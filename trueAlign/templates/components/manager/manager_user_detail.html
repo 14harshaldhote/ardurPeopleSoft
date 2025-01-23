@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Employee Profile</h1>
+<ul>
+    <li>Name: {{ user_detail.user.get_full_name }}</li>
+    <li>Email: {{ user_detail.user.email }}</li>
+    <li>Date of Birth: {{ user_detail.dob }}</li>
+    <li>Blood Group: {{ user_detail.blood_group }}</li>
+    <li>Hire Date: {{ user_detail.hire_date }}</li>
+    <li>Gender: {{ user_detail.gender }}</li>
+    <li>PAN Number: {{ user_detail.panno }}</li>
+    <li>Job Description: {{ user_detail.job_description }}</li>
+    <li>Employment Status: {{ user_detail.employment_status }}</li>
+    <li>Emergency Contact Address: {{ user_detail.emergency_contact_address }}</li>
+    <li>Emergency Contact Primary: {{ user_detail.emergency_contact_primary }}</li>
+    <li>Emergency Contact Name: {{ user_detail.emergency_contact_name }}</li>
+    <li>Start Date: {{ user_detail.start_date }}</li>
+    <li>Work Location: {{ user_detail.work_location }}</li>
+    <li>Contact Number: {{ user_detail.contact_number_primary }}</li>
+    <li>Personal Email: {{ user_detail.personal_email }}</li>
+    <li>Aadhar Number: {{ user_detail.aadharno }}</li>
+    <li>Group: {{ user_detail.group.name if user_detail.group else 'None' }}</li>
+</ul>
+<a href="{% url 'home' %}">Back to Home</a>
+{% endblock %}

@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="container mx-auto px-4 py-8">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="mb-4 p-4 rounded {% if message.tags == 'success' %}bg-green-100 text-green-700{% else %}bg-red-100 text-red-700{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% if ticket %}
+    <!-- Single Ticket View -->
+    <div class="bg-white rounded-lg shadow-lg p-6">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-gray-800">HR Ticket Details</h2>
+            <a href="{% url 'aps_hr:hr_support' %}" class="px-4 py-2 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition-colors">
+                Back to List
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div class="bg-gray-50 p-4 rounded">
+                <p class="text-sm text-gray-500">Ticket ID</p>
+                <p class="font-semibold text-gray-800">{{ ticket.ticket_id }}</p>
+            </div>
+            <div class="bg-gray-50 p-4 rounded">
+                <p class="text-sm text-gray-500">Status</p>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium
+                    {% if ticket.status == 'Open' %}bg-yellow-100 text-yellow-800
+                    {% elif ticket.status == 'In Progress' %}bg-blue-100 text-blue-800
+                    {% elif ticket.status == 'Resolved' %}bg-green-100 text-green-800
+                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                    {{ ticket.status }}
+                </span>
+            </div>
+            <div class="bg-gray-50 p-4 rounded">
+                <p class="text-sm text-gray-500">Issue Type</p>
+                <p class="font-semibold text-gray-800">{{ ticket.issue_type }}</p>
+            </div>
+            <div class="bg-gray-50 p-4 rounded">
+                <p class="text-sm text-gray-500">Reported By</p>
+                <p class="font-semibold text-gray-800">{{ ticket.user.username }}</p>
+            </div>
+        </div>
+
+        <div class="bg-gray-50 p-4 rounded mb-6">
+            <p class="text-sm text-gray-500 mb-2">Subject</p>
+            <p class="text-gray-800">{{ ticket.subject }}</p>
+        </div>
+
+        <div class="bg-gray-50 p-4 rounded mb-6">
+            <p class="text-sm text-gray-500 mb-2">Description</p>
+            <p class="text-gray-800 whitespace-pre-wrap">{{ ticket.description }}</p>
+        </div>
+
+        <form method="post" class="bg-gray-50 p-4 rounded">
+            {% csrf_token %}
+            <div class="flex items-center space-x-4">
+                <select name="status" class="flex-1 rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    {% for value, label in ticket.STATUS_CHOICES %}
+                        <option value="{{ value }}" {% if value == ticket.status %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors">
+                    Update Status
+                </button>
+            </div>
+        </form>
+    </div>
+
+    {% else %}
+    <!-- Ticket List View -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="text-2xl font-bold text-yellow-600 mb-2">{{ open_tickets }}</div>
+            <div class="text-gray-600">Open HR Tickets</div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="text-2xl font-bold text-blue-600 mb-2">{{ in_progress_tickets }}</div>
+            <div class="text-gray-600">In Progress</div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="text-2xl font-bold text-green-600 mb-2">{{ resolved_tickets }}</div>
+            <div class="text-gray-600">Resolved</div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow">
+        <div class="p-6 border-b border-gray-200">
+            <h2 class="text-xl font-semibold text-gray-800">HR Support Tickets</h2>
+        </div>
+        <div class="divide-y divide-gray-200">
+            {% for ticket in tickets %}
+                <div class="p-6 hover:bg-gray-50 transition-colors">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <a href="{% url 'aps_hr:hr_support_with_ticket' ticket.ticket_id %}" 
+                               class="text-lg font-medium text-indigo-600 hover:text-indigo-800">
+                                {{ ticket.subject }}
+                            </a>
+                            <p class="text-sm text-gray-500">Ticket ID: {{ ticket.ticket_id }}</p>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium
+                                {% if ticket.status == 'Open' %}bg-yellow-100 text-yellow-800
+                                {% elif ticket.status == 'In Progress' %}bg-blue-100 text-blue-800
+                                {% elif ticket.status == 'Resolved' %}bg-green-100 text-green-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ ticket.status }}
+                            </span>
+                            <span class="text-sm text-gray-500">
+                                {{ ticket.created_at|date:"M d, Y" }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="p-6 text-center text-gray-500">
+                    No HR tickets found.
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

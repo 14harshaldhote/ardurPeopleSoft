@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Manager Dashboard</h1>
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Job Description</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for member in team_members %}
+        <tr>
+            <td>{{ member.user.get_full_name }}</td>
+            <td>{{ member.user.email }}</td>
+            <td>{{ member.job_description }}</td>
+            <td><a href="{% url 'aps:manager_user_detail' member.id %}">View Details</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

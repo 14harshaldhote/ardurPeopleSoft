@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>{% block title %}Tracking Web Application{% endblock %}</title>
+    {% load static %}
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@2.8.2/dist/alpine.min.js" defer></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Linlegrey:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #F2F3F6;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        .greeting {
+            font-size: 2.5rem; /* 30px */
+            font-weight: 300;
+            color: #1F2937;
+            letter-spacing: -0.025em;
+            line-height: 1.2;
+            margin-bottom: 0.5rem;
+        }
+
+        .gradient-text {
+            background: linear-gradient(45deg,
+                    #F29F67 0%,
+                    #d54c5a 50%,
+                    #4252b9 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientAnimation 5s ease infinite, morphGradient 3s ease-in-out infinite;
+            border-bottom: 2px solid #118748;
+        }
+
+        .gradient-text:hover {
+            transform: perspective(500px) rotateX(10deg);
+            transition: 0.3s;
+        }
+
+        @keyframes gradientAnimation {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+       
+
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            overflow-y: auto;
+            transition: all 0.3s ease-in-out;
+            border-right: 1px solid #e5e7eb;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05),
+                0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        .content-wrapper {
+            margin-left: 240px;
+            padding: 20px;
+            flex-grow: 1;
+            overflow-y: auto;
+            min-height: calc(100vh - 40px);
+            padding-bottom: 80px;
+            /* Space for watermark */
+        }
+
+        .watermark-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 50;
+            background: rgba(255, 255, 255, 0.211);
+            backdrop-filter: blur(8px);
+            padding: 12px 16px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .watermark-container:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+            background: rgba(255, 255, 255, 0.56);
+        }
+
+        .watermark-image {
+            width: 128px;
+            height: auto;
+            object-fit: contain;
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="flex">
+        <div class="navbar">
+            {% include 'navbar.html' %}
+        </div>
+
+        <div class="content-wrapper">
+            <header class="flex justify-between items-center p-6">
+                <p id="greeting" class="greeting text-black font-thin text-xl">
+                    <span class="font-medium text-xs">{{ user.first_name }} {{ user.last_name }}</span>
+                </p>
+
+                <div class="text-sm text-white flex items-center space-x-4">
+                    <span class="font-semibold text-black username">{{ user.username }}</span>
+                    <a href="{% url 'logout' %}"
+                        class="inline-block py-2 px-6 rounded-full bg-red-500 text-white font-semibold uppercase tracking-wider transform transition-all duration-300 ease-in-out hover:bg-red-600 hover:scale-105 focus:ring-4 focus:ring-red-300">
+                        Logout
+                    </a>
+                </div>
+            </header>
+
+            <div>
+                {% block content %}
+                {% endblock %}
+            </div>
+        </div>
+
+        <!-- Improved Watermark -->
+        <div class="watermark-container">
+            <p class="text-gray-800 font-semibold whitespace-nowrap">Product by</p>
+            <img src="{% static 'images/ardurtech.png' %}" alt="Ardur Technology Watermark" class="watermark-image">
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Dynamic Greeting
+        function getGreeting() {
+            const hour = new Date().getHours();
+            if (hour < 12) return "Good Morning";
+            else if (hour < 18) return "Good Afternoon";
+            return "Good Evening";
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const greetingElement = document.getElementById("greeting");
+            greetingElement.innerHTML = `${getGreeting()} <span class="font-semibold text-xl">{{ user.first_name }} {{ user.last_name }}</span>`;
+        });
+    </script>
+
+    <!-- Add this to your base.html -->
+    <script>
+        class SessionManager {
+            constructor(idleThresholdMinutes = 1) {
+                this.idleTime = 0;
+                this.idleThreshold = idleThresholdMinutes * 60 * 1000;
+                this.activityEvents = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart', 'touchmove'];
+                this.isIdle = false;
+                this.setupEventListeners();
+                this.startIdleCheck();
+            }
+
+            getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+
+            async makeRequest(url, method = 'POST', body = null) {
+                try {
+                    const response = await fetch(url, {
+                        method: method,
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': this.getCookie('csrftoken')
+                        },
+                        body: body ? JSON.stringify(body) : null
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    return await response.json();
+                } catch (error) {
+                    console.error(`Error making request to ${url}:`, error);
+                    throw error;
+                }
+            }
+
+            async updateServerActivity() {
+                try {
+                    const data = await this.makeRequest('/update-last-activity/', 'POST', {
+                        timestamp: new Date().toISOString()
+                    });
+
+                    if (data.status === 'success') {
+                        console.log('Activity updated successfully');
+                    }
+                } catch (error) {
+                    console.error('Failed to update activity:', error);
+                }
+            }
+
+            async handleLogout() {
+                try {
+                    // First try to end the session properly
+                    await this.makeRequest('/end-session/', 'POST');
+                    console.log('Session ended successfully');
+                } catch (error) {
+                    console.error('Error ending session:', error);
+                } finally {
+                    // Always proceed with logout
+                    window.location.href = '/logout/';
+                }
+            }
+
+            resetIdleTime() {
+                if (this.isIdle) {
+                    this.isIdle = false;
+                    this.updateServerActivity();
+                }
+                this.idleTime = 0;
+            }
+
+            setupEventListeners() {
+                // Activity events
+                this.activityEvents.forEach(event => {
+                    document.addEventListener(event, () => this.resetIdleTime());
+                });
+
+                // Visibility change
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'visible') {
+                        this.resetIdleTime();
+                    }
+                });
+
+                // Handle beforeunload event
+                window.addEventListener('beforeunload', async (event) => {
+                    // Try to update the server one last time
+                    await this.updateServerActivity();
+                });
+
+                // Add click handler to logout buttons/links
+                document.querySelectorAll('[data-action="logout"]').forEach(element => {
+                    element.addEventListener('click', async (e) => {
+                        e.preventDefault();
+                        await this.handleLogout();
+                    });
+                });
+            }
+
+            startIdleCheck() {
+                // Check idle time every second
+                setInterval(() => {
+                    this.idleTime += 1000;
+                    if (this.idleTime >= this.idleThreshold && !this.isIdle) {
+                        this.isIdle = true;
+                        console.log('User is idle');
+                        this.updateServerActivity();
+                    }
+                }, 1000);
+            }
+        }
+        // Initialize the session manager when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            window.sessionManager = new SessionManager(1); // 1 minute threshold
+        });
+    </script>
+</body>
+
+</html>

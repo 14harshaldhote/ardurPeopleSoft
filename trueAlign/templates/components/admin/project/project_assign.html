@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h1>Assign Users to Project: {{ project.name }}</h1>
+
+  <form method="POST">
+    {% csrf_token %}
+
+    <div class="form-group">
+      <label for="employees">Assign Employees</label>
+      <select name="employees" id="employees" class="form-control" multiple>
+        {% for employee in employees %}
+          <option value="{{ employee.id }}">{{ employee.username }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="clients">Assign Clients</label>
+      <select name="clients" id="clients" class="form-control" multiple>
+        {% for client in clients %}
+          <option value="{{ client.id }}">{{ client.username }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <button type="submit" class="btn btn-success mt-3">Assign Users</button>
+  </form>
+
+  <a href="{% url 'aps_admin:project_detail' project.id %}" class="btn btn-secondary mt-3">Back to Project Details</a>
+{% endblock %}

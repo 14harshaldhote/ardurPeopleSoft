@@ -1,0 +1,24 @@
+<div class="card">
+    <div class="card-header">
+      <h5 class="mb-0">Create New Project</h5>
+    </div>
+    <div class="card-body">
+      <form method="POST">
+        {% csrf_token %}
+        <div class="form-group">
+          <label for="projectName">Project Name</label>
+          <input type="text" name="name" id="projectName" class="form-control" placeholder="Enter project name" required>
+        </div>
+        <div class="form-group">
+          <label for="projectStatus">Project Status</label>
+          <select name="status" id="projectStatus" class="form-control">
+            <option value="not_started">Not Started</option>
+            <option value="in_progress">In Progress</option>
+            <option value="completed">Completed</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Create Project</button>
+      </form>
+    </div>
+  </div>
+  

@@ -1,0 +1,24 @@
+{% extends 'aps/base.html' %}
+
+{% block title %}Leave Balance{% endblock %}
+
+{% block content %}
+    <h2>Your Leave Balance</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Applied Leave</th>
+                <th>Balance Leaves</th>
+                <th>Pending for Approval</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>{{ leave_balance.applied_leave }} days</td>
+                <td>{{ leave_balance.balance_leaves }} days</td>
+                <td>{{ leave_balance.pending_for_approval_leaves }} days</td>
+            </tr>
+        </tbody>
+    </table>
+    <a href="{% url 'aps_employee:leave_request' %}">Request Leave</a> <!-- Link to Leave Request Page -->
+{% endblock %}

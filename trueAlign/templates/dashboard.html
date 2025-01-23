@@ -1,0 +1,276 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard - APS Portal{% endblock %}
+{% block content %}
+<div class="min-h-screen py-6 px-4 sm:px-6 lg:px-8 overflow-y-auto">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header Section with Role-Based Content -->
+        <div class="relative overflow-hidden bg-white mb-8 rounded-lg shadow-lg">
+            <!-- Decorative background elements -->
+            <div class="absolute top-0 left-0 w-full h-full">
+                <div
+                    class="absolute top-0 left-0 w-32 h-32 bg-indigo-100 rounded-full -translate-x-16 -translate-y-16 opacity-50">
+                </div>
+                <div
+                    class="absolute bottom-0 right-0 w-32 h-32 bg-green-100 rounded-full translate-x-16 translate-y-16 opacity-50">
+                </div>
+            </div>
+
+            <!-- Content container -->
+            <div class="relative p-8 md:p-12">
+                <div class="flex flex-col md:flex-row justify-between space-y-1 md:space-y-0">
+                    <!-- Left side content -->
+                    <div class=" px-2 py-1">
+                        <!-- Top Navigation -->
+                        <nav class="bg-white rounded-2xl shadow-md p-1 mb-2 flex justify-between items-center">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center">
+                                    <span class="text-white font-medium">JD</span>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-gray-900">{{ user.get_full_name }}</p>
+                                    <p class="text-sm text-gray-500">{{ user.email }}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-4">
+                                <span class="flex items-center space-x-2">
+                                    <span class="w-2 h-2 rounded-full transition-colors duration-300 
+                                        {% if user_status.status == 'active' %}bg-green-500
+                                        {% elif user_status.status == 'idle' %}bg-yellow-500
+                                        {% elif user_status.status == 'inactive' %}bg-red-500
+                                        {% else %}bg-gray-500{% endif %}">
+                                    </span>
+                                    <span class="text-sm text-gray-600">
+                                        {{ user_status.status|title }}
+                                        {% if user_status.status != 'offline' %}
+                                        {% if user_status.idle_time %}
+                                        <span class="text-xs text-gray-500">
+                                            {% if user_status.idle_time.days %}
+                                            (Idle: {{ user_status.idle_time.days }} days)
+                                            {% else %}
+                                            (Idle: {{ user_status.formatted_idle_time }})
+                                            {% endif %}
+                                        </span>
+                                        {% else %}
+                                        <span class="text-xs text-gray-500">No idle time</span>
+                                        {% endif %}
+                                        {% endif %}
+                                    </span>
+                                </span>
+
+
+                                <button class="btn-secondary">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9">
+                                        </path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </nav>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <!-- Main Content -->
+                            <div class="lg:col-span-2 space-y-8">
+                                <!-- Welcome Message -->
+                                <div class="card  text-black rounded-md">
+                                    <h1 class="text-2xl font-bold mb-2">
+                                        {% if is_admin %}
+                                        Welcome, Administrator!
+                                        {% elif is_manager %}
+                                        Welcome, Project Manager!
+                                        {% elif is_hr %}
+                                        Welcome, HR Manager!
+                                        {% elif is_employee %}
+                                        Welcome, Team Member!
+                                        {% elif is_client %}
+                                        Welcome, Valued Client!
+                                        {% endif %}
+                                    </h1>
+                                    <p class="text-indigo-200">Last login: {{ user.last_login|date:"F j, Y, g:i a" }}
+                                    </p>
+                                </div>
+
+
+
+                                <!-- Projects Section -->
+                                <div class="card">
+                                    <div class="flex justify-between items-center mb-6">
+                                        {% if not is_admin and not is_hr %}
+                                        <h2 class="text-xl font-bold text-gray-900">
+                                            {% if is_manager %}
+                                            Managed Projects
+                                            {% elif is_client %}
+                                            Your Projects
+                                            {% else %}
+                                            Assigned Projects
+                                            {% endif %}
+                                        </h2>
+                                        {% endif %}
+                                    </div>
+
+
+                                    {% if projects %}
+                                    <div class="space-y-4 overflow-y-auto max-h-32">
+                                        {% for project in projects %}
+                                        <div
+                                            class="group bg-gray-50 rounded-xl p-2 hover:bg-gray-100 transition-colors duration-200">
+                                            <div class="flex items-center justify-between">
+                                                <div class="flex items-center space-x-3">
+                                                    <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                                                    <h3 class="text-lg font-medium text-gray-900">{{ project.name }}
+                                                    </h3>
+                                                </div>
+
+                                            </div>
+                                            <div class="mt-3 grid grid-cols-2 gap-4">
+                                                <div class="flex items-center space-x-2 text-sm text-gray-600">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                        viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2">
+                                                        </path>
+                                                    </svg>
+                                                    <span>Status: {{ project.status }}</span>
+                                                </div>
+                                                <div class="flex items-center space-x-2 text-sm text-gray-600">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                        viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                                                        </path>
+                                                    </svg>
+                                                    <span>Deadline: {{ project.deadline|date:"F j, Y" }}</span>
+                                                    {% if project.is_deadline_close %}
+                                                    <span
+                                                        class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                        <span class="h-2 w-2 mr-1 bg-red-600 rounded-full"></span>
+                                                        Deadline Near
+                                                    </span>
+                                                    {% endif %}
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% else %}
+                                    <div>
+
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Right Sidebar -->
+                            <!-- Right Sidebar -->
+                            <!-- Right Sidebar -->
+                            <div class="space-y-8">
+                                <!-- User Stats -->
+                                {% if not is_admin %}
+                                <div class="card">
+                                    <h3 class="text-lg font-bold text-gray-900 mb-4">Quick Stats</h3>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        {% if is_employee %}
+                                        <div class="bg-green-50 rounded-lg p-4">
+                                            <p class="text-sm text-green-600 mb-1">Active Projects</p>
+                                            <p class="text-2xl font-bold text-green-700">{{ projects|length }}</p>
+                                        </div>
+                                        <div class="bg-indigo-50 rounded-lg p-4">
+                                            <p class="text-sm text-indigo-600 mb-1">Hours Today</p>
+                                            <p class="text-2xl font-bold text-indigo-700">{{ hours_logged }}</p>
+                                        </div>
+                                        {% endif %}
+                                        {% if is_manager %}
+                                        <div class="bg-green-50 rounded-lg p-4">
+                                            <p class="text-sm text-green-600 mb-1">Active Projects</p>
+                                            <p class="text-2xl font-bold text-green-700">{{ projects|length }}</p>
+                                        </div>
+                                        <!-- Active Breaks Section -->
+                                        <div class="bg-blue-50 rounded-lg p-4 ">
+                                            <p class="text-sm text-blue-600 mb-1">Active Breaks</p>
+                                            <p class="text-2xl font-bold text-blue-700">{{ active_breaks }}</p>
+                                        </div>
+                                        <!-- Present Employees Section -->
+                                        <div class="bg-yellow-50 rounded-lg p-4">
+                                            <p class="text-sm text-yellow-600 mb-1">Present Employees</p>
+                                            <p class="text-2xl font-bold text-yellow-700">{{ present_employees_count }}
+                                            </p>
+                                        </div>
+                                        {% endif %}
+
+                                        {% if is_hr %}
+                                        <div class="bg-yellow-50 rounded-lg p-4">
+                                            <p class="text-sm text-yellow-600 mb-1">Employees Present</p>
+                                            <p class="text-2xl font-bold text-yellow-700">{{ present_employees }}</p>
+                                        </div>
+                                        <div class="bg-red-50 rounded-lg p-4">
+                                            <p class="text-sm text-red-600 mb-1">Employees Absent</p>
+                                            <p class="text-2xl font-bold text-red-700">{{ absent_employees }}</p>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+
+
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Role-Based Quick Stats Section -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-8">
+            {% if is_admin or is_manager %}
+            {% include 'card/project_stats_card.html' %}
+            {% include 'card/attendance_card.html' %}
+            {% include 'card/break_card.html' %}
+            {% elif is_hr %}
+            {% include 'card/break_card.html' %}
+            {% include 'card/attendance_card.html' %}
+            {% include 'card/employee_directory.html' %}
+            {% elif is_employee %}
+            {% include 'card/tasks_card.html' %}
+            {% include 'card/attendance_card.html' %}
+            {% include 'card/break_card.html' %}
+            {% elif is_client %}
+            {% include 'card/project_progress_card.html' %}
+            {% include 'card/support_tickets_card.html' %}
+            {% include 'card/billing_summary_card.html' %}
+            {% endif %}
+        </div>
+
+        <!-- Role-Based Updates Section -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {% if is_admin or is_manager %}
+            {% include 'card/team_update_card.html' %}
+            {% include 'card/global_update_card.html' %}
+            {% elif is_hr %}
+            {% include 'card/global_update_card.html' %}
+            {% elif is_employee %}
+            {% include 'card/team_update_card.html' %}
+            {% include 'card/global_update_card.html' %}
+            {% elif is_client %}
+            {% include 'card/project_updates_card.html' %}
+            {% include 'card/support_status_card.html' %}
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+<!-- CSS for buttons -->
+<style>
+    .btn-primary {
+        @apply px-4 py-2 bg-indigo-600 text-white rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors duration-200;
+    }
+
+    .btn-secondary {
+        @apply px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors duration-200;
+    }
+</style>
+{% endblock %}

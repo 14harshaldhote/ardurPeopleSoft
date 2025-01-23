@@ -1,0 +1,25 @@
+<div class="bg-white shadow-xl rounded-xl p-6 transition-transform transform hover:scale-105 hover:shadow-2xl">
+    <div class="flex justify-between items-center mb-4">
+        <h3 class="text-xl font-semibold text-gray-800">Project Timeline for {{ timeline.project.name }}</h3>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6M9 12v1.5M15 12v1.5M9 14v1.5M15 14v1.5M9 16v1.5M15 16v1.5M9 18v1.5M15 18v1.5" />
+        </svg>
+    </div>
+    <div class="space-y-4">
+        {% for phase in timeline.phases %}
+            <div class="bg-gray-50 p-3 rounded-lg border-l-4 border-{{ phase.color }}-500">
+                <h4 class="font-medium text-gray-800">{{ phase.name }}</h4>
+                <p class="text-xs text-gray-500">
+                    {% if phase.completion_date %}
+                        Completed on {{ phase.completion_date }}
+                    {% elif phase.expected_completion %}
+                        Expected to complete by {{ phase.expected_completion }}
+                    {% elif phase.scheduled_start %}
+                        Scheduled to start on {{ phase.scheduled_start }}
+                    {% endif %}
+                </p>
+                <span class="text-xs text-{{ phase.color }}-600">{{ phase.status }}</span>
+            </div>
+        {% endfor %}
+    </div>
+</div>

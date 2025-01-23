@@ -1,0 +1,243 @@
+<div id="createProjectModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center hidden">
+    <div class="bg-white p-6 rounded-lg w-3/4 max-w-screen-lg h-3/4 overflow-y-auto shadow-lg">
+        <div class="modal-header flex justify-between items-center mb-6">
+            <h2 class="modal-title text-2xl font-semibold text-gray-800">Create New Project</h2>
+            <button class="close-button p-2 rounded-full bg-transparent hover:bg-gray-100 focus:outline-none"
+                id="closeModal" aria-label="Close modal">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd"
+                        d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                        clip-rule="evenodd" />
+                </svg>
+            </button>
+        </div>
+
+        <form id="projectForm" method="POST" action="{% url 'aps_admin:project_create' %}">
+            {% csrf_token %}
+
+            <div class="space-y-8">
+                <!-- Project Details Section -->
+                <div class="bg-gray-50 rounded-xl p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-6">Project Details</h3>
+
+                    <!-- Project Name -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Project Name</label>
+                            <input type="text" id="name" name="name"
+                                class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm text-gray-900 placeholder-gray-400"
+                                required placeholder="Enter project name" />
+                            <span class="text-xs text-red-500 mt-1 hidden">Project name is required</span>
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="mb-6">
+                        <label for="description"
+                            class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                        <textarea id="description" name="description" rows="4"
+                            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm text-gray-900 placeholder-gray-400"
+                            placeholder="Enter project description"></textarea>
+                    </div>
+
+                    <!-- Dates Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <!-- Start Date -->
+                        <div>
+                            <label for="start_date" class="block text-sm font-medium text-gray-700 mb-2">Start
+                                Date</label>
+                            <input type="date" id="start_date" name="start_date"
+                                class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                                required />
+                        </div>
+
+                        <!-- Deadline -->
+                        <div>
+                            <label for="deadline" class="block text-sm font-medium text-gray-700 mb-2">Deadline</label>
+                            <input type="date" id="deadline" name="deadline"
+                                class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                                required />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Team Section -->
+                <div class="bg-gray-50 rounded-xl p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-6">Team & Stakeholders</h3>
+
+                    <div class="mb-6">
+                        <label for="manager" class="block text-sm font-medium text-gray-700 mb-2">Project
+                            Manager</label>
+                        <select name="manager" id="manager"
+                            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                            required>
+                            <option value="">Select Manager</option>
+                            {% for manager in managers %}
+                            <option value="{{ manager.id }}">{{ manager.first_name }} {{ manager.last_name }}</option>
+                            {% empty %}
+                            <option value="" disabled>No managers available</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Team Members Selection -->
+                    <div class="mb-6">
+                        <label for="employees" class="block text-sm font-medium text-gray-700 mb-2">Team Members</label>
+
+                        <!-- Search and Selection Container -->
+                        <div class="relative">
+                            <!-- Search Input -->
+                            <div class="flex items-center px-3 py-2 bg-white border border-gray-300 rounded-t-lg">
+                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                                <input type="text" id="employeeSearch" placeholder="Search team members..."
+                                    class="w-full ml-2 focus:outline-none text-sm" />
+                            </div>
+
+                            <!-- Selected Members Display -->
+                            <div
+                                class="min-h-[52px] max-h-[80px] overflow-y-auto p-2 border-l border-r border-gray-300 bg-gray-50">
+                                <div class="flex flex-wrap gap-2" id="selectedMembers">
+                                    <!-- Dynamically added selected members will appear here -->
+                                </div>
+                            </div>
+
+                            <!-- Dropdown List -->
+                            <div class="max-h-[240px] overflow-y-auto border border-gray-300 rounded-b-lg bg-white">
+                                <div class="p-1" id="dropdownList">
+                                    {% for employee in employees %}
+                                    <button type="button"
+                                        class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded-md flex items-center justify-between group"
+                                        data-value="{{ employee.id }}">
+                                        <span>{{ employee.first_name }} {{ employee.last_name }}</span>
+                                        <span class="text-indigo-600 opacity-0 group-hover:opacity-100">Add</span>
+                                    </button>
+                                    {% empty %}
+                                    <div class="px-3 py-2 text-sm text-gray-500">No employees available</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Hidden actual select input for form submission -->
+                        <select name="employees" id="employees" multiple class="hidden" required>
+                            {% for employee in employees %}
+                            <option value="{{ employee.id }}">{{ employee.first_name }} {{ employee.last_name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+
+                        <div class="mt-2 flex items-center gap-2 text-sm text-gray-500">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <p>Search and click to select multiple team members</p>
+                        </div>
+                    </div>
+
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function () {
+                            const searchInput = document.getElementById('employeeSearch');
+                            const dropdownItems = document.querySelectorAll('[data-value]');
+                            const hiddenSelect = document.getElementById('employees');
+                            const selectedContainer = document.getElementById('selectedMembers');
+                            const dropdownList = document.getElementById('dropdownList');
+
+                            // Search functionality
+                            searchInput.addEventListener('input', function (e) {
+                                const searchTerm = e.target.value.toLowerCase();
+                                dropdownItems.forEach(item => {
+                                    const text = item.textContent.toLowerCase();
+                                    item.style.display = text.includes(searchTerm) ? 'flex' : 'none';
+                                });
+                            });
+
+                            // Add member to selected list and update hidden select
+                            function addMember(id, name) {
+                                // Prevent adding duplicates
+                                if (selectedContainer.querySelector(`[data-id="${id}"]`)) return;
+
+                                // Create new member tag
+                                const tag = document.createElement('span');
+                                tag.className = 'inline-flex items-center px-2 py-1 bg-indigo-100 text-indigo-700 rounded-md text-sm';
+                                tag.setAttribute('data-id', id);
+                                tag.innerHTML = `<button class="ml-1 text-indigo-500 hover:text-indigo-700" data-id="${id}">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        `;
+                                selectedContainer.appendChild(tag);
+
+                                // Add selected option to hidden select
+                                const option = hiddenSelect.querySelector(`option[value="${id}"]`);
+                                if (option) option.selected = true;
+                            }
+
+                            // Remove member from selected list and update hidden select
+                            function removeMember(id) {
+                                // Remove the member tag
+                                const tag = selectedContainer.querySelector(`[data-id="${id}"]`);
+                                if (tag) tag.remove();
+
+                                // Unselect option from hidden select
+                                const option = hiddenSelect.querySelector(`option[value="${id}"]`);
+                                if (option) option.selected = false;
+                            }
+
+                            // Handle dropdown item click to add member
+                            dropdownList.addEventListener('click', function (e) {
+                                if (e.target.closest('button')) {
+                                    const id = e.target.closest('button').dataset.value;
+                                    const name = e.target.closest('button').querySelector('span').textContent;
+                                    addMember(id, name);
+                                }
+                            });
+
+                            // Handle tag click to remove member
+                            selectedContainer.addEventListener('click', function (e) {
+                                if (e.target.closest('button')) {
+                                    const id = e.target.closest('button').dataset.id;
+                                    removeMember(id);
+                                }
+                            });
+                        });
+                    </script>
+
+
+                    <!-- Clients Selection -->
+                    <div>
+                        <label for="clients" class="block text-sm font-medium text-gray-700 mb-2">Project
+                            Clients</label>
+                        <select name="clients" id="clients" multiple
+                            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                            required>
+                            {% for client in clients %}
+                            <option value="{{ client.id }}">{{ client.first_name }} {{ client.last_name }}</option>
+                            {% empty %}
+                            <option disabled>No clients available</option>
+                            {% endfor %}
+                        </select>
+                        <p class="mt-2 text-sm text-gray-500">Hold Ctrl/Cmd to select multiple clients</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="mt-8 pt-6 border-t border-gray-200 flex justify-end gap-4">
+                <button type="button" id="cancelButton"
+                    class="px-6 py-3 rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors">
+                    Cancel
+                </button>
+                <button type="submit"
+                    class="px-6 py-3 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                    Create Project
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

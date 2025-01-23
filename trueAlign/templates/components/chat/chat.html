@@ -1,0 +1,86 @@
+<!-- templates/chat/chat.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+
+    <!-- Display all conversations -->
+    <h2 class="font-semibold text-lg">Chat Conversations</h2>
+    <ul class="space-y-4">
+        {% for conversation in conversations %}
+            <li>
+                <a href="{% url 'chat:chat_view' conversation.id %}" class="block p-2 bg-gray-200 rounded-md">
+                    {{ conversation }}
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <!-- Form to create a new group -->
+    {% if is_admin %}
+        <h3 class="mt-8 text-lg font-semibold">Create a New Group Chat</h3>
+        <form method="POST">
+            {% csrf_token %}
+            <label for="participants" class="block text-sm font-medium text-gray-700">Select Participants</label>
+            <select name="participants" id="participants" multiple class="mt-1 block w-full p-2 border rounded-md">
+                {% for user in users %}
+                    <option value="{{ user.id }}">{{ user.username }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" name="create_group" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md">Create Group</button>
+        </form>
+    {% endif %}
+
+    <!-- Display messages for a conversation -->
+    {% if conversation %}
+        <div class="mt-8">
+            <h3 class="font-semibold text-lg">Conversation: {{ conversation }}</h3>
+            <div class="mb-4">
+                <ul class="space-y-2">
+                    {% for message in messages %}
+                        <li><strong>{{ message.sender.username }}:</strong> {{ message.content }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- Message input form -->
+            <form method="POST">
+                {% csrf_token %}
+                <textarea name="message" class="w-full p-2 border rounded-md" placeholder="Type your message here..."></textarea>
+                <button type="submit" class="mt-2 px-4 py-2 bg-blue-500 text-white rounded-md">Send Message</button>
+            </form>
+        </div>
+
+        <!-- Manage participants in the group -->
+        {% if is_admin and conversation.is_group_chat %}
+            <div class="mt-8">
+                <h4 class="text-lg font-semibold">Manage Participants</h4>
+
+                <form method="POST">
+                    {% csrf_token %}
+                    <label for="user_id" class="block text-sm font-medium text-gray-700">Add Participant</label>
+                    <select name="user_id" id="user_id" class="mt-1 block w-full p-2 border rounded-md">
+                        {% for user in users %}
+                            {% if user not in conversation.participants.all %}
+                                <option value="{{ user.id }}">{{ user.username }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                    <button type="submit" name="add_participant" class="mt-4 px-4 py-2 bg-green-500 text-white rounded-md">Add Participant</button>
+                </form>
+
+                <form method="POST">
+                    {% csrf_token %}
+                    <label for="user_id" class="block text-sm font-medium text-gray-700">Remove Participant</label>
+                    <select name="user_id" id="user_id" class="mt-1 block w-full p-2 border rounded-md">
+                        {% for user in conversation.participants.all %}
+                            <option value="{{ user.id }}">{{ user.username }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" name="remove_participant" class="mt-4 px-4 py-2 bg-red-500 text-white rounded-md">Remove Participant</button>
+                </form>
+            </div>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

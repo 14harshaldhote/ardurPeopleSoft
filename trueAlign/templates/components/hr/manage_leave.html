@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="p-8 min-h-screen bg-gray-50">
+    <!-- Leave Request Details -->
+    <div class="bg-white rounded-lg shadow-lg p-8 max-w-2xl mx-auto">
+        <h1 class="text-4xl font-medium text-gray-900 mb-8">{{ action }} Leave Request</h1>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <div>
+                <label class="text-sm font-normal text-gray-500">Employee</label>
+                <p class="text-lg font-semibold text-gray-900">{{ leave_request.user.username }}</p>
+            </div>
+            <div>
+                <label class="text-sm font-normal text-gray-500">Leave Type</label>
+                <p class="text-lg font-semibold text-gray-900">{{ leave_request.leave_type }}</p>
+            </div>
+            <div>
+                <label class="text-sm font-normal text-gray-500">Start Date</label>
+                <p class="text-lg font-semibold text-gray-900">{{ leave_request.start_date }}</p>
+            </div>
+            <div>
+                <label class="text-sm font-normal text-gray-500">End Date</label>
+                <p class="text-lg font-semibold text-gray-900">{{ leave_request.end_date }}</p>
+            </div>
+            <div class="col-span-2">
+                <label class="text-sm font-normal text-gray-500">Reason</label>
+                <p class="text-lg font-semibold text-gray-900">{{ leave_request.reason }}</p>
+            </div>
+        </div>
+
+        <div class="flex justify-end items-center space-x-6">
+            <!-- Action Buttons (Approve/Reject) -->
+            <form method="POST" class="flex gap-6">
+                {% csrf_token %}
+                <button type="submit" class="bg-purple-400 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 focus:outline-none focus:ring-4 focus:ring-purple-300 active:bg-purple-800 transition-all duration-300 ease-in-out"
+>
+                    {{ action }}
+                </button>
+                <a href="{% url 'aps_hr:view_leave_requests_hr' %}" 
+                   class="bg-transparent text-teal-600 border border-teal-600 px-6 py-3 rounded-lg font-semibold hover:bg-teal-50 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all">
+                    Cancel
+                </a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="p-8 min-h-screen ">
+
+    <!-- Title -->
+    <h1 class="text-3xl font-thin text-gray-900 mb-8">Leave Management</h1>
+
+    <!-- Filter Section -->
+    <div class="flex gap-6 mb-8">
+        <!-- Username Filter -->
+        <div class="flex items-center gap-2">
+            <label for="employee" class="text-sm font-medium text-gray-600">Employee</label>
+            <select id="employee" name="employee" class="px-4 py-2 rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                <option value="">All Employees</option>
+                {% for leave in leave_requests %}
+                <option value="{{ leave.user.username }}">{{ leave.user.username }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <!-- Leave Type Filter -->
+        <div class="flex items-center gap-2">
+            <label for="leave_type" class="text-sm font-medium text-gray-600">Leave Type</label>
+            <select id="leave_type" name="leave_type" class="px-4 py-2 rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                <option value="">All Types</option>
+                <option value="Sick Leave">Sick Leave</option>
+                <option value="Casual Leave">Casual Leave</option>
+                <option value="Earned Leave">Earned Leave</option>
+                <option value="Loss of Pay">Loss of Pay</option>
+            </select>
+        </div>
+    </div>
+    
+    <!-- Tab Navigation -->
+    <div class="mb-8 border-b border-gray-300">
+        <ul class="flex -mb-px">
+            <li class="mr-6">
+                <button onclick="showTab('pending')" 
+                        class="tab-btn active px-6 py-3 font-medium text-gray-700 hover:text-gray-900 transition duration-300 ease-in-out border-b-2 border-transparent hover:border-yellow-500">
+                    Pending Requests
+                </button>
+            </li>
+            <li class="mr-6">
+                <button onclick="showTab('history')" 
+                        class="tab-btn px-6 py-3 font-medium text-gray-500 hover:text-gray-700 transition duration-300 ease-in-out border-b-2 border-transparent hover:border-yellow-500">
+                    History
+                </button>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Pending Requests Tab -->
+    <div id="pending-tab" class="tab-content">
+        <div class="grid gap-6">
+            {% for leave in leave_requests %}
+            {% if leave.status == 'Pending' %}
+            <div class="bg-white rounded-lg shadow-md p-6 flex items-center justify-between transition transform hover:scale-105 hover:shadow-xl">
+                <div class="flex-1 grid grid-cols-4 gap-6">
+                    <div>
+                        <p class="text-sm text-gray-500">Employee</p>
+                        <p class="font-medium text-gray-800">{{ leave.user.username }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Leave Type</p>
+                        <p class="font-medium text-gray-800">{{ leave.leave_type }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Duration</p>
+                        <p class="font-medium text-gray-800">{{ leave.start_date }} - {{ leave.end_date }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Status</p>
+                        <span class="px-4 py-1 text-sm font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                            {{ leave.status }}
+                        </span>
+                    </div>
+                </div>
+                <div class="flex gap-4">
+                    <a href="{% url 'aps_hr:manage_leave_hr' leave.id 'approve' %}" 
+                       class="bg-green-500 text-white px-5 py-2 rounded-lg hover:bg-green-600 transition duration-200">
+                        Approve
+                    </a>
+                    <a href="{% url 'aps_hr:manage_leave_hr' leave.id 'reject' %}"
+                       class="bg-red-500 text-white px-5 py-2 rounded-lg hover:bg-red-600 transition duration-200">
+                        Reject
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- History Tab -->
+    <div id="history-tab" class="tab-content hidden">
+        <div class="grid gap-6">
+            {% for leave in leave_requests %}
+            {% if leave.status != 'Pending' %}
+            <div class="bg-white rounded-lg shadow-md p-6 grid grid-cols-5 gap-2 transition transform hover:scale-105 hover:shadow-xl">
+                <div>
+                    <p class="text-sm text-gray-500">Employee</p>
+                    <p class="font-medium text-gray-800">{{ leave.user.username }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Leave Type</p>
+                    <p class="font-medium text-gray-800">{{ leave.leave_type }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Duration</p>
+                    <p class="font-medium text-gray-800">{{ leave.start_date }} - {{ leave.end_date }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Status</p>
+                    <span class="px-4 py-1 text-sm font-semibold rounded-full 
+                    {% if leave.status == 'Approved' %}
+                        bg-green-100 text-green-800
+                    {% else %}
+                        bg-red-100 text-red-800
+                    {% endif %}">
+                        {{ leave.status }}
+                    </span>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+
+<script>
+function showTab(tabName) {
+    const tabs = document.querySelectorAll('.tab-content');
+    const buttons = document.querySelectorAll('.tab-btn');
+    
+    tabs.forEach(tab => tab.classList.add('hidden'));
+    buttons.forEach(btn => btn.classList.remove('border-yellow-500', 'text-gray-900'));
+    
+    document.getElementById(`${tabName}-tab`).classList.remove('hidden');
+    event.target.classList.add('border-yellow-500', 'text-gray-900');
+}
+
+// Add event listener for filter changes
+document.getElementById('employee').addEventListener('change', filterRequests);
+document.getElementById('leave_type').addEventListener('change', filterRequests);
+
+function filterRequests() {
+    const employeeFilter = document.getElementById('employee').value.toLowerCase();
+    const leaveTypeFilter = document.getElementById('leave_type').value.toLowerCase();
+
+    const leaveRequests = document.querySelectorAll('.tab-content .grid > div');
+    leaveRequests.forEach(request => {
+        const employeeName = request.querySelector('.font-medium.text-gray-800').textContent.toLowerCase();
+        const leaveType = request.querySelector('.font-medium.text-gray-800:nth-child(2)').textContent.toLowerCase();
+
+        if ((employeeFilter === '' || employeeName.includes(employeeFilter)) &&
+            (leaveTypeFilter === '' || leaveType.includes(leaveTypeFilter))) {
+            request.classList.remove('hidden');
+        } else {
+            request.classList.add('hidden');
+        }
+    });
+}
+</script>
+
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Team Attendance</h1>
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Date</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for attendance in team_attendance %}
+                <tr>
+                    <td>{{ attendance.user.username }}</td>
+                    <td>{{ attendance.date }}</td>
+                    <td>{{ attendance.status }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="pagination">
+        <span class="step-links">
+            {% if team_attendance.has_previous %}
+                <a href="?page=1">&laquo; first</a>
+                <a href="?page={{ team_attendance.previous_page_number }}">previous</a>
+            {% endif %}
+            
+            <span class="current">
+                Page {{ team_attendance.number }} of {{ team_attendance.paginator.num_pages }}.
+            </span>
+
+            {% if team_attendance.has_next %}
+                <a href="?page={{ team_attendance.next_page_number }}">next</a>
+                <a href="?page={{ team_attendance.paginator.num_pages }}">last &raquo;</a>
+            {% endif %}
+        </span>
+    </div>
+{% endblock %}

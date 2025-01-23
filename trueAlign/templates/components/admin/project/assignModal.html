@@ -1,0 +1,177 @@
+<!-- Assign Employee Modal -->
+<div id="assignEmployeeModal{{ project.id }}"
+    class="hidden fixed inset-0 flex justify-center items-center bg-gray-900 bg-opacity-50 z-50">
+    <div class="bg-white rounded-xl shadow-xl w-3/4 mx-4 transform transition-all">
+        <!-- Modal Header -->
+        <div class="bg-gray-50 px-6 py-4 rounded-t-xl border-b flex justify-between items-center">
+            <div>
+                <h2 class="text-xl font-bold text-gray-900">Project Team Management</h2>
+                <p class="text-sm text-gray-600 mt-1">{{ project.name }}</p>
+            </div>
+
+            <button id="closeAssignEmployeeModal{{ project.id }}"
+                class="close-modal text-gray-400 hover:text-gray-600 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="px-6 py-4 max-h-[80vh] overflow-y-auto">
+            <!-- Current Team Section -->
+            <div class="mb-8">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-gray-500" viewBox="0 0 20 20"
+                        fill="currentColor">
+                        <path
+                            d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+                    </svg>
+                    Active Team Members
+                </h3>
+
+                <!-- Active Members List -->
+                <div class="space-y-3 overflow-y-auto pr-2">
+                    {% for assignment in active_assignments %}
+                    <div
+                        class="flex items-center justify-between bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                                <span class="text-blue-600 font-medium">
+                                    {{ assignment.user.get_initials|default:assignment.user.username|slice:":2"|upper }}
+                                </span>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">
+                                    {{ assignment.user.full_name|default:assignment.user.username }}
+                                </p>
+                                <p class="text-xs text-gray-500">
+                                    {{ assignment.get_role_display }} • Added: {{ assignment.assigned_date|date:"M d, Y" }}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <!-- Change Role Form -->
+                            <form class="inline-block" method="POST"
+                                action="{% url 'aps_admin:change_role' project.id  %}">
+                                {% csrf_token %}
+                                <button type="submit"
+                                    class="text-sm px-3 py-1 rounded-md text-gray-700 hover:bg-gray-200 transition-colors">
+                                    Edit Role
+                                </button>
+                            </form>
+                            <!-- Remove Member Form -->
+                            <form class="inline-block" method="POST"
+                                action="{% url 'aps_admin:remove_member' project.id %}">
+                                {% csrf_token %}
+                                <button type="submit"
+                                    class="text-sm px-3 py-1 rounded-md text-red-600 hover:bg-red-50 transition-colors"
+                                    onclick="return confirm('Are you sure you want to remove this team member?')">
+                                    Remove
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-4 text-gray-500 bg-gray-50 rounded-lg">
+                        <p>No active team members</p>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Previously Assigned Members -->
+                <div class="mt-8">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-gray-500" viewBox="0 0 20 20"
+                            fill="currentColor">
+                            <path
+                                d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+                        </svg>
+                        Previously Assigned Members
+                    </h3>
+                    <div class="space-y-3 overflow-y-auto pr-2">
+                        {% for assignment in removed_assignments %}
+                        <div class="flex items-center justify-between bg-gray-50 rounded-lg p-3 opacity-75">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                                    <span class="text-gray-600 font-medium">{{
+                                        assignment.user.get_initials|default:assignment.user.username|slice:":2"|upper
+                                        }}</span>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-700">{{
+                                        assignment.user.get_full_name|default:assignment.user.username }}</p>
+                                    <p class="text-xs text-gray-500">{{ assignment.get_role_display }} • Ended: {{
+                                        assignment.end_date|date:"M d, Y" }}</p>
+                                </div>
+                            </div>
+                            <!-- Reactivate Form -->
+                            <form method="POST"
+                                action="{% url 'aps_admin:reactivate_member' project.id assignment.user.id %}">
+                                {% csrf_token %}
+                                <button type="submit"
+                                    class="text-sm px-3 py-1 rounded-md text-green-600 hover:bg-green-50 transition-colors"
+                                    onclick="return confirm('Are you sure you want to reactivate this team member?')">
+                                    Reactivate
+                                </button>
+                            </form>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add New Member Form -->
+            <form method="POST" action="{% url 'aps_admin:assign_employee' project.id %}"
+                class="space-y-4 border-t pt-6">
+                {% csrf_token %}
+                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-gray-500" viewBox="0 0 20 20"
+                        fill="currentColor">
+                        <path
+                            d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
+                    </svg>
+                    Add New Team Member
+                </h3>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="col-span-2 sm:col-span-1">
+                        <label for="user" class="block text-sm font-medium text-gray-700 mb-1">Select Employee</label>
+                        <select name="user" id="user" required
+                            class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <option value="">Choose an employee...</option>
+                            {% for employee in available_employees %}
+                            <option value="{{ employee.id }}">{{ employee.get_full_name|default:employee.username }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-span-2 sm:col-span-1">
+                        <label for="role" class="block text-sm font-medium text-gray-700 mb-1">Assign Role</label>
+                        <select name="role" id="role" required
+                            class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <option value="">Select role...</option>
+                            {% for role in available_roles %}
+                            <option value="{{ role.0 }}">{{ role.1 }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button"
+                        class="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                        onclick="closeModal('assignEmployeeModal{{ project.id }}')">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                        class="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">
+                        Add Member
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

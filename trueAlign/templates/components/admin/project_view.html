@@ -1,0 +1,488 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+    <div class="px-4 py-6 sm:px-0">
+        <div class="flex justify-between items-center">
+            <h1 class="text-3xl font-thin text-gray-800">Project Management</h1>
+            <!-- Button to Open Modal -->
+            <!-- Button to Open Modal -->
+            <button type="button" id="openModal"
+                class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                    fill="currentColor">
+                    <path fill-rule="evenodd"
+                        d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
+                        clip-rule="evenodd" />
+                </svg>
+                New Project
+            </button>
+
+        </div>
+
+        <div class="border-b border-gray-200 mt-6">
+            <nav class="-mb-px flex space-x-8" aria-label="Project sections">
+                <a href="?status=active"
+                    class="{% if request.GET.status != 'archived' %}border-blue-500 text-blue-600{% else %}border-transparent text-gray-500{% endif %} whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm hover:text-gray-700 hover:border-gray-300">
+                    Active Projects
+                </a>
+                <a href="?status=archived"
+                    class="{% if request.GET.status == 'archived' %}border-blue-500 text-blue-600{% else %}border-transparent text-gray-500{% endif %} whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm hover:text-gray-700 hover:border-gray-300">
+                    Archived Projects
+                </a>
+                <!-- Info icon with tooltip -->
+                <div class="tooltip-container">
+                    <button aria-label="Status information" class="info-icon" role="tooltip">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 16h-1v-4h-1m1-4h.01M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z" />
+                        </svg>
+                    </button>
+                    <div class="tooltip" role="tooltip">
+                        <div class="status-item">
+                            <span class="status-dot completed"></span>
+                            <span class="status-text">Completed</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-dot in-progress"></span>
+                            <span class="status-text">In Progress</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-dot pending"></span>
+                            <span class="status-text">Pending</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-dot deadline"></span>
+                            <span class="status-text">Deadline</span>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+        </div>
+
+
+        <div class="mt-6 space-y-6">
+            <ul class="divide-y divide-gray-200 space-y-4">
+                {% for project in projects %}
+                <li class="rounded-md 
+                {% if project.status == 'In Progress' %}bg-green-50
+                {% elif project.status == 'Pending' %}bg-yellow-50
+                {% elif project.status == 'Completed' %}bg-blue-50
+                {% else %}bg-gray-50{% endif %}"> <!-- Collapsed View -->
+                    <div class="px-6 py-4 cursor-pointer">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-4 flex-1">
+                                <!-- Project Name and Status -->
+                                <!-- Project Name, Status and Client -->
+                                <div class="flex-1">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center "
+                                            onclick="toggleProject('project-{{ project.id }}')">
+                                            <h3 class="text-lg font-medium text-gray-900">{{ project.name }}</h3>
+                                            <span class="ml-3 px-2.5 py-0.5 text-xs font-medium rounded-full 
+                                                    {% if project.status == 'In Progress' %}bg-green-100 text-green-800
+                                                    {% elif project.status == 'Pending' %}bg-yellow-100 text-yellow-800
+                                                    {% elif project.status == 'Completed' %}bg-blue-100 text-blue-800
+                                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                                {{ project.status }}
+                                            </span>
+                                            {% if project.is_deadline_close %}
+                                            <span
+                                                class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                <span class="h-2 w-2 mr-1 bg-red-600 rounded-full"></span> Deadline Near
+                                            </span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="text-sm text-gray-500">
+                                            {% for participation in project.client_participations.all %}
+                                            {{ participation.client.first_name }} {{ participation.client.last_name}}
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Timeline -->
+                                <div class="hidden sm:block text-sm text-gray-500">
+                                    {{ project.start_date|date:"M d, Y" }} - {{ project.deadline|date:"M d, Y" }}
+                                </div>
+
+                                <!-- Team Count -->
+                                <div class="hidden sm:flex items-center text-sm text-gray-500">
+                                    <svg class="h-5 w-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                                    </svg>
+                                    {{ project.projectassignment_set.count }}
+                                </div>
+
+                                <!-- Expand/Collapse Icon -->
+                                <svg id="icon-{{project.id}}"
+                                    class="h-5 w-5 text-gray-600 font-bold transform transition-transform duration-200"
+                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
+                        </div>
+
+
+                        <!-- Expanded View -->
+                        <div id="project-{{project.id}}" class=" hidden px-6 py-4  border-t border-gray-200">
+                            <!-- Description -->
+                            <div class="description-container mb-6 p-4 bg-gray-50 rounded-lg shadow-sm">
+                                <h4 class="text-lg font-semibold text-gray-700 border-b border-gray-200 pb-2">
+                                    Description
+                                </h4>
+                                <p class="mt-3 text-sm text-gray-800 leading-relaxed">{{ project.description }}</p>
+                            </div>
+
+                            <style>
+                                .description-container {
+                                    transition: background-color 0.3s, box-shadow 0.3s;
+                                }
+
+                                .description-container:hover {
+                                    background-color: #f9fafb;
+                                    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+                                }
+
+                                @media (prefers-reduced-motion: reduce) {
+                                    .description-container {
+                                        transition: none;
+                                    }
+                                }
+                            </style>
+
+                            <div class="hidden sm:block text-sm text-gray-500 mb-4">
+                                <h4 class="text-sm font-medium text-gray-500">Manager</h4>
+                                <div
+                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+
+                                    {% for assignment in project.projectassignment_set.all %}
+                                    {% if assignment.role_in_project == 'Manager' %}
+                                    {{ assignment.user.first_name }} {{ assignment.user.last_name }}
+                                    {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <h4 class="text-sm font-medium text-gray-500">Team Members</h4>
+                                <div class="mt-2 flex flex-wrap gap-2">
+                                    {% for assignment in project.projectassignment_set.all %}
+                                    {% if assignment.role_in_project != 'Manager' %}
+                                    <span
+                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                        {{ assignment.user.first_name }} {{ assignment.user.last_name }}
+                                        <span class="ml-1 text-gray-500">({{ assignment.role_in_project }})</span>
+                                    </span>
+                                    {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="flex justify-end space-x-3">
+                                <button type="button"
+                                    class="inline-flex items-center px-3 py-1.5 border border-red-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                                    id="openDeleteModal{{ project.id }}">
+                                    Delete
+                                </button>
+
+                                <button type="button" 
+                                    id="openAssignEmployeeModal{{ project.id }}"
+                                    class="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                    Assign
+                                </button>
+                                <button type="button" id="openUpdateModal{{ project.id }}"
+                                    class="inline-flex items-center px-3 py-1.5 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                    Update Project
+                                </button>
+
+                            </div>
+                        </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        {% if not projects %}
+        <div class="text-center py-12">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">No projects</h3>
+            <p class="mt-1 text-sm text-gray-500">Get started by creating a new project.</p>
+        </div>
+        {% endif %}
+    </div>
+
+
+
+
+    <script>
+        function toggleProject(id) {
+            const content = document.getElementById(id);
+            const icon = document.getElementById('icon-' + id.split('-')[1]);
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                icon.classList.add('rotate-180');
+            } else {
+                content.classList.add('hidden');
+                icon.classList.remove('rotate-180');
+            }
+        }
+    </script>
+
+    </div>
+
+    <!-- Modal -->
+    {% include 'components/admin/project/createModal.html' %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const openModalButton = document.getElementById('openModal');
+            const closeModalButton = document.getElementById('closeModal');
+            const cancelButton = document.getElementById('cancelButton');
+            const modal = document.getElementById('createProjectModal');
+
+            // Open modal
+            openModalButton.addEventListener('click', function () {
+                modal.classList.remove('hidden');
+            });
+
+            // Close modal
+            [closeModalButton, cancelButton].forEach(button => {
+                button.addEventListener('click', function () {
+                    modal.classList.add('hidden');
+                });
+            });
+
+            // Close modal if clicking outside the modal
+            modal.addEventListener('click', function (event) {
+                if (event.target === modal) {
+                    modal.classList.add('hidden');
+                }
+            });
+        });
+    </script>
+
+    {% for project in projects %}
+    {% include 'components/admin/project/deleteModal.html' %}
+    {% include 'components/admin/project/updateModal.html' %}
+    {% include 'components/admin/project/assignModal.html' %}
+    {% endfor %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Get modal and buttons
+            const openDeleteButtons = document.querySelectorAll('[id^="openDeleteModal"]');
+            const closeDeleteButtons = document.querySelectorAll('[id^="closeDeleteModal"]');
+
+            openDeleteButtons.forEach(button => {
+                button.addEventListener('click', function () {
+                    const projectId = this.id.replace('openDeleteModal', ''); // Extract project ID
+                    document.getElementById('deleteModal' + projectId).classList.remove('hidden');
+                });
+            });
+
+            closeDeleteButtons.forEach(button => {
+                button.addEventListener('click', function () {
+                    const projectId = this.id.replace('closeDeleteModal', ''); // Extract project ID
+                    document.getElementById('deleteModal' + projectId).classList.add('hidden');
+                });
+            });
+
+            // Close modal if clicking outside
+            document.querySelectorAll('[id^="deleteModal"]').forEach(modal => {
+                modal.addEventListener('click', function (event) {
+                    if (event.target === modal) {
+                        modal.classList.add('hidden');
+                    }
+                });
+            });
+        });
+
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Open modal when any "Update" button is clicked
+            document.querySelectorAll('[id^="openUpdateModal"]').forEach(button => {
+                button.addEventListener('click', function () {
+                    const projectId = this.id.replace('openUpdateModal', '');
+                    document.getElementById('updateProjectModal' + projectId).classList.remove('hidden');
+                });
+            });
+
+            // Close modal when any "Close" button is clicked
+            document.querySelectorAll('[id^="closeUpdateModal"]').forEach(button => {
+                button.addEventListener('click', function () {
+                    const projectId = this.id.replace('closeUpdateModal', '');
+                    document.getElementById('updateProjectModal' + projectId).classList.add('hidden');
+                });
+            });
+
+            // Close modal when any "Cancel" button is clicked
+            document.querySelectorAll('[id^="cancelUpdateButton"]').forEach(button => {
+                button.addEventListener('click', function () {
+                    const projectId = this.id.replace('cancelUpdateButton', '');
+                    document.getElementById('updateProjectModal' + projectId).classList.add('hidden');
+                });
+            });
+
+            // Close modal if clicking outside the modal content
+            document.querySelectorAll('[id^="updateProjectModal"]').forEach(modal => {
+                modal.addEventListener('click', function (event) {
+                    if (event.target === modal) {
+                        modal.classList.add('hidden');
+                    }
+                });
+            });
+            // Submit the form when the "Update Project" button is clicked
+            document.querySelectorAll('[id^="submitProjectUpdateForm"]').forEach(button => {
+                button.addEventListener('click', function () {
+                    const projectId = this.id.replace('submitProjectUpdateForm', '');
+                    const form = document.getElementById('projectUpdateForm' + projectId);
+                    form.submit();  // Submit the form
+                });
+            });
+        });
+
+
+    </script>
+    <!-- Trigger Button -->
+<!-- Trigger Button -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Open modal when "Assign or Update Employees" button is clicked
+        document.querySelectorAll('[id^="openAssignEmployeeModal"]').forEach(button => {
+            button.addEventListener('click', function () {
+                const projectId = this.id.replace('openAssignEmployeeModal', '');
+                document.getElementById('assignEmployeeModal' + projectId).classList.remove('hidden');
+            });
+        });
+
+        // Close modal when "Close" button is clicked
+        document.querySelectorAll('[id^="closeAssignEmployeeModal"]').forEach(button => {
+            button.addEventListener('click', function () {
+                const projectId = this.id.replace('closeAssignEmployeeModal', '');
+                document.getElementById('assignEmployeeModal' + projectId).classList.add('hidden');
+            });
+        });
+    });
+
+    function closeModal(modalId) {
+        document.getElementById(modalId).classList.add('hidden');
+    }
+</script>
+
+
+
+
+
+
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.8/umd/popper.min.js"></script>
+<style>
+    .tooltip-container {
+        position: relative;
+        display: inline-block;
+    }
+
+    .info-icon {
+        width: 24px;
+        height: 24px;
+        padding: 4px;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        color: #6B7280;
+    }
+
+    .info-icon:hover {
+        background-color: #F3F4F6;
+        transform: scale(1.05);
+    }
+
+    .tooltip {
+        position: absolute;
+        left: 0;
+        margin-top: 8px;
+        width: 220px;
+        padding: 12px;
+        background-color: white;
+        border: 1px solid #E5E7EB;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-10px);
+        transition: all 0.2s ease;
+        z-index: 50;
+    }
+
+    .tooltip-container:hover .tooltip,
+    .tooltip-container:focus-within .tooltip {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+    }
+
+    .tooltip::before {
+        content: '';
+        position: absolute;
+        top: -6px;
+        left: 16px;
+        width: 12px;
+        height: 12px;
+        background-color: white;
+        border-left: 1px solid #E5E7EB;
+        border-top: 1px solid #E5E7EB;
+        transform: rotate(45deg);
+    }
+
+    .status-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 0;
+    }
+
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+    }
+
+    .status-text {
+        font-size: 14px;
+        color: #374151;
+        font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    .completed {
+        background-color: #10B981;
+    }
+
+    .in-progress {
+        background-color: #F59E0B;
+    }
+
+    .pending {
+        background-color: #9144ef;
+    }
+
+    .deadline {
+        background-color: #f63b6a;
+        /* Blue color for Deadline */
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+
+        .tooltip,
+        .info-icon {
+            transition: none;
+        }
+    }
+</style>
+
+{% endblock %}

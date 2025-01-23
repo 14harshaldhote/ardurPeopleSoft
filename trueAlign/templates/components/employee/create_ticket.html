@@ -1,0 +1,24 @@
+
+<div class="bg-white p-6 rounded-lg shadow-lg">
+    <h2 class="text-xl font-semibold text-gray-800 mb-4">Raise an IT Support Ticket</h2>
+    <form method="post" action="{% url 'aps_employee:create_ticket' %}">
+        {% csrf_token %}
+        <div class="mb-4">
+            <label for="issue_type" class="block text-gray-600 mb-2">Issue Type:</label>
+            <select id="issue_type" name="issue_type" class="block w-full p-3 border border-gray-300 rounded-md">
+                <option value="Hardware Issue">Hardware Issue</option>
+                <option value="Software Issue">Software Issue</option>
+                <option value="Network Issue">Network Issue</option>
+                <option value="Internet Issue">Internet Issue</option>
+                <option value="Application Issue">Application Issue</option>
+            </select>
+        </div>
+        <div class="mb-4">
+            <label for="description" class="block text-gray-600 mb-2">Description:</label>
+            <textarea id="description" name="description" class="block w-full p-3 border border-gray-300 rounded-md" placeholder="Enter issue description here."></textarea>
+        </div>
+        <button type="submit" class="bg-yellow-400 text-white py-2 px-6 rounded-md hover:bg-yellow-600 hover:text-yellow-100 transition-all duration-300">
+            Submit Ticket
+        </button>
+    </form>
+</div>

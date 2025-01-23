@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Profile</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/js/all.min.js"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen p-6">
+        <!-- Profile Header -->
+        <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-6">
+                <div class="flex items-center space-x-4">
+                    <div class="h-24 w-24 bg-white rounded-full flex items-center justify-center">
+                        <i class="fas fa-user text-4xl text-blue-500"></i>
+                    </div>
+                    <div class="text-white">
+                        <h1 class="text-2xl font-bold" id="fullName"></h1>
+                        <p class="text-blue-100" id="jobDescription"></p>
+                        <p class="text-blue-100" id="workLocation"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Content -->
+            <div class="p-6">
+                <!-- Personal Information -->
+                <div class="mb-8">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Personal Information</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="text-sm text-gray-600">Gender</label>
+                                <p class="text-gray-800 font-medium" id="gender"></p>
+                            </div>
+                            <div>
+                                <label class="text-sm text-gray-600">Date of Birth</label>
+                                <p class="text-gray-800 font-medium" id="dob"></p>
+                            </div>
+                            <div>
+                                <label class="text-sm text-gray-600">Blood Group</label>
+                                <p class="text-gray-800 font-medium" id="bloodGroup"></p>
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="text-sm text-gray-600">Personal Email</label>
+                                <p class="text-gray-800 font-medium" id="personalEmail"></p>
+                            </div>
+                            <div>
+                                <label class="text-sm text-gray-600">Contact Number</label>
+                                <p class="text-gray-800 font-medium" id="contactNumber"></p>
+                            </div>
+                            <div>
+                                <label class="text-sm text-gray-600">PAN Number</label>
+                                <p class="text-gray-800 font-medium" id="panNo"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Employment Details -->
+                <div class="mb-8">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Employment Details</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="text-sm text-gray-600">Employment Status</label>
+                                <p class="text-gray-800 font-medium" id="employmentStatus"></p>
+                            </div>
+                            <div>
+                                <label class="text-sm text-gray-600">Hire Date</label>
+                                <p class="text-gray-800 font-medium" id="hireDate"></p>
+                            </div>
+                            <div>
+                                <label class="text-sm text-gray-600">Start Date</label>
+                                <p class="text-gray-800 font-medium" id="startDate"></p>
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="text-sm text-gray-600">Group</label>
+                                <p class="text-gray-800 font-medium" id="group"></p>
+                            </div>
+                            <div>
+                                <label class="text-sm text-gray-600">Aadhar Number</label>
+                                <p class="text-gray-800 font-medium" id="aadharNo"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Emergency Contact -->
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Emergency Contact</h2>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="text-sm text-gray-600">Contact Name</label>
+                                    <p class="text-gray-800 font-medium" id="emergencyContactName"></p>
+                                </div>
+                                <div>
+                                    <label class="text-sm text-gray-600">Contact Number</label>
+                                    <p class="text-gray-800 font-medium" id="emergencyContactPrimary"></p>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-sm text-gray-600">Address</label>
+                                <p class="text-gray-800 font-medium" id="emergencyContactAddress"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,159 @@
+<div class="max-w-4xl bg-white  mx-auto hover:bg-yellow-50 rounded-xl duration-300  hover:scale-105  transition-all">
+    <!-- Header -->
+    <div class="mb-6 p-6 ">
+        <h1 class="text-2xl font-semibold text-gray-900 mb-4">Employee Directory</h1>
+        <div class="flex flex-col sm:flex-row gap-6 sm:gap-4 items-center">
+            <div class="relative flex-1">
+                <input type="text" id="searchInput" placeholder="Search employees..."
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm shadow-sm placeholder-gray-500 transition-all ease-in-out duration-300"
+                    aria-label="Search employees">
+                <svg class="w-5 h-5 text-gray-400 absolute right-4 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+            </div>
+    
+            {% if is_hr %}
+            <button id="openModal"
+            class="px-5 py-3 bg-gradient-to-r from-indigo-600 via-indigo-700 to-indigo-800 text-white rounded-lg hover:from-indigo-700 hover:via-indigo-800 hover:to-indigo-900 transition-all duration-300 ease-in-out text-sm shadow-lg transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50">
+            View All Employees
+        </button>
+        
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Modal -->
+    <div id="employeeModal" class="fixed inset-0 z-50 hidden bg-gray-500 bg-opacity-50 flex justify-center items-center"
+        role="dialog" aria-hidden="true" aria-labelledby="modalTitle">
+        <div class="bg-white rounded-lg shadow-lg w-full max-w-3xl p-6">
+            <h2 id="modalTitle" class="text-xl font-semibold text-gray-900 mb-4">All Employees</h2>
+            <div id="employeeList" class="space-y-1 overflow-y-auto">
+                <!-- Employee list will be populated here dynamically -->
+            </div>
+            <button id="closeModal"
+                class="px-4 py-2 bg-gray-300 text-gray-900 rounded-lg mt-4 hover:bg-gray-400 transition-colors text-sm">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    // Search functionality for both modal and main page
+    document.getElementById('searchInput').addEventListener('input', function (e) {
+        const searchTerm = e.target.value.toLowerCase();
+        filterEmployeeList(searchTerm);
+    });
+
+    // Function to filter the employee list
+    function filterEmployeeList(searchTerm) {
+        const employeeCards = document.querySelectorAll('[data-employee-id]');
+
+        employeeCards.forEach(card => {
+            const name = card.querySelector('h3').textContent.toLowerCase();
+            const username = card.querySelector('p').textContent.toLowerCase();
+            if (name.includes(searchTerm) || username.includes(searchTerm)) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+
+    // DOM Elements
+    const openModalButton = document.getElementById("openModal");
+    const closeModalButton = document.getElementById("closeModal");
+    const modal = document.getElementById("employeeModal");
+    const searchInput = document.getElementById("searchInput");
+    const employeeList = document.getElementById("employeeList");
+
+    // Open modal and fetch data
+    openModalButton?.addEventListener("click", () => {
+        modal.classList.remove("hidden");
+        modal.setAttribute("aria-hidden", "false");
+        fetchEmployeeData();
+    });
+
+    // Close modal
+    closeModalButton.addEventListener("click", () => {
+        modal.classList.add("hidden");
+        modal.setAttribute("aria-hidden", "true");
+    });
+
+    // Fetch employee data from backend
+    async function fetchEmployeeData() {
+        try {
+            const response = await fetch("{% url 'aps_hr:employee_directory' %}");
+            if (!response.ok) throw new Error("Failed to fetch employee data");
+
+            const data = await response.json();
+            populateEmployeeList(data.employees);
+        } catch (error) {
+            console.error("Error fetching employee data:", error);
+            employeeList.innerHTML = `
+                <p class="text-center text-red-500">Unable to load employee data. Please try again later.</p>`;
+        }
+    }
+
+    // Populate employee list
+    function populateEmployeeList(employees) {
+        employeeList.innerHTML = ""; // Clear existing data
+        if (!employees.length) {
+            employeeList.innerHTML = `
+                <p class="text-center text-gray-500">No employees found.</p>`;
+            return;
+        }
+
+        employees.forEach((emp) => {
+            const employeeCard = document.createElement("div");
+            employeeCard.classList.add("bg-white", "rounded-lg", "shadow-lg", "overflow-hidden");
+            employeeCard.dataset.employeeId = emp.id;
+
+            const cardHTML = `
+                <div class="p-2 cursor-pointer hover:bg-gray-50 flex items-center justify-between" onclick="toggleExpand(this)">
+                    <div class="flex items-center gap-3">
+                        <div>
+                            <h3 class="font-medium text-gray-900 text-base">${emp.user__first_name || "N/A"} ${emp.user__last_name || "N/A"}</h3>
+                            <p class="text-xs text-gray-500">Username: ${emp.user__username || "N/A"}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="employee-details border-t border-gray-100 hidden">
+                    <div class="p-4 bg-gray-50">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-xs text-gray-500">Phone</p>
+                                <p class="font-medium text-gray-900 text-sm">${emp.contact_number_primary || "N/A"}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500">Email</p>
+                                <p class="font-medium text-gray-900 text-sm">${emp.personal_email || "N/A"}</p>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>`;
+            employeeCard.innerHTML = cardHTML;
+            employeeList.appendChild(employeeCard);
+        });
+    }
+
+    // Toggle expand/collapse employee details
+    function toggleExpand(element) {
+        const details = element.nextElementSibling;
+        details.classList.toggle("hidden");
+    }
+
+    // Search functionality
+    searchInput.addEventListener("input", function (e) {
+        const searchTerm = e.target.value.toLowerCase();
+        const employees = document.querySelectorAll("[data-employee-id]");
+        employees.forEach((employee) => {
+            const name = employee.querySelector("h3").textContent.toLowerCase();
+            const username = employee.querySelector("p").textContent.toLowerCase();
+            employee.style.display =
+                name.includes(searchTerm) || username.includes(searchTerm) ? "block" : "none";
+        });
+    });
+</script>

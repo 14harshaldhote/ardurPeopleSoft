@@ -1,0 +1,36 @@
+<h2>{{ project.name }}</h2>
+<div class="row">
+  <div class="col-md-6">
+    <h3>Assigned Managers</h3>
+    <ul>
+      {% for manager in assignments %}
+        <li>{{ manager.user.username }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  <div class="col-md-6">
+    <h3>Assigned Clients</h3>
+    <ul>
+      {% for client in clients %}
+        <li>{{ client }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+
+<h3>Project Status: {{ project.status }}</h3>
+
+{% if is_overdue %}
+  <div class="alert alert-danger">
+    <strong>Overdue!</strong> This project is overdue.
+  </div>
+{% endif %}
+
+<h4>Actions</h4>
+<form method="POST">
+  {% csrf_token %}
+  <button type="submit" name="update" class="btn btn-warning">Update Project</button>
+  <button type="submit" name="delete" class="btn btn-danger">Delete Project</button>
+</form>
+
+<a href="{% url 'aps_admin:projects_list' %}" class="btn btn-secondary mt-3">Back to Project List</a>

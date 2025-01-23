@@ -1,0 +1,84 @@
+<div id="updateProjectModal{{ project.id }}"
+    class="hidden fixed inset-0 flex justify-center items-center bg-gray-600 bg-opacity-50">
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-lg mx-4 sm:max-w-md md:max-w-lg lg:max-w-xl">
+        <!-- Modal Header -->
+        <div class="bg-gray-100 px-6 py-4 flex justify-between items-center border-b">
+            <h2 class="text-xl font-semibold text-gray-800">Update Project</h2>
+            <!-- Clear Button -->
+            <button id="closeUpdateModal{{ project.id }}" class="text-gray-500 hover:text-gray-700 focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="px-6 py-4">
+            {% if project.id %}
+
+            <div>
+                <label for="start_date" class="block text-sm font-medium text-gray-700">Start Date</label>
+                <input type="text" name="start_date" id="start_date" value="{{ project.start_date }}" disabled
+                    class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md bg-gray-100">
+            </div>
+
+            <form id="projectUpdateForm{{ project.id }}" method="POST" action="{% url 'aps_admin:project_update' project.id %}">
+                {% csrf_token %}
+                <div class="space-y-4">
+
+                    <!-- Project Name -->
+                    <div>
+                        <label for="name" class="block text-sm font-medium text-gray-700">Project Name</label>
+                        <input type="text" name="name" id="name" value="{{ project.name }}"
+                            class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="description" class="block text-sm font-medium text-gray-700">Project
+                            Description</label>
+                        <textarea name="description" id="description" rows="3"
+                            class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">{{ project.description }}</textarea>
+                    </div>
+                    <div>
+                        <label for="deadline" class="block text-sm font-medium text-gray-700">Deadline</label>
+                        <input type="date" name="deadline" id="deadline" value="{{ project.deadline|default:'' }}"
+                            class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+
+                    <!-- Project Status -->
+                    <div>
+                        <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
+                        <select name="status" id="status"
+                            class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            {% for status_value, status_label in project_statuses.items %}
+                            <option value="{{ status_value }}" {% if project.status == status_value %}selected{% endif %}>
+                                {{ status_label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                </div>
+            </form>
+            {% else %}
+            <p>Error: Project ID is missing.</p>
+            {% endif %}
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="bg-gray-100 px-6 py-4 flex justify-between items-center border-t">
+            
+
+            <button type="button" id="cancelUpdateButton{{ project.id }}"
+                class="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-gray-700 bg-gray-200 hover:bg-gray-300 focus:outline-none">
+                Cancel
+            </button>
+
+
+            <button type="button" id="submitProjectUpdateForm{{ project.id }}"
+                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                Update Project
+            </button>
+        </div>
+    </div>
+</div>

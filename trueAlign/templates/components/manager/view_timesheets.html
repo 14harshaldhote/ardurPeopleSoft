@@ -1,0 +1,305 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container mx-auto px-4 py-6">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div>
+                <h1 class="text-3xl font-thin text-gray-800 mb-6">Timesheet Management</h1>    <!-- Header Section -->
+            </div>
+            <div class="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+                <form method="GET" class="flex-1 sm:flex-initial">
+                    <div class="flex items-center gap-3">
+                        <select id="time-filter" name="time-filter" 
+                            class="w-full sm:w-auto rounded-lg border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500 px-4 py-2.5 text-sm"
+                            onchange="this.form.submit()">
+                            <option value="7" {% if time_filter == '7' %}selected{% endif %}>Last 7 days</option>
+                            <option value="30" {% if time_filter == '30' %}selected{% endif %}>Last 30 days</option>
+                            <option value="90" {% if time_filter == '90' %}selected{% endif %}>Last 90 days</option>
+                            <option value="custom" {% if time_filter == 'custom' %}selected{% endif %}>Custom Range</option>
+                        </select>
+                        <button type="button" 
+                            class="px-4 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm flex items-center gap-2 shadow-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            Export
+                        </button>
+                    </div>
+                </form>
+        </div>
+    </div>
+
+    <!-- Dashboard Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <!-- Cards remain the same -->
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex flex-col md:flex-row justify-between gap-4">
+                <div class="flex items-center gap-3 batch-actions">
+                    <button type="submit" form="batch-actions-form" name="action" value="approve" 
+                        class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2" 
+                        disabled id="batch-approve">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        Approve Selected
+                    </button>
+                    <button type="submit" form="batch-actions-form" name="action" value="reject" 
+                        class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2" 
+                        disabled id="batch-reject">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                        Reject Selected
+                    </button>
+                    <span id="selection-count" class="text-sm text-gray-600 ml-3"></span>
+                </div>
+                
+                <!-- Search form remains the same -->
+                
+                <form method="GET" class="flex-1 md:max-w-xs">
+                    <div class="relative">
+                        <input type="hidden" name="time-filter" value="{{ time_filter }}">
+                        <input type="text" name="search" value="{{ search_query }}"
+                            placeholder="Search timesheets..." 
+                            class="w-full rounded-lg border-gray-300 pl-10 pr-4 py-2.5 text-sm focus:border-yellow-500 focus:ring-yellow-500">
+                        <svg class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Consolidated Timesheet Table -->
+        <form id="batch-actions-form" method="POST" action="{% url 'aps_manager:bulk_update_timesheet' %}">
+            {% csrf_token %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="w-8 px-6 py-4">
+                                <input type="checkbox" id="select-all" 
+                                    class="rounded border-gray-300 text-yellow-500 focus:ring-yellow-500 cursor-pointer">
+                            </th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Hours</th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Projects</th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"></th>                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% regroup page_obj by user as user_timesheets %}
+                        {% for user_group in user_timesheets %}
+                        {% with user_entries=user_group.list %}
+                        <tr class="hover:bg-gray-50 group" data-user-id="{{ user_group.grouper.id }}">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <input type="checkbox" name="selected_users[]" value="{{ user_group.grouper.id }}" 
+                                    class="user-checkbox rounded border-gray-300 text-yellow-500 focus:ring-yellow-500 cursor-pointer">
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-medium">
+                                        {{ user_group.grouper.first_name|first }}{{ user_group.grouper.last_name|first }}
+                                    </div>
+                                    <div class="ml-3">
+                                        <div class="text-sm font-medium text-gray-900">
+                                            {{ user_group.grouper.first_name }} {{ user_group.grouper.last_name }}
+                                        </div>
+                                        <div class="text-sm text-gray-500">{{ user_group.grouper.email }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">
+                                    {% with total_hours=0 %}
+                                        {% for entry in user_entries %}
+                                            {% with total_hours=total_hours|add:entry.hours %}{% endwith %}
+                                        {% endfor %}
+                                        {{ total_hours|floatformat:1 }} hrs
+                                    {% endwith %}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-sm text-gray-900">
+                                    {{ user_entries|length }} projects
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex gap-2">
+                                    {% with pending_count=0 %}
+                                        {% for entry in user_entries %}
+                                            {% if entry.approval_status == 'Pending' %}
+                                                {% with pending_count=pending_count|add:1 %}{% endwith %}
+                                            {% endif %}
+                                        {% endfor %}
+                                        {% if pending_count > 0 %}
+                                            <span class="px-3 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
+                                                {{ pending_count }} Pending
+                                            </span>
+                                        {% endif %}
+                                    {% endwith %}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right">
+                                <button type="button" class="text-gray-500 hover:text-gray-700 transition-colors"
+                                    onclick="toggleDetails('{{ user_group.grouper.id }}')">
+                                    <svg class="w-5 h-5 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                        id="chevron-{{ user_group.grouper.id }}">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                    </svg>
+                                </button>
+                            </td>
+                        </tr>
+                        <!-- Expandable Details Row -->
+                        <tr class="hidden" id="details-{{ user_group.grouper.id }}">
+                            <td colspan="6" class="px-2 py-2 bg-gray-50">
+                                <div class="space-y-1">
+                                    {% for timesheet in user_entries %}
+                                    <div class="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200">
+                                        <div class="flex items-center gap-4 w-full">
+                                            <input type="checkbox" 
+                                                name="selected_timesheets[]" 
+                                                value="{{ timesheet.id }}" 
+                                                class="timesheet-checkbox rounded border-gray-300 text-yellow-500 focus:ring-yellow-500 cursor-pointer">
+                                            <div class="flex-1">
+                                                <div class="font-medium text-gray-900">{{ timesheet.project.name }}</div>
+                                                <div class="text-sm text-gray-500">{{ timesheet.task_name }}</div>
+                                                <div class="text-sm text-gray-500">Week of {{ timesheet.week_start_date|date:"M. d, Y" }}</div>
+                                            </div>
+                                            <div class="flex items-center gap-4">
+                                                <div class="text-sm font-medium text-gray-900">{{ timesheet.hours }} hrs</div>
+                                                <span class="px-3 py-1 text-xs font-medium rounded-full 
+                                                    {% if timesheet.approval_status == 'Pending' %}bg-yellow-100 text-yellow-800
+                                                    {% elif timesheet.approval_status == 'Approved' %}bg-green-100 text-green-800
+                                                    {% else %}bg-red-100 text-red-800{% endif %}">
+                                                    {{ timesheet.approval_status }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endwith %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </form>
+
+
+        <!-- Pagination remains the same -->
+    </div>
+</div>
+
+<script>
+function toggleDetails(userId) {
+    const detailsRow = document.getElementById(`details-${userId}`);
+    const chevron = document.getElementById(`chevron-${userId}`);
+    
+    detailsRow.classList.toggle('hidden');
+    chevron.style.transform = detailsRow.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
+}
+
+document.getElementById('select-all').addEventListener('change', function(e) {
+    document.querySelectorAll('.user-checkbox').forEach(checkbox => {
+        checkbox.checked = e.target.checked;
+    });
+    updateBatchButtons();
+});
+
+document.querySelectorAll('.user-checkbox').forEach(checkbox => {
+    checkbox.addEventListener('change', updateBatchButtons);
+});
+
+function updateBatchButtons() {
+    const hasChecked = [...document.querySelectorAll('.user-checkbox')].some(cb => cb.checked);
+    document.getElementById('batch-approve').disabled = !hasChecked;
+    document.getElementById('batch-reject').disabled = !hasChecked;
+}
+</script>
+
+<!-- Enhanced JavaScript with better UX --><script>
+document.addEventListener('DOMContentLoaded', function() {
+    const selectAll = document.getElementById('select-all');
+    const timesheetCheckboxes = document.querySelectorAll('.timesheet-checkbox');
+    const batchApprove = document.getElementById('batch-approve');
+    const batchReject = document.getElementById('batch-reject');
+    
+    // Toggle details function
+    window.toggleDetails = function(userId) {
+        const detailsRow = document.getElementById(`details-${userId}`);
+        const chevron = document.getElementById(`chevron-${userId}`);
+        
+        if (detailsRow) {
+            detailsRow.classList.toggle('hidden');
+            if (chevron) {
+                chevron.style.transform = detailsRow.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
+            }
+        }
+    };
+
+    // Select all functionality
+    selectAll.addEventListener('change', function() {
+        timesheetCheckboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+            updateRowHighlight(checkbox);
+        });
+        updateBatchButtons();
+        updateSelectionCount();
+    });
+    
+    // Individual checkbox handling
+    timesheetCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function(e) {
+            e.stopPropagation(); // Prevent row click handler from firing
+            updateRowHighlight(this);
+            updateBatchButtons();
+            updateSelectionCount();
+            updateSelectAllState();
+        });
+    });
+
+    function updateSelectAllState() {
+        const allChecked = Array.from(timesheetCheckboxes).every(cb => cb.checked);
+        const someChecked = Array.from(timesheetCheckboxes).some(cb => cb.checked);
+        selectAll.checked = allChecked;
+        selectAll.indeterminate = someChecked && !allChecked;
+    }
+    
+    function updateRowHighlight(checkbox) {
+        const timesheet = checkbox.closest('div');
+        if (timesheet) {
+            if (checkbox.checked) {
+                timesheet.classList.add('bg-yellow-50');
+            } else {
+                timesheet.classList.remove('bg-yellow-50');
+            }
+        }
+    }
+    
+    function updateBatchButtons() {
+        const checkedCount = document.querySelectorAll('.timesheet-checkbox:checked').length;
+        batchApprove.disabled = checkedCount === 0;
+        batchReject.disabled = checkedCount === 0;
+    }
+    
+    function updateSelectionCount() {
+        const checkedCount = document.querySelectorAll('.timesheet-checkbox:checked').length;
+        const total = timesheetCheckboxes.length;
+        const countElement = document.getElementById('selection-count');
+        countElement.textContent = checkedCount > 0 ? `Selected ${checkedCount} of ${total} timesheets` : '';
+    }
+
+    // Initial state setup
+    updateBatchButtons();
+    updateSelectionCount();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-6xl mx-auto">
+        <!-- Header with Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow p-6 border-l-4 border-green-500">
+                <div class="flex justify-between">
+                    <h3 class="text-gray-500 text-sm font-medium">Present Today</h3>
+                    <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">{{ present_count }}</span>
+                </div>
+                <p class="text-2xl font-bold text-gray-800 mt-2">{{ present_count }} Employees</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6 border-l-4 border-red-500">
+                <div class="flex justify-between">
+                    <h3 class="text-gray-500 text-sm font-medium">Absent Today</h3>
+                    <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">{{ absent_count }}</span>
+                </div>
+                <p class="text-2xl font-bold text-gray-800 mt-2">{{ absent_count }} Employees</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6 border-l-4 border-yellow-500">
+                <div class="flex justify-between">
+                    <h3 class="text-gray-500 text-sm font-medium">On Leave</h3>
+                    <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">{{ leave_count }}</span>
+                </div>
+                <p class="text-2xl font-bold text-gray-800 mt-2">{{ leave_count }} Employees</p>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="bg-white rounded-lg shadow mb-8">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex flex-wrap gap-4 justify-between items-center">
+                    <!-- Export Buttons -->
+                    <div class="flex gap-3">
+                        <form method="get" action="{% url 'aps_hr:attendance' %}">
+                            <input type="hidden" name="export" value="csv">
+                            <button type="submit" class="inline-flex items-center px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                </svg>
+                                Export CSV
+                            </button>
+                        </form>
+                    
+                        <!-- Export to Excel -->
+                        <form method="get" action="{% url 'aps_hr:attendance' %}">
+                            <input type="hidden" name="export" value="excel">
+                            <button type="submit" class="inline-flex items-center px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                </svg>
+                                Export Excel
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Filter Form -->
+                    <form method="get" action="{% url 'aps_hr:attendance' %}" class="flex flex-wrap gap-3">
+                        <input type="text" name="username" placeholder="Search username..." value="{{ username_filter }}" 
+                               class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-400">
+                        
+                        <select name="status" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-400">
+                            <option value="">All Statuses</option>
+                            <option value="Present" {% if status_filter == 'Present' %}selected{% endif %}>Present</option>
+                            <option value="Absent" {% if status_filter == 'Absent' %}selected{% endif %}>Absent</option>
+                            <option value="On Leave" {% if status_filter == 'On Leave' %}selected{% endif %}>On Leave</option>
+                        </select>
+                        
+                        <input type="date" name="date" value="{{ date_filter }}" 
+                               class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-400">
+                        
+                        <button type="submit" class="inline-flex items-center px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg transition-colors">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414v6.586a1 1 0 01-.293.707l-2 2A1 1 0 0111 23v-7.586l-6.414-6.414A1 1 0 014 8.586V4z"/>
+                            </svg>
+                            Filter
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+          
+
+            <!-- Table -->
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Employee</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Username</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Hour</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for record in summary %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4">
+                                <div class="flex items-center">
+                                    <div class="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center">
+                                        <span class="text-gray-600 font-medium text-sm">
+                                            {{ record.user.first_name|slice:":1"|upper }}{{ record.user.last_name|slice:":1"|upper }}
+                                        </span>
+                                    </div>
+                                    <span class="ml-3 text-sm text-gray-900">{{ record.user.first_name }} {{ record.user.last_name }}</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-500">{{ record.user.username }}</td>
+                            <td class="px-6 py-4">
+                                {% if record.status == 'Present' %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Present</span>
+                                {% elif record.status == 'Absent' %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Absent</span>
+                                {% else %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">On Leave</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-500">{{ record.working_hours }}</td>
+
+                            <td class="px-6 py-4 text-sm text-gray-500">{{ record.date }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="px-6 py-4 border-t border-gray-200">
+                <div class="flex items-center justify-between">
+                    <p class="text-sm text-gray-700">
+                        Page {{ summary.number }} of {{ summary.paginator.num_pages }}
+                    </p>
+                    <div class="flex gap-2">
+                        {% if summary.has_previous %}
+                            <a href="?page=1" class="px-3 py-1 rounded border border-gray-300 text-sm hover:bg-gray-50">&laquo; First</a>
+                            <a href="?page={{ summary.previous_page_number }}" class="px-3 py-1 rounded border border-gray-300 text-sm hover:bg-gray-50">Previous</a>
+                        {% endif %}
+                        <span class="px-3 py-1 rounded border border-blue-500 bg-blue-50 text-blue-600 text-sm">{{ summary.number }}</span>
+                        {% if summary.has_next %}
+                            <a href="?page={{ summary.next_page_number }}" class="px-3 py-1 rounded border border-gray-300 text-sm hover:bg-gray-50">Next</a>
+                            <a href="?page={{ summary.paginator.num_pages }}" class="px-3 py-1 rounded border border-gray-300 text-sm hover:bg-gray-50">Last &raquo;</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+       
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('attendanceChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Present', 'Absent', 'On Leave'],
+            datasets: [{
+                label: 'Attendance Status',
+                data: [{{ present_count }}, {{ absent_count }}, {{ leave_count }}],
+                backgroundColor: ['#10B981', '#EF4444', '#F59E0B'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        display: true,
+                        color: '#E5E7EB'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

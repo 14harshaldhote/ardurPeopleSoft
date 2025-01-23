@@ -1,0 +1,32 @@
+<div class="bg-white shadow-xl rounded-xl p-6 sm:p-8 transform transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:bg-green-50">
+    <!-- Header Section -->
+    <div class="flex justify-between items-center mb-6">
+        <div class="flex items-center space-x-3">
+            <h3 class="text-xl font-semibold text-gray-800">Attendance</h3>
+            <span class="bg-green-100 text-green-600 px-2 py-1 rounded-full text-xs">{{ attendance.today_date|default:"" }}</span>
+        </div>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 sm:h-8 sm:w-8 text-green-500" fill="none"
+            viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+    </div>
+
+    <!-- Attendance Stats -->
+    <div class="flex flex-col items-center space-y-4 mb-6">
+        <p class="text-xl font-semibold text-green-600">Days Present - {{ attendance.attendance.total_present|default:"0" }}</p>
+        <p class="text-sm text-gray-500">{{ attendance.current_month_name|default:"" }}</p>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-2 gap-4 mb-6">
+        <div class="bg-green-50 rounded-lg p-3 text-center hover:bg-green-100 transition-all duration-200">
+            <p class="text-sm text-gray-600">Leave Requests</p>
+            <p class="text-xl font-semibold text-gray-600">{{ attendance.attendance.leave_request_count|default:"0" }}</p>
+        </div>
+        <div class="bg-blue-50 rounded-lg p-3 text-center hover:bg-blue-100 transition-all duration-200">
+            <p class="text-sm text-gray-600">Approved Leaves</p>
+            <p class="text-xl font-semibold text-blue-600">{{ attendance.attendance.approved_leave_count|default:"0" }}</p>
+        </div>
+    </div>
+</div>
