@@ -471,6 +471,13 @@ from django.utils import timezone
 
 @login_required
 def dashboard_view(request):
+
+
+        # Get today's date
+    time = timezone.now()
+    print(f"time: {time}")
+    today = timezone.now().date()
+    
     user = request.user
 
     # Get user's current session status
@@ -569,9 +576,9 @@ def dashboard_view(request):
             'remaining_seconds': int(remaining_time.total_seconds() % 60)
         }
 
+    
+
     if is_hr:
-        # Get today's date
-        today = timezone.now().date()
 
         # Get today's present employees
         present_employees = Attendance.objects.filter(
@@ -668,8 +675,7 @@ def dashboard_view(request):
         'break_durations': {k: int(v.total_seconds() / 60) for k, v in Break.BREAK_DURATIONS.items()},
         'user_status': user_status,
         'present_employees_count': present_employees_count,
-        'present_employees_count': present_employees_count,
-
+        'time': time
 
     }
 

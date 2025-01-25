@@ -21,15 +21,54 @@
                     <!-- Left side content -->
                     <div class=" px-2 py-1">
                         <!-- Top Navigation -->
-                        <nav class="bg-white rounded-2xl shadow-md p-1 mb-2 flex justify-between items-center">
+                        <nav class="bg-white rounded-2xl shadow-md p-1 mb-2 flex justify-between w-full items-center">
                             <div class="flex items-center space-x-4">
-                                <div class="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center">
-                                    <span class="text-white font-medium">JD</span>
+                                <div class="flex items-center justify-center space-x-4">
+                                    <!-- Circle with Initials -->
+                                    <div
+                                        class="w-10 h-10 rounded-full bg-indigo-600 shadow-lg flex items-center justify-center">
+                                        <span class="text-white font-medium text-xl uppercase" id="initials">
+                                            {{ user.first_name|default:''|slice:":1"|upper }}{{ user.last_name|default:''|slice:":1"|upper }}
+                                        </span>
+                                           </div>
+
+                                    <!-- Time Display -->
+                                    <span class="text-indigo-600 font-bold text-md tracking-wider"
+                                        id="time">12:34:56</span>
+                                    <span class="text-indigo-400 font-medium text-md" id="time-ampm">AM</span>
+                                    <div class="absolute -bottom-1 left-0 w-full h-1 bg-indigo-500 rounded-full"></div>
                                 </div>
-                                <div>
-                                    <p class="font-medium text-gray-900">{{ user.get_full_name }}</p>
-                                    <p class="text-sm text-gray-500">{{ user.email }}</p>
-                                </div>
+
+                                <script>
+                                    function updateTime() {
+                                        const timeElement = document.getElementById("time");
+                                        const ampmElement = document.getElementById("time-ampm");
+                                        const now = new Date();
+                                        let hours = now.getHours();
+                                        let minutes = now.getMinutes();
+                                        let seconds = now.getSeconds();
+                                        let ampm = hours >= 12 ? 'PM' : 'AM';
+
+                                        // Convert to 12-hour format
+                                        hours = hours % 12;
+                                        hours = hours ? hours : 12; // 0 becomes 12
+                                        minutes = minutes < 10 ? '0' + minutes : minutes;
+                                        seconds = seconds < 10 ? '0' + seconds : seconds;
+
+                                        const formattedTime = `${hours}:${minutes}:${seconds}`;
+                                        timeElement.textContent = formattedTime;
+                                        ampmElement.textContent = ampm;
+                                    }
+
+                                    // Update time immediately and every second
+                                    updateTime();
+                                    setInterval(updateTime, 1000);
+                                </script>
+
+
+
+
+
                             </div>
                             <div class="flex items-center space-x-4">
                                 <span class="flex items-center space-x-2">
@@ -41,19 +80,7 @@
                                     </span>
                                     <span class="text-sm text-gray-600">
                                         {{ user_status.status|title }}
-                                        {% if user_status.status != 'offline' %}
-                                        {% if user_status.idle_time %}
-                                        <span class="text-xs text-gray-500">
-                                            {% if user_status.idle_time.days %}
-                                            (Idle: {{ user_status.idle_time.days }} days)
-                                            {% else %}
-                                            (Idle: {{ user_status.formatted_idle_time }})
-                                            {% endif %}
-                                        </span>
-                                        {% else %}
-                                        <span class="text-xs text-gray-500">No idle time</span>
-                                        {% endif %}
-                                        {% endif %}
+
                                     </span>
                                 </span>
 

@@ -339,7 +339,7 @@ class Attendance(models.Model):
 
     def process_attendance(self, user_sessions):
         """Comprehensive attendance processing"""
-        if self.date.weekday() >= 5:  # Weekend check
+        if self.date.weekday() >= 6:  # Weekend check
             self.status = 'Weekend'
             self._reset_times()
             return self
