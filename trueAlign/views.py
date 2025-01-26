@@ -3231,15 +3231,17 @@ def manager_attendance_view(request):
 @login_required
 @user_passes_test(is_hr)
 def hr_attendance_view(request):
+    from datetime import timedelta
+
     # Optimized query using select_related
     all_attendance = Attendance.objects.select_related('user').order_by('-date')
 
     # Filters
-    username_filter = request.GET.get('username', '')
-    status_filter = request.GET.get('status', '')
-    date_filter = request.GET.get('date', '')
-    date_range_start = request.GET.get('start_date', '')
-    date_range_end = request.GET.get('end_date', '')
+    username_filter = request.GET.get('username', '').strip()
+    status_filter = request.GET.get('status', '').strip()
+    date_filter = request.GET.get('date', '').strip()
+    date_range_start = request.GET.get('start_date', '').strip()
+    date_range_end = request.GET.get('end_date', '').strip()
 
     if username_filter:
         all_attendance = all_attendance.filter(user__username__icontains=username_filter)
@@ -3250,7 +3252,7 @@ def hr_attendance_view(request):
             date_obj = datetime.strptime(date_filter, '%Y-%m-%d').date()
             all_attendance = all_attendance.filter(date=date_obj)
         except ValueError:
-            pass  # If the date format is incorrect, it will be ignored
+            date_filter = ''  # Reset invalid date input
 
     # Filtering by date range
     if date_range_start and date_range_end:
@@ -3259,10 +3261,10 @@ def hr_attendance_view(request):
             end_date = datetime.strptime(date_range_end, '%Y-%m-%d').date()
             all_attendance = all_attendance.filter(date__range=[start_date, end_date])
         except ValueError:
-            pass  # Handle invalid date format
+            date_range_start, date_range_end = '', ''  # Reset invalid date range input
 
     # Handle export requests before pagination
-    export_type = request.GET.get('export')
+    export_type = request.GET.get('export', '').strip().lower()
     if export_type == 'csv':
         return export_attendance_csv(all_attendance)
     elif export_type == 'excel':
@@ -3280,21 +3282,27 @@ def hr_attendance_view(request):
     present_count = all_attendance.filter(status='Present').count()
     absent_count = all_attendance.filter(status='Absent').count()
     leave_count = all_attendance.filter(status='On Leave').count()
-    lop_count = all_attendance.filter(status='Loss of Pay').count()  # Add Loss of Pay count
+    lop_count = all_attendance.filter(status='Loss of Pay').count()
 
-    # Optimized working hours calculation
+    # Working hours calculation using UserSession's total_hours
     for record in all_records:
-        if record.clock_in_time and record.clock_out_time:
-            clock_in_datetime = datetime.combine(record.date, record.clock_in_time)
-            clock_out_datetime = datetime.combine(record.date, record.clock_out_time)
-            working_hours = clock_out_datetime - clock_in_datetime
-            hours = working_hours.seconds // 3600
-            minutes = (working_hours.seconds % 3600) // 60
-            record.working_hours = f"{hours}h {minutes}m"
-        else:
-            record.working_hours = None
+        try:
+            user_session = UserSession.objects.filter(
+                user=record.user,
+                date=record.date
+            ).first()  # Assuming one session per day; adjust logic if needed
 
-    return render(request, 'components/hr/attendance_report.html', {
+            if user_session and user_session.total_hours:
+                total_seconds = user_session.total_hours.total_seconds()
+                hours = int(total_seconds // 3600)
+                minutes = int((total_seconds % 3600) // 60)
+                record.working_hours = f"{hours}h {minutes}m"
+            else:
+                record.working_hours = "Not available"
+        except Exception:
+            record.working_hours = "Error"
+
+    return render(request, 'components/hr/hr_admin_attendance.html', {
         'summary': all_records,
         'username_filter': username_filter,
         'status_filter': status_filter,
@@ -3306,7 +3314,6 @@ def hr_attendance_view(request):
         'leave_count': leave_count,
         'lop_count': lop_count,  # Include Loss of Pay count in the template context
     })
-
 
 def export_attendance_csv(queryset):
     response = HttpResponse(content_type='text/csv')
