@@ -54,7 +54,6 @@ msgpack==1.0.4
 mysql-connector-python==8.0.31
 mysqlclient==2.1.1
 numexpr==2.8.0
-numpy==2.0.1
 openpyxl==3.0.10
 pandas==2.2.3
 prompt_toolkit==3.0.48
