@@ -70,3 +70,4 @@ class ChatConsumer(AsyncWebsocketConsumer):
             print(f'Message saved successfully: {message}')
         except Exception as e:
             print(f'Error saving message: {e}')
+
