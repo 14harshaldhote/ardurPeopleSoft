@@ -3583,6 +3583,9 @@ def check_group_permissions(*allowed_groups):
         return _wrapped_view
     return decorator
 
+from django.db.models import Q, Subquery, OuterRef, Count, Max, Value
+from django.db.models.functions import Concat
+
 @login_required
 def chat_list(request):
     """
@@ -3590,41 +3593,64 @@ def chat_list(request):
     """
     try:
         print(f"Fetching chat list for user: {request.user}")
+        
+        # Query to fetch the latest message in each chat
         latest_message = Message.objects.filter(
             chat=OuterRef('id')
         ).order_by('-timestamp')
         
+        # Query to count unread messages in each chat
         unread_count = Message.objects.filter(
             chat=OuterRef('id'),
             is_read=False
-        ).exclude(
-            sender=request.user
-        ).values('chat').annotate(
+        ).exclude(sender=request.user).values('chat').annotate(
             count=Count('id')
         ).values('count')
 
+        # Query to identify the full name of the other participant in the chat
+        other_participant = User.objects.filter(
+            chats__id=OuterRef('id')
+        ).exclude(id=request.user.id).annotate(
+            full_name=Concat('first_name', Value(' '), 'last_name')
+        ).values('full_name')[:1]
+
+        # Fetch all chats for the current user
         chats = Chat.objects.filter(
             members=request.user
         ).annotate(
             last_message_time=Max('messages__timestamp'),
             last_message=Subquery(latest_message.values('content')[:1]),
-            unread_messages=Subquery(unread_count[:1])
+            unread_messages=Subquery(unread_count[:1]),
+            other_user_name=Subquery(other_participant)  # Annotate the other user's full name
         ).order_by('-last_message_time')
 
-        print(f"Retrieved chats: {list(chats)}")
+        # Print the full names of the users in the chats
+        chat_users = [
+            chat.other_user_name for chat in chats
+        ]
+        print(f"Retrieved chats with users: {chat_users}")
         
+        # Users available for initiating new chats
         if request.user.groups.filter(name='Admin').exists():
-            users = User.objects.exclude(id=request.user.id)
+            users = User.objects.exclude(id=request.user.id).annotate(
+                full_name=Concat('first_name', Value(' '), 'last_name')
+            )
         elif request.user.groups.filter(name='Manager').exists():
             employee_group = Group.objects.get(name='Employee')
-            users = User.objects.filter(groups=employee_group).exclude(id=request.user.id)
+            users = User.objects.filter(groups=employee_group).exclude(id=request.user.id).annotate(
+                full_name=Concat('first_name', Value(' '), 'last_name')
+            )
         else:
             users = User.objects.filter(
                 Q(groups__name='Manager') | 
                 Q(groups__name='HR')
-            ).exclude(id=request.user.id)
+            ).exclude(id=request.user.id).annotate(
+                full_name=Concat('first_name', Value(' '), 'last_name')
+            )
 
-        print(f"Users available for chat: {list(users)}")
+        # Print the full names of the available users
+        user_names = [user.full_name for user in users]
+        print(f"Users available for chat: {user_names}")
         
         return render(request, 'components/chat/chat.html', {
             'chats': chats,
@@ -3647,46 +3673,73 @@ def chat_detail(request, chat_id):
     Display a specific chat with enhanced features
     """
     try:
-        print(f"Fetching details for chat ID: {chat_id} for user: {request.user}")
+        # Log the user and chat ID for tracing
+        print(f"Fetching details for chat ID: {chat_id} for user: {request.user.get_full_name()}")
+
+        # Fetch the chat and validate membership
         chat = get_object_or_404(Chat, id=chat_id, members=request.user)
-        
+        print(f"Chat details fetched for chat ID: {chat.id}, chat type: {chat.type}, members: {', '.join([member.get_full_name() for member in chat.members.all()])}")
+
+        # Check group chat permissions
         if chat.type == 'group':
             if not request.user.groups.filter(name='Admin').exists() and chat.created_by != request.user:
-                print(f"User {request.user} does not have permission to access group chat ID: {chat_id}")
+                print(f"User {request.user.get_full_name()} does not have permission to access group chat ID: {chat_id}")
                 messages.error(request, 'You do not have permission to access this group chat.')
                 return redirect('chat_list')
 
+        # Fetch and order messages (ascending)
         messages_display = chat.messages.select_related(
             'sender'
         ).prefetch_related(
             'read_by'
-        ).order_by('-timestamp')[:50]
+        ).order_by('timestamp')[:50]
+        print(f"Fetched {len(messages_display)} messages for chat ID: {chat_id}, ordered by timestamp")
 
-        print(f"Messages for chat {chat_id}: {list(messages_display)}")
-        
+        # Add full name for message senders
+        for msg in messages_display:
+            msg.sender_full_name = f"{msg.sender.first_name} {msg.sender.last_name}".strip()
+        print(f"Messages for chat {chat_id}: {[msg.sender_full_name for msg in messages_display]}")
+
+        # Mark unread messages as read
         unread_messages = chat.messages.filter(
             is_read=False
         ).exclude(
             sender=request.user
         )
-        
+        print(f"Found {len(unread_messages)} unread messages to mark as read for chat ID: {chat_id}")
+
         for msg in unread_messages:
-            print(f"Marking message {msg.id} as read")
+            print(f"Marking message {msg.id} as read by {request.user.get_full_name()}")
             msg.is_read = True
             msg.read_by.add(request.user)
             msg.save()
 
+        # Sidebar chats with annotations for last message time
         chats = Chat.objects.filter(
             members=request.user
         ).annotate(
             last_message_time=Max('messages__timestamp')
         ).order_by('-last_message_time')
+        print(f"Fetched {len(chats)} chats for user {request.user.get_full_name()} with last message time")
 
-        users = User.objects.exclude(id=request.user.id)
+        # Add other user names for personal chats
+        retrieved_chat_users = []
+        for c in chats:
+            if c.type == 'personal':
+                other_user = c.members.exclude(id=request.user.id).first()
+                c.other_user_full_name = f"{other_user.first_name} {other_user.last_name}".strip() if other_user else "Unknown User"
+                retrieved_chat_users.append(c.other_user_full_name)
 
-        print(f"Sidebar chats: {list(chats)}")
-        print(f"Users available for chat: {list(users)}")
-        
+        # Log the retrieved chat users
+        print(f"Retrieved chats with users: {retrieved_chat_users}")
+
+        # All users for starting a new chat (excluding self)
+        users = User.objects.exclude(id=request.user.id).annotate(
+            full_name=Concat('first_name', Value(' '), 'last_name')
+        )
+        available_user_full_names = [u.full_name for u in users]
+        print(f"Users available for chat: {available_user_full_names}")
+
         return render(request, 'components/chat/chat.html', {
             'chats': chats,
             'chat': chat,
@@ -3700,6 +3753,7 @@ def chat_detail(request, chat_id):
         print(f"Error in chat_detail: {str(e)}")
         messages.error(request, 'An error occurred while displaying the chat details.')
         return redirect('chat_list')
+
 
 @login_required
 @check_group_permissions('Admin')

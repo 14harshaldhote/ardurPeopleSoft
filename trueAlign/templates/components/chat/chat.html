@@ -1,469 +1,326 @@
 {% extends 'base.html' %}
 {% block content %}
-    <div class="flex h-screen antialiased">
-        <!-- Sidebar -->
-        <div class="flex flex-col w-64 bg-white border-r">
-            <!-- User Profile -->
-            <div class="p-4 border-b">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center">
-                        <span class="text-white font-semibold">{{ request.user.username|first|upper }}</span>
-                    </div>
-                    <div>
-                        <h2 class="font-semibold">{{ request.user.get_full_name }}</h2>
-                        <p class="text-sm text-gray-500">{{ request.user.email }}</p>
-                    </div>
+<div class="flex h-screen antialiased bg-gray-50">
+    <!-- Sidebar -->
+    <div class="flex flex-col w-80 bg-white border-r shadow-sm">
+        <!-- User Profile -->
+        <div class="p-4 border-b bg-gradient-to-r from-blue-500 to-blue-600">
+            <div class="flex items-center space-x-4">
+                <div class="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-md">
+                    <span class="text-blue-500 font-bold text-lg">{{ request.user.first_name|first|upper }}</span>
                 </div>
-            </div>
-
-            <!-- Chat List -->
-            <div class="flex-1 overflow-y-auto">
-                <div class="p-4">
-                    <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Recent Chats</h3>
-                    {% for chat in chats %}
-                    <a href="{% url 'chat_detail' chat.id %}" class="block">
-                        <div class="flex items-center p-3 {% if active_chat.id == chat.id %}bg-blue-50{% else %}hover:bg-gray-50{% endif %} rounded-lg mb-2 transition">
-                            <div class="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center mr-3">
-                                {% if chat.type == 'group' %}
-                                    <span class="text-gray-600">👥</span>
-                                {% else %}
-                                    {% with other_user=chat.members.exclude|first %}
-                                        <span class="text-gray-600">{{ other_user.get_full_name|default:other_user.username|first|upper }}</span>
-                                    {% endwith %}
-                                {% endif %}
-                            </div>
-                            <div class="flex-1">
-                                <h4 class="font-semibold">
-                                    {% if chat.type == 'group' %}
-                                        {{ chat.name }}
-                                    {% else %}
-                                        {% with other_user=chat.members.exclude|first %}
-                                            {{ other_user.get_full_name|default:other_user.username }}
-                                        {% endwith %}
-                                    {% endif %}
-                                </h4>
-                                <p class="text-sm text-gray-500 truncate">{{ chat.last_message|default:"No messages yet" }}</p>
-                            </div>
-                            {% if chat.unread_messages %}
-                            <div class="ml-2">
-                                <span class="bg-blue-500 text-white px-2 py-1 rounded-full text-xs">
-                                    {{ chat.unread_messages }}
-                                </span>
-                            </div>
-                            {% endif %}
-                        </div>
-                    </a>
-                    {% endfor %}
+                <div class="text-white">
+                    <h2 class="font-bold text-lg">{{ request.user.get_full_name }}</h2>
+                    <p class="text-sm text-blue-100">{{ request.user.email }}</p>
                 </div>
-            </div>
-
-            <!-- New Chat Button -->
-            <div class="p-4 border-t">
-                {% if is_admin %}
-                <button onclick="showNewGroupChat()" class="w-full bg-blue-500 text-white rounded-lg px-4 py-2 mb-2 hover:bg-blue-600 transition">
-                    New Group Chat
-                </button>
-                {% endif %}
-                <button onclick="showNewPersonalChat()" class="w-full bg-gray-100 text-gray-700 rounded-lg px-4 py-2 hover:bg-gray-200 transition">
-                    New Message
-                </button>
             </div>
         </div>
 
-        <!-- Chat Area -->
-        <div class="flex-1 flex flex-col">
-            {% if chat %}
-            <!-- Chat Header -->
-            <div class="bg-white border-b px-6 py-4">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
-                            <span class="text-gray-600">{{ chat.name|first|upper }}</span>
-                        </div>
-                        <div>
-                            <h2 class="font-semibold">{{ chat.name }}</h2>
-                            <p class="text-sm text-gray-500">
-                                {{ chat.members.all|length }} members
-                                {% if chat.type == 'group' %}• Created by {{ chat.created_by.get_full_name }}{% endif %}
-                            </p>
-                        </div>
-                    </div>
-                    <div class="flex items-center space-x-3">
-                        {% if can_manage %}
-                        <button onclick="confirmDeleteChat({{ chat.id }})" class="text-red-500 hover:text-red-600">
-                            Delete Chat
-                        </button>
-                        {% endif %}
-                        {% if chat.type == 'group' and chat.created_by != request.user %}
-                        <button onclick="confirmLeaveChat({{ chat.id }})" class="text-gray-500 hover:text-gray-600">
-                            Leave Chat
-                        </button>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-
-            <!-- Messages Area -->
-            <div id="messages-container" class="flex-1 overflow-y-auto p-6 space-y-4">
-                {% for message in messages %}
-                <div class="flex {% if message.sender == request.user %}justify-end{% endif %}">
-                    <div class="max-w-lg {% if message.sender == request.user %}bg-blue-500 text-white{% else %}bg-gray-100 text-gray-800{% endif %} rounded-lg px-4 py-2 shadow">
-                        {% if message.sender != request.user %}
-                        <p class="text-xs text-gray-500 mb-1">{{ message.sender.get_full_name }}</p>
-                        {% endif %}
-                        <p>{{ message.content }}</p>
-                        <p class="text-xs {% if message.sender == request.user %}text-blue-100{% else %}text-gray-500{% endif %} mt-1">
-                            {{ message.timestamp|date:"g:i A" }}
-                            {% if message.is_read %}
-                            • Read
+        <!-- Chat List -->
+        <div class="flex-1 overflow-y-auto">
+            <div class="p-4">
+                <h3 class="text-xs font-bold text-gray-600 uppercase tracking-wider mb-4">Recent Chats</h3>
+                {% for chat in chats %}
+                <a href="{% url 'chat_detail' chat.id %}" class="block">
+                    <div class="flex items-center p-4 {% if active_chat.id == chat.id %}bg-blue-50 border-l-4 border-blue-500{% else %}hover:bg-gray-50{% endif %} rounded-lg mb-3 transition-all duration-200 shadow-sm">
+                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center mr-4 shadow-inner">
+                            {% if chat.type == 'group' %}
+                            <span class="text-xl">👥</span>
+                            {% else %}
+                            <span class="text-gray-700 font-bold text-lg">
+                                {{ chat.other_user_full_name|first|upper }}
+                            </span>
                             {% endif %}
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-semibold text-gray-800">
+                                {% if chat.type == 'group' %}
+                                {{ chat.name }}
+                                {% else %}
+                                {{ chat.other_user_full_name }}
+                                {% endif %}
+                            </h4>
+                            <p class="text-sm text-gray-500 truncate">{{ chat.last_message|default:"No messages yet" }}</p>
+                        </div>
+                        {% if chat.unread_messages %}
+                        <div class="ml-3">
+                            <span class="bg-blue-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-sm">
+                                {{ chat.unread_messages }}
+                            </span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- New Chat Button -->
+        <div class="p-4 border-t bg-gray-50">
+            {% if is_admin %}
+            <button onclick="showNewGroupChat()"
+                class="w-full bg-blue-600 text-white rounded-lg px-4 py-3 mb-3 hover:bg-blue-700 transition-colors duration-200 font-semibold shadow-md">
+                <i class="fas fa-users mr-2"></i> New Group Chat
+            </button>
+            {% endif %}
+            <button onclick="showNewPersonalChat()"
+                class="w-full bg-white text-gray-700 rounded-lg px-4 py-3 hover:bg-gray-100 transition-colors duration-200 font-semibold border shadow-sm">
+                <i class="fas fa-comment mr-2"></i> New Message
+            </button>
+        </div>
+    </div>
+
+    <!-- Chat Area -->
+    <div class="flex-1 flex flex-col bg-white">
+        {% if chat %}
+        <!-- Chat Header -->
+        <div class="bg-white border-b px-6 py-4 shadow-sm">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center shadow-inner">
+                        {% if chat.type == 'group' %}
+                        <span class="text-blue-600 font-bold text-lg">{{ chat.name|first|upper }}</span>
+                        {% else %}
+                        <span class="text-blue-600 font-bold text-lg">{{ chat.other_user_full_name|first|upper }}</span>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <h2 class="font-bold text-xl text-gray-800">
+                            {% if chat.type == 'group' %}
+                            {{ chat.name }}
+                            {% else %}
+                            {{ chat.other_user_full_name }}
+                            {% endif %}
+                        </h2>
+                        <p class="text-sm text-gray-500">
+                            {{ chat.members.all|length }} members
+                            {% if chat.type == 'group' %}• Created by {{ chat.created_by.get_full_name }}{% endif %}
                         </p>
                     </div>
                 </div>
-                {% endfor %}
-            </div>
-
-            <!-- Message Input -->
-            <div class="bg-white border-t p-4">
-                <form id="message-form" class="flex items-center space-x-4">
-                    <input type="text" 
-                           id="message-input"
-                           class="flex-1 border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                           placeholder="Type your message...">
-                    <button type="submit"
-                            class="bg-blue-500 text-white rounded-lg px-6 py-2 hover:bg-blue-600 transition">
-                        Send
+                <div class="flex items-center space-x-4">
+                    {% if can_manage %}
+                    <button onclick="confirmDeleteChat({{ chat.id }})" class="text-red-500 hover:text-red-600 font-semibold flex items-center">
+                        <i class="fas fa-trash-alt mr-2"></i> Delete Chat
                     </button>
-                </form>
-            </div>
-            {% else %}
-            <!-- No Chat Selected -->
-            <div class="flex-1 flex items-center justify-center">
-                <div class="text-center">
-                    <h3 class="text-xl font-semibold text-gray-500 mb-2">Select a chat to start messaging</h3>
-                    <p class="text-gray-400">or create a new one</p>
+                    {% endif %}
+                    {% if chat.type == 'group' and chat.created_by != request.user %}
+                    <button onclick="confirmLeaveChat({{ chat.id }})" class="text-gray-500 hover:text-gray-600 font-semibold flex items-center">
+                        <i class="fas fa-sign-out-alt mr-2"></i> Leave Chat
+                    </button>
+                    {% endif %}
                 </div>
             </div>
-            {% endif %}
         </div>
-    </div>
 
-    <!-- Modals -->
-    <!-- New Group Chat Modal -->
-    <div id="new-group-chat-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-        <div class="bg-white rounded-lg p-6 w-96">
-            <h3 class="text-lg font-semibold mb-4">Create New Group Chat</h3>
-            <form action="{% url 'create_group_chat' %}" method="POST">
-                {% csrf_token %}
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Group Name</label>
-                    <input type="text" name="name" required
-                           class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <!-- Messages Area -->
+        <div id="messages-container" class="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50">
+            {% for message in messages %}
+            <div class="flex {% if message.sender == request.user %}justify-end{% endif %}">
+                <div class="max-w-lg {% if message.sender == request.user %}bg-blue-600 text-white{% else %}bg-white text-gray-800{% endif %} rounded-2xl px-6 py-3 shadow-md">
+                    {% if message.sender != request.user %}
+                    <p class="text-sm font-semibold {% if message.sender == request.user %}text-blue-100{% else %}text-blue-600{% endif %} mb-1">{{ message.sender_full_name }}</p>
+                    {% endif %}
+                    <p class="text-base">{{ message.content }}</p>
+                    <p class="text-xs {% if message.sender == request.user %}text-blue-100{% else %}text-gray-500{% endif %} mt-2">
+                        {{ message.timestamp|date:"g:i A" }}
+                        {% if message.is_read %}
+                        • <i class="fas fa-check-double"></i> Read
+                        {% endif %}
+                    </p>
                 </div>
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Select Members</label>
-                    <select name="members" multiple required
-                            class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        {% for user in users %}
-                        <option value="{{ user.id }}">{{ user.get_full_name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="flex justify-end space-x-3">
-                    <button type="button" onclick="hideNewGroupChat()"
-                            class="px-4 py-2 text-gray-500 hover:text-gray-700">
-                        Cancel
-                    </button>
-                    <button type="submit"
-                            class="bg-blue-500 text-white rounded-lg px-4 py-2 hover:bg-blue-600">
-                        Create Group
-                    </button>
-                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Message Input -->
+        <div class="bg-white border-t p-4 shadow-lg">
+            <form id="message-form" class="flex items-center space-x-4">
+                <input type="text" id="message-input"
+                    class="flex-1 border-2 border-gray-200 rounded-full px-6 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Type your message...">
+                <button type="submit" class="bg-blue-600 text-white rounded-full px-8 py-3 hover:bg-blue-700 transition-colors duration-200 font-semibold shadow-md flex items-center">
+                    <i class="fas fa-paper-plane mr-2"></i> Send
+                </button>
             </form>
         </div>
-    </div>
-
-    <!-- New Personal Chat Modal -->
-    <div id="new-personal-chat-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-        <div class="bg-white rounded-lg p-6 w-96">
-            <h3 class="text-lg font-semibold mb-4">Start New Chat</h3>
-            <form action="{% url 'create_personal_chat' %}" method="POST">
-                {% csrf_token %}
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Select User</label>
-                    <select name="member" required
-                            class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        {% for user in users %}
-                        <option value="{{ user.id }}">{{ user.get_full_name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="flex justify-end space-x-3">
-                    <button type="button" onclick="hideNewPersonalChat()"
-                            class="px-4 py-2 text-gray-500 hover:text-gray-700">
-                        Cancel
-                    </button>
-                    <button type="submit"
-                            class="bg-blue-500 text-white rounded-lg px-4 py-2 hover:bg-blue-600">
-                        Start Chat
-                    </button>
-                </div>
-            </form>
+        {% else %}
+        <!-- No Chat Selected -->
+        <div class="flex-1 flex items-center justify-center bg-gray-50">
+            <div class="text-center">
+                <div class="text-6xl mb-4">💬</div>
+                <h3 class="text-2xl font-bold text-gray-700 mb-2">Select a chat to start messaging</h3>
+                <p class="text-gray-500">or create a new one to begin the conversation</p>
+            </div>
         </div>
+        {% endif %}
     </div>
+</div>
 
-    <script>
-        // WebSocket Connection
-        const chatSocket = new ReconnectingWebSocket(
-            'ws://' + window.location.host + '/ws/chat/{{ chat.id }}/'
-        );
-    
-        const messagesContainer = document.getElementById('messages-container');
-        const messageForm = document.getElementById('message-form');
-        const messageInput = document.getElementById('message-input');
-    
-        // Scroll to bottom of messages
-        function scrollToBottom() {
-            if (messagesContainer) {
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            }
+<!-- Modals -->
+<!-- New Group Chat Modal -->
+<div id="new-group-chat-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center backdrop-blur-sm">
+    <div class="bg-white rounded-xl p-8 w-[480px] shadow-2xl">
+        <h3 class="text-2xl font-bold text-gray-800 mb-6">Create New Group Chat</h3>
+        <form action="{% url 'create_group_chat' %}" method="POST">
+            {% csrf_token %}
+            <div class="mb-6">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Group Name</label>
+                <input type="text" name="name" required
+                    class="w-full border-2 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            </div>
+            <div class="mb-6">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Select Members</label>
+                <select name="members" multiple required
+                    class="w-full border-2 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    {% for user in users %}
+                    <option value="{{ user.id }}">{{ user.get_full_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="flex justify-end space-x-4">
+                <button type="button" onclick="hideNewGroupChat()" 
+                    class="px-6 py-3 text-gray-600 hover:text-gray-800 font-semibold">
+                    Cancel
+                </button>
+                <button type="submit" 
+                    class="bg-blue-600 text-white rounded-lg px-6 py-3 hover:bg-blue-700 transition-colors duration-200 font-semibold shadow-md">
+                    Create Group
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- New Personal Chat Modal -->
+<div id="new-personal-chat-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center backdrop-blur-sm">
+    <div class="bg-white rounded-xl p-8 w-[480px] shadow-2xl">
+        <h3 class="text-2xl font-bold text-gray-800 mb-6">Start New Chat</h3>
+        <form action="{% url 'create_personal_chat' %}" method="POST">
+            {% csrf_token %}
+            <div class="mb-6">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Select User</label>
+                <select name="member" required
+                    class="w-full border-2 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    {% for user in users %}
+                    <option value="{{ user.id }}">{{ user.get_full_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="flex justify-end space-x-4">
+                <button type="button" onclick="hideNewPersonalChat()"
+                    class="px-6 py-3 text-gray-600 hover:text-gray-800 font-semibold">
+                    Cancel
+                </button>
+                <button type="submit" 
+                    class="bg-blue-600 text-white rounded-lg px-6 py-3 hover:bg-blue-700 transition-colors duration-200 font-semibold shadow-md">
+                    Start Chat
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // WebSocket Connection
+    const chatSocket = new WebSocket(
+        `${window.location.protocol === 'https:' ? 'wss:' : 'ws://'}${window.location.host}/ws/chat/{{ chat.id }}/`
+    );
+
+    const messagesContainer = document.getElementById('messages-container');
+    const messageForm = document.getElementById('message-form');
+    const messageInput = document.getElementById('message-input');
+
+    // Scroll to bottom of messages
+    function scrollToBottom() {
+        if (messagesContainer) {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
-    
-        // Initialize notifications
-        let notificationPermission = false;
-        if ("Notification" in window) {
-            Notification.requestPermission().then(function(permission) {
-                notificationPermission = permission === "granted";
-            });
+    }
+
+    // WebSocket message handling
+    chatSocket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        const userId = {{ request.user.id }};
+
+        // Create message element
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `flex ${data.user_id === userId ? 'justify-end' : ''}`;
+
+        const messageContent = document.createElement('div');
+        messageContent.className = `max-w-lg ${data.user_id === userId ? 'bg-blue-600 text-white' : 'bg-white text-gray-800'} rounded-2xl px-6 py-3 shadow-md`;
+
+        if (data.user_id !== userId) {
+            const senderName = document.createElement('p');
+            senderName.className = 'text-sm font-semibold text-blue-600 mb-1';
+            senderName.textContent = data.username;
+            messageContent.appendChild(senderName);
         }
-    
-        // Show notification
-        function showNotification(sender, message) {
-            if (notificationPermission && document.hidden) {
-                new Notification("New Message from " + sender, {
-                    body: message,
-                    icon: "/static/images/chat-icon.png"
-                });
-    
-                // Play notification sound
-                const audio = new Audio('/static/sounds/notification.mp3');
-                audio.play();
-            }
+
+        const messageText = document.createElement('p');
+        messageText.className = 'text-base';
+        messageText.textContent = data.message;
+        messageContent.appendChild(messageText);
+
+        const timeStamp = document.createElement('p');
+        timeStamp.className = `text-xs ${data.user_id === userId ? 'text-blue-100' : 'text-gray-500'} mt-2`;
+        timeStamp.textContent = new Date().toLocaleTimeString([], {hour: 'numeric', minute:'2-digit'});
+        messageContent.appendChild(timeStamp);
+
+        messageDiv.appendChild(messageContent);
+        messagesContainer.appendChild(messageDiv);
+
+        scrollToBottom();
+    };
+
+    // Send message
+    messageForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const message = messageInput.value.trim();
+        
+        if (message) {
+            chatSocket.send(JSON.stringify({
+                'message': message
+            }));
+            messageInput.value = '';
+            messageInput.focus();
         }
-    
-        // Calculate remaining time for SLA
-        function calculateRemainingTime(timestamp) {
-            const messageTime = moment(timestamp);
-            const deadline = messageTime.add(24, 'hours');
-            const now = moment();
-            const remaining = deadline.diff(now);
-    
-            if (remaining <= 0) {
-                return 'SLA Expired';
-            }
-    
-            const duration = moment.duration(remaining);
-            const hours = Math.floor(duration.asHours());
-            const minutes = duration.minutes();
-    
-            return `${hours}h ${minutes}m remaining`;
+    });
+
+    // Modal functions
+    function showNewGroupChat() {
+        document.getElementById('new-group-chat-modal').classList.remove('hidden');
+    }
+
+    function hideNewGroupChat() {
+        document.getElementById('new-group-chat-modal').classList.add('hidden');
+    }
+
+    function showNewPersonalChat() {
+        document.getElementById('new-personal-chat-modal').classList.remove('hidden');
+    }
+
+    function hideNewPersonalChat() {
+        document.getElementById('new-personal-chat-modal').classList.add('hidden');
+    }
+
+    // Confirmation dialogs
+    function confirmDeleteChat(chatId) {
+        if (confirm('Are you sure you want to delete this chat?')) {
+            window.location.href = `/chat/${chatId}/delete/`;
         }
-    
-        // Update all remaining time indicators
-        function updateAllRemainingTimes() {
-            const timeElements = document.querySelectorAll('.remaining-time');
-            timeElements.forEach(element => {
-                const timestamp = element.dataset.timestamp;
-                element.textContent = calculateRemainingTime(timestamp);
-                
-                // Update styles based on remaining time
-                const remaining = moment(timestamp).add(24, 'hours').diff(moment());
-                if (remaining <= 0) {
-                    element.classList.add('text-red-500');
-                } else if (remaining <= 2 * 60 * 60 * 1000) { // 2 hours warning
-                    element.classList.add('text-yellow-500');
-                }
-            });
+    }
+
+    function confirmLeaveChat(chatId) {
+        if (confirm('Are you sure you want to leave this chat?')) {
+            window.location.href = `/chat/${chatId}/leave/`;
         }
-    
-        // WebSocket message handling
-        chatSocket.onmessage = function(e) {
-            const data = JSON.parse(e.data);
-            const userId = {{ request.user.id }};
-            
-            // Create message element
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `flex ${data.user_id === userId ? 'justify-end' : ''}`;
-            
-            const messageContent = document.createElement('div');
-            messageContent.className = `max-w-lg ${data.user_id === userId ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-800'} rounded-lg px-4 py-2 shadow`;
-            
-            if (data.user_id !== userId) {
-                const senderName = document.createElement('p');
-                senderName.className = 'text-xs text-gray-500 mb-1';
-                senderName.textContent = data.username;
-                messageContent.appendChild(senderName);
-                
-                // Show notification
-                showNotification(data.username, data.message);
-            }
-            
-            const messageText = document.createElement('p');
-            messageText.textContent = data.message;
-            messageContent.appendChild(messageText);
-            
-            const timeInfo = document.createElement('div');
-            timeInfo.className = 'flex items-center justify-between text-xs mt-1';
-            
-            const timeStamp = document.createElement('span');
-            timeStamp.className = `${data.user_id === userId ? 'text-blue-100' : 'text-gray-500'}`;
-            timeStamp.textContent = moment().format('h:mm A');
-            
-            const remainingTime = document.createElement('span');
-            remainingTime.className = 'remaining-time ml-2';
-            remainingTime.dataset.timestamp = moment().toISOString();
-            remainingTime.textContent = '24h 0m remaining';
-            
-            timeInfo.appendChild(timeStamp);
-            timeInfo.appendChild(remainingTime);
-            messageContent.appendChild(timeInfo);
-            
-            messageDiv.appendChild(messageContent);
-            messagesContainer.appendChild(messageDiv);
-            
-            scrollToBottom();
-            updateAllRemainingTimes();
-        };
-    
-        // Send message
-        messageForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const message = messageInput.value.trim();
-            
-            if (message) {
-                chatSocket.send(JSON.stringify({
-                    'message': message
-                }));
-                messageInput.value = '';
-                messageInput.focus();
-            }
-        });
-    
-        // WebSocket connection handling
-        chatSocket.onopen = function(e) {
-            console.log('WebSocket connection established');
-            document.getElementById('connection-status').textContent = 'Connected';
-            document.getElementById('connection-status').className = 'text-green-500';
-        };
-    
-        chatSocket.onclose = function(e) {
-            console.log('WebSocket connection closed');
-            document.getElementById('connection-status').textContent = 'Reconnecting...';
-            document.getElementById('connection-status').className = 'text-yellow-500';
-        };
-    
-        // Typing indicator
-        let typingTimeout;
-        messageInput.addEventListener('input', function() {
-            if (!typingTimeout) {
-                chatSocket.send(JSON.stringify({
-                    'type': 'typing',
-                    'status': true
-                }));
-            }
-            
-            clearTimeout(typingTimeout);
-            typingTimeout = setTimeout(() => {
-                chatSocket.send(JSON.stringify({
-                    'type': 'typing',
-                    'status': false
-                }));
-                typingTimeout = null;
-            }, 1000);
-        });
-    
-        // Modal functions
-        function showNewGroupChat() {
-            document.getElementById('new-group-chat-modal').classList.remove('hidden');
-        }
-    
-        function hideNewGroupChat() {
-            document.getElementById('new-group-chat-modal').classList.add('hidden');
-        }
-    
-        function showNewPersonalChat() {
-            document.getElementById('new-personal-chat-modal').classList.remove('hidden');
-        }
-    
-        function hideNewPersonalChat() {
-            document.getElementById('new-personal-chat-modal').classList.add('hidden');
-        }
-    
-        // Confirmation dialogs
-        function confirmDeleteChat(chatId) {
-            if (confirm('Are you sure you want to delete this chat?')) {
-                window.location.href = `/chat/${chatId}/delete/`;
-            }
-        }
-    
-        function confirmLeaveChat(chatId) {
-            if (confirm('Are you sure you want to leave this chat?')) {
-                window.location.href = `/chat/${chatId}/leave/`;
-            }
-        }
-    
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            scrollToBottom();
-            updateAllRemainingTimes();
-            setInterval(updateAllRemainingTimes, 60000); // Update times every minute
-        });
-    
-        // Handle file uploads
-        const fileInput = document.getElementById('file-input');
-        if (fileInput) {
-            fileInput.addEventListener('change', function(e) {
-                const file = e.target.files[0];
-                if (file) {
-                    const formData = new FormData();
-                    formData.append('file', file);
-                    
-                    fetch('/chat/upload/', {
-                        method: 'POST',
-                        body: formData,
-                        headers: {
-                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                        }
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.url) {
-                            chatSocket.send(JSON.stringify({
-                                'type': 'file',
-                                'url': data.url,
-                                'filename': file.name
-                            }));
-                        }
-                    });
-                }
-            });
-        }
-    
-        // Handle emoji picker
-        const emojiButton = document.getElementById('emoji-button');
-        if (emojiButton) {
-            emojiButton.addEventListener('click', function() {
-                const picker = document.getElementById('emoji-picker');
-                picker.classList.toggle('hidden');
-            });
-        }
-    
-        // Handle read receipts
-        function updateReadReceipts(messageId, readers) {
-            const readReceiptElement = document.querySelector(`#read-receipt-${messageId}`);
-            if (readReceiptElement) {
-                readReceiptElement.textContent = `Read by ${readers.join(', ')}`;
-            }
-        }
-    </script>
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        scrollToBottom();
+    });
+</script>
+
 {% endblock %}

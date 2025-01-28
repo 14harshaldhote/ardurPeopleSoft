@@ -91,6 +91,114 @@
                                             d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9">
                                         </path>
                                     </svg>
+                                    <script>
+                                        // Create WebSocket connection for notifications
+                                        const userNotificationSocket = new WebSocket(
+                                            'ws://' + window.location.host + 
+                                            '/ws/chat/' + '{{ request.user.id }}/'  // You'll need to update the URL pattern
+                                        );
+                                        
+                                        let notificationCount = 0;
+                                        const notificationButton = document.querySelector('.btn-secondary');
+                                        const notificationList = document.createElement('div');
+                                        notificationList.className = 'notification-dropdown hidden';
+                                        document.body.appendChild(notificationList);
+                                        
+                                        userNotificationSocket.onmessage = function(e) {
+                                            const data = JSON.parse(e.data);
+                                            
+                                            if (data.type === 'notification') {
+                                                notificationCount++;
+                                                updateNotificationBadge();
+                                                addNotification(data);
+                                            }
+                                        };
+                                        
+                                        function updateNotificationBadge() {
+                                            // Create or update notification badge
+                                            let badge = notificationButton.querySelector('.notification-badge');
+                                            if (!badge) {
+                                                badge = document.createElement('span');
+                                                badge.className = 'notification-badge';
+                                                notificationButton.appendChild(badge);
+                                            }
+                                            badge.textContent = notificationCount;
+                                        }
+                                        
+                                        function addNotification(data) {
+                                            const notification = document.createElement('div');
+                                            notification.className = 'notification-item';
+                                            notification.innerHTML = `
+                                                <p><strong>${data.sender_username}</strong> sent a message in chat ${data.chat_id}</p>
+                                                <p class="notification-message">${data.message}</p>
+                                            `;
+                                            notificationList.insertBefore(notification, notificationList.firstChild);
+                                        }
+                                        
+                                        // Toggle notification dropdown
+                                        notificationButton.addEventListener('click', () => {
+                                            notificationList.classList.toggle('hidden');
+                                            notificationCount = 0;
+                                            updateNotificationBadge();
+                                        });
+                                        
+                                        // Close dropdown when clicking outside
+                                        document.addEventListener('click', (e) => {
+                                            if (!notificationButton.contains(e.target) && !notificationList.contains(e.target)) {
+                                                notificationList.classList.add('hidden');
+                                            }
+                                        });
+                                        </script>
+                                        
+                                        <style>
+                                        .notification-badge {
+                                            position: absolute;
+                                            top: -5px;
+                                            right: -5px;
+                                            background-color: red;
+                                            color: white;
+                                            border-radius: 50%;
+                                            padding: 2px 6px;
+                                            font-size: 12px;
+                                        }
+                                        
+                                        .notification-dropdown {
+                                            position: absolute;
+                                            top: 100%;
+                                            right: 0;
+                                            background: white;
+                                            border: 1px solid #ddd;
+                                            border-radius: 4px;
+                                            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+                                            width: 300px;
+                                            max-height: 400px;
+                                            overflow-y: auto;
+                                            z-index: 1000;
+                                        }
+                                        
+                                        .notification-dropdown.hidden {
+                                            display: none;
+                                        }
+                                        
+                                        .notification-item {
+                                            padding: 10px;
+                                            border-bottom: 1px solid #eee;
+                                        }
+                                        
+                                        .notification-item:last-child {
+                                            border-bottom: none;
+                                        }
+                                        
+                                        .notification-message {
+                                            color: #666;
+                                            font-size: 14px;
+                                            margin-top: 5px;
+                                        }
+                                        
+                                        .btn-secondary {
+                                            position: relative;
+                                        }
+                                        </style>
                                 </button>
                             </div>
                         </nav>
