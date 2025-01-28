@@ -3522,66 +3522,6 @@ def hr_support(request, ticket_id=None):
         print(f"HR Support Error: {str(e)}")  # For debugging
         messages.error(request, "An error occurred while managing tickets.")
         return redirect('aps_hr:hr_support')
-'''--------------------------- CHAT AREA------------------------'''
-# views.py
-# aps/views.py
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
-from django.http import HttpResponseForbidden
-from .models import Conversation, Message
-from django.utils import timezone
-# View to handle both group and direct conversations
-@login_required
-def chat_view(request, conversation_id=None):
-    conversation = None
-    messages = []
-
-    # If conversation_id is provided, get that conversation
-    if conversation_id:
-        conversation = get_object_or_404(Conversation, id=conversation_id)
-        messages = conversation.messages.all().order_by('created_at')
-
-    # Handle message sending
-    if request.method == 'POST' and 'message' in request.POST:
-        message_content = request.POST.get('message')
-        if message_content and conversation:
-            message = Message(conversation=conversation, sender=request.user, content=message_content)
-            message.save()
-            return redirect('chat:chat_view', conversation_id=conversation.id)
-        
-        if 'participants' in request.POST:
-            # Handle group creation or adding/removing participants
-            if 'create_group' in request.POST:
-                participants_ids = request.POST.getlist('participants')
-                participants = User.objects.filter(id__in=participants_ids)
-
-                conversation = Conversation.objects.create(is_group_chat=True)
-                conversation.participants.add(*participants)
-                conversation.participants.add(request.user)  # Add the creator to the group
-                conversation.save()
-                return redirect('chat:chat_view', conversation_id=conversation.id)
-            elif 'add_participant' in request.POST:
-                user_id = request.POST.get('user_id')
-                user = get_object_or_404(User, id=user_id)
-                conversation.participants.add(user)
-                conversation.save()
-                return redirect('chat:chat_view', conversation_id=conversation.id)
-            elif 'remove_participant' in request.POST:
-                user_id = request.POST.get('user_id')
-                user = get_object_or_404(User, id=user_id)
-                conversation.participants.remove(user)
-                conversation.save()
-                return redirect('chat:chat_view', conversation_id=conversation.id)
-
-    # Display conversations
-    conversations = Conversation.objects.filter(participants=request.user)
-    return render(request, 'components/chat/chat.html', {
-        'conversation': conversation,
-        'messages': messages,
-        'conversations': conversations,
-        'is_admin': request.user.is_staff
-    })
 
 '''----- Temeporray views -----'''
 
@@ -3607,7 +3547,272 @@ def approve_leave(request):
 
 
 
+'''--------------------------CHAT --------------------------------'''
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.models import User, Group
+from django.contrib import messages
+from .models import Chat, Message
+from django.db.models import Q, Max, Prefetch, OuterRef, Subquery
+from django.http import JsonResponse
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+from functools import wraps
+from django.core.exceptions import PermissionDenied
 
+def check_group_permissions(*allowed_groups):
+    """
+    Decorator to check if user belongs to allowed groups
+    """
+    def decorator(view_func):
+        @wraps(view_func)
+        def _wrapped_view(request, *args, **kwargs):
+            print(f"Checking permissions for user: {request.user} in groups: {allowed_groups}")
+            if not request.user.is_authenticated:
+                print("User is not authenticated. Redirecting to login.")
+                return redirect('login')
+            
+            user_groups = request.user.groups.values_list('name', flat=True)
+            print(f"User groups: {list(user_groups)}")
+            if any(group in user_groups for group in allowed_groups):
+                print(f"Permission granted for user: {request.user}")
+                return view_func(request, *args, **kwargs)
+            
+            print(f"Permission denied for user: {request.user}")
+            raise PermissionDenied("You don't have permission to access this feature.")
+        return _wrapped_view
+    return decorator
 
+@login_required
+def chat_list(request):
+    """
+    Display list of all chats for the current user with unread message count
+    """
+    try:
+        print(f"Fetching chat list for user: {request.user}")
+        latest_message = Message.objects.filter(
+            chat=OuterRef('id')
+        ).order_by('-timestamp')
+        
+        unread_count = Message.objects.filter(
+            chat=OuterRef('id'),
+            is_read=False
+        ).exclude(
+            sender=request.user
+        ).values('chat').annotate(
+            count=Count('id')
+        ).values('count')
 
-'''-----------------------------'''
+        chats = Chat.objects.filter(
+            members=request.user
+        ).annotate(
+            last_message_time=Max('messages__timestamp'),
+            last_message=Subquery(latest_message.values('content')[:1]),
+            unread_messages=Subquery(unread_count[:1])
+        ).order_by('-last_message_time')
+
+        print(f"Retrieved chats: {list(chats)}")
+        
+        if request.user.groups.filter(name='Admin').exists():
+            users = User.objects.exclude(id=request.user.id)
+        elif request.user.groups.filter(name='Manager').exists():
+            employee_group = Group.objects.get(name='Employee')
+            users = User.objects.filter(groups=employee_group).exclude(id=request.user.id)
+        else:
+            users = User.objects.filter(
+                Q(groups__name='Manager') | 
+                Q(groups__name='HR')
+            ).exclude(id=request.user.id)
+
+        print(f"Users available for chat: {list(users)}")
+        
+        return render(request, 'components/chat/chat.html', {
+            'chats': chats,
+            'users': users,
+            'chat': None,
+            'messages': None,
+            'is_admin': request.user.groups.filter(name='Admin').exists(),
+            'is_manager': request.user.groups.filter(name='Manager').exists(),
+            'is_hr': request.user.groups.filter(name='HR').exists()
+        })
+    
+    except Exception as e:
+        print(f"Error in chat_list: {str(e)}")
+        messages.error(request, 'An error occurred while fetching the chat list.')
+        return redirect('chat_list')
+
+@login_required
+def chat_detail(request, chat_id):
+    """
+    Display a specific chat with enhanced features
+    """
+    try:
+        print(f"Fetching details for chat ID: {chat_id} for user: {request.user}")
+        chat = get_object_or_404(Chat, id=chat_id, members=request.user)
+        
+        if chat.type == 'group':
+            if not request.user.groups.filter(name='Admin').exists() and chat.created_by != request.user:
+                print(f"User {request.user} does not have permission to access group chat ID: {chat_id}")
+                messages.error(request, 'You do not have permission to access this group chat.')
+                return redirect('chat_list')
+
+        messages_display = chat.messages.select_related(
+            'sender'
+        ).prefetch_related(
+            'read_by'
+        ).order_by('-timestamp')[:50]
+
+        print(f"Messages for chat {chat_id}: {list(messages_display)}")
+        
+        unread_messages = chat.messages.filter(
+            is_read=False
+        ).exclude(
+            sender=request.user
+        )
+        
+        for msg in unread_messages:
+            print(f"Marking message {msg.id} as read")
+            msg.is_read = True
+            msg.read_by.add(request.user)
+            msg.save()
+
+        chats = Chat.objects.filter(
+            members=request.user
+        ).annotate(
+            last_message_time=Max('messages__timestamp')
+        ).order_by('-last_message_time')
+
+        users = User.objects.exclude(id=request.user.id)
+
+        print(f"Sidebar chats: {list(chats)}")
+        print(f"Users available for chat: {list(users)}")
+        
+        return render(request, 'components/chat/chat.html', {
+            'chats': chats,
+            'chat': chat,
+            'messages': messages_display,
+            'users': users,
+            'active_chat': chat,
+            'can_manage': request.user == chat.created_by or request.user.groups.filter(name='Admin').exists()
+        })
+
+    except Exception as e:
+        print(f"Error in chat_detail: {str(e)}")
+        messages.error(request, 'An error occurred while displaying the chat details.')
+        return redirect('chat_list')
+
+@login_required
+@check_group_permissions('Admin')
+def create_group_chat(request):
+    """
+    Create a new group chat (Admin only)
+    """
+    if request.method == 'POST':
+        try:
+            name = request.POST.get('name')
+            member_ids = request.POST.getlist('members')
+            
+            if not name:
+                messages.error(request, 'Chat name is required for group chats.')
+                return redirect('chat_list')
+
+            chat = Chat.objects.create(
+                name=name,
+                type='group',
+                created_by=request.user
+            )
+            
+            members = User.objects.filter(id__in=member_ids)
+            chat.members.add(request.user, *members)
+            
+            messages.success(request, 'Group chat created successfully!')
+            return redirect('chat_detail', chat_id=chat.id)
+
+        except Exception as e:
+            messages.error(request, f'Error creating group chat: {str(e)}')
+            return redirect('chat_list')
+
+    return redirect('chat_list')
+
+@login_required
+def create_personal_chat(request):
+    """
+    Create a personal chat with proper naming for both users
+    """
+    if request.method == 'POST':
+        try:
+            member_id = request.POST.get('member')
+            
+            # Check if chat already exists
+            existing_chat = Chat.objects.filter(
+                type='personal',
+                members=request.user
+            ).filter(
+                members__id=member_id
+            ).first()
+            
+            if existing_chat:
+                return redirect('chat_detail', chat_id=existing_chat.id)
+            
+            # Create new personal chat
+            other_user = get_object_or_404(User, id=member_id)
+            chat = Chat.objects.create(
+                # Remove specific name as it will be generated dynamically
+                type='personal',
+                created_by=request.user
+            )
+            
+            chat.members.add(request.user, other_user)
+            
+            messages.success(request, 'Personal chat created successfully!')
+            return redirect('chat_detail', chat_id=chat.id)
+            
+        except Exception as e:
+            messages.error(request, f'Error creating personal chat: {str(e)}')
+            return redirect('chat_list')
+    
+    return redirect('chat_list')
+
+@login_required
+def delete_chat(request, chat_id):
+    """
+    Delete a chat with enhanced permissions
+    """
+    try:
+        chat = get_object_or_404(Chat, id=chat_id)
+        
+        if request.user == chat.created_by or request.user.groups.filter(name='Admin').exists():
+            chat.delete()
+            messages.success(request, 'Chat deleted successfully!')
+        else:
+            messages.error(request, 'You do not have permission to delete this chat.')
+        
+        return redirect('chat_list')
+
+    except Exception as e:
+        messages.error(request, 'An error occurred while deleting the chat.')
+        return redirect('chat_list')
+
+@login_required
+def leave_chat(request, chat_id):
+    """
+    Leave a chat with role-based restrictions
+    """
+    try:
+        chat = get_object_or_404(Chat, id=chat_id, members=request.user)
+        
+        if chat.type == 'personal':
+            messages.error(request, 'You cannot leave a personal chat.')
+            return redirect('chat_list')
+        
+        if chat.created_by == request.user:
+            messages.error(request, 'Chat creator cannot leave the chat.')
+            return redirect('chat_detail', chat_id=chat.id)
+            
+        chat.members.remove(request.user)
+        messages.success(request, 'You have left the chat.')
+        return redirect('chat_list')
+    
+    except Exception as e:
+        messages.error(request, 'An error occurred while leaving the chat.')
+        return redirect('chat_list')

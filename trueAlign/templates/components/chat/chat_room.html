@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mx-auto py-8 px-4 max-w-7xl">
+    <!-- Grid Layout -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <!-- Sidebar: Chat List -->
+        <aside class="bg-gray-100 rounded-lg shadow-md p-4">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">Chats</h2>
+            <div id="chat-list" class="space-y-2">
+                {% for chat in chats %}
+                    <a href="?chat_id={{ chat.id }}" 
+                       class="block p-3 rounded-lg transition hover:bg-gray-200 {% if selected_chat == chat %}bg-blue-100{% endif %}">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h3 class="font-semibold text-gray-700">{{ chat.name }}</h3>
+                                <p class="text-sm text-gray-500">{{ chat.chat_type|title }}</p>
+                            </div>
+                            {% if selected_chat == chat %}
+                                <span class="bg-blue-500 text-white text-xs px-2 py-1 rounded-full">Active</span>
+                            {% endif %}
+                        </div>
+                    </a>
+                {% empty %}
+                    <p class="text-gray-500 text-center">No chats yet</p>
+                {% endfor %}
+            </div>
+        </aside>
+
+        <!-- Main: Chat Messages -->
+        <main class="md:col-span-3 bg-white rounded-lg shadow-md">
+            {% if selected_chat %}
+                <header class="p-4 border-b bg-gray-50">
+                    <h2 class="text-lg font-semibold text-gray-800">{{ selected_chat.name }}</h2>
+                </header>
+                <div id="messages" class="h-96 overflow-y-auto p-4 bg-gray-50">
+                    {% for message in messages %}
+                        <div class="mb-4 {% if message.sender == request.user %}text-right{% else %}text-left{% endif %}">
+                            <div class="inline-block p-3 rounded-lg 
+                                {% if message.sender == request.user %}bg-blue-500 text-white{% else %}bg-gray-200 text-gray-800{% endif %}">
+                                <p class="text-sm font-semibold">{{ message.sender.username }}</p>
+                                <p class="text-sm">{{ message.content }}</p>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <p class="text-center text-gray-500">No messages</p>
+                    {% endfor %}
+                </div>
+                <form method="post" class="p-4 border-t flex gap-2 bg-gray-50">
+                    {% csrf_token %}
+                    <input type="hidden" name="chat_id" value="{{ selected_chat.id }}">
+                    <textarea name="content" class="flex-grow p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                              placeholder="Type your message..." required></textarea>
+                    <button type="submit" name="send_message" 
+                            class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg">Send</button>
+                </form>
+            {% else %}
+                <div class="p-4 text-center text-gray-500">
+                    Select a chat or create a new one
+                </div>
+            {% endif %}
+        </main>
+    </div>
+
+    <!-- New Chat Creation -->
+    <section class="mt-8 bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-lg font-semibold text-gray-800 mb-4">Create New Chat</h2>
+        <form id="create-chat-form" method="post" class="space-y-4">
+            {% csrf_token %}
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Chat Type</label>
+                <select name="chat_type" id="chat-type" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500" required>
+                    <option value="personal">Personal</option>
+                    <option value="group">Group</option>
+                </select>
+            </div>
+
+            <div id="personal-users" class="hidden">
+                <label class="block text-sm font-medium text-gray-700">Select User</label>
+                <select name="other_user" class="w-full p-3 border rounded-lg">
+                    {% for user in users %}
+                        <option value="{{ user.id }}">{{ user.username }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div id="group-users" class="hidden">
+                <label class="block text-sm font-medium text-gray-700">Select Group Members</label>
+                <select name="group_members" multiple class="w-full p-3 border rounded-lg">
+                    {% for user in users %}
+                        <option value="{{ user.id }}">{{ user.username }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Chat Name (Optional)</label>
+                <input type="text" name="name" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg">
+                Create Chat
+            </button>
+        </form>
+    </section>
+</div>
+
+<script>
+document.getElementById('chat-type').addEventListener('change', function() {
+    const personalUsers = document.getElementById('personal-users');
+    const groupUsers = document.getElementById('group-users');
+    
+    if (this.value === 'personal') {
+        personalUsers.classList.remove('hidden');
+        groupUsers.classList.add('hidden');
+    } else {
+        personalUsers.classList.add('hidden');
+        groupUsers.classList.remove('hidden');
+    }
+});
+
+document.getElementById('create-chat-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+
+    fetch('', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.href = `?chat_id=${data.chat_id}`;
+        } else {
+            alert(data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred');
+    });
+});
+
+// Auto-scroll messages
+const messagesContainer = document.getElementById('messages');
+if (messagesContainer) {
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+</script>
+{% endblock %}

@@ -1077,25 +1077,54 @@ class ProjectUpdate(models.Model):
     def __str__(self):
         return f"Update for {self.project.name} by {self.created_by.username}"
     
+    
 
-'''---------------------------------- CHAT AREA --------------------------------'''
+'''---------------- chat -----------------------'''
+from django.db import models
+from django.contrib.auth.models import User
 
-class Conversation(models.Model):
-    participants = models.ManyToManyField(User)
-    created_at = models.DateTimeField(auto_now_add=True)  # Timestamp of creation
-    is_group_chat = models.BooleanField(default=False)  # To distinguish group chats
+class Chat(models.Model):
+    CHAT_TYPES = [
+        ('personal', 'Personal'),
+        ('group', 'Group')
+    ]
+    
+    name = models.CharField(max_length=255)
+    type = models.CharField(max_length=20, choices=CHAT_TYPES)
+    members = models.ManyToManyField(User, related_name='chats')
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        related_name='created_chats', 
+        null=True
+    )
+
+    def get_last_message(self):
+        """Retrieve the most recent message in the chat."""
+        return self.messages.order_by('-timestamp').first()
+
+    def get_other_member(self, current_user):
+        """Get the other member in a personal chat."""
+        if self.type == 'personal':
+            return self.members.exclude(id=current_user.id).first()
+        return None
 
     def __str__(self):
-        if self.is_group_chat:
-            return f"Group chat: {', '.join([user.username for user in self.participants.all()])}"
-        else:
-            return f"Conversation between {', '.join([user.username for user in self.participants.all()])}"
+        return f"{self.name} ({self.type})"
 
 class Message(models.Model):
-    conversation = models.ForeignKey(Conversation, related_name="messages", on_delete=models.CASCADE)
-    sender = models.ForeignKey(User, on_delete=models.CASCADE)
+    chat = models.ForeignKey(Chat, related_name='messages', on_delete=models.CASCADE)
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
     content = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)
+    read_by = models.ManyToManyField(User, related_name='read_messages')
+
+
+    class Meta:
+        ordering = ['-timestamp']
+        verbose_name_plural = 'Messages'
 
     def __str__(self):
-        return f"{self.sender.username}: {self.content[:30]}"
+        return f"Message from {self.sender} at {self.timestamp}"

@@ -1,5 +1,7 @@
+# trueAlign/urls.py
 from django.urls import path, include
 from . import views
+
 
 # Admin-specific URLs under 'truealign/admin/'
 admin_patterns = [
@@ -83,8 +85,15 @@ urlpatterns = [
     path('break/check/', views.check_active_break, name='check_active_break'),
     path('break/take/', views.take_break, name='take_break'),
     path('break/end/<int:break_id>/', views.end_break, name='end_break'),
-    path('chats/', views.chat_view, name='chat_view'),
     path('dashboard/', views.dashboard_view, name='dashboard'),
+    
+    # Chat URLs
+    path('chats/', views.chat_list, name='chat_list'),
+    path('chats/<int:chat_id>/', views.chat_detail, name='chat_detail'),
+    path('chats/create/group/', views.create_group_chat, name='create_group_chat'),
+    path('chats/create/personal/', views.create_personal_chat, name='create_personal_chat'),
+    path('chats/<int:chat_id>/delete/', views.delete_chat, name='delete_chat'),
+    path('chats/<int:chat_id>/leave/', views.leave_chat, name='leave_chat'),
 
     # Admin-specific URLs under 'truealign/admin/'
     path('truealign/admin/', include((admin_patterns, 'aps'), namespace='aps_admin')),

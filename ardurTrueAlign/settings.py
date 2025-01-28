@@ -30,8 +30,11 @@ ALLOWED_HOSTS = []
 
 
 # Application definition
+ASGI_APPLICATION = 'ardurTrueAlign.asgi.application'
+
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -39,6 +42,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'trueAlign',
+    'rest_framework',
+    'channels',
+    
 ]
 
 MIDDLEWARE = [
@@ -49,18 +55,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'trueAlign.middleware.IdleTimeTrackingMiddleware',  # Add this line
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-
+    'trueAlign.middleware.IdleTimeTrackingMiddleware',
 ]
+
 
 ROOT_URLCONF = 'ardurTrueAlign.urls'
 
@@ -89,6 +86,16 @@ TEMPLATES = [
 
 
 WSGI_APPLICATION = 'ardurTrueAlign.wsgi.application'
+# Channels Configuration
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],  # Redis server host and port
+        },
+    },
+}
 
 
 # Database
