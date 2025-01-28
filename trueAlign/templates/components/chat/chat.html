@@ -7,7 +7,7 @@
         <div class="p-4 border-b bg-gradient-to-r from-blue-500 to-blue-600">
             <div class="flex items-center space-x-4">
                 <div class="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-md">
-                    <span class="text-blue-500 font-bold text-lg">{{ request.user.first_name|first|upper }}</span>
+                    <span class="text-blue-500 font-bold text-lg">{{ request.user.username|first|upper }}</span>
                 </div>
                 <div class="text-white">
                     <h2 class="font-bold text-lg">{{ request.user.get_full_name }}</h2>
@@ -28,7 +28,7 @@
                             <span class="text-xl">👥</span>
                             {% else %}
                             <span class="text-gray-700 font-bold text-lg">
-                                {{ chat.other_user_full_name|first|upper }}
+                                {{ chat.other_user_name|default:"Unknown User"|first|upper }}
                             </span>
                             {% endif %}
                         </div>
@@ -37,7 +37,7 @@
                                 {% if chat.type == 'group' %}
                                 {{ chat.name }}
                                 {% else %}
-                                {{ chat.other_user_full_name }}
+                                {{ chat.other_user_name|default:"Unknown User" }}
                                 {% endif %}
                             </h4>
                             <p class="text-sm text-gray-500 truncate">{{ chat.last_message|default:"No messages yet" }}</p>
@@ -78,20 +78,10 @@
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-4">
                     <div class="w-12 h-12 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center shadow-inner">
-                        {% if chat.type == 'group' %}
                         <span class="text-blue-600 font-bold text-lg">{{ chat.name|first|upper }}</span>
-                        {% else %}
-                        <span class="text-blue-600 font-bold text-lg">{{ chat.other_user_full_name|first|upper }}</span>
-                        {% endif %}
                     </div>
                     <div>
-                        <h2 class="font-bold text-xl text-gray-800">
-                            {% if chat.type == 'group' %}
-                            {{ chat.name }}
-                            {% else %}
-                            {{ chat.other_user_full_name }}
-                            {% endif %}
-                        </h2>
+                        <h2 class="font-bold text-xl text-gray-800">{{ chat.name }}</h2>
                         <p class="text-sm text-gray-500">
                             {{ chat.members.all|length }} members
                             {% if chat.type == 'group' %}• Created by {{ chat.created_by.get_full_name }}{% endif %}
@@ -119,7 +109,7 @@
             <div class="flex {% if message.sender == request.user %}justify-end{% endif %}">
                 <div class="max-w-lg {% if message.sender == request.user %}bg-blue-600 text-white{% else %}bg-white text-gray-800{% endif %} rounded-2xl px-6 py-3 shadow-md">
                     {% if message.sender != request.user %}
-                    <p class="text-sm font-semibold {% if message.sender == request.user %}text-blue-100{% else %}text-blue-600{% endif %} mb-1">{{ message.sender_full_name }}</p>
+                    <p class="text-sm font-semibold {% if message.sender == request.user %}text-blue-100{% else %}text-blue-600{% endif %} mb-1">{{ message.sender.get_full_name|default:"Unknown User"|first|upper }}</p>
                     {% endif %}
                     <p class="text-base">{{ message.content }}</p>
                     <p class="text-xs {% if message.sender == request.user %}text-blue-100{% else %}text-gray-500{% endif %} mt-2">

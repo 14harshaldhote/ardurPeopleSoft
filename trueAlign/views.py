@@ -3697,7 +3697,7 @@ def chat_detail(request, chat_id):
 
         # Add full name for message senders
         for msg in messages_display:
-            msg.sender_full_name = f"{msg.sender.first_name} {msg.sender.last_name}".strip()
+            msg.sender_full_name = Concat(msg.sender.first_name, Value(' '), msg.sender.last_name)
         print(f"Messages for chat {chat_id}: {[msg.sender_full_name for msg in messages_display]}")
 
         # Mark unread messages as read
@@ -3727,7 +3727,7 @@ def chat_detail(request, chat_id):
         for c in chats:
             if c.type == 'personal':
                 other_user = c.members.exclude(id=request.user.id).first()
-                c.other_user_full_name = f"{other_user.first_name} {other_user.last_name}".strip() if other_user else "Unknown User"
+                c.other_user_full_name = Concat(other_user.first_name, Value(' '), other_user.last_name) if other_user else "Unknown User"
                 retrieved_chat_users.append(c.other_user_full_name)
 
         # Log the retrieved chat users
