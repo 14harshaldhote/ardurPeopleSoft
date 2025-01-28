@@ -1,0 +1,92 @@
+alembic==1.14.0
+amqp==5.3.1
+asgiref @ file:///home/conda/feedstock_root/build_artifacts/asgiref_1733215607532/work
+async-timeout @ file:///home/conda/feedstock_root/build_artifacts/async-timeout_1733235340728/work
+attrs==24.3.0
+autobahn==24.4.2
+Automat==24.8.1
+bcrypt==4.2.1
+billiard==4.2.1
+blinker @ file:///home/conda/feedstock_root/build_artifacts/blinker_1731096409132/work
+Bottleneck @ file:///private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_55txi4fy1u/croot/bottleneck_1731058642212/work
+celery==5.4.0
+cffi==1.17.1
+channels @ file:///home/conda/feedstock_root/build_artifacts/channels_1732548825478/work
+channels_redis @ file:///home/conda/feedstock_root/build_artifacts/channels_redis_1731725520833/work
+click @ file:///home/conda/feedstock_root/build_artifacts/click_1733221831880/work
+click-didyoumean==0.3.1
+click-plugins==1.1.1
+click-repl==0.3.0
+constantly==23.10.4
+cron-descriptor==1.4.5
+cryptography==44.0.0
+daphne==4.1.2
+Django @ file:///home/conda/feedstock_root/build_artifacts/django_1733376776721/work
+django-celery-beat==2.7.0
+django-cron==0.6.0
+django-debug-toolbar==5.0.1
+django-environ==0.11.2
+django-jsonify==0.3.0
+django-model-utils==5.0.0
+django-notifications-hq==1.8.3
+django-sslserver==0.22
+django-timezone-field==7.0
+djangorestframework==3.15.2
+et-xmlfile==1.1.0
+Flask==2.3.2
+Flask-Bcrypt==1.0.1
+Flask-Cors==5.0.0
+Flask-DebugToolbar==0.16.0
+Flask-JWT-Extended==4.7.1
+Flask-Login @ file:///home/conda/feedstock_root/build_artifacts/flask-login_1699273405387/work
+Flask-Migrate==3.1.0
+Flask-MySQLdb==2.0.0
+Flask-SQLAlchemy==3.0.2
+Flask-WTF @ file:///home/conda/feedstock_root/build_artifacts/flask-wtf_1729820164028/work
+greenlet @ file:///private/var/folders/k1/30mswbxs7r1g6zwn8y4fyt500000gp/T/abs_516imz09pb/croot/greenlet_1702059966336/work
+hyperlink==21.0.0
+idna==3.10
+importlib_metadata @ file:///home/conda/feedstock_root/build_artifacts/importlib-metadata_1733223117029/work
+incremental==24.7.2
+itsdangerous==2.1.2
+Jinja2==3.1.2
+jsonfield==3.1.0
+kombu==5.4.2
+Mako==1.3.7
+MarkupSafe @ file:///home/conda/feedstock_root/build_artifacts/markupsafe_1733219583522/work
+msgpack @ file:///Users/runner/miniforge3/conda-bld/msgpack-python_1725975020701/work
+mysql-connector-python==8.0.31
+mysqlclient @ file:///Users/runner/miniforge3/conda-bld/mysqlclient_1731700452109/work
+numexpr @ file:///private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_b3kvvt6tc6/croot/numexpr_1730215947700/work
+numpy @ file:///private/var/folders/k1/30mswbxs7r1g6zwn8y4fyt500000gp/T/abs_f2amvjkczw/croot/numpy_and_numpy_base_1725470317860/work/dist/numpy-2.0.1-cp310-cp310-macosx_11_0_arm64.whl#sha256=6ec8707b1639af7f6893526745ed5ceed4a86932c569fe7ad97c6b4ba65e9662
+openpyxl @ file:///private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_96hhik4ygv/croot/openpyxl_1721752931204/work
+pandas @ file:///private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_4aifrweohv/croot/pandas_1732735109535/work/dist/pandas-2.2.3-cp310-cp310-macosx_11_0_arm64.whl#sha256=6c5bbde94d3ac89a919939bdecfabca704888cdaf6251a6b101db7024fed27ab
+prompt_toolkit==3.0.48
+protobuf==3.20.1
+pyasn1==0.6.1
+pyasn1_modules==0.4.1
+pycparser==2.22
+PyJWT==2.10.1
+PyMySQL==1.0.2
+pyOpenSSL==24.3.0
+python-crontab==3.2.0
+python-dateutil @ file:///private/var/folders/k1/30mswbxs7r1g6zwn8y4fyt500000gp/T/abs_66ud1l42_h/croot/python-dateutil_1716495741162/work
+python-dotenv==1.0.1
+pytz @ file:///private/var/folders/k1/30mswbxs7r1g6zwn8y4fyt500000gp/T/abs_a4b76c83ik/croot/pytz_1713974318928/work
+redis @ file:///home/conda/feedstock_root/build_artifacts/redis-py_1733604941268/work
+service-identity==24.2.0
+six @ file:///tmp/build/80754af9/six_1644875935023/work
+SQLAlchemy @ file:///private/var/folders/k1/30mswbxs7r1g6zwn8y4fyt500000gp/T/abs_3frqduvs8h/croot/sqlalchemy_1725885054432/work
+sqlparse @ file:///home/conda/feedstock_root/build_artifacts/sqlparse_1733215646586/work
+swapper==1.4.0
+tomli @ file:///home/conda/feedstock_root/build_artifacts/tomli_1733256695513/work
+Twisted==24.11.0
+txaio==23.1.1
+typing_extensions @ file:///home/conda/feedstock_root/build_artifacts/typing_extensions_1733188668063/work
+tzdata @ file:///croot/python-tzdata_1690578112552/work
+vine==5.1.0
+wcwidth==0.2.13
+Werkzeug==2.3.7
+WTForms @ file:///home/conda/feedstock_root/build_artifacts/wtforms_1733061487436/work
+zipp @ file:///home/conda/feedstock_root/build_artifacts/zipp_1732827521216/work
+zope.interface==7.2
