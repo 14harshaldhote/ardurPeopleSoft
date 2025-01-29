@@ -26,7 +26,8 @@ SECRET_KEY = 'django-insecure-wt0_%27ipo5)5q$w^q0__tbe++rk7amy*6y%3-q5g061f1bpoa
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['home.aurdurtechnology.com', 'www.home.aurdurtechnology.com']
+
 
 
 # Application definition
@@ -56,6 +57,10 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'trueAlign.middleware.IdleTimeTrackingMiddleware',
+    'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
 ]
 
 
@@ -104,10 +109,10 @@ CHANNEL_LAYERS = {
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'ardurTrueAlign',
-        'USER': 'root',
-        'PASSWORD': '12345678',
-        'HOST': '127.0.0.1',
+        'NAME': 'ardurtechnology',
+        'USER': 'ardurdev',
+        'PASSWORD': 'LAo1#qs6hsP}',
+        'HOST': '68.178.227.55',
         'PORT': '3306',
     }
 }
