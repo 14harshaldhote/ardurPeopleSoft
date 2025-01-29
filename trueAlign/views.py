@@ -168,18 +168,19 @@ def reset_password(request):
         current_password = request.POST.get('current_pwd')
         new_password = request.POST.get('new_pwd')
         confirm_password = request.POST.get('confirm_pwd')
-        # Check if new password matches confirm password
+
+        # Validate new password and confirmation
         if new_password != confirm_password:
             messages.error(request, "New password and confirm password do not match.")
             return redirect('reset_password')
 
-        # Authenticate the current password to ensure the user is correct
+        # Authenticate the user with the current password
         user = authenticate(username=request.user.username, password=current_password)
-        if user is not None:
-            # Password change logic
+        if user:
+            # Update the user's password
             user.set_password(new_password)
             user.save()
-            # Update session authentication hash to prevent logout after password change
+            # Update session authentication hash to maintain user session
             update_session_auth_hash(request, user)
 
             messages.success(request, "Your password has been successfully updated.")
@@ -188,7 +189,7 @@ def reset_password(request):
             messages.error(request, "Incorrect current password.")
             return redirect('reset_password')
     
-    return render(request, 'reset_password.html')
+    return render(request, 'basic/user_profile.html')
 
 # Create your views here.
 
@@ -309,25 +310,46 @@ from django.utils.timezone import now
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 
-@login_required
+
 def check_active_break(request):
     """
-    Check if the authenticated user has an active break.
+    Check if the authenticated user has an active break and remaining break count.
     """
     print(f"Checking active break for user: {request.user.username}")
     active_break = Break.objects.filter(user=request.user, end_time__isnull=True).first()
+    
+    # Get today's date
+    today = timezone.now().date()
+    
+    # Get break counts for today
+    break_counts = {}
+    for break_type, _ in Break.BREAK_TYPES:
+        total_allowed = Break.BREAK_LIMITS.get(break_type, 1)
+        used_count = Break.objects.filter(
+            user=request.user,
+            break_type=break_type,
+            start_time__date=today
+        ).count()
+        break_counts[break_type] = {
+            'used': used_count,
+            'remaining': total_allowed - used_count
+        }
+
     if active_break and active_break.is_active:
-        print(f"Active break found: {active_break}")
         return JsonResponse({
             'status': 'success',
             'break_id': active_break.id,
             'break_type': active_break.break_type,
             'start_time': active_break.start_time,
-            'is_active': active_break.is_active
+            'is_active': active_break.is_active,
+            'break_counts': break_counts
         })
     else:
-        print("No active break found")
-        return JsonResponse({'status': 'error', 'message': 'No active break found'})
+        return JsonResponse({
+            'status': 'error', 
+            'message': 'No active break found',
+            'break_counts': break_counts
+        })
 
 def take_break(request):
     if request.method == 'POST':
@@ -471,9 +493,7 @@ from django.utils import timezone
 
 @login_required
 def dashboard_view(request):
-
-
-        # Get today's date
+    # Get today's date
     time = timezone.now()
     print(f"time: {time}")
     today = timezone.now().date()
@@ -555,9 +575,31 @@ def dashboard_view(request):
     # Ensure the end date is inclusive
     end_date += timedelta(days=1)
 
-    # Check if the user has an active break
     active_break = Break.objects.filter(user=user, end_time__isnull=True).first()
     break_data = None
+    
+    # Get today's date for break counts
+    today = timezone.now().date()
+    
+    # Get break counts for today
+    break_counts = {}
+    for break_type, _ in Break.BREAK_TYPES:
+        total_allowed = Break.DAILY_BREAK_LIMITS.get(break_type, 1)
+        used_count = Break.objects.filter(
+            user=user,
+            break_type=break_type,
+            start_time__date=today
+        ).count()
+        break_counts[break_type] = {
+            'used': used_count,
+            'remaining': total_allowed - used_count
+        }
+    
+    # Always include break counts whether break is active or not
+    break_data = {
+        'break_counts': break_counts
+    }
+    
     if active_break and active_break.is_active:
         # Get break duration in minutes
         break_duration = Break.BREAK_DURATIONS.get(active_break.break_type, timedelta(minutes=15))
@@ -567,19 +609,18 @@ def dashboard_view(request):
         elapsed_time = now - active_break.start_time
         remaining_time = max(timedelta(0), break_duration - elapsed_time)
         
-        break_data = {
+        # Add active break info to break_data
+        break_data.update({
             'break_id': active_break.id,
             'break_type': active_break.break_type,
             'start_time': active_break.start_time,
             'active_break': active_break.is_active,
             'remaining_minutes': int(remaining_time.total_seconds() / 60),
             'remaining_seconds': int(remaining_time.total_seconds() % 60)
-        }
-
+        })
     
 
     if is_hr:
-
         # Get today's present employees
         present_employees = Attendance.objects.filter(
             status='Present',
@@ -676,7 +717,6 @@ def dashboard_view(request):
         'user_status': user_status,
         'present_employees_count': present_employees_count,
         'time': time
-
     }
 
     return render(request, 'dashboard.html', context)
@@ -1160,7 +1200,8 @@ def employee_profile(request):
     
     return render(request, 'components/employee/employee_profile.html', {
         'user_detail': user_detail,
-        'role': 'Employee'
+        'role': 'Employee',
+        'username': request.user.username
     })
 
 @login_required
@@ -1170,6 +1211,8 @@ def user_profile(request, user_id):
     
     return render(request, 'basic/user_profile.html', {
         'user_detail': user_detail,
+        'role': user_detail.user.groups.first().name if user_detail.user.groups.exists() else 'User',
+        'username': user_detail.user.username
     })
 
 ''' --------------------------------------------------------- ADMIN AREA --------------------------------------------------------- '''
@@ -1839,68 +1882,6 @@ def user_sessions_view(request):
         return render(request, 'error.html', {'error_message': str(e)})
 
 
-@login_required
-@user_passes_test(is_admin)
-def ticket_detail(request, ticket_id):
-    """View to show details of a specific ticket."""
-    try:
-        ticket = get_object_or_404(ITSupportTicket, ticket_id=ticket_id)  # Correct lookup field
-        return render(request, 'components/admin/ticket_detail.html', {'ticket': ticket})
-
-    except Exception as e:
-        messages.error(request, f"An error occurred: {str(e)}")
-        return redirect('it_support_admin')
-
-
-@login_required
-@user_passes_test(is_admin)
-def update_ticket(request, ticket_id):
-    """View to update the status of a specific ticket."""
-    try:
-        ticket = get_object_or_404(ITSupportTicket, ticket_id=ticket_id)  # Correct lookup field
-        if request.method == 'POST':
-            status = request.POST.get('status')
-            if status in dict(ITSupportTicket.STATUS_CHOICES):
-                ticket.status = status
-                ticket.save()
-                return redirect('ticket_detail', ticket_id=ticket.ticket_id)
-        return render(request, 'components/admin/update_ticket.html', {'ticket': ticket})
-
-    except Exception as e:
-        messages.error(request, f"An error occurred while updating the ticket: {str(e)}")
-        return redirect('ticket_detail', ticket_id=ticket_id)
-    
-@login_required
-@user_passes_test(is_admin)
-def it_support_admin(request):
-    """IT Support Admin view to manage tickets and system errors."""
-    try:
-        tickets = ITSupportTicket.objects.all()
-        context = {
-            'open_tickets': tickets.filter(status='Open').count(),
-            'in_progress_tickets': tickets.filter(status='In Progress').count(),
-            'resolved_tickets': tickets.filter(status='Resolved').count(),
-            'tickets': tickets.order_by('-created_at'),
-        }
-        return render(request, 'components/admin/it_support.html', context)
-
-    except Exception as e:
-        messages.error(request, f"An error occurred while fetching tickets: {str(e)}")
-        return redirect('dashboard')
-
-
-@login_required
-@user_passes_test(is_admin)
-def ticket_detail(request, ticket_id):
-    """View to show details of a specific ticket."""
-    try:
-        ticket = get_object_or_404(ITSupportTicket, ticket_id=ticket_id)
-        return render(request, 'components/admin/ticket_detail.html', {'ticket': ticket})
-
-    except Exception as e:
-        messages.error(request, f"An error occurred: {str(e)}")
-        return redirect('it_support_admin')
-
 
 
 # View for System Usage Information
@@ -1954,18 +1935,6 @@ def is_employee(user):
     return user.groups.filter(name='Employee').exists()
 
 
-# IT Support View
-
-
-@login_required
-def change_password(request):
-    if request.method == 'POST':
-        # Logic for password change
-        messages.success(request, "Password changed successfully.")
-        return redirect('it_support_home')
-    return render(request, 'components/employee/change_password.html')
-# Attendance View
-
 ''' ---------------------------------------- TIMESHEET AREA ---------------------------------------- '''
 @login_required
 @user_passes_test(is_employee)  # Only allow employees to access this view
@@ -2014,7 +1983,7 @@ def timesheet_view(request):
 
         except Exception as e:
             # If an error occurs, show an error message
-            messages.error(request, f"An error occurred: {e}")
+            messages.error(request, f"An error occurred: Fill the timesheet propley")
             return redirect('aps_employee:timesheet')
 
     else:
@@ -2032,6 +2001,7 @@ def timesheet_view(request):
             'today': today,
             'timesheet_history': timesheet_history,
             'assigned_projects': assigned_projects,  # Pass the list of assigned projects
+            'todays': now().date()
         })
 
 

@@ -207,22 +207,12 @@
                             <!-- Main Content -->
                             <div class="lg:col-span-2 space-y-8">
                                 <!-- Welcome Message -->
-                                <div class="card  text-black rounded-md">
+                                <div class="card text-black rounded-md">
                                     <h1 class="text-2xl font-bold mb-2">
-                                        {% if is_admin %}
-                                        Welcome, Administrator!
-                                        {% elif is_manager %}
-                                        Welcome, Project Manager!
-                                        {% elif is_hr %}
-                                        Welcome, HR Manager!
-                                        {% elif is_employee %}
-                                        Welcome, Team Member!
-                                        {% elif is_client %}
-                                        Welcome, Valued Client!
-                                        {% endif %}
+                                        Welcome, {{ user.first_name }} {{ user.last_name }} !
+                                       
                                     </h1>
-                                    <p class="text-indigo-200">Last login: {{ user.last_login|date:"F j, Y, g:i a" }}
-                                    </p>
+                                    <p class="text-indigo-200">Last login: {{ user.last_login|date:"F j, Y, g:i a" }}</p>
                                 </div>
 
 

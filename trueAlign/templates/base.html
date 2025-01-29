@@ -146,8 +146,7 @@
 
         <div class="content-wrapper">
             <header class="flex justify-between items-center p-6">
-                <p id="greeting" class="greeting text-black font-thin text-xl">
-                    <span class="font-medium text-xs">{{ user.first_name }} {{ user.last_name }}</span>
+                <p id="greeting" class=" font-medium text-4xl ">
                 </p>
 
                 <div class="text-sm text-white flex items-center space-x-4">
@@ -173,7 +172,7 @@
 
         <!-- Improved Watermark -->
         <div class="watermark-container">
-            <p class="text-gray-800 font-semibold whitespace-nowrap">Product by</p>
+            <p class="text-gray-800 font-medium text-sm whitespace-nowrap">Product by</p>
             <img src="{% static 'images/ardurtech.png' %}" alt="Ardur Technology Watermark" class="watermark-image">
         </div>
     </div>
@@ -190,7 +189,7 @@
 
         document.addEventListener('DOMContentLoaded', function () {
             const greetingElement = document.getElementById("greeting");
-            greetingElement.innerHTML = `${getGreeting()} <span class="font-semibold text-xl">{{ user.first_name }} {{ user.last_name }}</span>`;
+            greetingElement.innerHTML = `${getGreeting()} <span class="font-medium text-4xl"></span>`;
         });
     </script>
 

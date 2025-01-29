@@ -8,14 +8,115 @@
             <div class="relative px-8 py-8" style="background: linear-gradient(to right, #550c82, #f8bead);">
                 <div class="flex justify-between items-center">
                     <div>
-                        <h1 class="text-3xl font-bold text-white mb-2">User Profile</h1>
-                        <p class="text-purple-200">Manage your personal information</p>
+                        <h1 class="text-3xl font-semibold text-white mb-2">Employee Demographics</h1>
+                        <p class="text-purple-200">{{ username }}   <span class="italic p-1"> ( Role : {{ role }} )</span></p>
                     </div>
-
+                    <!-- Reset Password Button -->
+                    <button type="button" class="bg-purple-700 hover:bg-purple-900 text-red-100 hover:text-yellow-100 px-4 py-2 rounded-lg transition duration-200" onclick="openResetPasswordModal()">Reset Password</button>
                 </div>
             </div>
 
+            <!-- Reset Password Modal -->
+            <div id="resetPasswordModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+                <div class="bg-white rounded-lg shadow-lg p-6 w-96">
+                    <h2 class="text-xl font-semibold mb-4">Reset Password</h2>
+                    <form method="POST" action="{% url 'reset_password' %}" id="resetPasswordForm">
+                        {% csrf_token %}
+                        <div class="mb-4">
+                            <label for="current_pwd" class="block text-sm font-medium text-gray-700">Current Password</label>
+                            <div class="relative">
+                                <input type="password" name="current_pwd" id="current_pwd" required 
+                                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <button type="button" class="absolute right-2 top-3" onclick="togglePassword('current_pwd')">
+                                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" id="current_pwd_icon">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label for="new_pwd" class="block text-sm font-medium text-gray-700">New Password</label>
+                            <div class="relative">
+                                <input type="password" name="new_pwd" id="new_pwd" required 
+                                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <button type="button" class="absolute right-2 top-3" onclick="togglePassword('new_pwd')">
+                                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" id="new_pwd_icon">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label for="confirm_pwd" class="block text-sm font-medium text-gray-700">Confirm New Password</label>
+                            <div class="relative">
+                                <input type="password" name="confirm_pwd" id="confirm_pwd" required 
+                                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <button type="button" class="absolute right-2 top-3" onclick="togglePassword('confirm_pwd')">
+                                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" id="confirm_pwd_icon">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <p id="passwordMatchError" class="text-red-500 text-sm mt-1 hidden">Passwords do not match</p>
+                        </div>
+                        <div class="flex justify-end space-x-3">
+                            <button type="button" class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg transition duration-200" onclick="closeResetPasswordModal()">Cancel</button>
+                            <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition duration-200">Submit</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
 
+            <script>
+                function openResetPasswordModal() {
+                    document.getElementById('resetPasswordModal').classList.remove('hidden');
+                }
+
+                function closeResetPasswordModal() {
+                    document.getElementById('resetPasswordModal').classList.add('hidden');
+                    document.getElementById('resetPasswordForm').reset();
+                    document.getElementById('passwordMatchError').classList.add('hidden');
+                }
+
+                function togglePassword(inputId) {
+                    const input = document.getElementById(inputId);
+                    const icon = document.getElementById(inputId + '_icon');
+                    
+                    if (input.type === 'password') {
+                        input.type = 'text';
+                        icon.innerHTML = `
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                        `;
+                    } else {
+                        input.type = 'password';
+                        icon.innerHTML = `
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        `;
+                    }
+                }
+
+                document.getElementById('resetPasswordForm').addEventListener('submit', function(e) {
+                    const newPwd = document.getElementById('new_pwd').value;
+                    const confirmPwd = document.getElementById('confirm_pwd').value;
+                    
+                    if (newPwd !== confirmPwd) {
+                        e.preventDefault();
+                        document.getElementById('passwordMatchError').classList.remove('hidden');
+                    }
+                });
+
+                // Close modal when clicking outside
+                document.getElementById('resetPasswordModal').addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        closeResetPasswordModal();
+                    }
+                });
+            </script>
+            <!-- End of Reset Password Modal -->
             <!-- Profile Content -->
             <div class="p-8">
                 <!-- Personal Information Section -->
@@ -31,31 +132,31 @@
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
-                            <p class="text-sm font-medium text-gray-500 mb-1">Full Name</p>
+                            <p class="text-sm font-medium text-blue-600 mb-1">Full Name</p>
                             <p class="text-gray-800 font-medium">{{ user_detail.user.get_full_name }}</p>
                         </div>
                         <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
-                            <p class="text-sm font-medium text-gray-500 mb-1">Personal Email</p>
+                            <p class="text-sm font-medium text-blue-600 mb-1">Personal Email</p>
                             <p class="text-gray-800 font-medium">{{ user_detail.personal_email }}</p>
                         </div>
                         <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
-                            <p class="text-sm font-medium text-gray-500 mb-1">Date of Birth</p>
+                            <p class="text-sm font-medium text-blue-600 mb-1">Date of Birth</p>
                             <p class="text-gray-800 font-medium">{{ user_detail.dob|date:"M d, Y" }}</p>
                         </div>
                         <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
-                            <p class="text-sm font-medium text-gray-500 mb-1">Gender</p>
+                            <p class="text-sm font-medium text-blue-600 mb-1">Gender</p>
                             <p class="text-gray-800 font-medium">{{ user_detail.gender }}</p>
                         </div>
                         <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
-                            <p class="text-sm font-medium text-gray-500 mb-1">Blood Group</p>
+                            <p class="text-sm font-medium text-blue-600 mb-1">Blood Group</p>
                             <p class="text-gray-800 font-medium">{{ user_detail.blood_group }}</p>
                         </div>
                         <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
-                            <p class="text-sm font-medium text-gray-500 mb-1">PAN Number</p>
+                            <p class="text-sm font-medium text-blue-600 mb-1">PAN Number</p>
                             <p class="text-gray-800 font-medium">{{ user_detail.panno }}</p>
                         </div>
                         <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
-                            <p class="text-sm font-medium text-gray-500 mb-1">Aadhar Number</p>
+                            <p class="text-sm font-medium text-blue-600 mb-1">Aadhar Number</p>
                             <p class="text-gray-800 font-medium">{{ user_detail.aadharno }}</p>
                         </div>
                     </div>
@@ -75,15 +176,15 @@
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
-                            <p class="text-sm font-medium text-gray-500 mb-1">Job Description</p>
+                            <p class="text-sm font-medium text-green-600 mb-1">Job Description</p>
                             <p class="text-gray-800 font-medium">{{ user_detail.job_description }}</p>
                         </div>
                         <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
-                            <p class="text-sm font-medium text-gray-500 mb-1">Employment Status</p>
+                            <p class="text-sm font-medium text-green-600 mb-1">Employment Status</p>
                             <p class="text-gray-800 font-medium">{{ user_detail.employment_status }}</p>
                         </div>
                         <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
-                            <p class="text-sm font-medium text-gray-500 mb-1">Work Location</p>
+                            <p class="text-sm font-medium text-green-600 mb-1">Work Location</p>
                             <p class="text-gray-800 font-medium">{{ user_detail.work_location }}</p>
                         </div>
                     </div>
@@ -102,11 +203,11 @@
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
-                            <p class="text-sm font-medium text-gray-500 mb-1">Start Date</p>
+                            <p class="text-sm font-medium text-yellow-600 mb-1">Start Date</p>
                             <p class="text-gray-800 font-medium">{{ user_detail.start_date|date:"M d, Y" }}</p>
                         </div>
                         <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
-                            <p class="text-sm font-medium text-gray-500 mb-1">Hire Date</p>
+                            <p class="text-sm font-medium text-yellow-600 mb-1">Hire Date</p>
                             <p class="text-gray-800 font-medium">{{ user_detail.hire_date|date:"M d, Y" }}</p>
                         </div>
                     </div>
@@ -126,15 +227,15 @@
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
-                            <p class="text-sm font-medium text-gray-500 mb-1">Contact Name</p>
+                            <p class="text-sm font-medium text-red-600 mb-1">Contact Name</p>
                             <p class="text-gray-800 font-medium">{{ user_detail.emergency_contact_name }}</p>
                         </div>
                         <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
-                            <p class="text-sm font-medium text-gray-500 mb-1">Contact Address</p>
+                            <p class="text-sm font-medium text-red-600 mb-1">Contact Address</p>
                             <p class="text-gray-800 font-medium">{{ user_detail.emergency_contact_address }}</p>
                         </div>
                         <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
-                            <p class="text-sm font-medium text-gray-500 mb-1">Contact Number</p>
+                            <p class="text-sm font-medium text-red-600 mb-1">Contact Number</p>
                             <p class="text-gray-800 font-medium">{{ user_detail.emergency_contact_primary }}</p>
                         </div>
                     </div>

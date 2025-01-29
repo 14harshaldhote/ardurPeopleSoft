@@ -952,15 +952,15 @@ from datetime import timedelta
 
 class Break(models.Model):
     BREAK_TYPES = [
-        ('Tea Break', 'Tea Break'),
+        ('Tea Break 1', 'Tea Break 1'),
         ('Lunch/Dinner Break', 'Lunch/Dinner Break'),
-        ('Tea Break ', 'Extended Tea Break'),
+        ('Tea Break 2', 'Tea Break 2'),
     ]
     
     BREAK_DURATIONS = {
-        'Tea Break': timedelta(minutes=10),
-        'Lunch/Dinner Break': timedelta(minutes=30),
-        'Tea Break ': timedelta(minutes=15),
+        'Tea Break 1': timedelta(minutes=5),
+        'Lunch/Dinner Break': timedelta(minutes=35),
+        'Tea Break 2': timedelta(minutes=5),
     }
     
     DAILY_BREAK_LIMITS = {

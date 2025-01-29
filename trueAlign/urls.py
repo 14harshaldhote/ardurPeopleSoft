@@ -106,4 +106,7 @@ urlpatterns = [
 
     # Manager-specific URLs under 'truealign/manager/'
     path('truealign/manager/', include((manager_patterns, 'aps'), namespace='aps_manager')),
+
+    path('reset-password/', views.reset_password, name='reset_password'),
+
 ]
