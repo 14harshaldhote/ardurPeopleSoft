@@ -26,7 +26,8 @@ SECRET_KEY = 'django-insecure-wt0_%27ipo5)5q$w^q0__tbe++rk7amy*6y%3-q5g061f1bpoa
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['home.aurdurtechnology.com', 'www.home.aurdurtechnology.com']
+# ALLOWED_HOSTS = ['home.aurdurtechnology.com', 'www.home.aurdurtechnology.com']
+ALLOWED_HOSTS = []
 
 
 
@@ -109,10 +110,10 @@ CHANNEL_LAYERS = {
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'ardurtechnology',
-        'USER': 'ardurdev',
-        'PASSWORD': 'LAo1#qs6hsP}',
-        'HOST': '68.178.227.55',
+        'NAME': 'ardurTrueAlign',
+        'USER': 'root',
+        'PASSWORD': '12345678',
+        'HOST': 'localhost',
         'PORT': '3306',
     }
 }
