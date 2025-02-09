@@ -591,59 +591,120 @@ class Attendance(models.Model):
 import uuid
 from django.db import models
 from django.utils.timezone import now
+from django.contrib.auth import get_user_model
 
-def generate_ticket_id():
-    """Generate a unique ticket ID based on UUID."""
-    return uuid.uuid4()  # This will generate a full UUID
+User = get_user_model()
 
 class Support(models.Model):
-    STATUS_CHOICES = [
-        ('Open', 'Open'),
-        ('In Progress', 'In Progress'),
-        ('Resolved', 'Resolved'),
-        ('Closed', 'Closed'),
-    ]
+    class Status(models.TextChoices):
+        NEW = 'New', 'New'
+        OPEN = 'Open', 'Open'
+        IN_PROGRESS = 'In Progress', 'In Progress'
+        PENDING_USER = 'Pending User Response', 'Pending User Response'
+        PENDING_THIRD_PARTY = 'Pending Third Party', 'Pending Third Party'
+        ON_HOLD = 'On Hold', 'On Hold'
+        RESOLVED = 'Resolved', 'Resolved'
+        CLOSED = 'Closed', 'Closed'
 
-    ISSUE_TYPE_CHOICES = [
-        ('Hardware Issue', 'Hardware Issue'),
-        ('Software Issue', 'Software Issue'),
-        ('Network Issue', 'Network Issue'),
-        ('Internet Issue', 'Internet Issue'),
-        ('Application Issue', 'Application Issue'),
-        ('HR Related Issue', 'HR Related Issue'),
-    ]
+    class Priority(models.TextChoices):
+        LOW = 'Low', 'Low'
+        MEDIUM = 'Medium', 'Medium'
+        HIGH = 'High', 'High'
+        CRITICAL = 'Critical', 'Critical'
 
-    ASSIGNED_TO_CHOICES = [
-        ('HR', 'HR'),
-        ('Admin', 'Admin'),
-    ]
+    class IssueType(models.TextChoices):
+        HARDWARE = 'Hardware Issue', 'Hardware Issue'
+        SOFTWARE = 'Software Issue', 'Software Issue'
+        NETWORK = 'Network Issue', 'Network Issue'
+        INTERNET = 'Internet Issue', 'Internet Issue'
+        APPLICATION = 'Application Issue', 'Application Issue'
+        HR = 'HR Related Issue', 'HR Related Issue'
+        ACCESS = 'Access Management', 'Access Management'
+        SECURITY = 'Security Incident', 'Security Incident'
+        SERVICE = 'Service Request', 'Service Request'
 
+    class AssignedTo(models.TextChoices):
+        HR = 'HR', 'HR'
+        ADMIN = 'Admin', 'Admin'
 
-    ticket_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)  # UUID ticket ID
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tickets')  # User who raised the ticket
-    issue_type = models.CharField(max_length=50, choices=ISSUE_TYPE_CHOICES)
-    subject = models.CharField(max_length=100, default="No subject")
+    # Core Fields
+    ticket_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tickets')
+    issue_type = models.CharField(max_length=50, choices=IssueType.choices)
+    subject = models.CharField(max_length=200)
     description = models.TextField()
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Open')
-    assigned_to = models.CharField(max_length=50, choices=ASSIGNED_TO_CHOICES, default='Admin')
+
+    # Status and Assignment
+    status = models.CharField(max_length=30, choices=Status.choices, default=Status.NEW)
+    priority = models.CharField(max_length=20, choices=Priority.choices, default=Priority.MEDIUM)
+    assigned_to = models.CharField(max_length=50, choices=AssignedTo.choices, default=AssignedTo.HR)
+    assigned_to_user = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='assigned_tickets'
+    )
+
+    # Timestamps
     created_at = models.DateTimeField(default=now)
     updated_at = models.DateTimeField(auto_now=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    due_date = models.DateTimeField(null=True, blank=True)
 
-    def save(self, *args, **kwargs):
-        """Override save method to generate ticket ID if not provided."""
-        if not self.ticket_id:
-            self.ticket_id = self.generate_ticket_id()
-        super().save(*args, **kwargs)
+    # Additional Fields
+    department = models.CharField(max_length=100, blank=True)
+    location = models.CharField(max_length=100, blank=True)
+    asset_id = models.CharField(max_length=50, blank=True, help_text="Related hardware/software asset ID")
 
-    def generate_ticket_id(self):
-        """Generate a unique ticket ID based on UUID."""
-        return uuid.uuid4()
+    # Related Issues
+    parent_ticket = models.ForeignKey(
+        'self',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='sub_tickets',
+        help_text="Parent ticket for related issues"
+    )
+
+    # SLA and Resolution
+    sla_breach = models.BooleanField(default=False)
+    resolution_summary = models.TextField(blank=True)
+    resolution_time = models.DurationField(null=True, blank=True)
+
+    # User Satisfaction
+    satisfaction_rating = models.IntegerField(null=True, blank=True, choices=[(i, i) for i in range(1, 6)])
+    feedback = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['ticket_id']),
+            models.Index(fields=['status']),
+            models.Index(fields=['created_at']),
+            models.Index(fields=['user']),
+            models.Index(fields=['due_date']),
+        ]
+        verbose_name = "Support Ticket"
+        verbose_name_plural = "Support Tickets"
 
     def __str__(self):
-        """Return a string representation of the ticket."""
-        return f"{self.ticket_id} - {self.issue_type} - {self.status} - {self.assigned_to}"
+        return f"[{self.priority}] {self.ticket_id} - {self.subject} ({self.status})"
 
-# IT Support Ticket model to track and manage IT support requests
+    @property
+    def is_overdue(self):
+        return bool(self.due_date and self.due_date < now())
+
+
+class StatusLog(models.Model):
+    ticket = models.ForeignKey(Support, on_delete=models.CASCADE, related_name='status_logs')
+    old_status = models.CharField(max_length=30, choices=Support.Status.choices)
+    new_status = models.CharField(max_length=30, choices=Support.Status.choices)
+    changed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    changed_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.ticket.ticket_id}: {self.old_status} -> {self.new_status}"
 ''' ------------------------------------------- REmove employee AREA ------------------------------------------- '''
 
 # Employee model to store employee-specific information

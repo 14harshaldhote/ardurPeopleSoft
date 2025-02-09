@@ -2,6 +2,41 @@
 {% block title %}Dashboard - APS Portal{% endblock %}
 {% block content %}
 <div class="min-h-screen py-6 px-4 sm:px-6 lg:px-8 overflow-y-auto">
+     <!-- Page Header -->
+     <div class="mb-8">
+        {% if messages %}
+        <div id="toast-container" class="fixed top-4 right-4 z-50">
+            {% for message in messages %}
+            <div class="p-4 rounded-md mb-2 transform transition-all duration-300 opacity-0 translate-x-full {% if message.tags == 'success' %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %} flex items-center shadow-lg">
+                <span class="mr-2">
+                    {% if message.tags == 'success' %}✓{% else %}⚠️{% endif %}
+                </span>
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const toasts = document.querySelectorAll('#toast-container > div');
+                toasts.forEach(toast => {
+                    // Show toast
+                    setTimeout(() => {
+                        toast.classList.remove('opacity-0', 'translate-x-full');
+                        toast.classList.add('opacity-100', 'translate-x-0');
+                    }, 100);
+
+                    // Hide and remove toast after 1 second
+                    setTimeout(() => {
+                        toast.classList.remove('opacity-100', 'translate-x-0');
+                        toast.classList.add('opacity-0', 'translate-x-full');
+                        setTimeout(() => toast.remove(), 300);
+                    }, 6000);
+                });
+            });
+        </script>
+        {% endif %}
+    </div>
     <div class="max-w-7xl mx-auto">
         <!-- Header Section with Role-Based Content -->
         <div class="relative overflow-hidden bg-white mb-8 rounded-lg shadow-lg">

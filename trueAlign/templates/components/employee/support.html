@@ -3,72 +3,132 @@
 <div class="min-h-screen  p-4 sm:p-6">
     <!-- Page Header -->
     <div class="mb-8">
-        <h1 class="text-3xl font-thin text-gray-900">Support Dashboard</h1>
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-thin text-gray-900">Support Area</h1>
+            </div>
+            <div class="text-sm text-gray-500">
+                Last Updated: {% now "F j, Y H:i" %}
+            </div>
+        </div>
+
         {% if messages %}
         <div id="toast-container" class="fixed top-4 right-4 z-50">
             {% for message in messages %}
-            <div class="p-4 rounded-md mb-2 transform transition-all duration-300 opacity-0 translate-x-full {% if message.tags == 'success' %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %} flex items-center shadow-lg">
-                <span class="mr-2">
-                    {% if message.tags == 'success' %}✓{% else %}⚠️{% endif %}
+            <div class="p-4 rounded-lg mb-2 transform transition-all duration-300 opacity-0 translate-x-full 
+                {% if message.tags == 'success' %}bg-green-100 text-green-800 border border-green-200
+                {% else %}bg-red-100 text-red-800 border border-red-200{% endif %} 
+                flex items-center shadow-md">
+                <span class="mr-2 flex-shrink-0">
+                    {% if message.tags == 'success' %}
+                    <svg class="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    {% else %}
+                    <svg class="h-5 w-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    {% endif %}
                 </span>
-                {{ message }}
+                <p class="text-sm font-medium">{{ message }}</p>
             </div>
             {% endfor %}
         </div>
-
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                const toasts = document.querySelectorAll('#toast-container > div');
-                toasts.forEach(toast => {
-                    // Show toast
-                    setTimeout(() => {
-                        toast.classList.remove('opacity-0', 'translate-x-full');
-                        toast.classList.add('opacity-100', 'translate-x-0');
-                    }, 100);
-
-                    // Hide and remove toast after 1 second
-                    setTimeout(() => {
-                        toast.classList.remove('opacity-100', 'translate-x-0');
-                        toast.classList.add('opacity-0', 'translate-x-full');
-                        setTimeout(() => toast.remove(), 300);
-                    }, 6000);
-                });
-            });
-        </script>
         {% endif %}
     </div>
 
     <div class="grid gap-8 md:grid-cols-2">
+        <!-- Create Ticket Form -->
+        <div class="order-1 md:order-2">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 transition-shadow hover:shadow-md">
+                <div class="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white">
+                    <h2 class="text-xl font-semibold text-gray-900">Create New Ticket</h2>
+                    <p class="mt-1 text-sm text-gray-600">Fill in the details below to submit a new support request</p>
+                </div>
+
+                <form method="POST" action="{% url 'aps_employee:employee_support' %}" class="p-6 space-y-6" id="supportForm">
+                    {% csrf_token %}
+                    
+                    <div class="space-y-5">
+                        <div>
+                            <label for="subject" class="block text-sm font-medium text-gray-700">Subject <span class="text-red-500">*</span></label>
+                            <input type="text" name="subject" id="subject" required
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm transition-colors"
+                                placeholder="Enter a brief subject">
+                            <p class="mt-1 text-xs text-gray-500">Provide a clear and concise subject for your ticket</p>
+                        </div>
+
+                        <div>
+                            <label for="issue_type" class="block text-sm font-medium text-gray-700">Issue Type <span class="text-red-500">*</span></label>
+                            <select name="issue_type" id="issue_type" required
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm transition-colors">
+                                <option value="">Select an issue type</option>
+                                {% for choice in issue_type_choices %}
+                                <option value="{{ choice }}">{{ choice }}</option>
+                                {% endfor %}
+                            </select>
+                            <p class="mt-1 text-xs text-gray-500">Select the category that best matches your issue</p>
+                        </div>
+
+                        <div>
+                            <label for="description" class="block text-sm font-medium text-gray-700">Description <span class="text-red-500">*</span></label>
+                            <div class="mt-1">
+                                <textarea name="description" id="description" rows="5" required
+                                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm transition-colors"
+                                    placeholder="Please provide detailed information about your issue..."></textarea>
+                            </div>
+                            <p class="mt-2 text-xs text-gray-500">Include specific details, steps to reproduce, and any error messages you've encountered</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-end gap-4 pt-4 border-t border-gray-200">
+                        <button type="reset" 
+                            class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                            Clear Form
+                        </button>
+                        <button type="submit"
+                            class="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                            Submit Ticket
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         <!-- Support Tickets List -->
         <div class="order-2 md:order-1">
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-                <div class="p-4 border-b border-gray-200 bg-blue-50">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 transition-shadow hover:shadow-md">
+                <div class="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white">
                     <div class="flex items-center justify-between">
-                        <h2 class="text-lg font-medium text-gray-900">Your Tickets ({{ tickets.count }})</h2>
-                        <div class="text-sm text-gray-500">
-                            Last Updated: {% now "F j, Y H:i" %}
-                        </div>
+                        <h2 class="text-xl font-semibold text-gray-900">Your Tickets ({{ tickets.count }})</h2>
+                        <button onclick="window.location.reload()" class="text-blue-600 hover:text-blue-700 transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                        </button>
                     </div>
                 </div>
 
-                <div class="divide-y divide-gray-200 max-h-[600px] overflow-y-auto">
+                <div class="divide-y divide-gray-200 max-h-[calc(100vh-24rem)] overflow-y-auto">
                     {% for ticket in tickets %}
-                    <div class="p-4 hover:bg-gray-50 transition-colors duration-150">
-                        <div class="flex items-start justify-between">
-                            <div class="flex-1">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-sm font-medium text-gray-900">#{{ ticket.ticket_id }}</span>
+                    <div class="p-4 hover:bg-gray-50 transition-colors duration-150 group">
+                        <div class="flex items-start justify-between gap-4">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="text-sm font-medium text-gray-900">#{{ ticket.ticket_id|slice:":8" }}</span>
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
                                         {% if ticket.status == 'Open' %}bg-green-100 text-green-800
                                         {% elif ticket.status == 'In Progress' %}bg-yellow-100 text-yellow-800
-                                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                        {% elif ticket.status == 'Resolved' %}bg-blue-100 text-blue-800
+                                        {% elif ticket.status == 'Closed' %}bg-gray-100 text-gray-800
+                                        {% else %}bg-purple-100 text-purple-800{% endif %}">
                                         {{ ticket.status }}
                                     </span>
                                     <span class="text-xs text-gray-500">{{ ticket.created_at|timesince }} ago</span>
                                 </div>
-                                <h3 class="mt-1 text-sm font-medium text-gray-900">{{ ticket.subject|default:"No Subject" }}</h3>
+                                <h3 class="mt-1 text-sm font-medium text-gray-900 truncate">{{ ticket.subject|default:"No Subject" }}</h3>
                                 <p class="mt-1 text-sm text-gray-600 line-clamp-2">{{ ticket.description }}</p>
-                                <div class="mt-2 flex items-center gap-4 text-sm text-gray-500">
+                                <div class="mt-2 flex flex-wrap items-center gap-4 text-xs text-gray-500">
                                     <span class="flex items-center gap-1">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
@@ -81,90 +141,186 @@
                                         </svg>
                                         {{ ticket.assigned_to }}
                                     </span>
+                                    {% if ticket.due_date %}
+                                    <span class="flex items-center gap-1">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                        </svg>
+                                        Due: {{ ticket.due_date|date:"M d, Y" }}
+                                    </span>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
                     </div>
                     {% empty %}
                     <div class="p-8 text-center">
-                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 48 48">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h30v24H9z"></path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13l15 15 15-15"></path>
+                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
                         </svg>
-                        <h3 class="mt-2 text-sm font-medium text-gray-900">No tickets</h3>
+                        <h3 class="mt-2 text-sm font-medium text-gray-900">No tickets found</h3>
                         <p class="mt-1 text-sm text-gray-500">Get started by creating a new support ticket.</p>
                     </div>
                     {% endfor %}
                 </div>
             </div>
         </div>
-
-        <!-- Create Ticket Form -->
-        <div class="order-1 md:order-2">
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-                <div class="p-4 border-b border-gray-200">
-                    <h2 class="text-lg font-medium text-gray-900">Create New Ticket</h2>
-                    <p class="mt-1 text-sm text-gray-600">Fill in the details below to submit a new support request</p>
-                </div>
-
-                <form method="POST" action="{% url 'aps_employee:employee_support' %}" class="p-4 space-y-6" id="supportForm">
-                    {% csrf_token %}
-                    
-                    <div class="space-y-4">
-                        <div>
-                            <label for="subject" class="block text-sm font-medium text-gray-700">Subject <span class="text-red-500">*</span></label>
-                            <input type="text" name="subject" id="subject" required
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                                placeholder="Subject line">
-                        </div>
-
-                        <div>
-                            <label for="issue_type" class="block text-sm font-medium text-gray-700">Issue Type <span class="text-red-500">*</span></label>
-                            <select name="issue_type" id="issue_type" required
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
-                                <option value="">Select an issue type</option>
-                                {% for choice in issue_type_choices %}
-                                <option value="{{ choice }}">{{ choice }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-
-                        <div>
-                            <label for="description" class="block text-sm font-medium text-gray-700">Description <span class="text-red-500">*</span></label>
-                            <div class="mt-1">
-                                <textarea name="description" id="description" rows="4" required
-                                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                                    placeholder="Provide detailed information about your issue"></textarea>
-                            </div>
-                            <p class="mt-2 text-sm text-gray-500">Include any relevant details that might help resolve your issue.</p>
-                        </div>
-                    </div>
-
-                    <div class="flex items-center justify-end gap-4 mt-6">
-                        <button type="reset" 
-                            class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                            Clear Form
-                        </button>
-                        <button type="submit"
-                            class="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                            Submit Ticket
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
     </div>
 </div>
 
 <script>
-document.getElementById('supportForm').addEventListener('submit', function(e) {
-    const issueType = document.getElementById('issue_type').value;
-    const description = document.getElementById('description').value;
+document.addEventListener('DOMContentLoaded', function() {
+    // Toast notifications
+    const toasts = document.querySelectorAll('#toast-container > div');
+    toasts.forEach(toast => {
+        // Show toast
+        setTimeout(() => {
+            toast.classList.remove('opacity-0', 'translate-x-full');
+            toast.classList.add('opacity-100', 'translate-x-0');
+        }, 100);
+
+        // Hide and remove toast
+        setTimeout(() => {
+            toast.classList.remove('opacity-100', 'translate-x-0');
+            toast.classList.add('opacity-0', 'translate-x-full');
+            setTimeout(() => toast.remove(), 300);
+        }, 6000);
+    });
+
+    // Form validation
+    const supportForm = document.getElementById('supportForm');
+    supportForm.addEventListener('submit', function(e) {
+        const issueType = document.getElementById('issue_type').value;
+        const description = document.getElementById('description').value;
+        const subject = document.getElementById('subject').value;
+        
+        if (!issueType || !description || !subject) {
+            e.preventDefault();
+            alert('Please fill in all required fields.');
+        }
+    });
+
+    // Character counter for description
+    const description = document.getElementById('description');
+    const maxLength = 1000; // Adjust as needed
     
-    if (!issueType || !description) {
+    description.addEventListener('input', function() {
+        const remaining = maxLength - this.value.length;
+        let helpText = this.nextElementSibling;
+        
+        if (!helpText || !helpText.classList.contains('text-xs')) {
+            helpText = document.createElement('p');
+            helpText.classList.add('mt-1', 'text-xs', 'text-gray-500');
+            this.parentNode.appendChild(helpText);
+        }
+        
+        helpText.textContent = `${remaining} characters remaining`;
+        helpText.classList.toggle('text-red-500', remaining < 50);
+    });
+
+    // Reset form handler
+    const resetButton = supportForm.querySelector('button[type="reset"]');
+    resetButton.addEventListener('click', function(e) {
         e.preventDefault();
-        alert('Please fill in all required fields.');
+        if (confirm('Are you sure you want to clear the form?')) {
+            supportForm.reset();
+            // Reset any custom UI states (like character counter)
+            const helpTexts = supportForm.querySelectorAll('.text-xs.text-gray-500');
+            helpTexts.forEach(text => {
+                if (text.textContent.includes('characters remaining')) {
+                    text.remove();
+                }
+            });
+        }
+    });
+
+    // Priority indicator based on issue type
+    const issueTypeSelect = document.getElementById('issue_type');
+    issueTypeSelect.addEventListener('change', function() {
+        const priorityMap = {
+            'HARDWARE': 'High',
+            'SOFTWARE': 'Medium',
+            'NETWORK': 'Critical',
+            'INTERNET': 'Critical',
+            'APPLICATION': 'Medium',
+            'HR': 'Low',
+            'ACCESS': 'High',
+            'SECURITY': 'Critical',
+            'SERVICE': 'Medium'
+        };
+
+        const priority = priorityMap[this.value] || 'Medium';
+        let priorityIndicator = document.getElementById('priority-indicator');
+        
+        if (!priorityIndicator) {
+            priorityIndicator = document.createElement('div');
+            priorityIndicator.id = 'priority-indicator';
+            priorityIndicator.classList.add('mt-1', 'text-xs');
+            this.parentNode.appendChild(priorityIndicator);
+        }
+
+        const priorityColors = {
+            'Critical': 'text-red-600',
+            'High': 'text-orange-600',
+            'Medium': 'text-yellow-600',
+            'Low': 'text-green-600'
+        };
+
+        priorityIndicator.className = `mt-1 text-xs ${priorityColors[priority]}`;
+        priorityIndicator.textContent = `Priority: ${priority}`;
+    });
+
+    // Autosave form data to localStorage
+    const formInputs = supportForm.querySelectorAll('input, textarea, select');
+    const STORAGE_KEY = 'support_form_draft';
+
+    // Load saved data
+    const savedData = localStorage.getItem(STORAGE_KEY);
+    if (savedData) {
+        const data = JSON.parse(savedData);
+        formInputs.forEach(input => {
+            if (data[input.name]) {
+                input.value = data[input.name];
+            }
+        });
     }
+
+    // Save data on input
+    formInputs.forEach(input => {
+        input.addEventListener('input', () => {
+            const formData = {};
+            formInputs.forEach(input => {
+                formData[input.name] = input.value;
+            });
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(formData));
+        });
+    });
+
+    // Clear localStorage on successful form submission
+    supportForm.addEventListener('submit', function() {
+        if (this.checkValidity()) {
+            localStorage.removeItem(STORAGE_KEY);
+        }
+    });
+
+    // Description expansion/collapse
+    document.querySelectorAll('.line-clamp-2').forEach(description => {
+        const fullText = description.textContent;
+        const truncated = description.classList.contains('line-clamp-2');
+        
+        if (description.scrollHeight > description.clientHeight) {
+            const toggleButton = document.createElement('button');
+            toggleButton.textContent = 'Show more';
+            toggleButton.classList.add('text-blue-600', 'text-xs', 'mt-1', 'hover:text-blue-700');
+            
+            toggleButton.addEventListener('click', () => {
+                description.classList.toggle('line-clamp-2');
+                toggleButton.textContent = description.classList.contains('line-clamp-2') ? 'Show more' : 'Show less';
+            });
+            
+            description.parentNode.appendChild(toggleButton);
+        }
+    });
 });
 </script>
-{% endblock %}
+{% endblock %}       

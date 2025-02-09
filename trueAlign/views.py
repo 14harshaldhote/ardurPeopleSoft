@@ -3338,62 +3338,79 @@ def export_attendance_excel(queryset):
 def employee_support(request):
     """Employee's Support Home with the ability to create a ticket."""
     
-    print("Accessed employee_support view")
-
     if request.method == 'POST':
-        print("POST request received")
         issue_type = request.POST.get('issue_type')
-        description = request.POST.get('description')
-        subject = request.POST.get('subject', 'No subject')  # Added subject to the form
-
-        print(f"Issue Type: {issue_type}")
-        print(f"Description: {description}")
-        print(f"Subject: {subject}")
-
-        # Validate the required fields
+        description = request.POST.get('description', '').strip()
+        subject = request.POST.get('subject', 'No subject').strip()
+        
+        # Validate required fields
         if not issue_type or not description:
-            print("Validation failed: Issue Type or Description is missing")
             messages.error(request, "Issue Type and Description are required.")
             return redirect('aps_employee:employee_support')
 
-        # Assign ticket based on issue type (HR issues go to HR, others to Admin)
-        assigned_to = 'Admin' if issue_type != 'HR Related Issue' else 'HR'
-        print(f"Assigned to: {assigned_to}")
+        # Assign responsible department (HR or Admin)
+        assigned_to = (
+            Support.AssignedTo.HR if issue_type == Support.IssueType.HR else Support.AssignedTo.ADMIN
+        )
+
+        # Assign priority dynamically
+        priority_mapping = {
+            Support.IssueType.HARDWARE: Support.Priority.HIGH,
+            Support.IssueType.SOFTWARE: Support.Priority.MEDIUM,
+            Support.IssueType.NETWORK: Support.Priority.CRITICAL,
+            Support.IssueType.INTERNET: Support.Priority.CRITICAL,
+            Support.IssueType.APPLICATION: Support.Priority.MEDIUM,
+            Support.IssueType.HR: Support.Priority.LOW,
+            Support.IssueType.ACCESS: Support.Priority.HIGH,
+            Support.IssueType.SECURITY: Support.Priority.CRITICAL,
+            Support.IssueType.SERVICE: Support.Priority.MEDIUM,
+        }
+        priority = priority_mapping.get(issue_type, Support.Priority.MEDIUM)
+
+        # Set due date based on priority
+        due_date_mapping = {
+            Support.Priority.CRITICAL: now() + timedelta(hours=4),
+            Support.Priority.HIGH: now() + timedelta(days=1),
+            Support.Priority.MEDIUM: now() + timedelta(days=3),
+            Support.Priority.LOW: now() + timedelta(days=5),
+        }
+        due_date = due_date_mapping.get(priority)
 
         try:
-            # Create a new support ticket
-            Support.objects.create(
-                user=request.user,
-                issue_type=issue_type,
-                description=description,
-                subject=subject,  # Store the subject entered by the employee
-                status='Open',
-                assigned_to=assigned_to
-            )
-            print("Ticket created successfully")
-            messages.success(request, "Your ticket has been created successfully.")
+            with transaction.atomic():
+                ticket = Support.objects.create(
+                    user=request.user,
+                    issue_type=issue_type,
+                    description=description,
+                    subject=subject,
+                    status=Support.Status.NEW,
+                    priority=priority,
+                    assigned_to=assigned_to,
+                    due_date=due_date,
+                )
+            messages.success(request, f"Ticket #{ticket.ticket_id} created successfully.")
         except Exception as e:
-            print(f"Error occurred: {str(e)}")
-            messages.error(request, f"An error occurred: {str(e)}")
+            messages.error(request, f"Error: {str(e)}")
             return redirect('aps_employee:employee_support')
 
     # Fetch tickets raised by the logged-in employee
     tickets = Support.objects.filter(user=request.user).order_by('-created_at')
-    print(f"Fetched {tickets.count()} tickets for user {request.user}")
 
     # Fetch issue type choices dynamically
-    issue_type_choices = [choice[0] for choice in Support.ISSUE_TYPE_CHOICES]
-    print(f"Issue type choices: {issue_type_choices}")
+    issue_type_choices = [choice[0] for choice in Support.IssueType.choices]
 
     return render(request, 'components/employee/support.html', {
         'tickets': tickets,
         'issue_type_choices': issue_type_choices
     })
 
+
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
-from .models import Support
+from django.db.models import Q
+from .models import Support, StatusLog
+from django.utils.timezone import now
 
 def is_admin(user):
     return user.groups.filter(name='Admin').exists()
@@ -3406,11 +3423,28 @@ def admin_support(request, ticket_id=None):
             ticket = get_object_or_404(Support, ticket_id=ticket_id)
             
             if request.method == 'POST':
-                status = request.POST.get('status')
-                if status in dict(Support.STATUS_CHOICES):
-                    ticket.status = status
+                new_status = request.POST.get('status')
+                if new_status in dict(Support.Status.choices):
+                    old_status = ticket.status
+                    ticket.status = new_status
+                    
+                    # Update resolved_at if status changed to Resolved
+                    if new_status == Support.Status.RESOLVED and old_status != Support.Status.RESOLVED:
+                        ticket.resolved_at = now()
+                    elif new_status != Support.Status.RESOLVED:
+                        ticket.resolved_at = None
+                        
                     ticket.save()
-                    messages.success(request, f"Ticket {ticket.ticket_id} updated to {status}.")
+                    
+                    # Log status change
+                    StatusLog.objects.create(
+                        ticket=ticket,
+                        old_status=old_status,
+                        new_status=new_status,
+                        changed_by=request.user
+                    )
+                    
+                    messages.success(request, f"Ticket {ticket.ticket_id} updated to {new_status}.")
                     return redirect('aps_admin:admin_support')
                 else:
                     messages.error(request, "Invalid status selected.")
@@ -3420,25 +3454,31 @@ def admin_support(request, ticket_id=None):
                 'is_admin': True
             })
         
-        # List view
-        tickets = Support.objects.all()
+        # List view with filters
+        tickets = Support.objects.all().select_related('user')
+        
+        # Apply filters
+        status_filter = request.GET.get('status')
+        issue_type_filter = request.GET.get('issue_type')
+        
+        if status_filter:
+            tickets = tickets.filter(status=status_filter)
+        if issue_type_filter:
+            tickets = tickets.filter(issue_type=issue_type_filter)
+            
         context = {
             'tickets': tickets,
-            'open_tickets': tickets.filter(status='Open').count(),
-            'in_progress_tickets': tickets.filter(status='In Progress').count(),
-            'resolved_tickets': tickets.filter(status='Resolved').count(),
+            'open_tickets': Support.objects.filter(status=Support.Status.OPEN).count(),
+            'in_progress_tickets': Support.objects.filter(status=Support.Status.IN_PROGRESS).count(),
+            'resolved_tickets': Support.objects.filter(status=Support.Status.RESOLVED).count(),
             'is_admin': True
         }
         return render(request, 'components/admin/support_admin.html', context)
         
     except Exception as e:
-        messages.error(request, "An error occurred while managing tickets.")
+        messages.error(request, f"An error occurred while managing tickets: {str(e)}")
         return redirect('aps_admin:admin_support')
-    
 
-
-def is_hr(user):
-    return user.groups.filter(name='HR').exists()
 def is_hr(user):
     return user.groups.filter(name='HR').exists()
 
@@ -3448,17 +3488,32 @@ def hr_support(request, ticket_id=None):
     """HR view to manage tickets and see ticket details."""
     try:
         if ticket_id:
-            # Handle single ticket view and updates
             ticket = get_object_or_404(Support, ticket_id=ticket_id)
             
             if request.method == 'POST':
-                status = request.POST.get('status')
-                if status in dict(Support.STATUS_CHOICES):
-                    # Only allow HR to update tickets assigned to HR
-                    if ticket.assigned_to == 'HR':
-                        ticket.status = status
+                new_status = request.POST.get('status')
+                if new_status in dict(Support.Status.choices):
+                    if ticket.assigned_to == Support.AssignedTo.HR:
+                        old_status = ticket.status
+                        ticket.status = new_status
+                        
+                        # Update resolved_at if status changed to Resolved
+                        if new_status == Support.Status.RESOLVED and old_status != Support.Status.RESOLVED:
+                            ticket.resolved_at = now()
+                        elif new_status != Support.Status.RESOLVED:
+                            ticket.resolved_at = None
+                            
                         ticket.save()
-                        messages.success(request, f"Ticket {ticket.ticket_id} updated to {status}.")
+                        
+                        # Log status change
+                        StatusLog.objects.create(
+                            ticket=ticket,
+                            old_status=old_status,
+                            new_status=new_status,
+                            changed_by=request.user
+                        )
+                        
+                        messages.success(request, f"Ticket {ticket.ticket_id} updated to {new_status}.")
                         return redirect('aps_hr:hr_support')
                     else:
                         messages.error(request, "You can only update HR-assigned tickets.")
@@ -3468,20 +3523,25 @@ def hr_support(request, ticket_id=None):
             return render(request, 'components/hr/support_hr.html', {
                 'ticket': ticket,
                 'is_hr': True,
-                'can_update': ticket.assigned_to == 'HR'  # Only show update form for HR tickets
+                'can_update': ticket.assigned_to == Support.AssignedTo.HR
             })
         
-        # List view - Show only HR-relevant tickets
+        # List view with filters
         tickets = Support.objects.filter(
-            Q(assigned_to='HR') |  # Tickets assigned to HR
-            Q(issue_type='HR Related Issue')  # HR-related issues
-        ).order_by('-created_at')
+            Q(assigned_to=Support.AssignedTo.HR) |
+            Q(issue_type=Support.IssueType.HR)
+        ).select_related('user').order_by('-created_at')
+        
+        # Apply filters
+        status_filter = request.GET.get('status')
+        if status_filter:
+            tickets = tickets.filter(status=status_filter)
         
         context = {
             'tickets': tickets,
-            'open_tickets': tickets.filter(status='Open').count(),
-            'in_progress_tickets': tickets.filter(status='In Progress').count(),
-            'resolved_tickets': tickets.filter(status='Resolved').count(),
+            'open_tickets': tickets.filter(status=Support.Status.OPEN).count(),
+            'in_progress_tickets': tickets.filter(status=Support.Status.IN_PROGRESS).count(),
+            'resolved_tickets': tickets.filter(status=Support.Status.RESOLVED).count(),
             'is_hr': True,
             'total_tickets': tickets.count()
         }
@@ -3490,7 +3550,7 @@ def hr_support(request, ticket_id=None):
         
     except Exception as e:
         print(f"HR Support Error: {str(e)}")  # For debugging
-        messages.error(request, "An error occurred while managing tickets.")
+        messages.error(request, f"An error occurred while managing tickets: {str(e)}")
         return redirect('aps_hr:hr_support')
 
 '''----- Temeporray views -----'''
