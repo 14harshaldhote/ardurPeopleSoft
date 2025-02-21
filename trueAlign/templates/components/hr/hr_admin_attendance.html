@@ -2,191 +2,234 @@
 
 {% block content %}
 <div class="container mx-auto px-4 py-8">
-    <div class="max-w-6xl mx-auto">
-        <!-- Header with Stats -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="bg-white rounded-lg shadow p-6 border-l-4 border-green-500">
-                <div class="flex justify-between">
-                    <h3 class="text-gray-500 text-sm font-medium">Present Today</h3>
-                    <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">{{ present_count }}</span>
-                </div>
-                <p class="text-2xl font-bold text-gray-800 mt-2">{{ present_count }} Employees</p>
-            </div>
-            <div class="bg-white rounded-lg shadow p-6 border-l-4 border-red-500">
-                <div class="flex justify-between">
-                    <h3 class="text-gray-500 text-sm font-medium">Absent Today</h3>
-                    <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">{{ absent_count }}</span>
-                </div>
-                <p class="text-2xl font-bold text-gray-800 mt-2">{{ absent_count }} Employees</p>
-            </div>
-            <div class="bg-white rounded-lg shadow p-6 border-l-4 border-yellow-500">
-                <div class="flex justify-between">
-                    <h3 class="text-gray-500 text-sm font-medium">On Leave</h3>
-                    <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">{{ leave_count }}</span>
-                </div>
-                <p class="text-2xl font-bold text-gray-800 mt-2">{{ leave_count }} Employees</p>
-            </div>
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Monthly Attendance Report</h1>
+            <p class="text-gray-600">{{ month_name }} {{ year }}</p>
         </div>
 
-        <!-- Attendance Chart -->
-        <div class="bg-white rounded-lg shadow mb-8 p-6">
-            <canvas id="attendanceChart" class="w-full h-64"></canvas>
-        </div>
+        <!-- Month Navigation and Download Options -->
+        <div class="flex justify-between items-center mb-8">
+            <div class="flex items-center gap-4">
+                <a href="?month={{ prev_month }}&year={{ prev_year }}" class="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">
+                    <i class="fas fa-chevron-left mr-2"></i>Previous Month
+                </a>
+                <div class="text-lg font-semibold">{{ month_name }} {{ year }}</div>
+                <a href="?month={{ next_month }}&year={{ next_year }}" class="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">
+                    Next Month<i class="fas fa-chevron-right ml-2"></i>
+                </a>
+            </div>
 
-        <!-- Quick Actions -->
-        <div class="bg-white rounded-lg shadow mb-8">
-            <div class="p-6 border-b border-gray-200">
-                <div class="flex flex-wrap gap-4 justify-between items-center">
-                    <!-- Export Buttons -->
-                    <div class="flex gap-3">
-                        <form method="get" action="{% url 'aps_hr:attendance' %}">
-                            <input type="hidden" name="export" value="csv">
-                            <button type="submit" class="inline-flex items-center px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors">
-                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                                </svg>
-                                Export CSV
-                            </button>
-                        </form>
-                    
-                        <!-- Export to Excel -->
-                        <form method="get" action="{% url 'aps_hr:attendance' %}">
-                            <input type="hidden" name="export" value="excel">
-                            <button type="submit" class="inline-flex items-center px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors">
-                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                                </svg>
-                                Export Excel
+            <!-- Download Options -->
+            <div class="flex items-center gap-3">
+                <div class="relative">
+                    <button id="downloadBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center">
+                        <i class="fas fa-download mr-2"></i>Download Report
+                        <i class="fas fa-chevron-down ml-2"></i>
+                    </button>
+                    <div id="downloadMenu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-50">
+                        <a href="?month={{ month }}&year={{ year }}&format=excel" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                            <i class="fas fa-file-excel mr-2 text-green-600"></i>Excel Format
+                        </a>
+                        <a href="?month={{ month }}&year={{ year }}&format=pdf" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                            <i class="fas fa-file-pdf mr-2 text-red-600"></i>PDF Format
+                        </a>
+                        <a href="?month={{ month }}&year={{ year }}&format=csv" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                            <i class="fas fa-file-csv mr-2 text-blue-600"></i>CSV Format
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Custom Month Download -->
+                <div class="relative">
+                    <button id="customMonthBtn" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center">
+                        <i class="fas fa-calendar-alt mr-2"></i>Custom Month
+                    </button>
+                    <div id="customMonthMenu" class="hidden absolute right-0 mt-2 p-4 w-64 bg-white rounded-lg shadow-lg z-50">
+                        <form action="" method="GET" class="space-y-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Select Month</label>
+                                <input type="month" name="custom_month" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Format</label>
+                                <select name="format" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                    <option value="excel">Excel</option>
+                                    <option value="pdf">PDF</option>
+                                    <option value="csv">CSV</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                                Download
                             </button>
                         </form>
                     </div>
-
-                    <!-- Filter Form -->
-                    <form method="get" action="{% url 'aps_hr:attendance' %}" class="flex flex-wrap gap-3">
-                        <input type="text" name="username" placeholder="Search username..." value="{{ username_filter }}" 
-                               class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-400">
-                        
-                        <select name="status" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-400">
-                            <option value="">All Statuses</option>
-                            <option value="Present" {% if status_filter == 'Present' %}selected{% endif %}>Present</option>
-                            <option value="Absent" {% if status_filter == 'Absent' %}selected{% endif %}>Absent</option>
-                            <option value="On Leave" {% if status_filter == 'On Leave' %}selected{% endif %}>On Leave</option>
-                        </select>
-                        
-                        <input type="date" name="date" value="{{ date_filter }}" 
-                               class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-400">
-                        
-                        <button type="submit" class="inline-flex items-center px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg transition-colors">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414v6.586a1 1 0 01-.293.707l-2 2A1 1 0 0111 23v-7.586l-6.414-6.414A1 1 0 014 8.586V4z"/>
-                            </svg>
-                            Filter
-                        </button>
-                    </form>
                 </div>
             </div>
-            <!-- Table -->
-            <div class="overflow-x-auto">
-                <table class="w-full">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Employee</th>
-                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Username</th>
-                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
-                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Date</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-200">
-                        {% for record in summary %}
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4">
-                                <div class="flex items-center">
-                                    <div class="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center">
-                                        <span class="text-gray-600 font-medium text-sm">
-                                            {{ record.user.first_name|slice:":1"|upper }}{{ record.user.last_name|slice:":1"|upper }}
-                                        </span>
-                                    </div>
-                                    <span class="ml-3 text-sm text-gray-900">{{ record.user.first_name }} {{ record.user.last_name }}</span>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 text-sm text-gray-500">{{ record.user.username }}</td>
-                            <td class="px-6 py-4">
-                                {% if record.status == 'Present' %}
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Present</span>
-                                {% elif record.status == 'Absent' %}
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Absent</span>
-                                {% else %}
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">On Leave</span>
-                                {% endif %}
-                            </td>
+        </div>
 
-                            <td class="px-6 py-4 text-sm text-gray-500">{{ record.date }}</td>
-                        </tr>
+        <!-- Summary Stats -->
+        <!-- <div class="grid grid-cols-4 gap-4 mb-8">
+            <div class="bg-green-50 p-4 rounded-lg">
+                <div class="text-green-600 text-lg font-semibold">Present</div>
+                <div class="text-2xl font-bold">{{ present_count }}</div>
+            </div>
+            <div class="bg-red-50 p-4 rounded-lg">
+                <div class="text-red-600 text-lg font-semibold">Absent</div>
+                <div class="text-2xl font-bold">{{ absent_count }}</div>
+            </div>
+            <div class="bg-yellow-50 p-4 rounded-lg">
+                <div class="text-yellow-600 text-lg font-semibold">On Leave</div>
+                <div class="text-2xl font-bold">{{ leave_count }}</div>
+            </div>
+            <div class="bg-orange-50 p-4 rounded-lg">
+                <div class="text-orange-600 text-lg font-semibold">Loss of Pay</div>
+                <div class="text-2xl font-bold">{{ lop_count }}</div>
+            </div>
+        </div> -->
+
+        <!-- Attendance Table -->
+        <div class="bg-white rounded-lg shadow overflow-x-auto">
+            <table class="min-w-full">
+                <thead class="bg-gray-50 sticky top-0 z-10">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50">Employee</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-40 bg-gray-50">Location</th>
+                        {% for day in days_range %}
+                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
+                            {{ day|date:"D" }}<br>{{ day|date:"d" }}
+                        </th>
                         {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Pagination -->
-            <div class="px-6 py-4 border-t border-gray-200">
-                <div class="flex items-center justify-between">
-                    <p class="text-sm text-gray-700">
-                        Page {{ summary.number }} of {{ summary.paginator.num_pages }}
-                    </p>
-                    <div class="flex gap-2">
-                        {% if summary.has_previous %}
-                            <a href="?page=1" class="px-3 py-1 rounded border border-gray-300 text-sm hover:bg-gray-50">&laquo; First</a>
-                            <a href="?page={{ summary.previous_page_number }}" class="px-3 py-1 rounded border border-gray-300 text-sm hover:bg-gray-50">Previous</a>
-                        {% endif %}
-                        <span class="px-3 py-1 rounded border border-blue-500 bg-blue-50 text-blue-600 text-sm">{{ summary.number }}</span>
-                        {% if summary.has_next %}
-                            <a href="?page={{ summary.next_page_number }}" class="px-3 py-1 rounded border border-gray-300 text-sm hover:bg-gray-50">Next</a>
-                            <a href="?page={{ summary.paginator.num_pages }}" class="px-3 py-1 rounded border border-gray-300 text-sm hover:bg-gray-50">Last &raquo;</a>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200" style="max-height: calc(100vh - 300px); overflow-y: auto;">
+                    {% for row in attendance_matrix %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap sticky left-0 bg-white">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                                    {% if row.employee.first_name and row.employee.last_name %}
+                                        {{ row.employee.first_name|first|upper }}{{ row.employee.last_name|first|upper }}
+                                    {% else %}
+                                        --
+                                    {% endif %}
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">
+                                        {% if row.employee.first_name and row.employee.last_name %}
+                                            {{ row.employee.first_name }} {{ row.employee.last_name }}
+                                        {% else %}
+                                            Unknown Employee
+                                        {% endif %}
+                                    </div>
+                                    <div class="text-sm text-gray-500">{{ row.employee.username|default:"No email" }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap sticky left-40 bg-white">
+                            <span class="px-2 py-1 text-xs rounded-full {% if row.work_location == 'Pune' %}bg-blue-100 text-blue-800{% else %}bg-purple-100 text-purple-800{% endif %}">
+                                {{ row.work_location|default:"Unknown" }}
+                            </span>
+                        </td>
+                        {% for day, data in row.attendance.items %}
+                        <td class="px-4 py-4 text-center whitespace-nowrap">
+                            <div class="flex flex-col items-center">
+                                {% if data.status == 'Present' %}
+                                    <span class="h-3 w-3 rounded-full bg-green-500" title="Present"></span>
+                                {% elif data.status == 'Absent' %}
+                                    <span class="h-3 w-3 rounded-full bg-red-500" title="Absent"></span>
+                                {% elif data.status == 'On Leave' %}
+                                    <span class="h-3 w-3 rounded-full bg-yellow-500" title="On Leave"></span>
+                                {% elif data.status == 'Loss of Pay' %}
+                                    <span class="h-3 w-3 rounded-full bg-orange-500" title="Loss of Pay"></span>
+                                {% else %}
+                                    <span class="h-3 w-3 rounded-full bg-gray-200" title="No Record"></span>
+                                {% endif %}
+                               
+                            </div>
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="30" class="px-6 py-4 text-center text-gray-500">
+                            No attendance records found
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- JavaScript for Dropdowns -->
 <script>
-    const ctx = document.getElementById('attendanceChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: ['Present', 'Absent', 'On Leave'],
-            datasets: [{
-                label: 'Attendance Status',
-                data: [{{ present_count }}, {{ absent_count }}, {{ leave_count }}],
-                backgroundColor: ['#10B981', '#EF4444', '#F59E0B'],
-                borderWidth: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        display: true,
-                        color: '#E5E7EB'
-                    }
-                },
-                x: {
-                    grid: {
-                        display: false
-                    }
-                }
-            },
-            plugins: {
-                legend: {
-                    display: false
-                }
+document.addEventListener('DOMContentLoaded', function() {
+    // Download dropdown toggle
+    const downloadBtn = document.getElementById('downloadBtn');
+    const downloadMenu = document.getElementById('downloadMenu');
+    
+    if (downloadBtn && downloadMenu) {
+        downloadBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            downloadMenu.classList.toggle('hidden');
+            // Hide custom month menu when download menu is opened
+            if (customMonthMenu) {
+                customMonthMenu.classList.add('hidden');
             }
+        });
+    }
+    
+    // Custom month dropdown toggle
+    const customMonthBtn = document.getElementById('customMonthBtn');
+    const customMonthMenu = document.getElementById('customMonthMenu');
+    
+    if (customMonthBtn && customMonthMenu) {
+        customMonthBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            customMonthMenu.classList.toggle('hidden');
+            // Hide download menu when custom month menu is opened
+            if (downloadMenu) {
+                downloadMenu.classList.add('hidden');
+            }
+        });
+    }
+    
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function(e) {
+        if (downloadMenu && !downloadBtn?.contains(e.target) && !downloadMenu.contains(e.target)) {
+            downloadMenu.classList.add('hidden');
+        }
+        if (customMonthMenu && !customMonthBtn?.contains(e.target) && !customMonthMenu.contains(e.target)) {
+            customMonthMenu.classList.add('hidden');
         }
     });
+    
+    // Initialize month input with current month
+    const monthInput = document.querySelector('input[name="custom_month"]');
+    if (monthInput) {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        monthInput.value = `${year}-${month}`;
+    }
+
+    // Handle download form submission
+    const downloadForm = document.querySelector('#customMonthMenu form');
+    if (downloadForm) {
+        downloadForm.addEventListener('submit', function(e) {
+            const monthInput = this.querySelector('input[name="custom_month"]');
+            const formatSelect = this.querySelector('select[name="format"]');
+            
+            if (!monthInput.value) {
+                e.preventDefault();
+                alert('Please select a month');
+                return false;
+            }
+        });
+    }
+});
 </script>
 {% endblock %}

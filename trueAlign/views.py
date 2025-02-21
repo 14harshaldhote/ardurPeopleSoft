@@ -31,6 +31,8 @@ import csv
 import openpyxl
 from datetime import datetime, timedelta
 from django.db.models import F, ExpressionWrapper, DurationField
+# Commented out xlsxwriter import since it's not installed
+# import xlsxwriter
 
 '''------------------------------ TRACKING ------------------------'''
 
@@ -3258,138 +3260,312 @@ def manager_attendance_view(request):
 
     return render(request, 'components/manager/manager_attendance.html', {'team_attendance': team_records})
 
-
 @login_required
 @user_passes_test(is_hr)
 def hr_attendance_view(request):
-    from datetime import timedelta
+    from datetime import datetime, timedelta
+    import calendar
 
-    # Optimized query using select_related
-    all_attendance = Attendance.objects.select_related('user').order_by('-date')
+    # Get the month and year from request params, default to current month
+    today = datetime.today()
+    month = int(request.GET.get('month', today.month))
+    year = int(request.GET.get('year', today.year))
 
-    # Filters
-    username_filter = request.GET.get('username', '').strip()
-    status_filter = request.GET.get('status', '').strip()
-    date_filter = request.GET.get('date', '').strip()
-    date_range_start = request.GET.get('start_date', '').strip()
-    date_range_end = request.GET.get('end_date', '').strip()
+    # Get first and last day of selected month
+    first_day = datetime(year, month, 1).date()
+    last_day = datetime(year, month, calendar.monthrange(year, month)[1]).date()
 
-    if username_filter:
-        all_attendance = all_attendance.filter(user__username__icontains=username_filter)
-    if status_filter:
-        all_attendance = all_attendance.filter(status=status_filter)
-    if date_filter:
-        try:
-            date_obj = datetime.strptime(date_filter, '%Y-%m-%d').date()
-            all_attendance = all_attendance.filter(date=date_obj)
-        except ValueError:
-            date_filter = ''  # Reset invalid date input
+    # Get all employees with their details
+    employees = User.objects.select_related('userdetails').filter(
+        groups__name='Employee'
+    ).order_by('username')
 
-    # Filtering by date range
-    if date_range_start and date_range_end:
-        try:
-            start_date = datetime.strptime(date_range_start, '%Y-%m-%d').date()
-            end_date = datetime.strptime(date_range_end, '%Y-%m-%d').date()
-            all_attendance = all_attendance.filter(date__range=[start_date, end_date])
-        except ValueError:
-            date_range_start, date_range_end = '', ''  # Reset invalid date range input
+    # Get all attendance records for the month
+    attendance_records = Attendance.objects.filter(
+        date__range=[first_day, last_day]
+    ).select_related('user')
 
-    # Handle export requests before pagination
-    export_type = request.GET.get('export', '').strip().lower()
-    if export_type == 'csv':
-        return export_attendance_csv(all_attendance)
-    elif export_type == 'excel':
-        return export_attendance_excel(all_attendance)
+    # Create attendance matrix
+    attendance_matrix = []
+    days_in_month = calendar.monthrange(year, month)[1]
 
-    # Pagination
-    paginator = Paginator(all_attendance, 10)
-    page = request.GET.get('page', 1)
-    try:
-        all_records = paginator.get_page(page)
-    except (PageNotAnInteger, EmptyPage):
-        all_records = paginator.page(1)
+    for employee in employees:
+        employee_row = {
+            'employee': employee,
+            'work_location': employee.userdetails.work_location if hasattr(employee, 'userdetails') else "Not set",
+            'attendance': {}
+        }
 
-    # Attendance summary counts
-    present_count = all_attendance.filter(status='Present').count()
-    absent_count = all_attendance.filter(status='Absent').count()
-    leave_count = all_attendance.filter(status='On Leave').count()
-    lop_count = all_attendance.filter(status='Loss of Pay').count()
+        # Initialize all days with None (no record), skipping Sundays
+        for day in range(1, days_in_month + 1):
+            current_date = datetime(year, month, day).date()
+            if current_date.weekday() != 6:  # Skip Sundays (6 represents Sunday)
+                day_name = current_date.strftime('%a')  # Get 3-letter day name
+                employee_row['attendance'][current_date] = {
+                    'status': '-',
+                    'working_hours': None,
+                    'day_name': day_name
+                }
 
-    # Working hours calculation using UserSession's total_hours
-    for record in all_records:
-        try:
-            user_session = UserSession.objects.filter(
-                user=record.user,
-                date=record.date
-            ).first()  # Assuming one session per day; adjust logic if needed
+        # Fill in actual attendance records
+        employee_records = attendance_records.filter(user=employee)
+        for record in employee_records:
+            if record.date.weekday() != 6:  # Skip Sundays
+                day_name = record.date.strftime('%a')  # Get 3-letter day name
+                
+                # Get working hours
+                try:
+                    user_session = UserSession.objects.filter(
+                        user=employee,
+                        date=record.date
+                    ).first()
+                    
+                    if user_session and user_session.total_hours:
+                        total_seconds = user_session.total_hours.total_seconds()
+                        hours = int(total_seconds // 3600)
+                        minutes = int((total_seconds % 3600) // 60)
+                        working_hours = f"{hours}h {minutes}m"
+                    else:
+                        working_hours = "-"
+                except Exception:
+                    working_hours = "Error"
 
-            if user_session and user_session.total_hours:
-                total_seconds = user_session.total_hours.total_seconds()
-                hours = int(total_seconds // 3600)
-                minutes = int((total_seconds % 3600) // 60)
-                record.working_hours = f"{hours}h {minutes}m"
-            else:
-                record.working_hours = "Not available"
-        except Exception:
-            record.working_hours = "Error"
+                employee_row['attendance'][record.date] = {
+                    'status': record.status,
+                    'working_hours': working_hours,
+                    'day_name': day_name
+                }
 
-    return render(request, 'components/hr/hr_admin_attendance.html', {
-        'summary': all_records,
-        'username_filter': username_filter,
-        'status_filter': status_filter,
-        'date_filter': date_filter,
-        'date_range_start': date_range_start,
-        'date_range_end': date_range_end,
+        attendance_matrix.append(employee_row)
+
+    # Calculate summary counts for the month (excluding Sundays)
+    present_count = attendance_records.exclude(date__week_day=1).filter(status='Present').count()
+    absent_count = attendance_records.exclude(date__week_day=1).filter(status='Absent').count()
+    leave_count = attendance_records.exclude(date__week_day=1).filter(status='On Leave').count()
+    lop_count = attendance_records.exclude(date__week_day=1).filter(status='Loss of Pay').count()
+
+    # Get previous and next month links
+    if month == 1:
+        prev_month = 12
+        prev_year = year - 1
+    else:
+        prev_month = month - 1
+        prev_year = year
+
+    if month == 12:
+        next_month = 1
+        next_year = year + 1
+    else:
+        next_month = month + 1
+        next_year = year
+
+    # Create days range excluding Sundays
+    days_range = []
+    for day in range(1, days_in_month + 1):
+        current_date = datetime(year, month, day).date()
+        if current_date.weekday() != 6:  # Skip Sundays
+            days_range.append(current_date)
+
+    # Handle download requests
+    if 'format' in request.GET:
+        return handle_attendance_download(request)
+        
+
+    context = {
+        'attendance_matrix': attendance_matrix,
+        'days_range': days_range,
+        'month': month,
+        'year': year,
+        'month_name': calendar.month_name[month],
+        'prev_month': prev_month,
+        'prev_year': prev_year,
+        'next_month': next_month, 
+        'next_year': next_year,
         'present_count': present_count,
         'absent_count': absent_count,
         'leave_count': leave_count,
-        'lop_count': lop_count,  # Include Loss of Pay count in the template context
-    })
+        'lop_count': lop_count
+    }
 
-def export_attendance_csv(queryset):
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="attendance.csv"'
+    return render(request, 'components/hr/hr_admin_attendance.html', context)
 
-    writer = csv.writer(response)
-    writer.writerow(['Employee', 'Username', 'Status', 'Date', 'Working Hours'])
+def handle_attendance_download(request):
+    """Handle attendance download requests for both direct and custom month downloads"""
+    try:
+        # Get format and date parameters
+        export_format = request.GET.get('format', 'excel')
+        
+        # Check if this is a custom month request
+        custom_month = request.GET.get('custom_month')
+        if custom_month:
+            # Parse custom month (format: YYYY-MM)
+            year, month = map(int, custom_month.split('-'))
+        else:
+            # Use month and year from query parameters
+            month = int(request.GET.get('month', datetime.now().month))
+            year = int(request.GET.get('year', datetime.now().year))
 
-    records = queryset.values(
-        'user__first_name', 'user__last_name', 'user__username', 'status', 'date', 'working_hours'
-    )
-    for record in records:
-        writer.writerow([
-            f"{record['user__first_name']} {record['user__last_name']}",
-            record['user__username'],
-            record['status'],
-            record['date'].strftime('%Y-%m-%d'),
-            record['working_hours'],
-        ])
-    return response
+        # Get first and last day of selected month
+        first_day = datetime(year, month, 1).date()
+        last_day = datetime(year, month, calendar.monthrange(year, month)[1]).date()
 
-def export_attendance_excel(queryset):
-    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename="attendance.xlsx"'
+        # Get attendance queryset for the month
+        queryset = Attendance.objects.filter(
+            date__range=[first_day, last_day]
+        ).select_related('user', 'user__userdetails')
 
-    wb = openpyxl.Workbook()
+        # Export based on format
+        if export_format == 'excel':
+            return export_attendance_excel(queryset, month, year)
+        elif export_format == 'csv':
+            return export_attendance_csv(queryset, month, year)
+        elif export_format == 'pdf':
+            return export_attendance_pdf(queryset, month, year)
+        else:
+            raise Http404("Invalid export format")
+            
+    except Exception as e:
+        # Log the error and return an error response
+        print(f"Export error: {str(e)}")  # Replace with proper logging
+        return HttpResponse(
+            "Error generating report. Please try again.",
+            status=500
+        )
+
+def export_attendance_excel(queryset, month, year):
+    """Generate Excel version of attendance report"""
+    from openpyxl import Workbook
+    from openpyxl.styles import PatternFill, Font, Alignment
+    import calendar
+    from io import BytesIO
+    
+    # Create workbook and select active sheet
+    wb = Workbook()
     ws = wb.active
-    ws.title = "Attendance"
-    ws.append(['Employee', 'Username', 'Status', 'Date', 'Working Hours'])
-
-    records = queryset.values(
-        'user__first_name', 'user__last_name', 'user__username', 'status', 'date', 'working_hours'
+    
+    # Define styles
+    header_fill = PatternFill(start_color='4B5563', end_color='4B5563', fill_type='solid')
+    header_font = Font(bold=True, color='FFFFFF')
+    center_align = Alignment(horizontal='center', vertical='center')
+    
+    # Get all dates in month excluding Sundays
+    days_in_month = calendar.monthrange(year, month)[1]
+    dates = [
+        datetime(year, month, day).date()
+        for day in range(1, days_in_month + 1)
+        if datetime(year, month, day).date().weekday() != 6
+    ]
+    
+    # Write headers
+    headers = ['Employee', 'Username', 'Location'] + [d.strftime('%d') for d in dates]
+    for col, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col, value=header)
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = center_align
+    
+    # Write data
+    row = 2
+    for user_id in queryset.values_list('user', flat=True).distinct():
+        user = User.objects.get(id=user_id)
+        user_details = UserDetails.objects.get(user=user)
+        
+        ws.cell(row=row, column=1, value=f"{user.first_name} {user.last_name}").alignment = center_align
+        ws.cell(row=row, column=2, value=user.username).alignment = center_align
+        ws.cell(row=row, column=3, value=user_details.work_location or 'Unknown').alignment = center_align
+        
+        col = 4
+        for date in dates:
+            try:
+                record = queryset.get(user=user, date=date)
+                status = {
+                    'Present': 'P',
+                    'Absent': 'A', 
+                    'On Leave': 'L',
+                    'Loss of Pay': 'LOP'
+                }.get(record.status, '-')
+            except:
+                status = '-'
+            ws.cell(row=row, column=col, value=status).alignment = center_align
+            col += 1
+        row += 1
+    
+    # Adjust column widths
+    ws.column_dimensions['A'].width = 20  # Employee name
+    ws.column_dimensions['B'].width = 15  # Username  
+    ws.column_dimensions['C'].width = 15  # Location
+    for col in range(4, len(headers) + 1):
+        ws.column_dimensions[ws.cell(row=1, column=col).column_letter].width = 5
+    
+    # Save to BytesIO
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+    
+    # Create response
+    response = HttpResponse(
+        output.read(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )
-    for record in records:
-        ws.append([
-            f"{record['user__first_name']} {record['user__last_name']}",
-            record['user__username'],
-            record['status'],
-            record['date'].strftime('%Y-%m-%d'),
-            record['working_hours'],
-        ])
-    wb.save(response)
+    response['Content-Disposition'] = f'attachment; filename="attendance_{month}_{year}.xlsx"'
     return response
 
+def export_attendance_csv(queryset, month, year):
+    """Generate CSV version of attendance report"""
+    import csv
+    from io import StringIO
+    
+    # Create the HTTP response
+    output = StringIO()
+    writer = csv.writer(output)
+    
+    # Get all dates in month excluding Sundays
+    days_in_month = calendar.monthrange(year, month)[1]
+    dates = [
+        datetime(year, month, day).date()
+        for day in range(1, days_in_month + 1)
+        if datetime(year, month, day).date().weekday() != 6
+    ]
+    
+    # Write headers
+    headers = ['Employee', 'Username', 'Location'] + [d.strftime('%d') for d in dates]
+    writer.writerow(headers)
+    
+    # Write data
+    for user_id in queryset.values_list('user', flat=True).distinct():
+        user = User.objects.get(id=user_id)
+        user_details = UserDetails.objects.get(user=user)
+        
+        row = [
+            f"{user.first_name} {user.last_name}",
+            user.username,
+            user_details.work_location or 'Unknown'
+        ]
+        
+        for date in dates:
+            try:
+                record = queryset.get(user=user, date=date)
+                status = {
+                    'Present': 'P',
+                    'Absent': 'A',
+                    'On Leave': 'L',
+                    'Loss of Pay': 'LOP'
+                }.get(record.status, '-')
+            except:
+                status = '-'
+            row.append(status)
+            
+        writer.writerow(row)
+    
+    # Create the response
+    output.seek(0)
+    response = HttpResponse(output.getvalue(), content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="attendance_{month}_{year}.csv"'
+    return response
 
+def export_attendance_pdf(queryset, month, year, request):
+    """Generate PDF version of attendance report"""
+    return messages.error(request, "PDF export is currently unavailable. Please try Excel or CSV format instead.")
 
 '''------------------------------------------------ SUPPORT  AREA------------------------------------------------'''
 
