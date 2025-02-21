@@ -2,41 +2,7 @@
 {% block title %}Dashboard - APS Portal{% endblock %}
 {% block content %}
 <div class="min-h-screen py-6 px-4 sm:px-6 lg:px-8 overflow-y-auto">
-     <!-- Page Header -->
-     <div class="mb-8">
-        {% if messages %}
-        <div id="toast-container" class="fixed top-4 right-4 z-50">
-            {% for message in messages %}
-            <div class="p-4 rounded-md mb-2 transform transition-all duration-300 opacity-0 translate-x-full {% if message.tags == 'success' %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %} flex items-center shadow-lg">
-                <span class="mr-2">
-                    {% if message.tags == 'success' %}✓{% else %}⚠️{% endif %}
-                </span>
-                {{ message }}
-            </div>
-            {% endfor %}
-        </div>
-
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                const toasts = document.querySelectorAll('#toast-container > div');
-                toasts.forEach(toast => {
-                    // Show toast
-                    setTimeout(() => {
-                        toast.classList.remove('opacity-0', 'translate-x-full');
-                        toast.classList.add('opacity-100', 'translate-x-0');
-                    }, 100);
-
-                    // Hide and remove toast after 1 second
-                    setTimeout(() => {
-                        toast.classList.remove('opacity-100', 'translate-x-0');
-                        toast.classList.add('opacity-0', 'translate-x-full');
-                        setTimeout(() => toast.remove(), 300);
-                    }, 6000);
-                });
-            });
-        </script>
-        {% endif %}
-    </div>
+   
     <div class="max-w-7xl mx-auto">
         <!-- Header Section with Role-Based Content -->
         <div class="relative overflow-hidden bg-white mb-8 rounded-lg shadow-lg">
@@ -61,11 +27,9 @@
                                 <div class="flex items-center justify-center space-x-4">
                                     <!-- Circle with Initials -->
                                     <div
-                                        class="w-10 h-10 rounded-full bg-indigo-600 shadow-lg flex items-center justify-center">
-                                        <span class="text-white font-medium text-xl uppercase" id="initials">
-                                            {{ user.first_name|default:''|slice:":1"|upper }}{{ user.last_name|default:''|slice:":1"|upper }}
-                                        </span>
-                                           </div>
+                                        class="w-10 h-10 rounded-full  flex items-center justify-center">
+                                    
+                                    </div>
 
                                     <!-- Time Display -->
                                     <span class="text-indigo-600 font-bold text-md tracking-wider"
@@ -99,11 +63,6 @@
                                     updateTime();
                                     setInterval(updateTime, 1000);
                                 </script>
-
-
-
-
-
                             </div>
                             <div class="flex items-center space-x-4">
                                 <span class="flex items-center space-x-2">
@@ -129,26 +88,26 @@
                                     <script>
                                         // Create WebSocket connection for notifications
                                         const userNotificationSocket = new WebSocket(
-                                            'ws://' + window.location.host + 
+                                            'ws://' + window.location.host +
                                             '/ws/chat/' + '{{ request.user.id }}/'  // You'll need to update the URL pattern
                                         );
-                                        
+
                                         let notificationCount = 0;
                                         const notificationButton = document.querySelector('.btn-secondary');
                                         const notificationList = document.createElement('div');
                                         notificationList.className = 'notification-dropdown hidden';
                                         document.body.appendChild(notificationList);
-                                        
-                                        userNotificationSocket.onmessage = function(e) {
+
+                                        userNotificationSocket.onmessage = function (e) {
                                             const data = JSON.parse(e.data);
-                                            
+
                                             if (data.type === 'notification') {
                                                 notificationCount++;
                                                 updateNotificationBadge();
                                                 addNotification(data);
                                             }
                                         };
-                                        
+
                                         function updateNotificationBadge() {
                                             // Create or update notification badge
                                             let badge = notificationButton.querySelector('.notification-badge');
@@ -159,7 +118,7 @@
                                             }
                                             badge.textContent = notificationCount;
                                         }
-                                        
+
                                         function addNotification(data) {
                                             const notification = document.createElement('div');
                                             notification.className = 'notification-item';
@@ -169,23 +128,23 @@
                                             `;
                                             notificationList.insertBefore(notification, notificationList.firstChild);
                                         }
-                                        
+
                                         // Toggle notification dropdown
                                         notificationButton.addEventListener('click', () => {
                                             notificationList.classList.toggle('hidden');
                                             notificationCount = 0;
                                             updateNotificationBadge();
                                         });
-                                        
+
                                         // Close dropdown when clicking outside
                                         document.addEventListener('click', (e) => {
                                             if (!notificationButton.contains(e.target) && !notificationList.contains(e.target)) {
                                                 notificationList.classList.add('hidden');
                                             }
                                         });
-                                        </script>
-                                        
-                                        <style>
+                                    </script>
+
+                                    <style>
                                         .notification-badge {
                                             position: absolute;
                                             top: -5px;
@@ -196,7 +155,7 @@
                                             padding: 2px 6px;
                                             font-size: 12px;
                                         }
-                                        
+
                                         .notification-dropdown {
                                             position: absolute;
                                             top: 100%;
@@ -204,36 +163,36 @@
                                             background: white;
                                             border: 1px solid #ddd;
                                             border-radius: 4px;
-                                            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+                                            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
                                             width: 300px;
                                             max-height: 400px;
                                             overflow-y: auto;
                                             z-index: 1000;
                                         }
-                                        
+
                                         .notification-dropdown.hidden {
                                             display: none;
                                         }
-                                        
+
                                         .notification-item {
                                             padding: 10px;
                                             border-bottom: 1px solid #eee;
                                         }
-                                        
+
                                         .notification-item:last-child {
                                             border-bottom: none;
                                         }
-                                        
+
                                         .notification-message {
                                             color: #666;
                                             font-size: 14px;
                                             margin-top: 5px;
                                         }
-                                        
+
                                         .btn-secondary {
                                             position: relative;
                                         }
-                                        </style>
+                                    </style>
                                 </button>
                             </div>
                         </nav>
@@ -245,9 +204,10 @@
                                 <div class="card text-black rounded-md">
                                     <h1 class="text-2xl font-bold mb-2">
                                         Welcome, {{ user.first_name }} {{ user.last_name }} !
-                                       
+
                                     </h1>
-                                    <p class="text-indigo-200">Last login: {{ user.last_login|date:"F j, Y, g:i a" }}</p>
+                                    <p class="text-indigo-200">Last login: {{ user.last_login|date:"F j, Y, g:i a" }}
+                                    </p>
                                 </div>
 
 

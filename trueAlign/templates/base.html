@@ -10,7 +10,8 @@
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@2.8.2/dist/alpine.min.js" defer></script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Linlegrey:wght@400;700&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/reconnecting-websocket/1.0.0/reconnecting-websocket.min.js"></script>
+    <script
+        src="https://cdnjs.cloudflare.com/ajax/libs/reconnecting-websocket/1.0.0/reconnecting-websocket.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
 
     <style>
@@ -151,21 +152,60 @@
 
                 <div class="text-sm text-white flex items-center space-x-4">
                     <span class="font-semibold text-black username">{{ user.username }}</span>
-                    <a href="{% url 'logout' %}" 
-                    class="px-6 py-3 bg-gradient-to-r from-red-500 to-pink-600 text-white 
+                    <a href="{% url 'logout' %}" class="px-6 py-3 bg-gradient-to-r from-red-500 to-pink-600 text-white 
                            rounded-xl shadow-lg hover:shadow-xl 
                            transform hover:-translate-y-1 transition-all duration-300 
                            flex items-center space-x-2">
-                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                         <path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 1.293a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 01-1.414-1.414L14.586 11H7a1 1 0 110-2h7.586l-1.293-1.293a1 1 0 010-1.414z" clip-rule="evenodd" />
-                     </svg>
-                     <span>Logout</span>
-                 </a>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 1.293a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 01-1.414-1.414L14.586 11H7a1 1 0 110-2h7.586l-1.293-1.293a1 1 0 010-1.414z"
+                                clip-rule="evenodd" />
+                        </svg>
+                        <span>Logout</span>
+                    </a>
                 </div>
             </header>
 
             <div>
+                 <!-- Page Header -->
+    <div class="mb-8">
+        {% if messages %}
+        <div id="toast-container" class="fixed top-4 right-4 z-50">
+            {% for message in messages %}
+            <div
+                class="p-4 rounded-md mb-2 transform transition-all duration-300 opacity-0 translate-x-full {% if message.tags == 'success' %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %} flex items-center shadow-lg">
+                <span class="mr-2">
+                    {% if message.tags == 'success' %}✓{% else %}⚠️{% endif %}
+                </span>
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const toasts = document.querySelectorAll('#toast-container > div');
+                toasts.forEach(toast => {
+                    // Show toast
+                    setTimeout(() => {
+                        toast.classList.remove('opacity-0', 'translate-x-full');
+                        toast.classList.add('opacity-100', 'translate-x-0');
+                    }, 100);
+
+                    // Hide and remove toast after 1 second
+                    setTimeout(() => {
+                        toast.classList.remove('opacity-100', 'translate-x-0'); 
+                        toast.classList.add('opacity-0', 'translate-x-full');
+                        setTimeout(() => toast.remove(), 300);
+                    }, 6000);
+                });
+            });
+        </script>
+        {% endif %}
+    </div>
                 {% block content %}
+
+
                 {% endblock %}
             </div>
         </div>
@@ -323,42 +363,42 @@
         });
     </script>
 
- 
- <script>
- function updateClock() {
-    const now = new Date();
-    const hoursEl = document.getElementById('hours');
-    const minutesEl = document.getElementById('minutes');
-    const secondsEl = document.getElementById('seconds');
-    const ampmEl = document.getElementById('ampm');
-    const dateEl = document.getElementById('date');
-    
-    let hours = now.getHours();
-    const minutes = now.getMinutes();
-    const seconds = now.getSeconds();
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    
-    // Convert to 12-hour format
-    hours = hours % 12;
-    hours = hours ? hours : 12; // handle midnight (0 hours)
-    
-    hoursEl.textContent = hours.toString().padStart(2, '0');
-    minutesEl.textContent = minutes.toString().padStart(2, '0');
-    secondsEl.textContent = seconds.toString().padStart(2, '0');
-    ampmEl.textContent = ampm;
-    
-    dateEl.textContent = now.toLocaleDateString(undefined, {
-        weekday: 'short', 
-        month: 'short', 
-        day: 'numeric'
-    });
- }
- 
- // Update immediately and then every second
- updateClock();
- setInterval(updateClock, 1000);
- </script>
- 
+
+    <script>
+        function updateClock() {
+            const now = new Date();
+            const hoursEl = document.getElementById('hours');
+            const minutesEl = document.getElementById('minutes');
+            const secondsEl = document.getElementById('seconds');
+            const ampmEl = document.getElementById('ampm');
+            const dateEl = document.getElementById('date');
+
+            let hours = now.getHours();
+            const minutes = now.getMinutes();
+            const seconds = now.getSeconds();
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+
+            // Convert to 12-hour format
+            hours = hours % 12;
+            hours = hours ? hours : 12; // handle midnight (0 hours)
+
+            hoursEl.textContent = hours.toString().padStart(2, '0');
+            minutesEl.textContent = minutes.toString().padStart(2, '0');
+            secondsEl.textContent = seconds.toString().padStart(2, '0');
+            ampmEl.textContent = ampm;
+
+            dateEl.textContent = now.toLocaleDateString(undefined, {
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric'
+            });
+        }
+
+        // Update immediately and then every second
+        updateClock();
+        setInterval(updateClock, 1000);
+    </script>
+
 </body>
 
 </html>

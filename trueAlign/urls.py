@@ -49,6 +49,9 @@ hr_patterns = [
     path('hr/edit-update/<int:update_id>/', views.hr_edit_update, name='hr_edit_update'),
     path('hr/delete-update/<int:update_id>/', views.hr_delete_update, name='hr_delete_update'),
     path('employees/', views.employee_directory, name='employee_directory'),
+
+    path('mark_attendance/', views.manual_attendance, name='manual_attendance'),
+
 ]
 
 # Manager-specific URLs under 'truealign/manager/'

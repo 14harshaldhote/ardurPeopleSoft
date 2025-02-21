@@ -4,7 +4,7 @@ from .models import (UserSession, Attendance, SystemError,
                     Support, FailedLoginAttempt, PasswordChange, 
                     RoleAssignmentAudit, FeatureUsage, SystemUsage, 
                     Timesheet,GlobalUpdate,
-                     UserDetails,ProjectUpdate)
+                     UserDetails,ProjectUpdate, Presence, PresenceStatus)
 from django.db.models import Q
 from datetime import datetime, timedelta, date
 from django.utils import timezone
@@ -159,6 +159,11 @@ def is_manager(user):
 def is_employee(user):
     """Check if the user belongs to the 'Employee' group."""
     return user.groups.filter(name="Employee").exists()
+    
+def is_management(user):
+    """Check if the user belongs to the 'Employee' group."""
+    return user.groups.filter(name="Management").exists()
+    
 
 
 ''' ----------------- COMMON AREA ----------------- '''
@@ -1756,20 +1761,20 @@ def system_usage_view(request):
         return redirect('dashboard')
 
 '''' -------------- usersession ---------------'''
-from django.db.models import Max, Min, Sum, Case, When, BooleanField
+from django.db.models import Count, Min, Max, Sum, Case, When, BooleanField
 from django.db.models.functions import Coalesce
-from django.utils import timezone
 from datetime import datetime, timedelta
+from django.utils import timezone
 from django.contrib import messages
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required, user_passes_test
+from .models import UserSession, ProjectAssignment, Project
 
 @login_required
 @user_passes_test(is_admin)
 def user_sessions_view(request):
     """View to display user sessions, accessible only by admins."""
     try:
-        # Get filter parameters from GET request
         username = request.GET.get('username', '')
         start_date = request.GET.get('start_date', '')
         end_date = request.GET.get('end_date', '')
@@ -1778,19 +1783,19 @@ def user_sessions_view(request):
         max_idle_time = request.GET.get('max_idle_time', '')
 
         # Initialize base queryset
-        sessions = UserSession.objects.all()
+        sessions = UserSession.objects.select_related('user')
 
         # Apply filters
         if username:
             sessions = sessions.filter(user__username__icontains=username)
-        
+
         if start_date:
             try:
                 start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
                 sessions = sessions.filter(login_time__date__gte=start_date)
             except ValueError:
                 messages.error(request, "Invalid start date format. Please use YYYY-MM-DD.")
-        
+
         if end_date:
             try:
                 end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
@@ -1803,7 +1808,6 @@ def user_sessions_view(request):
 
         if min_working_hours:
             try:
-                # Convert hours to timedelta (format expected: HH:MM)
                 hours, minutes = map(int, min_working_hours.split(':'))
                 min_duration = timedelta(hours=hours, minutes=minutes)
                 sessions = sessions.filter(working_hours__gte=min_duration)
@@ -1812,7 +1816,6 @@ def user_sessions_view(request):
 
         if max_idle_time:
             try:
-                # Convert minutes to timedelta (format expected: MM)
                 max_idle = timedelta(minutes=int(max_idle_time))
                 sessions = sessions.filter(idle_time__lte=max_idle)
             except ValueError:
@@ -1821,7 +1824,7 @@ def user_sessions_view(request):
         # Group sessions by user and location
         grouped_sessions = (
             sessions
-            .values('user__username', 'location')
+            .values('user__username', 'user__first_name', 'user__last_name', 'location')
             .annotate(
                 first_login=Min('login_time'),
                 last_logout=Max('logout_time'),
@@ -1837,9 +1840,45 @@ def user_sessions_view(request):
             .order_by('-first_login')
         )
 
-        # Prepare context data
-        context = {
+        # **Summary Counts**
+        location_summary = sessions.values('location').annotate(count=Count('id'))
+
+        # **Project-wise summary (Indirect Relationship)**
+        project_summary = (
+            ProjectAssignment.objects
+            .filter(user__in=sessions.values('user'))  # Get projects for users with active sessions
+            .values('project__name')
+            .annotate(count=Count('user', distinct=True))  # Count unique users per project
+        )
+
+        # Process the grouped sessions for display
+        for session in grouped_sessions:
+            session['full_name'] = f"{session['user__first_name']} {session['user__last_name']} ({session['user__username']})"
+            session['login_time_local'] = timezone.localtime(session['first_login'])
+            session['logout_time_local'] = (
+                timezone.localtime(session['last_logout']) 
+                if session['last_logout'] and not session['is_active']
+                else None
+            )
+            session['last_activity_local'] = timezone.localtime(session['last_activity'])
+
+            # Format working hours
+            total_seconds = session['total_working_hours'].total_seconds()
+            hours = int(total_seconds // 3600)
+            minutes = int((total_seconds % 3600) // 60)
+            session['working_hours_display'] = f"{hours:02d}:{minutes:02d}"
+
+            # Format idle time
+            if session['total_idle_time']:
+                idle_minutes = int(session['total_idle_time'].total_seconds() // 60)
+                session['idle_time_display'] = f"{idle_minutes} min"
+            else:
+                session['idle_time_display'] = ""
+
+        return render(request, 'components/admin/user_sessions.html', {
             'sessions': grouped_sessions,
+            'location_summary': location_summary,
+            'project_summary': project_summary,
             'filters': {
                 'username': username,
                 'start_date': start_date,
@@ -1848,39 +1887,12 @@ def user_sessions_view(request):
                 'min_working_hours': min_working_hours,
                 'max_idle_time': max_idle_time,
             },
-            'location_choices': [('Office', 'Office'), ('Home', 'Home')],  # For dropdown
-        }
-
-        # Process the grouped sessions for display
-        for session in grouped_sessions:
-            # Convert times to local timezone
-            session['login_time_local'] = timezone.localtime(session['first_login'])
-            session['logout_time_local'] = (
-                timezone.localtime(session['last_logout']) 
-                if session['last_logout'] and not session['is_active']
-                else None
-            )
-            session['last_activity_local'] = timezone.localtime(session['last_activity'])
-            
-            # Format working hours
-            total_seconds = session['total_working_hours'].total_seconds()
-            hours = int(total_seconds // 3600)
-            minutes = int((total_seconds % 3600) // 60)
-            session['working_hours_display'] = f"{hours:02d}:{minutes:02d}"
-            
-            # Format idle time
-            if session['total_idle_time']:
-                idle_minutes = int(session['total_idle_time'].total_seconds() // 60)
-                session['idle_time_display'] = f"{idle_minutes} min"
-            else:
-                session['idle_time_display'] = ""
-
-        return render(request, 'components/admin/user_sessions.html', context)
+            'location_choices': [('Office', 'Office'), ('Home', 'Home')],
+        })
 
     except Exception as e:
         messages.error(request, f"An error occurred: {str(e)}")
         return render(request, 'error.html', {'error_message': str(e)})
-
 
 
 
@@ -3900,3 +3912,92 @@ def leave_chat(request, chat_id):
     except Exception as e:
         messages.error(request, 'An error occurred while leaving the chat.')
         return redirect('chat_list')
+
+
+
+'''-------------------------- MANUAL ATTENDACE BY HR  --------------------------------'''
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib import messages
+from django.utils.timezone import now
+from django.contrib.auth.models import User, Group
+from .models import Presence, PresenceStatus
+from datetime import datetime
+from django.db.models import Q
+from trueAlign.context_processors import is_management
+
+
+def is_hr(user):
+    """Check if user is HR"""
+    return user.groups.filter(name="HR").exists()
+
+def is_management(request):
+    """Check if the user belongs to the 'Management' group."""
+    return {'is_management': request.user.groups.filter(name="Management").exists()} if request.user.is_authenticated else {'is_management': False}
+
+@login_required
+@user_passes_test(is_hr)
+def manual_attendance(request):
+    try:
+        # Get date from query parameters or use current date
+        date_str = request.GET.get('date')
+        attendance_date = datetime.strptime(date_str, '%Y-%m-%d').date() if date_str else now().date()
+
+        # Get manageable users (Management and Backoffice users)
+        manageable_users = User.objects.filter(is_active=True).filter(
+            Q(groups__name="Management") | Q(groups__name="Backoffice")
+        ).distinct()
+
+        if request.method == "POST":
+            attendance_date = datetime.strptime(request.POST.get('date'), '%Y-%m-%d').date()
+            
+            # Process each user's attendance data
+            for user in manageable_users:
+                user_id = str(user.id)
+                status_key = f'attendance[{user_id}][status]'
+                notes_key = f'attendance[{user_id}][notes]'
+                
+                if status_key in request.POST:
+                    status = request.POST.get(status_key)
+                    notes = request.POST.get(notes_key, '').strip()
+                    
+                    # Update or create attendance record
+                    Presence.objects.update_or_create(
+                        user=user,
+                        date=attendance_date,
+                        defaults={
+                            'status': status,
+                            'notes': notes,
+                            'marked_by': request.user,
+                            'marked_at': now()
+                        }
+                    )
+            
+            messages.success(request, "Attendance marked successfully")
+            return redirect('aps_hr:manual_attendance')
+
+        # Get existing presence records for the selected date
+        presences = Presence.objects.filter(date=attendance_date, user__in=manageable_users)
+        
+        # Check if user is in Management group directly
+        is_management_user = request.user.groups.filter(name="Management").exists()
+        
+        # Prepare context for template rendering
+        context = {
+            'presences': presences,
+            'employees': manageable_users,
+            'statuses': PresenceStatus.choices,
+            'date_filter': attendance_date,
+            'today': now().date(),
+            'is_hr': True,
+            'is_management': is_management(request)  # Add this directly
+        }
+        
+        # Debug line to verify the context
+        print(f"Context contains is_management: {context}")
+
+        return render(request, 'components/hr/markAttendace.html', context)
+
+    except Exception as e:
+        messages.error(request, f"An error occurred: {str(e)}")
+        return redirect('aps_hr:manual_attendance')

@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-800">Attendance Management</h2>
+        <div class="flex space-x-4">
+            <input type="date" id="dateFilter" name="date" value="{{ date_filter|default:today|date:'Y-m-d' }}" 
+                class="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                onchange="this.form.submit()">
+        </div>
+    </div>
+
+    <form method="POST" action="{% url 'aps_hr:manual_attendance' %}" id="attendanceForm">
+        {% csrf_token %}
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-gray-600">Employee</th>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-gray-600">Role</th>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-gray-600">Date</th>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-gray-600">Status</th>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-gray-600">Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for employee in employees %}
+                        <tr class="hover:bg-gray-50 transition duration-150">
+                            <td class="px-6 py-4">
+                                <div class="flex items-center">
+                                    <div class="h-10 w-10 flex-shrink-0">
+                                        <span class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600">
+                                            {{ employee.first_name|first }}{{ employee.last_name|first }}
+                                        </span>
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-gray-900">
+                                            {{ employee.first_name }} {{ employee.last_name }}
+                                        </div>
+                                        <div class="text-sm text-gray-500">
+                                            {{ employee.email }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                    {% if employee.groups.first.name == 'Management' %}bg-purple-100 text-purple-800
+                                    {% else %}bg-blue-100 text-blue-800{% endif %}">
+                                    {{ employee.groups.first.name|default:"-" }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <input type="date" name="date" value="{{ date_filter|default:today|date:'Y-m-d' }}"
+                                    class="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                    required>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex flex-col space-y-2">
+                                    <label class="inline-flex items-center">
+                                        <input type="radio" name="attendance[{{ employee.id }}][status]" value="present"
+                                            class="form-radio text-green-600" checked
+                                            onchange="toggleNotes('{{ employee.id }}', false)">
+                                        <span class="ml-2 text-sm text-gray-700">✔️ Present</span>
+                                    </label>
+                                    <label class="inline-flex items-center">
+                                        <input type="radio" name="attendance[{{ employee.id }}][status]" value="absent"
+                                            class="form-radio text-red-600"
+                                            onchange="toggleNotes('{{ employee.id }}', true, true)">
+                                        <span class="ml-2 text-sm text-gray-700">❌ Absent</span>
+                                    </label>
+                                    {% if employee not in management_users %}
+                                    <label class="inline-flex items-center">
+                                        <input type="radio" name="attendance[{{ employee.id }}][status]" value="late"
+                                            class="form-radio text-yellow-600"
+                                            onchange="toggleNotes('{{ employee.id }}', true, true)">
+                                        <span class="ml-2 text-sm text-gray-700">🕒 Late</span>
+                                    </label>
+                                    {% endif %}
+
+                                    {% if employee in management_users %}
+                                    <label class="inline-flex items-center">
+                                        <input type="radio" name="attendance[{{ employee.id }}][status]" value="wfh"
+                                            class="form-radio text-blue-600"
+                                            onchange="toggleNotes('{{ employee.id }}', false)">
+                                        <span class="ml-2 text-sm text-gray-700">🏠 WFH</span>
+                                    </label>
+                                    <label class="inline-flex items-center">
+                                        <input type="radio" name="attendance[{{ employee.id }}][status]" value="business_trip"
+                                            class="form-radio text-purple-600"
+                                            onchange="toggleNotes('{{ employee.id }}', true, true)">
+                                        <span class="ml-2 text-sm text-gray-700">✈️ Business Trip</span>
+                                    </label>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <textarea id="notes_{{ employee.id }}" name="attendance[{{ employee.id }}][notes]" 
+                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                    rows="2" placeholder="Add notes here..." disabled></textarea>
+                                <div id="error_{{ employee.id }}" class="text-red-500 text-sm hidden">Notes are required for this status</div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {% if is_hr %}
+        <div class="mt-6 flex justify-end">
+            <button type="submit"
+                class="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150">
+                Save Attendance
+            </button>
+        </div>
+        {% endif %}
+    </form>
+</div>
+
+<script>
+function toggleNotes(employeeId, enable, required = false) {
+    const notesField = document.getElementById(`notes_${employeeId}`);
+    const errorDiv = document.getElementById(`error_${employeeId}`);
+    notesField.disabled = !enable;
+    
+    if (!enable) {
+        notesField.value = '';
+        notesField.required = false;
+        errorDiv.classList.add('hidden');
+    } else {
+        notesField.required = required;
+        if (required) {
+            errorDiv.classList.remove('hidden');
+        } else {
+            errorDiv.classList.add('hidden');
+        }
+    }
+}
+
+document.getElementById('attendanceForm').addEventListener('submit', function(e) {
+    const textareas = document.querySelectorAll('textarea[required]');
+    let isValid = true;
+    
+    textareas.forEach(textarea => {
+        if (!textarea.value.trim()) {
+            const errorDiv = document.getElementById(`error_${textarea.id.split('_')[1]}`);
+            errorDiv.classList.remove('hidden');
+            isValid = false;
+        }
+    });
+    
+    if (!isValid) {
+        e.preventDefault();
+    }
+});
+</script>
+
+{% endblock %}

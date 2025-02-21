@@ -2,44 +2,32 @@ from django.contrib.auth.models import Group
 
 def is_admin(request):
     """Check if the user belongs to the 'Admin' group."""
-    if hasattr(request, 'user') and request.user.is_authenticated:
-        try:
-            is_admin = request.user.groups.filter(name="Admin").exists()
-        except AttributeError:
-            is_admin = False
-    else:
-        is_admin = False
-    return {'is_admin': is_admin}
+    return {'is_admin': request.user.groups.filter(name="Admin").exists()} if request.user.is_authenticated else {'is_admin': False}
 
 def is_manager(request):
     """Check if the user belongs to the 'Manager' group."""
-    if hasattr(request, 'user') and request.user.is_authenticated:
-        try:
-            is_manager = request.user.groups.filter(name="Manager").exists()
-        except AttributeError:
-            is_manager = False
-    else:
-        is_manager = False
-    return {'is_manager': is_manager}
+    return {'is_manager': request.user.groups.filter(name="Manager").exists()} if request.user.is_authenticated else {'is_manager': False}
 
 def is_employee(request):
     """Check if the user belongs to the 'Employee' group."""
-    if hasattr(request, 'user') and request.user.is_authenticated:
-        try:
-            is_employee = request.user.groups.filter(name="Employee").exists()
-        except AttributeError:
-            is_employee = False
-    else:
-        is_employee = False
-    return {'is_employee': is_employee}
+    return {'is_employee': request.user.groups.filter(name="Employee").exists()} if request.user.is_authenticated else {'is_employee': False}
 
 def is_hr(request):
     """Check if the user belongs to the 'HR' group."""
-    if hasattr(request, 'user') and request.user.is_authenticated:
-        try:
-            is_hr = request.user.groups.filter(name="HR").exists()
-        except AttributeError:
-            is_hr = False
-    else:
-        is_hr = False
-    return {'is_hr': is_hr}
+    return {'is_hr': request.user.groups.filter(name="HR").exists()} if request.user.is_authenticated else {'is_hr': False}
+
+def is_backoffice(request):
+    """Check if the user belongs to the 'Backoffice' group."""
+    return {'is_backoffice': request.user.groups.filter(name="Backoffice").exists()} if request.user.is_authenticated else {'is_backoffice': False}
+
+def is_client(request):
+    """Check if the user belongs to the 'Client' group."""
+    return {'is_client': request.user.groups.filter(name="Client").exists()} if request.user.is_authenticated else {'is_client': False}
+
+def is_finance(request):
+    """Check if the user belongs to the 'Finance' group."""
+    return {'is_finance': request.user.groups.filter(name="Finance").exists()} if request.user.is_authenticated else {'is_finance': False}
+
+def is_management(request):
+    """Check if the user belongs to the 'Management' group."""
+    return {'is_management': request.user.groups.filter(name="Management").exists()} if request.user.is_authenticated else {'is_management': False}

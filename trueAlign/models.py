@@ -131,10 +131,18 @@ class UserSession(models.Model):
         self.location = self.determine_location()
         super().save(*args, **kwargs)
 
+
+        
+    """Determine if the user is working from home or office based on IP address."""
+
     def determine_location(self):
-        """Determine if the user is working from home or office based on IP address."""
-        office_ips = ['16.75.62.90']  # Add your actual office IP addresses here
-        return 'Office' if self.ip_address in office_ips else 'Home'
+        office_ips = ['116.75.62.90']  # Ensure this matches the real office IP
+        ip = self.ip_address.strip()  # Remove spaces
+
+        print(f"Detected IP: {ip}")  # Debugging: See actual stored IP
+
+        return 'Office' if ip in office_ips else 'Home'
+
 
     def update_activity(self):
         """Update the last activity timestamp"""
@@ -1189,3 +1197,54 @@ class Message(models.Model):
 
     def __str__(self):
         return f"Message from {self.sender} at {self.timestamp}"
+    
+
+'''------------------------ marking manula attendace ----------------'''
+from django.db import models
+from django.contrib.auth.models import User
+from django.utils import timezone
+
+class Department(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    
+    def __str__(self):
+        return self.name
+
+class EmployeeType(models.TextChoices):
+    BACKOFFICE = 'backoffice', 'Backoffice Support'
+    MANAGEMENT = 'management', 'Management'
+    OTHER = 'other', 'Other'
+
+class PresenceStatus(models.TextChoices):
+    PRESENT = 'present', 'Present'
+    ABSENT = 'absent', 'Absent'
+    LATE = 'late', 'Late'
+    LEAVE = 'leave', 'On Leave'
+    WORK_FROM_HOME = 'wfh', 'Work From Home'
+    BUSINESS_TRIP = 'business_trip', 'Business Trip'
+
+class Presence(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='presences')
+    date = models.DateField(default=timezone.now)
+    status = models.CharField(
+        max_length=20,
+        choices=PresenceStatus.choices,
+        default=PresenceStatus.ABSENT
+    )
+    marked_by = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        related_name='presence_marked'
+    )
+    marked_at = models.DateTimeField(auto_now_add=True)
+    notes = models.TextField(blank=True, null=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'date'], name='unique_presence_per_user_per_day')
+        ]
+        ordering = ['-date', 'user__first_name']
+
+    def __str__(self):
+        return f"{self.user.first_name} {self.user.last_name} - {self.date} - {self.get_status_display()}"
