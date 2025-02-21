@@ -1034,136 +1034,185 @@ def is_employee(user):
 @login_required
 @user_passes_test(is_hr)
 def hr_dashboard(request):
-    """HR Dashboard to see all users and perform actions"""
+    """HR Dashboard with improved filtering and query optimization"""
+    # Get filter parameters
     search_query = request.GET.get('search', '')
     department_filter = request.GET.get('department', '')
     status_filter = request.GET.get('status', '')
-    work_location_filter = request.GET.get('work_location', '')  # Add work location filter
-
-    # Start with all users
-    users = User.objects.all()
-
-    # Filter based on the search query
+    work_location_filter = request.GET.get('work_location', '')
+    
+    # Start with all users and prefetch userdetails to avoid N+1 query problem
+    users = User.objects.select_related('userdetails').all()
+    
+    # Apply filters
     if search_query:
         users = users.filter(
             Q(first_name__icontains=search_query) |
             Q(last_name__icontains=search_query) |
-            Q(job_description__icontains=search_query) |
-            Q(username__icontains=search_query)
-        )
+            Q(username__icontains=search_query) |
+            Q(email__icontains=search_query) |
+            Q(userdetails__job_description__icontains=search_query)
+        ).distinct()
+    
 
-    # Filter by UserDetails department if selected
-    if department_filter:
-        users = users.filter(userdetails__department=department_filter)
-
-    # Filter by employment status if selected
+    # Apply employment status filter
     if status_filter:
         users = users.filter(userdetails__employment_status=status_filter)
-
-    # Filter by work location if selected
+    
+    # Apply work location filter
     if work_location_filter:
         users = users.filter(userdetails__work_location=work_location_filter)
-
-    # Use select_related to join UserDetails to avoid additional queries
-    users = users.select_related('userdetails')
-
-    return render(request, 'components/hr/hr_dashboard.html', {
+    
+    # Handle case where UserDetails might not exist for some users
+    for user in users:
+        if not hasattr(user, 'userdetails'):
+            # Create default UserDetails for users who don't have it
+            UserDetails.objects.create(user=user)
+    
+    context = {
         'users': users,
-        'role': 'HR'
-    })
+        'role': 'HR',
+  'employment_status_choices': UserDetails._meta.get_field('employment_status').choices,
+        'search_query': search_query,
+        'status_filter': status_filter,
+        'work_location_filter': work_location_filter,
+    }
+    
+    return render(request, 'components/hr/hr_dashboard.html', context)
 
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import user_passes_test
+from django.contrib import messages
+from django.db import transaction
+import logging
+from .models import UserDetails, User
+
+logger = logging.getLogger(__name__)
 @user_passes_test(is_hr)
 def hr_user_detail(request, user_id):
-    # Add logging for initial request
-    print(f"Accessing details for user_id: {user_id}")
+    import re
+    from datetime import date, datetime
     
     user = get_object_or_404(User, id=user_id)
-    print(f"Accessing details for user_id after get_object_or_404: {user_id}")
     user_detail, created = UserDetails.objects.get_or_create(user=user)
 
     if request.method == 'POST':
         try:
-            # Log the incoming request data
-            print(f"Processing POST request for user_id: {user_id}")
-            print("POST data received:", request.POST)
+            logger.info(f"Processing POST request for user_id: {user_id}")
 
-            # Validate contact number if provided
-            contact_number = request.POST.get('contact_number_primary')
-            if contact_number:
-                if not contact_number.isdigit():
-                    raise ValueError('Contact number must contain only digits.')
-                if len(contact_number) != 10:
-                    raise ValueError('Contact number must be exactly 10 digits.')
+            # Extract and clean data
+            data = request.POST.copy()
 
-            # Validate Aadhar number if provided
-            aadhar_number = request.POST.get('aadharno')
-            if aadhar_number:
-                aadhar_cleaned = aadhar_number.replace(' ', '')
-                if not aadhar_cleaned.isdigit():
-                    raise ValueError('Aadhar number must contain only digits.')
-                if len(aadhar_cleaned) != 12:
-                    raise ValueError('Aadhar number must be exactly 12 digits.')
+            # Validate date of birth
+            dob = data.get('dob')
+            if dob:
+                dob_date = datetime.strptime(dob, '%Y-%m-%d').date()
+                today = date.today()
+                age = today.year - dob_date.year - ((today.month, today.day) < (dob_date.month, dob_date.day))
+                if age < 18:
+                    raise ValueError('Employee must be at least 18 years old.')
 
-            # Update user details
+            # Validate contact numbers
+            def validate_contact(country_code, number, field_name):
+                if not number:
+                    return None
+                    
+                if not number.isdigit() or len(number) != 10:
+                    raise ValueError(f'{field_name} must be exactly 10 digits.')
+                    
+                if not country_code or not country_code.startswith('+'):
+                    raise ValueError(f'Invalid country code for {field_name}')
+                    
+                return f"{country_code}{number}"
+
+            # Primary contact validation
+            primary_country_code = data.get('country_code', '').strip()
+            primary_number = data.get('contact_number_primary', '').strip()
+            primary_full_contact = validate_contact(
+                primary_country_code, 
+                primary_number,
+                'Primary contact number'
+            )
+
+            # Emergency contact validation  
+            emergency_country_code = data.get('emergency_country_code', '').strip()
+            emergency_number = data.get('emergency_contact_primary', '').strip()
+            emergency_full_contact = validate_contact(
+                emergency_country_code,
+                emergency_number, 
+                'Emergency contact number'
+            )
+
+            # Validate PAN
+            pan = data.get('panno')
+            if pan and not re.match(r'^[A-Z]{5}[0-9]{4}[A-Z]$', pan):
+                raise ValueError('Invalid PAN number format')
+
+            # Validate Aadhar
+            aadhar = data.get('aadharno', '').replace(' ', '')
+            if aadhar and (not aadhar.isdigit() or len(aadhar) != 12):
+                raise ValueError('Aadhar number must be exactly 12 digits.')
+
+            # Validate email
+            email = data.get('personal_email')
+            if email and not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
+                raise ValueError('Invalid email format')
+
+            # Dictionary of fields to update
             fields_to_update = {
-                'dob': request.POST.get('dob'),
-                'blood_group': request.POST.get('blood_group'),
-                'hire_date': request.POST.get('hire_date'),
-                'gender': request.POST.get('gender'),
-                'panno': request.POST.get('panno'),
-                'job_description': request.POST.get('job_description'),
-                'employment_status': request.POST.get('employment_status'),
-                'emergency_contact_address': request.POST.get('emergency_contact_address'),
-                'emergency_contact_primary': request.POST.get('emergency_contact_primary'),
-                'emergency_contact_name': request.POST.get('emergency_contact_name'),
-                'start_date': request.POST.get('start_date'),
-                'work_location': request.POST.get('work_location'),
-                'contact_number_primary': contact_number,
-                'personal_email': request.POST.get('personal_email'),
-                'aadharno': aadhar_number
+                'dob': dob or None,
+                'blood_group': data.get('blood_group') or None,
+                'hire_date': data.get('hire_date') or None,
+                'gender': data.get('gender') or None,
+                'panno': pan or None,
+                'job_description': data.get('job_description') or None,
+                'employment_status': data.get('employment_status') or None,
+                'emergency_contact_address': data.get('emergency_contact_address') or None,
+                'emergency_contact_primary': emergency_full_contact,
+                'emergency_contact_name': data.get('emergency_contact_name') or None,
+                'start_date': data.get('start_date') or None,
+                'work_location': data.get('work_location') or None,
+                'contact_number_primary': primary_full_contact,
+                'personal_email': email or None,
+                'aadharno': aadhar or None,
+                'country_code': primary_country_code or None,
             }
 
-            # Remove None values to prevent overwriting with None
+            # Remove empty values to avoid unnecessary updates
             fields_to_update = {k: v for k, v in fields_to_update.items() if v is not None}
 
-            # Update the user_detail object
-            for field, value in fields_to_update.items():
-                setattr(user_detail, field, value)
+            # Validate against model choices
+            if fields_to_update.get('blood_group') and fields_to_update['blood_group'] not in dict(UserDetails._meta.get_field('blood_group').choices):
+                raise ValueError('Invalid blood group')
 
-            # Log the state before saving
-            print("User Detail before save:", user_detail.__dict__)
-            
-            # Save the changes
-            user_detail.save()
-            
-            # Log the state after saving
-            print("User Detail after save:", user_detail.__dict__)
+            if fields_to_update.get('gender') and fields_to_update['gender'] not in dict(UserDetails._meta.get_field('gender').choices):
+                raise ValueError('Invalid gender')
+
+            if fields_to_update.get('employment_status') and fields_to_update['employment_status'] not in dict(UserDetails._meta.get_field('employment_status').choices):
+                raise ValueError('Invalid employment status')
+
+            # Perform atomic update
+            with transaction.atomic():
+                UserDetails.objects.filter(user=user).update(**fields_to_update)
 
             messages.success(request, 'User details updated successfully.')
             return redirect('aps_hr:hr_dashboard')
 
         except ValueError as e:
-            print(f"Validation Error for user {user_id}:", str(e))
+            logger.warning(f"Validation Error for user {user_id}: {str(e)}")
             messages.error(request, str(e))
-            return render(request, 'components/hr/hr_user_detail.html', {
-                'user_detail': user_detail,
-                'blood_group_choices': UserDetails._meta.get_field('blood_group').choices,
-                'gender_choices': UserDetails._meta.get_field('gender').choices,
-            })
         except Exception as e:
-            print(f"Unexpected error for user {user_id}:", str(e))
-            messages.error(request, f'Error updating user details: {str(e)}')
-            return render(request, 'components/hr/hr_user_detail.html', {
-                'user_detail': user_detail,
-                'blood_group_choices': UserDetails._meta.get_field('blood_group').choices,
-                'gender_choices': UserDetails._meta.get_field('gender').choices,
-            })
+            logger.error(f"Unexpected error for user {user_id}: {str(e)}", exc_info=True)
+            messages.error(request, 'An unexpected error occurred while updating user details.')
 
     return render(request, 'components/hr/hr_user_detail.html', {
         'user_detail': user_detail,
+        'today': date.today(),
         'blood_group_choices': UserDetails._meta.get_field('blood_group').choices,
         'gender_choices': UserDetails._meta.get_field('gender').choices,
+        'employment_status_choices': UserDetails._meta.get_field('employment_status').choices,
     })
+
 
 
 @login_required

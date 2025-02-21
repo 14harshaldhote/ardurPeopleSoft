@@ -436,164 +436,6 @@ class Attendance(models.Model):
         super().save(*args, **kwargs)
 
 
-# class Attendance(models.Model):
-#     STATUS_CHOICES = [
-#         ('Present', 'Present'),
-#         ('Absent', 'Absent'),
-#         ('Pending', 'Pending'),
-#         ('On Leave', 'On Leave'),
-#         ('Work From Home', 'Work From Home'),
-#         ('Weekend', 'Weekend'),
-#         ('Holiday', 'Holiday'),
-#     ]
-
-#     user = models.ForeignKey(User, on_delete=models.CASCADE)
-#     date = models.DateField()
-#     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Absent')  # Changed default
-#     clock_in_time = models.TimeField(null=True, blank=True)
-#     clock_out_time = models.TimeField(null=True, blank=True)
-#     total_hours = models.DurationField(null=True, blank=True)
-#     leave_request = models.ForeignKey(
-#         'Leave', on_delete=models.SET_NULL, null=True, blank=True,
-#         related_name='attendances'
-#     )
-#     last_updated = models.DateTimeField(auto_now=True)
-#     notes = models.TextField(blank=True, null=True)
-
-#     class Meta:
-#         unique_together = ['user', 'date']
-#         indexes = [
-#             models.Index(fields=['user', 'date']),
-#             models.Index(fields=['date']),
-#         ]
-
-#     @classmethod
-#     def create_daily_records(cls):
-#         """Create attendance records for all active users at start of day."""
-#         today = timezone.now().date()
-#         active_users = User.objects.filter(is_active=True)
-        
-#         records = [
-#             cls(
-#                 user=user,
-#                 date=today,
-#                 status='Present'  # Default status is Absent
-#             )
-#             for user in active_users
-#         ]
-        
-#         cls.objects.bulk_create(records, ignore_conflicts=True)
-
-#     @classmethod
-#     def cleanup_pending_records(cls):
-#         """Convert remaining 'Pending' statuses to 'Absent' at end of day."""
-#         yesterday = timezone.now().date() - timedelta(days=1)
-#         cls.objects.filter(
-#             date=yesterday,
-#             status='Pending'
-#         ).update(status='Absent')
-
-#     def calculate_attendance(self):
-#         """Calculate attendance based on UserSessions and conditions."""
-#         try:
-#             if self._is_non_working_day():
-#                 return
-            
-#             if self._has_approved_leave():
-#                 return
-
-#             user_sessions = self._get_user_sessions()
-            
-#             if user_sessions.exists():
-#                 self._process_sessions(user_sessions)
-#             else:
-#                 self._set_absent()  # Changed from _set_no_sessions
-
-#         except Exception as e:
-#             print(f"Error calculating attendance for {self.user.username} on {self.date}: {str(e)}")
-#             self._set_absent()  # Changed from _set_pending
-
-#     def _is_non_working_day(self):
-#         """Check if date is weekend or holiday."""
-#         if self.date.weekday() >= 5:  # Saturday or Sunday
-#             self.status = 'Weekend'
-#             self._clear_time_records()
-#             return True
-#         return False
-
-#     def _has_approved_leave(self):
-#         """Check if user has approved leave."""
-#         if self.leave_request and self.leave_request.is_approved:
-#             self.status = 'On Leave'
-#             self._clear_time_records()
-#             return True
-#         return False
-
-#     def _get_user_sessions(self):
-#         """Get user sessions for the day."""
-#         start_of_day = timezone.datetime.combine(self.date, timezone.datetime.min.time())
-#         end_of_day = timezone.datetime.combine(self.date, timezone.datetime.max.time())
-        
-#         return UserSession.objects.filter(
-#             user=self.user,
-#             login_time__range=(timezone.make_aware(start_of_day), timezone.make_aware(end_of_day))
-#         ).order_by('login_time')
-
-#     def _process_sessions(self, user_sessions):
-#         """Process sessions and calculate total hours."""
-#         total_worked_seconds = 0
-#         first_session = user_sessions.first()
-#         last_session = user_sessions.last()
-
-#         for session in user_sessions:
-#             duration = (session.logout_time or timezone.now()) - session.login_time
-#             if session.idle_time:
-#                 duration -= session.idle_time
-#             total_worked_seconds += max(duration.total_seconds(), 0)
-
-#         self.status = 'Work From Home' if self._check_wfh(user_sessions) else 'Present'
-#         self.clock_in_time = first_session.login_time.time()
-#         self.clock_out_time = last_session.logout_time.time() if last_session.logout_time else None
-#         self.total_hours = timedelta(seconds=total_worked_seconds)
-
-#     def _check_wfh(self, sessions):
-#         """Check if any session is from home."""
-#         return any(session.location == 'Home' for session in sessions)
-
-#     def _set_absent(self):
-#         """Set attendance status to absent."""
-#         self.status = 'Absent'
-#         self._clear_time_records()
-
-#     def _clear_time_records(self):
-#         """Clear time-related fields."""
-#         self.clock_in_time = None
-#         self.clock_out_time = None
-#         self.total_hours = None
-
-#     def save(self, *args, **kwargs):
-#         """Override save method."""
-#         recalculate = kwargs.pop('recalculate', False)
-        
-#         if not self.leave_request:
-#             self._check_and_link_leave()
-
-#         if recalculate or not self.pk:
-#             self.calculate_attendance()
-
-#         super().save(*args, **kwargs)
-        
-#         print(f"Attendance saved - User: {self.user.username}, Date: {self.date}, "
-#               f"Status: {self.status}, Hours: {self.total_hours}")
-
-#     def _check_and_link_leave(self):
-#         """Check and link approved leave requests."""
-#         self.leave_request = Leave.objects.filter(
-#             user=self.user,
-#             start_date__lte=self.date,
-#             end_date__gte=self.date,
-#             status='Approved'
-#         ).first()
 
 '''-------------------------------------------- SUPPORT AREA ---------------------------------------'''
 import uuid
@@ -776,11 +618,12 @@ class UserDetails(models.Model):
  # No default value here
     )
     emergency_contact_address = models.TextField(null=True, blank=True)
-    emergency_contact_primary = models.CharField(max_length=10, null=True, blank=True)
+    emergency_contact_primary = models.CharField(max_length=13, null=True, blank=True)
     emergency_contact_name = models.CharField(max_length=100, null=True, blank=True)
     start_date = models.DateField(null=True, blank=True)
     work_location = models.CharField(max_length=100, null=True, blank=True)
-    contact_number_primary = models.CharField(max_length=10, null=True, blank=True)
+    contact_number_primary = models.CharField(max_length=13, null=True, blank=True)
+    country_code = models.CharField(max_length=5, null=True, blank=True)  # Add this field
     personal_email = models.EmailField(null=True, blank=True)
     aadharno = models.CharField(max_length=14, null=True, blank=True)  # To store Aadhar with spaces
     group = models.ForeignKey('auth.Group', on_delete=models.SET_NULL, null=True, blank=True)
