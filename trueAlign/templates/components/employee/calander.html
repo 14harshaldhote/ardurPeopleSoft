@@ -91,14 +91,14 @@
                     {% endif %}
                 </div>
                 
-                {% if day.clock_in %}
+                {% if day.clock_in_time %}
                     <div class="mt-2 text-xs text-gray-600">
                         <div class="font-extralight text-gray-700">
-                            In: <span class="text-sm text-gray-500">{{ day.clock_in|date:"H:i" }}</span>
+                            In: <span class="text-sm text-gray-500">{{ day.clock_in_time|date:"H:i" }}</span>
                         </div>
-                        {% if day.clock_out %}
+                        {% if day.clock_out_time %}
                         <div class="font-extralight text-gray-700">
-                            Out: <span class="text-sm text-gray-500">{{ day.clock_out|date:"H:i" }}</span>
+                            Out: <span class="text-sm text-gray-500">{{ day.clock_out_time|date:"H:i" }}</span>
                         </div>
                         {% endif %}
                         {% if day.total_hours %}
@@ -155,52 +155,6 @@
                 <span class="text-sm text-gray-600">Holiday</span>
             </div>
         </div>
-
-        <!-- Paginated Records -->
-        {% if records %}
-        <div class="mt-6 border-t border-gray-200 pt-4">
-            <h3 class="text-lg font-medium text-gray-800 mb-4">Attendance Records</h3>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Clock In</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Clock Out</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Hours</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        {% for record in records %}
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ record.date }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ record.status }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ record.clock_in|date:"H:i" }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ record.clock_out|date:"H:i" }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ record.total_hours }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ record.location }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            
-            <!-- Pagination -->
-            <div class="mt-4 flex justify-center">
-                {% if records.has_previous %}
-                    <a href="?page={{ records.previous_page_number }}&month={{ current_month }}&year={{ current_year }}" class="px-3 py-1 bg-gray-100 text-gray-700 rounded-md mr-2">Previous</a>
-                {% endif %}
-                
-                <span class="px-3 py-1">Page {{ records.number }} of {{ records.paginator.num_pages }}</span>
-                
-                {% if records.has_next %}
-                    <a href="?page={{ records.next_page_number }}&month={{ current_month }}&year={{ current_year }}" class="px-3 py-1 bg-gray-100 text-gray-700 rounded-md ml-2">Next</a>
-                {% endif %}
-            </div>
-        </div>
-        {% endif %}
     </div>
 </div>
 {% endblock %}

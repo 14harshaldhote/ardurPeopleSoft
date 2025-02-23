@@ -377,12 +377,12 @@ class Attendance(models.Model):
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     date = models.DateField()
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Absent')  # Default to Absent
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Absent')
     is_half_day = models.BooleanField(default=False)
     leave_type = models.CharField(max_length=50, null=True, blank=True)
-    clock_in = models.DateTimeField(null=True, blank=True)
-    clock_out = models.DateTimeField(null=True, blank=True)
-    breaks = models.JSONField(default=list)  # Store break periods
+    clock_in_time = models.DateTimeField(null=True, blank=True)  # Renamed from clock_in
+    clock_out_time = models.DateTimeField(null=True, blank=True)  # Renamed from clock_out
+    breaks = models.JSONField(default=list)
     total_hours = models.DecimalField(max_digits=4, decimal_places=2, null=True)
     is_weekend = models.BooleanField(default=False)
     is_holiday = models.BooleanField(default=False)
@@ -401,16 +401,16 @@ class Attendance(models.Model):
         ]
 
     def clean(self):
-        if self.clock_in and self.clock_out:
-            if self.clock_out < self.clock_in:
+        if self.clock_in_time and self.clock_out_time:
+            if self.clock_out_time < self.clock_in_time:
                 raise ValidationError("Clock out must be after clock in")
 
     def calculate_hours(self):
         """Calculate total working hours including breaks"""
-        if not (self.clock_in and self.clock_out):
+        if not (self.clock_in_time and self.clock_out_time):
             return None
             
-        total_time = (self.clock_out - self.clock_in).total_seconds() / 3600
+        total_time = (self.clock_out_time - self.clock_in_time).total_seconds() / 3600
         break_time = sum((b['end'] - b['start']).total_seconds() / 3600 
                         for b in self.breaks)
         
@@ -418,16 +418,15 @@ class Attendance(models.Model):
 
     def check_late_arrival(self):
         """Check for late arrival and apply penalties"""
-        if not self.clock_in:
-            self.status = 'Absent'  # Mark as absent if no clock in
+        if not self.clock_in_time:
+            self.status = 'Absent'
             return
             
         start_time = timezone.datetime.combine(self.date, timezone.time(9, 0))
         grace_period = timedelta(minutes=15)
         
-        if self.clock_in > (start_time + grace_period):
+        if self.clock_in_time > (start_time + grace_period):
             self.status = 'Late'
-            # Track cumulative late arrivals
             late_count = Attendance.objects.filter(
                 user=self.user,
                 date__month=self.date.month,
@@ -435,7 +434,6 @@ class Attendance(models.Model):
             ).count()
             
             if late_count >= 3:
-                # Create half-day deduction
                 Leave.objects.create(
                     user=self.user,
                     leave_type='Loss of Pay',
@@ -446,23 +444,30 @@ class Attendance(models.Model):
                     status='Approved'
                 )
 
-    def save(self, *args, **kwargs):
+    def save(self, recalculate=False, *args, **kwargs):
         # Set weekend flag for Sunday only
         self.is_weekend = self.date.weekday() == 6
         self.is_holiday = self.check_if_holiday()
         
         if not self.is_weekend and not self.is_holiday:
-            if not self.clock_in:
-                self.status = 'Absent'  # Explicitly mark as absent if no clock in
+            if not self.clock_in_time:
+                self.status = 'Absent'
             else:
                 self.check_late_arrival()
                 self.total_hours = self.calculate_hours()
                 
-                # Auto-mark half day if worked less than 4 hours
                 if self.total_hours and self.total_hours < 4:
                     self.is_half_day = True
                     
+        if recalculate:
+            self.total_hours = self.calculate_hours()
+                    
         super().save(*args, **kwargs)
+
+    def check_if_holiday(self):
+        """Check if date is a holiday"""
+        # Add holiday checking logic here
+        return False
 
     @classmethod
     def bulk_update_status(cls, start_date, end_date, status, reason=None):
