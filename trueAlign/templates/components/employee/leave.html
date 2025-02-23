@@ -151,6 +151,9 @@
                             {% if leave.documentation %}
                             <a href="{{ leave.documentation.url }}" class="text-blue-600 hover:text-blue-800 text-sm">View Documentation</a>
                             {% endif %}
+                            {% if leave.rejection_reason %}
+                            <p class="text-sm text-red-500">Rejection Reason: {{ leave.rejection_reason }}</p>
+                            {% endif %}
                         </div>
                         <div class="text-right">
                             <span class="px-2 py-1 text-xs font-medium rounded-full
@@ -163,13 +166,19 @@
                             {% if leave.priority %}
                             <p class="text-xs text-gray-500 mt-1">Priority: {{ leave.get_priority_display }}</p>
                             {% endif %}
+                            {% if leave.approver %}
+                            <p class="text-xs text-gray-500 mt-1">Approved by: {{ leave.approver.username }}</p>
+                            {% endif %}
                         </div>
                     </div>
                     <div class="mt-2 flex justify-end space-x-2">
-                        {% if leave.status == 'Pending' or leave.status == 'Approved' %}
+                        {% if leave.status == 'Pending' %}
                         <form method="POST" action="{% url 'aps_employee:leave_view' %}" class="inline">
                             {% csrf_token %}
                             <input type="hidden" name="leave_id" value="{{ leave.id }}">
+                            <button type="submit" name="edit_leave" class="text-blue-600 hover:text-blue-800 text-sm font-medium mr-2">
+                                Edit Request
+                            </button>
                             <button type="submit" name="delete_leave" class="text-red-600 hover:text-red-800 text-sm font-medium">
                                 Cancel Request
                             </button>

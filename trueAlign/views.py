@@ -2212,176 +2212,105 @@ from django.contrib import messages
 from .models import Leave
 from django.contrib.auth.decorators import login_required, user_passes_test
 from datetime import datetime
+
 @login_required
 @user_passes_test(is_employee)
 def leave_view(request):
     """Handle multiple leave functionalities on one page."""
-    # Define total annual leaves constant at the start
-    total_annual_leaves = 18
-
+    # Get current year for filtering
+    year = timezone.now().year
+    
     try:
         # Get detailed leave balance info
         leave_balance = Leave.get_leave_balance(request.user)
         
-        # Calculate total leaves taken this year
-        year = timezone.now().year
-        leaves_taken = Leave.objects.filter(
-            user=request.user,
-            status='Approved', 
-            start_date__year=year
-        ).exclude(
-            leave_type='Loss of Pay'
-        ).aggregate(
-            total=Sum('leave_days')
-        )['total'] or 0
-
-        # Calculate remaining leaves
-        remaining_leaves = total_annual_leaves - leaves_taken
-
-        # Get loss of pay leaves
-        loss_of_pay = Leave.objects.filter(
-            user=request.user,
-            status='Approved',
-            leave_type='Loss of Pay',
-            start_date__year=year
-        ).aggregate(
-            total=Sum('leave_days')
-        )['total'] or 0
+        # Get all leave requests for the current user
+        leave_requests = Leave.objects.filter(user=request.user).order_by('-created_at')
 
     except Exception as e:
-        # Log the error for debugging with more details
         logger.error(f"Error calculating leave balance for user {request.user.username}: {str(e)}")
         logger.error(f"Full exception traceback:", exc_info=True)
         
-        # Try to get partial data if possible
-        try:
-            leave_balance = {
-                'total_leaves': Leave.get_leave_balance(request.user)['total_leaves'],
-                'comp_off': 0,
-                'loss_of_pay': 0
-            }
-            leaves_taken = Leave.objects.filter(
-                user=request.user,
-                status='Approved',
-                start_date__year=year
-            ).exclude(
-                leave_type='Loss of Pay'
-            ).count()
-            remaining_leaves = total_annual_leaves - leaves_taken
-            loss_of_pay = 0
-            
-            messages.warning(request, "Some leave balance information may be incomplete. Please verify with HR.")
-            
-        except:
-            # If even partial data fails, use defaults
-            leave_balance = {
-                'total_leaves': total_annual_leaves,
-                'comp_off': 0, 
-                'loss_of_pay': 0
-            }
-            leaves_taken = 0
-            remaining_leaves = total_annual_leaves
-            loss_of_pay = 0
-            
-            messages.error(request, "Unable to calculate leave balance. Please contact HR to verify your leave status.")
-
-    # Fetch leave requests for the current user
-    leave_requests = Leave.objects.filter(user=request.user)
+        # Set default values if error occurs
+        leave_balance = {
+            'total_leaves': 0,
+            'comp_off': 0,
+            'loss_of_pay': 0
+        }
+        leave_requests = Leave.objects.none()
+        messages.error(request, "Unable to calculate leave balance. Please contact HR.")
 
     # Handle leave request submission
     if request.method == 'POST' and 'request_leave' in request.POST:
-        leave_type = request.POST.get('leave_type')
-        start_date = request.POST.get('start_date')
-        end_date = request.POST.get('end_date')
-        reason = request.POST.get('reason')
-        priority = int(request.POST.get('priority', 3))  # Default to Regular priority
-        half_day = request.POST.get('half_day', False) == 'true'
-        is_retroactive = request.POST.get('is_retroactive', False) == 'true'
-        documentation = request.FILES.get('documentation')
-
         try:
-            start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
-            end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+            # Parse dates
+            start_date = datetime.strptime(request.POST.get('start_date'), '%Y-%m-%d').date()
+            end_date = datetime.strptime(request.POST.get('end_date'), '%Y-%m-%d').date()
 
             # Create new leave request
             leave = Leave(
                 user=request.user,
-                leave_type=leave_type,
+                leave_type=request.POST.get('leave_type'),
                 start_date=start_date,
                 end_date=end_date,
-                reason=reason,
-                priority=priority,
-                half_day=half_day,
-                is_retroactive=is_retroactive,
-                documentation=documentation
+                reason=request.POST.get('reason'),
+                priority=int(request.POST.get('priority', 3)),
+                half_day=request.POST.get('half_day', 'false') == 'true',
+                is_retroactive=request.POST.get('is_retroactive', 'false') == 'true',
+                documentation=request.FILES.get('documentation'),
+                approver=None  # Explicitly set approver to None for new requests
             )
 
-            # Run validations
+            # Run validations and save
             leave.full_clean()
-            
-            # Calculate leave days and auto-convert type if needed
-            leave.leave_days = leave.calculate_leave_days()
-            leave.auto_convert_leave_type()
-            
             leave.save()
 
-            messages.success(request, f"Leave request for {leave_type} from {start_date} to {end_date} has been submitted.")
+            messages.success(request, f"Leave request submitted successfully.")
             return redirect('aps_employee:leave_view')
 
         except ValidationError as e:
             messages.error(request, str(e))
-            return redirect('aps_employee:leave_view')
         except Exception as e:
             messages.error(request, f"Error submitting leave request: {str(e)}")
-            return redirect('aps_employee:leave_view')
+        return redirect('aps_employee:leave_view')
 
     # Handle leave request updates
     if request.method == 'POST' and 'edit_leave' in request.POST:
-        leave_id = request.POST.get('leave_id')
         try:
-            leave = Leave.objects.get(id=leave_id, user=request.user)
+            leave = Leave.objects.get(id=request.POST.get('leave_id'), user=request.user)
             
-            # Only allow editing pending requests
             if leave.status != 'Pending':
                 messages.error(request, "Only pending leave requests can be edited.")
                 return redirect('aps_employee:leave_view')
 
+            # Update leave details
             leave.start_date = datetime.strptime(request.POST.get('start_date'), '%Y-%m-%d').date()
             leave.end_date = datetime.strptime(request.POST.get('end_date'), '%Y-%m-%d').date()
             leave.reason = request.POST.get('reason')
             leave.priority = int(request.POST.get('priority', leave.priority))
-            leave.half_day = request.POST.get('half_day', leave.half_day) == 'true'
+            leave.half_day = request.POST.get('half_day', 'false') == 'true'
             
             if 'documentation' in request.FILES:
                 leave.documentation = request.FILES['documentation']
 
-            # Run validations
+            # Validate and save
             leave.full_clean()
-            
-            # Recalculate leave days and check type conversion
-            leave.leave_days = leave.calculate_leave_days()
-            leave.auto_convert_leave_type()
-            
             leave.save()
             
             messages.success(request, "Leave request updated successfully.")
             return redirect('aps_employee:leave_view')
 
-        except ValidationError as e:
+        except (ValidationError, Leave.DoesNotExist) as e:
             messages.error(request, str(e))
-        except Leave.DoesNotExist:
-            messages.error(request, "Leave request not found.")
         except Exception as e:
             messages.error(request, f"Error updating leave request: {str(e)}")
         return redirect('aps_employee:leave_view')
 
     # Handle leave cancellation
     if request.method == 'POST' and 'delete_leave' in request.POST:
-        leave_id = request.POST.get('leave_id')
         try:
-            leave = Leave.objects.get(id=leave_id, user=request.user)
+            leave = Leave.objects.get(id=request.POST.get('leave_id'), user=request.user)
             
-            # Only allow cancelling pending or approved requests
             if leave.status not in ['Pending', 'Approved']:
                 messages.error(request, "This leave request cannot be cancelled.")
                 return redirect('aps_employee:leave_view')
@@ -2403,90 +2332,128 @@ def leave_view(request):
         'leave_requests': leave_requests,
         'leave_types': Leave.LEAVE_TYPES,
         'priority_choices': Leave.PRIORITY_CHOICES,
-        'total_annual_leaves': total_annual_leaves,
-        'leaves_taken': leaves_taken,
-        'remaining_leaves': remaining_leaves,
-        'loss_of_pay': loss_of_pay
+        'total_annual_leaves': 18,  # Constant defined in model logic
+        'leaves_taken': leave_balance['total_leaves'],
+        'remaining_leaves': max(0, 18 - leave_balance['total_leaves']),
+        'loss_of_pay': leave_balance['loss_of_pay']
     })
 
 @login_required
 @user_passes_test(is_hr)
 def view_leave_requests_hr(request):
     """HR views all leave requests."""
-    leave_requests = Leave.objects.all()
-    return render(request, 'components/hr/view_leave_requests.html', {'leave_requests': leave_requests})
+    leave_requests = Leave.objects.all().order_by('-created_at')
+    
+    # Get leave balances for all users
+    user_balances = []
+    for leave in leave_requests:
+        balance = Leave.get_leave_balance(leave.user)
+        user_balances.append({
+            'user': leave.user,
+            'balance': balance
+        })
+            
+    return render(request, 'components/hr/view_leave_requests.html', {
+        'leave_requests': leave_requests,
+        'user_balances': user_balances,
+        'leave_types': Leave.LEAVE_TYPES,
+        'priority_choices': Leave.PRIORITY_CHOICES
+    })
 
-
-@login_required
+@login_required 
 @user_passes_test(is_hr)
 def manage_leave_request_hr(request, leave_id, action):
     """HR approves or rejects leave requests."""
     leave_request = get_object_or_404(Leave, id=leave_id)
 
     if request.method == 'POST':
-        if action == 'approve':
-            leave_request.status = 'Approved'
-            leave_request.approver = request.user
-            leave_request.save()
-            messages.success(request, f"Leave for {leave_request.user.username} approved.")
-        elif action == 'reject':
-            leave_request.status = 'Rejected'
-            leave_request.approver = request.user
-            leave_request.save()
-            messages.warning(request, f"Leave for {leave_request.user.username} rejected.")
-        return redirect('aps_hr:view_leave_requests_hr')
+        try:
+            if action == 'approve':
+                # Check leave balance before approval
+                balance = Leave.get_leave_balance(leave_request.user)
+                
+                if (leave_request.leave_type != 'Loss of Pay' and 
+                    balance['total_leaves'] < leave_request.leave_days):
+                    # Auto convert to Loss of Pay if insufficient balance
+                    leave_request.leave_type = 'Loss of Pay'
+                    messages.warning(request, "Leave converted to Loss of Pay due to insufficient balance.")
+                
+                leave_request.status = 'Approved'
+                leave_request.approver = request.user
+                leave_request.save() # This will trigger update_attendance()
+                
+                messages.success(request, f"Leave for {leave_request.user.username} approved.")
+                
+            elif action == 'reject':
+                leave_request.status = 'Rejected'
+                leave_request.approver = request.user
+                leave_request.rejection_reason = request.POST.get('rejection_reason')
+                leave_request.save()
+                messages.warning(request, f"Leave for {leave_request.user.username} rejected.")
+                
+            return redirect('aps_hr:view_leave_requests_hr')
+            
+        except ValidationError as e:
+            messages.error(request, str(e))
+            return redirect('aps_hr:view_leave_requests_hr')
+        except Exception as e:
+            messages.error(request, f"Error processing leave request: {str(e)}")
+            return redirect('aps_hr:view_leave_requests_hr')
 
     return render(request, 'components/hr/manage_leave.html', {
         'leave_request': leave_request,
-        'action': action.capitalize()
+        'action': action.capitalize(),
+        'leave_balance': Leave.get_leave_balance(leave_request.user)
     })
 
 @login_required
 @user_passes_test(is_manager)
 def view_leave_requests_manager(request):
-    """HR views all leave requests."""
-    leave_requests = Leave.objects.all()
-    print(f"Leave requests fetched: {leave_requests}")
+    """Manager views team leave requests."""
+    leave_requests = Leave.objects.filter(
+        user__employee__reporting_manager=request.user
+    ).order_by('-created_at')
     return render(request, 'components/manager/view_leave_requests.html', {'leave_requests': leave_requests})
-
 
 @login_required
 @user_passes_test(is_manager)
 def manage_leave_request_manager(request, leave_id, action):
-    """HR approves or rejects leave requests."""
-    leave_request = get_object_or_404(Leave, id=leave_id)
-    print(f"Managing leave request: {leave_request} for action: {action}")
+    """Manager approves or rejects team leave requests."""
+    leave_request = get_object_or_404(
+        Leave,
+        id=leave_id,
+        user__employee__reporting_manager=request.user
+    )
 
     if request.method == 'POST':
-        if action == 'approve':
-            print(f"Approving leave request: {leave_request}")
-            leave_request.status = 'Approved'
-            leave_request.approver = request.user
-            leave_request.save()
-            messages.success(request, f"Leave for {leave_request.user.username} approved.")
-        elif action == 'reject':
-            print(f"Rejecting leave request: {leave_request}")
-            leave_request.status = 'Rejected'
-            leave_request.approver = request.user
-            leave_request.save()
-            messages.warning(request, f"Leave for {leave_request.user.username} rejected.")
-        return redirect('aps_hr:view_leave_requests_hr')
+        try:
+            if action == 'approve':
+                leave_request.status = 'Approved'
+                leave_request.approver = request.user
+                leave_request.save()
+                messages.success(request, f"Leave for {leave_request.user.username} approved.")
+            elif action == 'reject':
+                leave_request.status = 'Rejected'
+                leave_request.approver = request.user
+                leave_request.rejection_reason = request.POST.get('rejection_reason')
+                leave_request.save()
+                messages.warning(request, f"Leave for {leave_request.user.username} rejected.")
+            return redirect('aps_manager:view_leave_requests_manager')
+        except Exception as e:
+            messages.error(request, f"Error processing leave request: {str(e)}")
+            return redirect('aps_manager:view_leave_requests_manager')
 
     return render(request, 'components/manager/manage_leave.html', {
         'leave_request': leave_request,
         'action': action.capitalize()
     })
 
-
 @login_required
-@user_passes_test(is_admin)  # Admin can view all leave requests
+@user_passes_test(is_admin)
 def view_leave_requests_admin(request):
-    """Admin view to see all leave requests"""
-    leave_requests = Leave.objects.all()
+    """Admin views all leave requests."""
+    leave_requests = Leave.objects.all().order_by('-created_at')
     return render(request, 'components/admin/view_leave_requests.html', {'leave_requests': leave_requests})
-
-
-# Admin, HR, Manager views to view leave requests remain as they are
 
 
 ''' ------------------------------------------- PROJECT AREA ------------------------------------------- '''

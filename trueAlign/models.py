@@ -180,12 +180,11 @@ from django.core.exceptions import ValidationError
 from django.db.models import Q, Sum, Avg
 from datetime import timedelta
 import calendar
-
 class Leave(models.Model):
     LEAVE_TYPES = [
         ('Sick Leave', 'Sick Leave'),
-        ('Casual Leave', 'Casual Leave'),
-        ('Earned Leave', 'Earned Leave'), 
+        ('Casual Leave', 'Casual Leave'), 
+        ('Earned Leave', 'Earned Leave'),
         ('Loss of Pay', 'Loss of Pay'),
         ('Maternity Leave', 'Maternity Leave'),
         ('Paternity Leave', 'Paternity Leave'),
@@ -197,8 +196,8 @@ class Leave(models.Model):
 
     STATUS_CHOICES = [
         ('Pending', 'Pending'),
-        ('Approved', 'Approved'), 
-        ('Rejected', 'Rejected'),
+        ('Approved', 'Approved'),
+        ('Rejected', 'Rejected'), 
         ('Cancelled', 'Cancelled')
     ]
 
@@ -217,7 +216,7 @@ class Leave(models.Model):
     reason = models.TextField()
     priority = models.IntegerField(choices=PRIORITY_CHOICES, default=3)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
-    approver = models.ForeignKey(User, related_name='leave_approvals', on_delete=models.SET_NULL, null=True)
+    approver = models.ForeignKey(User, related_name='leave_approvals', on_delete=models.SET_NULL, null=True, blank=True)
     rejection_reason = models.TextField(null=True, blank=True)
     suggested_dates = models.JSONField(null=True, blank=True)
     documentation = models.FileField(upload_to='leave_docs/', null=True, blank=True)
@@ -234,16 +233,16 @@ class Leave(models.Model):
         if self.start_date > self.end_date:
             raise ValidationError("End date must be after start date")
         
-        # Check for overlapping team leaves
-        team_leaves = Leave.objects.filter(
-            user__department=self.user.department,
+        # Check for overlapping leaves
+        overlapping_leaves = Leave.objects.filter(
             status='Approved',
             start_date__lte=self.end_date,
-            end_date__gte=self.start_date
-        ).exclude(user=self.user)
+            end_date__gte=self.start_date,
+            user=self.user
+        ).exclude(id=self.id)
         
-        if team_leaves.exists():
-            raise ValidationError("Team members already on leave during this period")
+        if overlapping_leaves.exists():
+            raise ValidationError("You already have approved leave during this period")
 
     def calculate_leave_days(self):
         if not (self.start_date and self.end_date):
@@ -304,14 +303,14 @@ class Leave(models.Model):
         month = timezone.now().month
         
         # Total annual leave allocation is 18
-        TOTAL_ANNUAL_LEAVES = 18
+        TOTAL_ANNUAL_LEAVES = 18.0
         
         # Calculate monthly accrual (18/12 = 1.5 leaves per month)
-        months_passed = month
-        accrued_leaves = (TOTAL_ANNUAL_LEAVES / 12) * months_passed
+        months_passed = float(month)
+        accrued_leaves = float((TOTAL_ANNUAL_LEAVES / 12.0) * months_passed)
         
         # Get used leaves
-        used_leaves = cls.objects.filter(
+        used_leaves = float(cls.objects.filter(
             user=user,
             status='Approved',
             start_date__year=year
@@ -319,10 +318,20 @@ class Leave(models.Model):
             leave_type='Loss of Pay'
         ).aggregate(
             total=Sum('leave_days')
-        )['total'] or 0
+        )['total'] or 0)
         
         # Calculate comp off balance
-        comp_off_balance = cls.get_comp_off_balance(user)
+        comp_off_balance = float(cls.get_comp_off_balance(user))
+        
+        # Calculate loss of pay leaves
+        loss_of_pay = float(cls.objects.filter(
+            user=user,
+            status='Approved',
+            leave_type='Loss of Pay',
+            start_date__year=year
+        ).aggregate(
+            total=Sum('leave_days')
+        )['total'] or 0)
         
         # Calculate total available leaves
         total_available = accrued_leaves - used_leaves + comp_off_balance
@@ -330,7 +339,7 @@ class Leave(models.Model):
         return {
             'total_leaves': total_available,
             'comp_off': comp_off_balance,
-            'loss_of_pay': cls.calculate_lop(user)
+            'loss_of_pay': loss_of_pay
         }
 
     @classmethod
@@ -338,19 +347,19 @@ class Leave(models.Model):
         """Track comp-off earned and used"""
         year = timezone.now().year
         
-        earned = Attendance.objects.filter(
+        earned = float(Attendance.objects.filter(
             user=user,
             date__year=year,
             is_weekend=True,
             status='Present'
-        ).count()
+        ).count())
         
-        used = cls.objects.filter(
+        used = float(cls.objects.filter(
             user=user,
             leave_type='Comp Off',
             status='Approved',
             start_date__year=year
-        ).aggregate(total=Sum('leave_days'))['total'] or 0
+        ).aggregate(total=Sum('leave_days'))['total'] or 0)
         
         return earned - used
     
