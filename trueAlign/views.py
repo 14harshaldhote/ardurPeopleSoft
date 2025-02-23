@@ -2207,102 +2207,206 @@ from django.contrib import messages
 from .models import Leave
 from django.contrib.auth.decorators import login_required, user_passes_test
 from datetime import datetime
-
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from .models import Leave
 from django.contrib.auth.decorators import login_required, user_passes_test
 from datetime import datetime
-
 @login_required
 @user_passes_test(is_employee)
 def leave_view(request):
     """Handle multiple leave functionalities on one page."""
-    leave_balance = Leave.get_leave_balance(request.user)
+    # Define total annual leaves constant at the start
+    total_annual_leaves = 18
+
+    try:
+        # Get detailed leave balance info
+        leave_balance = Leave.get_leave_balance(request.user)
+        
+        # Calculate total leaves taken this year
+        year = timezone.now().year
+        leaves_taken = Leave.objects.filter(
+            user=request.user,
+            status='Approved', 
+            start_date__year=year
+        ).exclude(
+            leave_type='Loss of Pay'
+        ).aggregate(
+            total=Sum('leave_days')
+        )['total'] or 0
+
+        # Calculate remaining leaves
+        remaining_leaves = total_annual_leaves - leaves_taken
+
+        # Get loss of pay leaves
+        loss_of_pay = Leave.objects.filter(
+            user=request.user,
+            status='Approved',
+            leave_type='Loss of Pay',
+            start_date__year=year
+        ).aggregate(
+            total=Sum('leave_days')
+        )['total'] or 0
+
+    except Exception as e:
+        # Log the error for debugging with more details
+        logger.error(f"Error calculating leave balance for user {request.user.username}: {str(e)}")
+        logger.error(f"Full exception traceback:", exc_info=True)
+        
+        # Try to get partial data if possible
+        try:
+            leave_balance = {
+                'total_leaves': Leave.get_leave_balance(request.user)['total_leaves'],
+                'comp_off': 0,
+                'loss_of_pay': 0
+            }
+            leaves_taken = Leave.objects.filter(
+                user=request.user,
+                status='Approved',
+                start_date__year=year
+            ).exclude(
+                leave_type='Loss of Pay'
+            ).count()
+            remaining_leaves = total_annual_leaves - leaves_taken
+            loss_of_pay = 0
+            
+            messages.warning(request, "Some leave balance information may be incomplete. Please verify with HR.")
+            
+        except:
+            # If even partial data fails, use defaults
+            leave_balance = {
+                'total_leaves': total_annual_leaves,
+                'comp_off': 0, 
+                'loss_of_pay': 0
+            }
+            leaves_taken = 0
+            remaining_leaves = total_annual_leaves
+            loss_of_pay = 0
+            
+            messages.error(request, "Unable to calculate leave balance. Please contact HR to verify your leave status.")
 
     # Fetch leave requests for the current user
     leave_requests = Leave.objects.filter(user=request.user)
 
-    # Handle leave request submission (creating a new leave request)
+    # Handle leave request submission
     if request.method == 'POST' and 'request_leave' in request.POST:
         leave_type = request.POST.get('leave_type')
         start_date = request.POST.get('start_date')
         end_date = request.POST.get('end_date')
         reason = request.POST.get('reason')
-
-        # Print form data to check if it's correctly received
-        print(f"Request Leave - Leave Type: {leave_type}, Start Date: {start_date}, End Date: {end_date}, Reason: {reason}")
+        priority = int(request.POST.get('priority', 3))  # Default to Regular priority
+        half_day = request.POST.get('half_day', False) == 'true'
+        is_retroactive = request.POST.get('is_retroactive', False) == 'true'
+        documentation = request.FILES.get('documentation')
 
         try:
             start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
             end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
-        except ValueError:
-            messages.error(request, "Invalid date format. Please use YYYY-MM-DD.")
+
+            # Create new leave request
+            leave = Leave(
+                user=request.user,
+                leave_type=leave_type,
+                start_date=start_date,
+                end_date=end_date,
+                reason=reason,
+                priority=priority,
+                half_day=half_day,
+                is_retroactive=is_retroactive,
+                documentation=documentation
+            )
+
+            # Run validations
+            leave.full_clean()
+            
+            # Calculate leave days and auto-convert type if needed
+            leave.leave_days = leave.calculate_leave_days()
+            leave.auto_convert_leave_type()
+            
+            leave.save()
+
+            messages.success(request, f"Leave request for {leave_type} from {start_date} to {end_date} has been submitted.")
             return redirect('aps_employee:leave_view')
 
-        if start_date > end_date:
-            messages.error(request, "Start date cannot be after the end date.")
+        except ValidationError as e:
+            messages.error(request, str(e))
+            return redirect('aps_employee:leave_view')
+        except Exception as e:
+            messages.error(request, f"Error submitting leave request: {str(e)}")
             return redirect('aps_employee:leave_view')
 
-        leave_days = (end_date - start_date).days + 1
-        leave_balance = Leave.get_leave_balance(request.user)
-
-        if leave_balance['available_leave'] < leave_days:
-            messages.error(request, "Insufficient leave balance.")
-            return redirect('aps_employee:leave_view')
-
-        # Create a new leave request
-        Leave.objects.create(
-            user=request.user,
-            leave_type=leave_type,
-            start_date=start_date,
-            end_date=end_date,
-            leave_days=leave_days,
-            reason=reason,
-            status='Pending',
-        )
-        print(f"Leave request for {leave_type} from {start_date} to {end_date} created.")
-        messages.success(request, f"Leave request for {leave_type} from {start_date} to {end_date} has been submitted.")
-        return redirect('aps_employee:leave_view')
-
-    # Handle leave request updates (edit or delete)
+    # Handle leave request updates
     if request.method == 'POST' and 'edit_leave' in request.POST:
         leave_id = request.POST.get('leave_id')
-        leave = Leave.objects.get(id=leave_id)
-        if leave.user == request.user:
-            print(f"Editing Leave Request - ID: {leave_id}")
-            print(f"Form Data: start_date={request.POST.get('start_date')}, end_date={request.POST.get('end_date')}, reason={request.POST.get('reason')}")
-
-            # Check if 'start_date' is present and not empty
-            start_date = request.POST.get('start_date')
-            if not start_date:
-                messages.error(request, "Start date is required.")
+        try:
+            leave = Leave.objects.get(id=leave_id, user=request.user)
+            
+            # Only allow editing pending requests
+            if leave.status != 'Pending':
+                messages.error(request, "Only pending leave requests can be edited.")
                 return redirect('aps_employee:leave_view')
 
-            leave.start_date = start_date
-            leave.end_date = request.POST.get('end_date')
+            leave.start_date = datetime.strptime(request.POST.get('start_date'), '%Y-%m-%d').date()
+            leave.end_date = datetime.strptime(request.POST.get('end_date'), '%Y-%m-%d').date()
             leave.reason = request.POST.get('reason')
-            leave.status = request.POST.get('status', leave.status)
+            leave.priority = int(request.POST.get('priority', leave.priority))
+            leave.half_day = request.POST.get('half_day', leave.half_day) == 'true'
+            
+            if 'documentation' in request.FILES:
+                leave.documentation = request.FILES['documentation']
+
+            # Run validations
+            leave.full_clean()
+            
+            # Recalculate leave days and check type conversion
+            leave.leave_days = leave.calculate_leave_days()
+            leave.auto_convert_leave_type()
+            
             leave.save()
-            print(f"Leave request {leave_id} updated.")
-            messages.success(request, "Leave request updated.")
+            
+            messages.success(request, "Leave request updated successfully.")
             return redirect('aps_employee:leave_view')
 
+        except ValidationError as e:
+            messages.error(request, str(e))
+        except Leave.DoesNotExist:
+            messages.error(request, "Leave request not found.")
+        except Exception as e:
+            messages.error(request, f"Error updating leave request: {str(e)}")
+        return redirect('aps_employee:leave_view')
 
+    # Handle leave cancellation
     if request.method == 'POST' and 'delete_leave' in request.POST:
         leave_id = request.POST.get('leave_id')
-        leave = Leave.objects.get(id=leave_id)
-        if leave.user == request.user:
-            print(f"Deleting Leave Request - ID: {leave_id}")
-            leave.delete()
-            print(f"Leave request {leave_id} deleted.")
-            messages.success(request, "Leave request deleted.")
+        try:
+            leave = Leave.objects.get(id=leave_id, user=request.user)
+            
+            # Only allow cancelling pending or approved requests
+            if leave.status not in ['Pending', 'Approved']:
+                messages.error(request, "This leave request cannot be cancelled.")
+                return redirect('aps_employee:leave_view')
+
+            leave.status = 'Cancelled'
+            leave.save()
+            
+            messages.success(request, "Leave request cancelled successfully.")
             return redirect('aps_employee:leave_view')
 
-    # Render the page with the leave balance and the leave requests for the user
+        except Leave.DoesNotExist:
+            messages.error(request, "Leave request not found.")
+        except Exception as e:
+            messages.error(request, f"Error cancelling leave request: {str(e)}")
+        return redirect('aps_employee:leave_view')
+
     return render(request, 'components/employee/leave.html', {
         'leave_balance': leave_balance,
-        'leave_requests': leave_requests,  # Pass leave_requests to the template
+        'leave_requests': leave_requests,
+        'leave_types': Leave.LEAVE_TYPES,
+        'priority_choices': Leave.PRIORITY_CHOICES,
+        'total_annual_leaves': total_annual_leaves,
+        'leaves_taken': leaves_taken,
+        'remaining_leaves': remaining_leaves,
+        'loss_of_pay': loss_of_pay
     })
 
 @login_required
@@ -3125,7 +3229,6 @@ def manager_project_view(request, action=None, project_id=None):
 
 ''' ------------------------------------------- ATTENDACE AREA ------------------------------------------- '''
 
-
 import calendar
 from datetime import datetime, timedelta
 from django.contrib.auth.decorators import login_required
@@ -3133,13 +3236,10 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.shortcuts import render
 from django.utils.timezone import now, localtime, make_aware
 
-
-
 @login_required
 def employee_attendance_view(request):
     # Current date in the local timezone
     current_date = localtime(now())
-    print(f'current_date', current_date)
     
     # Get current month and year from query parameters or fallback to the current date
     current_month = int(request.GET.get('month', current_date.month))
@@ -3158,22 +3258,24 @@ def employee_attendance_view(request):
 
     # Query attendance and leave data for the current user
     user_attendance = Attendance.objects.filter(
-        user=request.user, date__month=current_month, date__year=current_year
-    ).select_related('leave_request')
-    leaves = Leave.objects.filter(
         user=request.user, 
-        start_date__lte=datetime(current_year, current_month, 1), 
-        end_date__gte=datetime(current_year, current_month, calendar.monthrange(current_year, current_month)[1]),
-        status='Approved'
+        date__month=current_month, 
+        date__year=current_year
+    )
+    
+    leaves = Leave.objects.filter(
+        user=request.user,
+        status='Approved',
+        start_date__lte=datetime(current_year, current_month, calendar.monthrange(current_year, current_month)[1]),
+        end_date__gte=datetime(current_year, current_month, 1)
     )
 
-    # Aggregate statistics
+    # Aggregate statistics including weekend work
     total_present = user_attendance.filter(status='Present').count()
     total_absent = user_attendance.filter(status='Absent').count()
     total_leave = user_attendance.filter(status='On Leave').count()
     total_wfh = user_attendance.filter(status='Work From Home').count()
-    leave_balance = Leave.get_leave_balance(request.user)
-    total_lop_days = Leave.calculate_lop_per_month(request.user, current_month, current_year)
+    weekend_work = user_attendance.filter(is_weekend=True, status='Present').count()
 
     # Prepare calendar data with attendance and leave details
     calendar_data = []
@@ -3186,7 +3288,9 @@ def employee_attendance_view(request):
                 date = make_aware(datetime(current_year, current_month, day))
                 leave_status = None
                 leave_type = None
-                clock_in = clock_out = total_hours = None
+                clock_in = None
+                clock_out = None
+                total_hours = None
 
                 # Check if leave exists for the day
                 leave_on_day = leaves.filter(start_date__lte=date, end_date__gte=date).first()
@@ -3198,8 +3302,8 @@ def employee_attendance_view(request):
                 attendance_on_day = user_attendance.filter(date=date.date()).first()
                 if attendance_on_day:
                     leave_status = attendance_on_day.status
-                    clock_in = attendance_on_day.clock_in_time
-                    clock_out = attendance_on_day.clock_out_time
+                    clock_in = attendance_on_day.clock_in
+                    clock_out = attendance_on_day.clock_out
                     total_hours = attendance_on_day.total_hours
 
                 week_data.append({
@@ -3210,6 +3314,7 @@ def employee_attendance_view(request):
                     'clock_in': clock_in,
                     'clock_out': clock_out,
                     'total_hours': total_hours,
+                    'is_sunday': date.weekday() == 6,
                     'empty': False
                 })
         calendar_data.append(week_data)
@@ -3222,7 +3327,6 @@ def employee_attendance_view(request):
     except (EmptyPage, PageNotAnInteger):
         records = paginator.page(1)
 
-    # Render the calendar and stats
     return render(request, 'components/employee/calander.html', {
         'current_month': current_month_name,
         'current_year': current_year,
@@ -3235,17 +3339,17 @@ def employee_attendance_view(request):
         'total_absent': total_absent,
         'total_leave': total_leave,
         'total_wfh': total_wfh,
-        'leave_balance': leave_balance,
-        'total_lop_days': total_lop_days,
+        'weekend_work': weekend_work,
         'records': records,
     })
-
 
 @login_required
 @user_passes_test(is_manager)
 def manager_attendance_view(request):
     # Prefetching related user manager data for efficiency
-    team_attendance = Attendance.objects.filter(user__manager=request.user).select_related('user').order_by('-date')
+    team_attendance = Attendance.objects.filter(
+        user__manager=request.user
+    ).select_related('user').order_by('-date')
     
     # Pagination setup
     paginator = Paginator(team_attendance, 10)
@@ -3258,14 +3362,13 @@ def manager_attendance_view(request):
     except PageNotAnInteger:
         team_records = paginator.page(1)
 
-    return render(request, 'components/manager/manager_attendance.html', {'team_attendance': team_records})
+    return render(request, 'components/manager/manager_attendance.html', {
+        'team_attendance': team_records
+    })
 
 @login_required
 @user_passes_test(is_hr)
 def hr_attendance_view(request):
-    from datetime import datetime, timedelta
-    import calendar
-
     # Get the month and year from request params, default to current month
     today = datetime.today()
     month = int(request.GET.get('month', today.month))
@@ -3296,80 +3399,61 @@ def hr_attendance_view(request):
             'attendance': {}
         }
 
-        # Initialize all days with None (no record), skipping Sundays
+        # Initialize all days, marking Sundays as holidays
         for day in range(1, days_in_month + 1):
             current_date = datetime(year, month, day).date()
-            if current_date.weekday() != 6:  # Skip Sundays (6 represents Sunday)
-                day_name = current_date.strftime('%a')  # Get 3-letter day name
-                employee_row['attendance'][current_date] = {
-                    'status': '-',
-                    'working_hours': None,
-                    'day_name': day_name
-                }
+            day_name = current_date.strftime('%a')
+            is_sunday = current_date.weekday() == 6
+            
+            employee_row['attendance'][current_date] = {
+                'status': 'Holiday' if is_sunday else '-',
+                'working_hours': None,
+                'day_name': day_name,
+                'is_sunday': is_sunday
+            }
 
         # Fill in actual attendance records
         employee_records = attendance_records.filter(user=employee)
         for record in employee_records:
-            if record.date.weekday() != 6:  # Skip Sundays
-                day_name = record.date.strftime('%a')  # Get 3-letter day name
-                
-                # Get working hours
-                try:
-                    user_session = UserSession.objects.filter(
-                        user=employee,
-                        date=record.date
-                    ).first()
-                    
-                    if user_session and user_session.total_hours:
-                        total_seconds = user_session.total_hours.total_seconds()
-                        hours = int(total_seconds // 3600)
-                        minutes = int((total_seconds % 3600) // 60)
-                        working_hours = f"{hours}h {minutes}m"
-                    else:
-                        working_hours = "-"
-                except Exception:
-                    working_hours = "Error"
+            day_name = record.date.strftime('%a')
+            working_hours = "-"
+            if record.total_hours:
+                working_hours = f"{record.total_hours:.1f}h"
 
-                employee_row['attendance'][record.date] = {
-                    'status': record.status,
-                    'working_hours': working_hours,
-                    'day_name': day_name
-                }
+            # Override holiday status if employee worked on Sunday
+            if record.date.weekday() == 6 and record.status == 'Present':
+                status = 'Weekend Work'
+            else:
+                status = record.status
+
+            employee_row['attendance'][record.date] = {
+                'status': status,
+                'working_hours': working_hours,
+                'day_name': day_name,
+                'is_sunday': record.date.weekday() == 6
+            }
 
         attendance_matrix.append(employee_row)
 
-    # Calculate summary counts for the month (excluding Sundays)
-    present_count = attendance_records.exclude(date__week_day=1).filter(status='Present').count()
-    absent_count = attendance_records.exclude(date__week_day=1).filter(status='Absent').count()
-    leave_count = attendance_records.exclude(date__week_day=1).filter(status='On Leave').count()
-    lop_count = attendance_records.exclude(date__week_day=1).filter(status='Loss of Pay').count()
+    # Calculate summary counts for the month
+    present_count = attendance_records.filter(status='Present').count()
+    absent_count = attendance_records.filter(status='Absent').count()
+    leave_count = attendance_records.filter(status='On Leave').count()
+    wfh_count = attendance_records.filter(status='Work From Home').count()
+    weekend_work_count = attendance_records.filter(is_weekend=True, status='Present').count()
 
     # Get previous and next month links
-    if month == 1:
-        prev_month = 12
-        prev_year = year - 1
-    else:
-        prev_month = month - 1
-        prev_year = year
+    prev_month = 12 if month == 1 else month - 1
+    prev_year = year - 1 if month == 1 else year
+    next_month = 1 if month == 12 else month + 1
+    next_year = year + 1 if month == 12 else year
 
-    if month == 12:
-        next_month = 1
-        next_year = year + 1
-    else:
-        next_month = month + 1
-        next_year = year
-
-    # Create days range excluding Sundays
-    days_range = []
-    for day in range(1, days_in_month + 1):
-        current_date = datetime(year, month, day).date()
-        if current_date.weekday() != 6:  # Skip Sundays
-            days_range.append(current_date)
+    # Create days range for all days
+    days_range = [datetime(year, month, day).date() for day in range(1, days_in_month + 1)]
 
     # Handle download requests
     if 'format' in request.GET:
         return handle_attendance_download(request)
-        
 
     context = {
         'attendance_matrix': attendance_matrix,
@@ -3384,7 +3468,8 @@ def hr_attendance_view(request):
         'present_count': present_count,
         'absent_count': absent_count,
         'leave_count': leave_count,
-        'lop_count': lop_count
+        'wfh_count': wfh_count,
+        'weekend_work_count': weekend_work_count
     }
 
     return render(request, 'components/hr/hr_admin_attendance.html', context)

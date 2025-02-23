@@ -173,269 +173,318 @@ class UserSession(models.Model):
 
 
 '''---------- ATTENDANCE AREA ----------'''
-
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.core.exceptions import ValidationError
+from django.db.models import Q, Sum, Avg
+from datetime import timedelta
+import calendar
 
 class Leave(models.Model):
     LEAVE_TYPES = [
         ('Sick Leave', 'Sick Leave'),
         ('Casual Leave', 'Casual Leave'),
-        ('Earned Leave', 'Earned Leave'),
+        ('Earned Leave', 'Earned Leave'), 
         ('Loss of Pay', 'Loss of Pay'),
+        ('Maternity Leave', 'Maternity Leave'),
+        ('Paternity Leave', 'Paternity Leave'),
+        ('Sabbatical', 'Sabbatical'),
+        ('Comp Off', 'Comp Off'),
+        ('Half Day', 'Half Day'),
+        ('Emergency', 'Emergency')
     ]
-    
+
     STATUS_CHOICES = [
         ('Pending', 'Pending'),
-        ('Approved', 'Approved'),
+        ('Approved', 'Approved'), 
         ('Rejected', 'Rejected'),
+        ('Cancelled', 'Cancelled')
+    ]
+
+    PRIORITY_CHOICES = [
+        (1, 'Emergency'),
+        (2, 'Medical'),
+        (3, 'Regular')
     ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     leave_type = models.CharField(max_length=50, choices=LEAVE_TYPES)
     start_date = models.DateField()
     end_date = models.DateField()
-    leave_days = models.IntegerField(null=True, blank=True)
+    half_day = models.BooleanField(default=False)
+    leave_days = models.DecimalField(max_digits=4, decimal_places=1, null=True, blank=True)
     reason = models.TextField()
+    priority = models.IntegerField(choices=PRIORITY_CHOICES, default=3)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
-    approver = models.ForeignKey(
-        User, related_name='leave_approvals', on_delete=models.SET_NULL, null=True, blank=True
-    )
+    approver = models.ForeignKey(User, related_name='leave_approvals', on_delete=models.SET_NULL, null=True)
+    rejection_reason = models.TextField(null=True, blank=True)
+    suggested_dates = models.JSONField(null=True, blank=True)
+    documentation = models.FileField(upload_to='leave_docs/', null=True, blank=True)
+    is_retroactive = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['user', 'start_date', 'status']),
+        ]
 
-    def __str__(self):
-        return f"Leave Request by {self.user.username} for {self.leave_type}"
+    def clean(self):
+        if self.start_date > self.end_date:
+            raise ValidationError("End date must be after start date")
+        
+        # Check for overlapping team leaves
+        team_leaves = Leave.objects.filter(
+            user__department=self.user.department,
+            status='Approved',
+            start_date__lte=self.end_date,
+            end_date__gte=self.start_date
+        ).exclude(user=self.user)
+        
+        if team_leaves.exists():
+            raise ValidationError("Team members already on leave during this period")
 
     def calculate_leave_days(self):
-        if self.start_date and self.end_date:
-            self.leave_days = (self.end_date - self.start_date).days + 1
-            return self.leave_days
+        if not (self.start_date and self.end_date):
+            return 0
+            
+        total_days = 0
+        current_date = self.start_date
+        while current_date <= self.end_date:
+            # Skip only Sundays unless emergency leave
+            if current_date.weekday() != 6 or self.leave_type == 'Emergency':
+                total_days += 0.5 if self.half_day else 1
+            current_date += timedelta(days=1)
+            
+        return total_days
+
+    def auto_convert_leave_type(self):
+        """Auto convert leave type based on balance and priority"""
+        balance = self.get_leave_balance(self.user)
+        
+        if self.leave_type == 'Sick Leave' and balance['total_leaves'] < self.leave_days:
+            self.leave_type = 'Loss of Pay'
 
     def save(self, *args, **kwargs):
         if not self.leave_days:
             self.leave_days = self.calculate_leave_days()
+            
+        if not self.pk:  # New leave request
+            self.auto_convert_leave_type()
+            
         super().save(*args, **kwargs)
-        self.update_attendance_status()
-
-    def update_attendance_status(self):
-        """Update attendance status for the user during the leave period"""
+        
         if self.status == 'Approved':
-            attendance_records = Attendance.objects.filter(
-                user=self.user,
-                date__range=[self.start_date, self.end_date]
-            )
-            for attendance in attendance_records:
-                attendance.status = 'On Leave'
-                attendance.save()
+            self.update_attendance()
+
+    def update_attendance(self):
+        """Update attendance records for approved leave period"""
+        current_date = self.start_date
+        while current_date <= self.end_date:
+            if current_date.weekday() != 6:  # All days except Sunday
+                defaults = {
+                    'status': 'On Leave',
+                    'leave_type': self.leave_type
+                }
+                if self.half_day:
+                    defaults['is_half_day'] = True
+                    
+                Attendance.objects.update_or_create(
+                    user=self.user,
+                    date=current_date,
+                    defaults=defaults
+                )
+            current_date += timedelta(days=1)
 
     @classmethod
     def get_leave_balance(cls, user):
-        """Calculate leave balance dynamically"""
-        TOTAL_LEAVES = 18  # Annual leave allocation, adjust as necessary
-
-        # Get approved leaves
-        approved_leaves = cls.objects.filter(
-            user=user,
-            status='Approved',
-            start_date__year=timezone.now().year
-        ).aggregate(
-            total_days=models.Sum('leave_days')
-        )['total_days'] or 0
-
-        # Get pending leaves
-        pending_leaves = cls.objects.filter(
-            user=user,
-            status='Pending',
-            start_date__year=timezone.now().year
-        ).aggregate(
-            total_days=models.Sum('leave_days')
-        )['total_days'] or 0
-
-        available_leave = TOTAL_LEAVES - approved_leaves - pending_leaves
-
-        return {
-            'total_leave': TOTAL_LEAVES,
-            'consumed_leave': approved_leaves,
-            'pending_leave': pending_leaves,
-            'available_leave': available_leave,
-        }
-    @classmethod
-    def calculate_lop_per_month(cls, user, month, year):
-        """Calculate the number of Loss of Pay days taken per month for the user"""
-        lop_leaves = cls.objects.filter(
-            user=user,
-            leave_type='Loss of Pay',
-            status='Approved',
-            start_date__year=year,
-            start_date__month=month
-        )
+        """Calculate leave balance from total 18 leaves per year"""
+        year = timezone.now().year
+        month = timezone.now().month
         
-        # Count total LOP days in the given month
-        total_lop_days = 0
-        for leave in lop_leaves:
-            # Add leave days for each leave request
-            total_lop_days += leave.leave_days
+        # Total annual leave allocation is 18
+        TOTAL_ANNUAL_LEAVES = 18
+        
+        # Calculate monthly accrual (18/12 = 1.5 leaves per month)
+        months_passed = month
+        accrued_leaves = (TOTAL_ANNUAL_LEAVES / 12) * months_passed
+        
+        # Get used leaves
+        used_leaves = cls.objects.filter(
+            user=user,
+            status='Approved',
+            start_date__year=year
+        ).exclude(
+            leave_type='Loss of Pay'
+        ).aggregate(
+            total=Sum('leave_days')
+        )['total'] or 0
+        
+        # Calculate comp off balance
+        comp_off_balance = cls.get_comp_off_balance(user)
+        
+        # Calculate total available leaves
+        total_available = accrued_leaves - used_leaves + comp_off_balance
+        
+        return {
+            'total_leaves': total_available,
+            'comp_off': comp_off_balance,
+            'loss_of_pay': cls.calculate_lop(user)
+        }
 
-        return total_lop_days
-
-
-    
     @classmethod
-    def can_apply_leave(cls, user, requested_days):
-        """Check if user can apply for leave"""
-        balance = cls.get_leave_balance(user)
-        return balance['available_leave'] >= requested_days
-
-from django.contrib.auth.models import User, Group
-from django.conf import settings
-from django.db import models
-from django.utils import timezone
-from django.core.exceptions import ValidationError
-
-
+    def get_comp_off_balance(cls, user):
+        """Track comp-off earned and used"""
+        year = timezone.now().year
+        
+        earned = Attendance.objects.filter(
+            user=user,
+            date__year=year,
+            is_weekend=True,
+            status='Present'
+        ).count()
+        
+        used = cls.objects.filter(
+            user=user,
+            leave_type='Comp Off',
+            status='Approved',
+            start_date__year=year
+        ).aggregate(total=Sum('leave_days'))['total'] or 0
+        
+        return earned - used
+    
 class Attendance(models.Model):
     STATUS_CHOICES = [
         ('Present', 'Present'),
-        ('Absent', 'Absent'),
-        ('Pending', 'Pending'),
+        ('Absent', 'Absent'), 
+        ('Late', 'Late'),
+        ('Half Day', 'Half Day'),
         ('On Leave', 'On Leave'),
         ('Work From Home', 'Work From Home'),
         ('Weekend', 'Weekend'),
-        ('Holiday', 'Holiday'),
+        ('Holiday', 'Holiday')
     ]
 
-    LOCATION_CHOICES = [
-        ('Office', 'Office'),
-        ('Home', 'Work From Home'),
-        ('Remote', 'Remote'),
-    ]
-
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,  # Correctly reference the default User model
-        on_delete=models.CASCADE
-    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     date = models.DateField()
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
-    location = models.CharField(max_length=20, choices=LOCATION_CHOICES, null=True, blank=True)
-    clock_in_time = models.DateTimeField(null=True, blank=True)
-    clock_out_time = models.DateTimeField(null=True, blank=True)
-    total_hours = models.DurationField(null=True, blank=True)
-    leave_request = models.ForeignKey(
-        'Leave',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='attendances'
-    )
-    last_updated = models.DateTimeField(auto_now=True)
-    notes = models.TextField(blank=True, null=True)
-
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Absent')  # Default to Absent
+    is_half_day = models.BooleanField(default=False)
+    leave_type = models.CharField(max_length=50, null=True, blank=True)
+    clock_in = models.DateTimeField(null=True, blank=True)
+    clock_out = models.DateTimeField(null=True, blank=True)
+    breaks = models.JSONField(default=list)  # Store break periods
+    total_hours = models.DecimalField(max_digits=4, decimal_places=2, null=True)
+    is_weekend = models.BooleanField(default=False)
+    is_holiday = models.BooleanField(default=False)
+    location = models.CharField(max_length=50, default='Office')
+    ip_address = models.GenericIPAddressField(null=True)
+    device_info = models.JSONField(null=True)
+    last_modified = models.DateTimeField(auto_now=True)
+    modified_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL, related_name='attendance_modifications')
+    regularization_reason = models.TextField(null=True, blank=True)
+    regularization_status = models.CharField(max_length=20, null=True)
+    
     class Meta:
         unique_together = ['user', 'date']
         indexes = [
-            models.Index(fields=['user', 'date']),
-            models.Index(fields=['date']),
+            models.Index(fields=['user', 'date', 'status']),
         ]
 
     def clean(self):
-        """Validate attendance record"""
-        if self.clock_in_time and self.clock_out_time:
-            if self.clock_in_time > self.clock_out_time:
-                raise ValidationError("Clock-out time must be after clock-in time")
+        if self.clock_in and self.clock_out:
+            if self.clock_out < self.clock_in:
+                raise ValidationError("Clock out must be after clock in")
 
-    def process_attendance(self, user_sessions):
-        """Comprehensive attendance processing"""
-        if self.date.weekday() >= 6:  # Weekend check
-            self.status = 'Weekend'
-            self._reset_times()
-            return self
-
-        if self.leave_request and self.leave_request.status == 'Approved':  # Leave check
-            self.status = 'On Leave'
-            self._reset_times()
-            return self
-
-        # Get existing clock times before processing new sessions
-        existing_clock_in = self.clock_in_time
-        existing_clock_out = self.clock_out_time
-
-        if not user_sessions:  # No sessions found
-            if existing_clock_in is None:  # Only update if no previous clock-in
-                self.status = 'Absent' if self.date < timezone.now().date() else 'Pending'
-                self._reset_times()
-            return self
-
-        # Process sessions
-        total_seconds = self._calculate_total_work_time(user_sessions)
-        self.total_hours = timezone.timedelta(seconds=total_seconds)
-
-        # Update clock times only if they haven't been set
-        first_session = user_sessions.first()
-        last_session = user_sessions.last()
+    def calculate_hours(self):
+        """Calculate total working hours including breaks"""
+        if not (self.clock_in and self.clock_out):
+            return None
+            
+        total_time = (self.clock_out - self.clock_in).total_seconds() / 3600
+        break_time = sum((b['end'] - b['start']).total_seconds() / 3600 
+                        for b in self.breaks)
         
-        if not existing_clock_in:
-            self.clock_in_time = first_session.login_time
+        return round(total_time - break_time, 2)
+
+    def check_late_arrival(self):
+        """Check for late arrival and apply penalties"""
+        if not self.clock_in:
+            self.status = 'Absent'  # Mark as absent if no clock in
+            return
+            
+        start_time = timezone.datetime.combine(self.date, timezone.time(9, 0))
+        grace_period = timedelta(minutes=15)
         
-        if last_session.logout_time:  # Only update clock-out if session is ended
-            self.clock_out_time = last_session.logout_time
-
-        # Determine location
-        self.location = self._determine_location(user_sessions)
-        self.status = 'Work From Home' if self.location == 'Home' else 'Present'
-
-        return self
-
-    def _calculate_total_work_time(self, sessions):
-        """Calculate total work time from user sessions"""
-        total_seconds = 0
-        for session in sessions:
-            duration = (session.logout_time or timezone.now()) - session.login_time
-            if session.idle_time:
-                duration -= session.idle_time
-            total_seconds += max(duration.total_seconds(), 0)
-        return total_seconds
-
-    def _determine_location(self, sessions):
-        """Determine work location from sessions"""
-        locations = [session.location for session in sessions]
-        return 'Home' if 'Home' in locations else 'Office'
-
-    def _reset_times(self):
-        """Reset time-related fields"""
-        self.clock_in_time = None
-        self.clock_out_time = None
-        self.total_hours = None
-        self.location = None
+        if self.clock_in > (start_time + grace_period):
+            self.status = 'Late'
+            # Track cumulative late arrivals
+            late_count = Attendance.objects.filter(
+                user=self.user,
+                date__month=self.date.month,
+                status='Late'
+            ).count()
+            
+            if late_count >= 3:
+                # Create half-day deduction
+                Leave.objects.create(
+                    user=self.user,
+                    leave_type='Loss of Pay',
+                    start_date=self.date,
+                    end_date=self.date,
+                    half_day=True,
+                    reason='Automatic deduction for excessive late arrivals',
+                    status='Approved'
+                )
 
     def save(self, *args, **kwargs):
-        """Enhanced save method with comprehensive processing"""
-        recalculate = kwargs.pop('recalculate', False)
-
-        self.full_clean()
-
-        # Link leave request if not already linked
-        if not self.leave_request:
-            self.leave_request = Leave.objects.filter(
-                user=self.user,
-                start_date__lte=self.date,
-                end_date__gte=self.date,
-                status='Approved'
-            ).first()
-
-        # Only recalculate if explicitly requested or it's a new record
-        if recalculate or not self.pk:
-            user_sessions = UserSession.objects.filter(
-                user=self.user,
-                login_time__date=self.date
-            ).order_by('login_time')
-
-            self.process_attendance(user_sessions)
-
+        # Set weekend flag for Sunday only
+        self.is_weekend = self.date.weekday() == 6
+        self.is_holiday = self.check_if_holiday()
+        
+        if not self.is_weekend and not self.is_holiday:
+            if not self.clock_in:
+                self.status = 'Absent'  # Explicitly mark as absent if no clock in
+            else:
+                self.check_late_arrival()
+                self.total_hours = self.calculate_hours()
+                
+                # Auto-mark half day if worked less than 4 hours
+                if self.total_hours and self.total_hours < 4:
+                    self.is_half_day = True
+                    
         super().save(*args, **kwargs)
 
+    @classmethod
+    def bulk_update_status(cls, start_date, end_date, status, reason=None):
+        """Bulk update attendance status (e.g. for lockdowns)"""
+        cls.objects.filter(
+            date__range=(start_date, end_date)
+        ).update(
+            status=status,
+            regularization_reason=reason
+        )
 
+    @classmethod
+    def get_attendance_trends(cls, user, days=30):
+        """Analyze attendance patterns"""
+        end_date = timezone.now().date()
+        start_date = end_date - timedelta(days=days)
+        
+        attendance = cls.objects.filter(
+            user=user,
+            date__range=(start_date, end_date)
+        )
+        
+        trends = {
+            'late_arrivals': attendance.filter(status='Late').count(),
+            'half_days': attendance.filter(is_half_day=True).count(),
+            'absences': attendance.filter(status='Absent').count(),
+            'wfh_days': attendance.filter(status='Work From Home').count(),
+            'avg_hours': attendance.aggregate(Avg('total_hours'))['total_hours__avg']
+        }
+        
+        return trends
 
 '''-------------------------------------------- SUPPORT AREA ---------------------------------------'''
 import uuid
