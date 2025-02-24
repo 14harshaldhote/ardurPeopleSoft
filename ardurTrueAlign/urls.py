@@ -16,10 +16,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include, re_path
-from trueAlign import routing  # Import the routing.py from the aps app
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('trueAlign.urls')),  # Include URLs for the 'aps' app
-    re_path(r'^ws/', include(routing.websocket_urlpatterns)),  # WebSocket routing
 ]

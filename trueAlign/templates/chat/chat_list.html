@@ -1,0 +1,93 @@
+<div class="flex flex-col h-full">
+    <div class="p-6">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">Chats</h2>
+        
+        <!-- Create New Chat Buttons -->
+        <div class="flex gap-4 mb-8">
+            {% if is_admin or is_manager %}
+            <button type="button" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" onclick="openModal('createGroupModal')">
+                Create Group
+            </button>
+            {% endif %}
+            <button type="button" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2" onclick="openModal('createDirectModal')">
+                New Message
+            </button>
+        </div>
+
+        <!-- Group Chats -->
+        <div class="mb-8">
+            <h3 class="text-lg font-semibold text-gray-700 mb-4">Group Chats</h3>
+            <div class="space-y-3">
+                {% for chat in group_chats %}
+                <a href="{% url 'chat:chat_detail' 'group' chat.id %}" class="block p-4 bg-white rounded-lg shadow hover:shadow-md transition-shadow">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h4 class="font-medium text-gray-900">{{ chat.name }}</h4>
+                            <p class="text-sm text-gray-600 truncate">{{ chat.latest_message|default:"No messages yet" }}</p>
+                        </div>
+                        {% if chat.unread_count %}
+                        <span class="px-2 py-1 bg-indigo-100 text-indigo-800 text-xs font-medium rounded-full">
+                            {{ chat.unread_count }}
+                        </span>
+                        {% endif %}
+                    </div>
+                </a>
+                {% empty %}
+                <div class="text-center p-4 bg-gray-50 rounded-lg">
+                    <p class="text-gray-500">No group chats yet</p>
+                    {% if is_admin or is_manager %}
+                    <button type="button" onclick="openModal('createGroupModal')" class="mt-2 text-indigo-600 hover:text-indigo-700 text-sm font-medium">
+                        Create your first group
+                    </button>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Direct Messages -->
+        <div>
+            <h3 class="text-lg font-semibold text-gray-700 mb-4">Direct Messages</h3>
+            <div class="space-y-3">
+                {% for chat in direct_messages %}
+                <a href="{% url 'chat:chat_detail' 'direct' chat.id %}" class="block p-4 bg-white rounded-lg shadow hover:shadow-md transition-shadow">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h4 class="font-medium text-gray-900">{{ chat.other_user.get_full_name|default:chat.other_user.username }}</h4>
+                            <p class="text-sm text-gray-600 truncate">{{ chat.latest_message|default:"No messages yet" }}</p>
+                        </div>
+                        {% if chat.unread_count %}
+                        <span class="px-2 py-1 bg-indigo-100 text-indigo-800 text-xs font-medium rounded-full">
+                            {{ chat.unread_count }}
+                        </span>
+                        {% endif %}
+                    </div>
+                </a>
+                {% empty %}
+                <div class="text-center p-4 bg-gray-50 rounded-lg">
+                    <p class="text-gray-500">No direct messages yet</p>
+                    <button type="button" onclick="openModal('createDirectModal')" class="mt-2 text-indigo-600 hover:text-indigo-700 text-sm font-medium">
+                        Start your first conversation
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.remove('hidden');
+    }
+}
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+}
+</script>

@@ -76,6 +76,15 @@ manager_patterns = [
     path('attendance/', views.manager_attendance_view, name='attendance'),
 ]
 
+# Chat URL patterns
+chat_patterns = [
+    path('', views.chat_home, name='chat_home'),  # Root URL for chat home
+    path('list/', views.chat_list, name='chat_list'),
+    path('<str:chat_type>/<int:chat_id>/', views.chat_detail, name='chat_detail'),
+    path('group/create/', views.create_group_chat, name='create_group'), 
+    path('direct/create/', views.create_direct_message, name='create_direct'),
+]
+
 # Main URL configuration for the project
 urlpatterns = [
     path('', views.home_view, name='home'),
@@ -90,13 +99,8 @@ urlpatterns = [
     path('break/end/<int:break_id>/', views.end_break, name='end_break'),
     path('dashboard/', views.dashboard_view, name='dashboard'),
     
-    # Chat URLs
-    path('chats/', views.chat_list, name='chat_list'),
-    path('chats/<int:chat_id>/', views.chat_detail, name='chat_detail'),
-    path('chats/create/group/', views.create_group_chat, name='create_group_chat'),
-    path('chats/create/personal/', views.create_personal_chat, name='create_personal_chat'),
-    path('chats/<int:chat_id>/delete/', views.delete_chat, name='delete_chat'),
-    path('chats/<int:chat_id>/leave/', views.leave_chat, name='leave_chat'),
+    # Include chat URLs with namespace
+    path('chat/', include((chat_patterns, 'chat'))),
 
     # Admin-specific URLs under 'truealign/admin/'
     path('truealign/admin/', include((admin_patterns, 'aps'), namespace='aps_admin')),

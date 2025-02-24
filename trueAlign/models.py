@@ -1052,58 +1052,159 @@ class ProjectUpdate(models.Model):
     def __str__(self):
         return f"Update for {self.project.name} by {self.created_by.username}"
     
-    
 
-'''---------------- chat -----------------------'''
+'''---------------- Chat System Models -----------------------'''
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
+from django.core.exceptions import ValidationError
+from django.utils import timezone
+from django.db.models import Count, Q
 
-class Chat(models.Model):
-    CHAT_TYPES = [
-        ('personal', 'Personal'),
-        ('group', 'Group')
-    ]
-    
+class ChatGroup(models.Model):
+    """Represents team/department chat groups that only managers/admins can create"""
     name = models.CharField(max_length=255)
-    type = models.CharField(max_length=20, choices=CHAT_TYPES)
-    members = models.ManyToManyField(User, related_name='chats')
+    description = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(
-        User, 
-        on_delete=models.SET_NULL, 
-        related_name='created_chats', 
-        null=True
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='created_groups'
     )
+    is_active = models.BooleanField(default=True)
+    last_activity = models.DateTimeField(auto_now=True)
 
-    def get_last_message(self):
-        """Retrieve the most recent message in the chat."""
-        return self.messages.order_by('-timestamp').first()
+    def clean(self):
+        # Ensure only managers/admins can create groups
+        if not self.created_by.groups.filter(name__in=['Admin', 'Manager']).exists():
+            raise ValidationError("Only managers and administrators can create chat groups")
 
-    def get_other_member(self, current_user):
-        """Get the other member in a personal chat."""
-        if self.type == 'personal':
-            return self.members.exclude(id=current_user.id).first()
-        return None
+    def get_unread_count(self, user):
+        """Get count of unread messages for a user in this group"""
+        return self.messages.filter(
+            messageread__user=user,
+            messageread__read_at__isnull=True
+        ).count()
 
     def __str__(self):
-        return f"{self.name} ({self.type})"
+        return self.name
 
-class Message(models.Model):
-    chat = models.ForeignKey(Chat, related_name='messages', on_delete=models.CASCADE)
-    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
-    content = models.TextField()
-    timestamp = models.DateTimeField(auto_now_add=True)
-    is_read = models.BooleanField(default=False)
-    read_by = models.ManyToManyField(User, related_name='read_messages')
+class GroupMember(models.Model):
+    """Tracks group membership and roles"""
+    ROLES = [
+        ('admin', 'Group Admin'),
+        ('member', 'Member')
+    ]
 
+    group = models.ForeignKey(ChatGroup, on_delete=models.CASCADE, related_name='memberships')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='group_memberships')
+    role = models.CharField(max_length=20, choices=ROLES, default='member')
+    joined_at = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
+    last_seen = models.DateTimeField(auto_now=True)
+    typing_status = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        ordering = ['-timestamp']
-        verbose_name_plural = 'Messages'
+        unique_together = ['group', 'user']
+
+    def mark_typing(self):
+        """Update typing status"""
+        self.typing_status = timezone.now()
+        self.save()
+
+    def clear_typing(self):
+        """Clear typing status"""
+        self.typing_status = None
+        self.save()
+
+class DirectMessage(models.Model):
+    """Represents one-to-one private chats between users"""
+    participants = models.ManyToManyField(User, related_name='direct_messages')
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
+    last_activity = models.DateTimeField(auto_now=True)
+
+    def clean(self):
+        # Ensure exactly two participants
+        if self.participants.count() != 2:
+            raise ValidationError("Direct messages must have exactly two participants")
+
+    def get_unread_count(self, user):
+        """Get count of unread messages for a user in this conversation"""
+        return self.messages.filter(
+            messageread__user=user,
+            messageread__read_at__isnull=True
+        ).count()
+
+    def get_other_participant(self, user):
+        """Get the other participant in the conversation"""
+        return self.participants.exclude(id=user.id).first()
+
+    def get_messages(self):
+        """Get all messages in this conversation"""
+        return self.messages.all().order_by('sent_at')
+
+class Message(models.Model):
+    """Represents messages in both groups and direct messages"""
+    MESSAGE_TYPES = [
+        ('text', 'Text Message'),
+        ('file', 'File Attachment'),
+        ('system', 'System Message')
+    ]
+
+    group = models.ForeignKey(ChatGroup, on_delete=models.CASCADE, null=True, blank=True, related_name='messages')
+    direct_message = models.ForeignKey(DirectMessage, on_delete=models.CASCADE, null=True, blank=True, related_name='messages')
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
+    content = models.TextField()
+    message_type = models.CharField(max_length=20, choices=MESSAGE_TYPES, default='text')
+    file_attachment = models.FileField(upload_to='chat_files/', null=True, blank=True)
+    sent_at = models.DateTimeField(auto_now_add=True)
+    edited_at = models.DateTimeField(null=True, blank=True)
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['sent_at']
+        indexes = [
+            models.Index(fields=['group', 'sent_at']),
+            models.Index(fields=['direct_message', 'sent_at']),
+            models.Index(fields=['sender', 'sent_at'])
+        ]
+
+    def clean(self):
+        # Message must belong to either group or direct message
+        if (self.group and self.direct_message) or (not self.group and not self.direct_message):
+            raise ValidationError("Message must belong to either a group or direct message")
+
+    def soft_delete(self):
+        """Soft delete a message"""
+        self.is_deleted = True
+        self.deleted_at = timezone.now()
+        self.content = "Message deleted"
+        self.save()
 
     def __str__(self):
-        return f"Message from {self.sender} at {self.timestamp}"
-    
+        chat_type = f"Group: {self.group.name}" if self.group else f"DM with: {self.direct_message.get_other_participant(self.sender)}"
+        return f"{self.sender.username} in {chat_type} at {self.sent_at}"
+
+class MessageRead(models.Model):
+    """Tracks message read status per user"""
+    message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name='read_receipts')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    read_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        unique_together = ['message', 'user']
+        indexes = [
+            models.Index(fields=['user', 'read_at']),
+            models.Index(fields=['message', 'user'])
+        ]
+
+    def mark_as_read(self):
+        """Mark message as read"""
+        if not self.read_at:
+            self.read_at = timezone.now()
+            self.save()
 
 '''------------------------ marking manula attendace ----------------'''
 from django.db import models
