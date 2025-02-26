@@ -1,93 +1,112 @@
-<div class="flex flex-col h-full">
-    <div class="p-6">
-        <h2 class="text-2xl font-bold text-gray-800 mb-6">Chats</h2>
-        
-        <!-- Create New Chat Buttons -->
-        <div class="flex gap-4 mb-8">
-            {% if is_admin or is_manager %}
-            <button type="button" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" onclick="openModal('createGroupModal')">
-                Create Group
-            </button>
-            {% endif %}
-            <button type="button" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2" onclick="openModal('createDirectModal')">
-                New Message
-            </button>
-        </div>
-
-        <!-- Group Chats -->
-        <div class="mb-8">
-            <h3 class="text-lg font-semibold text-gray-700 mb-4">Group Chats</h3>
-            <div class="space-y-3">
-                {% for chat in group_chats %}
-                <a href="{% url 'chat:chat_detail' 'group' chat.id %}" class="block p-4 bg-white rounded-lg shadow hover:shadow-md transition-shadow">
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <h4 class="font-medium text-gray-900">{{ chat.name }}</h4>
-                            <p class="text-sm text-gray-600 truncate">{{ chat.latest_message|default:"No messages yet" }}</p>
-                        </div>
-                        {% if chat.unread_count %}
-                        <span class="px-2 py-1 bg-indigo-100 text-indigo-800 text-xs font-medium rounded-full">
-                            {{ chat.unread_count }}
-                        </span>
-                        {% endif %}
-                    </div>
-                </a>
-                {% empty %}
-                <div class="text-center p-4 bg-gray-50 rounded-lg">
-                    <p class="text-gray-500">No group chats yet</p>
-                    {% if is_admin or is_manager %}
-                    <button type="button" onclick="openModal('createGroupModal')" class="mt-2 text-indigo-600 hover:text-indigo-700 text-sm font-medium">
-                        Create your first group
-                    </button>
-                    {% endif %}
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-
-        <!-- Direct Messages -->
-        <div>
-            <h3 class="text-lg font-semibold text-gray-700 mb-4">Direct Messages</h3>
-            <div class="space-y-3">
-                {% for chat in direct_messages %}
-                <a href="{% url 'chat:chat_detail' 'direct' chat.id %}" class="block p-4 bg-white rounded-lg shadow hover:shadow-md transition-shadow">
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <h4 class="font-medium text-gray-900">{{ chat.other_user.get_full_name|default:chat.other_user.username }}</h4>
-                            <p class="text-sm text-gray-600 truncate">{{ chat.latest_message|default:"No messages yet" }}</p>
-                        </div>
-                        {% if chat.unread_count %}
-                        <span class="px-2 py-1 bg-indigo-100 text-indigo-800 text-xs font-medium rounded-full">
-                            {{ chat.unread_count }}
-                        </span>
-                        {% endif %}
-                    </div>
-                </a>
-                {% empty %}
-                <div class="text-center p-4 bg-gray-50 rounded-lg">
-                    <p class="text-gray-500">No direct messages yet</p>
-                    <button type="button" onclick="openModal('createDirectModal')" class="mt-2 text-indigo-600 hover:text-indigo-700 text-sm font-medium">
-                        Start your first conversation
-                    </button>
-                </div>
-                {% endfor %}
+<div class="flex flex-col h-full bg-blue-50 border-r border-blue-200">
+    <!-- Header -->
+    <div class="p-4 bg-blue-600 text-white shadow-sm">
+        <div class="flex items-center justify-between">
+            <h2 class="text-xl font-semibold">Chats</h2>
+            <div class="flex gap-2">
+                {% if is_admin or is_manager %}
+                <button onclick="openModal('createGroupModal')" 
+                    class="p-2 hover:bg-blue-700 rounded-full transition-colors duration-200"
+                    title="Create Group Chat">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                </button>
+                {% endif %}
+                <button onclick="openModal('createDirectModal')"
+                    class="p-2 hover:bg-blue-700 rounded-full transition-colors duration-200"
+                    title="New Chat">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                    </svg>
+                </button>
             </div>
         </div>
     </div>
+
+    <!-- Chat Lists -->
+    <div class="flex-1 overflow-y-auto">
+        <!-- Group Chats -->
+        {% if group_chats %}
+        <div class="py-2 border-b border-blue-100">
+            <h3 class="px-4 py-2 text-sm font-medium text-blue-800">Group Chats</h3>
+            {% for chat in group_chats %}
+            <div class="chat-item group-chat" 
+                 data-chat-name="{{ chat.name|lower }}"
+                 onclick="loadChat('group', '{{ chat.id }}')"
+                 class="flex items-center px-4 py-3 hover:bg-blue-100 cursor-pointer transition-colors duration-200 {% if chat_type == 'group' and chat.id == chat_id %}bg-blue-100 border-l-4 border-blue-600{% endif %}">
+                <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-medium shadow-sm">
+                    {{ chat.name|slice:":2"|upper }}
+                </div>
+                <div class="ml-3 flex-1 min-w-0">
+                    <div class="flex items-center justify-between">
+                        <p class="text-sm font-medium text-gray-800 truncate">{{ chat.name }}</p>
+                        {% if chat.unread_count > 0 %}
+                        <span class="ml-2 inline-flex items-center justify-center w-5 h-5 text-xs font-bold leading-none text-white bg-blue-600 rounded-full shadow-sm">
+                            {{ chat.unread_count }}
+                        </span>
+                        {% endif %}
+                    </div>
+                    <p class="text-sm text-gray-600 truncate">
+                        {% if chat.latest_message %}
+                            {{ chat.latest_message }}
+                        {% else %}
+                            No messages yet
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Direct Messages -->
+        {% if direct_messages %}
+        <div class="py-2">
+            <h3 class="px-4 py-2 text-sm font-medium text-blue-800">Direct Messages</h3>
+            {% for chat in direct_messages %}
+            <div class="chat-item direct-chat"
+                 data-chat-name="{{ chat.other_user.get_full_name|default:chat.other_user.username|lower }}"
+                 onclick="loadChat('direct', '{{ chat.id }}')"
+                 class="flex items-center px-4 py-3 hover:bg-blue-100 cursor-pointer transition-colors duration-200 {% if chat_type == 'direct' and chat.id == chat_id %}bg-blue-100 border-l-4 border-blue-600{% endif %}">
+                <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-r from-blue-400 to-blue-500 rounded-full flex items-center justify-center text-white font-medium shadow-sm">
+                    {{ chat.other_user.get_full_name|slice:":2"|upper }}
+                </div>
+                <div class="ml-3 flex-1 min-w-0">
+                    <div class="flex items-center justify-between">
+                        <p class="text-sm font-medium text-gray-800 truncate">
+                            {{ chat.other_user.get_full_name|default:chat.other_user.username }}
+                        </p>
+                        {% if chat.unread_count > 0 %}
+                        <span class="ml-2 inline-flex items-center justify-center w-5 h-5 text-xs font-bold leading-none text-white bg-blue-600 rounded-full shadow-sm">
+                            {{ chat.unread_count }}
+                        </span>
+                        {% endif %}
+                    </div>
+                    <p class="text-sm text-gray-600 truncate">
+                        {% if chat.latest_message %}
+                            {{ chat.latest_message }}
+                        {% else %}
+                            No messages yet
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if not group_chats and not direct_messages %}
+        <div class="flex flex-col items-center justify-center h-full text-blue-800">
+            <svg class="w-16 h-16 mb-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+            </svg>
+            <p class="text-lg font-medium">No conversations yet</p>
+            <p class="text-sm text-blue-600">Start a new chat or create a group</p>
+            <button onclick="openModal('createDirectModal')" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 shadow-sm">
+                Start a conversation
+            </button>
+        </div>
+        {% endif %}
+    </div>
 </div>
-
-<script>
-function openModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.classList.remove('hidden');
-    }
-}
-
-function closeModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.classList.add('hidden');
-    }
-}
-</script>

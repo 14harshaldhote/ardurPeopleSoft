@@ -78,11 +78,9 @@ manager_patterns = [
 
 # Chat URL patterns
 chat_patterns = [
-    path('', views.chat_home, name='chat_home'),  # Root URL for chat home
-    path('list/', views.chat_list, name='chat_list'),
-    path('<str:chat_type>/<int:chat_id>/', views.chat_detail, name='chat_detail'),
-    path('group/create/', views.create_group_chat, name='create_group'), 
-    path('direct/create/', views.create_direct_message, name='create_direct'),
+    path('', views.chat_home, name='home'),
+    path('<str:chat_type>/<int:chat_id>/', views.chat_home, name='detail'),
+    path('send_message/<str:chat_type>/<int:chat_id>/', views.chat_home, name='send_message'),
 ]
 
 # Main URL configuration for the project

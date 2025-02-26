@@ -379,14 +379,6 @@ def take_break(request):
         
         return redirect('dashboard')
 
-    # For GET requests, show available breaks
-    available_breaks = Break.get_available_breaks(request.user)
-    context = {
-        'available_breaks': available_breaks,
-        'break_durations': Break.BREAK_DURATIONS
-    }
-    return render(request, 'breaks/take_break.html', context)
-
 from django.urls import reverse
 
 @login_required
@@ -3913,6 +3905,8 @@ def approve_leave(request):
         'leave_requests': [],  # Example data (you can replace this with actual leave request data)
     }
     return render(request, 'components/manager/approve_leave.html', context)
+
+
 '''-------------------------- CHAT SYSTEM --------------------------------'''
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -3922,15 +3916,15 @@ from django.db.models import Q, Count, OuterRef, Subquery, F
 from django.core.exceptions import PermissionDenied
 from django.utils import timezone
 from functools import wraps
+import re
 
 from .models import ChatGroup, GroupMember, DirectMessage, Message, MessageRead
 from .services import get_chat_history, mark_messages_as_read, get_unread_counts, create_group
 from .utils import validate_user_in_chat, send_notification
 
 @login_required
-def chat_home(request):
-    """Main chat view that renders the chat interface"""
-    print("[DEBUG] chat_home: Starting chat home view")
+def chat_home(request, chat_type=None, chat_id=None):
+    """Main chat view that renders the chat interface and handles all chat functionality"""
     try:
         # Get available users based on role
         is_admin = request.user.groups.filter(name='Admin').exists()
@@ -3945,40 +3939,7 @@ def chat_home(request):
                     Q(groups__name='Manager') | Q(groups__name='HR')
                 )
 
-        context = {
-            'available_users': available_users,
-            'is_admin': is_admin,
-            'is_manager': is_manager,
-            'unread_counts': get_unread_counts(request.user)
-        }
-
-        return render(request, 'chat/chat_home.html', context)
-
-    except Exception as e:
-        print(f"[DEBUG] chat_home: Error occurred: {str(e)}")
-        messages.error(request, f'Error loading chat home: {str(e)}')
-        return redirect('dashboard')
-
-def check_group_permissions(*allowed_groups):
-    """Decorator to check if user belongs to allowed groups"""
-    def decorator(view_func):
-        @wraps(view_func)
-        def _wrapped_view(request, *args, **kwargs):
-            if not request.user.is_authenticated:
-                return redirect('login')
-            
-            if request.user.groups.filter(name__in=allowed_groups).exists():
-                return view_func(request, *args, **kwargs)
-            
-            raise PermissionDenied("You don't have permission to access this feature.")
-        return _wrapped_view
-    return decorator
-
-@login_required
-def chat_list(request):
-    """Display list of all chats for the current user"""
-    try:
-        # Get group chats and direct messages with annotations
+        # Get chat lists for sidebar - Updated query
         group_chats = ChatGroup.objects.filter(
             memberships__user=request.user,
             memberships__is_active=True,
@@ -3987,8 +3948,8 @@ def chat_list(request):
             unread_count=Count(
                 'messages',
                 filter=Q(
-                    messages__messageread__user=request.user,
-                    messages__messageread__read_at__isnull=True,
+                    messages__read_receipts__user=request.user,
+                    messages__read_receipts__read_at__isnull=True,
                     messages__is_deleted=False
                 )
             ),
@@ -4007,8 +3968,8 @@ def chat_list(request):
             unread_count=Count(
                 'messages',
                 filter=Q(
-                    messages__messageread__user=request.user,
-                    messages__messageread__read_at__isnull=True,
+                    messages__read_receipts__user=request.user,
+                    messages__read_receipts__read_at__isnull=True,
                     messages__is_deleted=False
                 )
             ),
@@ -4020,22 +3981,9 @@ def chat_list(request):
             )
         ).prefetch_related('participants', 'messages')
 
-        # Add other participant info
+        # Add other participant info for direct messages
         for dm in direct_messages:
             dm.other_user = dm.participants.exclude(id=request.user.id).first()
-
-        # Get available users based on role
-        is_admin = request.user.groups.filter(name='Admin').exists()
-        is_manager = request.user.groups.filter(name='Manager').exists()
-
-        available_users = User.objects.exclude(id=request.user.id)
-        if not is_admin:
-            if is_manager:
-                available_users = available_users.filter(groups__name='Employee')
-            else:
-                available_users = available_users.filter(
-                    Q(groups__name='Manager') | Q(groups__name='HR')
-                )
 
         context = {
             'group_chats': group_chats,
@@ -4045,124 +3993,183 @@ def chat_list(request):
             'is_manager': is_manager,
             'unread_counts': get_unread_counts(request.user)
         }
-        return render(request, 'chat/chat_list.html', context)
 
-    except Exception as e:
-        messages.error(request, f'Error loading chats: {str(e)}')
-        return redirect('dashboard')
+        # Handle chat detail view
+        if chat_type and chat_id:
+            try:
+                validate_user_in_chat(request.user, chat_id)
+                
+                if chat_type == 'group':
+                    chat = get_object_or_404(ChatGroup, id=chat_id, is_active=True)
+                    other_participant = None
+                else:
+                    chat = get_object_or_404(DirectMessage, id=chat_id, is_active=True)
+                    other_participant = chat.participants.exclude(id=request.user.id).first()
 
-@login_required
-def chat_detail(request, chat_type, chat_id):
-    """Display chat details and messages"""
-    try:
-        # Validate user access and get chat instance
-        validate_user_in_chat(request.user, chat_id)
-
-        if chat_type == 'group':
-            chat = get_object_or_404(ChatGroup, id=chat_id, is_active=True)
-            other_participant = None
-        else:
-            chat = get_object_or_404(DirectMessage, id=chat_id, is_active=True)
-            other_participant = chat.participants.exclude(id=request.user.id).first()
-
-        # Get messages and mark as read
-        messages_list = get_chat_history(chat_id, request.user, chat_type)
-        mark_messages_as_read(chat_id, request.user, chat_type)
-        
-        # Send read notification
-        send_notification(
-            request.user.id,
-            "Messages marked as read",
-            "read_status",
-            chat_id
-        )
-
-        context = {
-            'chat': chat,
-            'chat_type': chat_type,
-            'messages': messages_list,
-            'other_participant': other_participant,
-            'can_manage': request.user.groups.filter(name__in=['Admin', 'Manager']).exists(),
-            'unread_counts': get_unread_counts(request.user)
-        }
-        return render(request, 'chat/chat_detail.html', context)
-
-    except Exception as e:
-        messages.error(request, f'Error loading chat: {str(e)}')
-        return redirect('chat:chat_home')
-
-@login_required
-@check_group_permissions('Admin', 'Manager')
-def create_group_chat(request):
-    """Create a new group chat"""
-    if request.method == 'POST':
-        try:
-            name = request.POST.get('name')
-            description = request.POST.get('description', '')
-            member_ids = request.POST.getlist('members')
-
-            # Create group and add members
-            chat = create_group(name, request.user, description)
-            GroupMember.objects.bulk_create([
-                GroupMember(group=chat, user_id=member_id, role='member', is_active=True)
-                for member_id in member_ids
-            ])
-
-            # Send notifications
-            for member_id in member_ids:
+                messages_list = get_chat_history(chat_id, request.user, chat_type)
+                mark_messages_as_read(chat_id, request.user, chat_type)
+                
                 send_notification(
-                    member_id,
-                    f"You've been added to group chat: {name}",
-                    "group_add",
+                    request.user.id,
+                    "Messages marked as read",
+                    "read_status",
+                    chat_id
+                )
+
+                context.update({
+                    'chat': chat,
+                    'chat_type': chat_type,
+                    'messages': messages_list,
+                    'other_participant': other_participant,
+                    'can_manage': request.user.groups.filter(name__in=['Admin', 'Manager']).exists(),
+                    'chat_detail_view': True
+                })
+
+            except Exception as e:
+                messages.error(request, f'Error loading chat: {str(e)}')
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({'error': str(e)}, status=400)
+                return redirect('home')
+
+        # Handle create group chat
+        if request.method == 'POST' and request.POST.get('action') == 'create_group':
+            if not request.user.groups.filter(name__in=['Admin', 'Manager']).exists():
+                raise PermissionDenied("You don't have permission to create groups")
+                
+            try:
+                name = request.POST.get('name')
+                description = request.POST.get('description', '')
+                member_ids = request.POST.getlist('members')
+
+                chat = create_group(name, request.user, description)
+                GroupMember.objects.bulk_create([
+                    GroupMember(group=chat, user_id=member_id, role='member', is_active=True)
+                    for member_id in member_ids
+                ])
+
+                for member_id in member_ids:
+                    send_notification(
+                        member_id,
+                        f"You've been added to group chat: {name}",
+                        "group_add",
+                        chat.id,
+                        request.user.username
+                    )
+
+                messages.success(request, 'Group chat created successfully')
+                return redirect('chat_detail', chat_type='group', chat_id=chat.id)
+
+            except Exception as e:
+                messages.error(request, f'Error creating group: {str(e)}')
+                return redirect('home')
+
+        # Handle create direct message
+        if request.method == 'POST' and request.POST.get('action') == 'create_direct':
+            try:
+                user_id = request.POST.get('user_id')
+                if not user_id:
+                    raise ValueError("No user_id provided")
+                    
+                other_user = get_object_or_404(User, id=user_id)
+
+                existing_chat = DirectMessage.objects.filter(
+                    participants=request.user
+                ).filter(
+                    participants=other_user,
+                    is_active=True
+                ).first()
+
+                if existing_chat:
+                    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                        return JsonResponse({'chat_id': existing_chat.id})
+                    return redirect('chat_detail', chat_type='direct', chat_id=existing_chat.id)
+
+                chat = DirectMessage.objects.create(is_active=True)
+                chat.participants.add(request.user)
+                chat.participants.add(other_user)
+                chat.save()
+
+                send_notification(
+                    other_user.id,
+                    f"New message from {request.user.get_full_name() or request.user.username}",
+                    "direct_message",
                     chat.id,
                     request.user.username
                 )
 
-            messages.success(request, 'Group chat created successfully')
-            return redirect('chat:chat_detail', chat_type='group', chat_id=chat.id)
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({'chat_id': chat.id})
+                return redirect('chat_detail', chat_type='direct', chat_id=chat.id)
 
-        except Exception as e:
-            messages.error(request, f'Error creating group: {str(e)}')
-            return redirect('chat:chat_home')
+            except Exception as e:
+                messages.error(request, f'Error creating chat: {str(e)}')
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({'error': str(e)}, status=400)
+                return redirect('home')
 
-    return redirect('chat:chat_home')
+        # Handle message sending
+        if request.method == 'POST' and request.POST.get('message'):
+            try:
+                content = request.POST.get('message')
+                message_type = request.POST.get('message_type', 'text')
+                file_attachment = request.FILES.get('file_attachment')
 
-@login_required
-def create_direct_message(request):
-    """Create a direct message chat"""
-    if request.method == 'POST':
-        try:
-            other_user = get_object_or_404(User, id=request.POST.get('user_id'))
+                if chat_type == 'group':
+                    chat = get_object_or_404(ChatGroup, id=chat_id)
+                    message = Message.objects.create(
+                        group=chat,
+                        sender=request.user,
+                        content=content,
+                        message_type=message_type,
+                        file_attachment=file_attachment
+                    )
+                else:
+                    chat = get_object_or_404(DirectMessage, id=chat_id)
+                    message = Message.objects.create(
+                        direct_message=chat,
+                        sender=request.user,
+                        content=content,
+                        message_type=message_type,
+                        file_attachment=file_attachment
+                    )
 
-            # Check for existing chat
-            existing_chat = DirectMessage.objects.filter(
-                Q(participants=request.user) & Q(participants=other_user),
-                is_active=True
-            ).first()
+                # Create read receipt for sender
+                MessageRead.objects.create(message=message, user=request.user, read_at=timezone.now())
 
-            if existing_chat:
-                return redirect('chat:chat_detail', chat_type='direct', chat_id=existing_chat.id)
+                # Create read receipts for other participants
+                if chat_type == 'group':
+                    participants = User.objects.filter(
+                        group_memberships__group=chat,
+                        group_memberships__is_active=True
+                    ).exclude(id=request.user.id)
+                else:
+                    participants = chat.participants.exclude(id=request.user.id)
 
-            # Create new chat
-            chat = DirectMessage.objects.create(is_active=True)
-            chat.participants.add(request.user, other_user)
+                MessageRead.objects.bulk_create([
+                    MessageRead(message=message, user=participant)
+                    for participant in participants
+                ])
 
-            # Send notification
-            send_notification(
-                other_user.id,
-                f"New message from {request.user.get_full_name() or request.user.username}",
-                "direct_message",
-                chat.id,
-                request.user.username
-            )
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({'success': True})
+                return redirect('chat_detail', chat_type=chat_type, chat_id=chat_id)
 
-            return redirect('chat:chat_detail', chat_type='direct', chat_id=chat.id)
+            except Exception as e:
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({'error': str(e)}, status=400)
+                messages.error(request, f'Error sending message: {str(e)}')
+                return redirect('home')
 
-        except Exception as e:
-            messages.error(request, f'Error creating chat: {str(e)}')
-            return redirect('chat:chat_home')
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return render(request, 'chat/chat_content.html', context)
+        return render(request, 'chat/chat_home.html', context)
 
-    return redirect('chat:chat_home')
+    except Exception as e:
+        print(f"[DEBUG] chat_home: Error occurred: {str(e)}")
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'error': str(e)}, status=400)
+        messages.error(request, f'Error loading chat home: {str(e)}')
+        return redirect('dashboard')
 
 '''-------------------------- MANUAL ATTENDACE BY HR  --------------------------------'''
 from django.shortcuts import render, get_object_or_404, redirect

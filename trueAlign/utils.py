@@ -104,7 +104,7 @@ def soft_delete_message(message_id, user):
         print("[DEBUG] soft_delete_message: Message not found")
         raise ValidationError("Message not found")
 
-def send_notification(user_id, message, notification_type, chat_id=None, sender=None):
+def send_notification(user_id, message, notification_type, chat_id=None, sender=None, hours_ago=24):
     """
     Send notification via WebSocket
     Args:
@@ -113,6 +113,7 @@ def send_notification(user_id, message, notification_type, chat_id=None, sender=
         notification_type: Type of notification
         chat_id: Optional chat ID
         sender: Optional sender info
+        hours_ago: Number of hours to look back for unread messages (default 24)
     """
     print(f"[DEBUG] send_notification: Sending notification to user {user_id}")
     print(f"[DEBUG] send_notification: Message: {message}")

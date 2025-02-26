@@ -3,46 +3,56 @@
 <div id="createGroupModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
     <div class="flex items-center justify-center min-h-screen px-4">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-lg">
-            <form method="POST" action="{% url 'chat:create_group' %}" class="p-6">
+            <div class="bg-blue-600 text-white px-6 py-4 rounded-t-lg flex justify-between items-center">
+                <h3 class="text-xl font-semibold">Create New Group</h3>
+                <button type="button" onclick="closeModal('createGroupModal')" class="text-white hover:text-blue-100">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <form method="POST" class="p-6 bg-blue-50">
                 {% csrf_token %}
-                <div class="flex justify-between items-center border-b border-gray-200 pb-4">
-                    <h5 class="text-xl font-semibold text-gray-800">Create Group Chat</h5>
-                    <button type="button" onclick="closeModal('createGroupModal')" class="text-gray-400 hover:text-gray-500">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                    </button>
-                </div>
-                <div class="space-y-4 mt-4">
+                <input type="hidden" name="action" value="create_group">
+                
+                <div class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Group Name</label>
+                        <label class="block text-sm font-medium text-blue-700 mb-1">Group Name</label>
                         <input type="text" name="name" required
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                            placeholder="Enter group name">
+                               class="block w-full rounded-lg border border-blue-200 px-4 py-2.5 focus:border-blue-400 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
                     </div>
+
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                        <label class="block text-sm font-medium text-blue-700 mb-1">Description</label>
                         <textarea name="description" rows="3"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                            placeholder="Group description (optional)"></textarea>
+                                  class="block w-full rounded-lg border border-blue-200 px-4 py-2.5 focus:border-blue-400 focus:ring focus:ring-blue-200 focus:ring-opacity-50"></textarea>
                     </div>
+
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Add Members</label>
-                        <select name="members" multiple required
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
-                            {% for user in available_users %}
-                            <option value="{{ user.id }}">{{ user.get_full_name|default:user.username }}</option>
-                            {% endfor %}
-                        </select>
+                        <label class="block text-sm font-medium text-blue-700 mb-1">Add Members</label>
+                        <div class="relative">
+                            <select name="members" multiple required
+                                    class="block w-full rounded-lg border border-blue-200 px-4 py-2.5 focus:border-blue-400 focus:ring focus:ring-blue-200 focus:ring-opacity-50 bg-white" 
+                                    size="6">
+                                {% for user in available_users %}
+                                    <option value="{{ user.id }}" class="py-2 px-4 hover:bg-blue-100 cursor-pointer">
+                                        {{ user.get_full_name|default:user.username }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <p class="mt-1 text-xs text-blue-500">Hold Ctrl/Cmd to select multiple members</p>
                     </div>
                 </div>
-                <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
-                    <button type="button" onclick="closeModal('createGroupModal')"
-                        class="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
+
+                <div class="mt-6 flex justify-end gap-3">
+                    <button type="button" onclick="closeModal('createGroupModal')" 
+                            class="px-6 py-2.5 text-blue-600 bg-white border border-blue-200 rounded-lg hover:bg-blue-50 font-medium">
                         Cancel
                     </button>
-                    <button type="submit"
-                        class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                    <button type="submit" 
+                            class="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
                         Create Group
                     </button>
                 </div>

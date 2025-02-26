@@ -3,48 +3,275 @@
 {% block title %}Chat | TrueAlign{% endblock %}
 
 {% block content %}
-<div class="flex h-screen bg-gray-100">
-    <!-- Chat List Sidebar -->
-    <div class="w-1/4 border-r border-gray-200 bg-white overflow-y-auto">
-        <div class="p-4">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-semibold text-gray-800">Chats</h2>
-                <div class="space-x-2">
+<style>
+/* Chat UI Improvements */
+.chat-sidebar {
+    background: #2563eb;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+}
+
+.chat-search {
+    background: #dbeafe;
+    border: 1px solid #1e40af;
+}
+
+.chat-item {
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+}
+
+.chat-item:hover {
+    background: #dbeafe;
+    border-left-color: #2563eb;
+}
+
+.chat-item.active {
+    background: #dbeafe;
+    border-left-color: #2563eb;
+}
+
+/* Message Status Indicators */
+.message-status-sent {
+    color: #2563eb;
+}
+
+.message-status-delivered {
+    color: #fbbf24;
+}
+
+.message-status-read {
+    color: #22c55e;
+}
+
+/* Message Bubbles */
+.message-bubble-sent {
+    background: #2563eb;
+    color: white;
+    border-radius: 16px 16px 0 16px;
+}
+
+.message-bubble-received {
+    background: #dbeafe;
+    color: #1e40af;
+    border-radius: 16px 16px 16px 0;
+}
+
+/* Action Buttons */
+.action-button {
+    background: #2563eb;
+    color: white;
+    transition: all 0.2s ease;
+}
+
+.action-button:hover {
+    background: #1e40af;
+    transform: translateY(-1px);
+}
+
+.action-button-danger {
+    background: #ef4444;
+}
+
+.action-button-success {
+    background: #22c55e;
+}
+
+/* Notifications */
+.notification-badge {
+    background: #ef4444;
+    color: white;
+}
+
+/* Loading States */
+.loading-indicator {
+    border: 2px solid #dbeafe;
+    border-top-color: #2563eb;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+</style>
+
+<div class="flex h-screen">
+    <!-- Left Sidebar -->
+    <div class="w-80 chat-sidebar flex flex-col">
+        <!-- Header -->
+        <div class="p-4 text-white">
+            <div class="flex items-center justify-between mb-4">
+                <h1 class="text-xl font-semibold">Messages</h1>
+                <div class="flex space-x-2">
                     {% if is_admin or is_manager %}
-                    <button onclick="openModal('createGroupModal')" class="p-2 text-gray-600 hover:text-gray-900" title="Create Group Chat">
+                    <button onclick="openModal('createGroupModal')" 
+                            class="action-button p-2 rounded-full hover:bg-blue-800">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                         </svg>
                     </button>
                     {% endif %}
-                    <button onclick="openModal('createDirectModal')" class="p-2 text-gray-600 hover:text-gray-900" title="Send Direct Message">
+                    <button onclick="openModal('createDirectModal')" 
+                            class="action-button p-2 rounded-full hover:bg-blue-800">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                         </svg>
                     </button>
                 </div>
             </div>
+            
+            <!-- Search -->
+            <div class="relative">
+                <input type="text" 
+                       id="chatSearch" 
+                       class="chat-search w-full pl-10 pr-4 py-2 rounded-full"
+                       placeholder="Search conversations...">
+                <svg class="w-5 h-5 text-gray-300 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+            </div>
+        </div>
 
-            {% include 'chat/chat_list.html' %}
+        <!-- Chat List -->
+        <div class="flex-1 overflow-y-auto bg-white" id="chatList">
+            {% include "chat/chat_list.html" %}
         </div>
     </div>
 
-    <!-- Chat Detail Main Content -->
-    <div class="w-3/4 flex flex-col">
-        {% if chat_detail_view %}
-            {% include 'chat/chat_detail.html' %}
+    <!-- Main Chat Area -->
+    <div class="flex-1 flex flex-col bg-gray-50">
+        {% if chat %}
+            {% include "chat/chat_content.html" %}
         {% else %}
-            <div class="flex items-center justify-center h-full">
-                <div class="text-center text-gray-500">
-                    <h3 class="text-xl font-medium mb-2">Select a chat to start messaging</h3>
-                    <p>Choose from your existing conversations or start a new one</p>
+            <div class="flex-1 flex items-center justify-center">
+                <div class="text-center">
+                    <div class="mb-6">
+                        <svg class="w-24 h-24 text-blue-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-medium text-gray-800 mb-3">Welcome to TrueAlign Chat</h3>
+                    <p class="text-gray-600 mb-8">Start connecting with your team</p>
+                    <button onclick="openModal('createDirectModal')"
+                            class="action-button px-6 py-3 rounded-full text-sm font-medium">
+                        Start a Conversation
+                    </button>
                 </div>
             </div>
         {% endif %}
     </div>
 </div>
 
-{% include 'chat/modals/create_group.html' %}
-{% include 'chat/modals/create_direct.html' %}
+<!-- Modals -->
+{% include "chat/modals/create_group.html" %}
+{% include "chat/modals/create_direct.html" %}
 
+<script>
+// Add smooth transitions for chat loading
+function loadChat(chatType, chatId) {
+    const mainContent = document.querySelector('.flex-1.flex.flex-col');
+    mainContent.style.opacity = '0';
+    
+    setTimeout(() => {
+        window.location.href = `/chat/${chatType}/${chatId}/`;
+    }, 200);
+}
+
+// Improve modal transitions
+function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    modal.classList.remove('hidden');
+    setTimeout(() => modal.classList.add('opacity-100'), 50);
+}
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    modal.classList.remove('opacity-100');
+    setTimeout(() => modal.classList.add('hidden'), 200);
+}
+
+function filterChats() {
+    const searchTerm = document.getElementById('chatSearch').value.toLowerCase();
+    const chatItems = document.querySelectorAll('.chat-item');
+    
+    chatItems.forEach(item => {
+        const chatName = item.dataset.chatName;
+        if (chatName.includes(searchTerm)) {
+            item.style.display = 'flex';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+function handleFileSelect(input) {
+    if (input.files && input.files[0]) {
+        const fileName = input.files[0].name;
+        document.getElementById('selectedFileName').textContent = fileName;
+    }
+}
+
+function scrollToBottom() {
+    const messagesContainer = document.getElementById('messages');
+    if (messagesContainer) {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    scrollToBottom();
+    
+    const messageForm = document.getElementById('messageForm');
+    if (messageForm) {
+        messageForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(messageForm);
+            
+            try {
+                const currentPath = window.location.pathname;
+                const response = await fetch(currentPath, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    }
+                });
+                
+                if (response.ok) {
+                    messageForm.reset();
+                    const fileNameDisplay = document.getElementById('selectedFileName');
+                    if (fileNameDisplay) {
+                        fileNameDisplay.textContent = '';
+                    }
+                    
+                    const chatType = '{{ chat_type }}';
+                    const chatId = '{{ chat.id }}';
+                    if (chatType && chatId) {
+                        loadChat(chatType, chatId);
+                    }
+                } else {
+                    const errorData = await response.json();
+                    console.error('Error:', errorData.error);
+                    alert('Failed to send message. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error sending message:', error);
+                alert('Failed to send message. Please try again.');
+            }
+        });
+    }
+
+    // Auto-refresh chat list periodically
+    setInterval(() => {
+        if (!document.hidden) {
+            fetch('{% url "home" %}')
+                .then(response => response.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    document.querySelector('#chatList').innerHTML = doc.querySelector('#chatList').innerHTML;
+                });
+        }
+    }, 30000);
+});
+</script>
 {% endblock %}
