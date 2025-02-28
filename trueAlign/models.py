@@ -371,6 +371,11 @@ class Leave(models.Model):
         
         return earned - used
     
+from datetime import time, timedelta
+from django.utils import timezone
+from django.db import models
+from django.core.exceptions import ValidationError
+
 class Attendance(models.Model):
     STATUS_CHOICES = [
         ('Present', 'Present'),
@@ -388,19 +393,19 @@ class Attendance(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Absent')
     is_half_day = models.BooleanField(default=False)
     leave_type = models.CharField(max_length=50, null=True, blank=True)
-    clock_in_time = models.DateTimeField(null=True, blank=True)  # Renamed from clock_in
-    clock_out_time = models.DateTimeField(null=True, blank=True)  # Renamed from clock_out
+    clock_in_time = models.DateTimeField(null=True, blank=True)
+    clock_out_time = models.DateTimeField(null=True, blank=True)
     breaks = models.JSONField(default=list)
-    total_hours = models.DecimalField(max_digits=4, decimal_places=2, null=True)
+    total_hours = models.DecimalField(max_digits=4, decimal_places=2, null=True, blank=True)
     is_weekend = models.BooleanField(default=False)
     is_holiday = models.BooleanField(default=False)
     location = models.CharField(max_length=50, default='Office')
-    ip_address = models.GenericIPAddressField(null=True)
-    device_info = models.JSONField(null=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    device_info = models.JSONField(null=True, blank=True)
     last_modified = models.DateTimeField(auto_now=True)
-    modified_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL, related_name='attendance_modifications')
+    modified_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='attendance_modifications')
     regularization_reason = models.TextField(null=True, blank=True)
-    regularization_status = models.CharField(max_length=20, null=True)
+    regularization_status = models.CharField(max_length=20, null=True, blank=True)
     
     class Meta:
         unique_together = ['user', 'date']
@@ -411,81 +416,148 @@ class Attendance(models.Model):
     def clean(self):
         if self.clock_in_time and self.clock_out_time:
             if self.clock_out_time < self.clock_in_time:
+                print("Validation Error: Clock out must be after clock in")
                 raise ValidationError("Clock out must be after clock in")
 
     def calculate_hours(self):
         """Calculate total working hours including breaks"""
         if not (self.clock_in_time and self.clock_out_time):
+            print("No clock in or clock out time available for calculation")
             return None
             
         total_time = (self.clock_out_time - self.clock_in_time).total_seconds() / 3600
-        break_time = sum((b['end'] - b['start']).total_seconds() / 3600 
-                        for b in self.breaks)
         
+        # Handle breaks if they exist
+        break_time = 0
+        if self.breaks:
+            try:
+                break_time = sum((b['end'] - b['start']).total_seconds() / 3600 
+                                for b in self.breaks)
+            except:
+                print("Error calculating break time, using 0")
+        
+        print(f"Calculated total hours: {round(total_time - break_time, 2)}")
         return round(total_time - break_time, 2)
 
     def check_late_arrival(self):
         """Check for late arrival and apply penalties"""
         if not self.clock_in_time:
             self.status = 'Absent'
+            print("No clock in time, marking status as Absent")
             return
-            
-        start_time = timezone.datetime.combine(self.date, timezone.time(9, 0))
+        
+        # Create a timezone-aware datetime for the start time (9:00 AM)
+        # First create a naive datetime by combining the date with 9:00 AM time
+        naive_start_time = timezone.datetime.combine(self.date, time(9, 0))
+        
+        # Then make it timezone-aware with the current timezone
+        start_time = timezone.make_aware(naive_start_time)
+        
+        print(f"Start time (timezone-aware): {start_time}")
+        print(f"Clock in time: {self.clock_in_time}")
+        print(f"Is clock_in_time timezone-aware: {timezone.is_aware(self.clock_in_time)}")
+        
+        # Ensure clock_in_time is timezone-aware
+        if timezone.is_naive(self.clock_in_time):
+            self.clock_in_time = timezone.make_aware(self.clock_in_time)
+            print(f"Made clock_in_time timezone-aware: {self.clock_in_time}")
+
         grace_period = timedelta(minutes=15)
         
         if self.clock_in_time > (start_time + grace_period):
             self.status = 'Late'
-            late_count = Attendance.objects.filter(
-                user=self.user,
-                date__month=self.date.month,
-                status='Late'
-            ).count()
+            print(f"User {self.user} is late. Status updated to Late.")
             
-            if late_count >= 3:
-                Leave.objects.create(
+            # Optional: Handle late count penalties
+            try:
+                late_count = Attendance.objects.filter(
                     user=self.user,
-                    leave_type='Loss of Pay',
-                    start_date=self.date,
-                    end_date=self.date,
-                    half_day=True,
-                    reason='Automatic deduction for excessive late arrivals',
-                    status='Approved'
-                )
+                    date__month=self.date.month,
+                    status='Late'
+                ).count()
+                
+                if late_count >= 3:
+                    # Assuming you have a Leave model
+                    from .models import Leave  # Import here to avoid circular imports
+                    
+                    Leave.objects.create(
+                        user=self.user,
+                        leave_type='Loss of Pay',
+                        start_date=self.date,
+                        end_date=self.date,
+                        half_day=True,
+                        reason='Automatic deduction for excessive late arrivals',
+                        status='Approved'
+                    )
+                    print(f"Created Loss of Pay leave for user {self.user} due to excessive late arrivals.")
+            except Exception as e:
+                print(f"Error handling late count: {str(e)}")
 
     def save(self, recalculate=False, *args, **kwargs):
-        # Set weekend flag for Sunday only
+        # Set weekend flag
         self.is_weekend = self.date.weekday() == 6
         self.is_holiday = self.check_if_holiday()
         
+        print(f"Saving attendance for user {self.user} on {self.date}. Weekend: {self.is_weekend}, Holiday: {self.is_holiday}")
+        
+        # Ensure timezone awareness for datetime fields
+        if self.clock_in_time and timezone.is_naive(self.clock_in_time):
+            self.clock_in_time = timezone.make_aware(self.clock_in_time)
+            print(f"Made clock_in_time timezone-aware during save: {self.clock_in_time}")
+            
+        if self.clock_out_time and timezone.is_naive(self.clock_out_time):
+            self.clock_out_time = timezone.make_aware(self.clock_out_time)
+            print(f"Made clock_out_time timezone-aware during save: {self.clock_out_time}")
+        
+        # Skip late arrival check and other processing for weekends and holidays
         if not self.is_weekend and not self.is_holiday:
             if not self.clock_in_time:
                 self.status = 'Absent'
+                print("No clock in time, marking status as Absent")
             else:
-                self.check_late_arrival()
-                self.total_hours = self.calculate_hours()
+                # Only check late arrival for regular days
+                try:
+                    self.check_late_arrival()
+                except Exception as e:
+                    print(f"Error in check_late_arrival: {str(e)}")
+                    # Don't let this error prevent saving
                 
-                if self.total_hours and self.total_hours < 4:
-                    self.is_half_day = True
-                    
-        if recalculate:
-            self.total_hours = self.calculate_hours()
-                    
+                # Calculate hours if both clock times are available
+                if self.clock_in_time and self.clock_out_time:
+                    try:
+                        self.total_hours = self.calculate_hours()
+                        
+                        if self.total_hours and self.total_hours < 4:
+                            self.is_half_day = True
+                            print(f"Total hours less than 4, marking as half day for user {self.user}.")
+                    except Exception as e:
+                        print(f"Error calculating hours: {str(e)}")
+                
+        if recalculate and self.clock_in_time and self.clock_out_time:
+            try:
+                self.total_hours = self.calculate_hours()
+            except Exception as e:
+                print(f"Error recalculating hours: {str(e)}")
+        
         super().save(*args, **kwargs)
+        print(f"Attendance saved for user {self.user} on {self.date} with status {self.status}.")
 
     def check_if_holiday(self):
         """Check if date is a holiday"""
         # Add holiday checking logic here
+        print(f"Checking if {self.date} is a holiday.")
         return False
 
     @classmethod
     def bulk_update_status(cls, start_date, end_date, status, reason=None):
         """Bulk update attendance status (e.g. for lockdowns)"""
-        cls.objects.filter(
+        updated_count = cls.objects.filter(
             date__range=(start_date, end_date)
         ).update(
             status=status,
             regularization_reason=reason
         )
+        print(f"Bulk updated attendance status to {status} for {updated_count} records from {start_date} to {end_date}.")
 
     @classmethod
     def get_attendance_trends(cls, user, days=30):
@@ -503,9 +575,10 @@ class Attendance(models.Model):
             'half_days': attendance.filter(is_half_day=True).count(),
             'absences': attendance.filter(status='Absent').count(),
             'wfh_days': attendance.filter(status='Work From Home').count(),
-            'avg_hours': attendance.aggregate(Avg('total_hours'))['total_hours__avg']
+            'avg_hours': attendance.aggregate(models.Avg('total_hours'))['total_hours__avg']
         }
         
+        print(f"Attendance trends for user {user}: {trends}")
         return trends
 
 '''-------------------------------------------- SUPPORT AREA ---------------------------------------'''

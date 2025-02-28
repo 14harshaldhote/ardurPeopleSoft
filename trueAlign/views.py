@@ -432,8 +432,11 @@ def get_attendance_stats(request):
         print(f"Today's Date: {today_date}")
 
         # Get attendance records for the current month
+        current_month = timezone.now().month
+        current_year = timezone.now().year
+
         attendance_records = Attendance.objects.filter(
-            user=user,
+            user=request.user,
             date__month=current_month,
             date__year=current_year
         )
@@ -3203,25 +3206,40 @@ from django.shortcuts import render
 from django.utils.timezone import now, localtime, make_aware
 from django.db.models import Avg
 from .models import Attendance, Leave
+from datetime import time, timedelta
+
+import calendar
+from datetime import datetime, timedelta, time
+from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.shortcuts import render
+from django.utils.timezone import now, localtime, make_aware
+from django.db.models import Avg
+from .models import Attendance, Leave
+
 @login_required
 def employee_attendance_view(request):
     # Current date in the local timezone
     current_date = localtime(now())
+    print(f"Current date: {current_date}")
     
     # Get current month and year from query parameters or fallback to the current date
     current_month = int(request.GET.get('month', current_date.month))
     current_year = int(request.GET.get('year', current_date.year))
     current_month_name = calendar.month_name[current_month]
+    print(f"Current month: {current_month}, Current year: {current_year}")
 
     # Calculate previous and next month and year
     prev_month = current_month - 1 if current_month > 1 else 12
     next_month = current_month + 1 if current_month < 12 else 1
     prev_year = current_year if current_month > 1 else current_year - 1
     next_year = current_year if current_month < 12 else current_year + 1
+    print(f"Previous month: {prev_month}, Next month: {next_month}, Previous year: {prev_year}, Next year: {next_year}")
 
     # Generate the calendar for the current month
     cal = calendar.Calendar(firstweekday=6)  # Week starts on Sunday
     days_in_month = cal.monthdayscalendar(current_year, current_month)
+    print(f"Days in month: {days_in_month}")
 
     # Query attendance and leave data for the current user
     user_attendance = Attendance.objects.filter(
@@ -3229,6 +3247,7 @@ def employee_attendance_view(request):
         date__month=current_month, 
         date__year=current_year
     ).select_related('user')
+    print(f"User attendance records: {user_attendance.count()} found")
     
     leaves = Leave.objects.filter(
         user=request.user,
@@ -3236,6 +3255,7 @@ def employee_attendance_view(request):
         start_date__lte=datetime(current_year, current_month, calendar.monthrange(current_year, current_month)[1]),
         end_date__gte=datetime(current_year, current_month, 1)
     )
+    print(f"Approved leaves: {leaves.count()} found")
 
     # Aggregate statistics including weekend work
     total_present = user_attendance.filter(status='Present').count()
@@ -3245,11 +3265,13 @@ def employee_attendance_view(request):
     total_wfh = user_attendance.filter(status='Work From Home').count()
     weekend_work = user_attendance.filter(is_weekend=True, status='Present').count()
     total_half_days = user_attendance.filter(is_half_day=True).count()
+    print(f"Attendance stats - Present: {total_present}, Absent: {total_absent}, Late: {total_late}, Leave: {total_leave}, WFH: {total_wfh}, Weekend Work: {weekend_work}, Half Days: {total_half_days}")
 
     # Get average working hours
     avg_hours = user_attendance.exclude(total_hours__isnull=True).aggregate(
         avg_hours=Avg('total_hours')
     )['avg_hours'] or 0
+    print(f"Average working hours: {avg_hours}")
 
     # Prepare calendar data with attendance and leave details
     calendar_data = []
@@ -3258,6 +3280,7 @@ def employee_attendance_view(request):
         for day in week:
             if day == 0:
                 week_data.append({'empty': True})
+                print(f"Day {day} is empty")
             else:
                 date = make_aware(datetime(current_year, current_month, day))
                 leave_status = None
@@ -3276,6 +3299,7 @@ def employee_attendance_view(request):
                 if leave_on_day:
                     leave_status = 'On Leave'
                     leave_type = leave_on_day.leave_type
+                    print(f"Leave on day {day}: {leave_status}, Type: {leave_type}")
 
                 # Check if attendance exists for the day
                 attendance_on_day = user_attendance.filter(date=date.date()).first()
@@ -3289,6 +3313,7 @@ def employee_attendance_view(request):
                     is_half_day = attendance_on_day.is_half_day
                     regularization_status = attendance_on_day.regularization_status
                     regularization_reason = attendance_on_day.regularization_reason
+                    print(f"Attendance on day {day}: Status: {leave_status}, Clock In: {clock_in_time}, Clock Out: {clock_out_time}")
 
                 week_data.append({
                     'date': day,
@@ -3312,10 +3337,13 @@ def employee_attendance_view(request):
     # Paginate the attendance records
     paginator = Paginator(user_attendance.order_by('-date'), 10)
     page = request.GET.get('page')
+    print(f"Pagination page: {page}")
     try:
         records = paginator.get_page(page)
+        print(f"Records on page: {len(records)}")  # Fixed: using len() instead of count()
     except (EmptyPage, PageNotAnInteger):
         records = paginator.page(1)
+        print("No valid page number provided, defaulting to page 1")
 
     return render(request, 'components/employee/calander.html', {
         'current_month': current_month_name,
