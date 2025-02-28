@@ -4022,14 +4022,14 @@ def chat_home(request, chat_type=None, chat_id=None):
                     'messages': messages_list,
                     'other_participant': other_participant,
                     'can_manage': request.user.groups.filter(name__in=['Admin', 'Manager']).exists(),
-                    'chat_detail_view': True
+                    'chat_detail_view': True                
                 })
 
             except Exception as e:
                 messages.error(request, f'Error loading chat: {str(e)}')
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                     return JsonResponse({'error': str(e)}, status=400)
-                return redirect('home')
+                return redirect('dashboard')
 
         # Handle create group chat
         if request.method == 'POST' and request.POST.get('action') == 'create_group':
@@ -4057,11 +4057,11 @@ def chat_home(request, chat_type=None, chat_id=None):
                     )
 
                 messages.success(request, 'Group chat created successfully')
-                return redirect('chat_detail', chat_type='group', chat_id=chat.id)
+                return redirect('chat:detail', chat_type='group', chat_id=chat.id)
 
             except Exception as e:
                 messages.error(request, f'Error creating group: {str(e)}')
-                return redirect('home')
+                return redirect('dashboard')
 
         # Handle create direct message
         if request.method == 'POST' and request.POST.get('action') == 'create_direct':
@@ -4082,7 +4082,7 @@ def chat_home(request, chat_type=None, chat_id=None):
                 if existing_chat:
                     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                         return JsonResponse({'chat_id': existing_chat.id})
-                    return redirect('chat_detail', chat_type='direct', chat_id=existing_chat.id)
+                    return redirect('chat:detail', chat_type='direct', chat_id=existing_chat.id)
 
                 chat = DirectMessage.objects.create(is_active=True)
                 chat.participants.add(request.user)
@@ -4099,13 +4099,13 @@ def chat_home(request, chat_type=None, chat_id=None):
 
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                     return JsonResponse({'chat_id': chat.id})
-                return redirect('chat_detail', chat_type='direct', chat_id=chat.id)
+                return redirect('chat:detail', chat_type='direct', chat_id=chat.id)
 
             except Exception as e:
                 messages.error(request, f'Error creating chat: {str(e)}')
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                     return JsonResponse({'error': str(e)}, status=400)
-                return redirect('home')
+                return redirect('dashboard')
 
         # Handle message sending
         if request.method == 'POST' and request.POST.get('message'):
@@ -4152,13 +4152,13 @@ def chat_home(request, chat_type=None, chat_id=None):
 
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                     return JsonResponse({'success': True})
-                return redirect('chat_detail', chat_type=chat_type, chat_id=chat_id)
+                return redirect('chat:detail', chat_type=chat_type, chat_id=chat_id)
 
             except Exception as e:
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                     return JsonResponse({'error': str(e)}, status=400)
                 messages.error(request, f'Error sending message: {str(e)}')
-                return redirect('home')
+                return redirect('dashboard')
 
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return render(request, 'chat/chat_content.html', context)

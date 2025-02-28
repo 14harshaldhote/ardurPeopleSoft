@@ -1143,6 +1143,7 @@ class DirectMessage(models.Model):
     def get_messages(self):
         """Get all messages in this conversation"""
         return self.messages.all().order_by('sent_at')
+    
 class Message(models.Model):
     """Represents messages in both groups and direct messages"""
     MESSAGE_TYPES = [
