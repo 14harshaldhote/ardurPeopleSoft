@@ -2226,6 +2226,8 @@ def leave_view(request):
         # Set default values if error occurs
         leave_balance = {
             'total_leaves': 0,
+            'accrued_leaves': 0,
+            'used_leaves': 0,
             'comp_off': 0,
             'loss_of_pay': 0
         }
@@ -2319,16 +2321,21 @@ def leave_view(request):
             messages.error(request, f"Error cancelling leave request: {str(e)}")
         return redirect('aps_employee:leave_view')
 
+    # Constants for display
+    # Constants for display
+    TOTAL_ANNUAL_LEAVES = 18.0
+    
     return render(request, 'components/employee/leave.html', {
         'leave_balance': leave_balance,
         'leave_requests': leave_requests,
         'leave_types': Leave.LEAVE_TYPES,
         'priority_choices': Leave.PRIORITY_CHOICES,
-        'total_annual_leaves': 18,  # Constant defined in model logic
-        'leaves_taken': leave_balance['total_leaves'],
-        'remaining_leaves': max(0, 18 - leave_balance['total_leaves']),
-        'loss_of_pay': leave_balance['loss_of_pay']
+        'total_annual_leaves': TOTAL_ANNUAL_LEAVES,
+        'leaves_taken': leave_balance.get('used_leaves', 0.0),
+        'remaining_leaves': leave_balance.get('total_leaves', TOTAL_ANNUAL_LEAVES),
+        'loss_of_pay': leave_balance.get('loss_of_pay', 0.0)
     })
+
 
 @login_required
 @user_passes_test(is_hr)

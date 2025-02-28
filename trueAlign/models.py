@@ -184,12 +184,7 @@ class Leave(models.Model):
     LEAVE_TYPES = [
         ('Sick Leave', 'Sick Leave'),
         ('Casual Leave', 'Casual Leave'), 
-        ('Earned Leave', 'Earned Leave'),
         ('Loss of Pay', 'Loss of Pay'),
-        ('Maternity Leave', 'Maternity Leave'),
-        ('Paternity Leave', 'Paternity Leave'),
-        ('Sabbatical', 'Sabbatical'),
-        ('Comp Off', 'Comp Off'),
         ('Half Day', 'Half Day'),
         ('Emergency', 'Emergency')
     ]
@@ -244,19 +239,7 @@ class Leave(models.Model):
         if overlapping_leaves.exists():
             raise ValidationError("You already have approved leave during this period")
 
-    def calculate_leave_days(self):
-        if not (self.start_date and self.end_date):
-            return 0
-            
-        total_days = 0
-        current_date = self.start_date
-        while current_date <= self.end_date:
-            # Skip only Sundays unless emergency leave
-            if current_date.weekday() != 6 or self.leave_type == 'Emergency':
-                total_days += 0.5 if self.half_day else 1
-            current_date += timedelta(days=1)
-            
-        return total_days
+
 
     def auto_convert_leave_type(self):
         """Auto convert leave type based on balance and priority"""
@@ -277,6 +260,36 @@ class Leave(models.Model):
         if self.status == 'Approved':
             self.update_attendance()
 
+ 
+
+    
+    def calculate_leave_days(self):
+        if not (self.start_date and self.end_date):
+            return 0
+            
+        total_days = 0
+        current_date = self.start_date
+        while current_date <= self.end_date:
+            # Skip only Sundays unless emergency leave
+            if current_date.weekday() != 6 or self.leave_type == 'Emergency':
+                # Apply half day calculation properly
+                total_days += 0.5 if self.half_day else 1.0
+            current_date += timedelta(days=1)
+            
+        return total_days
+
+    def save(self, *args, **kwargs):
+        # Recalculate leave days on every save to ensure accuracy
+        self.leave_days = self.calculate_leave_days()
+            
+        if not self.pk:  # New leave request
+            self.auto_convert_leave_type()
+            
+        super().save(*args, **kwargs)
+        
+        if self.status == 'Approved':
+            self.update_attendance()
+
     def update_attendance(self):
         """Update attendance records for approved leave period"""
         current_date = self.start_date
@@ -284,10 +297,9 @@ class Leave(models.Model):
             if current_date.weekday() != 6:  # All days except Sunday
                 defaults = {
                     'status': 'On Leave',
-                    'leave_type': self.leave_type
+                    'leave_type': self.leave_type,
+                    'is_half_day': self.half_day  # Correctly set half day status
                 }
-                if self.half_day:
-                    defaults['is_half_day'] = True
                     
                 Attendance.objects.update_or_create(
                     user=self.user,
@@ -305,17 +317,12 @@ class Leave(models.Model):
         # Total annual leave allocation is 18
         TOTAL_ANNUAL_LEAVES = 18.0
         
-        # Calculate monthly accrual (18/12 = 1.5 leaves per month)
-        months_passed = float(month)
-        accrued_leaves = float((TOTAL_ANNUAL_LEAVES / 12.0) * months_passed)
-        
-        # Get used leaves
+        # Get used leaves - include all counted leave types
         used_leaves = float(cls.objects.filter(
             user=user,
             status='Approved',
-            start_date__year=year
-        ).exclude(
-            leave_type='Loss of Pay'
+            start_date__year=year,
+            leave_type__in=['Sick Leave', 'Casual Leave', 'Half Day', 'Emergency']
         ).aggregate(
             total=Sum('leave_days')
         )['total'] or 0)
@@ -323,7 +330,7 @@ class Leave(models.Model):
         # Calculate comp off balance
         comp_off_balance = float(cls.get_comp_off_balance(user))
         
-        # Calculate loss of pay leaves
+        # Calculate loss of pay leaves - maintain separate tracking
         loss_of_pay = float(cls.objects.filter(
             user=user,
             status='Approved',
@@ -334,10 +341,11 @@ class Leave(models.Model):
         )['total'] or 0)
         
         # Calculate total available leaves
-        total_available = accrued_leaves - used_leaves + comp_off_balance
+        total_available = TOTAL_ANNUAL_LEAVES - used_leaves + comp_off_balance
         
         return {
             'total_leaves': total_available,
+            'used_leaves': used_leaves,
             'comp_off': comp_off_balance,
             'loss_of_pay': loss_of_pay
         }
