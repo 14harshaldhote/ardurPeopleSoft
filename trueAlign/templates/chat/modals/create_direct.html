@@ -1,46 +1,52 @@
 <!-- Create Direct Message Modal -->
-<div id="createDirectModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+<div id="createDirectModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 transition-opacity duration-300">
     <div class="flex items-center justify-center min-h-screen px-4">
-        <div class="bg-[#F0F4F8] rounded-lg shadow-xl w-full max-w-lg">
-            <div class="bg-[#2B5278] text-white px-6 py-4 rounded-t-lg flex justify-between items-center">
+        <div class="bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg shadow-xl w-full max-w-lg transform transition-transform duration-300">
+            <div class="bg-blue-900 text-white px-6 py-4 rounded-t-lg flex justify-between items-center">
                 <h3 class="text-xl font-semibold">New Chat</h3>
-                <button type="button" onclick="closeModal('createDirectModal')" class="text-white hover:text-gray-200">
+                <button type="button" onclick="closeModal('createDirectModal')" class="text-white hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 rounded-full p-1">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </div>
             
-            <form method="POST" class="p-6">
+            <form method="POST" class="p-6 space-y-6">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="create_direct">
                 
-                <div class="mb-6">
+                <div>
+                    <label for="userSearch" class="block text-sm font-medium text-gray-200 mb-2">Find contacts</label>
                     <div class="relative">
                         <input type="text" id="userSearch" placeholder="Search people..." 
-                               class="w-full pl-10 pr-4 py-3 bg-white rounded-full border-2 border-[#00AFF0] focus:outline-none focus:ring-2 focus:ring-[#00AFF0] focus:border-transparent">
-                        <svg class="w-5 h-5 text-[#00AFF0] absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                               class="w-full pl-10 pr-4 py-3 bg-white rounded-lg border-2 border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+                               autocomplete="off">
+                        <svg class="w-5 h-5 text-blue-500 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                         </svg>
                     </div>
                     
-                    <select name="user_id" required class="mt-4 w-full bg-white rounded-lg border-2 border-gray-200 p-3 max-h-48 overflow-y-auto">
-                        <option value="" disabled selected>Select a contact</option>
-                        {% for user in available_users %}
-                            <option value="{{ user.id }}" class="py-2 px-3 hover:bg-[#F0F4F8]">
-                                {{ user.get_full_name|default:user.username }}
-                            </option>
-                        {% endfor %}
-                    </select>
+                    <div class="mt-4">
+                        <label for="user_select" class="block text-sm font-medium text-gray-200 mb-2">Select a contact</label>
+                        <select id="user_select" name="user_id" required 
+                                class="w-full bg-white rounded-lg border-2 border-gray-300 p-3 max-h-48 overflow-y-auto focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200">
+                            <option value="" disabled selected>Choose someone to chat with</option>
+                            {% for user in available_users %}
+                                <option value="{{ user.id }}" class="py-2 px-3 hover:bg-blue-100">
+                                    {{ user.get_full_name|default:user.username }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
                 </div>
-
-                <div class="flex justify-end gap-3">
-                    <button type="button" onclick="closeModal('createDirectModal')" 
-                            class="px-6 py-2 text-[#00AFF0] bg-white border-2 border-[#00AFF0] rounded-full hover:bg-[#F0F4F8] font-medium">
+                
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" onclick="closeModal('createDirectModal')"
+                             class="px-6 py-2 text-blue-500 bg-white border-2 border-blue-500 rounded-full hover:bg-blue-100 font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
                         Cancel
                     </button>
-                    <button type="submit" 
-                            class="px-6 py-2 bg-[#00AFF0] text-white rounded-full hover:bg-[#009de0] font-medium">
+                    <button type="submit"
+                             class="px-6 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
                         Start Chat
                     </button>
                 </div>
@@ -48,3 +54,51 @@
         </div>
     </div>
 </div>
+
+<script>
+// JavaScript to enhance the user search functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const userSearch = document.getElementById('userSearch');
+    const userSelect = document.getElementById('user_select');
+    
+    if (userSearch && userSelect) {
+        userSearch.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const options = userSelect.options;
+            
+            for (let i = 1; i < options.length; i++) { // Start at 1 to skip the placeholder
+                const optionText = options[i].text.toLowerCase();
+                if (optionText.includes(searchTerm)) {
+                    options[i].style.display = '';
+                } else {
+                    options[i].style.display = 'none';
+                }
+            }
+        });
+    }
+    
+    // Open modal function
+    window.openModal = function(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.querySelector('div > div').classList.add('scale-100');
+                modal.querySelector('div > div').classList.remove('scale-95');
+            }, 10);
+        }
+    };
+    
+    // Close modal function
+    window.closeModal = function(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.querySelector('div > div').classList.add('scale-95');
+            modal.querySelector('div > div').classList.remove('scale-100');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+    };
+});
+</script>

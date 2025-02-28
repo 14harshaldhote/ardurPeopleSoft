@@ -26,25 +26,16 @@ def validate_user_in_chat(user, chat_id):
     Raises:
         ValidationError if user does not have access
     """
-    print(f"[DEBUG] validate_user_in_chat: Validating access for user {user} in chat {chat_id}")
     try:
         # Check group chat access
-        print("[DEBUG] validate_user_in_chat: Checking group chat access")
         chat_group = ChatGroup.objects.get(id=chat_id)
-        print(f"[DEBUG] validate_user_in_chat: Found group chat: {chat_group}")
         if not GroupMember.objects.filter(group=chat_group, user=user, is_active=True).exists():
-            print("[DEBUG] validate_user_in_chat: User not in group, raising error")
             raise ValidationError("User is not an active member of this group")
-        print("[DEBUG] validate_user_in_chat: User has group access")
     except ChatGroup.DoesNotExist:
         # Check direct message access
-        print("[DEBUG] validate_user_in_chat: Group not found, checking direct message")
         direct_message = DirectMessage.objects.get(id=chat_id, is_active=True)
-        print(f"[DEBUG] validate_user_in_chat: Found direct message: {direct_message}")
         if not direct_message.participants.filter(id=user.id).exists():
-            print("[DEBUG] validate_user_in_chat: User not in DM, raising error")
             raise ValidationError("User is not a participant in this conversation")
-        print("[DEBUG] validate_user_in_chat: User has DM access")
 
 def get_last_seen(user):
     """
@@ -54,16 +45,13 @@ def get_last_seen(user):
     Returns:
         Last seen datetime or None
     """
-    print(f"[DEBUG] get_last_seen: Getting last seen for user {user}")
     last_group_activity = GroupMember.objects.filter(
         user=user,
         is_active=True
     ).order_by('-last_seen').first()
     
     if last_group_activity:
-        print(f"[DEBUG] get_last_seen: Found last activity at {last_group_activity.last_seen}")
         return last_group_activity.last_seen
-    print("[DEBUG] get_last_seen: No activity found")
     return None
 
 def soft_delete_message(message_id, user):
@@ -75,14 +63,11 @@ def soft_delete_message(message_id, user):
     Raises:
         ValidationError if user cannot delete message
     """
-    print(f"[DEBUG] soft_delete_message: Attempting to delete message {message_id} by user {user}")
     try:
         message = Message.objects.get(id=message_id, is_deleted=False)
-        print(f"[DEBUG] soft_delete_message: Found message: {message}")
         
         # Validate user can delete message
         if message.sender != user:
-            print("[DEBUG] soft_delete_message: User is not sender, checking group admin status")
             if message.group:
                 if not GroupMember.objects.filter(
                     group=message.group,
@@ -90,18 +75,13 @@ def soft_delete_message(message_id, user):
                     role='admin',
                     is_active=True
                 ).exists():
-                    print("[DEBUG] soft_delete_message: User not admin, raising error")
                     raise ValidationError("Only message sender or group admin can delete messages")
             else:
-                print("[DEBUG] soft_delete_message: Not group message, raising error")
                 raise ValidationError("Only message sender can delete direct messages")
                 
-        print("[DEBUG] soft_delete_message: Performing soft delete")
         message.soft_delete()
-        print("[DEBUG] soft_delete_message: Message deleted successfully")
         
     except Message.DoesNotExist:
-        print("[DEBUG] soft_delete_message: Message not found")
         raise ValidationError("Message not found")
 
 def send_notification(user_id, message, notification_type, chat_id=None, sender=None, hours_ago=24):
@@ -115,12 +95,7 @@ def send_notification(user_id, message, notification_type, chat_id=None, sender=
         sender: Optional sender info
         hours_ago: Number of hours to look back for unread messages (default 24)
     """
-    print(f"[DEBUG] send_notification: Sending notification to user {user_id}")
-    print(f"[DEBUG] send_notification: Message: {message}")
-    print(f"[DEBUG] send_notification: Type: {notification_type}")
-    
     channel_layer = get_channel_layer()
-    print("[DEBUG] send_notification: Got channel layer")
     
     # Get unread counts using service function
     unread_count = MessageRead.objects.filter(
@@ -128,7 +103,7 @@ def send_notification(user_id, message, notification_type, chat_id=None, sender=
         read_at__isnull=True,
         message__is_deleted=False
     ).count()
-    print(f"[DEBUG] send_notification: Unread count: {unread_count}")
+
     
     notification_data = {
         'type': 'notify',
@@ -139,10 +114,8 @@ def send_notification(user_id, message, notification_type, chat_id=None, sender=
         'timestamp': timezone.now().isoformat(),
         'unread_count': unread_count
     }
-    print(f"[DEBUG] send_notification: Sending data: {notification_data}")
     
     async_to_sync(channel_layer.group_send)(
         f'notifications_{user_id}',
         notification_data
     )
-    print("[DEBUG] send_notification: Notification sent successfully")

@@ -1,112 +1,415 @@
 <div class="flex flex-col h-full bg-blue-50 border-r border-blue-200">
     <!-- Header -->
-    <div class="p-4 bg-blue-600 text-white shadow-sm">
+    <div class="p-4 bg-blue-600 text-white shadow-md">
         <div class="flex items-center justify-between">
             <h2 class="text-xl font-semibold">Chats</h2>
             <div class="flex gap-2">
                 {% if is_admin or is_manager %}
                 <button onclick="openModal('createGroupModal')" 
-                    class="p-2 hover:bg-blue-700 rounded-full transition-colors duration-200"
-                    title="Create Group Chat">
+                    class="p-2 hover:bg-blue-700 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-opacity-75"
+                    title="Create Group Chat"
+                    aria-label="Create Group Chat">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                     </svg>
                 </button>
                 {% endif %}
                 <button onclick="openModal('createDirectModal')"
-                    class="p-2 hover:bg-blue-700 rounded-full transition-colors duration-200"
-                    title="New Chat">
+                    class="p-2 hover:bg-blue-700 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-opacity-75"
+                    title="New Chat"
+                    aria-label="Start New Chat">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
                     </svg>
                 </button>
             </div>
         </div>
+        
+        <!-- Enhanced Search bar -->
+        <div class="mt-3 relative">
+            <input type="text" id="chatSearch" placeholder="Search conversations..." 
+                class="w-full pl-10 pr-10 py-2 bg-blue-700 bg-opacity-30 text-white rounded-lg placeholder-blue-200 border border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-colors duration-200">
+            <svg class="w-5 h-5 text-blue-300 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <button id="clearSearch" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-300 hover:text-white focus:outline-none hidden">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+        
+        <!-- Search filters -->
+        <div class="mt-4 flex space-x-4"> <!-- Increased margin-top for better spacing -->
+            <button id="filterAll" class="px-3 py-1 text-xs bg-blue-700 bg-opacity-50 rounded-full text-white focus:outline-none focus:ring-2 focus:ring-blue-400 hover:bg-opacity-70 transition-colors search-filter active">
+                All
+            </button>
+            <button id="filterGroups" class="px-3 py-1 text-xs bg-blue-700 bg-opacity-30 rounded-full text-white focus:outline-none focus:ring-2 focus:ring-blue-400 hover:bg-opacity-70 transition-colors search-filter">
+                Groups
+            </button>
+            <button id="filterDirect" class="px-3 py-1 text-xs bg-blue-700 bg-opacity-30 rounded-full text-white focus:outline-none focus:ring-2 focus:ring-blue-400 hover:bg-opacity-70 transition-colors search-filter">
+                Direct
+            </button>
+            <button id="filterUnread" class="px-3 py-1 text-xs bg-blue-700 bg-opacity-30 rounded-full text-white focus:outline-none focus:ring-2 focus:ring-blue-400 hover:bg-opacity-70 transition-colors search-filter">
+                Unread
+            </button>
+        </div>
     </div>
 
-    <!-- Chat Lists -->
-    <div class="flex-1 overflow-y-auto">
+    <!-- Search results count and sort options -->
+    <div id="searchResultsInfo" class="px-4 py-2 bg-blue-100 border-b border-blue-200 hidden">
+        <div class="flex justify-between items-center">
+            <p class="text-sm text-blue-800"><span id="resultCount">0</span> results found</p>
+            <div class="relative">
+                <select id="sortChats" class="text-xs bg-blue-50 border border-blue-300 rounded-md px-2 py-1 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-400 appearance-none cursor-pointer">
+                    <option value="recent">Most Recent</option>
+                    <option value="name">Name</option>
+                    <option value="unread">Unread First</option>
+                </select>
+                <svg class="w-4 h-4 text-blue-800 absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Lists with improved structure -->
+    <div class="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-blue-300 scrollbar-track-transparent">
+        <!-- No results message -->
+        <div id="noResults" class="hidden flex flex-col items-center justify-center p-8 text-blue-800">
+            <svg class="w-16 h-16 mb-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.5 15.5l-4-4m-1.5 1.5l1.5-1.5 1.5 1.5m-1.5-1.5v-7m-5 4h-2m12 0h-2M8 20H4v-4m0-4V8m0-4h4M16 4h4v4m0 4v4m0 4h-4"/>
+            </svg>
+            <p class="text-lg font-medium">No conversations found</p>
+            <p class="text-sm text-blue-600 text-center">Try different search terms or filters</p>
+        </div>
+
         <!-- Group Chats -->
         {% if group_chats %}
-        <div class="py-2 border-b border-blue-100">
-            <h3 class="px-4 py-2 text-sm font-medium text-blue-800">Group Chats</h3>
-            {% for chat in group_chats %}
-            <div class="chat-item group-chat" 
-                 data-chat-name="{{ chat.name|lower }}"
-                 onclick="loadChat('group', '{{ chat.id }}')"
-                 class="flex items-center px-4 py-3 hover:bg-blue-100 cursor-pointer transition-colors duration-200 {% if chat_type == 'group' and chat.id == chat_id %}bg-blue-100 border-l-4 border-blue-600{% endif %}">
-                <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-medium shadow-sm">
-                    {{ chat.name|slice:":2"|upper }}
+        <div id="groupChatsSection" class="py-2 border-b border-blue-100">
+            <h3 class="px-4 py-2 text-sm font-medium text-blue-800 flex items-center justify-between">
+                <div class="flex items-center">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    </svg>
+                    Group Chats
                 </div>
-                <div class="ml-3 flex-1 min-w-0">
-                    <div class="flex items-center justify-between">
-                        <p class="text-sm font-medium text-gray-800 truncate">{{ chat.name }}</p>
-                        {% if chat.unread_count > 0 %}
-                        <span class="ml-2 inline-flex items-center justify-center w-5 h-5 text-xs font-bold leading-none text-white bg-blue-600 rounded-full shadow-sm">
-                            {{ chat.unread_count }}
-                        </span>
-                        {% endif %}
+                <button class="text-xs text-blue-600 hover:text-blue-800 focus:outline-none" onclick="toggleSection('groupChatsContent')">
+                    <span id="groupChatsToggle">Hide</span>
+                </button>
+            </h3>
+            <div id="groupChatsContent" class="chat-group">
+                {% for chat in group_chats %}
+                <div class="chat-item group-chat" 
+                     data-chat-name="{{ chat.name|lower }}"
+                     data-unread="{{ chat.unread_count }}"
+                     data-timestamp="{{ chat.last_message_time|date:'U'|default:'0' }}"
+                     onclick="loadChat('group', '{{ chat.id }}')"
+                     tabindex="0"
+                     role="button"
+                     aria-label="Open {{ chat.name }} group chat"
+                     class="flex items-center px-4 py-3 hover:bg-blue-100 cursor-pointer transition-colors duration-200 {% if chat_type == 'group' and chat.id == chat_id %}bg-blue-100 border-l-4 border-blue-600{% else %}border-l-4 border-transparent{% endif %} focus:outline-none focus:bg-blue-100">
+                    <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-medium shadow-sm">
+                        {{ chat.name|slice:":2"|upper }}
                     </div>
-                    <p class="text-sm text-gray-600 truncate">
-                        {% if chat.latest_message %}
-                            {{ chat.latest_message }}
-                        {% else %}
-                            No messages yet
-                        {% endif %}
-                    </p>
+                    <div class="ml-3 flex-1 min-w-0">
+                        <div class="flex items-center justify-between">
+                            <p class="text-sm font-medium text-gray-800 truncate">{{ chat.name }}</p>
+                            {% if chat.unread_count > 0 %}
+                            <span class="unread-badge ml-2 inline-flex items-center justify-center w-5 h-5 text-xs font-bold leading-none text-white bg-blue-600 rounded-full shadow-sm">
+                                {{ chat.unread_count }}
+                            </span>
+                            {% endif %}
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <p class="text-xs text-gray-600 truncate w-5/6">
+                                {% if chat.latest_message %}
+                                    {{ chat.latest_message }}
+                                {% else %}
+                                    No messages yet
+                                {% endif %}
+                            </p>
+                            {% if chat.last_message_time %}
+                            <span class="text-xs text-gray-500">{{ chat.last_message_time|time:"g:i A" }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
+                {% endfor %}
             </div>
-            {% endfor %}
         </div>
         {% endif %}
 
         <!-- Direct Messages -->
         {% if direct_messages %}
-        <div class="py-2">
-            <h3 class="px-4 py-2 text-sm font-medium text-blue-800">Direct Messages</h3>
-            {% for chat in direct_messages %}
-            <div class="chat-item direct-chat"
-                 data-chat-name="{{ chat.other_user.get_full_name|default:chat.other_user.username|lower }}"
-                 onclick="loadChat('direct', '{{ chat.id }}')"
-                 class="flex items-center px-4 py-3 hover:bg-blue-100 cursor-pointer transition-colors duration-200 {% if chat_type == 'direct' and chat.id == chat_id %}bg-blue-100 border-l-4 border-blue-600{% endif %}">
-                <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-r from-blue-400 to-blue-500 rounded-full flex items-center justify-center text-white font-medium shadow-sm">
-                    {{ chat.other_user.get_full_name|slice:":2"|upper }}
+        <div id="directMessagesSection" class="py-2">
+            <h3 class="px-4 py-2 text-sm font-medium text-blue-800 flex items-center justify-between">
+                <div class="flex items-center">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                    </svg>
+                    Direct Messages
                 </div>
-                <div class="ml-3 flex-1 min-w-0">
-                    <div class="flex items-center justify-between">
-                        <p class="text-sm font-medium text-gray-800 truncate">
-                            {{ chat.other_user.get_full_name|default:chat.other_user.username }}
-                        </p>
-                        {% if chat.unread_count > 0 %}
-                        <span class="ml-2 inline-flex items-center justify-center w-5 h-5 text-xs font-bold leading-none text-white bg-blue-600 rounded-full shadow-sm">
-                            {{ chat.unread_count }}
-                        </span>
+                <button class="text-xs text-blue-600 hover:text-blue-800 focus:outline-none" onclick="toggleSection('directMessagesContent')">
+                    <span id="directMessagesToggle">Hide</span>
+                </button>
+            </h3>
+            <div id="directMessagesContent" class="chat-direct">
+                {% for chat in direct_messages %}
+                <div class="chat-item direct-chat"
+                     data-chat-name="{{ chat.other_user.get_full_name|default:chat.other_user.username|lower }}"
+                     data-unread="{{ chat.unread_count }}"
+                     data-timestamp="{{ chat.last_message_time|date:'U'|default:'0' }}"
+                     data-online="{{ chat.other_user.is_online|yesno:'true,false' }}"
+                     onclick="loadChat('direct', '{{ chat.id }}')"
+                     tabindex="0"
+                     role="button"
+                     aria-label="Open chat with {{ chat.other_user.get_full_name|default:chat.other_user.username }}"
+                     class="flex items-center px-4 py-3 hover:bg-blue-100 cursor-pointer transition-colors duration-200 {% if chat_type == 'direct' and chat.id == chat_id %}bg-blue-100 border-l-4 border-blue-600{% else %}border-l-4 border-transparent{% endif %} focus:outline-none focus:bg-blue-100">
+                    <div class="relative flex-shrink-0">
+                        <div class="w-10 h-10 bg-gradient-to-r from-blue-400 to-blue-500 rounded-full flex items-center justify-center text-white font-medium shadow-sm">
+                            {{ chat.other_user.get_full_name|slice:":2"|upper }}
+                        </div>
+                        {% if chat.other_user.is_online %}
+                        <span class="absolute bottom-0 right-0 block w-3 h-3 bg-green-500 rounded-full ring-2 ring-white"></span>
                         {% endif %}
                     </div>
-                    <p class="text-sm text-gray-600 truncate">
-                        {% if chat.latest_message %}
-                            {{ chat.latest_message }}
-                        {% else %}
-                            No messages yet
-                        {% endif %}
-                    </p>
+                    <div class="ml-3 flex-1 min-w-1">
+                        <div class="flex items-center justify-between">
+                            <p class="text-sm font-medium text-gray-800 truncate">
+                                {{ chat.other_user.get_full_name|default:chat.other_user.username }}
+                            </p>
+                            {% if chat.unread_count > 0 %}
+                            <span class="unread-badge ml-2 inline-flex items-center justify-center w-5 h-5 text-xs font-bold leading-none text-white bg-blue-600 rounded-full shadow-sm">
+                                {{ chat.unread_count }}
+                            </span>
+                            {% endif %}
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <p class="text-xs text-gray-600 truncate w-5/6">
+                                {% if chat.latest_message %}
+                                    {{ chat.latest_message }}
+                                {% else %}
+                                    No messages yet
+                                {% endif %}
+                            </p>
+                            {% if chat.last_message_time %}
+                            <span class="text-xs text-gray-500">{{ chat.last_message_time|time:"g:i A" }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
+                {% endfor %}
             </div>
-            {% endfor %}
         </div>
         {% endif %}
 
         {% if not group_chats and not direct_messages %}
-        <div class="flex flex-col items-center justify-center h-full text-blue-800">
-            <svg class="w-16 h-16 mb-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="flex flex-col items-center justify-center h-full text-blue-800 p-4">
+            <svg class="w-16 h-16 mb-4 text-blue-500 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
             </svg>
             <p class="text-lg font-medium">No conversations yet</p>
-            <p class="text-sm text-blue-600">Start a new chat or create a group</p>
-            <button onclick="openModal('createDirectModal')" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 shadow-sm">
+            <p class="text-sm text-blue-600 mb-4 text-center">Start a new chat or create a group</p>
+            <button onclick="openModal('createDirectModal')" class="mt-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75">
                 Start a conversation
             </button>
         </div>
         {% endif %}
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Enhanced search functionality
+    const chatSearch = document.getElementById('chatSearch');
+    const chatItems = document.querySelectorAll('.chat-item');
+    const clearSearchBtn = document.getElementById('clearSearch');
+    const searchResultsInfo = document.getElementById('searchResultsInfo');
+    const resultCount = document.getElementById('resultCount');
+    const noResults = document.getElementById('noResults');
+    const sortChats = document.getElementById('sortChats');
+    const filterButtons = document.querySelectorAll('.search-filter');
+    
+    let currentFilter = 'all';
+    
+    // Initialize show/hide toggles for sections
+    window.toggleSection = function(sectionId) {
+        const section = document.getElementById(sectionId);
+        const toggleBtn = document.getElementById(sectionId === 'groupChatsContent' ? 'groupChatsToggle' : 'directMessagesToggle');
+        
+        if (section.style.display === 'none') {
+            section.style.display = 'block';
+            toggleBtn.textContent = 'Hide';
+        } else {
+            section.style.display = 'none';
+            toggleBtn.textContent = 'Show';
+        }
+    };
+    
+    // Filter buttons functionality
+    filterButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            // Remove active class from all buttons
+            filterButtons.forEach(btn => btn.classList.remove('active', 'bg-opacity-50'));
+            filterButtons.forEach(btn => btn.classList.add('bg-opacity-30'));
+            
+            // Add active class to clicked button
+            this.classList.add('active', 'bg-opacity-50');
+            this.classList.remove('bg-opacity-30');
+            
+            // Set current filter
+            if (this.id === 'filterAll') currentFilter = 'all';
+            else if (this.id === 'filterGroups') currentFilter = 'group';
+            else if (this.id === 'filterDirect') currentFilter = 'direct';
+            else if (this.id === 'filterUnread') currentFilter = 'unread';
+            
+            // Apply search with new filter
+            applySearch();
+        });
+    });
+    
+    // Sort functionality
+    if (sortChats) {
+        sortChats.addEventListener('change', function() {
+            sortChatItems();
+        });
+    }
+    
+    function sortChatItems() {
+        const sortValue = sortChats.value;
+        const groupChatsContent = document.getElementById('groupChatsContent');
+        const directMessagesContent = document.getElementById('directMessagesContent');
+        
+        // Get all visible items
+        const visibleGroupItems = Array.from(document.querySelectorAll('#groupChatsContent .chat-item:not([style*="display: none"])'));
+        const visibleDirectItems = Array.from(document.querySelectorAll('#directMessagesContent .chat-item:not([style*="display: none"])'));
+        
+        // Sort based on selected value
+        if (sortValue === 'recent') {
+            sortByTimestamp(visibleGroupItems, groupChatsContent);
+            sortByTimestamp(visibleDirectItems, directMessagesContent);
+        } else if (sortValue === 'name') {
+            sortByName(visibleGroupItems, groupChatsContent);
+            sortByName(visibleDirectItems, directMessagesContent);
+        } else if (sortValue === 'unread') {
+            sortByUnread(visibleGroupItems, groupChatsContent);
+            sortByUnread(visibleDirectItems, directMessagesContent);
+        }
+    }
+    
+    function sortByTimestamp(items, container) {
+        items.sort((a, b) => {
+            return parseInt(b.dataset.timestamp) - parseInt(a.dataset.timestamp);
+        }).forEach(item => container.appendChild(item));
+    }
+    
+    function sortByName(items, container) {
+        items.sort((a, b) => {
+            return a.dataset.chatName.localeCompare(b.dataset.chatName);
+        }).forEach(item => container.appendChild(item));
+    }
+    
+    function sortByUnread(items, container) {
+        items.sort((a, b) => {
+            return parseInt(b.dataset.unread || 0) - parseInt(a.dataset.unread || 0);
+        }).forEach(item => container.appendChild(item));
+    }
+    
+    // Apply search and filters
+    function applySearch() {
+        const searchTerm = chatSearch.value.toLowerCase();
+        let visibleCount = 0;
+        
+        chatItems.forEach(item => {
+            const chatName = item.getAttribute('data-chat-name');
+            const isGroupChat = item.classList.contains('group-chat');
+            const isDirectChat = item.classList.contains('direct-chat');
+            const hasUnread = item.querySelector('.unread-badge') !== null;
+            
+            let shouldShow = chatName.includes(searchTerm);
+            
+            // Apply additional filtering
+            if (currentFilter === 'group' && !isGroupChat) shouldShow = false;
+            if (currentFilter === 'direct' && !isDirectChat) shouldShow = false;
+            if (currentFilter === 'unread' && !hasUnread) shouldShow = false;
+            
+            if (shouldShow) {
+                item.style.display = 'flex';
+                visibleCount++;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+        
+        // Update results count
+        resultCount.textContent = visibleCount;
+        
+        // Show/hide sections based on visible items
+        const groupSection = document.getElementById('groupChatsSection');
+        const directSection = document.getElementById('directMessagesSection');
+        
+        if (groupSection) {
+            const visibleGroupItems = document.querySelectorAll('#groupChatsContent .chat-item[style="display: flex;"]');
+            groupSection.style.display = visibleGroupItems.length > 0 ? 'block' : 'none';
+        }
+        
+        if (directSection) {
+            const visibleDirectItems = document.querySelectorAll('#directMessagesContent .chat-item[style="display: flex;"]');
+            directSection.style.display = visibleDirectItems.length > 0 ? 'block' : 'none';
+        }
+        
+        // Show search results info if search is active
+        if (searchTerm.length > 0 || currentFilter !== 'all') {
+            searchResultsInfo.style.display = 'block';
+            clearSearchBtn.style.display = 'block';
+        } else {
+            searchResultsInfo.style.display = 'none';
+            clearSearchBtn.style.display = 'none';
+        }
+        
+        // Show no results message if needed
+        if (visibleCount === 0) {
+            noResults.style.display = 'flex';
+        } else {
+            noResults.style.display = 'none';
+        }
+        
+        // Apply sorting
+        sortChatItems();
+    }
+    
+    // Setup event listeners
+    if (chatSearch) {
+        chatSearch.addEventListener('input', applySearch);
+        
+        // Add clear button functionality
+        clearSearchBtn.addEventListener('click', function() {
+            chatSearch.value = '';
+            applySearch();
+            chatSearch.focus();
+        });
+        
+        // Add keyboard support for search
+        chatSearch.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                chatSearch.value = '';
+                applySearch();
+            }
+        });
+    }
+    
+    // Add keyboard navigation for chat items
+    chatItems.forEach(item => {
+        item.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                this.click();
+            }
+        });
+    });
+    
+    // Initialize with default filter
+    document.getElementById('filterAll').click();
+});
+</script>

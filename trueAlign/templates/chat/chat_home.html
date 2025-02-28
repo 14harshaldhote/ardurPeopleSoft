@@ -6,87 +6,162 @@
 <style>
 /* Chat UI Improvements */
 .chat-sidebar {
-    background: #2563eb;
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+    background: linear-gradient(to bottom, #1e40af, #2563eb);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .chat-search {
-    background: #dbeafe;
-    border: 1px solid #1e40af;
+    background: rgba(219, 234, 254, 0.9);
+    border: 1px solid rgba(30, 64, 175, 0.3);
+    transition: all 0.2s ease;
+}
+
+.chat-search:focus {
+    border-color: #1e40af;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+    outline: none;
 }
 
 .chat-item {
-    transition: all 0.2s ease;
+    transition: all 0.25s ease;
     border-left: 3px solid transparent;
+    position: relative;
+    overflow: hidden;
 }
 
 .chat-item:hover {
-    background: #dbeafe;
+    background: rgba(219, 234, 254, 0.7);
     border-left-color: #2563eb;
+    transform: translateX(4px);
 }
 
 .chat-item.active {
     background: #dbeafe;
     border-left-color: #2563eb;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
-/* Message Status Indicators */
+.chat-item::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: rgba(0, 0, 0, 0.05);
+}
+
+/* Message Status Indicators with Animation */
 .message-status-sent {
     color: #2563eb;
+    opacity: 0;
+    animation: fadeIn 0.3s forwards;
 }
 
 .message-status-delivered {
     color: #fbbf24;
+    transition: color 0.3s ease;
 }
 
 .message-status-read {
     color: #22c55e;
+    transition: color 0.3s ease;
 }
 
-/* Message Bubbles */
+@keyframes fadeIn {
+    to { opacity: 1; }
+}
+
+/* Message Bubbles with improved aesthetics */
 .message-bubble-sent {
-    background: #2563eb;
+    background: linear-gradient(135deg, #2563eb, #1e40af);
     color: white;
-    border-radius: 16px 16px 0 16px;
+    border-radius: 18px 18px 0 18px;
+    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+    transform-origin: right bottom;
+    animation: messagePop 0.3s ease;
 }
 
 .message-bubble-received {
-    background: #dbeafe;
-    color: #1e40af;
-    border-radius: 16px 16px 16px 0;
+    background: linear-gradient(135deg, #f0f9ff, #dbeafe);
+    color: #1e3a8a;
+    border-radius: 18px 18px 18px 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transform-origin: left bottom;
+    animation: messagePop 0.3s ease;
+    border: 1px solid rgba(219, 234, 254, 0.7);
 }
 
-/* Action Buttons */
+@keyframes messagePop {
+    0% { transform: scale(0.95); opacity: 0.7; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* Action Buttons with improved interaction */
 .action-button {
     background: #2563eb;
     color: white;
-    transition: all 0.2s ease;
+    transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+}
+
+.action-button:after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.5);
+    opacity: 0;
+    border-radius: 100%;
+    transform: scale(1) translate(-50%, -50%);
+    transform-origin: 50% 50%;
 }
 
 .action-button:hover {
     background: #1e40af;
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.action-button:active:after {
+    animation: ripple 0.6s ease-out;
+}
+
+@keyframes ripple {
+    0% { transform: scale(0); opacity: 1; }
+    100% { transform: scale(20); opacity: 0; }
 }
 
 .action-button-danger {
-    background: #ef4444;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
 }
 
 .action-button-success {
-    background: #22c55e;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
 }
 
-/* Notifications */
+/* Notifications with animation */
 .notification-badge {
     background: #ef4444;
     color: white;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
 }
 
 /* Loading States */
 .loading-indicator {
-    border: 2px solid #dbeafe;
+    border: 3px solid #dbeafe;
     border-top-color: #2563eb;
-    animation: spin 1s linear infinite;
+    animation: spin 1s cubic-bezier(0.55, 0.055, 0.675, 0.19) infinite;
+    box-shadow: 0 0 10px rgba(37, 99, 235, 0.1);
 }
 
 @keyframes spin {
@@ -98,41 +173,10 @@
     <!-- Left Sidebar -->
     <div class="w-80 chat-sidebar flex flex-col">
         <!-- Header -->
-        <div class="p-4 text-white">
-            <div class="flex items-center justify-between mb-4">
-                <h1 class="text-xl font-semibold">Messages</h1>
-                <div class="flex space-x-2">
-                    {% if is_admin or is_manager %}
-                    <button onclick="openModal('createGroupModal')" 
-                            class="action-button p-2 rounded-full hover:bg-blue-800">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                        </svg>
-                    </button>
-                    {% endif %}
-                    <button onclick="openModal('createDirectModal')" 
-                            class="action-button p-2 rounded-full hover:bg-blue-800">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-            
-            <!-- Search -->
-            <div class="relative">
-                <input type="text" 
-                       id="chatSearch" 
-                       class="chat-search w-full pl-10 pr-4 py-2 rounded-full"
-                       placeholder="Search conversations...">
-                <svg class="w-5 h-5 text-gray-300 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                </svg>
-            </div>
-        </div>
+       
 
-        <!-- Chat List -->
-        <div class="flex-1 overflow-y-auto bg-white" id="chatList">
+        <!-- Chat List with scroll animation -->
+        <div class="flex-1 overflow-y-auto bg-white scroll-smooth" id="chatList">
             {% include "chat/chat_list.html" %}
         </div>
     </div>
@@ -143,7 +187,7 @@
             {% include "chat/chat_content.html" %}
         {% else %}
             <div class="flex-1 flex items-center justify-center">
-                <div class="text-center">
+                <div class="text-center p-6 bg-white rounded-xl shadow-sm max-w-md mx-auto transform transition-all duration-500 hover:scale-105">
                     <div class="mb-6">
                         <svg class="w-24 h-24 text-blue-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
@@ -152,7 +196,7 @@
                     <h3 class="text-2xl font-medium text-gray-800 mb-3">Welcome to TrueAlign Chat</h3>
                     <p class="text-gray-600 mb-8">Start connecting with your team</p>
                     <button onclick="openModal('createDirectModal')"
-                            class="action-button px-6 py-3 rounded-full text-sm font-medium">
+                            class="action-button px-6 py-3 rounded-full text-sm font-medium shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                         Start a Conversation
                     </button>
                 </div>
@@ -166,64 +210,226 @@
 {% include "chat/modals/create_direct.html" %}
 
 <script>
-// Add smooth transitions for chat loading
+// Enhanced smooth transitions for chat loading
 function loadChat(chatType, chatId) {
     const mainContent = document.querySelector('.flex-1.flex.flex-col');
     mainContent.style.opacity = '0';
+    mainContent.style.transform = 'translateY(10px)';
+    mainContent.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
     
     setTimeout(() => {
         window.location.href = `/chat/${chatType}/${chatId}/`;
-    }, 200);
+    }, 300);
 }
 
-// Improve modal transitions
+// Improved modal transitions with backdrop blur
 function openModal(modalId) {
     const modal = document.getElementById(modalId);
+    document.body.style.overflow = 'hidden'; // Prevent scrolling
     modal.classList.remove('hidden');
-    setTimeout(() => modal.classList.add('opacity-100'), 50);
+    modal.style.display = 'flex';
+    
+    setTimeout(() => {
+        modal.classList.add('opacity-100');
+        const modalContent = modal.querySelector('.modal-content');
+        if (modalContent) {
+            modalContent.style.transform = 'translateY(0)';
+            modalContent.style.opacity = '1';
+        }
+    }, 50);
 }
 
 function closeModal(modalId) {
     const modal = document.getElementById(modalId);
+    const modalContent = modal.querySelector('.modal-content');
+    
+    if (modalContent) {
+        modalContent.style.transform = 'translateY(-20px)';
+        modalContent.style.opacity = '0';
+    }
+    
     modal.classList.remove('opacity-100');
-    setTimeout(() => modal.classList.add('hidden'), 200);
+    
+    setTimeout(() => {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+        document.body.style.overflow = ''; // Re-enable scrolling
+    }, 300);
 }
 
+// Enhanced chat filtering with animation
 function filterChats() {
-    const searchTerm = document.getElementById('chatSearch').value.toLowerCase();
+    const searchTerm = document.getElementById('chatSearch').value.toLowerCase().trim();
     const chatItems = document.querySelectorAll('.chat-item');
+    let hasResults = false;
     
     chatItems.forEach(item => {
-        const chatName = item.dataset.chatName;
-        if (chatName.includes(searchTerm)) {
+        const chatName = item.dataset.chatName.toLowerCase();
+        const lastMessage = item.dataset.lastMessage ? item.dataset.lastMessage.toLowerCase() : '';
+        const matches = chatName.includes(searchTerm) || lastMessage.includes(searchTerm);
+        
+        if (matches) {
             item.style.display = 'flex';
+            item.style.animation = 'fadeIn 0.3s forwards';
+            hasResults = true;
         } else {
-            item.style.display = 'none';
+            item.style.opacity = '1';
+            item.style.animation = 'fadeOut 0.3s forwards';
+            setTimeout(() => {
+                if (!chatName.includes(searchTerm) && !lastMessage.includes(searchTerm)) {
+                    item.style.display = 'none';
+                }
+            }, 300);
+        }
+    });
+    
+    const chatList = document.getElementById('chatList');
+    if (!hasResults && searchTerm.length > 0) {
+        // Show no results message if it doesn't exist
+        let noResults = document.getElementById('noResultsMessage');
+        if (!noResults) {
+            noResults = document.createElement('div');
+            noResults.id = 'noResultsMessage';
+            noResults.className = 'p-4 text-center text-gray-500 animate-fadeIn';
+            noResults.innerHTML = 'No conversations found';
+            chatList.appendChild(noResults);
+        }
+    } else {
+        // Remove no results message if it exists
+        const noResults = document.getElementById('noResultsMessage');
+        if (noResults) {
+            noResults.remove();
+        }
+    }
+}
+
+// Improved file selection experience
+function handleFileSelect(input) {
+    if (input.files && input.files[0]) {
+        const fileName = input.files[0].name;
+        const fileSize = (input.files[0].size / 1024).toFixed(1);
+        const fileSizeText = fileSize > 1024 ? `${(fileSize/1024).toFixed(1)} MB` : `${fileSize} KB`;
+        
+        const fileDisplay = document.getElementById('selectedFileName');
+        if (fileDisplay) {
+            fileDisplay.innerHTML = `
+                <span class="font-medium">${fileName}</span>
+                <span class="text-xs opacity-75">(${fileSizeText})</span>
+            `;
+            
+            const fileContainer = document.getElementById('fileAttachmentContainer');
+            if (fileContainer) {
+                fileContainer.classList.remove('hidden');
+                fileContainer.classList.add('flex');
+            }
+        }
+    }
+}
+
+// Clear file selection
+function clearFileSelection() {
+    const fileInput = document.querySelector('input[name="file_attachment"]');
+    if (fileInput) fileInput.value = '';
+    
+    const fileContainer = document.getElementById('fileAttachmentContainer');
+    if (fileContainer) {
+        fileContainer.classList.add('hidden');
+        fileContainer.classList.remove('flex');
+    }
+}
+
+// Enhanced smooth scrolling to bottom
+function scrollToBottom() {
+    const messagesContainer = document.getElementById('messages');
+    if (messagesContainer) {
+        const scrollHeight = messagesContainer.scrollHeight;
+        const height = messagesContainer.clientHeight;
+        const maxScrollTop = scrollHeight - height;
+        
+        // Animate the scroll
+        const startPosition = messagesContainer.scrollTop;
+        const change = maxScrollTop - startPosition;
+        const duration = 300;
+        let startTime = null;
+        
+        function animateScroll(timestamp) {
+            if (!startTime) startTime = timestamp;
+            const progress = timestamp - startTime;
+            const percent = Math.min(progress / duration, 1);
+            
+            // Easing function for smoother animation
+            const easeOutCubic = percent => 1 - Math.pow(1 - percent, 3);
+            
+            messagesContainer.scrollTop = startPosition + change * easeOutCubic(percent);
+            
+            if (progress < duration) {
+                window.requestAnimationFrame(animateScroll);
+            }
+        }
+        
+        window.requestAnimationFrame(animateScroll);
+    }
+}
+
+// Improved message input focus handling
+function focusMessageInput() {
+    const messageInput = document.querySelector('input[name="message"]');
+    if (messageInput) {
+        messageInput.focus();
+    }
+}
+
+// Add keypress shortcuts
+function setupShortcuts() {
+    document.addEventListener('keydown', function(e) {
+        // Press '/' to focus on search
+        if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
+            e.preventDefault();
+            document.getElementById('chatSearch').focus();
+        }
+        
+        // Press 'Esc' to close modals
+        if (e.key === 'Escape') {
+            const visibleModals = document.querySelectorAll('.modal:not(.hidden)');
+            if (visibleModals.length > 0) {
+                closeModal(visibleModals[0].id);
+            }
         }
     });
 }
 
-function handleFileSelect(input) {
-    if (input.files && input.files[0]) {
-        const fileName = input.files[0].name;
-        document.getElementById('selectedFileName').textContent = fileName;
-    }
-}
-
-function scrollToBottom() {
-    const messagesContainer = document.getElementById('messages');
-    if (messagesContainer) {
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    }
-}
-
 document.addEventListener('DOMContentLoaded', function() {
     scrollToBottom();
+    setupShortcuts();
     
+    // Add smooth entry animation for chat items
+    const chatItems = document.querySelectorAll('.chat-item');
+    chatItems.forEach((item, index) => {
+        item.style.opacity = '0';
+        item.style.transform = 'translateX(-10px)';
+        item.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+        
+        setTimeout(() => {
+            item.style.opacity = '1';
+            item.style.transform = 'translateX(0)';
+        }, 50 + (index * 30)); // Staggered animation
+    });
+    
+    // Focus message input when chat loads
+    focusMessageInput();
+    
+    // Enhanced message form submission with feedback
     const messageForm = document.getElementById('messageForm');
     if (messageForm) {
         messageForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            
+            // Show sending indicator
+            const submitButton = messageForm.querySelector('button[type="submit"]');
+            const originalContent = submitButton.innerHTML;
+            submitButton.disabled = true;
+            submitButton.innerHTML = `<div class="loading-indicator w-5 h-5 mx-auto rounded-full"></div>`;
+            
             const formData = new FormData(messageForm);
             
             try {
@@ -237,41 +443,166 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 
                 if (response.ok) {
+                    // Message sent successfully
                     messageForm.reset();
-                    const fileNameDisplay = document.getElementById('selectedFileName');
-                    if (fileNameDisplay) {
-                        fileNameDisplay.textContent = '';
-                    }
+                    clearFileSelection();
                     
-                    const chatType = '{{ chat_type }}';
-                    const chatId = '{{ chat.id }}';
-                    if (chatType && chatId) {
-                        loadChat(chatType, chatId);
-                    }
+                    // Show success animation
+                    submitButton.innerHTML = `<svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>`;
+                    
+                    setTimeout(() => {
+                        submitButton.innerHTML = originalContent;
+                        submitButton.disabled = false;
+                        
+                        // Reload chat
+                        const chatType = '{{ chat_type }}';
+                        const chatId = '{{ chat.id }}';
+                        if (chatType && chatId) {
+                            loadChat(chatType, chatId);
+                        }
+                    }, 500);
                 } else {
+                    // Show error
                     const errorData = await response.json();
                     console.error('Error:', errorData.error);
-                    alert('Failed to send message. Please try again.');
+                    
+                    submitButton.innerHTML = `<svg class="w-5 h-5 mx-auto text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>`;
+                    
+                    setTimeout(() => {
+                        submitButton.innerHTML = originalContent;
+                        submitButton.disabled = false;
+                        
+                        // Show toast notification
+                        showToast('Failed to send message. Please try again.', 'error');
+                    }, 1000);
                 }
             } catch (error) {
                 console.error('Error sending message:', error);
-                alert('Failed to send message. Please try again.');
+                submitButton.innerHTML = originalContent;
+                submitButton.disabled = false;
+                showToast('Network error. Please check your connection.', 'error');
             }
         });
     }
 
-    // Auto-refresh chat list periodically
-    setInterval(() => {
-        if (!document.hidden) {
-            fetch('{% url "home" %}')
-                .then(response => response.text())
-                .then(html => {
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(html, 'text/html');
+    // Improved chat list refresh with visual indicator
+    let isRefreshing = false;
+    
+    function refreshChatList() {
+        if (isRefreshing || document.hidden) return;
+        
+        isRefreshing = true;
+        const refreshIndicator = document.createElement('div');
+        refreshIndicator.id = 'refreshIndicator';
+        refreshIndicator.className = 'loading-indicator w-4 h-4 fixed top-2 right-2 rounded-full';
+        document.body.appendChild(refreshIndicator);
+        
+        fetch('{% url "home" %}')
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                
+                // Animate transition
+                const currentList = document.querySelector('#chatList');
+                currentList.style.opacity = '0.5';
+                currentList.style.transition = 'opacity 0.3s ease';
+                
+                setTimeout(() => {
                     document.querySelector('#chatList').innerHTML = doc.querySelector('#chatList').innerHTML;
-                });
+                    currentList.style.opacity = '1';
+                    
+                    // Remove refresh indicator
+                    const indicator = document.getElementById('refreshIndicator');
+                    if (indicator) indicator.remove();
+                    isRefreshing = false;
+                }, 300);
+            })
+            .catch(error => {
+                console.error('Error refreshing chat list:', error);
+                const indicator = document.getElementById('refreshIndicator');
+                if (indicator) indicator.remove();
+                isRefreshing = false;
+            });
+    }
+    
+    // Toast notification system
+    function showToast(message, type = 'info') {
+        // Remove existing toasts
+        const existingToasts = document.querySelectorAll('.toast-notification');
+        existingToasts.forEach(toast => {
+            toast.remove();
+        });
+        
+        // Create new toast
+        const toast = document.createElement('div');
+        toast.className = `toast-notification fixed bottom-4 right-4 px-4 py-2 rounded-lg shadow-lg text-white text-sm z-50 transform transition-all duration-300 translate-y-20 opacity-0`;
+        
+        // Set color based on type
+        if (type === 'error') {
+            toast.classList.add('bg-red-500');
+        } else if (type === 'success') {
+            toast.classList.add('bg-green-500');
+        } else {
+            toast.classList.add('bg-blue-500');
         }
-    }, 30000);
+        
+        toast.innerText = message;
+        document.body.appendChild(toast);
+        
+        // Animate in
+        setTimeout(() => {
+            toast.classList.remove('translate-y-20', 'opacity-0');
+        }, 10);
+        
+        // Auto remove
+        setTimeout(() => {
+            toast.classList.add('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.remove();
+            }, 300);
+        }, 3000);
+    }
+    
+    // Set up auto-refresh with improved interval handling
+    let refreshInterval = setInterval(refreshChatList, 30000);
+    
+    // Pause refresh when tab is inactive
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            clearInterval(refreshInterval);
+        } else {
+            refreshChatList(); // Refresh immediately when returning to tab
+            refreshInterval = setInterval(refreshChatList, 30000);
+        }
+    });
 });
+
+// Add animation classes
+document.head.insertAdjacentHTML('beforeend', `
+<style>
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(10px); }
+}
+
+.animate-fadeIn {
+    animation: fadeIn 0.3s forwards;
+}
+
+.animate-fadeOut {
+    animation: fadeOut 0.3s forwards;
+}
+</style>
+`);
 </script>
 {% endblock %}

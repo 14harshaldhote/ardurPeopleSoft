@@ -1082,12 +1082,13 @@ class ChatGroup(models.Model):
     def get_unread_count(self, user):
         """Get count of unread messages for a user in this group"""
         return self.messages.filter(
-            messageread__user=user,
-            messageread__read_at__isnull=True
+            read_receipts__user=user,
+            read_receipts__read_at__isnull=True
         ).count()
 
-    def __str__(self):
-        return self.name
+
+    # def __str__(self):
+    #     return self.name
 
 class GroupMember(models.Model):
     """Tracks group membership and roles"""
@@ -1126,7 +1127,7 @@ class DirectMessage(models.Model):
 
     def clean(self):
         # Ensure exactly two participants
-        if self.participants.count() != 2:
+        if self.participants.all().count() != 2:
             raise ValidationError("Direct messages must have exactly two participants")
 
     def get_unread_count(self, user):
@@ -1180,12 +1181,11 @@ class Message(models.Model):
         """Soft delete a message"""
         self.is_deleted = True
         self.deleted_at = timezone.now()
-        self.content = "Message deleted"
         self.save()
 
-    def __str__(self):
-        chat_type = f"Group: {self.group.name}" if self.group else f"DM with: {self.direct_message.get_other_participant(self.sender)}"
-        return f"{self.sender.username} in {chat_type} at {self.sent_at}"
+    # def __str__(self):
+    #     chat_type = f"Group: {self.group.name}" if self.group else f"DM with: {self.direct_message.get_other_participant(self.sender)}"
+    #     return f"{self.sender.username} in {chat_type} at {self.sent_at}"
 
 class MessageRead(models.Model):
     """Tracks message read status per user"""

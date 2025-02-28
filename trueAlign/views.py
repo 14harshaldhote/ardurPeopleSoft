@@ -4026,9 +4026,9 @@ def chat_home(request, chat_type=None, chat_id=None):
                 })
 
             except Exception as e:
-                messages.error(request, f'Error loading chat: {str(e)}')
+                # messages.error(request, f'Error loading chat: {str(e)}')
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                    return JsonResponse({'error': str(e)}, status=400)
+                    return JsonResponse({'error'}, status=400)
                 return redirect('dashboard')
 
         # Handle create group chat
@@ -4060,7 +4060,7 @@ def chat_home(request, chat_type=None, chat_id=None):
                 return redirect('chat:detail', chat_type='group', chat_id=chat.id)
 
             except Exception as e:
-                messages.error(request, f'Error creating group: {str(e)}')
+                # messages.error(request, f'Error creating group: {str(e)}')
                 return redirect('dashboard')
 
         # Handle create direct message
@@ -4102,9 +4102,9 @@ def chat_home(request, chat_type=None, chat_id=None):
                 return redirect('chat:detail', chat_type='direct', chat_id=chat.id)
 
             except Exception as e:
-                messages.error(request, f'Error creating chat: {str(e)}')
+                # messages.error(request, f'Error creating chat: {str(e)}')
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                    return JsonResponse({'error': str(e)}, status=400)
+                    return JsonResponse({'error'}, status=400)
                 return redirect('dashboard')
 
         # Handle message sending
@@ -4156,8 +4156,8 @@ def chat_home(request, chat_type=None, chat_id=None):
 
             except Exception as e:
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                    return JsonResponse({'error': str(e)}, status=400)
-                messages.error(request, f'Error sending message: {str(e)}')
+                    return JsonResponse({'error'}, status=400)
+                # messages.error(request, f'Error sending message: {str(e)}')
                 return redirect('dashboard')
 
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -4165,10 +4165,9 @@ def chat_home(request, chat_type=None, chat_id=None):
         return render(request, 'chat/chat_home.html', context)
 
     except Exception as e:
-        print(f"[DEBUG] chat_home: Error occurred: {str(e)}")
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return JsonResponse({'error': str(e)}, status=400)
-        messages.error(request, f'Error loading chat home: {str(e)}')
+        # messages.error(request, f'Error loading chat home: {str(e)}')
         return redirect('dashboard')
 
 '''-------------------------- MANUAL ATTENDACE BY HR  --------------------------------'''

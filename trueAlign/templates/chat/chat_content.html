@@ -1,24 +1,24 @@
-<div class="chat-content flex-1 flex flex-col bg-white">
-    <!-- Chat Header -->
-    <div class="bg-green-600 text-white p-4 flex items-center justify-between">
+<div class="chat-content flex-1 flex flex-col bg-white h-screen">
+    <!-- Chat Header with blue color scheme -->
+    <div class="bg-blue-600 text-white p-4 flex items-center justify-between shadow-md">
         <div class="flex items-center">
             {% if chat_type == 'group' %}
-                <div class="w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center text-white font-medium">
+                <div class="w-10 h-10 bg-blue-400 rounded-full flex items-center justify-center text-white font-medium shadow-sm">
                     {{ chat.name|slice:":2"|upper }}
                 </div>
                 <div class="ml-3">
                     <h2 class="text-lg font-medium">{{ chat.name }}</h2>
-                    <p class="text-sm opacity-80">{{ chat.memberships.count }} members</p>
+                    <p class="text-xs opacity-80">{{ chat.memberships.count }} members</p>
                 </div>
             {% else %}
-                <div class="w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center">
+                <div class="w-10 h-10 bg-blue-400 rounded-full flex items-center justify-center shadow-sm">
                     {{ other_participant.get_full_name|slice:":2"|upper }}
                 </div>
                 <div class="ml-3">
                     <h2 class="text-lg font-medium">
                         {{ other_participant.get_full_name|default:other_participant.username }}
                     </h2>
-                    <p class="text-sm opacity-80">
+                    <p class="text-xs opacity-80">
                         {% if other_participant.last_login %}
                             Last seen {{ other_participant.last_login|timesince }} ago
                         {% endif %}
@@ -26,13 +26,13 @@
                 </div>
             {% endif %}
         </div>
-        <div class="flex items-center space-x-4">
-            <button class="hover:bg-green-700 p-2 rounded-full transition duration-200">
+        <div class="flex items-center space-x-3">
+            <button class="hover:bg-blue-700 p-2 rounded-full transition duration-200 flex items-center justify-center" title="Call">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
                 </svg>
             </button>
-            <button class="hover:bg-green-700 p-2 rounded-full transition duration-200">
+            <button class="hover:bg-blue-700 p-2 rounded-full transition duration-200 flex items-center justify-center" title="Video Call">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
                 </svg>
@@ -40,35 +40,35 @@
         </div>
     </div>
 
-    <!-- Messages Area -->
-    <div class="flex-1 p-6 space-y-4 overflow-y-auto bg-gray-100 scroll-smooth" id="messages">
-        {% for message in messages %}
+    <!-- Messages Area with blue color scheme - ordered oldest to newest -->
+    <div class="flex-1 p-4 space-y-3 overflow-y-auto bg-gray-100 scroll-smooth" id="messages">
+        {% for message in messages reversed %}
             <div class="flex {% if message.sender == request.user %}justify-end{% endif %} items-end space-x-2 animate-fade-in">
                 {% if message.sender != request.user %}
-                    <div class="w-8 h-8 rounded-full bg-yellow-400 flex-shrink-0 flex items-center justify-center text-white text-sm shadow-md">
+                    <div class="w-8 h-8 rounded-full bg-blue-400 flex-shrink-0 flex items-center justify-center text-white text-sm shadow-sm">
                         {{ message.sender.get_full_name|slice:":1"|upper }}
                     </div>
                 {% endif %}
-                <div class="max-w-[60%] {% if message.sender == request.user %}bg-green-600 text-white{% else %}bg-white{% endif %} rounded-2xl p-3 shadow-md hover:shadow-lg transition-shadow duration-200">
+                <div class="max-w-[70%] {% if message.sender == request.user %}bg-blue-600 text-white rounded-tl-2xl rounded-tr-2xl rounded-bl-2xl{% else %}bg-white rounded-tr-2xl rounded-bl-2xl rounded-br-2xl{% endif %} p-3 shadow-sm hover:shadow-md transition-shadow duration-200">
                     {% if message.sender != request.user %}
-                        <div class="text-sm text-green-600 font-medium mb-1">
+                        <div class="text-xs text-blue-600 font-medium mb-1">
                             {{ message.sender.get_full_name|default:message.sender.username }}
                         </div>
                     {% endif %}
                     {% if message.message_type == 'file' %}
-                        <a href="{{ message.file_attachment.url }}" class="{% if message.sender == request.user %}text-white{% else %}text-green-600{% endif %} hover:underline flex items-center group transition duration-200" target="_blank">
+                        <a href="{{ message.file_attachment.url }}" class="{% if message.sender == request.user %}text-white{% else %}text-blue-600{% endif %} hover:underline flex items-center group transition duration-200" target="_blank">
                             <svg class="w-4 h-4 mr-2 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
                             </svg>
                             {{ message.file_attachment.name|slice:"14:" }}
                         </a>
                     {% else %}
-                        <p class="{% if message.sender == request.user %}text-white{% else %}text-gray-800{% endif %} break-words">{{ message.content }}</p>
+                        <p class="{% if message.sender == request.user %}text-white{% else %}text-gray-800{% endif %} break-words text-sm">{{ message.content }}</p>
                     {% endif %}
                     <div class="text-xs {% if message.sender == request.user %}text-white/80{% else %}text-gray-500{% endif %} mt-1 flex items-center justify-end space-x-1">
                         <span>{{ message.sent_at|date:"g:i A" }}</span>
                         {% if message.read_receipts.all %}
-                            <span class="text-yellow-400">✓✓</span>
+                            <span class="text-blue-400">✓✓</span>
                         {% else %}
                             <span>✓</span>
                         {% endif %}
@@ -78,23 +78,31 @@
         {% endfor %}
     </div>
 
-    <!-- Message Input Area -->
-    <div class="bg-white p-4 border-t border-gray-200">
-        <form id="messageForm" method="POST" enctype="multipart/form-data" class="flex items-center space-x-3">
+    <!-- Message Input Area with blue color scheme -->
+    <div class="bg-white p-3 border-t border-gray-200 shadow-inner">
+        <form id="messageForm" method="POST" enctype="multipart/form-data" class="flex items-center space-x-2">
             {% csrf_token %}
             <div class="flex-1 relative">
                 <input type="text" name="message" placeholder="Type a message..." 
-                       class="w-full pl-4 pr-10 py-3 rounded-full border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent transition duration-200 placeholder-gray-400" 
-                       required>
+                       class="w-full pl-4 pr-10 py-3 rounded-full border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 placeholder-gray-400 text-sm" 
+                       required
+                       autocomplete="off">
                 <label class="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer hover:scale-110 transition-transform duration-200">
                     <input type="file" name="file_attachment" class="hidden" onchange="handleFileSelect(this)">
-                    <svg class="w-5 h-5 text-gray-500 hover:text-green-600 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5 text-gray-500 hover:text-blue-600 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
                     </svg>
                 </label>
             </div>
-            <span id="selectedFileName" class="text-sm text-gray-500"></span>
-            <button type="submit" class="p-3 bg-green-600 text-white rounded-full hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transform hover:scale-105 active:scale-95 transition-all duration-200">
+            <div id="selectedFileContainer" class="hidden items-center text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-full max-w-xs overflow-hidden">
+                <span id="selectedFileName" class="truncate"></span>
+                <button type="button" onclick="clearSelectedFile()" class="ml-1 text-gray-500 hover:text-red-500">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <button type="submit" class="p-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transform hover:scale-105 active:scale-95 transition-all duration-200 flex items-center justify-center shadow-sm">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
                 </svg>
@@ -102,3 +110,36 @@
         </form>
     </div>
 </div>
+
+<script>
+function handleFileSelect(input) {
+    const fileName = input.files[0]?.name || '';
+    const fileContainer = document.getElementById('selectedFileContainer');
+    const fileNameElement = document.getElementById('selectedFileName');
+    
+    if (fileName) {
+        fileNameElement.textContent = fileName;
+        fileContainer.classList.remove('hidden');
+        fileContainer.classList.add('flex');
+    } else {
+        clearSelectedFile();
+    }
+}
+
+function clearSelectedFile() {
+    const fileInput = document.querySelector('input[name="file_attachment"]');
+    const fileContainer = document.getElementById('selectedFileContainer');
+    const fileNameElement = document.getElementById('selectedFileName');
+    
+    fileInput.value = '';
+    fileNameElement.textContent = '';
+    fileContainer.classList.add('hidden');
+    fileContainer.classList.remove('flex');
+}
+
+// Keep messages showing in correct order (newest at bottom) and scroll to bottom
+document.addEventListener('DOMContentLoaded', function() {
+    const messagesContainer = document.getElementById('messages');
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+});
+</script>
