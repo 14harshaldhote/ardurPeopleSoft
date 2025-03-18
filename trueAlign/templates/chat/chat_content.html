@@ -3,7 +3,7 @@
     <div class="bg-blue-600 text-white p-4 flex items-center justify-between shadow-md">
         <div class="flex items-center">
             {% if chat_type == 'group' %}
-                <div class="w-10 h-10 bg-blue-400 rounded-full flex items-center justify-center text-white font-medium shadow-sm">
+                <div class="w-10 h-10 bg-blue-400 rounded-full flex items-center justify-center text-white font-medium shadow-sm hover:bg-blue-500 transition-colors duration-200">
                     {{ chat.name|slice:":2"|upper }}
                 </div>
                 <div class="ml-3">
@@ -11,7 +11,7 @@
                     <p class="text-xs opacity-80">{{ chat.memberships.count }} members</p>
                 </div>
             {% else %}
-                <div class="w-10 h-10 bg-blue-400 rounded-full flex items-center justify-center shadow-sm">
+                <div class="w-10 h-10 bg-blue-400 rounded-full flex items-center justify-center shadow-sm hover:bg-blue-500 transition-colors duration-200">
                     {{ other_participant.get_full_name|slice:":2"|upper }}
                 </div>
                 <div class="ml-3">
@@ -27,29 +27,31 @@
             {% endif %}
         </div>
         <div class="flex items-center space-x-3">
-            <button class="hover:bg-blue-700 p-2 rounded-full transition duration-200 flex items-center justify-center" title="Call">
+            <button class="hover:bg-blue-700 p-2 rounded-full transition duration-200 flex items-center justify-center tooltip" title="Call">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
                 </svg>
+                <span class="tooltip-text">Call</span>
             </button>
-            <button class="hover:bg-blue-700 p-2 rounded-full transition duration-200 flex items-center justify-center" title="Video Call">
+            <button class="hover:bg-blue-700 p-2 rounded-full transition duration-200 flex items-center justify-center tooltip" title="Video Call">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
                 </svg>
+                <span class="tooltip-text">Video Call</span>
             </button>
         </div>
     </div>
 
     <!-- Messages Area with blue color scheme - ordered oldest to newest -->
-    <div class="flex-1 p-4 space-y-3 overflow-y-auto bg-gray-100 scroll-smooth" id="messages">
+    <div class="flex-1 p-4 space-y-3 overflow-y-auto bg-gray-50 scroll-smooth" id="messages">
         {% for message in messages reversed %}
-            <div class="flex {% if message.sender == request.user %}justify-end{% endif %} items-end space-x-2 animate-fade-in">
+            <div class="flex {% if message.sender == request.user %}justify-end{% endif %} items-end space-x-2 animate-fade-in message-container">
                 {% if message.sender != request.user %}
                     <div class="w-8 h-8 rounded-full bg-blue-400 flex-shrink-0 flex items-center justify-center text-white text-sm shadow-sm">
                         {{ message.sender.get_full_name|slice:":1"|upper }}
                     </div>
                 {% endif %}
-                <div class="max-w-[70%] {% if message.sender == request.user %}bg-blue-600 text-white rounded-tl-2xl rounded-tr-2xl rounded-bl-2xl{% else %}bg-white rounded-tr-2xl rounded-bl-2xl rounded-br-2xl{% endif %} p-3 shadow-sm hover:shadow-md transition-shadow duration-200">
+                <div class="max-w-[70%] {% if message.sender == request.user %}bg-blue-600 text-white rounded-tl-2xl rounded-tr-2xl rounded-bl-2xl{% else %}bg-white rounded-tr-2xl rounded-bl-2xl rounded-br-2xl{% endif %} p-3 shadow-sm hover:shadow-md transition-shadow duration-200 message-bubble">
                     {% if message.sender != request.user %}
                         <div class="text-xs text-blue-600 font-medium mb-1">
                             {{ message.sender.get_full_name|default:message.sender.username }}
@@ -74,21 +76,45 @@
                         {% endif %}
                     </div>
                 </div>
+                <div class="message-actions opacity-0 transition-opacity duration-200">
+                    <button class="text-gray-500 hover:text-blue-600 p-1 rounded-full hover:bg-gray-100">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </button>
+                </div>
             </div>
         {% endfor %}
     </div>
 
+    <!-- Typing indicator -->
+    <div id="typingIndicator" class="hidden px-4 py-2 text-xs text-gray-500 italic">
+        <div class="flex items-center">
+            <span id="typingUser"></span>
+            <span class="typing-dots ml-1">
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+            </span>
+        </div>
+    </div>
+
     <!-- Message Input Area with blue color scheme -->
     <div class="bg-white p-3 border-t border-gray-200 shadow-inner">
-        <form id="messageForm" method="POST" enctype="multipart/form-data" class="flex items-center space-x-2">
+        <form id="messageForm" method="POST" action="/send_message/" enctype="multipart/form-data" class="flex items-center space-x-2">
             {% csrf_token %}
+            <input type="hidden" name="chat_id" value="{{ chat.id }}">
+            <button type="button" class="p-2 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100 transition-colors duration-200">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+            </button>
             <div class="flex-1 relative">
                 <input type="text" name="message" placeholder="Type a message..." 
                        class="w-full pl-4 pr-10 py-3 rounded-full border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 placeholder-gray-400 text-sm" 
-                       required
-                       autocomplete="off">
+                       autocomplete="off" id="messageInput">
                 <label class="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer hover:scale-110 transition-transform duration-200">
-                    <input type="file" name="file_attachment" class="hidden" onchange="handleFileSelect(this)">
+                    <input type="file" name="file_attachment" class="hidden" id="fileInput" onchange="handleFileSelect(this)">
                     <svg class="w-5 h-5 text-gray-500 hover:text-blue-600 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
                     </svg>
@@ -111,6 +137,83 @@
     </div>
 </div>
 
+<style>
+    .message-container:hover .message-actions {
+        opacity: 1;
+    }
+    
+    .tooltip {
+        position: relative;
+    }
+    
+    .tooltip .tooltip-text {
+        visibility: hidden;
+        width: 80px;
+        background-color: rgba(0, 0, 0, 0.8);
+        color: #fff;
+        text-align: center;
+        border-radius: 6px;
+        padding: 5px;
+        position: absolute;
+        z-index: 1;
+        bottom: 125%;
+        left: 50%;
+        margin-left: -40px;
+        opacity: 0;
+        transition: opacity 0.3s;
+        font-size: 12px;
+    }
+    
+    .tooltip:hover .tooltip-text {
+        visibility: visible;
+        opacity: 1;
+    }
+    
+    .typing-dots .dot {
+        display: inline-block;
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        margin-right: 3px;
+        background: #888;
+        animation: wave 1.3s linear infinite;
+    }
+    
+    .typing-dots .dot:nth-child(2) {
+        animation-delay: -1.1s;
+    }
+    
+    .typing-dots .dot:nth-child(3) {
+        animation-delay: -0.9s;
+    }
+    
+    @keyframes wave {
+        0%, 60%, 100% {
+            transform: initial;
+        }
+        30% {
+            transform: translateY(-5px);
+        }
+    }
+    
+    .animate-fade-in {
+        animation: fadeIn 0.3s ease-in-out;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .message-bubble {
+        transition: transform 0.2s ease;
+    }
+    
+    .message-bubble:hover {
+        transform: translateY(-2px);
+    }
+</style>
+
 <script>
 function handleFileSelect(input) {
     const fileName = input.files[0]?.name || '';
@@ -127,7 +230,7 @@ function handleFileSelect(input) {
 }
 
 function clearSelectedFile() {
-    const fileInput = document.querySelector('input[name="file_attachment"]');
+    const fileInput = document.getElementById('fileInput');
     const fileContainer = document.getElementById('selectedFileContainer');
     const fileNameElement = document.getElementById('selectedFileName');
     
@@ -137,9 +240,125 @@ function clearSelectedFile() {
     fileContainer.classList.remove('flex');
 }
 
+// Typing indicator simulation
+const messageInput = document.getElementById('messageInput');
+let typingTimeout;
+
+messageInput.addEventListener('input', function() {
+    // Here you would normally emit a typing event to the server
+    // For demo purposes, we'll just show a simulated response
+    clearTimeout(typingTimeout);
+    
+    if (this.value.trim().length > 0) {
+        // Simulate other user typing after 1 second
+        typingTimeout = setTimeout(() => {
+            showTypingIndicator();
+            
+            // Hide typing indicator after 3 seconds
+            setTimeout(hideTypingIndicator, 3000);
+        }, 1000);
+    }
+});
+
+function showTypingIndicator() {
+    const typingIndicator = document.getElementById('typingIndicator');
+    const typingUser = document.getElementById('typingUser');
+    
+    // Set the name of the person typing
+    {% if chat_type == 'group' %}
+    typingUser.textContent = "Someone is typing";
+    {% else %}
+    typingUser.textContent = "{{ other_participant.get_full_name|default:other_participant.username }} is typing";
+    {% endif %}
+    
+    typingIndicator.classList.remove('hidden');
+}
+
+function hideTypingIndicator() {
+    const typingIndicator = document.getElementById('typingIndicator');
+    typingIndicator.classList.add('hidden');
+}
+
+// Form submission handling
+document.getElementById('messageForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const fileInput = document.getElementById('fileInput');
+    const messageInput = document.querySelector('input[name="message"]');
+    
+    // Validate that either a message or file is provided
+    if (!messageInput.value.trim() && !fileInput.files.length) {
+        alert('Please enter a message or attach a file');
+        return;
+    }
+    
+    // Show loading state
+    const submitButton = this.querySelector('button[type="submit"]');
+    const originalContent = submitButton.innerHTML;
+    submitButton.innerHTML = '<svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+    submitButton.disabled = true;
+    
+   fetch(this.action, {
+       method: 'POST',
+       body: formData,
+       headers: {
+           'X-Requested-With': 'XMLHttpRequest',
+           'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+       },
+       credentials: 'same-origin'
+   })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok: ' + response.status);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.status === 'success') {
+            // Clear the form
+            this.reset();
+            clearSelectedFile();
+            
+            // Add message to UI without reloading
+            addMessageToUI(data.message);
+        } else {
+            console.error('Error sending message:', data.error);
+            alert('Failed to send message: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error details:', error);
+        alert('An error occurred while sending your message: ' + error.message + '. Please check the console for more details.');
+    })
+    .finally(() => {
+        // Restore button state
+        submitButton.innerHTML = originalContent;
+        submitButton.disabled = false;
+    });
+});
+
+// Function to add a new message to UI without reloading
+function addMessageToUI(messageData) {
+    // This is a placeholder - in a real implementation, you would
+    // create DOM elements for the new message and append them
+    // For now, we'll just reload the page
+    location.reload();
+}
+
 // Keep messages showing in correct order (newest at bottom) and scroll to bottom
 document.addEventListener('DOMContentLoaded', function() {
     const messagesContainer = document.getElementById('messages');
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    
+    // Add smooth scrolling when new messages arrive
+    const observer = new MutationObserver(() => {
+        messagesContainer.scrollTo({
+            top: messagesContainer.scrollHeight,
+            behavior: 'smooth'
+        });
+    });
+    
+    observer.observe(messagesContainer, { childList: true, subtree: true });
 });
 </script>

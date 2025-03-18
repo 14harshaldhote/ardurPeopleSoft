@@ -36,44 +36,77 @@ def get_chat_history(chat_id, user, chat_type='group', limit=50):
         
     except (ChatGroup.DoesNotExist, DirectMessage.DoesNotExist) as e:
         raise ValidationError(f"Chat not found: {str(e)}")
-
-def mark_messages_as_read(chat_id, user, chat_type='group'):
-    """
-    Mark all unread messages in a chat as read
-    Args:
-        chat_id: ID of the chat
-        user: User marking messages as read
-        chat_type: Type of chat ('group' or 'direct')
-    """
+    
+def mark_messages_as_read(chat_id, user, chat_type):
+    """Mark all messages in a chat as read for a user"""
     try:
+        current_time = timezone.now()
+        
+        # Get all unread messages in this chat for this user
         if chat_type == 'group':
-            chat_group = ChatGroup.objects.get(id=chat_id, is_active=True)
-            if not GroupMember.objects.filter(group=chat_group, user=user, is_active=True).exists():
-                raise ValidationError("User is not an active member of this group")
-            messages = Message.objects.filter(group=chat_group, is_deleted=False)
+            # For group messages
+            read_receipts = MessageRead.objects.filter(
+                message__group_id=chat_id,
+                message__is_deleted=False,
+                user=user,
+                read_at__isnull=True
+            )
         else:
-            direct_message = DirectMessage.objects.get(id=chat_id, is_active=True)
-            if not direct_message.participants.filter(id=user.id).exists():
-                raise ValidationError("User is not a participant in this conversation")
-            messages = Message.objects.filter(direct_message=direct_message, is_deleted=False)
-
-        now = timezone.now()
-        MessageRead.objects.filter(
-            message__in=messages,
-            user=user,
-            read_at__isnull=True
-        ).update(read_at=now)
+            # For direct messages
+            read_receipts = MessageRead.objects.filter(
+                message__direct_message_id=chat_id,
+                message__is_deleted=False,
+                user=user,
+                read_at__isnull=True
+            )
         
-        unread_messages = messages.exclude(read_receipts__user=user)
+        # Update read_at timestamp for all unread messages at once
+        updated_count = read_receipts.update(read_at=current_time)
         
-        read_receipts = [
-            MessageRead(message=msg, user=user, read_at=now)
-            for msg in unread_messages
-        ]
-        MessageRead.objects.bulk_create(read_receipts, ignore_conflicts=True)
+        return updated_count
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error marking messages as read: {str(e)}")
+        return 0
 
-    except (ChatGroup.DoesNotExist, DirectMessage.DoesNotExist) as e:
-        raise ValidationError(f"Chat not found: {str(e)}")
+# def mark_messages_as_read(chat_id, user, chat_type='group'):
+#     """
+#     Mark all unread messages in a chat as read
+#     Args:
+#         chat_id: ID of the chat
+#         user: User marking messages as read
+#         chat_type: Type of chat ('group' or 'direct')
+#     """
+#     try:
+#         if chat_type == 'group':
+#             chat_group = ChatGroup.objects.get(id=chat_id, is_active=True)
+#             if not GroupMember.objects.filter(group=chat_group, user=user, is_active=True).exists():
+#                 raise ValidationError("User is not an active member of this group")
+#             messages = Message.objects.filter(group=chat_group, is_deleted=False)
+#         else:
+#             direct_message = DirectMessage.objects.get(id=chat_id, is_active=True)
+#             if not direct_message.participants.filter(id=user.id).exists():
+#                 raise ValidationError("User is not a participant in this conversation")
+#             messages = Message.objects.filter(direct_message=direct_message, is_deleted=False)
+
+#         now = timezone.now()
+#         MessageRead.objects.filter(
+#             message__in=messages,
+#             user=user,
+#             read_at__isnull=True
+#         ).update(read_at=now)
+        
+#         unread_messages = messages.exclude(read_receipts__user=user)
+        
+#         read_receipts = [
+#             MessageRead(message=msg, user=user, read_at=now)
+#             for msg in unread_messages
+#         ]
+#         MessageRead.objects.bulk_create(read_receipts, ignore_conflicts=True)
+
+#     except (ChatGroup.DoesNotExist, DirectMessage.DoesNotExist) as e:
+#         raise ValidationError(f"Chat not found: {str(e)}")
 
 def get_unread_counts(user):
     """

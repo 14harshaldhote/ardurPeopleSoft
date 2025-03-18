@@ -84,38 +84,86 @@ def soft_delete_message(message_id, user):
     except Message.DoesNotExist:
         raise ValidationError("Message not found")
 
-def send_notification(user_id, message, notification_type, chat_id=None, sender=None, hours_ago=24):
-    """
-    Send notification via WebSocket
-    Args:
-        user_id: ID of user to notify
-        message: Notification message
-        notification_type: Type of notification
-        chat_id: Optional chat ID
-        sender: Optional sender info
-        hours_ago: Number of hours to look back for unread messages (default 24)
-    """
-    channel_layer = get_channel_layer()
+# def send_notification(user_id, message, notification_type, chat_id=None, sender=None, hours_ago=24):
+#     """
+#     Send notification via WebSocket
+#     Args:
+#         user_id: ID of user to notify
+#         message: Notification message
+#         notification_type: Type of notification
+#         chat_id: Optional chat ID
+#         sender: Optional sender info
+#         hours_ago: Number of hours to look back for unread messages (default 24)
+#     """
+#     channel_layer = get_channel_layer()
     
-    # Get unread counts using service function
-    unread_count = MessageRead.objects.filter(
-        user_id=user_id,
-        read_at__isnull=True,
-        message__is_deleted=False
-    ).count()
+#     # Get unread counts using service function
+#     unread_count = MessageRead.objects.filter(
+#         user_id=user_id,
+#         read_at__isnull=True,
+#         message__is_deleted=False
+#     ).count()
 
     
-    notification_data = {
-        'type': 'notify',
-        'message': message,
-        'notification_type': notification_type,
-        'chat_id': chat_id,
-        'sender': sender,
-        'timestamp': timezone.now().isoformat(),
-        'unread_count': unread_count
-    }
+#     notification_data = {
+#         'type': 'notify',
+#         'message': message,
+#         'notification_type': notification_type,
+#         'chat_id': chat_id,
+#         'sender': sender,
+#         'timestamp': timezone.now().isoformat(),
+#         'unread_count': unread_count
+#     }
     
-    async_to_sync(channel_layer.group_send)(
-        f'notifications_{user_id}',
-        notification_data
-    )
+#     async_to_sync(channel_layer.group_send)(
+#         f'notifications_{user_id}',
+#         notification_data
+#     )
+def send_notification(user_id, message, notification_type, chat_id, sender_name=None):
+    """
+    Send a notification to a user
+    
+    Args:
+        user_id (int): The ID of the user to notify
+        message (str): The notification message
+        notification_type (str): Type of notification (read_status, direct_message, group_add, etc.)
+        chat_id (int): The ID of the relevant chat
+        sender_name (str, optional): The name of the sender if applicable
+        
+    Returns:
+        bool: True if notification was sent successfully, False otherwise
+    """
+    try:
+        # Only send notifications to users other than the current user
+        from django.contrib.auth.models import User
+        user = User.objects.get(id=user_id)
+        
+        # Check if the user has notification preferences enabled for this type
+        # You might have a UserPreference model to check this
+        
+        # Implement your notification logic here
+        # This could be WebSocket, database record, email, etc.
+        
+        # Example WebSocket notification (using Django Channels)
+        from channels.layers import get_channel_layer
+        from asgiref.sync import async_to_sync
+        
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f"user_{user_id}",
+            {
+                "type": "notification.message",
+                "message": message,
+                "notification_type": notification_type,
+                "chat_id": chat_id,
+                "sender_name": sender_name
+            }
+        )
+        
+        return True
+    except Exception as e:
+        # Log the error but don't crash
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error sending notification to user {user_id}: {str(e)}")
+        return False

@@ -9,7 +9,6 @@ from django.dispatch import receiver
 import datetime
 
 
-
 IST_TIMEZONE = pytz.timezone('Asia/Kolkata')
 
 '''------------------------- CLINET PROFILE --------------------'''
@@ -60,7 +59,7 @@ class UserSession(models.Model):
             models.Index(fields=['user', 'login_time']),
         ]
 
-
+    @staticmethod
     def generate_session_key():
         """Generate a unique session key"""
         return ''.join(random.choices(string.ascii_letters + string.digits, k=40))
@@ -82,7 +81,7 @@ class UserSession(models.Model):
             # If the user has been inactive for more than 30 minutes, end the session and create a new one
             if (current_time - existing_session.last_activity) > timedelta(minutes=30):
                 existing_session.end_session()
-                session_key = generate_session_key()  # Generate new session key
+                session_key = cls.generate_session_key()  # Generate new session key
                 return cls.objects.create(
                     user=user,
                     session_key=session_key,
@@ -95,7 +94,7 @@ class UserSession(models.Model):
         
         # If no active session, create a new session
         if not session_key:
-            session_key = generate_session_key()  # Generate a new session key
+            session_key = cls.generate_session_key()  # Generate a new session key
         return cls.objects.create(
             user=user,
             session_key=session_key,
@@ -180,6 +179,7 @@ from django.core.exceptions import ValidationError
 from django.db.models import Q, Sum, Avg
 from datetime import timedelta
 import calendar
+
 class Leave(models.Model):
     LEAVE_TYPES = [
         ('Sick Leave', 'Sick Leave'),
@@ -259,8 +259,6 @@ class Leave(models.Model):
         
         if self.status == 'Approved':
             self.update_attendance()
-
- 
 
     
     def calculate_leave_days(self):
@@ -1168,8 +1166,6 @@ class ChatGroup(models.Model):
         ).count()
 
 
-    # def __str__(self):
-    #     return self.name
 
 class GroupMember(models.Model):
     """Tracks group membership and roles"""
@@ -1239,7 +1235,7 @@ class Message(models.Model):
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
     content = models.TextField()
     message_type = models.CharField(max_length=20, choices=MESSAGE_TYPES, default='text')
-    file_attachment = models.FileField(upload_to='chat_files/', null=True, blank=True)
+    file_attachment = models.FileField(upload_to='chat_files/%Y/%m/%d/', null=True, blank=True)
     sent_at = models.DateTimeField(auto_now_add=True)
     edited_at = models.DateTimeField(null=True, blank=True)
     is_deleted = models.BooleanField(default=False)
@@ -1257,17 +1253,52 @@ class Message(models.Model):
         # Message must belong to either group or direct message
         if (self.group and self.direct_message) or (not self.group and not self.direct_message):
             raise ValidationError("Message must belong to either a group or direct message")
+        
+        # Validate file attachment if message type is file
+        if self.message_type == 'file' and not self.file_attachment:
+            raise ValidationError("File attachment is required for file type messages")
 
     def soft_delete(self):
         """Soft delete a message"""
         self.is_deleted = True
         self.deleted_at = timezone.now()
         self.save()
+        
+    def get_file_name(self):
+        """Get the name of the attached file"""
+        if self.file_attachment and hasattr(self.file_attachment, 'name'):
+            return self.file_attachment.name.split('/')[-1]
+        return None
+        
+    def get_file_url(self):
+        """Get the URL of the attached file"""
+        if self.file_attachment:
+            return self.file_attachment.url
+        return None
 
-    # def __str__(self):
-    #     chat_type = f"Group: {self.group.name}" if self.group else f"DM with: {self.direct_message.get_other_participant(self.sender)}"
-    #     return f"{self.sender.username} in {chat_type} at {self.sent_at}"
-
+    def __str__(self):
+        try:
+            # Format the timestamp in a user-friendly way
+            formatted_time = self.sent_at.strftime("%b %d, %I:%M %p")
+            
+            # Get a short preview of the message content (first 30 chars)
+            content_preview = self.content[:30] + "..." if len(self.content) > 30 else self.content
+            
+            if self.is_deleted:
+                return f"[Deleted message]"
+            
+            attachment_info = f" [with attachment: {self.get_file_name()}]" if self.file_attachment else ""
+            
+            if self.group:
+                return f"{self.sender.username} in {self.group.name}: {content_preview}{attachment_info} • {formatted_time}"
+            elif self.direct_message:
+                return f"{self.sender.username}: {content_preview}{attachment_info} • {formatted_time}"
+            else:
+                return f"Message from {self.sender.username}: {content_preview}{attachment_info} • {formatted_time}"
+        except Exception:
+            # Fallback that still provides useful information
+            return f"Message {self.id} from {getattr(self.sender, 'username', 'Unknown')}"
+        
 class MessageRead(models.Model):
     """Tracks message read status per user"""
     message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name='read_receipts')
