@@ -206,7 +206,6 @@ def home_view(request):
 
 from .utils import get_client_ip  # You can define this utility to fetch client IP address
 
-# Login View
 def login_view(request):
     if request.method == "POST":
         username = request.POST.get('username')
@@ -230,14 +229,47 @@ def login_view(request):
             else:
                 # Show error if authentication fails
                 error_message = 'Invalid username or password'
-                return render(request, 'error.html', {'error': error_message})
+                return render(request, 'login.html', {'error': error_message})
 
         except Exception as e:
             # Handle any unexpected errors
             error_message = f'An error occurred: {str(e)}'
-            return render(request, 'error.html', {'error': error_message})
+            return render(request, 'login.html', {'error': error_message})
 
     return render(request, 'login.html')
+
+# # Login View
+# def login_view(request):
+#     if request.method == "POST":
+#         username = request.POST.get('username')
+#         password = request.POST.get('password')
+
+#         try:
+#             # Authenticate the user
+#             user = authenticate(request, username=username, password=password)
+
+#             if user is not None:
+#                 login(request, user)
+
+#                 # Check if the user is authenticated and create a session for them
+#                 if request.user.is_authenticated:
+#                     session = UserSession.get_or_create_session(
+#                         user=request.user,
+#                         session_key=request.session.session_key,
+#                         ip_address=get_client_ip(request)  # Assuming you have a utility to get the user's IP
+#                     )
+#                 return redirect('dashboard')
+#             else:
+#                 # Show error if authentication fails
+#                 error_message = 'Invalid username or password'
+#                 return render(request, 'error.html', {'error': error_message})
+
+#         except Exception as e:
+#             # Handle any unexpected errors
+#             error_message = f'An error occurred: {str(e)}'
+#             return render(request, 'error.html', {'error': error_message})
+
+#     return render(request, 'login.html')
 
 
 
@@ -2063,7 +2095,7 @@ def reset_user_password(request, user_id):
             user.email_user(subject, message)
             
             messages.success(request, f"Password for {user.username} has been reset and emailed to the user.")
-            return redirect('hr_user_detail', user_id=user.id)
+            return redirect('aps_hr:hr_user_detail', user_id=user.id)
         
         except Exception as e:
             logger.error(f"Error resetting password: {str(e)}", exc_info=True)
@@ -2086,7 +2118,7 @@ def change_user_status(request, user_id):
         
         if not new_status or new_status not in dict(UserDetails._meta.get_field('employment_status').choices):
             messages.error(request, "Invalid status provided")
-            return redirect('hr_user_detail', user_id=user.id)
+            return redirect('aps_hr:hr_user_detail', user_id=user.id)
         
         try:
             with transaction.atomic():
@@ -2116,7 +2148,7 @@ def change_user_status(request, user_id):
             logger.error(f"Error changing user status: {str(e)}", exc_info=True)
             messages.error(request, f"Error changing user status: {str(e)}")
     
-    return redirect('hr_user_detail', user_id=user.id)
+    return redirect('aps_hr:hr_user_detail', user_id=user.id)
 
 @login_required
 @user_passes_test(is_hr)
@@ -2131,7 +2163,7 @@ def change_user_role(request, user_id):
         
         if not new_group_id:
             messages.error(request, "No role selected")
-            return redirect('hr_user_detail', user_id=user.id)
+            return redirect('aps_hr:hr_user_detail', user_id=user.id)
         
         try:
             new_group = Group.objects.get(id=new_group_id)
@@ -2164,7 +2196,7 @@ def change_user_role(request, user_id):
             logger.error(f"Error changing user role: {str(e)}", exc_info=True)
             messages.error(request, f"Error changing user role: {str(e)}")
     
-    return redirect('hr_user_detail', user_id=user.id)
+    return redirect('aps_hr:hr_user_detail', user_id=user.id)
 
 # Manager Views
 @login_required

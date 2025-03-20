@@ -29,19 +29,16 @@
                 </div>
 
                 <!-- Action Buttons -->
-                <div class="flex flex-wrap gap-3">
-                    <button type="button" id="changeStatusBtn"
+                <div class="flex flex-wrap gap-3"> <button type="button"
+                        onclick="document.getElementById('changeStatusModal').style.display='block'"
                         class="px-4 py-2 bg-white text-indigo-600 rounded-lg hover:bg-indigo-50 transition-colors shadow-sm">
-                        <i class="fas fa-exchange-alt mr-2"></i>Change Status
-                    </button>
-                    <button type="button" id="changeRoleBtn"
+                        <i class="fas fa-exchange-alt mr-2"></i>Change Status </button> <button type="button"
+                        onclick="document.getElementById('changeRoleModal').style.display='block'"
                         class="px-4 py-2 bg-white text-indigo-600 rounded-lg hover:bg-indigo-50 transition-colors shadow-sm">
-                        <i class="fas fa-user-tag mr-2"></i>Change Role
-                    </button>
-                    <button type="button" id="resetPasswordBtn"
+                        <i class="fas fa-user-tag mr-2"></i>Change Role </button> <button type="button"
+                        onclick="document.getElementById('resetPasswordModal').style.display='block'"
                         class="px-4 py-2 bg-white text-indigo-600 rounded-lg hover:bg-indigo-50 transition-colors shadow-sm">
-                        <i class="fas fa-key mr-2"></i>Reset Password
-                    </button>
+                        <i class="fas fa-key mr-2"></i>Reset Password </button>
                 </div>
             </div>
         </div>
@@ -153,7 +150,7 @@
                         <h2 class="text-xl font-semibold text-gray-800">Recent Activity</h2>
                         <a href="#" class="text-sm text-blue-600 hover:text-blue-800">View All</a>
                     </div>
-                    
+
                     <div class="bg-gray-50 rounded-lg p-4">
                         <table class="min-w-full">
                             <thead>
@@ -174,19 +171,19 @@
                             </thead>
                             <tbody>
                                 {% if activity_logs %}
-                                    {% for log in activity_logs %}
-                                    <tr>
-                                        <td class="py-2 text-sm text-gray-700">{{ log.date }}</td>
-                                        <td class="py-2 text-sm text-gray-700">{{ log.action }}</td>
-                                        <td class="py-2 text-sm text-gray-700">{{ log.by }}</td>
-                                        <td class="py-2 text-sm text-gray-700">{{ log.details }}</td>
-                                    </tr>
-                                    {% endfor %}
+                                {% for log in activity_logs %}
+                                <tr>
+                                    <td class="py-2 text-sm text-gray-700">{{ log.date }}</td>
+                                    <td class="py-2 text-sm text-gray-700">{{ log.action }}</td>
+                                    <td class="py-2 text-sm text-gray-700">{{ log.by }}</td>
+                                    <td class="py-2 text-sm text-gray-700">{{ log.details }}</td>
+                                </tr>
+                                {% endfor %}
                                 {% else %}
-                                    <tr>
+                                <tr>
                                     <td colspan="4" class="py-4 text-sm text-gray-500 text-center">No activity logs
                                         found</td>
-                                    </tr>
+                                </tr>
                                 {% endif %}
                             </tbody>
                         </table>
@@ -199,7 +196,7 @@
                         <h2 class="text-xl font-semibold text-gray-800">Recent Login Sessions</h2>
                         <a href="#" class="text-sm text-blue-600 hover:text-blue-800">View All</a>
                     </div>
-                    
+
                     <div class="bg-gray-50 rounded-lg p-4">
                         <table class="min-w-full">
                             <thead>
@@ -220,19 +217,19 @@
                             </thead>
                             <tbody>
                                 {% if login_sessions %}
-                                    {% for session in login_sessions %}
-                                    <tr>
-                                        <td class="py-2 text-sm text-gray-700">{{ session.login_time }}</td>
-                                        <td class="py-2 text-sm text-gray-700">{{ session.logout_time }}</td>
-                                        <td class="py-2 text-sm text-gray-700">{{ session.location }}</td>
-                                        <td class="py-2 text-sm text-gray-700">{{ session.duration }}</td>
-                                    </tr>
-                                    {% endfor %}
+                                {% for session in login_sessions %}
+                                <tr>
+                                    <td class="py-2 text-sm text-gray-700">{{ session.login_time }}</td>
+                                    <td class="py-2 text-sm text-gray-700">{{ session.logout_time }}</td>
+                                    <td class="py-2 text-sm text-gray-700">{{ session.location }}</td>
+                                    <td class="py-2 text-sm text-gray-700">{{ session.duration }}</td>
+                                </tr>
+                                {% endfor %}
                                 {% else %}
-                                    <tr>
+                                <tr>
                                     <td colspan="4" class="py-4 text-sm text-gray-500 text-center">No login sessions
                                         found</td>
-                                    </tr>
+                                </tr>
                                 {% endif %}
                             </tbody>
                         </table>
@@ -320,7 +317,8 @@
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
                             <option value="">Select Gender</option>
                             {% for gender_id, gender_name in gender_choices %}
-                            <option value="{{ gender_id }}" {% if gender_id == user_detail.gender %}selected{% endif %}>{{ gender_name }}</option>
+                            <option value="{{ gender_id }}" {% if gender_id == user_detail.gender %}selected{% endif %}>{{
+                                gender_name }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -344,8 +342,8 @@
                     <div>
                         <label for="country_code" class="block text-sm font-medium text-gray-700 mb-1">Country
                             Code</label>
-                        <input type="text" id="country_code" name="country_code"
-                            value="{{ user_detail.country_code }}" placeholder="+91"
+                        <input type="text" id="country_code" name="country_code" value="{{ user_detail.country_code }}"
+                            placeholder="+91"
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
                     </div>
                     <div>
@@ -418,191 +416,250 @@
 </div>
 
 <!-- Modals -->
+<!-- Modals -->
 <!-- Change Status Modal -->
-<div class="modal fade" id="changeStatusModal" tabindex="-1" role="dialog" aria-labelledby="changeStatusModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content rounded-lg shadow-lg">
-            <div class="modal-header bg-gradient-to-r from-blue-500 to-indigo-600 text-white">
-                <h5 class="modal-title" id="changeStatusModalLabel">Change Employment Status</h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body p-4">
-                <form action="{% url 'aps_hr:change_user_status' user_obj.id %}" method="post">
-                    {% csrf_token %}
-                    <div class="mb-4">
-                        <label for="current_status" class="block text-sm font-medium text-gray-700 mb-1">Current Status</label>
-                        <input type="text" id="current_status" value="{{ user_detail.employment_status|title|default:'None' }}" 
-                            class="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg" readonly>
-                    </div>
-                    <div class="mb-4">
-                        <label for="status" class="block text-sm font-medium text-gray-700 mb-1">New Status</label>
-                        <select id="status" name="status" required
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
-                            <option value="" selected disabled>Select Status</option>
-                            {% for status_id, status_name in employment_status_choices %}
-                                <option value="{{ status_id }}">{{ status_name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-4">
-                        <label for="reason" class="block text-sm font-medium text-gray-700 mb-1">Reason for Change</label>
-                        <textarea id="reason" name="reason" rows="3" required
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"></textarea>
-                    </div>
-                    <div class="flex justify-end space-x-3">
-                        <button type="button" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50" data-dismiss="modal">
-                            Cancel
-                        </button>
-                        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
-                            Save Changes
-                        </button>
-                    </div>
-                </form>
-            </div>
+<div id="changeStatusModal" class="modal"
+    style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4);">
+    <div class="modal-content"
+        style="background-color: #fefefe; margin: 10% auto; padding: 0; border: 1px solid #888; width: 50%; max-width: 500px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+        <div class="modal-header"
+            style="padding: 15px; background: linear-gradient(to right, #3b82f6, #4f46e5); color: white; border-top-left-radius: 8px; border-top-right-radius: 8px;">
+            <h5 style="margin: 0; font-size: 1.25rem; font-weight: 600;">Change Employment Status</h5>
+            <span class="close" onclick="document.getElementById('changeStatusModal').style.display='none'"
+                style="color: white; float: right; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
+        </div>
+        <div class="modal-body" style="padding: 20px;">
+            <form action="{% url 'aps_hr:change_user_status' user.id %}" method="post">
+                {% csrf_token %}
+                <div style="margin-bottom: 15px;">
+                    <label for="current_status"
+                        style="display: block; margin-bottom: 5px; font-size: 0.875rem; font-weight: 500; color: #374151;">Current
+                        Status</label>
+                    <input type="text" id="current_status"
+                        value="{{ user.userdetails.employment_status|title|default:'None' }}"
+                        style="width: 100%; padding: 8px 12px; background-color: #f3f4f6; border: 1px solid #d1d5db; border-radius: 6px;"
+                        readonly>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label for="status"
+                        style="display: block; margin-bottom: 5px; font-size: 0.875rem; font-weight: 500; color: #374151;">New
+                        Status</label>
+                    <select id="status" name="status" required
+                        style="width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px;">
+                        <option value="" selected disabled>Select Status</option>
+                        {% for status_id, status_name in employment_status_choices %}
+                        <option value="{{ status_id }}">{{ status_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label for="status_reason"
+                        style="display: block; margin-bottom: 5px; font-size: 0.875rem; font-weight: 500; color: #374151;">Reason
+                        for Change</label>
+                    <textarea id="status_reason" name="reason" rows="3" required
+                        style="width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px;"></textarea>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="button" onclick="document.getElementById('changeStatusModal').style.display='none'"
+                        style="padding: 8px 16px; border: 1px solid #d1d5db; background-color: white; color: #374151; border-radius: 6px; cursor: pointer;">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                        style="padding: 8px 16px; background-color: #4f46e5; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                        Save Changes
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 
 <!-- Change Role Modal -->
-<div class="modal fade" id="changeRoleModal" tabindex="-1" role="dialog" aria-labelledby="changeRoleModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content rounded-lg shadow-lg">
-            <div class="modal-header bg-gradient-to-r from-blue-500 to-indigo-600 text-white">
-                <h5 class="modal-title" id="changeRoleModalLabel">Change User Role</h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body p-4">
-                <form action="{% url 'aps_hr:change_user_role' user_obj.id %}" method="post">
-                    {% csrf_token %}
-                    <div class="mb-4">
-                        <label for="current_role" class="block text-sm font-medium text-gray-700 mb-1">Current Role</label>
-                        {% with current_group=user_obj.groups.first %}
-                        <input type="text" id="current_role" value="{{ current_group.name|default:'None' }}" 
-                            class="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg" readonly>
-                        {% endwith %}
-                    </div>
-                    <div class="mb-4">
-                        <label for="group" class="block text-sm font-medium text-gray-700 mb-1">New Role</label>
-                        <select id="group" name="group" required
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
-                            <option value="" selected disabled>Select Role</option>
-                            {% for group in groups %}
-                                <option value="{{ group.id }}">{{ group.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-4">
-                        <label for="reason" class="block text-sm font-medium text-gray-700 mb-1">Reason for Change</label>
-                        <textarea id="reason" name="reason" rows="3" required
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"></textarea>
-                    </div>
-                    <div class="flex justify-end space-x-3">
-                        <button type="button" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50" data-dismiss="modal">
-                            Cancel
-                        </button>
-                        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
-                            Save Changes
-                        </button>
-                    </div>
-                </form>
-            </div>
+<div id="changeRoleModal" class="modal"
+    style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4);">
+    <div class="modal-content"
+        style="background-color: #fefefe; margin: 10% auto; padding: 0; border: 1px solid #888; width: 50%; max-width: 500px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+        <div class="modal-header"
+            style="padding: 15px; background: linear-gradient(to right, #3b82f6, #4f46e5); color: white; border-top-left-radius: 8px; border-top-right-radius: 8px;">
+            <h5 style="margin: 0; font-size: 1.25rem; font-weight: 600;">Change User Role</h5>
+            <span class="close" onclick="document.getElementById('changeRoleModal').style.display='none'"
+                style="color: white; float: right; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
+        </div>
+        <div class="modal-body" style="padding: 20px;">
+            <form action="{% url 'aps_hr:change_user_role' user.id %}" method="post">
+                {% csrf_token %}
+                <div style="margin-bottom: 15px;">
+                    <label for="current_role"
+                        style="display: block; margin-bottom: 5px; font-size: 0.875rem; font-weight: 500; color: #374151;">Current
+                        Role</label>
+                    <input type="text" id="current_role" value="{{ user.userdetails.role|default:'Employee' }}"
+                        style="width: 100%; padding: 8px 12px; background-color: #f3f4f6; border: 1px solid #d1d5db; border-radius: 6px;"
+                        readonly>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label for="group"
+                        style="display: block; margin-bottom: 5px; font-size: 0.875rem; font-weight: 500; color: #374151;">New
+                        Role</label>
+                    <select id="group" name="group" required
+                        style="width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px;">
+                        <option value="" selected disabled>Select Role</option>
+                        {% for group in groups %}
+                        <option value="{{ group.id }}">{{ group.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label for="role_reason"
+                        style="display: block; margin-bottom: 5px; font-size: 0.875rem; font-weight: 500; color: #374151;">Reason
+                        for Change</label>
+                    <textarea id="role_reason" name="reason" rows="3" required
+                        style="width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px;"></textarea>
+                </div>
+                <div style="font-size: 0.875rem; color: #6b7280; margin-bottom: 15px;">
+                    <p>Changing a user's role will affect their permissions and access levels in the system.</p>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="button" onclick="document.getElementById('changeRoleModal').style.display='none'"
+                        style="padding: 8px 16px; border: 1px solid #d1d5db; background-color: white; color: #374151; border-radius: 6px; cursor: pointer;">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                        style="padding: 8px 16px; background-color: #4f46e5; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                        Save Changes
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 
 <!-- Reset Password Modal -->
-<div class="modal fade" id="resetPasswordModal" tabindex="-1" role="dialog" aria-labelledby="resetPasswordModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content rounded-lg shadow-lg">
-            <div class="modal-header bg-gradient-to-r from-blue-500 to-indigo-600 text-white">
-                <h5 class="modal-title" id="resetPasswordModalLabel">Reset User Password</h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body p-4">
-                <form action="{% url 'aps_hr:reset_user_password' user_obj.id %}" method="post" id="resetPasswordForm">
-                    {% csrf_token %}
-                    <div class="mb-4 text-center">
-                        <p class="text-gray-700">You are about to reset the password for: <strong>{{ user_obj.username }}</strong></p>
-                    </div>
-                    <div class="mb-4">
-                        <label for="new_password" class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
-                        <input type="password" id="new_password" name="new_password" required minlength="8"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
-                        <p class="text-xs text-gray-500 mt-1">Password must be at least 8 characters long.</p>
-                    </div>
-                    <div class="mb-4">
-                        <label for="confirm_password" class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
-                        <input type="password" id="confirm_password" name="confirm_password" required
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
-                        <p class="text-xs text-red-500 mt-1" id="password-mismatch" style="display: none;">Passwords do not match.</p>
-                    </div>
-                    <div class="text-sm text-gray-500 mb-4">
-                        <p>The user will receive an email with their new password.</p>
-                    </div>
-                    <div class="flex justify-end space-x-3">
-                        <button type="button" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50" data-dismiss="modal">
-                            Cancel
-                        </button>
-                        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
-                            Reset Password
-                        </button>
-                    </div>
-                </form>
-            </div>
+<div id="resetPasswordModal" class="modal"
+    style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4);">
+    <div class="modal-content"
+        style="background-color: #fefefe; margin: 10% auto; padding: 0; border: 1px solid #888; width: 50%; max-width: 500px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+        <div class="modal-header"
+            style="padding: 15px; background: linear-gradient(to right, #3b82f6, #4f46e5); color: white; border-top-left-radius: 8px; border-top-right-radius: 8px;">
+            <h5 style="margin: 0; font-size: 1.25rem; font-weight: 600;">Reset User Password</h5>
+            <span class="close" onclick="document.getElementById('resetPasswordModal').style.display='none'"
+                style="color: white; float: right; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
+        </div>
+        <div class="modal-body" style="padding: 20px;">
+            <form action="{% url 'aps_hr:reset_user_password' user.id %}" method="post" id="resetPasswordForm">
+                {% csrf_token %}
+                <div style="margin-bottom: 15px; text-align: center;">
+                    <p style="color: #374151;">You are about to reset the password for: <strong>{{ user.userdetails.employee_id }}</strong></p>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label for="new_password"
+                        style="display: block; margin-bottom: 5px; font-size: 0.875rem; font-weight: 500; color: #374151;">New
+                        Password</label>
+                    <input type="password" id="new_password" name="new_password" required minlength="8"
+                        style="width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px;">
+                    <p style="font-size: 0.75rem; color: #6b7280; margin-top: 4px;">Password must be at least 8
+                        characters long.</p>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label for="confirm_password"
+                        style="display: block; margin-bottom: 5px; font-size: 0.875rem; font-weight: 500; color: #374151;">Confirm
+                        Password</label>
+                    <input type="password" id="confirm_password" name="confirm_password" required
+                        style="width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px;">
+                    <p style="font-size: 0.75rem; color: #ef4444; margin-top: 4px; display: none;" id="password-mismatch">
+                        Passwords do not match.</p>
+                </div>
+                <div style="font-size: 0.875rem; color: #6b7280; margin-bottom: 15px;">
+                    <p>The user will receive an email with their new password.</p>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="button" onclick="document.getElementById('resetPasswordModal').style.display='none'"
+                        style="padding: 8px 16px; border: 1px solid #d1d5db; background-color: white; color: #374151; border-radius: 6px; cursor: pointer;">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                        style="padding: 8px 16px; background-color: #4f46e5; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                        Reset Password
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 
 <script>
-$(document).ready(function() {
-    // Ensure modals are hidden on page load
-    $('.modal').modal('hide');
-    
-    // Setup button handlers
-    $('#changeStatusBtn').click(function() {
-        $('#changeStatusModal').modal('show');
-    });
-    
-    $('#changeRoleBtn').click(function() {
-        $('#changeRoleModal').modal('show');
-    });
-    
-    $('#resetPasswordBtn').click(function() {
-        $('#resetPasswordModal').modal('show');
-    });
-    
-    // Password validation
-    const newPassword = document.getElementById('new_password');
-    const confirmPassword = document.getElementById('confirm_password');
-    const mismatchMessage = document.getElementById('password-mismatch');
-    const resetForm = document.getElementById('resetPasswordForm');
-    
-    if (resetForm) {
-    resetForm.addEventListener('submit', function(e) {
-        if (newPassword.value !== confirmPassword.value) {
-            e.preventDefault();
-            mismatchMessage.style.display = 'block';
-        } else {
-            mismatchMessage.style.display = 'none';
+    document.addEventListener('DOMContentLoaded', function () {
+        // Password validation
+        const newPassword = document.getElementById('new_password');
+        const confirmPassword = document.getElementById('confirm_password');
+        const mismatchMessage = document.getElementById('password-mismatch');
+        const resetForm = document.getElementById('resetPasswordForm');
+
+        if (resetForm) {
+            resetForm.addEventListener('submit', function (e) {
+                if (newPassword.value !== confirmPassword.value) {
+                    e.preventDefault();
+                    mismatchMessage.style.display = 'block';
+                } else {
+                    mismatchMessage.style.display = 'none';
+                }
+            });
+        }
+
+        if (confirmPassword) {
+            confirmPassword.addEventListener('input', function () {
+                if (newPassword.value !== confirmPassword.value) {
+                    mismatchMessage.style.display = 'block';
+                } else {
+                    mismatchMessage.style.display = 'none';
+                }
+            });
         }
     });
-    }
-    
-    if (confirmPassword) {
-    confirmPassword.addEventListener('input', function() {
-        if (newPassword.value !== confirmPassword.value) {
-            mismatchMessage.style.display = 'block';
-        } else {
-            mismatchMessage.style.display = 'none';
+</script>
+<script>
+    $(document).ready(function () {
+        // Ensure modals are hidden on page load
+        $('.modal').modal('hide');
+
+        // Setup button handlers
+        $('#changeStatusBtn').click(function () {
+            $('#changeStatusModal').modal('show');
+        });
+
+        $('#changeRoleBtn').click(function () {
+            $('#changeRoleModal').modal('show');
+        });
+
+        $('#resetPasswordBtn').click(function () {
+            $('#resetPasswordModal').modal('show');
+        });
+
+        // Password validation
+        const newPassword = document.getElementById('new_password');
+        const confirmPassword = document.getElementById('confirm_password');
+        const mismatchMessage = document.getElementById('password-mismatch');
+        const resetForm = document.getElementById('resetPasswordForm');
+
+        if (resetForm) {
+            resetForm.addEventListener('submit', function (e) {
+                if (newPassword.value !== confirmPassword.value) {
+                    e.preventDefault();
+                    mismatchMessage.style.display = 'block';
+                } else {
+                    mismatchMessage.style.display = 'none';
+                }
+            });
+        }
+
+        if (confirmPassword) {
+            confirmPassword.addEventListener('input', function () {
+                if (newPassword.value !== confirmPassword.value) {
+                    mismatchMessage.style.display = 'block';
+                } else {
+                    mismatchMessage.style.display = 'none';
+                }
+            });
         }
     });
-    }
-});
 </script>
 {% endblock %}
