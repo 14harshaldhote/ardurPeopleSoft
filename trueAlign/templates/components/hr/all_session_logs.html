@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mx-auto p-6">
+    <div class="flex justify-between items-center mb-4">
+        <h3 class="text-2xl font-semibold">User Session Logs</h3>
+        <a href="{% url 'aps_hr:hr_dashboard' %}" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100">Back to Dashboard</a>
+    </div>
+
+    <div class="bg-white shadow rounded-lg p-6">
+        <!-- Filter Form -->
+        <form method="GET" class="mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Start Date</label>
+                    <input type="date" name="start_date" class="w-full border-gray-300 rounded-lg p-2 focus:ring focus:ring-blue-300" value="{{ filter_start_date|date:'Y-m-d' }}">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">End Date</label>
+                    <input type="date" name="end_date" class="w-full border-gray-300 rounded-lg p-2 focus:ring focus:ring-blue-300" value="{{ filter_end_date|date:'Y-m-d' }}">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">User</label>
+                    <input type="text" name="user" class="w-full border-gray-300 rounded-lg p-2 focus:ring focus:ring-blue-300" placeholder="Search by name" value="{{ filter_user }}">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Location</label>
+                    <select name="location" class="w-full border-gray-300 rounded-lg p-2 focus:ring focus:ring-blue-300">
+                        <option value="">All Locations</option>
+                        {% for location in locations %}
+                            <option value="{{ location }}" {% if filter_location == location %}selected{% endif %}>{{ location }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="flex justify-end mt-4">
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Apply Filters</button>
+                <a href="{% url 'aps_hr:session_logs' %}" class="ml-2 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100">Reset</a>
+            </div>
+        </form>
+
+        <!-- Table -->
+        <div class="overflow-x-auto">
+            <table class="w-full border-collapse border border-gray-300">
+                <thead class="bg-gray-800 text-white">
+                    <tr>
+                        <th class="p-3 border border-gray-300">User</th>
+                        <th class="p-3 border border-gray-300">Login Time</th>
+                        <th class="p-3 border border-gray-300">Logout Time</th>
+                        <th class="p-3 border border-gray-300">Location</th>
+                        <th class="p-3 border border-gray-300">IP Address</th>
+                        <th class="p-3 border border-gray-300">Working Hours</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for session in page_obj %}
+                    <tr class="hover:bg-gray-100">
+                        <td class="p-3 border border-gray-300">
+                            <a href="{% url 'aps_hr:hr_user_detail' user_id=session.user.id %}" class="text-blue-600 hover:underline">
+                                {{ session.user.first_name }} {{ session.user.last_name }} ({{ session.user.username }})
+                            </a>
+                        </td>
+                        <td class="p-3 border border-gray-300">{{ session.login_time|date:"d/m/Y H:i:s" }}</td>
+                        <td class="p-3 border border-gray-300">
+                            {% if session.logout_time %}
+                                {{ session.logout_time|date:"d/m/Y H:i:s" }}
+                            {% else %}
+                                <span class="bg-green-500 text-white px-2 py-1 rounded">Active</span>
+                            {% endif %}
+                        </td>
+                        <td class="p-3 border border-gray-300">{{ session.location|default:"-" }}</td>
+                        <td class="p-3 border border-gray-300">{{ session.ip_address|default:"-" }}</td>
+                        <td class="p-3 border border-gray-300">
+                            {% if session.working_hours %}
+                                {{ session.working_hours }}
+                            {% elif not session.logout_time %}
+                                <span class="text-gray-500">Ongoing</span>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-gray-500 p-3">No session logs found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="flex justify-center mt-4">
+            <ul class="inline-flex space-x-2">
+                {% if page_obj.has_previous %}
+                    <li>
+                        <a href="?page=1{% if filter_start_date %}&start_date={{ filter_start_date|date:'Y-m-d' }}{% endif %}
+                            {% if filter_end_date %}&end_date={{ filter_end_date|date:'Y-m-d' }}{% endif %}
+                            {% if filter_user %}&user={{ filter_user }}{% endif %}
+                            {% if filter_location %}&location={{ filter_location }}{% endif %}"
+                            class="px-3 py-1 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100">First</a>
+                    </li>
+                    <li>
+                        <a href="?page={{ page_obj.previous_page_number }}{% if filter_start_date %}&start_date={{ filter_start_date|date:'Y-m-d' }}{% endif %}
+                            {% if filter_end_date %}&end_date={{ filter_end_date|date:'Y-m-d' }}{% endif %}
+                            {% if filter_user %}&user={{ filter_user }}{% endif %}
+                            {% if filter_location %}&location={{ filter_location }}{% endif %}"
+                            class="px-3 py-1 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100">Previous</a>
+                    </li>
+                {% endif %}
+
+                <li class="px-3 py-1 border border-gray-300 bg-blue-600 text-white rounded-lg">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</li>
+
+                {% if page_obj.has_next %}
+                    <li>
+                        <a href="?page={{ page_obj.next_page_number }}{% if filter_start_date %}&start_date={{ filter_start_date|date:'Y-m-d' }}{% endif %}
+                            {% if filter_end_date %}&end_date={{ filter_end_date|date:'Y-m-d' }}{% endif %}
+                            {% if filter_user %}&user={{ filter_user }}{% endif %}
+                            {% if filter_location %}&location={{ filter_location }}{% endif %}"
+                            class="px-3 py-1 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100">Next</a>
+                    </li>
+                    <li>
+                        <a href="?page={{ page_obj.paginator.num_pages }}{% if filter_start_date %}&start_date={{ filter_start_date|date:'Y-m-d' }}{% endif %}
+                            {% if filter_end_date %}&end_date={{ filter_end_date|date:'Y-m-d' }}{% endif %}
+                            {% if filter_user %}&user={{ filter_user }}{% endif %}
+                            {% if filter_location %}&location={{ filter_location }}{% endif %}"
+                            class="px-3 py-1 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100">Last</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

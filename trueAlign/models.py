@@ -713,19 +713,20 @@ class Employee(models.Model):
         return f"{self.user.username} - {', '.join([group.name for group in self.user.groups.all()])}"
     
 ''' ------------------------------------------- PROFILE AREA ------------------------------------------- '''
-from django.core.exceptions import ValidationError
-
+# models.py
 from django.db import models
-from django.core.validators import RegexValidator
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import User
+from django.utils import timezone
 
 class UserDetails(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     
+    # Personal Information
     dob = models.DateField(null=True, blank=True)
     blood_group = models.CharField(
         max_length=10, 
-        choices=[ ('', '--------'),
+        choices=[
+            ('', '--------'),
             ('A+', 'A+'),
             ('A-', 'A-'),
             ('B+', 'B+'),
@@ -736,18 +737,39 @@ class UserDetails(models.Model):
             ('O-', 'O-'),
         ], 
         null=True, 
-        blank=True, 
+        blank=True,
         default='Unknown'
     )
-    hire_date = models.DateField(null=True, blank=True)
-    gender = models.CharField(max_length=10, choices=[('', '--------'),('Male', 'Male'), ('Female', 'Female'), ('Other', 'Other')], null=True, blank=True)
+    gender = models.CharField(
+        max_length=10, 
+        choices=[
+            ('', '--------'),
+            ('Male', 'Male'), 
+            ('Female', 'Female'), 
+            ('Other', 'Other')
+        ], 
+        null=True, 
+        blank=True
+    )
     
-    panno = models.CharField(max_length=10, null=True, blank=True)
-
+    # Contact Information
+    country_code = models.CharField(max_length=5, null=True, blank=True)
+    contact_number_primary = models.CharField(max_length=13, null=True, blank=True)
+    personal_email = models.EmailField(null=True, blank=True)
+    
+    # Emergency Contact
+    emergency_contact_name = models.CharField(max_length=100, null=True, blank=True)
+    emergency_contact_primary = models.CharField(max_length=13, null=True, blank=True)
+    emergency_contact_address = models.TextField(null=True, blank=True)
+    
+    # Employment Information
+    hire_date = models.DateField(null=True, blank=True)
+    start_date = models.DateField(null=True, blank=True)
     job_description = models.TextField(null=True, blank=True)
+    work_location = models.CharField(max_length=100, null=True, blank=True)
     employment_status = models.CharField(
         max_length=50,
-        choices=[ 
+        choices=[
             ('', '--------'),
             ('active', 'Active'),
             ('inactive', 'Inactive'),
@@ -756,25 +778,101 @@ class UserDetails(models.Model):
             ('suspended', 'Suspended'),
             ('absconding', 'Absconding'),
         ],
-        blank=True,         null=True, 
- # No default value here
+        blank=True,
+        null=True,
     )
-    emergency_contact_address = models.TextField(null=True, blank=True)
-    emergency_contact_primary = models.CharField(max_length=13, null=True, blank=True)
-    emergency_contact_name = models.CharField(max_length=100, null=True, blank=True)
-    start_date = models.DateField(null=True, blank=True)
-    work_location = models.CharField(max_length=100, null=True, blank=True)
-    contact_number_primary = models.CharField(max_length=13, null=True, blank=True)
-    country_code = models.CharField(max_length=5, null=True, blank=True)  # Add this field
-    personal_email = models.EmailField(null=True, blank=True)
+    
+    # Government IDs
+    panno = models.CharField(max_length=10, null=True, blank=True)
     aadharno = models.CharField(max_length=14, null=True, blank=True)  # To store Aadhar with spaces
+    
+    # Role/Group
     group = models.ForeignKey('auth.Group', on_delete=models.SET_NULL, null=True, blank=True)
-
-    # Ensure the contact number is in the correct format
-
+    
+    # HR Management
+    onboarded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='onboarded_users')
+    onboarding_date = models.DateTimeField(auto_now_add=True)
+    last_updated = models.DateTimeField(auto_now=True)
+    last_status_change = models.DateTimeField(null=True, blank=True)
+    
+    # Methods
+    def save(self, *args, **kwargs):
+        # Track employment status changes
+        if self.pk:
+            old_instance = UserDetails.objects.get(pk=self.pk)
+            if old_instance.employment_status != self.employment_status:
+                self.last_status_change = timezone.now()
+        super().save(*args, **kwargs)
+    
     def __str__(self):
-        return f"Details for {self.user.username}" 
+        return f"Details for {self.user.username}"
+    
+    # Formatted contact number with country code
+    @property
+    def formatted_contact(self):
+        if self.contact_number_primary and self.country_code:
+            return f"{self.country_code} {self.contact_number_primary}"
+        return self.contact_number_primary
+    
+    # Employment duration
+    @property
+    def employment_duration(self):
+        if not self.start_date:
+            return None
+        
+        today = timezone.now().date()
+        delta = today - self.start_date
+        years = delta.days // 365
+        months = (delta.days % 365) // 30
+        
+        if years > 0:
+            return f"{years} year{'s' if years > 1 else ''}, {months} month{'s' if months > 1 else ''}"
+        return f"{months} month{'s' if months > 1 else ''}"
 
+    # Employment status for display with color coding
+    @property
+    def status_display(self):
+        status_colors = {
+            'active': 'success',
+            'inactive': 'secondary',
+            'terminated': 'danger',
+            'resigned': 'warning',
+            'suspended': 'info',
+            'absconding': 'dark'
+        }
+        
+        if not self.employment_status:
+            return {'text': 'Unknown', 'color': 'secondary'}
+        
+        status_text = dict(self._meta.get_field('employment_status').choices).get(self.employment_status, 'Unknown')
+        status_color = status_colors.get(self.employment_status, 'secondary')
+        
+        return {'text': status_text, 'color': status_color}
+
+
+# User action log for tracking important HR actions
+class UserActionLog(models.Model):
+    ACTION_TYPES = [
+        ('create', 'User Created'),
+        ('update', 'User Updated'),
+        ('status_change', 'Status Changed'),
+        ('role_change', 'Role Changed'),
+        ('deactivate', 'User Deactivated'),
+        ('activate', 'User Activated'),
+        ('password_reset', 'Password Reset'),
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_logs')
+    action_type = models.CharField(max_length=20, choices=ACTION_TYPES)
+    action_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='performed_actions')
+    timestamp = models.DateTimeField(auto_now_add=True)
+    details = models.TextField(blank=True, null=True)
+    
+    class Meta:
+        ordering = ['-timestamp']
+    
+    def __str__(self):
+        return f"{self.get_action_type_display()} for {self.user.username} on {self.timestamp.strftime('%Y-%m-%d %H:%M')}"
 
 ''' ------------------------------------------- Clinet - PROJECT AREA ------------------------------------------- '''
 class Project(models.Model):

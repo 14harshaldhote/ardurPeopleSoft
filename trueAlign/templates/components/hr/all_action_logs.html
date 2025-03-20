@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <div class="mb-4">
+        <a href="{% url 'aps_hr:hr_dashboard' %}" class="inline-flex items-center px-4 py-2 border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50 transition-colors">
+            <span>Back to Dashboard</span>
+        </a>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-md overflow-hidden mb-6">
+        <div class="bg-blue-600 px-6 py-4">
+            <h3 class="text-xl font-semibold text-white m-0">User Action Logs</h3>
+        </div>
+        <div class="p-6">
+            <form method="GET" class="mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Action Type</label>
+                        <select name="action_type" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
+                            <option value="">All Actions</option>
+                            {% for action_code, action_name in action_types %}
+                                <option value="{{ action_code }}" {% if filter_action_type == action_code %}selected{% endif %}>
+                                    {{ action_name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                        <input type="date" name="start_date" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200" value="{{ filter_start_date|date:'Y-m-d' }}">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                        <input type="date" name="end_date" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200" value="{{ filter_end_date|date:'Y-m-d' }}">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">User</label>
+                        <input type="text" name="user" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200" placeholder="Search by name" value="{{ filter_user }}">
+                    </div>
+                </div>
+                <div class="flex justify-end mt-4">
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 mr-2">
+                        Apply Filters
+                    </button>
+                    <a href="{% url 'aps_hr:user_action_logs' %}" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
+                        Reset
+                    </a>
+                </div>
+            </form>
+            
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">By</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for log in page_obj %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ log.timestamp|date:"d/m/Y H:i:s" }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                <a href="{% url 'aps_hr:hr_user_detail' user_id=log.user.id %}" class="text-blue-600 hover:text-blue-800 hover:underline">
+                                    {{ log.user.get_full_name }} ({{ log.user.username }})
+                                </a>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ log.get_action_type_display }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ log.action_by.get_full_name }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-900">{{ log.details }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">No logs found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            <nav class="flex justify-center mt-6">
+                <ul class="flex">
+                    {% if page_obj.has_previous %}
+                        <li>
+                            <a class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-l-md" 
+                               href="?page=1{% if filter_action_type %}&action_type={{ filter_action_type }}{% endif %}
+                                {% if filter_start_date %}&start_date={{ filter_start_date|date:'Y-m-d' }}{% endif %}
+                                {% if filter_end_date %}&end_date={{ filter_end_date|date:'Y-m-d' }}{% endif %}
+                                {% if filter_user %}&user={{ filter_user }}{% endif %}">First</a>
+                        </li>
+                        <li>
+                            <a class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50" 
+                               href="?page={{ page_obj.previous_page_number }}{% if filter_action_type %}&action_type={{ filter_action_type }}{% endif %}
+                                {% if filter_start_date %}&start_date={{ filter_start_date|date:'Y-m-d' }}{% endif %}
+                                {% if filter_end_date %}&end_date={{ filter_end_date|date:'Y-m-d' }}{% endif %}
+                                {% if filter_user %}&user={{ filter_user }}{% endif %}">Previous</a>
+                        </li>
+                    {% endif %}
+                    
+                    <li>
+                        <span class="relative inline-flex items-center px-4 py-2 border border-blue-600 bg-blue-600 text-sm font-medium text-white">
+                            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                        </span>
+                    </li>
+                    
+                    {% if page_obj.has_next %}
+                        <li>
+                            <a class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50" 
+                               href="?page={{ page_obj.next_page_number }}{% if filter_action_type %}&action_type={{ filter_action_type }}{% endif %}
+                                {% if filter_start_date %}&start_date={{ filter_start_date|date:'Y-m-d' }}{% endif %}
+                                {% if filter_end_date %}&end_date={{ filter_end_date|date:'Y-m-d' }}{% endif %}
+                                {% if filter_user %}&user={{ filter_user }}{% endif %}">Next</a>
+                        </li>
+                        <li>
+                            <a class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-r-md" 
+                               href="?page={{ page_obj.paginator.num_pages }}{% if filter_action_type %}&action_type={{ filter_action_type }}{% endif %}
+                                {% if filter_start_date %}&start_date={{ filter_start_date|date:'Y-m-d' }}{% endif %}
+                                {% if filter_end_date %}&end_date={{ filter_end_date|date:'Y-m-d' }}{% endif %}
+                                {% if filter_user %}&user={{ filter_user }}{% endif %}">Last</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+{% endblock %}

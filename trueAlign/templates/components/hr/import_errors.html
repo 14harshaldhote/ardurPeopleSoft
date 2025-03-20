@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="mb-3">
+        <a href="{% url 'hr_dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+        <a href="{% url 'bulk_add_users' %}" class="btn btn-primary">Try Import Again</a>
+    </div>
+    
+    <div class="card">
+        <div class="card-header bg-danger text-white">
+            <h3>Import Errors</h3>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-warning">
+                <p>The following errors occurred during the import process. Please fix the issues and try again.</p>
+            </div>
+            
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Row #</th>
+                        <th>Data</th>
+                        <th>Error</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for error in errors %}
+                    <tr>
+                        <td>{{ error.row_num }}</td>
+                        <td>
+                            <code>
+                                {% for key, value in error.data.items %}
+                                    {{ key }}: {{ value }}<br>
+                                {% endfor %}
+                            </code>
+                        </td>
+                        <td class="text-danger">{{ error.error }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,68 @@
+<!-- Change Status Modal -->
+<div class="modal fade" id="changeStatusModal" tabindex="-1" aria-labelledby="changeStatusModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{% url 'aps_hr:change_user_status' user_id=user_obj.id %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="changeStatusModalLabel">Change Employment Status</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="statusSelect" class="form-label">Current Status</label>
+                        <input type="text" class="form-control" value="{{ user_detail.employment_status }}" disabled>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="statusSelect" class="form-label">New Status</label>
+                        <select id="statusSelect" name="status" class="form-select" required>
+                            <option value="">Select Status</option>
+                            {% for status_value, status_name in employment_status_choices %}
+                                {% if status_value %}
+                                    <option value="{{ status_value }}">{{ status_name }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="reasonTextarea" class="form-label">Reason for Change</label>
+                        <textarea id="reasonTextarea" name="reason" class="form-control" rows="3" required></textarea>
+                    </div>
+                    
+                    <div class="alert alert-warning" id="statusWarning" style="display: none;">
+                        <i class="fas fa-exclamation-triangle"></i> 
+                        <span id="warningText"></span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const statusSelect = document.getElementById('statusSelect');
+    const statusWarning = document.getElementById('statusWarning');
+    const warningText = document.getElementById('warningText');
+    
+    statusSelect.addEventListener('change', function() {
+        const selectedStatus = this.value;
+        
+        if (['inactive', 'terminated', 'resigned', 'suspended', 'absconding'].includes(selectedStatus)) {
+            statusWarning.style.display = 'block';
+            warningText.textContent = `Setting status to ${selectedStatus} will deactivate the user account. They will not be able to log in.`;
+        } else if (selectedStatus === 'active') {
+            statusWarning.style.display = 'block';
+            warningText.textContent = 'Setting status to active will enable the user account. They will be able to log in.';
+        } else {
+            statusWarning.style.display = 'none';
+        }
+    });
+});
+</script>

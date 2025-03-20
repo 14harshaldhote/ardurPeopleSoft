@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="mb-3">
+        <a href="{% url 'hr_dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+        <a href="{% url 'hr_user_detail' user_id=user.id %}" class="btn btn-primary">Back to User Details</a>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h3>Session Logs for {{ user.get_full_name }} ({{ user.username }})</h3>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Login Time</th>
+                            <th>Logout Time</th>
+                            <th>Location</th>
+                            <th>IP Address</th>
+                            <th>Working Hours</th>
+                            <th>Idle Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for session in sessions %}
+                        <tr>
+                            <td>{{ session.login_time|date:"d/m/Y H:i:s" }}</td>
+                            <td>
+                                {% if session.logout_time %}
+                                    {{ session.logout_time|date:"d/m/Y H:i:s" }}
+                                {% else %}
+                                    <span class="badge bg-success">Active</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ session.location }}</td>
+                            <td>{{ session.ip_address }}</td>
+                            <td>
+                                {% if session.working_hours %}
+                                    {{ session.working_hours }}
+                                {% elif not session.logout_time %}
+                                    <span class="text-muted">Ongoing</span>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>{{ session.idle_time }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center">No session logs found for this user.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

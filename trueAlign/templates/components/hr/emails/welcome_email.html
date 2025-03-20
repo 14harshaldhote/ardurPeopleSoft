@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Our Company Portal</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #3498db;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .content {
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        .footer {
+            text-align: center;
+            padding: 10px;
+            font-size: 12px;
+            color: #777;
+        }
+        .credentials {
+            background-color: #eee;
+            padding: 15px;
+            margin: 15px 0;
+            border-left: 4px solid #3498db;
+        }
+        .button {
+            display: inline-block;
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Welcome to Our Company!</h1>
+        </div>
+        <div class="content">
+            <p>Hello {{ user.first_name }} {{ user.last_name }},</p>
+            
+            <p>Welcome to Our Company! Your account has been created successfully and you can now access our company portal.</p>
+            
+            <div class="credentials">
+                <p><strong>Your login credentials:</strong></p>
+                <p>Username: {{ user.username }}</p>
+                <p>Password: {{ password }}</p>
+            </div>
+            
+            <p>For security reasons, please change your password after logging in for the first time.</p>
+            
+            <p>
+                <a href="{{ login_url }}" class="button">Login to Portal</a>
+            </p>
+            
+            <p>If you have any questions or need assistance, please contact the HR department.</p>
+            
+            <p>
+                Regards,<br>
+                HR Department<br>
+                Our Company
+            </p>
+        </div>
+        <div class="footer">
+            <p>This is an automated email. Please do not reply to this message.</p>
+            <p>&copy; 2023 Our Company. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

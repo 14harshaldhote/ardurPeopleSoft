@@ -1011,11 +1011,28 @@ def manager_delete_project_update(request, update_id):
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.models import User, Group
 from django.contrib import messages
-from django.http import HttpResponseForbidden
-from .models import UserDetails
-from django.contrib.auth.models import User
-from datetime import datetime
+from django.http import HttpResponseForbidden, HttpResponse, JsonResponse
+from django.db import transaction
+from django.db.models import Q, Count, Sum, Max, Avg
+from django.core.paginator import Paginator
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.template.loader import render_to_string
+from django.core.mail import EmailMessage
+from django.utils import timezone
+import logging
+import re
+import csv
+import io
+import random
+import string
+from datetime import date, datetime, timedelta
+from .models import UserDetails, UserActionLog, UserSession
+
+logger = logging.getLogger(__name__)
 
 # Permission check functions
 def is_hr(user):
@@ -1027,7 +1044,90 @@ def is_manager(user):
 def is_employee(user):
     return user.groups.filter(name='Employee').exists()
 
-# HR Views
+# Helper function to generate employee ID
+def generate_employee_id(work_location=None):
+    prefix = "EMP"
+    
+    # Add year (last 2 digits)
+    current_year = str(datetime.now().year)[2:]
+    
+    # Add location code if provided
+    location_code = ""
+    if work_location:
+        # Extract first 3 letters of location and uppercase them
+        location_code = work_location[:3].upper()
+    
+    # Find the last employee ID with this pattern
+    last_id_pattern = f"{prefix}-{current_year}"
+    if location_code:
+        last_id_pattern += f"-{location_code}"
+        
+    last_user = UserDetails.objects.filter(
+        user__username__startswith=last_id_pattern
+    ).order_by('-user__username').first()
+    
+    # Extract the sequence number or start at 1
+    if last_user and last_user.user.username.startswith(last_id_pattern):
+        # Extract the sequence number
+        parts = last_user.user.username.split('-')
+        seq_num = int(parts[-1]) + 1
+    else:
+        seq_num = 1
+    
+    # Format with leading zeros (4 digits)
+    formatted_seq = f"{seq_num:04d}"
+    
+    # Construct final ID
+    if location_code:
+        employee_id = f"{prefix}-{current_year}-{location_code}-{formatted_seq}"
+    else:
+        employee_id = f"{prefix}-{current_year}-{formatted_seq}"
+    
+    return employee_id
+
+# Helper function to send welcome email
+def send_welcome_email(user, password):
+    """Send welcome email with login credentials"""
+    subject = "Welcome to Our Company Portal"
+    
+    email_body = f"""
+    Hello {user.first_name} {user.last_name},
+    
+    Welcome to Our Company! Your account has been created successfully.
+    
+    Here are your login details:
+    Username: {user.username}
+    Password: {password}
+    
+    Please log in at: http://yourcompanyportal.com/login/
+    
+    For security reasons, we recommend changing your password after first login.
+    
+    Regards,
+    HR Department
+    """
+    
+    # You can also use HTML template
+    html_message = render_to_string('components/hr/emails/welcome_email.html', {
+        'user': user,
+        'password': password,
+        'login_url': 'http://yourcompanyportal.com/login/'
+    })
+    
+    email = EmailMessage(
+        subject=subject,
+        body=email_body,
+        to=[user.email]
+    )
+    
+    if html_message:
+        email.content_subtype = "html"
+        email.body = html_message
+        
+    email.send()
+    return True
+
+# HR Dashboard with enhanced features
 @login_required
 @user_passes_test(is_hr)
 def hr_dashboard(request):
@@ -1037,6 +1137,7 @@ def hr_dashboard(request):
     department_filter = request.GET.get('department', '')
     status_filter = request.GET.get('status', '')
     work_location_filter = request.GET.get('work_location', '')
+    role_filter = request.GET.get('role', '')
     
     # Start with all users and prefetch userdetails to avoid N+1 query problem
     users = User.objects.select_related('userdetails').all()
@@ -1050,7 +1151,6 @@ def hr_dashboard(request):
             Q(email__icontains=search_query) |
             Q(userdetails__job_description__icontains=search_query)
         ).distinct()
-    
 
     # Apply employment status filter
     if status_filter:
@@ -1060,38 +1160,107 @@ def hr_dashboard(request):
     if work_location_filter:
         users = users.filter(userdetails__work_location=work_location_filter)
     
+    # Apply role/group filter
+    if role_filter:
+        users = users.filter(groups__name=role_filter)
+    
     # Handle case where UserDetails might not exist for some users
     for user in users:
         if not hasattr(user, 'userdetails'):
             # Create default UserDetails for users who don't have it
             UserDetails.objects.create(user=user)
     
+    # Get session data for users
+    user_ids = [user.id for user in users]
+    today = datetime.now().date()
+    recent_sessions = UserSession.objects.filter(
+        user_id__in=user_ids,
+        login_time__date=today
+    ).values('user_id').annotate(
+        last_login=Max('login_time')
+    )
+    
+    # Create a dict for quick lookup
+    session_data = {s['user_id']: s['last_login'] for s in recent_sessions}
+    
+    # Add last login information to users
+    for user in users:
+        user.last_login_today = session_data.get(user.id)
+    
+    # Get user statistics
+    total_users = users.count()
+    active_users = users.filter(is_active=True).count()
+    inactive_users = users.filter(is_active=False).count()
+    
+    # Get users by status
+    status_counts = UserDetails.objects.values('employment_status').annotate(
+        count=Count('id')
+    ).order_by('employment_status')
+    
+    # Get users by location
+    location_counts = UserDetails.objects.exclude(
+        work_location__isnull=True
+    ).exclude(
+        work_location=''
+    ).values('work_location').annotate(
+        count=Count('id')
+    ).order_by('-count')
+    
+    # Recent user additions (last 7 days)
+    recent_users = User.objects.filter(
+        date_joined__gte=today - timedelta(days=7)
+    ).order_by('-date_joined')[:5]
+    
+    # Pagination
+    paginator = Paginator(users, 20)  # Show 20 users per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # Get all available departments and work locations for filter dropdowns
+    work_locations = UserDetails.objects.exclude(
+        work_location__isnull=True
+    ).exclude(
+        work_location=''
+    ).values_list('work_location', flat=True).distinct()
+    
+    roles = Group.objects.all()
+    
     context = {
-        'users': users,
+        'page_obj': page_obj,
         'role': 'HR',
   'employment_status_choices': UserDetails._meta.get_field('employment_status').choices,
+        'work_locations': work_locations,
+        'roles': roles,
         'search_query': search_query,
         'status_filter': status_filter,
         'work_location_filter': work_location_filter,
+        'role_filter': role_filter,
+        'department_filter': department_filter,
+        'total_users': total_users,
+        'active_users': active_users,
+        'inactive_users': inactive_users,
+        'status_counts': status_counts,
+        'location_counts': location_counts,
+        'recent_users': recent_users,
     }
     
     return render(request, 'components/hr/hr_dashboard.html', context)
 
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import user_passes_test
-from django.contrib import messages
-from django.db import transaction
-import logging
-from .models import UserDetails, User
-
-logger = logging.getLogger(__name__)
+@login_required
 @user_passes_test(is_hr)
 def hr_user_detail(request, user_id):
+    """Enhanced view for HR to view and edit user details"""
     import re
     from datetime import date, datetime
     
     user = get_object_or_404(User, id=user_id)
     user_detail, created = UserDetails.objects.get_or_create(user=user)
+    
+    # Get user action logs
+    action_logs = UserActionLog.objects.filter(user=user).order_by('-timestamp')[:10]
+    
+    # Get recent sessions
+    recent_sessions = UserSession.objects.filter(user=user).order_by('-login_time')[:5]
 
     if request.method == 'POST':
         try:
@@ -1129,7 +1298,7 @@ def hr_user_detail(request, user_id):
                 primary_country_code, 
                 primary_number,
                 'Primary contact number'
-            )
+            ) if primary_number else None
 
             # Emergency contact validation  
             emergency_country_code = data.get('emergency_country_code', '').strip()
@@ -1138,7 +1307,7 @@ def hr_user_detail(request, user_id):
                 emergency_country_code,
                 emergency_number, 
                 'Emergency contact number'
-            )
+            ) if emergency_number else None
 
             # Validate PAN
             pan = data.get('panno')
@@ -1169,11 +1338,72 @@ def hr_user_detail(request, user_id):
                 'emergency_contact_name': data.get('emergency_contact_name') or None,
                 'start_date': data.get('start_date') or None,
                 'work_location': data.get('work_location') or None,
-                'contact_number_primary': primary_full_contact,
+                'contact_number_primary': primary_number,
                 'personal_email': email or None,
                 'aadharno': aadhar or None,
                 'country_code': primary_country_code or None,
             }
+
+            # Check if role/group is being updated
+            old_group = user.groups.first()
+            new_group_id = data.get('group')
+            if new_group_id:
+                new_group = Group.objects.get(id=new_group_id)
+                
+                # Only process if the group has changed
+                if not old_group or old_group.id != new_group.id:
+                    # Remove user from all current groups
+                    user.groups.clear()
+                    # Add user to new group
+                    user.groups.add(new_group)
+                    
+                    # Update UserDetails group
+                    fields_to_update['group'] = new_group
+                    
+                    # Log the role change
+                    UserActionLog.objects.create(
+                        user=user,
+                        action_type='role_change',
+                        action_by=request.user,
+                        details=f"Role changed from {old_group.name if old_group else 'None'} to {new_group.name}"
+                    )
+
+            # Check for employment status change
+            old_status = user_detail.employment_status
+            new_status = data.get('employment_status')
+            
+            if old_status != new_status and new_status:
+                # Log the status change
+                UserActionLog.objects.create(
+                    user=user,
+                    action_type='status_change',
+                    action_by=request.user,
+                    details=f"Employment status changed from {old_status if old_status else 'None'} to {new_status}"
+                )
+                
+                # If deactivating user
+                if new_status in ['inactive', 'terminated', 'resigned', 'suspended', 'absconding']:
+                    if user.is_active:
+                        user.is_active = False
+                        user.save()
+                        
+                        UserActionLog.objects.create(
+                            user=user,
+                            action_type='deactivate',
+                            action_by=request.user,
+                            details=f"User account deactivated due to status change to {new_status}"
+                        )
+                # If reactivating user
+                elif new_status == 'active' and not user.is_active:
+                    user.is_active = True
+                    user.save()
+                    
+                    UserActionLog.objects.create(
+                        user=user,
+                        action_type='activate',
+                        action_by=request.user,
+                        details="User account activated due to status change to active"
+                    )
 
             # Remove empty values to avoid unnecessary updates
             fields_to_update = {k: v for k, v in fields_to_update.items() if v is not None}
@@ -1188,12 +1418,39 @@ def hr_user_detail(request, user_id):
             if fields_to_update.get('employment_status') and fields_to_update['employment_status'] not in dict(UserDetails._meta.get_field('employment_status').choices):
                 raise ValueError('Invalid employment status')
 
+            # Check if basic user details are being updated
+            first_name = data.get('first_name')
+            last_name = data.get('last_name')
+            email = data.get('email')
+            
+            if first_name or last_name or email:
+                user.first_name = first_name or user.first_name
+                user.last_name = last_name or user.last_name
+                user.email = email or user.email
+                user.save()
+                
+                # Log the user update
+                UserActionLog.objects.create(
+                    user=user,
+                    action_type='update',
+                    action_by=request.user,
+                    details="Basic user information updated"
+                )
+
             # Perform atomic update
             with transaction.atomic():
                 UserDetails.objects.filter(user=user).update(**fields_to_update)
+                
+                # Log the general update
+                UserActionLog.objects.create(
+                    user=user,
+                    action_type='update',
+                    action_by=request.user,
+                    details="User details updated"
+                )
 
             messages.success(request, 'User details updated successfully.')
-            return redirect('aps_hr:hr_dashboard')
+            return redirect('aps_hr:hr_user_detail', user_id=user.id)
 
         except ValueError as e:
             logger.warning(f"Validation Error for user {user_id}: {str(e)}")
@@ -1203,15 +1460,703 @@ def hr_user_detail(request, user_id):
             messages.error(request, 'An unexpected error occurred while updating user details.')
 
     return render(request, 'components/hr/hr_user_detail.html', {
+        'user_obj': user,
         'user_detail': user_detail,
+        'action_logs': action_logs,
+        'recent_sessions': recent_sessions,
+        'today': date.today(),
+        'blood_group_choices': UserDetails._meta.get_field('blood_group').choices,
+        'gender_choices': UserDetails._meta.get_field('gender').choices,
+        'employment_status_choices': UserDetails._meta.get_field('employment_status').choices,
+        'groups': Group.objects.all(),
+    })
+
+@login_required
+@user_passes_test(is_hr)
+def add_user(request):
+    """Enhanced view to add a new user to the system with auto ID generation"""
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+                # Extract basic user information
+                email = request.POST.get('email')
+                first_name = request.POST.get('first_name')
+                last_name = request.POST.get('last_name')
+                group_id = request.POST.get('group')
+                work_location = request.POST.get('work_location')
+                
+                # Validate required fields
+                if not (email and first_name and last_name and group_id):
+                    raise ValueError("All required fields must be filled")
+                
+                # Check if email already exists
+                if User.objects.filter(email=email).exists():
+                    raise ValueError(f"Email '{email}' already exists")
+                
+                # Generate employee ID for username
+                employee_id = generate_employee_id(work_location)
+                
+                while User.objects.filter(username=employee_id).exists():
+                    # In the rare case of a duplicate, regenerate
+                    employee_id = generate_employee_id(work_location)
+                
+                # Generate a random password
+                password = ''.join(random.choices(string.ascii_letters + string.digits + string.punctuation, k=12))
+                
+                # Create new user
+                user = User.objects.create_user(
+                    username=employee_id,
+                    email=email,
+                    password=password,
+                    first_name=first_name,
+                    last_name=last_name
+                )
+                
+                # Add user to group
+                group = Group.objects.get(id=group_id)
+                user.groups.add(group)
+                
+                # Create UserDetails with comprehensive information
+                user_details = UserDetails.objects.create(
+                    user=user,
+                    group=group,
+                    hire_date=request.POST.get('hire_date') or datetime.now().date(),
+                    start_date=request.POST.get('start_date') or datetime.now().date(),
+                    employment_status='active',
+                    work_location=work_location,
+                    job_description=request.POST.get('job_description') or None,
+                    dob=request.POST.get('dob') or None,
+                    gender=request.POST.get('gender') or None,
+                    blood_group=request.POST.get('blood_group') or None,
+                    country_code=request.POST.get('country_code') or None,
+                    contact_number_primary=request.POST.get('contact_number_primary') or None,
+                    personal_email=request.POST.get('personal_email') or None,
+                    emergency_contact_name=request.POST.get('emergency_contact_name') or None,
+                    emergency_contact_primary=request.POST.get('emergency_contact_primary') or None,
+                    emergency_contact_address=request.POST.get('emergency_contact_address') or None,
+                    onboarded_by=request.user,
+                    onboarding_date=timezone.now()
+                )
+                
+                # Log user creation
+                UserActionLog.objects.create(
+                    user=user,
+                    action_type='create',
+                    action_by=request.user,
+                    details=f"User created with ID: {employee_id}, role: {group.name}"
+                )
+                
+                # Send welcome email
+                try:
+                    send_welcome_email(user, password)
+                    messages.success(request, f"Welcome email sent to {email} with login credentials.")
+                except Exception as e:
+                    logger.error(f"Error sending welcome email: {str(e)}", exc_info=True)
+                    messages.warning(request, f"User created but email failed to send: {str(e)}")
+                
+                messages.success(request, f"User {employee_id} ({first_name} {last_name}) created successfully.")
+                return redirect('hr_user_detail', user_id=user.id)
+                
+        except ValueError as e:
+            messages.error(request, str(e))
+        except Exception as e:
+            logger.error(f"Error creating user: {str(e)}", exc_info=True)
+            messages.error(request, f"Error creating user: {str(e)}")
+    
+    return render(request, 'components/hr/add_user.html', {
+        'groups': Group.objects.all(),
         'today': date.today(),
         'blood_group_choices': UserDetails._meta.get_field('blood_group').choices,
         'gender_choices': UserDetails._meta.get_field('gender').choices,
         'employment_status_choices': UserDetails._meta.get_field('employment_status').choices,
     })
 
+@login_required
+@user_passes_test(is_hr)
+def bulk_add_users(request):
+    """Enhanced view to import multiple users from CSV"""
+    if request.method == 'POST' and request.FILES.get('csv_file'):
+        csv_file = request.FILES['csv_file']
+        
+        # Check if file is CSV
+        if not csv_file.name.endswith('.csv'):
+            messages.error(request, 'File must be a CSV')
+            return redirect('bulk_add_users')
+        
+        # Process CSV file
+        decoded_file = csv_file.read().decode('utf-8')
+        io_string = io.StringIO(decoded_file)
+        reader = csv.DictReader(io_string)
+        
+        # Validate CSV structure
+        required_fields = ['email', 'first_name', 'last_name', 'group', 'work_location']
+        first_row = next(reader, None)
+        if not first_row:
+            messages.error(request, 'CSV file is empty')
+            return redirect('bulk_add_users')
+        
+        for field in required_fields:
+            if field not in first_row:
+                messages.error(request, f'CSV missing required field: {field}')
+                return redirect('bulk_add_users')
+        
+        # Reset file pointer
+        io_string.seek(0)
+        next(reader)  # Skip header row
+        
+        success_count = 0
+        error_rows = []
+        
+        # Process each row
+        for row_num, row in enumerate(reader, start=2):  # Start at 2 for header offset
+            try:
+                with transaction.atomic():
+                    email = row['email'].strip()
+                    first_name = row['first_name'].strip()
+                    last_name = row['last_name'].strip()
+                    group_name = row['group'].strip()
+                    work_location = row['work_location'].strip()
+                    
+                    # Validate required fields
+                    if not (email and first_name and last_name and group_name and work_location):
+                        raise ValueError("Missing required fields")
+                    
+                    # Check if email already exists
+                    if User.objects.filter(email=email).exists():
+                        raise ValueError(f"Email '{email}' already exists")
+                    
+                    # Check if group exists
+                    try:
+                        group = Group.objects.get(name=group_name)
+                    except Group.DoesNotExist:
+                        raise ValueError(f"Group '{group_name}' does not exist")
+                    
+                    # Generate employee ID
+                    employee_id = generate_employee_id(work_location)
+                    
+                    while User.objects.filter(username=employee_id).exists():
+                        # In the rare case of a duplicate, regenerate
+                        employee_id = generate_employee_id(work_location)
+                    
+                    # Generate a random password
+                    password = ''.join(random.choices(string.ascii_letters + string.digits + string.punctuation, k=12))
+                    
+                    # Create new user
+                    user = User.objects.create_user(
+                        username=employee_id,
+                        email=email,
+                        password=password,
+                        first_name=first_name,
+                        last_name=last_name
+                    )
+                    
+                    # Add user to group
+                    user.groups.add(group)
+                    
+                    # Map CSV columns to UserDetails fields
+                    user_details_fields = {
+                        'user': user,
+                        'group': group,
+                        'hire_date': row.get('hire_date') or datetime.now().date(),
+                        'start_date': row.get('start_date') or datetime.now().date(),
+                        'employment_status': 'active',
+                        'work_location': work_location,
+                        'job_description': row.get('job_description') or None,
+                        'onboarded_by': request.user,
+                        'onboarding_date': timezone.now()
+                    }
+                    
+                    # Optional fields with validation
+                    if 'dob' in row and row['dob']:
+                        try:
+                            dob = datetime.strptime(row['dob'], '%Y-%m-%d').date()
+                            user_details_fields['dob'] = dob
+                        except ValueError:
+                            pass  # Skip invalid date
+                    
+                    if 'gender' in row and row['gender']:
+                        gender = row['gender']
+                        if gender in dict(UserDetails._meta.get_field('gender').choices):
+                            user_details_fields['gender'] = gender
+                    
+                    if 'blood_group' in row and row['blood_group']:
+                        blood_group = row['blood_group']
+                        if blood_group in dict(UserDetails._meta.get_field('blood_group').choices):
+                            user_details_fields['blood_group'] = blood_group
+                    
+                    if 'contact_number_primary' in row and row['contact_number_primary']:
+                        user_details_fields['contact_number_primary'] = row['contact_number_primary']
+                    
+                    if 'country_code' in row and row['country_code']:
+                        user_details_fields['country_code'] = row['country_code']
+                    
+                    if 'personal_email' in row and row['personal_email']:
+                        user_details_fields['personal_email'] = row['personal_email']
+                    
+                    # Create UserDetails record
+                    UserDetails.objects.create(**user_details_fields)
+                    
+                    # Log user creation
+                    UserActionLog.objects.create(
+                        user=user,
+                        action_type='create',
+                        action_by=request.user,
+                        details=f"User created via bulk import with ID: {employee_id}, role: {group.name}"
+                    )
+                    
+                    # Send welcome email if requested
+                    if request.POST.get('send_welcome_emails') == 'on':
+                        try:
+                            send_welcome_email(user, password)
+                        except Exception as e:
+                            logger.error(f"Error sending welcome email to {email}: {str(e)}")
+                    
+                    success_count += 1
+                    
+            except Exception as e:
+                logger.error(f"Error in row {row_num}: {str(e)}", exc_info=True)
+                error_rows.append({
+                    'row_num': row_num,
+                    'data': row,
+                    'error': str(e)
+                })
+        
+        if success_count > 0:
+            messages.success(request, f"Successfully imported {success_count} users")
+        
+        if error_rows:
+            request.session['import_errors'] = error_rows
+            return redirect('import_errors')
+        
+        return redirect('hr_dashboard')
+    
+    return render(request, 'components/hr/bulk_add_users.html', {
+        'groups': Group.objects.all().values_list('name', flat=True),
+    })
+
+@login_required
+@user_passes_test(is_hr)
+def import_errors(request):
+    """View to display errors from bulk import"""
+    errors = request.session.get('import_errors', [])
+    if not errors:
+        messages.info(request, "No import errors to display")
+        return redirect('hr_dashboard')
+    
+    return render(request, 'components/hr/import_errors.html', {
+        'errors': errors
+    })
 
 
+@login_required
+@user_passes_test(is_hr)
+def user_action_logs(request, user_id=None):
+    """View all action logs or filtered by user"""
+    if user_id:
+        user = get_object_or_404(User, id=user_id)
+        logs = UserActionLog.objects.filter(user=user).order_by('-timestamp')
+        context = {
+            'logs': logs,
+            'user': user,
+        }
+        return render(request, 'components/hr/user_action_logs.html', context)
+    else:
+        # Get filter parameters
+        action_type = request.GET.get('action_type', '')
+        start_date = request.GET.get('start_date', '')
+        end_date = request.GET.get('end_date', '')
+        user_filter = request.GET.get('user', '')
+        
+        logs = UserActionLog.objects.all().order_by('-timestamp')
+        
+        # Apply filters
+        if action_type:
+            logs = logs.filter(action_type=action_type)
+        
+        if start_date:
+            try:
+                start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+                logs = logs.filter(timestamp__date__gte=start_date)
+            except ValueError:
+                messages.error(request, 'Invalid start date format')
+        
+        if end_date:
+            try:
+                end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+                logs = logs.filter(timestamp__date__lte=end_date)
+            except ValueError:
+                messages.error(request, 'Invalid end date format')
+        
+        if user_filter:
+            logs = logs.filter(
+                Q(user__username__icontains=user_filter) |
+                Q(user__first_name__icontains=user_filter) |
+                Q(user__last_name__icontains=user_filter)
+            )
+        
+        # Pagination
+        paginator = Paginator(logs, 20)  # Show 20 logs per page
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        
+        context = {
+            'page_obj': page_obj,
+            'action_types': UserActionLog.ACTION_TYPES,
+            'filter_action_type': action_type,
+            'filter_start_date': start_date,
+            'filter_end_date': end_date,
+            'filter_user': user_filter,
+        }
+        return render(request, 'components/hr/all_action_logs.html', context)
+
+@login_required
+@user_passes_test(is_hr)
+def session_logs(request, user_id=None):
+    """View session logs for a specific user or all users"""
+    if user_id:
+        user = get_object_or_404(User, id=user_id)
+        sessions = UserSession.objects.filter(user=user).order_by('-login_time')
+        context = {
+            'sessions': sessions,
+            'user': user,
+        }
+        return render(request, 'components/hr/user_session_logs.html', context)
+    else:
+        # Get filter parameters
+        start_date = request.GET.get('start_date', '')
+        end_date = request.GET.get('end_date', '')
+        user_filter = request.GET.get('user', '')
+        location_filter = request.GET.get('location', '')
+        
+        sessions = UserSession.objects.all().order_by('-login_time')
+        
+        # Apply filters
+        if start_date:
+            try:
+                start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+                sessions = sessions.filter(login_time__date__gte=start_date)
+            except ValueError:
+                messages.error(request, 'Invalid start date format')
+        
+        if end_date:
+            try:
+                end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+                sessions = sessions.filter(login_time__date__lte=end_date)
+            except ValueError:
+                messages.error(request, 'Invalid end date format')
+        
+        if user_filter:
+            sessions = sessions.filter(
+                Q(user__username__icontains=user_filter) |
+                Q(user__first_name__icontains=user_filter) |
+                Q(user__last_name__icontains=user_filter)
+            )
+        
+        if location_filter:
+            sessions = sessions.filter(location=location_filter)
+        
+        # Pagination
+        paginator = Paginator(sessions, 20)  # Show 20 sessions per page
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        
+        # Get unique locations for filter dropdown
+        locations = UserSession.objects.values_list('location', flat=True).distinct()
+        
+        context = {
+            'page_obj': page_obj,
+            'locations': locations,
+            'filter_start_date': start_date,
+            'filter_end_date': end_date,
+            'filter_user': user_filter,
+            'filter_location': location_filter,
+        }
+        return render(request, 'components/hr/all_session_logs.html', context)
+
+@login_required
+@user_passes_test(is_hr)
+def user_reports(request):
+    """View to generate reports on user data"""
+    report_type = request.GET.get('report_type', 'active_users')
+    export_format = request.GET.get('export_format', '')
+    
+    if report_type == 'active_users':
+        # Report on active vs inactive users
+        active_count = User.objects.filter(is_active=True).count()
+        inactive_count = User.objects.filter(is_active=False).count()
+        
+        # Users by employment status
+        status_counts = UserDetails.objects.exclude(employment_status__isnull=True).values('employment_status').annotate(count=Count('employment_status'))
+        
+        # Convert to dict with display names
+        status_choices = dict(UserDetails._meta.get_field('employment_status').choices)
+        status_data = {status_choices.get(item['employment_status'], item['employment_status']): item['count'] for item in status_counts}
+        
+        context = {
+            'report_type': 'active_users',
+            'active_count': active_count,
+            'inactive_count': inactive_count,
+            'status_data': status_data,
+        }
+    
+    elif report_type == 'location_distribution':
+        # Report on work location distribution
+        location_counts = UserDetails.objects.exclude(work_location__isnull=True).exclude(work_location='').values('work_location').annotate(count=Count('work_location')).order_by('-count')
+        
+        context = {
+            'report_type': 'location_distribution',
+            'location_counts': location_counts,
+        }
+    
+    elif report_type == 'session_activity':
+        # Report on session activity
+        # Today's active users
+        today = datetime.now().date()
+        active_today = UserSession.objects.filter(login_time__date=today).values('user').distinct().count()
+        
+        # Last 7 days active users
+        week_ago = today - timedelta(days=7)
+        active_week = UserSession.objects.filter(login_time__date__gte=week_ago).values('user').distinct().count()
+        
+        # Average session duration
+        avg_duration = UserSession.objects.filter(
+            working_hours__isnull=False
+        ).values('user').annotate(
+            avg_duration=Avg('working_hours')
+        )
+        
+        # Location breakdown
+        location_sessions = UserSession.objects.filter(
+            login_time__date__gte=week_ago
+        ).values('location').annotate(
+            count=Count('id')
+        ).order_by('-count')
+        
+        context = {
+            'report_type': 'session_activity',
+            'active_today': active_today,
+            'active_week': active_week,
+            'avg_duration': avg_duration,
+            'location_sessions': location_sessions,
+        }
+    
+    elif report_type == 'role_distribution':
+        # Report on role distribution
+        role_counts = Group.objects.annotate(
+            user_count=Count('user')
+        ).values('name', 'user_count').order_by('-user_count')
+        
+        context = {
+            'report_type': 'role_distribution',
+            'role_counts': role_counts,
+        }
+    
+    # Handle export if requested
+    if export_format:
+        if export_format == 'csv':
+            return export_as_csv(request, report_type, context)
+        # Comment out or remove undefined functions until they're implemented
+        # elif export_format == 'excel':
+        #     return export_as_excel(request, report_type, context)
+        # elif export_format == 'pdf':
+        #     return export_as_pdf(request, report_type, context)
+    
+    return render(request, 'components/hr/user_reports.html', context)
+
+@login_required
+@user_passes_test(is_hr)
+def export_as_csv(request, report_type, context):
+    """Export report data as CSV"""
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="{report_type}_report.csv"'
+    
+    writer = csv.writer(response)
+    
+    if report_type == 'active_users':
+        writer.writerow(['Status', 'Count'])
+        writer.writerow(['Active', context['active_count']])
+        writer.writerow(['Inactive', context['inactive_count']])
+        
+        writer.writerow([])  # Empty row as separator
+        writer.writerow(['Employment Status', 'Count'])
+        for status, count in context['status_data'].items():
+            writer.writerow([status, count])
+    
+    elif report_type == 'location_distribution':
+        writer.writerow(['Location', 'User Count'])
+        for item in context['location_counts']:
+            writer.writerow([item['work_location'], item['count']])
+    
+    elif report_type == 'session_activity':
+        writer.writerow(['Metric', 'Value'])
+        writer.writerow(['Active Users Today', context['active_today']])
+        writer.writerow(['Active Users Last 7 Days', context['active_week']])
+        
+        writer.writerow([])  # Empty row as separator
+        writer.writerow(['Location', 'Session Count'])
+        for item in context['location_sessions']:
+            writer.writerow([item['location'], item['count']])
+    
+    elif report_type == 'role_distribution':
+        writer.writerow(['Role', 'User Count'])
+        for item in context['role_counts']:
+            writer.writerow([item['name'], item['user_count']])
+    
+    return response
+
+@login_required
+@user_passes_test(is_hr)
+def reset_user_password(request, user_id):
+    """Reset a user's password"""
+    user = get_object_or_404(User, id=user_id)
+    
+    if request.method == 'POST':
+        new_password = request.POST.get('new_password')
+        confirm_password = request.POST.get('confirm_password')
+        
+        if not new_password or len(new_password) < 8:
+            messages.error(request, "Password must be at least 8 characters")
+            return redirect('reset_user_password', user_id=user_id)
+            
+        if new_password != confirm_password:
+            messages.error(request, "Passwords do not match")
+            return redirect('reset_user_password', user_id=user_id)
+        
+        try:
+            # Set new password
+            user.set_password(new_password)
+            user.save()
+            
+            # Log password reset
+            UserActionLog.objects.create(
+                user=user,
+                action_type='password_reset',
+                action_by=request.user,
+                details="Password reset by HR"
+            )
+            
+            # Send email notification to user
+            subject = "Your Password Has Been Reset"
+            message = f"""
+            Hello {user.first_name} {user.last_name},
+            
+            Your password has been reset by HR. Your new password is:
+            
+            {new_password}
+            
+            Please log in at http://yourcompanyportal.com/login/ and change your password immediately.
+            
+            Regards,
+            HR Department
+            """
+            
+            user.email_user(subject, message)
+            
+            messages.success(request, f"Password for {user.username} has been reset and emailed to the user.")
+            return redirect('hr_user_detail', user_id=user.id)
+        
+        except Exception as e:
+            logger.error(f"Error resetting password: {str(e)}", exc_info=True)
+            messages.error(request, f"Error resetting password: {str(e)}")
+    
+    return render(request, 'components/hr/reset_password.html', {
+        'user_obj': user
+    })
+
+@login_required
+@user_passes_test(is_hr)
+def change_user_status(request, user_id):
+    """Change a user's status (activate/deactivate)"""
+    user = get_object_or_404(User, id=user_id)
+    user_detail, created = UserDetails.objects.get_or_create(user=user)
+    
+    if request.method == 'POST':
+        new_status = request.POST.get('status')
+        reason = request.POST.get('reason', '')
+        
+        if not new_status or new_status not in dict(UserDetails._meta.get_field('employment_status').choices):
+            messages.error(request, "Invalid status provided")
+            return redirect('hr_user_detail', user_id=user.id)
+        
+        try:
+            with transaction.atomic():
+                # Update UserDetails status
+                old_status = user_detail.employment_status
+                user_detail.employment_status = new_status
+                user_detail.last_status_change = timezone.now()
+                user_detail.save()
+                
+                # Update User.is_active based on status
+                if new_status in ['inactive', 'terminated', 'resigned', 'suspended', 'absconding']:
+                    user.is_active = False
+                elif new_status == 'active':
+                    user.is_active = True
+                user.save()
+                
+                # Log status change
+                UserActionLog.objects.create(
+                    user=user,
+                    action_type='status_change',
+                    action_by=request.user,
+                    details=f"Status changed from '{old_status or 'None'}' to '{new_status}'. Reason: {reason}"
+                )
+                
+                messages.success(request, f"Status for {user.username} changed to {new_status}")
+        except Exception as e:
+            logger.error(f"Error changing user status: {str(e)}", exc_info=True)
+            messages.error(request, f"Error changing user status: {str(e)}")
+    
+    return redirect('hr_user_detail', user_id=user.id)
+
+@login_required
+@user_passes_test(is_hr)
+def change_user_role(request, user_id):
+    """Change a user's role/group"""
+    user = get_object_or_404(User, id=user_id)
+    user_detail, created = UserDetails.objects.get_or_create(user=user)
+    
+    if request.method == 'POST':
+        new_group_id = request.POST.get('group')
+        reason = request.POST.get('reason', '')
+        
+        if not new_group_id:
+            messages.error(request, "No role selected")
+            return redirect('hr_user_detail', user_id=user.id)
+        
+        try:
+            new_group = Group.objects.get(id=new_group_id)
+            old_groups = list(user.groups.all())
+            old_group_names = ', '.join([group.name for group in old_groups]) if old_groups else 'None'
+            
+            with transaction.atomic():
+                # Remove from all current groups
+                user.groups.clear()
+                
+                # Add to new group
+                user.groups.add(new_group)
+                
+                # Update UserDetails
+                user_detail.group = new_group
+                user_detail.save()
+                
+                # Log role change
+                UserActionLog.objects.create(
+                    user=user,
+                    action_type='role_change',
+                    action_by=request.user,
+                    details=f"Role changed from '{old_group_names}' to '{new_group.name}'. Reason: {reason}"
+                )
+                
+                messages.success(request, f"Role for {user.username} changed to {new_group.name}")
+        except Group.DoesNotExist:
+            messages.error(request, "Invalid role selected")
+        except Exception as e:
+            logger.error(f"Error changing user role: {str(e)}", exc_info=True)
+            messages.error(request, f"Error changing user role: {str(e)}")
+    
+    return redirect('hr_user_detail', user_id=user.id)
+
+# Manager Views
 @login_required
 @user_passes_test(is_manager)
 def manager_employee_profile(request):
@@ -1231,14 +2176,20 @@ def manager_user_detail(request, user_id):
     """Manager view to see (but not edit) user details"""
     user_detail = get_object_or_404(UserDetails, id=user_id)
     
+    # Managers should only see users in their group
+    if request.user.groups.first() != user_detail.group:
+        return HttpResponseForbidden("You don't have permission to view this user's details")
+    
+    # Get recent sessions
+    recent_sessions = UserSession.objects.filter(user=user_detail.user).order_by('-login_time')[:5]
+    
     return render(request, 'components/manager/manager_user_detail.html', {
         'user_detail': user_detail,
+        'recent_sessions': recent_sessions,
         'role': 'Manager'
     })
 
 # Employee Views
-# aps/views.py
-
 @login_required
 @user_passes_test(is_employee)
 def employee_profile(request):
@@ -1249,8 +2200,14 @@ def employee_profile(request):
         messages.error(request, 'Profile not found.')
         return redirect('home')
     
+    # Get recent sessions
+    recent_sessions = UserSession.objects.filter(
+        user=request.user
+    ).order_by('-login_time')[:5]
+    
     return render(request, 'components/employee/employee_profile.html', {
         'user_detail': user_detail,
+        'recent_sessions': recent_sessions,
         'role': 'Employee',
         'username': request.user.username
     })
@@ -1266,6 +2223,12 @@ def user_profile(request, user_id):
         'username': user_detail.user.username
     })
 
+# Alias for reset_user_password to maintain URL compatibility
+# @login_required
+# @user_passes_test(is_hr)
+# def hr_reset_user_password(request, user_id):
+#     """Alias for reset_user_password to maintain URL compatibility"""
+#     return reset_user_password(request, user_id)
 ''' --------------------------------------------------------- ADMIN AREA --------------------------------------------------------- '''
 # Helper function to check if the user belongs to the Admin group
 def is_admin(user):
