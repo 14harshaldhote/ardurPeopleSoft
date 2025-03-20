@@ -10,7 +10,6 @@
                 <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
             </a>
         </div>
-      
     </div>
 
     <!-- User Profile Card -->
@@ -19,26 +18,27 @@
         <div class="bg-gradient-to-r from-blue-500 to-indigo-600 p-6">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
                 <div class="flex items-center space-x-4 mb-4 md:mb-0">
-                    <div class="h-16 w-16 rounded-full bg-white flex items-center justify-center text-xl font-bold text-indigo-600 shadow-md">
-                        {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                    <div
+                        class="h-16 w-16 rounded-full bg-white flex items-center justify-center text-xl font-bold text-indigo-600 shadow-md">
+                        {{ user_obj.first_name|first|upper }}{{ user_obj.last_name|first|upper }}
                     </div>
                     <div class="text-white">
-                        <h1 class="text-2xl font-bold">{{ user.first_name }} {{ user.last_name }}</h1>
-                        <p class="text-blue-100">Employee ID: {{ user.userdetails.employee_id }}</p>
+                        <h1 class="text-2xl font-bold">{{ user_obj.first_name }} {{ user_obj.last_name }}</h1>
+                        <p class="text-blue-100">Employee ID: {{ user_obj.username }}</p>
                     </div>
                 </div>
 
                 <!-- Action Buttons -->
                 <div class="flex flex-wrap gap-3">
-                    <button type="button" onclick="$('#changeStatusModal').modal('show')"
+                    <button type="button" id="changeStatusBtn"
                         class="px-4 py-2 bg-white text-indigo-600 rounded-lg hover:bg-indigo-50 transition-colors shadow-sm">
                         <i class="fas fa-exchange-alt mr-2"></i>Change Status
                     </button>
-                    <button type="button" onclick="$('#changeRoleModal').modal('show')"
+                    <button type="button" id="changeRoleBtn"
                         class="px-4 py-2 bg-white text-indigo-600 rounded-lg hover:bg-indigo-50 transition-colors shadow-sm">
                         <i class="fas fa-user-tag mr-2"></i>Change Role
                     </button>
-                    <button type="button" onclick="$('#resetPasswordModal').modal('show')"
+                    <button type="button" id="resetPasswordBtn"
                         class="px-4 py-2 bg-white text-indigo-600 rounded-lg hover:bg-indigo-50 transition-colors shadow-sm">
                         <i class="fas fa-key mr-2"></i>Reset Password
                     </button>
@@ -54,39 +54,39 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <div>
                         <p class="text-sm text-gray-500 mb-1">Employee ID</p>
-                        <p class="font-medium text-gray-800">{{ user.userdetails.employee_id|default:"-" }}</p>
+                        <p class="font-medium text-gray-800">{{ user_obj.username }}</p>
                     </div>
                     <div>
                         <p class="text-sm text-gray-500 mb-1">Full Name</p>
-                        <p class="font-medium text-gray-800">{{ user.first_name }} {{ user.last_name }}</p>
+                        <p class="font-medium text-gray-800">{{ user_obj.first_name }} {{ user_obj.last_name }}</p>
                     </div>
                     <div>
                         <p class="text-sm text-gray-500 mb-1">Email</p>
-                        <p class="font-medium text-gray-800">{{ user.email|default:"-" }}</p>
+                        <p class="font-medium text-gray-800">{{ user_obj.email|default:"-" }}</p>
                     </div>
                     <div>
                         <p class="text-sm text-gray-500 mb-1">Role</p>
-                        <p class="font-medium text-gray-800">{{ user.userdetails.role|default:"Employee" }}</p>
+                        <p class="font-medium text-gray-800">{{ user_obj.groups.first.name|default:"Employee" }}</p>
                     </div>
                     <div>
                         <p class="text-sm text-gray-500 mb-1">Status</p>
                         <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium 
-                            {% if user.userdetails.employment_status == 'active' %}bg-green-100 text-green-700
-                            {% elif user.userdetails.employment_status == 'inactive' %}bg-gray-100 text-gray-700
-                            {% elif user.userdetails.employment_status == 'terminated' %}bg-red-100 text-red-700
+                            {% if user_detail.employment_status == 'active' %}bg-green-100 text-green-700
+                            {% elif user_detail.employment_status == 'inactive' %}bg-gray-100 text-gray-700
+                            {% elif user_detail.employment_status == 'terminated' %}bg-red-100 text-red-700
                             {% else %}bg-yellow-100 text-yellow-700{% endif %}">
                             <span class="w-2 h-2 rounded-full mr-2 
-                                {% if user.userdetails.employment_status == 'active' %}bg-green-500
-                                {% elif user.userdetails.employment_status == 'inactive' %}bg-gray-500
-                                {% elif user.userdetails.employment_status == 'terminated' %}bg-red-500
+                                {% if user_detail.employment_status == 'active' %}bg-green-500
+                                {% elif user_detail.employment_status == 'inactive' %}bg-gray-500
+                                {% elif user_detail.employment_status == 'terminated' %}bg-red-500
                                 {% else %}bg-yellow-500{% endif %}">
                             </span>
-                            {{ user.userdetails.employment_status|title|default:"Unknown" }}
+                            {{ user_detail.employment_status|title|default:"Unknown" }}
                         </span>
                     </div>
                     <div>
                         <p class="text-sm text-gray-500 mb-1">Account Active</p>
-                        <p class="font-medium text-gray-800">{{ user.is_active|yesno:"Yes,No" }}</p>
+                        <p class="font-medium text-gray-800">{{ user_obj.is_active|yesno:"Yes,No" }}</p>
                     </div>
                 </div>
             </div>
@@ -97,23 +97,23 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <div>
                         <p class="text-sm text-gray-500 mb-1">Work Location</p>
-                        <p class="font-medium text-gray-800">{{ user.userdetails.work_location|default:"-" }}</p>
+                        <p class="font-medium text-gray-800">{{ user_detail.work_location|default:"-" }}</p>
                     </div>
                     <div>
                         <p class="text-sm text-gray-500 mb-1">Hire Date</p>
-                        <p class="font-medium text-gray-800">{{ user.userdetails.hire_date|default:"-" }}</p>
+                        <p class="font-medium text-gray-800">{{ user_detail.hire_date|default:"-" }}</p>
                     </div>
                     <div>
                         <p class="text-sm text-gray-500 mb-1">Start Date</p>
-                        <p class="font-medium text-gray-800">{{ user.userdetails.start_date|default:"-" }}</p>
+                        <p class="font-medium text-gray-800">{{ user_detail.start_date|default:"-" }}</p>
                     </div>
                     <div>
                         <p class="text-sm text-gray-500 mb-1">Employment Duration</p>
-                        <p class="font-medium text-gray-800">{{ user.userdetails.employment_duration|default:"-" }}</p>
+                        <p class="font-medium text-gray-800">{{ user_detail.employment_duration|default:"-" }}</p>
                     </div>
                     <div class="col-span-full">
                         <p class="text-sm text-gray-500 mb-1">Job Description</p>
-                        <p class="font-medium text-gray-800">{{ user.userdetails.job_description|default:"-" }}</p>
+                        <p class="font-medium text-gray-800">{{ user_detail.job_description|default:"-" }}</p>
                     </div>
                 </div>
             </div>
@@ -124,23 +124,23 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <div>
                         <p class="text-sm text-gray-500 mb-1">Gender</p>
-                        <p class="font-medium text-gray-800">{{ user.userdetails.gender|default:"-" }}</p>
+                        <p class="font-medium text-gray-800">{{ user_detail.gender|default:"-" }}</p>
                     </div>
                     <div>
                         <p class="text-sm text-gray-500 mb-1">Date of Birth</p>
-                        <p class="font-medium text-gray-800">{{ user.userdetails.date_of_birth|default:"-" }}</p>
+                        <p class="font-medium text-gray-800">{{ user_detail.dob|default:"-" }}</p>
                     </div>
                     <div>
                         <p class="text-sm text-gray-500 mb-1">Blood Group</p>
-                        <p class="font-medium text-gray-800">{{ user.userdetails.blood_group|default:"Unknown" }}</p>
+                        <p class="font-medium text-gray-800">{{ user_detail.blood_group|default:"Unknown" }}</p>
                     </div>
                     <div>
                         <p class="text-sm text-gray-500 mb-1">Contact Number</p>
-                        <p class="font-medium text-gray-800">{{ user.userdetails.contact_number|default:"-" }}</p>
+                        <p class="font-medium text-gray-800">{{ user_detail.contact_number_primary|default:"-" }}</p>
                     </div>
                     <div>
                         <p class="text-sm text-gray-500 mb-1">Personal Email</p>
-                        <p class="font-medium text-gray-800">{{ user.userdetails.personal_email|default:"-" }}</p>
+                        <p class="font-medium text-gray-800">{{ user_detail.personal_email|default:"-" }}</p>
                     </div>
                 </div>
             </div>
@@ -158,10 +158,18 @@
                         <table class="min-w-full">
                             <thead>
                                 <tr>
-                                    <th class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">Date</th>
-                                    <th class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">Action</th>
-                                    <th class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">By</th>
-                                    <th class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">Details</th>
+                                    <th
+                                        class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">
+                                        Date</th>
+                                    <th
+                                        class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">
+                                        Action</th>
+                                    <th
+                                        class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">
+                                        By</th>
+                                    <th
+                                        class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">
+                                        Details</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -176,7 +184,8 @@
                                     {% endfor %}
                                 {% else %}
                                     <tr>
-                                        <td colspan="4" class="py-4 text-sm text-gray-500 text-center">No activity logs found</td>
+                                    <td colspan="4" class="py-4 text-sm text-gray-500 text-center">No activity logs
+                                        found</td>
                                     </tr>
                                 {% endif %}
                             </tbody>
@@ -195,10 +204,18 @@
                         <table class="min-w-full">
                             <thead>
                                 <tr>
-                                    <th class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">Login Time</th>
-                                    <th class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">Logout Time</th>
-                                    <th class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">Location</th>
-                                    <th class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">Duration</th>
+                                    <th
+                                        class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">
+                                        Login Time</th>
+                                    <th
+                                        class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">
+                                        Logout Time</th>
+                                    <th
+                                        class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">
+                                        Location</th>
+                                    <th
+                                        class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">
+                                        Duration</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -213,7 +230,8 @@
                                     {% endfor %}
                                 {% else %}
                                     <tr>
-                                        <td colspan="4" class="py-4 text-sm text-gray-500 text-center">No login sessions found</td>
+                                    <td colspan="4" class="py-4 text-sm text-gray-500 text-center">No login sessions
+                                        found</td>
                                     </tr>
                                 {% endif %}
                             </tbody>
@@ -230,27 +248,167 @@
             <h2 class="text-xl font-semibold text-white">Edit User Details</h2>
         </div>
         <div class="p-6">
-            <form action="" method="post">
+            <form action="{% url 'aps_hr:hr_user_detail' user_obj.id %}" method="post">
                 {% csrf_token %}
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <!-- Basic Info -->
+                <h3 class="text-lg font-medium text-gray-900 mb-3">Basic Information</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                     <div>
                         <label for="first_name" class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
-                        <input type="text" id="first_name" name="first_name" value="{{ user.first_name }}" 
+                        <input type="text" id="first_name" name="first_name" value="{{ user_obj.first_name }}"
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
                     </div>
                     <div>
                         <label for="last_name" class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
-                        <input type="text" id="last_name" name="last_name" value="{{ user.last_name }}" 
+                        <input type="text" id="last_name" name="last_name" value="{{ user_obj.last_name }}"
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
                     </div>
                     <div>
                         <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                        <input type="email" id="email" name="email" value="{{ user.email }}" 
+                        <input type="email" id="email" name="email" value="{{ user_obj.email }}"
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
                     </div>
                 </div>
+
+                <!-- Employment Information -->
+                <h3 class="text-lg font-medium text-gray-900 mb-3">Employment Information</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                    <div>
+                        <label for="work_location" class="block text-sm font-medium text-gray-700 mb-1">Work
+                            Location</label>
+                        <input type="text" id="work_location" name="work_location"
+                            value="{{ user_detail.work_location }}"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="hire_date" class="block text-sm font-medium text-gray-700 mb-1">Hire Date</label>
+                        <input type="date" id="hire_date" name="hire_date"
+                            value="{{ user_detail.hire_date|date:'Y-m-d' }}"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="start_date" class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                        <input type="date" id="start_date" name="start_date"
+                            value="{{ user_detail.start_date|date:'Y-m-d' }}"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="job_description" class="block text-sm font-medium text-gray-700 mb-1">Job
+                            Description</label>
+                        <textarea id="job_description" name="job_description" rows="3"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">{{ user_detail.job_description }}</textarea>
+                    </div>
+                    <div>
+                        <label for="employment_status" class="block text-sm font-medium text-gray-700 mb-1">Employment
+                            Status</label>
+                        <select id="employment_status" name="employment_status"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Select Status</option>
+                            {% for status_id, status_name in employment_status_choices %}
+                            <option value="{{ status_id }}" {% if status_id == user_detail.employment_status %}selected{% endif %}>{{ status_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Personal Details -->
+                <h3 class="text-lg font-medium text-gray-900 mb-3">Personal Details</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                    <div>
+                        <label for="gender" class="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                        <select id="gender" name="gender"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Select Gender</option>
+                            {% for gender_id, gender_name in gender_choices %}
+                            <option value="{{ gender_id }}" {% if gender_id == user_detail.gender %}selected{% endif %}>{{ gender_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="dob" class="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+                        <input type="date" id="dob" name="dob" value="{{ user_detail.dob|date:'Y-m-d' }}"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="blood_group" class="block text-sm font-medium text-gray-700 mb-1">Blood
+                            Group</label>
+                        <select id="blood_group" name="blood_group"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Select Blood Group</option>
+                            {% for bg_id, bg_name in blood_group_choices %}
+                            <option value="{{ bg_id }}" {% if bg_id == user_detail.blood_group %}selected{% endif %}>
+                                {{ bg_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="country_code" class="block text-sm font-medium text-gray-700 mb-1">Country
+                            Code</label>
+                        <input type="text" id="country_code" name="country_code"
+                            value="{{ user_detail.country_code }}" placeholder="+91"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="contact_number_primary" class="block text-sm font-medium text-gray-700 mb-1">Contact
+                            Number</label>
+                        <input type="text" id="contact_number_primary" name="contact_number_primary"
+                            value="{{ user_detail.contact_number_primary }}"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="personal_email" class="block text-sm font-medium text-gray-700 mb-1">Personal
+                            Email</label>
+                        <input type="email" id="personal_email" name="personal_email"
+                            value="{{ user_detail.personal_email }}"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="panno" class="block text-sm font-medium text-gray-700 mb-1">PAN Number</label>
+                        <input type="text" id="panno" name="panno" value="{{ user_detail.panno }}"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="aadharno" class="block text-sm font-medium text-gray-700 mb-1">Aadhar Number</label>
+                        <input type="text" id="aadharno" name="aadharno" value="{{ user_detail.aadharno }}"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                </div>
+
+                <!-- Emergency Contact -->
+                <h3 class="text-lg font-medium text-gray-900 mb-3">Emergency Contact</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                    <div>
+                        <label for="emergency_contact_name" class="block text-sm font-medium text-gray-700 mb-1">Contact
+                            Name</label>
+                        <input type="text" id="emergency_contact_name" name="emergency_contact_name"
+                            value="{{ user_detail.emergency_contact_name }}"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="emergency_country_code" class="block text-sm font-medium text-gray-700 mb-1">Country
+                            Code</label>
+                        <input type="text" id="emergency_country_code" name="emergency_country_code"
+                            value="{{ user_detail.emergency_country_code }}" placeholder="+91"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="emergency_contact_primary"
+                            class="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
+                        <input type="text" id="emergency_contact_primary" name="emergency_contact_primary"
+                            value="{{ user_detail.emergency_contact_primary }}"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div class="md:col-span-3">
+                        <label for="emergency_contact_address"
+                            class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                        <textarea id="emergency_contact_address" name="emergency_contact_address" rows="3"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">{{ user_detail.emergency_contact_address }}</textarea>
+                    </div>
+                </div>
+
                 <div class="flex justify-end">
-                    <button type="submit" class="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm">
+                    <button type="submit"
+                        class="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm">
                         Save Changes
                     </button>
                 </div>
@@ -261,43 +419,40 @@
 
 <!-- Modals -->
 <!-- Change Status Modal -->
-<div class="modal" id="changeStatusModal" tabindex="-1" role="dialog" aria-labelledby="changeStatusModalLabel" aria-hidden="true">
+<div class="modal fade" id="changeStatusModal" tabindex="-1" role="dialog" aria-labelledby="changeStatusModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content rounded-lg shadow-lg">
             <div class="modal-header bg-gradient-to-r from-blue-500 to-indigo-600 text-white">
                 <h5 class="modal-title" id="changeStatusModalLabel">Change Employment Status</h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close" onclick="$('#changeStatusModal').modal('hide')">
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body p-4">
-                <form action="{% url 'aps_hr:change_user_status' user.id %}" method="post">
+                <form action="{% url 'aps_hr:change_user_status' user_obj.id %}" method="post">
                     {% csrf_token %}
                     <div class="mb-4">
                         <label for="current_status" class="block text-sm font-medium text-gray-700 mb-1">Current Status</label>
-                        <input type="text" id="current_status" value="{{ user.userdetails.employment_status|title|default:'Unknown' }}" 
+                        <input type="text" id="current_status" value="{{ user_detail.employment_status|title|default:'None' }}" 
                             class="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg" readonly>
                     </div>
                     <div class="mb-4">
-                        <label for="new_status" class="block text-sm font-medium text-gray-700 mb-1">New Status</label>
-                        <select id="new_status" name="new_status" required
+                        <label for="status" class="block text-sm font-medium text-gray-700 mb-1">New Status</label>
+                        <select id="status" name="status" required
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
                             <option value="" selected disabled>Select Status</option>
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
-                            <option value="terminated">Terminated</option>
-                            <option value="resigned">Resigned</option>
-                            <option value="suspended">Suspended</option>
-                            <option value="absconding">Absconding</option>
+                            {% for status_id, status_name in employment_status_choices %}
+                                <option value="{{ status_id }}">{{ status_name }}</option>
+                            {% endfor %}
                         </select>
                     </div>
                     <div class="mb-4">
-                        <label for="status_reason" class="block text-sm font-medium text-gray-700 mb-1">Reason for Change</label>
-                        <textarea id="status_reason" name="status_reason" rows="3" required
+                        <label for="reason" class="block text-sm font-medium text-gray-700 mb-1">Reason for Change</label>
+                        <textarea id="reason" name="reason" rows="3" required
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"></textarea>
                     </div>
                     <div class="flex justify-end space-x-3">
-                        <button type="button" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50" onclick="$('#changeStatusModal').modal('hide')">
+                        <button type="button" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50" data-dismiss="modal">
                             Cancel
                         </button>
                         <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
@@ -311,48 +466,42 @@
 </div>
 
 <!-- Change Role Modal -->
-<div class="modal" id="changeRoleModal" tabindex="-1" role="dialog" aria-labelledby="changeRoleModalLabel" aria-hidden="true">
+<div class="modal fade" id="changeRoleModal" tabindex="-1" role="dialog" aria-labelledby="changeRoleModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content rounded-lg shadow-lg">
             <div class="modal-header bg-gradient-to-r from-blue-500 to-indigo-600 text-white">
                 <h5 class="modal-title" id="changeRoleModalLabel">Change User Role</h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close" onclick="$('#changeRoleModal').modal('hide')">
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body p-4">
-                <form action="{% url 'aps_hr:change_user_role' user.id %}" method="post">
+                <form action="{% url 'aps_hr:change_user_role' user_obj.id %}" method="post">
                     {% csrf_token %}
                     <div class="mb-4">
                         <label for="current_role" class="block text-sm font-medium text-gray-700 mb-1">Current Role</label>
-                        <input type="text" id="current_role" value="{{ user.userdetails.role|default:'Employee' }}" 
+                        {% with current_group=user_obj.groups.first %}
+                        <input type="text" id="current_role" value="{{ current_group.name|default:'None' }}" 
                             class="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg" readonly>
+                        {% endwith %}
                     </div>
                     <div class="mb-4">
-                        <label for="new_role" class="block text-sm font-medium text-gray-700 mb-1">New Role</label>
-                        <select id="new_role" name="new_role" required
+                        <label for="group" class="block text-sm font-medium text-gray-700 mb-1">New Role</label>
+                        <select id="group" name="group" required
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
                             <option value="" selected disabled>Select Role</option>
-                            <option value="Admin">Admin</option>
-                            <option value="Backoffice">Backoffice</option>
-                            <option value="Client">Client</option>
-                            <option value="Employee">Employee</option>
-                            <option value="Finance">Finance</option>
-                            <option value="HR">HR</option>
-                            <option value="Management">Management</option>
-                            <option value="Manager">Manager</option>
+                            {% for group in groups %}
+                                <option value="{{ group.id }}">{{ group.name }}</option>
+                            {% endfor %}
                         </select>
                     </div>
                     <div class="mb-4">
-                        <label for="role_reason" class="block text-sm font-medium text-gray-700 mb-1">Reason for Change</label>
-                        <textarea id="role_reason" name="role_reason" rows="3" required
+                        <label for="reason" class="block text-sm font-medium text-gray-700 mb-1">Reason for Change</label>
+                        <textarea id="reason" name="reason" rows="3" required
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"></textarea>
                     </div>
-                    <div class="text-sm text-gray-500 mb-4">
-                        <p>Changing a user's role will affect their permissions and access levels in the system.</p>
-                    </div>
                     <div class="flex justify-end space-x-3">
-                        <button type="button" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50" onclick="$('#changeRoleModal').modal('hide')">
+                        <button type="button" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50" data-dismiss="modal">
                             Cancel
                         </button>
                         <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
@@ -366,20 +515,20 @@
 </div>
 
 <!-- Reset Password Modal -->
-<div class="modal" id="resetPasswordModal" tabindex="-1" role="dialog" aria-labelledby="resetPasswordModalLabel" aria-hidden="true">
+<div class="modal fade" id="resetPasswordModal" tabindex="-1" role="dialog" aria-labelledby="resetPasswordModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content rounded-lg shadow-lg">
             <div class="modal-header bg-gradient-to-r from-blue-500 to-indigo-600 text-white">
                 <h5 class="modal-title" id="resetPasswordModalLabel">Reset User Password</h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close" onclick="$('#resetPasswordModal').modal('hide')">
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body p-4">
-                <form action="{% url 'aps_hr:reset_user_password' user.id %}" method="post" id="resetPasswordForm">
+                <form action="{% url 'aps_hr:reset_user_password' user_obj.id %}" method="post" id="resetPasswordForm">
                     {% csrf_token %}
                     <div class="mb-4 text-center">
-                        <p class="text-gray-700">You are about to reset the password for: <strong>{{ user.userdetails.employee_id }}</strong></p>
+                        <p class="text-gray-700">You are about to reset the password for: <strong>{{ user_obj.username }}</strong></p>
                     </div>
                     <div class="mb-4">
                         <label for="new_password" class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
@@ -397,7 +546,7 @@
                         <p>The user will receive an email with their new password.</p>
                     </div>
                     <div class="flex justify-end space-x-3">
-                        <button type="button" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50" onclick="$('#resetPasswordModal').modal('hide')">
+                        <button type="button" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50" data-dismiss="modal">
                             Cancel
                         </button>
                         <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
@@ -412,11 +561,20 @@
 
 <script>
 $(document).ready(function() {
-    // Initialize modals
-    $('.modal').modal({
-        show: false,
-        backdrop: 'static',
-        keyboard: false
+    // Ensure modals are hidden on page load
+    $('.modal').modal('hide');
+    
+    // Setup button handlers
+    $('#changeStatusBtn').click(function() {
+        $('#changeStatusModal').modal('show');
+    });
+    
+    $('#changeRoleBtn').click(function() {
+        $('#changeRoleModal').modal('show');
+    });
+    
+    $('#resetPasswordBtn').click(function() {
+        $('#resetPasswordModal').modal('show');
     });
     
     // Password validation
@@ -425,6 +583,7 @@ $(document).ready(function() {
     const mismatchMessage = document.getElementById('password-mismatch');
     const resetForm = document.getElementById('resetPasswordForm');
     
+    if (resetForm) {
     resetForm.addEventListener('submit', function(e) {
         if (newPassword.value !== confirmPassword.value) {
             e.preventDefault();
@@ -433,7 +592,9 @@ $(document).ready(function() {
             mismatchMessage.style.display = 'none';
         }
     });
+    }
     
+    if (confirmPassword) {
     confirmPassword.addEventListener('input', function() {
         if (newPassword.value !== confirmPassword.value) {
             mismatchMessage.style.display = 'block';
@@ -441,6 +602,7 @@ $(document).ready(function() {
             mismatchMessage.style.display = 'none';
         }
     });
+    }
 });
 </script>
 {% endblock %}

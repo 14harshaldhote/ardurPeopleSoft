@@ -1253,8 +1253,14 @@ def hr_user_detail(request, user_id):
     import re
     from datetime import date, datetime
     
+    # Log the requested user_id to help diagnose issues
+    logger.info(f"Accessing user detail for user_id: {user_id}")
+    
     user = get_object_or_404(User, id=user_id)
     user_detail, created = UserDetails.objects.get_or_create(user=user)
+    
+    # Log the retrieved user information
+    logger.info(f"Retrieved user: {user.username} ({user.first_name} {user.last_name}), user_id: {user.id}")
     
     # Get user action logs
     action_logs = UserActionLog.objects.filter(user=user).order_by('-timestamp')[:10]
@@ -1546,16 +1552,20 @@ def add_user(request):
                     details=f"User created with ID: {employee_id}, role: {group.name}"
                 )
                 
-                # Send welcome email
+                # Send welcome email with better exception handling
                 try:
                     send_welcome_email(user, password)
                     messages.success(request, f"Welcome email sent to {email} with login credentials.")
+                except ConnectionRefusedError:
+                    logger.error("Email server connection refused. Check email server settings.", exc_info=True)
+                    messages.warning(request, f"User created successfully, but welcome email could not be sent due to email server connection issues.")
                 except Exception as e:
                     logger.error(f"Error sending welcome email: {str(e)}", exc_info=True)
-                    messages.warning(request, f"User created but email failed to send: {str(e)}")
+                    messages.warning(request, f"User created successfully, but welcome email could not be sent: {str(e)}")
                 
                 messages.success(request, f"User {employee_id} ({first_name} {last_name}) created successfully.")
-                return redirect('hr_user_detail', user_id=user.id)
+                # Fix the URL name to include the namespace
+                return redirect('aps_hr:hr_user_detail', user_id=user.id)
                 
         except ValueError as e:
             messages.error(request, str(e))

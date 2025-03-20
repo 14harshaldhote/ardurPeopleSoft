@@ -1,311 +1,300 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="min-h-screen py-8">
-    <div class="container mx-auto px-4 max-w-7xl">
-        <!-- Animated Header -->
-        <div class="text-center mb-8 transform transition-all duration-500 hover:scale-105">
-            <h1 class="text-4xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-black">
-                HR Command Center
-            </h1>
-            <p class="mt-3 text-gray-600">Your centralized hub for employee management</p>
+<div class="min-h-screen bg-gray-50">
+    <!-- Header Section -->
+    <div class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-8 px-4 shadow-md">
+        <div class="container mx-auto max-w-7xl">
+            <h1 class="text-3xl md:text-4xl font-bold text-center">HR Command Center</h1>
+            <p class="text-center text-blue-100 mt-2">Your centralized hub for employee management</p>
         </div>
+    </div>
 
-        <!-- Quick Action Buttons -->
-        <div class="flex flex-wrap justify-center gap-4 mb-10">
-            <a href="{% url 'aps_hr:add_user' %}"
-                class="flex items-center px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transform transition-all duration-200 hover:scale-105 shadow-md">
-                <i class="fas fa-user-plus mr-2"></i>
-                Add User
-            </a>
-            <a href="{% url 'aps_hr:bulk_add_users' %}"
-                class="flex items-center px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transform transition-all duration-200 hover:scale-105 shadow-md">
-                <i class="fas fa-users mr-2"></i>
-                Bulk Add Users
-            </a>
-            <a href="{% url 'aps_hr:user_reports' %}"
-                class="flex items-center px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transform transition-all duration-200 hover:scale-105 shadow-md">
-                <i class="fas fa-chart-bar mr-2"></i>
-                View Reports
-            </a>
-            <a href="{% url 'aps_hr:user_action_logs' %}"
-                class="flex items-center px-6 py-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transform transition-all duration-200 hover:scale-105 shadow-md">
-                <i class="fas fa-history mr-2"></i>
-                Action Logs
-            </a>
-            <a href="{% url 'aps_hr:session_logs' %}"
-                class="flex items-center px-6 py-3 bg-teal-600 text-white rounded-xl hover:bg-teal-700 transform transition-all duration-200 hover:scale-105 shadow-md">
-                <i class="fas fa-sign-in-alt mr-2"></i>
-                Session Logs
-            </a>
-        </div>
-
-        <!-- Modern Search Bar -->
-        <div class="max-w-3xl mx-auto mb-10">
-            <div class="bg-white rounded-2xl shadow-lg p-2">
-                <form method="GET" action="{% url 'aps_hr:hr_dashboard' %}" class="space-y-4">
-                    <div class="flex flex-col md:flex-row gap-3">
-                        <!-- Search Input -->
-                        <div class="flex-grow relative">
-                            <input type="text" id="search" name="search" placeholder="Search employees..."
-                                value="{{ search_query }}"
-                                class="w-full pl-12 pr-4 py-4 rounded-xl bg-gray-50 border-none focus:ring-2 focus:ring-blue-400">
-                            <i
-                                class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                        </div>
-
-                        <!-- Smart Filters -->
-                        <div class="flex gap-2">
-                            <select id="status" name="status"
-                                class="px-4 py-3 rounded-xl bg-gray-50 border-none focus:ring-2 focus:ring-blue-400">
-                                <option value="">Status</option>
-                                {% for status in employment_status_choices %}
-                                <option value="{{ status.0 }}" {% if status.0 == status_filter %}selected{% endif %}> {{
-                                    status.1 }}
-                                </option>
-                                {% endfor %}
-                            </select>
-
-                            <select id="work_location" name="work_location"
-                                class="px-4 py-3 rounded-xl bg-gray-50 border-none focus:ring-2 focus:ring-blue-400">
-                                <option value="">📍 Location</option>
-                                {% for location in work_locations %}
-                                <option value="{{ location }}" {% if location == work_location_filter %}selected{%endif%}>
-                                    {{ location }}
-                                </option>
-                                {% endfor %}
-                            </select>
-
-                            <select id="role" name="role"
-                                class="px-4 py-3 rounded-xl bg-gray-50 border-none focus:ring-2 focus:ring-blue-400">
-                                <option value="">Role</option>
-                                {% for role_item in roles %}
-                                <option value="{{ role_item.name }}" {% if role_item.name == role_filter %}selected{%endif%}>
-                                    {{ role_item.name }}
-                                </option>
-                                {% endfor %}
-                            </select>
-
-                            <button type="submit"
-                                class="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transform transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                                <i class="fas fa-bolt"></i>
-                            </button>
-                        </div>
-                    </div>
-                </form>
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 max-w-7xl -mt-6">
+        <!-- Quick Action Cards -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Quick Actions</h2>
+            <div class="flex flex-wrap gap-3">
+                <a href="{% url 'aps_hr:add_user' %}" class="btn-action bg-blue-600 hover:bg-blue-700">
+                    <i class="fas fa-user-plus mr-2"></i> Add User
+                </a>
+                <a href="{% url 'aps_hr:bulk_add_users' %}" class="btn-action bg-indigo-600 hover:bg-indigo-700">
+                    <i class="fas fa-users mr-2"></i> Bulk Add Users
+                </a>
+                <a href="{% url 'aps_hr:user_reports' %}" class="btn-action bg-green-600 hover:bg-green-700">
+                    <i class="fas fa-chart-bar mr-2"></i> View Reports
+                </a>
+                <a href="{% url 'aps_hr:user_action_logs' %}" class="btn-action bg-purple-600 hover:bg-purple-700">
+                    <i class="fas fa-history mr-2"></i> Action Logs
+                </a>
+                <a href="{% url 'aps_hr:session_logs' %}" class="btn-action bg-teal-600 hover:bg-teal-700">
+                    <i class="fas fa-sign-in-alt mr-2"></i> Session Logs
+                </a>
             </div>
         </div>
 
-        <!-- Dashboard Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
-            <!-- Stats Overview -->
-            <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="bg-white rounded-xl p-6 shadow-lg transform transition-all duration-300 hover:scale-105">
-                    <div class="flex items-center justify-between">
-                        <h3 class="text-lg font-semibold text-gray-700">Total Users</h3>
-                        <div class="p-2 bg-blue-100 rounded-full">
-                            <i class="fas fa-users text-blue-600"></i>
-                        </div>
+        <!-- Stats Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-xl p-6 shadow-md border-l-4 border-blue-500">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-gray-700">Total Users</h3>
+                    <div class="p-2 bg-blue-100 rounded-full">
+                        <i class="fas fa-users text-blue-600"></i>
                     </div>
-                    <p class="text-3xl font-bold text-blue-600 mt-2">{{ total_users }}</p>
-                    <div class="mt-2 text-sm text-gray-500">All registered employees</div>
                 </div>
-                <div class="bg-white rounded-xl p-6 shadow-lg transform transition-all duration-300 hover:scale-105">
-                    <div class="flex items-center justify-between">
-                        <h3 class="text-lg font-semibold text-gray-700">Active Users</h3>
-                        <div class="p-2 bg-green-100 rounded-full">
-                            <i class="fas fa-user-check text-green-600"></i>
-                        </div>
-                    </div>
-                    <p class="text-3xl font-bold text-green-600 mt-2">{{ active_users }}</p>
-                    <div class="mt-2 text-sm text-gray-500">Currently active employees</div>
-                </div>
-                <div class="bg-white rounded-xl p-6 shadow-lg transform transition-all duration-300 hover:scale-105">
-                    <div class="flex items-center justify-between">
-                        <h3 class="text-lg font-semibold text-gray-700">Inactive Users</h3>
-                        <div class="p-2 bg-red-100 rounded-full">
-                            <i class="fas fa-user-times text-red-600"></i>
-                        </div>
-                    </div>
-                    <p class="text-3xl font-bold text-red-600 mt-2">{{ inactive_users }}</p>
-                    <div class="mt-2 text-sm text-gray-500">Inactive or terminated</div>
-                </div>
+                <p class="text-3xl font-bold text-blue-600 mt-2">{{ total_users }}</p>
+                <div class="mt-2 text-sm text-gray-500">All registered employees</div>
             </div>
+            <div class="bg-white rounded-xl p-6 shadow-md border-l-4 border-green-500">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-gray-700">Active Users</h3>
+                    <div class="p-2 bg-green-100 rounded-full">
+                        <i class="fas fa-user-check text-green-600"></i>
+                    </div>
+                </div>
+                <p class="text-3xl font-bold text-green-600 mt-2">{{ active_users }}</p>
+                <div class="mt-2 text-sm text-gray-500">Currently active employees</div>
+            </div>
+            <div class="bg-white rounded-xl p-6 shadow-md border-l-4 border-red-500">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-gray-700">Inactive Users</h3>
+                    <div class="p-2 bg-red-100 rounded-full">
+                        <i class="fas fa-user-times text-red-600"></i>
+                    </div>
+                </div>
+                <p class="text-3xl font-bold text-red-600 mt-2">{{ inactive_users }}</p>
+                <div class="mt-2 text-sm text-gray-500">Inactive or terminated</div>
+            </div>
+        </div>
 
-            <!-- Status Distribution -->
-            <div class="bg-white rounded-xl p-6 shadow-lg">
-                <h3 class="text-lg font-semibold text-gray-700 mb-4">Employment Status</h3>
-                <div class="space-y-4">
-                    {% for status in status_counts %}
-                    <div>
-                        <div class="flex justify-between mb-1">
-                            <span class="text-sm font-medium text-gray-700">{{ status.employment_status|title }}</span>
-                            <span class="text-sm font-medium text-gray-700">{{ status.count }}</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2.5">
-                            <div class="h-2.5 rounded-full 
-                                {% if status.employment_status == 'active' %}bg-green-600
-                                {% elif status.employment_status == 'inactive' %}bg-gray-500
-                                {% elif status.employment_status == 'terminated' %}bg-red-600
-                                {% elif status.employment_status == 'on_leave' %}bg-yellow-500
-                                {% else %}bg-blue-600{% endif %}"
-                                style="width: {% widthratio status.count total_users 100 %}%" </div>
-                            </div>
+        <!-- Search and Filters -->
+        <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Find Employees</h2>
+            <form method="GET" action="{% url 'aps_hr:hr_dashboard' %}">
+                <div class="flex flex-col md:flex-row gap-3">
+                    <div class="flex-grow relative">
+                        <input type="text" id="search" name="search" placeholder="Search by name, username, or email..." 
+                            value="{{ search_query }}" 
+                            class="w-full pl-10 pr-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-400 focus:border-blue-400">
+                        <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <select id="status" name="status" 
+                            class="px-3 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-400">
+                            <option value="">Status</option>
+                            {% for status in employment_status_choices %}
+                            <option value="{{ status.0 }}" {% if status.0 == status_filter %}selected{% endif %}>{{ status.1 }}</option>
                             {% endfor %}
+                        </select>
+                        <select id="work_location" name="work_location" 
+                            class="px-3 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-400">
+                            <option value="">📍 Location</option>
+                            {% for location in work_locations %}
+                            <option value="{{ location }}" {% if location == work_location_filter %}selected{% endif %}>{{ location }}</option>
+                            {% endfor %}
+                        </select>
+                        <select id="role" name="role" 
+                            class="px-3 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-400">
+                            <option value="">Role</option>
+                            {% for role_item in roles %}
+                            <option value="{{ role_item.name }}" {% if role_item.name == role_filter %}selected{% endif %}>{{ role_item.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" 
+                            class="px-5 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            <i class="fas fa-filter mr-2"></i>Apply Filters
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Status Distribution -->
+        <!-- <div class="bg-white rounded-xl p-6 shadow-md mb-8">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Employment Status Distribution</h3>
+            <div class="space-y-4">
+                {% for status in status_counts %}
+                <div>
+                    <div class="flex justify-between mb-1">
+                        <span class="text-sm font-medium text-gray-700">{{ status.employment_status|title }}</span>
+                        <span class="text-sm font-medium text-gray-700">{{ status.count }}</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div class="h-2.5 rounded-full 
+                            {% if status.employment_status == 'active' %}bg-green-600
+                            {% elif status.employment_status == 'inactive' %}bg-gray-500
+                            {% elif status.employment_status == 'terminated' %}bg-red-600
+                            {% elif status.employment_status == 'on_leave' %}bg-yellow-500
+                            {% else %}bg-blue-600{% endif %}"
+                            style="width: {% widthratio status.count total_users 100 %}%">
                         </div>
                     </div>
                 </div>
-
-                <!-- Location Distribution & Recent Users -->
-
-
-
+                {% endfor %}
             </div>
-            <!-- Employee Grid -->
-           
+        </div> -->
+
+        <!-- Employee Directory -->
+        <div class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Employee Directory</h2>
+            
+            {% if page_obj %}
+            <div class="overflow-hidden rounded-xl shadow-lg border border-gray-200">
+                <!-- Innovative Table with Interactive Features -->
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gradient-to-r from-blue-600 to-indigo-700">
+                            <tr>
+                                <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">
+                                    Employee
+                                </th>
+                                <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">
+                                    Status
+                                </th>
+                                <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">
+                                    Contact
+                                </th>
+                                <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">
+                                    Location
+                                </th>
+                                <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">
+                                    Tenure
+                                </th>
+                                <th scope="col" class="px-6 py-4 text-right text-xs font-medium text-white uppercase tracking-wider">
+                                    Actions
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for user in page_obj %}
+                            <tr class="hover:bg-blue-50 transition-colors duration-150 group cursor-pointer">
+                                <!-- Employee Column -->
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold text-sm shadow-sm">
+                                            {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                                        </div>
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-gray-900">{{ user.first_name }} {{ user.last_name }}</div>
+                                            <div class="text-xs text-gray-500">@{{ user.username }}</div>
+                                            {% if user.userdetails.job_description %}
+                                            <div class="text-xs text-gray-500 max-w-xs truncate hidden group-hover:block mt-1 italic">
+                                                {{ user.userdetails.job_description }}
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                
+                                <!-- Status Column -->
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    {% if user.userdetails.employment_status %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                                        {% if user.userdetails.employment_status == 'active' %}bg-green-100 text-green-800
+                                        {% elif user.userdetails.employment_status == 'inactive' %}bg-gray-100 text-gray-800
+                                        {% elif user.userdetails.employment_status == 'terminated' %}bg-red-100 text-red-800
+                                        {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                        <span class="w-1.5 h-1.5 rounded-full mr-1.5 
+                                            {% if user.userdetails.employment_status == 'active' %}bg-green-500
+                                            {% elif user.userdetails.employment_status == 'inactive' %}bg-gray-500
+                                            {% elif user.userdetails.employment_status == 'terminated' %}bg-red-500
+                                            {% else %}bg-yellow-500{% endif %}">
+                                        </span>
+                                        {{ user.userdetails.employment_status|title }}
+                                    </span>
+                                    {% endif %}
+                                    
+                                    {% if user.last_login_today %}
+                                    <div class="text-xs text-blue-600 mt-1 hidden group-hover:block">
+                                        <i class="fas fa-clock text-blue-500 mr-1"></i>
+                                        Last login: {{ user.last_login_today|time }}
+                                    </div>
+                                    {% endif %}
+                                </td>
+                                
+                                <!-- Contact Column -->
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    {% if user.email %}
+                                    <div class="text-sm text-gray-900 truncate max-w-[200px]">
+                                        <i class="fas fa-envelope text-gray-400 mr-1.5"></i>
+                                        {{ user.email }}
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if user.userdetails.contact_number_primary %}
+                                    <div class="text-xs text-gray-500 mt-1 hidden group-hover:block">
+                                        <i class="fas fa-phone text-gray-400 mr-1.5"></i>
+                                        {{ user.userdetails.contact_number_primary }}
+                                    </div>
+                                    {% endif %}
+                                </td>
+                                
+                                <!-- Location Column -->
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    {% if user.userdetails.work_location %}
+                                    <div class="text-sm text-gray-900">
+                                        <i class="fas fa-map-marker-alt text-gray-400 mr-1.5"></i>
+                                        {{ user.userdetails.work_location }}
+                                    </div>
+                                    {% endif %}
+                                </td>
+                                
+                                <!-- Tenure Column -->
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    {% if user.userdetails.hire_date %}
+                                    <div class="text-sm text-gray-900">
+                                        <i class="fas fa-calendar text-gray-400 mr-1.5"></i>
+                                        {{ user.userdetails.hire_date|date:"M Y" }}
+                                    </div>
+                                    <div class="text-xs text-gray-500 hidden group-hover:block mt-1">
+                                        {% with days=user.userdetails.hire_date|timesince %}
+                                        {{ days }} tenure
+                                        {% endwith %}
+                                    </div>
+                                    {% endif %}
+                                </td>
+                                
+                                <!-- Actions Column -->
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex justify-end space-x-2">
+                                        <a href="{% url 'aps_hr:hr_user_detail' user.id %}" 
+                                            class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 p-2 rounded-full transition-colors">
+                                            <i class="fas fa-user-edit"></i>
+                                        </a>
+                                        <button type="button" 
+                                            class="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 p-2 rounded-full transition-colors">
+                                            <i class="fas fa-envelope"></i>
+                                        </button>
+                                        <button type="button" 
+                                            class="text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100 p-2 rounded-full transition-colors">
+                                            <i class="fas fa-phone"></i>
+                                        </button>
+                                    </div>
+                                    <a href="{% url 'aps_hr:hr_user_detail' user.id %}" 
+                                        class="text-indigo-600 hover:text-indigo-900 group-hover:hidden">
+                                        View <i class="fas fa-chevron-right ml-1 text-xs"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
         </div>
-        <div>
-             <!-- Employee Grid -->
-             {% if page_obj %}
-             <div class="max-w-7xl mx-auto">
-                 <h2 class="text-3xl font-bold text-gray-800 mb-8">Employee Directory</h2>
- 
-                 <!-- Grid Layout -->
-                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 px-4">
-                     {% for user in page_obj %}
-                     <div class="group">
-                         <div
-                             class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg hover:translate-y-[-4px]">
-                             <!-- Card Header - Softer gradient -->
-                             <div class="bg-gradient-to-r from-blue-400 to-indigo-500 p-4">
-                                 <div class="flex items-center space-x-4">
-                                     <div
-                                         class="h-12 w-12 rounded-full bg-white flex items-center justify-center text-lg font-semibold text-indigo-600 shadow-md">
-                                         {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
-                                     </div>
-                                     <div class="text-white">
-                                         <h3 class="text-lg font-semibold">{{ user.first_name }} {{ user.last_name }}
-                                         </h3>
-                                         <p class="text-blue-100">@{{ user.username }}</p>
-                                     </div>
-                                 </div>
-                             </div>
- 
-                             <!-- Card Body - More breathing room -->
-                             <div class="p-6 space-y-5">
-                                 <!-- Status Badge - Enhanced styling -->
-                                 {% if user.userdetails.employment_status %}
-                                 <span class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium 
-                           {% if user.userdetails.employment_status == 'active' %}bg-green-100 text-green-700
-                           {% elif user.userdetails.employment_status == 'inactive' %}bg-gray-100 text-gray-700
-                           {% elif user.userdetails.employment_status == 'terminated' %}bg-red-100 text-red-700
-                           {% else %}bg-yellow-100 text-yellow-700{% endif %}">
-                                     <span class="w-2 h-2 rounded-full mr-2 
-                               {% if user.userdetails.employment_status == 'active' %}bg-green-500
-                               {% elif user.userdetails.employment_status == 'inactive' %}bg-gray-500
-                               {% elif user.userdetails.employment_status == 'terminated' %}bg-red-500
-                               {% else %}bg-yellow-500{% endif %}">
-                                     </span>
-                                     {{ user.userdetails.employment_status|title }}
-                                 </span>
-                                 {% endif %}
- 
-                                 <!-- Last Login - Improved formatting -->
-                                 {% if user.last_login_today %}
-                                 <div class="text-sm text-gray-500 flex items-center">
-                                     <i class="fas fa-clock mr-2 text-indigo-400"></i>
-                                     Last login: {{ user.last_login_today|time }}
-                                 </div>
-                                 {% endif %}
- 
-                                 <!-- Info Grid - Better spacing -->
-                                 <div class="grid grid-cols-1 gap-4 mt-2">
-                                     {% if user.userdetails.work_location %}
-                                     <div class="flex items-center space-x-3">
-                                         <div class="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center">
-                                             <i class="fas fa-map-marker-alt text-blue-500"></i>
-                                         </div>
-                                         <span class="text-gray-700">{{ user.userdetails.work_location }}</span>
-                                     </div>
-                                     {% endif %}
- 
-                                     {% if user.userdetails.hire_date %}
-                                     <div class="flex items-center space-x-3">
-                                         <div class="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center">
-                                             <i class="fas fa-calendar text-blue-500"></i>
-                                         </div>
-                                         <span class="text-gray-700">Since {{ user.userdetails.hire_date|date:"M Y"
-                                             }}</span>
-                                     </div>
-                                     {% endif %}
-                                 </div>
- 
-                                 <!-- Job Description - Better typography -->
-                                 {% if user.userdetails.job_description %}
-                                 <div class="border-t border-gray-100 pt-4 mt-4">
-                                     <h4 class="text-sm font-medium text-gray-500 mb-2">Job Description</h4>
-                                     <p class="text-gray-700 text-sm line-clamp-2">
-                                         {{ user.userdetails.job_description }}
-                                     </p>
-                                 </div>
-                                 {% endif %}
-                             </div>
- 
-                             <!-- Action Footer - Improved button -->
-                             <div class="px-6 pb-6">
-                                 <a href="{% url 'aps_hr:hr_user_detail' user.id %}"
-                                     class="flex items-center justify-center w-full px-6 py-3 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-all duration-200 shadow-sm hover:shadow">
-                                     <i class="fas fa-user-edit mr-2"></i>
-                                     View Profile
-                                 </a>
-                             </div>
-                         </div>
-                     </div>
-                     {% endfor %}
-                 </div>
- 
-                 <!-- Pagination - Enhanced styling -->
-                 {% if page_obj.paginator.num_pages > 1 %}
-                 <div class="flex justify-center mt-12 mb-8">
-                     <nav class="inline-flex rounded-lg shadow-sm">
-                         {% if page_obj.has_previous %}
-                         <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if work_location_filter %}&work_location={{ work_location_filter }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}"
-                             class="px-4 py-2 rounded-l-lg border border-gray-200 bg-white text-sm font-medium text-indigo-600 hover:bg-indigo-50 transition-colors">
-                             <i class="fas fa-chevron-left mr-1"></i> Previous
-                         </a>
-                         {% endif %}
- 
-                         <span class="px-4 py-2 border border-gray-200 bg-gray-50 text-sm font-medium text-gray-700">
-                             Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-                         </span>
- 
-                         {% if page_obj.has_next %}
-                         <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if work_location_filter %}&work_location={{ work_location_filter }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}"
-                             class="px-4 py-2 rounded-r-lg border border-gray-200 bg-white text-sm font-medium text-indigo-600 hover:bg-indigo-50 transition-colors">
-                             Next <i class="fas fa-chevron-right ml-1"></i>
-                         </a>
-                         {% endif %}
-                     </nav>
-                 </div>
-                 {% endif %}
-             </div>
- 
-             {% else %}
-             <!-- Empty State - More engaging design -->
-             <div class="flex flex-col items-center justify-center py-20 px-4">
-                 <div class="w-24 h-24 bg-indigo-100 rounded-full flex items-center justify-center mb-6 animate-pulse">
-                     <i class="fas fa-users text-4xl text-indigo-500"></i>
-                 </div>
-                 <h3 class="text-2xl font-bold text-gray-900 mb-3">No Employees Found</h3>
-                 <p class="text-gray-600 text-center max-w-md mb-8">
-                     We couldn't find any employees matching your criteria. Try adjusting your filters or start fresh.
-                 </p>
-                 <a href="{% url 'aps_hr:hr_dashboard' %}"
-                     class="inline-flex items-center px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all duration-200 shadow-md hover:shadow-lg">
-                     <i class="fas fa-sync-alt mr-2"></i>
-                     View All Employees
-                 </a>
-             </div>
-             {% endif %}
+            
+          
+            
+            
         </div>
-        {% endblock %}
+    </div>
+</div>
+
+<style>
+    .btn-action {
+        @apply flex items-center px-4 py-2 text-white rounded-lg transition-all duration-200 shadow-sm;
+    }
+</style>
+{% endblock %}
