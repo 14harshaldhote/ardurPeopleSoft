@@ -2058,11 +2058,11 @@ def reset_user_password(request, user_id):
         
         if not new_password or len(new_password) < 8:
             messages.error(request, "Password must be at least 8 characters")
-            return redirect('reset_user_password', user_id=user_id)
+            return redirect('aps_hr:hr_user_detail', user_id=user_id)
             
         if new_password != confirm_password:
             messages.error(request, "Passwords do not match")
-            return redirect('reset_user_password', user_id=user_id)
+            return redirect('aps_hr:hr_user_detail', user_id=user_id)
         
         try:
             # Set new password
@@ -2078,32 +2078,37 @@ def reset_user_password(request, user_id):
             )
             
             # Send email notification to user
-            subject = "Your Password Has Been Reset"
-            message = f"""
-            Hello {user.first_name} {user.last_name},
+            try:
+                subject = "Your Password Has Been Reset"
+                message = f"""
+                Hello {user.first_name} {user.last_name},
+                
+                Your password has been reset by HR. Your new password is:
+                
+                {new_password}
+                
+                Please log in at http://yourcompanyportal.com/login/ and change your password immediately.
+                
+                Regards,
+                HR Department
+                """
+                
+                user.email_user(subject, message, fail_silently=True)
+                messages.success(request, f"Password for {user.username} has been reset and email sent to the user.")
+            except Exception as e:
+                logger.error(f"Error sending email: {str(e)}", exc_info=True)
+                messages.warning(request, f"Password for {user.username} has been reset but email could not be sent.")
             
-            Your password has been reset by HR. Your new password is:
-            
-            {new_password}
-            
-            Please log in at http://yourcompanyportal.com/login/ and change your password immediately.
-            
-            Regards,
-            HR Department
-            """
-            
-            user.email_user(subject, message)
-            
-            messages.success(request, f"Password for {user.username} has been reset and emailed to the user.")
             return redirect('aps_hr:hr_user_detail', user_id=user.id)
         
         except Exception as e:
             logger.error(f"Error resetting password: {str(e)}", exc_info=True)
             messages.error(request, f"Error resetting password: {str(e)}")
+            return redirect('aps_hr:hr_user_detail', user_id=user_id)
     
-    return render(request, 'components/hr/reset_password.html', {
-        'user_obj': user
-    })
+    # This fallback should also redirect to the user detail page
+    messages.error(request, "Invalid request")
+    return redirect('aps_hr:hr_user_detail', user_id=user_id)
 
 @login_required
 @user_passes_test(is_hr)
