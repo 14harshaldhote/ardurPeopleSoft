@@ -2109,10 +2109,21 @@ def reset_user_password(request, user_id):
 @user_passes_test(is_hr)
 def change_user_status(request, user_id):
     """Change a user's status (activate/deactivate)"""
+    # Debug information
+    logger.info(f"change_user_status called with user_id={user_id}")
+    logger.info(f"POST data: {request.POST}")
+    
+    # Get the user from the URL parameter
     user = get_object_or_404(User, id=user_id)
     user_detail, created = UserDetails.objects.get_or_create(user=user)
     
     if request.method == 'POST':
+        # Extra safety check - verify the user_id in POST matches the URL
+        form_user_id = request.POST.get('user_id')
+        if form_user_id and int(form_user_id) != int(user_id):
+            messages.error(request, "User ID mismatch detected. Operation aborted for security.")
+            return redirect('aps_hr:hr_user_detail', user_id=user_id)
+            
         new_status = request.POST.get('status')
         reason = request.POST.get('reason', '')
         
@@ -2154,10 +2165,17 @@ def change_user_status(request, user_id):
 @user_passes_test(is_hr)
 def change_user_role(request, user_id):
     """Change a user's role/group"""
+    # Get the user from the URL parameter
     user = get_object_or_404(User, id=user_id)
     user_detail, created = UserDetails.objects.get_or_create(user=user)
     
     if request.method == 'POST':
+        # Extra safety check - verify the user_id in POST matches the URL
+        form_user_id = request.POST.get('user_id')
+        if form_user_id and int(form_user_id) != int(user_id):
+            messages.error(request, "User ID mismatch detected. Operation aborted for security.")
+            return redirect('aps_hr:hr_user_detail', user_id=user_id)
+            
         new_group_id = request.POST.get('group')
         reason = request.POST.get('reason', '')
         
