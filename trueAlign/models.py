@@ -185,7 +185,6 @@ class Leave(models.Model):
         ('Sick Leave', 'Sick Leave'),
         ('Casual Leave', 'Casual Leave'), 
         ('Loss of Pay', 'Loss of Pay'),
-        ('Half Day', 'Half Day'),
         ('Emergency', 'Emergency')
     ]
 
@@ -196,12 +195,6 @@ class Leave(models.Model):
         ('Cancelled', 'Cancelled')
     ]
 
-    PRIORITY_CHOICES = [
-        (1, 'Emergency'),
-        (2, 'Medical'),
-        (3, 'Regular')
-    ]
-
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     leave_type = models.CharField(max_length=50, choices=LEAVE_TYPES)
     start_date = models.DateField()
@@ -209,7 +202,6 @@ class Leave(models.Model):
     half_day = models.BooleanField(default=False)
     leave_days = models.DecimalField(max_digits=4, decimal_places=1, null=True, blank=True)
     reason = models.TextField()
-    priority = models.IntegerField(choices=PRIORITY_CHOICES, default=3)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
     approver = models.ForeignKey(User, related_name='leave_approvals', on_delete=models.SET_NULL, null=True, blank=True)
     rejection_reason = models.TextField(null=True, blank=True)
@@ -239,28 +231,13 @@ class Leave(models.Model):
         if overlapping_leaves.exists():
             raise ValidationError("You already have approved leave during this period")
 
-
-
     def auto_convert_leave_type(self):
-        """Auto convert leave type based on balance and priority"""
+        """Auto convert leave type based on balance"""
         balance = self.get_leave_balance(self.user)
         
         if self.leave_type == 'Sick Leave' and balance['total_leaves'] < self.leave_days:
             self.leave_type = 'Loss of Pay'
 
-    def save(self, *args, **kwargs):
-        if not self.leave_days:
-            self.leave_days = self.calculate_leave_days()
-            
-        if not self.pk:  # New leave request
-            self.auto_convert_leave_type()
-            
-        super().save(*args, **kwargs)
-        
-        if self.status == 'Approved':
-            self.update_attendance()
-
-    
     def calculate_leave_days(self):
         if not (self.start_date and self.end_date):
             return 0
@@ -270,13 +247,20 @@ class Leave(models.Model):
         while current_date <= self.end_date:
             # Skip only Sundays unless emergency leave
             if current_date.weekday() != 6 or self.leave_type == 'Emergency':
-                # Apply half day calculation properly
-                total_days += 0.5 if self.half_day else 1.0
+                # For half day leave requests, count each day as 0.5
+                if self.half_day:
+                    total_days += 0.5
+                else:
+                    total_days += 1.0
             current_date += timedelta(days=1)
             
         return total_days
 
     def save(self, *args, **kwargs):
+        # Convert half_day string to boolean if needed
+        if isinstance(self.half_day, str):
+            self.half_day = self.half_day.lower() == 'true'
+            
         # Recalculate leave days on every save to ensure accuracy
         self.leave_days = self.calculate_leave_days()
             
@@ -296,7 +280,7 @@ class Leave(models.Model):
                 defaults = {
                     'status': 'On Leave',
                     'leave_type': self.leave_type,
-                    'is_half_day': self.half_day  # Correctly set half day status
+                    'is_half_day': self.half_day
                 }
                     
                 Attendance.objects.update_or_create(

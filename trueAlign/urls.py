@@ -65,6 +65,7 @@ hr_patterns = [
     path('sessions/', views.session_logs, name='session_logs'),
     path('sessions/user/<int:user_id>/', views.session_logs, name='user_session_logs'),
     path('reports/', views.user_reports, name='user_reports'),
+    path('leave/', views.leave_view, name='leave_view'),
 ]
 
 # Manager-specific URLs under 'truealign/manager/'

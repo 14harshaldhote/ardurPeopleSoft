@@ -80,6 +80,9 @@ def send_unread_message_notifications(user_id):
         # Log the error but don't fail the task
         print(f"Error sending notification to user {user_id}: {str(e)}")
         return
+    
+
+
 
 # @shared_task
 # def send_unread_message_notifications(user_id):

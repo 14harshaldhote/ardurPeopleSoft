@@ -3289,7 +3289,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from datetime import datetime
 
 @login_required
-@user_passes_test(is_employee)
+@user_passes_test(lambda u: is_employee(u) or is_hr(u))  # Allow both employees and HR
 def leave_view(request):
     """Handle multiple leave functionalities on one page."""
     # Get current year for filtering
@@ -3309,7 +3309,6 @@ def leave_view(request):
         # Set default values if error occurs
         leave_balance = {
             'total_leaves': 0,
-            'accrued_leaves': 0,
             'used_leaves': 0,
             'comp_off': 0,
             'loss_of_pay': 0
@@ -3324,6 +3323,9 @@ def leave_view(request):
             start_date = datetime.strptime(request.POST.get('start_date'), '%Y-%m-%d').date()
             end_date = datetime.strptime(request.POST.get('end_date'), '%Y-%m-%d').date()
 
+            # Get half_day value properly from form
+            half_day = request.POST.get('half_day') == 'true'
+
             # Create new leave request
             leave = Leave(
                 user=request.user,
@@ -3331,12 +3333,12 @@ def leave_view(request):
                 start_date=start_date,
                 end_date=end_date,
                 reason=request.POST.get('reason'),
-                priority=int(request.POST.get('priority', 3)),
-                half_day=request.POST.get('half_day', 'false') == 'true',
-                is_retroactive=request.POST.get('is_retroactive', 'false') == 'true',
-                documentation=request.FILES.get('documentation'),
-                approver=None  # Explicitly set approver to None for new requests
+                half_day=half_day,
+                documentation=request.FILES.get('documentation')
             )
+
+            # Auto convert leave type based on balance
+            leave.auto_convert_leave_type()
 
             # Run validations and save
             leave.full_clean()
@@ -3364,11 +3366,13 @@ def leave_view(request):
             leave.start_date = datetime.strptime(request.POST.get('start_date'), '%Y-%m-%d').date()
             leave.end_date = datetime.strptime(request.POST.get('end_date'), '%Y-%m-%d').date()
             leave.reason = request.POST.get('reason')
-            leave.priority = int(request.POST.get('priority', leave.priority))
-            leave.half_day = request.POST.get('half_day', 'false') == 'true'
+            leave.half_day = request.POST.get('half_day') == 'true'
             
             if 'documentation' in request.FILES:
                 leave.documentation = request.FILES['documentation']
+
+            # Auto convert leave type based on updated dates
+            leave.auto_convert_leave_type()
 
             # Validate and save
             leave.full_clean()
@@ -3405,26 +3409,26 @@ def leave_view(request):
         return redirect('aps_employee:leave_view')
 
     # Constants for display
-    # Constants for display
     TOTAL_ANNUAL_LEAVES = 18.0
     
-    return render(request, 'components/employee/leave.html', {
+    return render(request, 'basic/leave.html', {
         'leave_balance': leave_balance,
         'leave_requests': leave_requests,
         'leave_types': Leave.LEAVE_TYPES,
-        'priority_choices': Leave.PRIORITY_CHOICES,
         'total_annual_leaves': TOTAL_ANNUAL_LEAVES,
         'leaves_taken': leave_balance.get('used_leaves', 0.0),
         'remaining_leaves': leave_balance.get('total_leaves', TOTAL_ANNUAL_LEAVES),
         'loss_of_pay': leave_balance.get('loss_of_pay', 0.0)
     })
 
-
 @login_required
 @user_passes_test(is_hr)
 def view_leave_requests_hr(request):
     """HR views all leave requests."""
-    leave_requests = Leave.objects.all().order_by('-created_at')
+    # Get all leave requests except HR's own requests
+    leave_requests = Leave.objects.exclude(
+        user__groups__name='HR'
+    ).order_by('-created_at')
     
     # Get leave balances for all users
     user_balances = []
@@ -3439,7 +3443,7 @@ def view_leave_requests_hr(request):
         'leave_requests': leave_requests,
         'user_balances': user_balances,
         'leave_types': Leave.LEAVE_TYPES,
-        'priority_choices': Leave.PRIORITY_CHOICES
+        'status_choices': Leave.STATUS_CHOICES
     })
 
 @login_required 
