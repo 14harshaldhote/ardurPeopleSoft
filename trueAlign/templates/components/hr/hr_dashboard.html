@@ -3,7 +3,7 @@
 {% block content %}
 <div class="min-h-screen bg-gray-50">
     <!-- Header Section -->
-    <div class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-8 px-4 shadow-md">
+    <div class="bg-gradient-to-r from-blue-700 to-indigo-400 text-white py-8 px-4 shadow-md">
         <div class="container mx-auto max-w-7xl">
             <h1 class="text-3xl md:text-4xl font-bold text-center">HR Command Center</h1>
             <p class="text-center text-blue-100 mt-2">Your centralized hub for employee management</p>
@@ -13,26 +13,37 @@
     <!-- Main Content -->
     <div class="container mx-auto px-4 max-w-7xl -mt-6">
         <!-- Quick Action Cards -->
-        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
-            <h2 class="text-xl font-semibold text-gray-800 mb-4">Quick Actions</h2>
-            <div class="flex flex-wrap gap-3">
-                <a href="{% url 'aps_hr:add_user' %}" class="btn-action bg-blue-600 hover:bg-blue-700">
-                    <i class="fas fa-user-plus mr-2"></i> Add User
+        <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+            <h2 class="text-2xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4 w-full">
+                <a href="{% url 'aps_hr:add_user' %}" 
+                   class="flex items-center justify-center gap-2 h-10 text-white bg-blue-400 hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium rounded-full text-sm dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                    <i class="fas fa-user-plus"></i>
+                    <span>Add User</span>
                 </a>
-                <a href="{% url 'aps_hr:bulk_add_users' %}" class="btn-action bg-indigo-600 hover:bg-indigo-700">
-                    <i class="fas fa-users mr-2"></i> Bulk Add Users
+                <a href="{% url 'aps_hr:bulk_add_users' %}" 
+                   class="flex items-center justify-center gap-2 h-10 text-white bg-purple-400 hover:bg-purple-800 focus:outline-none focus:ring-4 focus:ring-purple-300 font-medium rounded-full text-sm dark:bg-purple-600 dark:hover:bg-purple-700 dark:focus:ring-purple-900">
+                    <i class="fas fa-users"></i>
+                    <span>Bulk Add</span>
                 </a>
-                <a href="{% url 'aps_hr:user_reports' %}" class="btn-action bg-green-600 hover:bg-green-700">
-                    <i class="fas fa-chart-bar mr-2"></i> View Reports
+                <a href="{% url 'aps_hr:user_reports' %}" 
+                   class="flex items-center justify-center gap-2 h-10 text-white bg-yellow-200 hover:bg-yellow-500 focus:outline-none focus:ring-4 focus:ring-yellow-300 font-medium rounded-full text-sm dark:focus:ring-yellow-900">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Reports</span>
                 </a>
-                <a href="{% url 'aps_hr:user_action_logs' %}" class="btn-action bg-purple-600 hover:bg-purple-700">
-                    <i class="fas fa-history mr-2"></i> Action Logs
+                <a href="{% url 'aps_hr:user_action_logs' %}" 
+                   class="flex items-center justify-center gap-2 h-10 text-white bg-green-400 hover:bg-green-800 focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-full text-sm dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
+                    <i class="fas fa-history"></i>
+                    <span>Logs</span>
                 </a>
-                <a href="{% url 'aps_hr:session_logs' %}" class="btn-action bg-teal-600 hover:bg-teal-700">
-                    <i class="fas fa-sign-in-alt mr-2"></i> Session Logs
+                <a href="{% url 'aps_hr:session_logs' %}" 
+                   class="flex items-center justify-center gap-2 h-10 text-white bg-gray-400 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-full text-sm dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700">
+                    <i class="fas fa-sign-in-alt"></i>
+                    <span>Sessions</span>
                 </a>
             </div>
         </div>
+        
 
         <!-- Stats Overview -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
