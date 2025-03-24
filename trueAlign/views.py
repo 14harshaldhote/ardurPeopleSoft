@@ -1122,6 +1122,7 @@ def send_welcome_email(user, password):
     """Send welcome email with login credentials"""
     subject = "Welcome to Our Company Portal"
     
+    # Plain text email body
     email_body = f"""
     Hello {user.first_name} {user.last_name},
     
@@ -1139,24 +1140,37 @@ def send_welcome_email(user, password):
     HR Department
     """
     
-    # You can also use HTML template
-    html_message = render_to_string('components/hr/emails/welcome_email.html', {
-        'user': user,
-        'password': password,
-        'login_url': 'http://yourcompanyportal.com/login/'
-    })
-    
-    email = EmailMessage(
-        subject=subject,
-        body=email_body,
-        to=[user.email]
-    )
-    
-    if html_message:
-        email.content_subtype = "html"
-        email.body = html_message
+    # Try to render HTML template, fall back to plain text if it fails
+    try:
+        html_message = render_to_string('components/hr/emails/welcome_email.html', {
+            'user': user,
+            'password': password,
+            'login_url': 'http://yourcompanyportal.com/login/'
+        })
         
+        # Send email with both HTML and plain text
+        email = EmailMultiAlternatives(
+            subject=subject,
+            body=email_body,
+            to=[user.email]
+        )
+        email.attach_alternative(html_message, "text/html")
+    except Exception as e:
+        logger.error(f"Error rendering HTML template: {str(e)}")
+        # Fall back to plain text email
+        email = EmailMessage(
+            subject=subject,
+            body=email_body,
+            to=[user.email]
+        )
+    
+    # Add logging before sending
+    logger.info(f"Attempting to send welcome email to {user.email}")
+    
+    # Send the email
     email.send()
+    logger.info(f"Welcome email sent successfully to {user.email}")
+    
     return True
 
 # HR Dashboard with enhanced features
@@ -1170,6 +1184,7 @@ def hr_dashboard(request):
     status_filter = request.GET.get('status', '')
     work_location_filter = request.GET.get('work_location', '')
     role_filter = request.GET.get('role', '')
+    employee_type_filter = request.GET.get('employee_type', '')
     
     # Start with all users and prefetch userdetails to avoid N+1 query problem
     users = User.objects.select_related('userdetails').all()
@@ -1181,7 +1196,8 @@ def hr_dashboard(request):
             Q(last_name__icontains=search_query) |
             Q(username__icontains=search_query) |
             Q(email__icontains=search_query) |
-            Q(userdetails__job_description__icontains=search_query)
+            Q(userdetails__job_description__icontains=search_query) |
+            Q(userdetails__personal_address__icontains=search_query)
         ).distinct()
 
     # Apply employment status filter
@@ -1195,6 +1211,10 @@ def hr_dashboard(request):
     # Apply role/group filter
     if role_filter:
         users = users.filter(groups__name=role_filter)
+
+    # Apply employee type filter
+    if employee_type_filter:
+        users = users.filter(userdetails__employee_type=employee_type_filter)
     
     # Handle case where UserDetails might not exist for some users
     for user in users:
@@ -1237,6 +1257,11 @@ def hr_dashboard(request):
     ).values('work_location').annotate(
         count=Count('id')
     ).order_by('-count')
+
+    # Get users by employee type
+    employee_type_counts = UserDetails.objects.values('employee_type').annotate(
+        count=Count('id')
+    ).order_by('employee_type')
     
     # Recent user additions (last 7 days)
     recent_users = User.objects.filter(
@@ -1260,7 +1285,8 @@ def hr_dashboard(request):
     context = {
         'page_obj': page_obj,
         'role': 'HR',
-  'employment_status_choices': UserDetails._meta.get_field('employment_status').choices,
+        'employment_status_choices': UserDetails._meta.get_field('employment_status').choices,
+        'employee_type_choices': UserDetails._meta.get_field('employee_type').choices,
         'work_locations': work_locations,
         'roles': roles,
         'search_query': search_query,
@@ -1268,11 +1294,13 @@ def hr_dashboard(request):
         'work_location_filter': work_location_filter,
         'role_filter': role_filter,
         'department_filter': department_filter,
+        'employee_type_filter': employee_type_filter,
         'total_users': total_users,
         'active_users': active_users,
         'inactive_users': inactive_users,
         'status_counts': status_counts,
         'location_counts': location_counts,
+        'employee_type_counts': employee_type_counts,
         'recent_users': recent_users,
     }
     
@@ -1371,6 +1399,7 @@ def hr_user_detail(request, user_id):
                 'panno': pan or None,
                 'job_description': data.get('job_description') or None,
                 'employment_status': data.get('employment_status') or None,
+                'employee_type': data.get('employee_type') or None,
                 'emergency_contact_address': data.get('emergency_contact_address') or None,
                 'emergency_contact_primary': emergency_full_contact,
                 'emergency_contact_name': data.get('emergency_contact_name') or None,
@@ -1380,6 +1409,12 @@ def hr_user_detail(request, user_id):
                 'personal_email': email or None,
                 'aadharno': aadhar or None,
                 'country_code': primary_country_code or None,
+                'address_line1': data.get('address_line1') or None,
+                'address_line2': data.get('address_line2') or None,
+                'city': data.get('city') or None,
+                'state': data.get('state') or None,
+                'postal_code': data.get('postal_code') or None,
+                'country': data.get('country') or None
             }
 
             # Check if role/group is being updated
@@ -1456,6 +1491,9 @@ def hr_user_detail(request, user_id):
             if fields_to_update.get('employment_status') and fields_to_update['employment_status'] not in dict(UserDetails._meta.get_field('employment_status').choices):
                 raise ValueError('Invalid employment status')
 
+            if fields_to_update.get('employee_type') and fields_to_update['employee_type'] not in dict(UserDetails._meta.get_field('employee_type').choices):
+                raise ValueError('Invalid employee type')
+
             # Check if basic user details are being updated
             first_name = data.get('first_name')
             last_name = data.get('last_name')
@@ -1506,6 +1544,7 @@ def hr_user_detail(request, user_id):
         'blood_group_choices': UserDetails._meta.get_field('blood_group').choices,
         'gender_choices': UserDetails._meta.get_field('gender').choices,
         'employment_status_choices': UserDetails._meta.get_field('employment_status').choices,
+        'employee_type_choices': UserDetails._meta.get_field('employee_type').choices,
         'groups': Group.objects.all(),
     })
 
@@ -1573,7 +1612,9 @@ def add_user(request):
                     emergency_contact_primary=request.POST.get('emergency_contact_primary') or None,
                     emergency_contact_address=request.POST.get('emergency_contact_address') or None,
                     onboarded_by=request.user,
-                    onboarding_date=timezone.now()
+                    onboarding_date=timezone.now(),
+                    employee_type=request.POST.get('employee_type') or None,
+                    personal_address=request.POST.get('personal_address') or None
                 )
                 
                 # Log user creation
@@ -1611,6 +1652,7 @@ def add_user(request):
         'blood_group_choices': UserDetails._meta.get_field('blood_group').choices,
         'gender_choices': UserDetails._meta.get_field('gender').choices,
         'employment_status_choices': UserDetails._meta.get_field('employment_status').choices,
+        'employee_type_choices': UserDetails._meta.get_field('employee_type').choices,
     })
 
 @login_required
@@ -1705,7 +1747,9 @@ def bulk_add_users(request):
                         'work_location': work_location,
                         'job_description': row.get('job_description') or None,
                         'onboarded_by': request.user,
-                        'onboarding_date': timezone.now()
+                        'onboarding_date': timezone.now(),
+                        'employee_type': row.get('employee_type') or None,
+                        'personal_address': row.get('personal_address') or None
                     }
                     
                     # Optional fields with validation
@@ -2046,6 +2090,7 @@ def export_as_csv(request, report_type, context):
     
     return response
 
+
 @login_required
 @user_passes_test(is_hr)
 def reset_user_password(request, user_id):
@@ -2055,6 +2100,11 @@ def reset_user_password(request, user_id):
     if request.method == 'POST':
         new_password = request.POST.get('new_password')
         confirm_password = request.POST.get('confirm_password')
+        reason = request.POST.get('reason')
+        
+        if not reason:
+            messages.error(request, "Please provide a reason for password reset")
+            return redirect('aps_hr:hr_user_detail', user_id=user_id)
         
         if not new_password or len(new_password) < 8:
             messages.error(request, "Password must be at least 8 characters")
@@ -2069,12 +2119,12 @@ def reset_user_password(request, user_id):
             user.set_password(new_password)
             user.save()
             
-            # Log password reset
+            # Log password reset with reason
             UserActionLog.objects.create(
                 user=user,
                 action_type='password_reset',
                 action_by=request.user,
-                details="Password reset by HR"
+                details=f"Password reset by HR. Reason: {reason}"
             )
             
             # Send email notification to user
@@ -2088,6 +2138,8 @@ def reset_user_password(request, user_id):
                 {new_password}
                 
                 Please log in at http://yourcompanyportal.com/login/ and change your password immediately.
+                
+                Reason for reset: {reason}
                 
                 Regards,
                 HR Department

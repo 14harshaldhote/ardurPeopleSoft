@@ -6,8 +6,9 @@
     <!-- Profile Header -->
     <div class="flex justify-between items-center mb-8">
         <div class="flex items-center space-x-4">
-            <a href="{% url 'aps_hr:hr_dashboard' %}" class="text-blue-600 hover:text-blue-800">
-                <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+            <a href="{% url 'aps_hr:hr_dashboard' %}" class="inline-flex items-center px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-colors shadow-sm border border-blue-200">
+                <i class="fas fa-arrow-left mr-2"></i>
+                <span>Back to Dashboard</span>
             </a>
         </div>
     </div>
@@ -90,7 +91,6 @@
                     </div>
                 </div>
             </div>
-
             <!-- Employment Information -->
             <div class="mb-8">
                 <h2 class="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b">Employment Information</h2>
@@ -110,6 +110,10 @@
                     <div>
                         <p class="text-sm text-gray-500 mb-1">Employment Duration</p>
                         <p class="font-medium text-gray-800">{{ user_detail.employment_duration|default:"-" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500 mb-1">Employee Type</p>
+                        <p class="font-medium text-gray-800">{{ user_detail.employee_type|title|default:"-" }}</p>
                     </div>
                     <div class="col-span-full">
                         <p class="text-sm text-gray-500 mb-1">Job Description</p>
@@ -142,6 +146,57 @@
                         <p class="text-sm text-gray-500 mb-1">Personal Email</p>
                         <p class="font-medium text-gray-800">{{ user_detail.personal_email|default:"-" }}</p>
                     </div>
+                    <div>
+                        <p class="text-sm text-gray-500 mb-1">PAN Number</p>
+                        <p class="font-medium text-gray-800">{{ user_detail.panno|default:"-" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500 mb-1">Aadhar Number</p>
+                        <p class="font-medium text-gray-800">{{ user_detail.aadharno|default:"-" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500 mb-1">Address Line 1</p>
+                        <p class="font-medium text-gray-800">{{ user_detail.address_line1|default:"-" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500 mb-1">Address Line 2</p>
+                        <p class="font-medium text-gray-800">{{ user_detail.address_line2|default:"-" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500 mb-1">City</p>
+                        <p class="font-medium text-gray-800">{{ user_detail.city|default:"-" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500 mb-1">State</p>
+                        <p class="font-medium text-gray-800">{{ user_detail.state|default:"-" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500 mb-1">Postal Code</p>
+                        <p class="font-medium text-gray-800">{{ user_detail.postal_code|default:"-" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500 mb-1">Country</p>
+                        <p class="font-medium text-gray-800">{{ user_detail.country|default:"-" }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Emergency Contact -->
+            <div class="mb-8">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b">Emergency Contact</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div>
+                        <p class="text-sm text-gray-500 mb-1">Contact Name</p>
+                        <p class="font-medium text-gray-800">{{ user_detail.emergency_contact_name|default:"-" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500 mb-1">Contact Number</p>
+                        <p class="font-medium text-gray-800">{{ user_detail.emergency_contact_primary|default:"-" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500 mb-1">Address</p>
+                        <p class="font-medium text-gray-800">{{ user_detail.emergency_contact_address|default:"-" }}</p>
+                    </div>
                 </div>
             </div>
 
@@ -173,12 +228,12 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {% if activity_logs %}
-                                    {% for log in activity_logs %}
+                                {% if action_logs %}
+                                    {% for log in action_logs %}
                                     <tr>
-                                        <td class="py-2 text-sm text-gray-700">{{ log.date }}</td>
-                                        <td class="py-2 text-sm text-gray-700">{{ log.action }}</td>
-                                        <td class="py-2 text-sm text-gray-700">{{ log.by }}</td>
+                                        <td class="py-2 text-sm text-gray-700">{{ log.timestamp|date:"Y-m-d H:i" }}</td>
+                                        <td class="py-2 text-sm text-gray-700">{{ log.action_type|title }}</td>
+                                        <td class="py-2 text-sm text-gray-700">{{ log.action_by.get_full_name }}</td>
                                         <td class="py-2 text-sm text-gray-700">{{ log.details }}</td>
                                     </tr>
                                     {% endfor %}
@@ -219,13 +274,13 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {% if login_sessions %}
-                                    {% for session in login_sessions %}
+                                {% if recent_sessions %}
+                                    {% for session in recent_sessions %}
                                     <tr>
-                                        <td class="py-2 text-sm text-gray-700">{{ session.login_time }}</td>
-                                        <td class="py-2 text-sm text-gray-700">{{ session.logout_time }}</td>
-                                        <td class="py-2 text-sm text-gray-700">{{ session.location }}</td>
-                                        <td class="py-2 text-sm text-gray-700">{{ session.duration }}</td>
+                                        <td class="py-2 text-sm text-gray-700">{{ session.login_time|date:"Y-m-d H:i" }}</td>
+                                        <td class="py-2 text-sm text-gray-700">{{ session.logout_time|date:"Y-m-d H:i"|default:"-" }}</td>
+                                        <td class="py-2 text-sm text-gray-700">{{ session.location|default:"-" }}</td>
+                                        <td class="py-2 text-sm text-gray-700">{{ session.duration|default:"-" }}</td>
                                     </tr>
                                     {% endfor %}
                                 {% else %}
@@ -274,8 +329,7 @@
                 <h3 class="text-lg font-medium text-gray-900 mb-3">Employment Information</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                     <div>
-                        <label for="work_location" class="block text-sm font-medium text-gray-700 mb-1">Work
-                            Location</label>
+                        <label for="work_location" class="block text-sm font-medium text-gray-700 mb-1">Work Location</label>
                         <input type="text" id="work_location" name="work_location"
                             value="{{ user_detail.work_location }}"
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
@@ -292,15 +346,18 @@
                             value="{{ user_detail.start_date|date:'Y-m-d' }}"
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
                     </div>
-                    <div class="md:col-span-2">
-                        <label for="job_description" class="block text-sm font-medium text-gray-700 mb-1">Job
-                            Description</label>
-                        <textarea id="job_description" name="job_description" rows="3"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">{{ user_detail.job_description }}</textarea>
+                    <div>
+                        <label for="employee_type" class="block text-sm font-medium text-gray-700 mb-1">Employee Type</label>
+                        <select id="employee_type" name="employee_type"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Select Type</option>
+                            {% for type_id, type_name in employee_type_choices %}
+                            <option value="{{ type_id }}" {% if type_id == user_detail.employee_type %}selected{% endif %}>{{ type_name }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
                     <div>
-                        <label for="employment_status" class="block text-sm font-medium text-gray-700 mb-1">Employment
-                            Status</label>
+                        <label for="employment_status" class="block text-sm font-medium text-gray-700 mb-1">Employment Status</label>
                         <select id="employment_status" name="employment_status"
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
                             <option value="">Select Status</option>
@@ -308,6 +365,21 @@
                             <option value="{{ status_id }}" {% if status_id == user_detail.employment_status %}selected{% endif %}>{{ status_name }}</option>
                             {% endfor %}
                         </select>
+                    </div>
+                    <div>
+                        <label for="group" class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                        <select id="group" name="group"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Select Role</option>
+                            {% for group in groups %}
+                            <option value="{{ group.id }}" {% if group == user_obj.groups.first %}selected{% endif %}>{{ group.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-span-full">
+                        <label for="job_description" class="block text-sm font-medium text-gray-700 mb-1">Job Description</label>
+                        <textarea id="job_description" name="job_description" rows="3"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">{{ user_detail.job_description }}</textarea>
                     </div>
                 </div>
 
@@ -320,8 +392,7 @@
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
                             <option value="">Select Gender</option>
                             {% for gender_id, gender_name in gender_choices %}
-                            <option value="{{ gender_id }}" {% if gender_id == user_detail.gender %}selected{% endif %}>{{
-                                gender_name }}</option>
+                            <option value="{{ gender_id }}" {% if gender_id == user_detail.gender %}selected{% endif %}>{{ gender_name }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -331,34 +402,29 @@
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
                     </div>
                     <div>
-                        <label for="blood_group" class="block text-sm font-medium text-gray-700 mb-1">Blood
-                            Group</label>
+                        <label for="blood_group" class="block text-sm font-medium text-gray-700 mb-1">Blood Group</label>
                         <select id="blood_group" name="blood_group"
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
                             <option value="">Select Blood Group</option>
                             {% for bg_id, bg_name in blood_group_choices %}
-                            <option value="{{ bg_id }}" {% if bg_id == user_detail.blood_group %}selected{% endif %}>
-                                {{ bg_name }}</option>
+                            <option value="{{ bg_id }}" {% if bg_id == user_detail.blood_group %}selected{% endif %}>{{ bg_name }}</option>
                             {% endfor %}
                         </select>
                     </div>
                     <div>
-                        <label for="country_code" class="block text-sm font-medium text-gray-700 mb-1">Country
-                            Code</label>
+                        <label for="country_code" class="block text-sm font-medium text-gray-700 mb-1">Country Code</label>
                         <input type="text" id="country_code" name="country_code" value="{{ user_detail.country_code }}"
                             placeholder="+91"
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
                     </div>
                     <div>
-                        <label for="contact_number_primary" class="block text-sm font-medium text-gray-700 mb-1">Contact
-                            Number</label>
+                        <label for="contact_number_primary" class="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
                         <input type="text" id="contact_number_primary" name="contact_number_primary"
                             value="{{ user_detail.contact_number_primary }}"
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
                     </div>
                     <div>
-                        <label for="personal_email" class="block text-sm font-medium text-gray-700 mb-1">Personal
-                            Email</label>
+                        <label for="personal_email" class="block text-sm font-medium text-gray-700 mb-1">Personal Email</label>
                         <input type="email" id="personal_email" name="personal_email"
                             value="{{ user_detail.personal_email }}"
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
@@ -373,35 +439,61 @@
                         <input type="text" id="aadharno" name="aadharno" value="{{ user_detail.aadharno }}"
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
                     </div>
+                    <div>
+                        <label for="address_line1" class="block text-sm font-medium text-gray-700 mb-1">Address Line 1</label>
+                        <input type="text" id="address_line1" name="address_line1" value="{{ user_detail.address_line1 }}"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="address_line2" class="block text-sm font-medium text-gray-700 mb-1">Address Line 2</label>
+                        <input type="text" id="address_line2" name="address_line2" value="{{ user_detail.address_line2 }}"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="city" class="block text-sm font-medium text-gray-700 mb-1">City</label>
+                        <input type="text" id="city" name="city" value="{{ user_detail.city }}"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="state" class="block text-sm font-medium text-gray-700 mb-1">State</label>
+                        <input type="text" id="state" name="state" value="{{ user_detail.state }}"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="postal_code" class="block text-sm font-medium text-gray-700 mb-1">Postal Code</label>
+                        <input type="text" id="postal_code" name="postal_code" value="{{ user_detail.postal_code }}"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="country" class="block text-sm font-medium text-gray-700 mb-1">Country</label>
+                        <input type="text" id="country" name="country" value="{{ user_detail.country }}"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                    </div>
                 </div>
 
                 <!-- Emergency Contact -->
                 <h3 class="text-lg font-medium text-gray-900 mb-3">Emergency Contact</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                     <div>
-                        <label for="emergency_contact_name" class="block text-sm font-medium text-gray-700 mb-1">Contact
-                            Name</label>
+                        <label for="emergency_contact_name" class="block text-sm font-medium text-gray-700 mb-1">Contact Name</label>
                         <input type="text" id="emergency_contact_name" name="emergency_contact_name"
                             value="{{ user_detail.emergency_contact_name }}"
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
                     </div>
                     <div>
-                        <label for="emergency_country_code" class="block text-sm font-medium text-gray-700 mb-1">Country
-                            Code</label>
+                        <label for="emergency_country_code" class="block text-sm font-medium text-gray-700 mb-1">Country Code</label>
                         <input type="text" id="emergency_country_code" name="emergency_country_code"
                             value="{{ user_detail.emergency_country_code }}" placeholder="+91"
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
                     </div>
                     <div>
-                        <label for="emergency_contact_primary"
-                            class="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
+                        <label for="emergency_contact_primary" class="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
                         <input type="text" id="emergency_contact_primary" name="emergency_contact_primary"
                             value="{{ user_detail.emergency_contact_primary }}"
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
                     </div>
                     <div class="md:col-span-3">
-                        <label for="emergency_contact_address"
-                            class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                        <label for="emergency_contact_address" class="block text-sm font-medium text-gray-700 mb-1">Address</label>
                         <textarea id="emergency_contact_address" name="emergency_contact_address" rows="3"
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">{{ user_detail.emergency_contact_address }}</textarea>
                     </div>
@@ -518,7 +610,6 @@
         </div>
     </div>
 </div>
-
 <!-- Reset Password Modal -->
 <div id="resetPasswordModal" class="fixed inset-0 z-50 hidden overflow-auto bg-black bg-opacity-50 flex items-center justify-center">
     <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 md:mx-auto">
@@ -531,6 +622,9 @@
         <div class="p-6">
             <form action="{% url 'aps_hr:reset_user_password' user_obj.id %}" method="post" id="resetPasswordForm">
                 {% csrf_token %}
+                <!-- Add hidden user_id field for extra security -->
+                <input type="hidden" name="user_id" value="{{ user_obj.id }}">
+                
                 <div class="mb-4 text-center">
                     <p class="text-gray-700">You are about to reset the password for: <strong>{{ user_obj.username }}</strong></p>
                 </div>
@@ -546,8 +640,14 @@
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
                     <p class="text-xs text-red-500 mt-1 hidden" id="password-mismatch">Passwords do not match.</p>
                 </div>
+                <div class="mb-4">
+                    <label for="reason" class="block text-sm font-medium text-gray-700 mb-1">Reason for Password Reset</label>
+                    <textarea id="reason" name="reason" rows="3" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Please provide a reason for resetting the password"></textarea>
+                </div>
                 <div class="text-sm text-gray-500 mb-4">
-                    <p>The user will receive an email with their new password.</p>
+                    <p>The user will receive an email with their new password and instructions to change it.</p>
                 </div>
                 <div class="flex justify-end space-x-3">
                     <button type="button" class="closeModal px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">

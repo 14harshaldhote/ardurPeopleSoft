@@ -757,12 +757,29 @@ class UserDetails(models.Model):
     contact_number_primary = models.CharField(max_length=13, null=True, blank=True)
     personal_email = models.EmailField(null=True, blank=True)
     
+    # Address Information
+    address_line1 = models.CharField(max_length=100, null=True, blank=True)
+    address_line2 = models.CharField(max_length=100, null=True, blank=True)
+    city = models.CharField(max_length=50, null=True, blank=True)
+    state = models.CharField(max_length=50, null=True, blank=True)
+    postal_code = models.CharField(max_length=10, null=True, blank=True)
+    country = models.CharField(max_length=50, null=True, blank=True)
+    
     # Emergency Contact
     emergency_contact_name = models.CharField(max_length=100, null=True, blank=True)
     emergency_contact_primary = models.CharField(max_length=13, null=True, blank=True)
     emergency_contact_address = models.TextField(null=True, blank=True)
     
     # Employment Information
+    employee_type = models.CharField(
+        max_length=20,
+        choices=[
+            ('payroll', 'Payroll'),
+            ('contract', 'Contract'),
+        ],
+        null=True,
+        blank=True
+    )
     hire_date = models.DateField(null=True, blank=True)
     start_date = models.DateField(null=True, blank=True)
     job_description = models.TextField(null=True, blank=True)
