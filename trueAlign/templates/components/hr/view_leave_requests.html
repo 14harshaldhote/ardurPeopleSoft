@@ -1,209 +1,236 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="p-8 min-h-screen bg-gray-50">
-
-    <!-- Title -->
-    <div class="flex justify-between items-center mb-8">
-        <h1 class="text-3xl font-thin text-gray-900">Leave Management</h1>
-        <div class="text-sm text-gray-500">
-            Total Requests: <span class="font-medium text-gray-900">{{ leave_requests|length }}</span>
-        </div>
-    </div>
-
-    <!-- Filter Section -->
-    <div class="bg-white p-6 rounded-lg shadow-sm mb-8">
-        <h2 class="text-lg font-medium text-gray-900 mb-4">Filters</h2>
-        <div class="flex gap-6">
-            <!-- Username Filter -->
-            <div class="flex-1">
-                <label for="employee" class="block text-sm font-medium text-gray-600 mb-2">Employee</label>
-                <select id="employee" name="employee" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all">
-                    <option value="">All Employees</option>
-                    {% for leave in leave_requests %}
-                        <option value="{{ leave.user.username }}">{{ leave.user.username }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            
-            <!-- Leave Type Filter -->
-            <div class="flex-1">
-                <label for="leave_type" class="block text-sm font-medium text-gray-600 mb-2">Leave Type</label>
-                <select id="leave_type" name="leave_type" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all">
-                    <option value="">All Types</option>
-                    {% for type, label in leave_types %}
-                        <option value="{{ type }}">{{ label }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-        </div>
-    </div>
-
-    <!-- Tab Navigation -->
-    <div class="bg-white rounded-t-lg shadow-sm">
-        <div class="border-b border-gray-200">
-            <nav class="flex -mb-px" aria-label="Tabs">
-                <button onclick="showTab('pending')" 
-                        class="tab-btn active w-1/2 py-4 px-1 text-center border-b-2 font-medium text-sm border-yellow-500 text-yellow-600 focus:outline-none">
-                    Pending Requests
-                </button>
-                <button onclick="showTab('history')" 
-                        class="tab-btn w-1/2 py-4 px-1 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none">
-                    Request History
-                </button>
-            </nav>
-        </div>
-    </div>
-
-    <!-- Pending Requests Tab -->
-    <div id="pending-tab" class="tab-content bg-white rounded-b-lg shadow-sm">
-        <div class="divide-y divide-gray-200">
-            {% for leave in leave_requests %}
-            {% if leave.status == 'Pending' %}
-            <div class="p-6 hover:bg-gray-50 transition-colors duration-150">
-                <div class="flex items-center justify-between">
-                    <div class="grid grid-cols-5 gap-8 flex-1">
-                        <div>
-                            <p class="text-sm font-medium text-gray-900">{{ leave.user.username }}</p>
-                            <p class="text-xs text-gray-500">Employee</p>
-                        </div>
-                        <div>
-                            <p class="text-sm font-medium text-gray-900">{{ leave.leave_type }}</p>
-                            <p class="text-xs text-gray-500">Leave Type</p>
-                        </div>
-                        <div>
-                            <p class="text-sm font-medium text-gray-900">{{ leave.start_date|date:"M d" }} - {{ leave.end_date|date:"M d, Y" }}</p>
-                            <p class="text-xs text-gray-500">Duration</p>
-                        </div>
-                        <div>
-                            {% for balance in user_balances %}
-                                {% if balance.user == leave.user %}
-                                <p class="text-sm font-medium text-gray-900">{{ balance.balance.total_leaves|floatformat:1 }} days</p>
-                                <p class="text-xs text-gray-500">Leave Balance</p>
-                                {% endif %}
-                            {% endfor %}
-                        </div>
-                        <div>
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                {{ leave.status }}
-                            </span>
-                        </div>
-                    </div>
-                    <div class="flex gap-3 ml-8">
-                        <form method="POST" action="{% url 'aps_hr:manage_leave_hr' leave.id 'approve' %}">
-                            {% csrf_token %}
-                            <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                                Approve
-                            </button>
-                        </form>
-                        <form method="POST" action="{% url 'aps_hr:manage_leave_hr' leave.id 'reject' %}">
-                            {% csrf_token %}
-                            <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
-                                Reject
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-            {% endif %}
-            {% endfor %}
-        </div>
-    </div>
-
-    <!-- History Tab -->
-    <div id="history-tab" class="tab-content hidden bg-white rounded-b-lg shadow-sm">
-        <div class="divide-y divide-gray-200">
-            {% for leave in leave_requests %}
-            {% if leave.status != 'Pending' %}
-            <div class="p-6 hover:bg-gray-50 transition-colors duration-150">
-                <div class="grid grid-cols-6 gap-8">
-                    <div>
-                        <p class="text-sm font-medium text-gray-900">{{ leave.user.username }}</p>
-                        <p class="text-xs text-gray-500">Employee</p>
-                    </div>
-                    <div>
-                        <p class="text-sm font-medium text-gray-900">{{ leave.leave_type }}</p>
-                        <p class="text-xs text-gray-500">Leave Type</p>
-                    </div>
-                    <div>
-                        <p class="text-sm font-medium text-gray-900">{{ leave.start_date|date:"M d" }} - {{ leave.end_date|date:"M d, Y" }}</p>
-                        <p class="text-xs text-gray-500">Duration</p>
-                    </div>
-                    <div>
-                        <p class="text-sm font-medium text-gray-900">{{ leave.leave_days|floatformat:1 }} days</p>
-                        <p class="text-xs text-gray-500">Leave Days</p>
-                    </div>
-                    <div>
-                        <p class="text-sm font-medium text-gray-900">{{ leave.approver.username|default:'-' }}</p>
-                        <p class="text-xs text-gray-500">Approver</p>
-                    </div>
-                    <div>
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                        {% if leave.status == 'Approved' %}
-                            bg-green-100 text-green-800
-                        {% elif leave.status == 'Rejected' %}
-                            bg-red-100 text-red-800
-                        {% else %}
-                            bg-gray-100 text-gray-800
-                        {% endif %}">
-                            {{ leave.status }}
-                        </span>
-                    </div>
-                </div>
-            </div>
-            {% endif %}
-            {% endfor %}
-        </div>
-    </div>
-
-</div>
-
-<script>
-function showTab(tabName) {
-    const tabs = document.querySelectorAll('.tab-content');
-    const buttons = document.querySelectorAll('.tab-btn');
-    
-    tabs.forEach(tab => tab.classList.add('hidden'));
-    buttons.forEach(btn => {
-        btn.classList.remove('border-yellow-500', 'text-yellow-600');
-        btn.classList.add('border-transparent', 'text-gray-500');
-    });
-    
-    document.getElementById(`${tabName}-tab`).classList.remove('hidden');
-    event.target.classList.remove('border-transparent', 'text-gray-500');
-    event.target.classList.add('border-yellow-500', 'text-yellow-600');
-}
-
-// Debounced filter function for better performance
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-}
-
-const filterRequests = debounce(() => {
-    const employeeFilter = document.getElementById('employee').value.toLowerCase();
-    const leaveTypeFilter = document.getElementById('leave_type').value.toLowerCase();
-
-    document.querySelectorAll('.tab-content .divide-y > div').forEach(request => {
-        const employeeName = request.querySelector('.text-sm.font-medium').textContent.toLowerCase();
-        const leaveType = request.querySelectorAll('.text-sm.font-medium')[1].textContent.toLowerCase();
-
-        const matchesFilters = (!employeeFilter || employeeName.includes(employeeFilter)) && 
-                             (!leaveTypeFilter || leaveType.includes(leaveTypeFilter));
+    <div class="container mx-auto py-8 px-4">
+        <h1 class="text-3xl font-bold mb-6 text-gray-800 border-b pb-2">Leave Request Management</h1>
         
-        request.style.display = matchesFilters ? 'block' : 'none';
-    });
-}, 250);
+        <!-- Organization Overview Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col items-center transform hover:scale-105 transition-transform duration-300">
+                <div class="rounded-full bg-indigo-100 p-3 mb-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                </div>
+                <span class="text-sm font-medium text-gray-500 mb-1">Admins</span>
+                <span class="text-3xl font-bold text-indigo-600">{{ org_hierarchy.admin }}</span>
+            </div>
+            <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col items-center transform hover:scale-105 transition-transform duration-300">
+                <div class="rounded-full bg-blue-100 p-3 mb-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                </div>
+                <span class="text-sm font-medium text-gray-500 mb-1">HR Staff</span>
+                <span class="text-3xl font-bold text-blue-600">{{ org_hierarchy.hr }}</span>
+            </div>
+            <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col items-center transform hover:scale-105 transition-transform duration-300">
+                <div class="rounded-full bg-green-100 p-3 mb-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <span class="text-sm font-medium text-gray-500 mb-1">Managers</span>
+                <span class="text-3xl font-bold text-green-600">{{ org_hierarchy.managers }}</span>
+            </div>
+            <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col items-center transform hover:scale-105 transition-transform duration-300">
+                <div class="rounded-full bg-orange-100 p-3 mb-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                </div>
+                <span class="text-sm font-medium text-gray-500 mb-1">Employees</span>
+                <span class="text-3xl font-bold text-orange-600">{{ org_hierarchy.employees }}</span>
+            </div>
+        </div>
 
-document.getElementById('employee').addEventListener('change', filterRequests);
-document.getElementById('leave_type').addEventListener('change', filterRequests);
-</script>
+        <!-- Enhanced Filters Section -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-8 border-l-4 border-indigo-500">
+            <h2 class="text-xl font-semibold mb-4 text-gray-700 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                </svg>
+                Search & Filters
+            </h2>
+            <form method="get" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div>
+                    <label for="employee" class="block text-sm font-medium text-gray-700 mb-1">Employee</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <input type="text" name="employee" id="employee" value="{{ filters.employee }}"
+                               class="pl-10 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                               placeholder="Search by name">
+                    </div>
+                </div>
+                <div>
+                    <label for="leave_type" class="block text-sm font-medium text-gray-700 mb-1">Leave Type</label>
+                    <select name="leave_type" id="leave_type"
+                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                        <option value="">All Types</option>
+                        {% for type_code, type_name in leave_types %}
+                            <option value="{{ type_code }}" {% if filters.leave_type == type_code %}selected{% endif %}>{{ type_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <select name="status" id="status"
+                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                        <option value="">All Statuses</option>
+                        {% for status_code, status_name in status_choices %}
+                            <option value="{{ status_code }}" {% if filters.status == status_code %}selected{% endif %}>{{ status_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label for="date_range" class="block text-sm font-medium text-gray-700 mb-1">Date Range</label>
+                    <input type="text" name="date_range" id="date_range" value="{{ filters.date_range }}"
+                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                           placeholder="Select date range">
+                </div>
+            </form>
+        </div>
 
+        <!-- Leave Requests Table -->
+        <div class="bg-white shadow-lg rounded-lg overflow-hidden mb-8">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-800">Employee & Manager Leave Requests</h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Leave Type</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for request in employee_manager_requests %}
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-10 w-10">
+                                        <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                                            <span class="text-indigo-700 font-medium">{{ request.user.first_name|slice:":1"|upper }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-gray-900">
+                                            {{ request.user.get_full_name|default:request.user.username }}
+                                        </div>
+                                        <div class="text-sm text-gray-500">{{ request.user.email }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">{{ request.get_leave_type_display }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">{{ request.start_date|date:"M d" }} - {{ request.end_date|date:"M d, Y" }}</div>
+                                <div class="text-sm text-gray-500">{{ request.leave_days }} days</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                    {% if request.status == 'Pending' %}bg-yellow-100 text-yellow-800
+                                    {% elif request.status == 'Approved' %}bg-green-100 text-green-800
+                                    {% else %}bg-red-100 text-red-800{% endif %}">
+                                    {{ request.get_status_display }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <div class="flex space-x-3">
+                                    <a href="{% url 'aps_hr:manage_leave_request_hr' request.id 'approve' %}" 
+                                       class="bg-green-100 hover:bg-green-200 text-green-800 px-3 py-1 rounded-md transition duration-150 ease-in-out">
+                                        Approve
+                                    </a>
+                                    <a href="{% url 'aps_hr:manage_leave_request_hr' request.id 'reject' %}"
+                                       class="bg-red-100 hover:bg-red-200 text-red-800 px-3 py-1 rounded-md transition duration-150 ease-in-out">
+                                        Reject
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                                <p>No leave requests found</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Approval History -->
+        <div class="bg-white rounded-lg shadow-md">
+            <div class="border-b border-gray-200 px-6 py-4">
+                <h2 class="text-xl font-semibold text-gray-800">Approval History</h2>
+                <p class="text-sm text-gray-600">Recent leave request approvals and rejections</p>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Approver</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Leave Type</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for history in approval_history %}
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">
+                                    {% if history.user__first_name or history.user__last_name %}
+                                        {{ history.user__first_name }} {{ history.user__last_name }}
+                                    {% else %}
+                                        {{ history.user__username }}
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">
+                                    {% if history.approver__first_name or history.approver__last_name %}
+                                        {{ history.approver__first_name }} {{ history.approver__last_name }}
+                                    {% else %}
+                                        {{ history.approver__username }}
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ history.leave_type }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                    {% if history.status == 'Pending' %}bg-yellow-100 text-yellow-800
+                                    {% elif history.status == 'Approved' %}bg-green-100 text-green-800
+                                    {% elif history.status == 'Rejected' %}bg-red-100 text-red-800
+                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {{ history.status }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ history.updated_at|date:"M d, Y H:i" }}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">No approval history found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 {% endblock %}

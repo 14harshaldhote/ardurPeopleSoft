@@ -1,90 +1,297 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="p-8 min-h-screen ">
+<div class="p-8 min-h-screen bg-gray-50">
 
-    <!-- Title -->
-    <h1 class="text-3xl font-thin text-gray-900 mb-8">Leave Management</h1>
+    <!-- Title and Stats Dashboard -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Team Leave Management</h1>
+            <p class="text-gray-600">Manage your team's time off requests efficiently</p>
+        </div>
+        <div class="flex gap-4">
+            <div class="bg-yellow-100 text-yellow-800 px-4 py-3 rounded-lg shadow-sm flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <div>
+                    <span class="font-medium text-lg">{{ pending_count }}</span>
+                    <span class="ml-1">Pending</span>
+                </div>
+            </div>
+            <div class="bg-blue-100 text-blue-800 px-4 py-3 rounded-lg shadow-sm flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+                <div>
+                    <span class="font-medium text-lg">{{ total_days_off|default:"0" }}</span>
+                    <span class="ml-1">Days Off</span>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Filter Section -->
-    <div class="flex gap-6 mb-8">
-        <!-- Username Filter -->
-        <div class="flex items-center gap-2">
-            <label for="employee" class="text-sm font-medium text-gray-600">Employee</label>
-            <select id="employee" name="employee" class="px-4 py-2 rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-500">
-                <option value="">All Employees</option>
-                {% for leave in leave_requests %}
-                <option value="{{ leave.user.username }}">{{ leave.user.username }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        
-        <!-- Leave Type Filter -->
-        <div class="flex items-center gap-2">
-            <label for="leave_type" class="text-sm font-medium text-gray-600">Leave Type</label>
-            <select id="leave_type" name="leave_type" class="px-4 py-2 rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-500">
-                <option value="">All Types</option>
-                <option value="Sick Leave">Sick Leave</option>
-                <option value="Casual Leave">Casual Leave</option>
-                <option value="Earned Leave">Earned Leave</option>
-                <option value="Loss of Pay">Loss of Pay</option>
-            </select>
-        </div>
+    <div class="bg-white p-6 rounded-xl shadow-md mb-8 border border-gray-100">
+        <h2 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
+            <svg class="w-5 h-5 mr-2 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+            </svg>
+            Filters
+        </h2>
+        <form id="filter-form" method="get" class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <!-- Employee Filter -->
+            <div>
+                <label for="employee" class="block text-sm font-medium text-gray-600 mb-2">Team Member</label>
+                <div class="relative">
+                    <select id="employee" name="employee" class="w-full pl-4 pr-10 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all appearance-none">
+                        <option value="">All Team Members</option>
+                        {% for member in team_members %}
+                            <option value="{{ member.username }}" {% if filters.employee == member.username %}selected{% endif %}>
+                                {{ member.get_full_name|default:member.username }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Leave Type Filter -->
+            <div>
+                <label for="leave_type" class="block text-sm font-medium text-gray-600 mb-2">Leave Type</label>
+                <div class="relative">
+                    <select id="leave_type" name="leave_type" class="w-full pl-4 pr-10 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all appearance-none">
+                        <option value="">All Types</option>
+                        {% for type, label in leave_types %}
+                            <option value="{{ type }}" {% if filters.leave_type == type %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Status Filter -->
+            <div>
+                <label for="status" class="block text-sm font-medium text-gray-600 mb-2">Status</label>
+                <div class="relative">
+                    <select id="status" name="status" class="w-full pl-4 pr-10 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all appearance-none">
+                        <option value="">All Statuses</option>
+                        {% for status, label in status_choices %}
+                            <option value="{{ status }}" {% if filters.status == status %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Date Filter -->
+            <div>
+                <label for="date_filter" class="block text-sm font-medium text-gray-600 mb-2">Date Range</label>
+                <div class="relative">
+                    <select id="date_filter" name="date_filter" class="w-full pl-4 pr-10 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all appearance-none">
+                        <option value="">All Dates</option>
+                        <option value="today" {% if filters.date_filter == 'today' %}selected{% endif %}>Today</option>
+                        <option value="this_week" {% if filters.date_filter == 'this_week' %}selected{% endif %}>This Week</option>
+                        <option value="this_month" {% if filters.date_filter == 'this_month' %}selected{% endif %}>This Month</option>
+                        <option value="next_month" {% if filters.date_filter == 'next_month' %}selected{% endif %}>Next Month</option>
+                        <option value="custom" {% if filters.date_filter == 'custom' %}selected{% endif %}>Custom Range</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Custom Date Range (conditionally shown) -->
+            <div id="custom-date-range" class="md:col-span-4 grid grid-cols-1 md:grid-cols-2 gap-4 {% if filters.date_filter != 'custom' %}hidden{% endif %}">
+                <div>
+                    <label for="start_date" class="block text-sm font-medium text-gray-600 mb-2">From</label>
+                    <input type="date" id="start_date" name="start_date" value="{{ filters.start_date|default:'' }}" 
+                           class="w-full pl-4 pr-10 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label for="end_date" class="block text-sm font-medium text-gray-600 mb-2">To</label>
+                    <input type="date" id="end_date" name="end_date" value="{{ filters.end_date|default:'' }}" 
+                           class="w-full pl-4 pr-10 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent">
+                </div>
+            </div>
+            
+            <!-- Apply Filters Button -->
+            <div class="md:col-span-4 flex justify-end">
+                <button type="reset" class="mr-3 bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-2 rounded-lg transition duration-200 flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    Reset
+                </button>
+                <button type="submit" class="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2 rounded-lg transition duration-200 flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                    </svg>
+                    Apply Filters
+                </button>
+            </div>
+        </form>
     </div>
     
     <!-- Tab Navigation -->
-    <div class="mb-8 border-b border-gray-300">
-        <ul class="flex -mb-px">
+    <div class="mb-6 border-b border-gray-300">
+        <ul class="flex flex-wrap -mb-px">
             <li class="mr-6">
                 <button onclick="showTab('pending')" 
-                        class="tab-btn active px-6 py-3 font-medium text-gray-700 hover:text-gray-900 transition duration-300 ease-in-out border-b-2 border-transparent hover:border-yellow-500">
+                        class="tab-btn active px-6 py-3 font-medium text-gray-700 hover:text-gray-900 transition duration-300 ease-in-out border-b-2 border-yellow-500 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
                     Pending Requests
+                    {% if pending_count > 0 %}
+                    <span class="ml-2 px-2 py-1 text-xs font-bold rounded-full bg-yellow-500 text-white">{{ pending_count }}</span>
+                    {% endif %}
                 </button>
             </li>
             <li class="mr-6">
-                <button onclick="showTab('history')" 
-                        class="tab-btn px-6 py-3 font-medium text-gray-500 hover:text-gray-700 transition duration-300 ease-in-out border-b-2 border-transparent hover:border-yellow-500">
-                    History
+                <button onclick="showTab('approved')" 
+                        class="tab-btn px-6 py-3 font-medium text-gray-500 hover:text-gray-700 transition duration-300 ease-in-out border-b-2 border-transparent hover:border-green-500 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    Approved
+                </button>
+            </li>
+            <li>
+                <button onclick="showTab('rejected')" 
+                        class="tab-btn px-6 py-3 font-medium text-gray-500 hover:text-gray-700 transition duration-300 ease-in-out border-b-2 border-transparent hover:border-red-500 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                    Rejected
                 </button>
             </li>
         </ul>
     </div>
+
+    <!-- No Results Message -->
+    {% if leave_requests|length == 0 %}
+    <div class="bg-white rounded-lg shadow-md p-8 text-center">
+        <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+        </svg>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">No leave requests found</h3>
+        <p class="text-gray-600 mb-4">There are no leave requests matching your current filters.</p>
+        <button onclick="resetFilters()" class="inline-flex items-center px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg transition duration-200">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+            Reset Filters
+        </button>
+    </div>
+    {% endif %}
 
     <!-- Pending Requests Tab -->
     <div id="pending-tab" class="tab-content">
         <div class="grid gap-6">
             {% for leave in leave_requests %}
             {% if leave.status == 'Pending' %}
-            <div class="bg-white rounded-lg shadow-md p-6 flex items-center justify-between transition transform hover:scale-105 hover:shadow-xl">
-                <div class="flex-1 grid grid-cols-4 gap-6">
-                    <div>
-                        <p class="text-sm text-gray-500">Employee</p>
-                        <p class="font-medium text-gray-800">{{ leave.user.username }}</p>
+            <div class="bg-white rounded-lg shadow-md overflow-hidden transition transform hover:shadow-lg border-l-4 border-yellow-500">
+                <div class="p-6">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
+                        <div class="flex items-center mb-2 md:mb-0">
+                            <div class="w-10 h-10 rounded-full bg-yellow-100 text-yellow-800 flex items-center justify-center mr-3">
+                                {{ leave.user.get_full_name|default:leave.user.username|slice:":1"|upper }}
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-medium text-gray-900">{{ leave.user.get_full_name|default:leave.user.username }}</h3>
+                                <p class="text-sm text-gray-500">Request submitted on {{ leave.created_at|date:"M d, Y" }}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="px-3 py-1 text-sm font-semibold rounded-full bg-yellow-100 text-yellow-800 flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                {{ leave.status }}
+                            </span>
+                        </div>
                     </div>
-                    <div>
-                        <p class="text-sm text-gray-500">Leave Type</p>
-                        <p class="font-medium text-gray-800">{{ leave.leave_type }}</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div class="flex items-start">
+                            <svg class="w-5 h-5 mr-2 text-gray-500 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                            </svg>
+                            <div>
+                                <p class="text-sm text-gray-500">Leave Type</p>
+                                <p class="font-medium text-gray-800">{{ leave.get_leave_type_display }}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <svg class="w-5 h-5 mr-2 text-gray-500 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            <div>
+                                <p class="text-sm text-gray-500">Duration</p>
+                                <p class="font-medium text-gray-800">
+                                    {{ leave.start_date|date:"M d, Y" }} - {{ leave.end_date|date:"M d, Y" }}
+                                    {% if leave.half_day %}<span class="text-sm text-yellow-600 ml-1">(Half Day)</span>{% endif %}
+                                </p>
+                                <p class="text-sm text-gray-500">{{ leave.total_days|default:"1" }} day{% if leave.total_days > 1 %}s{% endif %}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <svg class="w-5 h-5 mr-2 text-gray-500 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                            <div>
+                                <p class="text-sm text-gray-500">Leave Balance</p>
+                                <p class="font-medium text-gray-800">
+                                    {{ team_balances|get_item:leave.user.id|get_item:'total_leaves'|floatformat:1 }} days remaining
+                                </p>
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <p class="text-sm text-gray-500">Duration</p>
-                        <p class="font-medium text-gray-800">{{ leave.start_date }} - {{ leave.end_date }}</p>
+                    
+                    {% if leave.reason %}
+                    <div class="mb-4">
+                        <div class="flex items-start mb-1">
+                            <svg class="w-5 h-5 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
+                            </svg>
+                            <p class="text-sm text-gray-500">Reason</p>
+                        </div>
+                        <p class="text-gray-800 bg-gray-50 p-3 rounded-lg border border-gray-100">{{ leave.reason }}</p>
                     </div>
-                    <div>
-                        <p class="text-sm text-gray-500">Status</p>
-                        <span class="px-4 py-1 text-sm font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                            {{ leave.status }}
-                        </span>
+                    {% endif %}
+                    
+                    <div class="flex flex-col sm:flex-row justify-end gap-4 mt-6">
+                        <a href="{% url 'aps_manager:manage_leave_request_manager' leave.id 'approve' %}" 
+                           class="bg-green-500 text-white px-5 py-2 rounded-lg hover:bg-green-600 transition duration-200 flex items-center justify-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            Approve
+                        </a>
+                        <a href="{% url 'aps_manager:manage_leave_request_manager' leave.id 'reject' %}"
+                           class="bg-red-500 text-white px-5 py-2 rounded-lg hover:bg-red-600 transition duration-200 flex items-center justify-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                            Reject
+                        </a>
                     </div>
-                </div>
-                <div class="flex gap-4">
-                    <a href="{% url 'aps_hr:manage_leave_hr' leave.id 'approve' %}" 
-                       class="bg-green-500 text-white px-5 py-2 rounded-lg hover:bg-green-600 transition duration-200">
-                        Approve
-                    </a>
-                    <a href="{% url 'aps_hr:manage_leave_hr' leave.id 'reject' %}"
-                       class="bg-red-500 text-white px-5 py-2 rounded-lg hover:bg-red-600 transition duration-200">
-                        Reject
-                    </a>
                 </div>
             </div>
             {% endif %}
@@ -92,34 +299,120 @@
         </div>
     </div>
 
-    <!-- History Tab -->
-    <div id="history-tab" class="tab-content hidden">
+    <!-- Approved Tab -->
+    <div id="approved-tab" class="tab-content hidden">
         <div class="grid gap-6">
             {% for leave in leave_requests %}
-            {% if leave.status != 'Pending' %}
-            <div class="bg-white rounded-lg shadow-md p-6 grid grid-cols-5 gap-2 transition transform hover:scale-105 hover:shadow-xl">
-                <div>
-                    <p class="text-sm text-gray-500">Employee</p>
-                    <p class="font-medium text-gray-800">{{ leave.user.username }}</p>
+            {% if leave.status == 'Approved' %}
+            <div class="bg-white rounded-lg shadow-md overflow-hidden transition transform hover:shadow-lg border-l-4 border-green-500">
+                <div class="p-6">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
+                        <div class="flex items-center mb-2 md:mb-0">
+                            <div class="w-10 h-10 rounded-full bg-green-100 text-green-800 flex items-center justify-center mr-3">
+                                {{ leave.user.get_full_name|default:leave.user.username|slice:":1"|upper }}
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-medium text-gray-900">{{ leave.user.get_full_name|default:leave.user.username }}</h3>
+                                <p class="text-sm text-gray-500">Approved on {{ leave.approval_date|date:"M d, Y" }}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="px-3 py-1 text-sm font-semibold rounded-full bg-green-100 text-green-800 flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                {{ leave.status }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="flex items-start">
+                            <svg class="w-5 h-5 mr-2 text-gray-500 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                            </svg>
+                            <div>
+                                <p class="text-sm text-gray-500">Leave Type</p>
+                                <p class="font-medium text-gray-800">{{ leave.get_leave_type_display }}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                        <div>
+                            <p class="text-sm text-gray-500">Leave Type</p>
+                            <p class="font-medium text-gray-800">{{ leave.get_leave_type_display }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Duration</p>
+                            <p class="font-medium text-gray-800">
+                                {{ leave.start_date|date:"M d, Y" }} - {{ leave.end_date|date:"M d, Y" }}
+                                {% if leave.half_day %}(Half Day){% endif %}
+                            </p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Approved By</p>
+                            <p class="font-medium text-gray-800">
+                                {% if leave.approver %}
+                                    {{ leave.approver.get_full_name|default:leave.approver.username }}
+                                {% else %}
+                                    You
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <p class="text-sm text-gray-500">Leave Type</p>
-                    <p class="font-medium text-gray-800">{{ leave.leave_type }}</p>
-                </div>
-                <div>
-                    <p class="text-sm text-gray-500">Duration</p>
-                    <p class="font-medium text-gray-800">{{ leave.start_date }} - {{ leave.end_date }}</p>
-                </div>
-                <div>
-                    <p class="text-sm text-gray-500">Status</p>
-                    <span class="px-4 py-1 text-sm font-semibold rounded-full 
-                    {% if leave.status == 'Approved' %}
-                        bg-green-100 text-green-800
-                    {% else %}
-                        bg-red-100 text-red-800
-                    {% endif %}">
-                        {{ leave.status }}
-                    </span>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Rejected Tab -->
+    <div id="rejected-tab" class="tab-content hidden">
+        <div class="grid gap-6">
+            {% for leave in leave_requests %}
+            {% if leave.status == 'Rejected' %}
+            <div class="bg-white rounded-lg shadow-md overflow-hidden transition transform hover:shadow-lg">
+                <div class="p-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-900">{{ leave.user.get_full_name|default:leave.user.username }}</h3>
+                            <p class="text-sm text-gray-500">Rejected on {{ leave.approval_date|date:"M d, Y" }}</p>
+                        </div>
+                        <span class="px-3 py-1 text-sm font-semibold rounded-full bg-red-100 text-red-800">
+                            {{ leave.status }}
+                        </span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div>
+                            <p class="text-sm text-gray-500">Leave Type</p>
+                            <p class="font-medium text-gray-800">{{ leave.get_leave_type_display }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Duration</p>
+                            <p class="font-medium text-gray-800">
+                                {{ leave.start_date|date:"M d, Y" }} - {{ leave.end_date|date:"M d, Y" }}
+                                {% if leave.half_day %}(Half Day){% endif %}
+                            </p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Rejected By</p>
+                            <p class="font-medium text-gray-800">
+                                {% if leave.approver %}
+                                    {{ leave.approver.get_full_name|default:leave.approver.username }}
+                                {% else %}
+                                    You
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    {% if leave.rejection_reason %}
+                    <div>
+                        <p class="text-sm text-gray-500">Rejection Reason</p>
+                        <p class="text-gray-800 bg-gray-50 p-3 rounded-lg">{{ leave.rejection_reason }}</p>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
             {% endif %}
@@ -130,38 +423,32 @@
 </div>
 
 <script>
+// Custom template filter for accessing dictionary items
+function getItem(dict, key) {
+    return dict[key] || {};
+}
+
 function showTab(tabName) {
     const tabs = document.querySelectorAll('.tab-content');
     const buttons = document.querySelectorAll('.tab-btn');
     
     tabs.forEach(tab => tab.classList.add('hidden'));
-    buttons.forEach(btn => btn.classList.remove('border-yellow-500', 'text-gray-900'));
+    buttons.forEach(btn => {
+        btn.classList.remove('border-yellow-500', 'text-gray-900');
+        btn.classList.add('border-transparent', 'text-gray-500');
+    });
     
     document.getElementById(`${tabName}-tab`).classList.remove('hidden');
-    event.target.classList.add('border-yellow-500', 'text-gray-900');
+    event.currentTarget.classList.remove('border-transparent', 'text-gray-500');
+    event.currentTarget.classList.add('border-yellow-500', 'text-gray-900');
 }
 
-// Add event listener for filter changes
-document.getElementById('employee').addEventListener('change', filterRequests);
-document.getElementById('leave_type').addEventListener('change', filterRequests);
-
-function filterRequests() {
-    const employeeFilter = document.getElementById('employee').value.toLowerCase();
-    const leaveTypeFilter = document.getElementById('leave_type').value.toLowerCase();
-
-    const leaveRequests = document.querySelectorAll('.tab-content .grid > div');
-    leaveRequests.forEach(request => {
-        const employeeName = request.querySelector('.font-medium.text-gray-800').textContent.toLowerCase();
-        const leaveType = request.querySelector('.font-medium.text-gray-800:nth-child(2)').textContent.toLowerCase();
-
-        if ((employeeFilter === '' || employeeName.includes(employeeFilter)) &&
-            (leaveTypeFilter === '' || leaveType.includes(leaveTypeFilter))) {
-            request.classList.remove('hidden');
-        } else {
-            request.classList.add('hidden');
-        }
+// Auto-submit form when filters change
+document.querySelectorAll('#filter-form select').forEach(select => {
+    select.addEventListener('change', function() {
+        document.getElementById('filter-form').submit();
     });
-}
+});
 </script>
 
 {% endblock %}

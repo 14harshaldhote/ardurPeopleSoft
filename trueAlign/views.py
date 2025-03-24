@@ -3421,125 +3421,535 @@ def leave_view(request):
         'loss_of_pay': leave_balance.get('loss_of_pay', 0.0)
     })
 
+
 @login_required
 @user_passes_test(is_hr)
 def view_leave_requests_hr(request):
-    """HR views all leave requests."""
-    # Get all leave requests except HR's own requests
-    leave_requests = Leave.objects.exclude(
-        user__groups__name='HR'
-    ).order_by('-created_at')
+    """HR views all leave requests with comprehensive filtering and organizational hierarchy."""
+    # Apply filters
+    employee_filter = request.GET.get('employee', '')
+    leave_type_filter = request.GET.get('leave_type', '')
+    status_filter = request.GET.get('status', '')
+    date_range = request.GET.get('date_range', '')
     
-    # Get leave balances for all users
-    user_balances = []
-    for leave in leave_requests:
-        balance = Leave.get_leave_balance(leave.user)
-        user_balances.append({
-            'user': leave.user,
-            'balance': balance
-        })
-            
+    # HR can see all leave requests except admin
+    leave_requests = Leave.objects.all().select_related('user', 'approver').order_by('-created_at')
+    
+    # Apply filters
+    if employee_filter:
+        leave_requests = leave_requests.filter(
+            Q(user__username__icontains=employee_filter) | 
+            Q(user__first_name__icontains=employee_filter) | 
+            Q(user__last_name__icontains=employee_filter)
+        )
+    
+    if leave_type_filter:
+        leave_requests = leave_requests.filter(leave_type=leave_type_filter)
+    
+    if status_filter:
+        leave_requests = leave_requests.filter(status=status_filter)
+    
+    if date_range:
+        try:
+            date_parts = date_range.split(' - ')
+            start_date = datetime.strptime(date_parts[0], '%Y-%m-%d').date()
+            end_date = datetime.strptime(date_parts[1], '%Y-%m-%d').date()
+            leave_requests = leave_requests.filter(
+                Q(start_date__range=[start_date, end_date]) | 
+                Q(end_date__range=[start_date, end_date])
+            )
+        except (ValueError, IndexError):
+            messages.error(request, "Invalid date range format")
+    
+    # Separate employee and manager requests that need HR approval
+    employee_manager_requests = leave_requests.filter(
+        Q(user__groups__name='Employee') | 
+        Q(user__groups__name='Manager'),
+        status='Pending'
+    )
+    
+    # Other requests for reference
+    other_requests = leave_requests.exclude(
+        Q(user__groups__name='Employee') | 
+        Q(user__groups__name='Manager'),
+        status='Pending'
+    )
+    
+    # Get organizational hierarchy data
+    org_hierarchy = {
+        'hr': User.objects.filter(groups__name='HR').count(),
+        'managers': User.objects.filter(groups__name='Manager').count(),
+        'employees': User.objects.filter(groups__name='Employee').count(),
+    }
+    
+    # Get approval history for audit trail
+    approval_history = Leave.objects.exclude(approver=None).values(
+        'user__username', 'user__first_name', 'user__last_name',
+        'approver__username', 'approver__first_name', 'approver__last_name',
+        'status', 'created_at', 'updated_at', 'leave_type'
+    ).order_by('-updated_at')[:100]  # Last 100 approvals
+    
     return render(request, 'components/hr/view_leave_requests.html', {
-        'leave_requests': leave_requests,
-        'user_balances': user_balances,
+        'employee_manager_requests': employee_manager_requests,
+        'other_requests': other_requests,
         'leave_types': Leave.LEAVE_TYPES,
-        'status_choices': Leave.STATUS_CHOICES
+        'status_choices': Leave.STATUS_CHOICES,
+        'org_hierarchy': org_hierarchy,
+        'approval_history': approval_history,
+        'filters': {
+            'employee': employee_filter,
+            'leave_type': leave_type_filter,
+            'status': status_filter,
+            'date_range': date_range
+        }
     })
 
-@login_required 
+@login_required
 @user_passes_test(is_hr)
 def manage_leave_request_hr(request, leave_id, action):
-    """HR approves or rejects leave requests."""
-    leave_request = get_object_or_404(Leave, id=leave_id)
+    """HR approves or rejects employee and manager leave requests with comprehensive validation."""
+    leave_request = get_object_or_404(Leave.objects.select_related('user', 'approver'), id=leave_id)
+    
+    # HR should only approve/reject employee and manager requests
+    if not (is_employee(leave_request.user) or is_manager(leave_request.user)):
+        messages.error(request, "HR should only approve employee and manager leave requests.")
+        return redirect('aps_hr:view_leave_requests_hr')
+    
+    # Check if leave request is already processed
+    if leave_request.status != 'Pending':
+        messages.error(request, f"This leave request is already {leave_request.status.lower()}.")
+        return redirect('aps_hr:view_leave_requests_hr')
 
     if request.method == 'POST':
         try:
-            if action == 'approve':
-                # Check leave balance before approval
-                balance = Leave.get_leave_balance(leave_request.user)
+            with transaction.atomic():
+                if action == 'approve':
+                    # For managers, check team coverage
+                    if is_manager(leave_request.user):
+                        # Check if team has coverage during this period
+                        team_size = User.objects.filter(employee__reporting_manager=leave_request.user).count()
+                        if team_size > 0:
+                            messages.info(request, f"Note: This manager has {team_size} direct reports.")
+                    
+                    leave_request.status = 'Approved'
+                    leave_request.approver = request.user
+                    leave_request.approval_date = timezone.now()
+                    leave_request.save()
+                    
+                    # Log the approval
+                    logger.info(f"Leave ID {leave_id} for {leave_request.user.username} approved by HR {request.user.username}")
+                    
+                    messages.success(request, f"Leave for {leave_request.user.get_full_name() or leave_request.user.username} approved.")
                 
-                if (leave_request.leave_type != 'Loss of Pay' and 
-                    balance['total_leaves'] < leave_request.leave_days):
-                    # Auto convert to Loss of Pay if insufficient balance
-                    leave_request.leave_type = 'Loss of Pay'
-                    messages.warning(request, "Leave converted to Loss of Pay due to insufficient balance.")
+                elif action == 'reject':
+                    rejection_reason = request.POST.get('rejection_reason')
+                    if not rejection_reason:
+                        messages.error(request, "Rejection reason is required.")
+                        return render(request, 'components/hr/manage_leave.html', {
+                            'leave_request': leave_request,
+                            'action': action.capitalize(),
+                            'leave_balance': Leave.get_leave_balance(leave_request.user)
+                        })
+                    
+                    leave_request.status = 'Rejected'
+                    leave_request.approver = request.user
+                    leave_request.rejection_reason = rejection_reason
+                    leave_request.approval_date = timezone.now()
+                    leave_request.save()
+                    
+                    # Log the rejection
+                    logger.info(f"Leave ID {leave_id} for {leave_request.user.username} rejected by HR {request.user.username}")
+                    
+                    messages.warning(request, f"Leave for {leave_request.user.get_full_name() or leave_request.user.username} rejected.")
                 
-                leave_request.status = 'Approved'
-                leave_request.approver = request.user
-                leave_request.save() # This will trigger update_attendance()
-                
-                messages.success(request, f"Leave for {leave_request.user.username} approved.")
-                
-            elif action == 'reject':
-                leave_request.status = 'Rejected'
-                leave_request.approver = request.user
-                leave_request.rejection_reason = request.POST.get('rejection_reason')
-                leave_request.save()
-                messages.warning(request, f"Leave for {leave_request.user.username} rejected.")
-                
-            return redirect('aps_hr:view_leave_requests_hr')
-            
-        except ValidationError as e:
-            messages.error(request, str(e))
-            return redirect('aps_hr:view_leave_requests_hr')
+                return redirect('aps_hr:view_leave_requests_hr')
+        
         except Exception as e:
+            logger.error(f"Error processing leave request: {str(e)}")
             messages.error(request, f"Error processing leave request: {str(e)}")
             return redirect('aps_hr:view_leave_requests_hr')
 
+    # Get organizational context
+    org_context = {}
+    
+    if is_manager(leave_request.user):
+        org_context['role'] = 'Manager'
+        org_context['team_size'] = User.objects.filter(employee__reporting_manager=leave_request.user).count()
+        org_context['team_on_leave'] = Leave.objects.filter(
+            user__employee__reporting_manager=leave_request.user,
+            status='Approved',
+            start_date__lte=leave_request.end_date,
+            end_date__gte=leave_request.start_date
+        ).count()
+
+    # Get leave history for context
+    leave_history = Leave.objects.filter(user=leave_request.user).exclude(id=leave_id).order_by('-created_at')[:10]
+    
     return render(request, 'components/hr/manage_leave.html', {
         'leave_request': leave_request,
         'action': action.capitalize(),
-        'leave_balance': Leave.get_leave_balance(leave_request.user)
+        'leave_balance': Leave.get_leave_balance(leave_request.user),
+        'leave_history': leave_history,
+        'org_context': org_context
     })
 
 @login_required
 @user_passes_test(is_manager)
 def view_leave_requests_manager(request):
-    """Manager views team leave requests."""
+    """Manager views team leave requests with comprehensive filtering."""
+    # Apply filters
+    employee_filter = request.GET.get('employee', '')
+    leave_type_filter = request.GET.get('leave_type', '')
+    status_filter = request.GET.get('status', '')
+    date_range = request.GET.get('date_range', '')
+    
+    # Manager can only see their team's leave requests
     leave_requests = Leave.objects.filter(
         user__employee__reporting_manager=request.user
-    ).order_by('-created_at')
-    return render(request, 'components/manager/view_leave_requests.html', {'leave_requests': leave_requests})
+    ).select_related('user', 'approver').order_by('-created_at')
+    
+    # Apply filters
+    if employee_filter:
+        leave_requests = leave_requests.filter(
+            Q(user__username__icontains=employee_filter) | 
+            Q(user__first_name__icontains=employee_filter) | 
+            Q(user__last_name__icontains=employee_filter)
+        )
+    
+    if leave_type_filter:
+        leave_requests = leave_requests.filter(leave_type=leave_type_filter)
+    
+    if status_filter:
+        leave_requests = leave_requests.filter(status=status_filter)
+    
+    if date_range:
+        try:
+            date_parts = date_range.split(' - ')
+            start_date = datetime.strptime(date_parts[0], '%Y-%m-%d').date()
+            end_date = datetime.strptime(date_parts[1], '%Y-%m-%d').date()
+            leave_requests = leave_requests.filter(
+                Q(start_date__range=[start_date, end_date]) | 
+                Q(end_date__range=[start_date, end_date])
+            )
+        except (ValueError, IndexError):
+            messages.error(request, "Invalid date range format")
+    
+    # Get team hierarchy data
+    team_hierarchy = {
+        'total_team': User.objects.filter(employee__reporting_manager=request.user).count(),
+        'on_leave': Leave.objects.filter(
+            user__employee__reporting_manager=request.user,
+            status='Approved'
+        ).count()
+    }
+    
+    # Get approval history for audit trail
+    approval_history = Leave.objects.filter(
+        user__employee__reporting_manager=request.user
+    ).exclude(approver=None).values(
+        'user__username', 'user__first_name', 'user__last_name',
+        'approver__username', 'approver__first_name', 'approver__last_name',
+        'status', 'created_at', 'updated_at', 'leave_type'
+    ).order_by('-updated_at')[:50]  # Last 50 approvals
+    
+    return render(request, 'components/manager/view_leave_requests.html', {
+        'leave_requests': leave_requests,
+        'leave_types': Leave.LEAVE_TYPES,
+        'status_choices': Leave.STATUS_CHOICES,
+        'team_hierarchy': team_hierarchy,
+        'approval_history': approval_history,
+        'filters': {
+            'employee': employee_filter,
+            'leave_type': leave_type_filter,
+            'status': status_filter,
+            'date_range': date_range
+        }
+    })
 
 @login_required
 @user_passes_test(is_manager)
 def manage_leave_request_manager(request, leave_id, action):
-    """Manager approves or rejects team leave requests."""
+    """Manager approves or rejects team leave requests with comprehensive validation."""
     leave_request = get_object_or_404(
-        Leave,
+        Leave.objects.select_related('user', 'approver'),
         id=leave_id,
         user__employee__reporting_manager=request.user
     )
+    
+    # Check if leave request is already processed
+    if leave_request.status != 'Pending':
+        messages.error(request, f"This leave request is already {leave_request.status.lower()}.")
+        return redirect('aps_manager:view_leave_requests_manager')
 
     if request.method == 'POST':
         try:
-            if action == 'approve':
-                leave_request.status = 'Approved'
-                leave_request.approver = request.user
-                leave_request.save()
-                messages.success(request, f"Leave for {leave_request.user.username} approved.")
-            elif action == 'reject':
-                leave_request.status = 'Rejected'
-                leave_request.approver = request.user
-                leave_request.rejection_reason = request.POST.get('rejection_reason')
-                leave_request.save()
-                messages.warning(request, f"Leave for {leave_request.user.username} rejected.")
-            return redirect('aps_manager:view_leave_requests_manager')
+            with transaction.atomic():
+                if action == 'approve':
+                    # Check team coverage during leave period
+                    team_on_leave = Leave.objects.filter(
+                        user__employee__reporting_manager=request.user,
+                        status='Approved',
+                        start_date__lte=leave_request.end_date,
+                        end_date__gte=leave_request.start_date
+                    ).exclude(id=leave_id).count()
+                    
+                    team_size = User.objects.filter(
+                        employee__reporting_manager=request.user
+                    ).count()
+                    
+                    if team_on_leave >= (team_size / 2):
+                        messages.warning(request, f"Warning: {team_on_leave} out of {team_size} team members will be on leave during this period.")
+                    
+                    leave_request.status = 'Approved'
+                    leave_request.approver = request.user
+                    leave_request.approval_date = timezone.now()
+                    leave_request.save()
+                    
+                    # Log the approval
+                    logger.info(f"Leave ID {leave_id} for {leave_request.user.username} approved by manager {request.user.username}")
+                    
+                    messages.success(request, f"Leave for {leave_request.user.get_full_name() or leave_request.user.username} approved.")
+                
+                elif action == 'reject':
+                    rejection_reason = request.POST.get('rejection_reason')
+                    if not rejection_reason:
+                        messages.error(request, "Rejection reason is required.")
+                        return render(request, 'components/manager/manage_leave.html', {
+                            'leave_request': leave_request,
+                            'action': action.capitalize(),
+                            'leave_balance': Leave.get_leave_balance(leave_request.user)
+                        })
+                    
+                    leave_request.status = 'Rejected'
+                    leave_request.approver = request.user
+                    leave_request.rejection_reason = rejection_reason
+                    leave_request.approval_date = timezone.now()
+                    leave_request.save()
+                    
+                    # Log the rejection
+                    logger.info(f"Leave ID {leave_id} for {leave_request.user.username} rejected by manager {request.user.username}")
+                    
+                    messages.warning(request, f"Leave for {leave_request.user.get_full_name() or leave_request.user.username} rejected.")
+                
+                return redirect('aps_manager:view_leave_requests_manager')
+        
         except Exception as e:
+            logger.error(f"Error processing leave request: {str(e)}")
             messages.error(request, f"Error processing leave request: {str(e)}")
             return redirect('aps_manager:view_leave_requests_manager')
 
+    # Get leave history for context
+    leave_history = Leave.objects.filter(user=leave_request.user).exclude(id=leave_id).order_by('-created_at')[:10]
+    
     return render(request, 'components/manager/manage_leave.html', {
         'leave_request': leave_request,
-        'action': action.capitalize()
+        'action': action.capitalize(),
+        'leave_balance': Leave.get_leave_balance(leave_request.user),
+        'leave_history': leave_history,
+        'team_on_leave': Leave.objects.filter(
+            user__employee__reporting_manager=request.user,
+            status='Approved',
+            start_date__lte=leave_request.end_date,
+            end_date__gte=leave_request.start_date
+        ).exclude(id=leave_id).count()
     })
 
 @login_required
 @user_passes_test(is_admin)
 def view_leave_requests_admin(request):
-    """Admin views all leave requests."""
-    leave_requests = Leave.objects.all().order_by('-created_at')
-    return render(request, 'components/admin/view_leave_requests.html', {'leave_requests': leave_requests})
+    """Admin views all leave requests with comprehensive filtering and organizational hierarchy."""
+    # Apply filters
+    employee_filter = request.GET.get('employee', '')
+    leave_type_filter = request.GET.get('leave_type', '')
+    status_filter = request.GET.get('status', '')
+    date_range = request.GET.get('date_range', '')
+    
+    # Admin can see all leave requests
+    leave_requests = Leave.objects.all().select_related('user', 'approver').order_by('-created_at')
+    
+    # Apply filters
+    if employee_filter:
+        leave_requests = leave_requests.filter(
+            Q(user__username__icontains=employee_filter) | 
+            Q(user__first_name__icontains=employee_filter) | 
+            Q(user__last_name__icontains=employee_filter)
+        )
+    
+    if leave_type_filter:
+        leave_requests = leave_requests.filter(leave_type=leave_type_filter)
+    
+    if status_filter:
+        leave_requests = leave_requests.filter(status=status_filter)
+    
+    if date_range:
+        try:
+            date_parts = date_range.split(' - ')
+            start_date = datetime.strptime(date_parts[0], '%Y-%m-%d').date()
+            end_date = datetime.strptime(date_parts[1], '%Y-%m-%d').date()
+            leave_requests = leave_requests.filter(
+                Q(start_date__range=[start_date, end_date]) | 
+                Q(end_date__range=[start_date, end_date])
+            )
+        except (ValueError, IndexError):
+            messages.error(request, "Invalid date range format")
+    
+    # Separate HR and manager requests that need admin approval
+    hr_manager_requests = leave_requests.filter(
+        Q(user__groups__name='HR') | 
+        Q(user__groups__name='Manager'),
+        status='Pending'
+    )
+    
+    # Other requests for reference
+    other_requests = leave_requests.exclude(
+        Q(user__groups__name='HR') | 
+        Q(user__groups__name='Manager'),
+        status='Pending'
+    )
+    
+    # Get organizational hierarchy data
+    org_hierarchy = {
+        'admin': User.objects.filter(groups__name='Admin').count(),
+        'hr': User.objects.filter(groups__name='HR').count(),
+        'managers': User.objects.filter(groups__name='Manager').count(),
+        'employees': User.objects.filter(groups__name='Employee').count(),
+    }
+    
+    # Get approval history for audit trail
+    approval_history = Leave.objects.exclude(approver=None).values(
+        'user__username', 'user__first_name', 'user__last_name',
+        'approver__username', 'approver__first_name', 'approver__last_name',
+        'status', 'created_at', 'updated_at', 'leave_type'
+    ).order_by('-updated_at')[:100]  # Last 100 approvals
+    
+    return render(request, 'components/admin/view_leave_requests.html', {
+        'hr_manager_requests': hr_manager_requests,
+        'other_requests': other_requests,
+        'leave_types': Leave.LEAVE_TYPES,
+        'status_choices': Leave.STATUS_CHOICES,
+        'org_hierarchy': org_hierarchy,
+        'approval_history': approval_history,
+        'filters': {
+            'employee': employee_filter,
+            'leave_type': leave_type_filter,
+            'status': status_filter,
+            'date_range': date_range
+        }
+    })
+
+@login_required
+@user_passes_test(is_admin)
+def manage_leave_request_admin(request, leave_id, action):
+    """Admin approves or rejects HR and manager leave requests with comprehensive validation."""
+    leave_request = get_object_or_404(Leave.objects.select_related('user', 'approver'), id=leave_id)
+    
+    # Admin should only approve/reject HR and manager requests
+    if not (is_hr(leave_request.user) or is_manager(leave_request.user)):
+        messages.error(request, "Admin should only approve HR and Manager leave requests.")
+        return redirect('aps_admin:view_leave_requests_admin')
+    
+    # Check if leave request is already processed
+    if leave_request.status != 'Pending':
+        messages.error(request, f"This leave request is already {leave_request.status.lower()}.")
+        return redirect('aps_admin:view_leave_requests_admin')
+
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+                if action == 'approve':
+                    # For HR and managers, check organizational impact
+                    if is_hr(leave_request.user):
+                        # Check if other HR personnel are available during this period
+                        other_hr_on_leave = Leave.objects.filter(
+                            user__groups__name='HR',
+                            status='Approved',
+                            start_date__lte=leave_request.end_date,
+                            end_date__gte=leave_request.start_date
+                        ).exclude(id=leave_id).count()
+                        
+                        total_hr = User.objects.filter(groups__name='HR').count()
+                        
+                        if other_hr_on_leave >= (total_hr / 2):
+                            messages.warning(request, f"Warning: {other_hr_on_leave} out of {total_hr} HR personnel will be on leave during this period.")
+                    
+                    elif is_manager(leave_request.user):
+                        # Check team coverage for manager's absence
+                        team_size = User.objects.filter(employee__reporting_manager=leave_request.user).count()
+                        if team_size > 0:
+                            messages.info(request, f"Note: This manager has {team_size} direct reports.")
+                    
+                    leave_request.status = 'Approved'
+                    leave_request.approver = request.user
+                    leave_request.approval_date = timezone.now()
+                    leave_request.save()
+                    
+                    # Log the approval
+                    logger.info(f"Leave ID {leave_id} for {leave_request.user.username} approved by admin {request.user.username}")
+                    
+                    messages.success(request, f"Leave for {leave_request.user.get_full_name() or leave_request.user.username} approved.")
+                
+                elif action == 'reject':
+                    rejection_reason = request.POST.get('rejection_reason')
+                    if not rejection_reason:
+                        messages.error(request, "Rejection reason is required.")
+                        return render(request, 'components/admin/manage_leave.html', {
+                            'leave_request': leave_request,
+                            'action': action.capitalize(),
+                            'leave_balance': Leave.get_leave_balance(leave_request.user)
+                        })
+                    
+                    leave_request.status = 'Rejected'
+                    leave_request.approver = request.user
+                    leave_request.rejection_reason = rejection_reason
+                    leave_request.approval_date = timezone.now()
+                    leave_request.save()
+                    
+                    # Log the rejection
+                    logger.info(f"Leave ID {leave_id} for {leave_request.user.username} rejected by admin {request.user.username}")
+                    
+                    messages.warning(request, f"Leave for {leave_request.user.get_full_name() or leave_request.user.username} rejected.")
+                
+                return redirect('aps_admin:view_leave_requests_admin')
+        
+        except Exception as e:
+            logger.error(f"Error processing leave request: {str(e)}")
+            messages.error(request, f"Error processing leave request: {str(e)}")
+            return redirect('aps_admin:view_leave_requests_admin')
+
+    # Get organizational context
+    org_context = {}
+    
+    if is_hr(leave_request.user):
+        org_context['role'] = 'HR'
+        org_context['other_hr'] = User.objects.filter(groups__name='HR').exclude(id=leave_request.user.id).count()
+        org_context['hr_on_leave'] = Leave.objects.filter(
+            user__groups__name='HR',
+            status='Approved',
+            start_date__lte=leave_request.end_date,
+            end_date__gte=leave_request.start_date
+        ).exclude(user=leave_request.user).count()
+    
+    elif is_manager(leave_request.user):
+        org_context['role'] = 'Manager'
+        org_context['team_size'] = User.objects.filter(employee__reporting_manager=leave_request.user).count()
+        org_context['team_on_leave'] = Leave.objects.filter(
+            user__employee__reporting_manager=leave_request.user,
+            status='Approved',
+            start_date__lte=leave_request.end_date,
+            end_date__gte=leave_request.start_date
+        ).count()
+
+    # Get leave history for context
+    leave_history = Leave.objects.filter(user=leave_request.user).exclude(id=leave_id).order_by('-created_at')[:10]
+    
+    return render(request, 'components/admin/manage_leave.html', {
+        'leave_request': leave_request,
+        'action': action.capitalize(),
+        'leave_balance': Leave.get_leave_balance(leave_request.user),
+        'leave_history': leave_history,
+        'org_context': org_context
+    })
+
 
 
 ''' ------------------------------------------- PROJECT AREA ------------------------------------------- '''

@@ -11,6 +11,7 @@ admin_patterns = [
     path('reports/system_errors/', views.system_error_view, name='system_errors'),
     path('reports/system_usage/', views.system_usage_view, name='system_usage'),
     path('leave/requests/', views.view_leave_requests_admin, name='view_leave_requests_admin'),
+    path('leave/requests/<int:leave_id>/<str:action>/', views.manage_leave_request_admin, name='manage_leave_request_admin'),
     path('projects_dashboard/', views.project_dashboard, name='project_dashboard'),
     path('projects/create/', views.project_create, name='project_create'),
     path('projects/update/<int:project_id>/', views.project_update, name='project_update'),
@@ -38,7 +39,7 @@ employee_patterns = [
 # HR-specific URLs under 'truealign/hr/'
 hr_patterns = [
     path('leave/requests/', views.view_leave_requests_hr, name='view_leave_requests_hr'),
-    path('leave/<int:leave_id>/<str:action>/', views.manage_leave_request_hr, name='manage_leave_hr'),
+    path('leave/<int:leave_id>/<str:action>/', views.manage_leave_request_hr, name='manage_leave_request_hr'),
     path('attendance/', views.hr_attendance_view, name='attendance'),
     path('dashboard/', views.hr_dashboard, name='hr_dashboard'),
     path('user/<int:user_id>/', views.hr_user_detail, name='hr_user_detail'),
@@ -71,7 +72,7 @@ hr_patterns = [
 # Manager-specific URLs under 'truealign/manager/'
 manager_patterns = [
     path('projects/', views.manager_project_view, {'action': 'list'}, name='project_list'),
-    path('projects/create/', views.manager_project_view, {'action': 'create'}, name='project_create'),
+    path('projects/create/', views.manager_project_view, {'action': 'create'}, name='project_create'), 
     path('projects/update/<int:project_id>/', views.manager_project_view, {'action': 'update'}, name='project_update'),
     path('projects/detail/<int:project_id>/', views.manager_project_view, {'action': 'detail'}, name='project_detail'),
     path('employee/', views.manager_employee_profile, name='manager_employee_profile'),
