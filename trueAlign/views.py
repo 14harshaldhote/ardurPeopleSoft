@@ -4409,16 +4409,36 @@ def reactivate_employee(request, project_id):
                 return JsonResponse({'status': 'error', 'message': 'User ID is required'}, status=400)
 
             user = get_object_or_404(User, id=user_id)
-            assignment = project.projectassignment_set.filter(user=user, is_active=False).first()
+            
+            # Find the most recent inactive assignment for this user in this project
+            assignment = ProjectAssignment.objects.filter(
+                project=project,
+                user=user,
+                is_active=False
+            ).order_by('-end_date').first()
 
             if not assignment:
                 return JsonResponse({'status': 'error', 'message': 'No removed assignment found for this user'}, status=404)
 
+            # Reactivate the assignment
             assignment.is_active = True
             assignment.end_date = None  # Clear end date
             assignment.save()
+            
+            # Log the reactivation
+            UserActionLog.objects.create(
+                user=user,
+                action_type='update',
+                action_by=request.user,
+                details=f"Reactivated in project: {project.name}"
+            )
 
-            return JsonResponse({'status': 'success', 'message': 'Employee reactivated successfully'})
+            return JsonResponse({
+                'status': 'success', 
+                'message': 'Employee reactivated successfully',
+                'user_name': user.get_full_name() or user.username,
+                'role': assignment.role_in_project
+            })
 
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
@@ -4543,6 +4563,7 @@ def assign_users_to_project(request, project, client_ids=None):
                 defaults={'feedback': '', 'approved': False}
             )
 
+            
 @login_required
 @user_passes_test(is_manager)
 def manager_project_view(request, action=None, project_id=None):
@@ -4551,27 +4572,39 @@ def manager_project_view(request, action=None, project_id=None):
     # Get all managers and employees
     managers = User.objects.filter(groups__name='Manager')
     employees = User.objects.filter(groups__name='Employee')
+    clients = User.objects.filter(groups__name='Client')
 
     # Action to list all projects
     if action == "list":
         # Get the current manager's projects
-        assignments = ProjectAssignment.objects.filter(user=request.user, role_in_project='Manager')
+        assignments = ProjectAssignment.objects.filter(user=request.user, role_in_project='Manager', is_active=True)
         projects = [assignment.project for assignment in assignments]
         
         return render(request, 'components/manager/project_view.html', {
             'projects': projects,
             'managers': managers,
-            'employees': employees
+            'employees': employees,
+            'clients': clients,
+            'action': 'list'
         })
-
 
     # Action to view project details
     elif action == "detail" and project_id:
         project = get_object_or_404(Project, id=project_id)
-        assignments = ProjectAssignment.objects.filter(project=project)
+        active_assignments = project.projectassignment_set.filter(is_active=True)
+        # Get all inactive assignments, not just the most recent ones
+        removed_assignments = project.projectassignment_set.filter(is_active=False).order_by('-end_date')
+        client_participations = project.client_participations.all()
+        
         context = {
             'project': project,
-            'assignments': assignments,
+            'active_assignments': active_assignments,
+            'removed_assignments': removed_assignments,
+            'employees': employees,
+            'clients': clients,
+            'client_participations': client_participations,
+            'role_choices': dict(ProjectAssignment._meta.get_field('role_in_project').choices),
+            'action': 'detail'
         }
         return render(request, 'components/manager/project_view.html', context)
 
@@ -4579,114 +4612,184 @@ def manager_project_view(request, action=None, project_id=None):
     elif action == "create":
         if request.method == 'POST':
             try:
-                # Extract form data from request.POST
-                name = request.POST.get('name')
-                description = request.POST.get('description')
-                due_date = request.POST.get('due_date')
-                
-                # Create the project first
-                project = Project.objects.create(
-                    name=name,
-                    description=description,
-                    deadline=due_date,
-                    status='Not Started'  # Set a default status
-                )
-                
-                # Assign the manager if selected
-                manager_id = request.POST.get('manager')
-                if manager_id:
-                    try:
-                        manager = User.objects.get(id=manager_id)
-                        ProjectAssignment.objects.create(
-                            project=project,
-                            user=manager,
-                            role_in_project='Manager'
-                        )
-                    except User.DoesNotExist:
-                        messages.warning(request, "Selected manager not found.")
-                
-                # Handle employee assignments
-                employee_ids = request.POST.getlist('employees')  # Get selected employees
-                for employee_id in employee_ids:
-                    try:
-                        employee = User.objects.get(id=employee_id)
-                        ProjectAssignment.objects.create(
-                            project=project,
-                            user=employee,
-                            role_in_project='Employee'
-                        )
-                    except User.DoesNotExist:
-                        messages.warning(request, f"Employee with ID {employee_id} not found.")
-
-                messages.success(request, "Project created successfully!")
-                return redirect('aps_manager:project_detail', project_id=project.id)
+                with transaction.atomic():
+                    # Create the project
+                    project = create_project(request)
+                    
+                    # Log the action - removed log_user_action call
+                    
+                    messages.success(request, "Project created successfully!")
+                    return redirect('aps_manager:project_detail', project_id=project.id)
             
+            except ValidationError as e:
+                messages.error(request, str(e))
             except Exception as e:
                 messages.error(request, f"Error creating project: {str(e)}")
-                return redirect('aps_manager:project_list')
+                logger.error(f"Project creation error: {str(e)}")
 
-        # GET request - show the creation form
         return render(request, 'components/manager/project_view.html', {
-            'managers': managers,
             'employees': employees,
+            'managers': managers,
+            'clients': clients,
+            'action': 'create'
         })
 
     # Action to update an existing project
     elif action == "update" and project_id:
         project = get_object_or_404(Project, id=project_id)
+        
+        # Verify manager has permission
+        if not project.projectassignment_set.filter(user=request.user, role_in_project='Manager', is_active=True).exists():
+            messages.error(request, "You don't have permission to update this project")
+            return redirect('aps_manager:project_list')
 
         if request.method == 'POST':
             try:
-                # Update project fields from request.POST
-                project.name = request.POST.get('name', project.name)
-                project.description = request.POST.get('description', project.description)
-                project.status = request.POST.get('status', project.status)
-                project.deadline = request.POST.get('deadline', project.deadline)
-                project.save()
+                with transaction.atomic():
+                    # Update the project
+                    updated_project = update_project(request, project)
+                    
+                    # Handle employee assignments
+                    assign_users_to_project(request, updated_project)
+                    
+                    # Log the action - removed log_user_action call
+                    
+                    messages.success(request, "Project updated successfully!")
+                    return redirect('aps_manager:project_detail', project_id=project.id)
 
-                # Update assignments - first delete existing assignments
-                ProjectAssignment.objects.filter(project=project).delete()
-                
-                # Recreate manager assignment
-                manager_id = request.POST.get('manager')
-                if manager_id:
-                    try:
-                        manager = User.objects.get(id=manager_id)
-                        ProjectAssignment.objects.create(
-                            project=project,
-                            user=manager,
-                            role_in_project='Manager'
-                        )
-                    except User.DoesNotExist:
-                        messages.warning(request, "Manager not found.")
-                
-                # Recreate employee assignments
-                employee_ids = request.POST.getlist('employees')  # Get list of selected employees
-                for employee_id in employee_ids:
-                    try:
-                        employee = User.objects.get(id=employee_id)
-                        ProjectAssignment.objects.create(
-                            project=project,
-                            user=employee,
-                            role_in_project='Employee'
-                        )
-                    except User.DoesNotExist:
-                        messages.warning(request, f"Employee with ID {employee_id} not found.")
-
-
-                messages.success(request, "Project updated successfully!")
-                return redirect('aps_manager:project_detail', project_id=project.id)
-
+            except ValidationError as e:
+                messages.error(request, str(e))
             except Exception as e:
                 messages.error(request, f"Error updating project: {str(e)}")
-                return redirect('aps_manager:project_detail', project_id=project.id)
+                logger.error(f"Project update error: {str(e)}")
 
-        # GET request - show the update form
+        # Get current project data for the form
+        active_assignments = project.projectassignment_set.filter(is_active=True)
+        # Include removed assignments for the update view as well
+        removed_assignments = project.projectassignment_set.filter(is_active=False).order_by('-end_date')
+        client_participations = project.client_participations.all()
+        
         return render(request, 'components/manager/project_view.html', {
             'project': project,
-            'managers': managers,
             'employees': employees,
+            'managers': managers,
+            'clients': clients,
+            'active_assignments': active_assignments,
+            'removed_assignments': removed_assignments,
+            'client_participations': client_participations,
+            'action': 'update'
         })
+
+    # Action to manage employees (assign/remove/change role)
+    elif action == "manage_employees" and project_id:
+        project = get_object_or_404(Project, id=project_id)
+        
+        # Verify manager has permission
+        if not project.projectassignment_set.filter(user=request.user, role_in_project='Manager', is_active=True).exists():
+            messages.error(request, "You don't have permission to manage employees for this project")
+            return redirect('aps_manager:project_list')
+        
+        if request.method == 'POST':
+            try:
+                user_id = request.POST.get('user_id')
+                role = request.POST.get('role', 'Employee')
+                action_type = request.POST.get('action')
+                hours = request.POST.get('hours')
+                
+                user = get_object_or_404(User, id=user_id)
+                
+                with transaction.atomic():
+                    if action_type == 'assign':
+                        # Check if there's an inactive assignment first
+                        inactive_assignment = project.projectassignment_set.filter(
+                            user=user, 
+                            is_active=False
+                        ).order_by('-end_date').first()
+                        
+                        if inactive_assignment:
+                            # Reactivate the existing assignment
+                            inactive_assignment.is_active = True
+                            inactive_assignment.end_date = None
+                            inactive_assignment.role_in_project = role
+                            inactive_assignment.save()
+                            
+                            # Log the reactivation
+                            UserActionLog.objects.create(
+                                user=user,
+                                action_type='update',
+                                action_by=request.user,
+                                details=f"Reactivated in project: {project.name}"
+                            )
+                        else:
+                            # Create new assignment
+                            ProjectAssignment.objects.create(
+                                project=project,
+                                user=user,
+                                role_in_project=role,
+                                is_active=True
+                            )
+                        
+                    elif action_type == 'remove':
+                        # Soft delete by marking inactive
+                        assignment = project.projectassignment_set.filter(user=user, is_active=True).first()
+                        if assignment:
+                            assignment.is_active = False
+                            assignment.end_date = timezone.now().date()
+                            assignment.save()
+                            # Removed log_user_action call
+                    
+                    elif action_type == 'change_role':
+                        # Update role
+                        assignment = project.projectassignment_set.filter(user=user, is_active=True).first()
+                        if assignment:
+                            assignment.role_in_project = role
+                            assignment.save()
+                            # Removed log_user_action call
+                    
+                    elif action_type == 'update_hours' and hours:
+                        # Update worked hours
+                        assignment = project.projectassignment_set.filter(user=user, is_active=True).first()
+                        if assignment:
+                            try:
+                                hours_float = float(hours)
+                                assignment.hours_worked = hours_float
+                                assignment.save()
+                                # Removed log_user_action call
+                            except ValueError:
+                                raise ValidationError("Invalid hours value")
+                    
+                    elif action_type == 'reactivate':
+                        # Find the most recent inactive assignment for this user
+                        inactive_assignment = project.projectassignment_set.filter(
+                            user=user, 
+                            is_active=False
+                        ).order_by('-end_date').first()
+                        
+                        if inactive_assignment:
+                            # Reactivate the assignment
+                            inactive_assignment.is_active = True
+                            inactive_assignment.end_date = None
+                            inactive_assignment.save()
+                            
+                            # Log the reactivation
+                            UserActionLog.objects.create(
+                                user=user,
+                                action_type='update',
+                                action_by=request.user,
+                                details=f"Reactivated in project: {project.name}"
+                            )
+                        else:
+                            raise ValidationError("No inactive assignment found for this user")
+                
+                messages.success(request, "Employee assignment updated successfully!")
+                
+            except ValidationError as e:
+                messages.error(request, str(e))
+            except Exception as e:
+                messages.error(request, f"Error managing employees: {str(e)}")
+                logger.error(f"Employee management error: {str(e)}")
+                
+        return redirect('aps_manager:project_detail', project_id=project.id)
 
     return redirect('aps_manager:project_list')
 

@@ -71,24 +71,34 @@ hr_patterns = [
 
 # Manager-specific URLs under 'truealign/manager/'
 manager_patterns = [
+    # Project management URLs
     path('projects/', views.manager_project_view, {'action': 'list'}, name='project_list'),
-    path('projects/create/', views.manager_project_view, {'action': 'create'}, name='project_create'), 
+    path('projects/create/', views.manager_project_view, {'action': 'create'}, name='project_create'),
     path('projects/update/<int:project_id>/', views.manager_project_view, {'action': 'update'}, name='project_update'),
     path('projects/detail/<int:project_id>/', views.manager_project_view, {'action': 'detail'}, name='project_detail'),
+    path('projects/<int:project_id>/manage-employees/', views.manager_project_view, {'action': 'manage_employees'}, name='manage_employees'),
+
+    # Project updates
+    path('project-updates/create/', views.manager_create_project_update, name='manager_create_project_update'),
+    path('project-updates/<int:update_id>/edit/', views.manager_edit_project_update, name='manager_edit_project_update'),
+    path('project-updates/<int:update_id>/delete/', views.manager_delete_project_update, name='manager_delete_project_update'),
+
+    # Employee management
     path('employee/', views.manager_employee_profile, name='manager_employee_profile'),
     path('user/<int:user_id>/', views.manager_user_detail, name='manager_user_detail'),
-    path('create-project-update/', views.manager_create_project_update, name='manager_create_project_update'),
-    path('edit-project-update/<int:update_id>/', views.manager_edit_project_update, name='manager_edit_project_update'),
-    path('delete-project-update/<int:update_id>/', views.manager_delete_project_update, name='manager_delete_project_update'),
+    path('assign-tasks/', views.assign_tasks, name='assign_tasks'),
+
+    # Reports and monitoring
     path('report/', views.manager_report_view, name='report'),
     path('reports/breaks/', views.break_report_view_manager, name='break_report_view_manager'),
     path('reports/attendance/', views.attendance_report_view_manager, name='attendance_report_view_manager'),
+    path('attendance/', views.manager_attendance_view, name='attendance'),
+    path('timesheets/', views.manager_view_timesheets, name='view_timesheets'),
+    path('timesheets/bulk-update/', views.bulk_update_timesheet, name='bulk_update_timesheet'),
+
+    # Leave management
     path('leave/requests/', views.view_leave_requests_manager, name='view_leave_requests_manager'),
     path('leave/<int:leave_id>/<str:action>/', views.manage_leave_request_manager, name='manage_leave_manager'),
-    path('view_timesheets/', views.manager_view_timesheets, name='view_timesheets'),
-    path('bulk-update-timesheet/', views.bulk_update_timesheet, name='bulk_update_timesheet'),
-    path('assign_tasks/', views.assign_tasks, name='assign_tasks'),
-    path('attendance/', views.manager_attendance_view, name='attendance'),
 ]
 
 # Chat URL patterns

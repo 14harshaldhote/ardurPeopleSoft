@@ -1,186 +1,621 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-thin text-gray-800 mb-6">Project Management</h1>
-
-    {% if not project %}
-    <!-- Manager's Project List Section -->
-    <div class="rounded-lg shadow-md p-6 mb-8">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-medium text-gray-600">Assigned Projects</h2>
+<div class="min-h-screen bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h1 class="text-4xl font-bold text-gray-900">Project Dashboard</h1>
+                <p class="text-gray-600 mt-1">Manage and monitor your projects</p>
+            </div>
+            {% if not project %}
             <button onclick="document.getElementById('createProjectForm').scrollIntoView({ behavior: 'smooth' })"
-                class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition duration-200 flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd"
-                        d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
-                        clip-rule="evenodd" />
+                class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg shadow-lg transition duration-200 flex items-center group">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 transform group-hover:rotate-180 transition-transform duration-300" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
                 </svg>
-                New Project
+                Create New Project
             </button>
+            {% endif %}
         </div>
 
-        <!-- Project Search and Filter Section -->
-        <div class="mb-6">
-            <div class="flex gap-4">
-                <div class="flex-1">
-                    <input type="text" placeholder="Search projects..."
-                        class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+        {% if not project %}
+        <!-- Project Overview Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-green-500">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-green-100 mr-4">
+                        <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Completed Projects</p>
+                    </div>
                 </div>
-                <select
-                    class="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-blue-500">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-blue-100 mr-4">
+                        <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">In Progress</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-yellow-500">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-yellow-100 mr-4">
+                        <svg class="h-6 w-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Pending Projects</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search and Filter Section -->
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
+            <div class="flex flex-col md:flex-row md:items-center gap-4">
+                <div class="flex-1">
+                    <div class="relative">
+                        <input type="text" id="projectSearch" placeholder="Search projects..."
+                            class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                        <svg class="absolute left-3 top-3.5 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                </div>
+                <select id="statusFilter" class="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 min-w-[200px]">
                     <option value="">All Status</option>
-                    <option value="not_started">Not Started</option>
-                    <option value="in_progress">In Progress</option>
-                    <option value="completed">Completed</option>
+                    <option value="Pending">Pending</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Completed">Completed</option>
                 </select>
             </div>
         </div>
 
-        <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <!-- Project Grid -->
+        <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {% for project in projects %}
-            <!-- Project Card -->
-            <div
-                class="bg-white border-l-4 border-blue-600 border-t border-r border-b border-gray-200 rounded-lg hover:shadow-lg transition-all duration-300 ease-in-out">
-                <a href="{% url 'aps_manager:project_detail' project_id=project.id %}" class="block p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3
-                            class="text-xl font-semibold text-gray-800 hover:text-blue-600 transition-colors duration-300">
-                            {{ project.name }}
-                        </h3>
-                        <span class="px-4 py-1.5 rounded-full text-sm font-medium tracking-wide
-                        {% if project.status == 'Completed' %}bg-emerald-50 text-emerald-700 border border-emerald-200
-                        {% elif project.status == 'In Progress' %}bg-blue-50 text-blue-700 border border-blue-200
-                        {% else %}bg-gray-50 text-gray-700 border border-gray-200{% endif %}">
-                            {{ project.status }}
-                        </span>
-                    </div>
-
-                    <p class="text-gray-600 text-sm leading-relaxed mb-6 line-clamp-2">
-                        {{ project.description }}
-                    </p>
-
-                    <div class="flex items-center justify-between pt-4 border-t border-gray-100">
-                        <div class="flex items-center space-x-2">
-                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                            <span class="text-sm text-gray-500">
-                                Due: <span class="font-medium text-gray-700">{{ project.deadline }}</span>
+            <div class="project-card group bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden">
+                <a href="{% url 'aps_manager:project_detail' project_id=project.id %}" class="block">
+                    <div class="p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-xl font-bold text-gray-900 group-hover:text-indigo-600 transition-colors duration-300 project-name">
+                                {{ project.name }}
+                            </h3>
+                            <span class="px-4 py-1.5 rounded-full text-sm font-semibold project-status
+                                {% if project.status == 'Completed' %}bg-green-100 text-green-800
+                                {% elif project.status == 'In Progress' %}bg-blue-100 text-blue-800
+                                {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                {{ project.status }}
                             </span>
                         </div>
-                        <svg class="w-5 h-5 text-gray-400 transform group-hover:translate-x-1 transition-transform duration-300"
-                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                        </svg>
+
+                        <p class="text-gray-600 text-sm leading-relaxed mb-6 line-clamp-2">{{ project.description }}</p>
+
+                        <!-- Team Members -->
+                        <div class="flex -space-x-3 mb-4">
+                            {% for assignment in project.active_assignments|slice:":4" %}
+                            <div class="w-10 h-10 rounded-full bg-indigo-100 border-2 border-white flex items-center justify-center ring-2 ring-indigo-50">
+                                <span class="text-sm font-semibold text-indigo-700">{{ assignment.user.get_full_name|make_list|first }}</span>
+                            </div>
+                            {% endfor %}
+                            {% if project.active_assignments.count > 4 %}
+                            <div class="w-10 h-10 rounded-full bg-gray-100 border-2 border-white flex items-center justify-center">
+                                <span class="text-sm font-semibold text-gray-600">+{{ project.active_assignments.count|add:"-4" }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="flex items-center justify-between pt-4 border-t border-gray-100">
+                            <div class="flex items-center space-x-2">
+                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                <span class="text-sm font-medium {% if project.is_deadline_close %}text-red-600{% else %}text-gray-600{% endif %}">
+                                    Due: {{ project.deadline }}
+                                </span>
+                            </div>
+                            <a href="{% url 'aps_manager:project_update' project_id=project.id %}" 
+                               class="text-indigo-600 hover:text-indigo-800 p-2 rounded-full hover:bg-indigo-50 transition-colors duration-200">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                </svg>
+                            </a>
+                        </div>
                     </div>
                 </a>
             </div>
             {% empty %}
-            <div class="col-span-full text-center py-8 text-gray-500">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-4 text-gray-400" fill="none"
-                    viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                </svg>
-                <p>No projects assigned</p>
+            <div class="col-span-full">
+                <div class="text-center py-12 bg-white rounded-xl shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-400 mb-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                    </svg>
+                    <h3 class="text-xl font-medium text-gray-900 mb-2">No Projects Yet</h3>
+                    <p class="text-gray-600 mb-6">Start by creating your first project</p>
+                    <button onclick="document.getElementById('createProjectForm').scrollIntoView({ behavior: 'smooth' })"
+                        class="inline-flex items-center px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg shadow-sm transition duration-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                        </svg>
+                        Create Your First Project
+                    </button>
+                </div>
             </div>
             {% endfor %}
         </div>
-    </div>
-    {% else %}
-    <!-- Manager's Project Details Section -->
-    <div class="bg-white rounded-lg shadow-md p-6">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-bold text-gray-800">{{ project.name }}</h2>
-            <div class="flex gap-4">
-                <a href="{% url 'aps_manager:project_list' %}" class="text-gray-600 hover:text-gray-800">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                    </svg>
-                </a>
-            </div>
+
+        <!-- Create Project Form -->
+        <div id="createProjectForm" class="bg-white rounded-xl shadow-lg p-8 mt-12">
+            <h2 class="text-2xl font-bold text-gray-900 mb-8">Create New Project</h2>
+            <form method="POST" action="{% url 'aps_manager:project_create' %}" class="space-y-8">
+                {% csrf_token %}
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Project Name</label>
+                            <input type="text" name="name" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+                            <input type="date" name="start_date" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                    </div>
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Deadline</label>
+                            <input type="date" name="deadline" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Team Members</label>
+                            <select name="employees" multiple required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                {% for employee in employees %}
+                                    <option value="{{ employee.id }}">{{ employee.get_full_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Project Description</label>
+                    <textarea name="description" rows="4" required
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                </div>
+                <div class="flex justify-end">
+                    <button type="submit"
+                        class="inline-flex items-center px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg shadow-sm transition duration-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                        </svg>
+                        Create Project
+                    </button>
+                </div>
+            </form>
         </div>
 
-        {% if project %}
-        <div class="grid md:grid-cols-2 gap-8">
-            <div class="space-y-6">
+        {% else %}
+        <!-- Project Detail View -->
+        <div class="bg-white rounded-xl shadow-lg p-8">
+            <div class="flex justify-between items-start mb-8">
                 <div>
-                    <h3 class="text-lg font-semibold mb-2">Description</h3>
-                    <p class="text-gray-600">{{ project.description }}</p>
-                </div>
-                <div class="flex gap-6">
-                    <div>
-                        <h4 class="text-sm font-medium text-gray-700 mb-1">Status</h4>
-                        <span class="px-3 py-1 rounded-full text-sm inline-block
-                                {% if project.status == 'Completed' %}bg-green-100 text-green-800
-                                {% elif project.status == 'In Progress' %}bg-blue-100 text-blue-800
-                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                    <div class="flex items-center gap-4 mb-2">
+                        <h2 class="text-3xl font-bold text-gray-900">{{ project.name }}</h2>
+                        <span class="px-4 py-1.5 rounded-full text-sm font-semibold
+                            {% if project.status == 'Completed' %}bg-green-100 text-green-800
+                            {% elif project.status == 'In Progress' %}bg-blue-100 text-blue-800
+                            {% else %}bg-yellow-100 text-yellow-800{% endif %}">
                             {{ project.status }}
                         </span>
                     </div>
-                    <div>
-                        <h4 class="text-sm font-medium text-gray-700 mb-1">Due Date</h4>
-                        <p class="text-gray-600">{{ project.deadline }}</p>
-                    </div>
+                    <p class="text-gray-600">Created by {{ project.created_by.get_full_name }}</p>
                 </div>
+                <a href="{% url 'aps_manager:project_list' %}" 
+                    class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition duration-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+                    </svg>
+                    Back to Projects
+                </a>
             </div>
 
-            <!-- Team Members Section -->
-            <div class="bg-gray-50 rounded-lg p-6">
-                <h3 class="text-lg font-semibold mb-4">Team Members</h3>
-                <div class="space-y-3">
-                    {% for assignment in assignments %}
-                    <div class="bg-white p-4 rounded-lg shadow-sm flex justify-between items-center">
-                        <div>
-                            <p class="font-medium">{{ assignment.user.first_name }} {{ assignment.user.last_name }} ({{
-                                assignment.user.username }})</p>
-                            <p class="text-sm text-gray-600">{{ assignment.role_in_project }}</p>
+            <div class="grid md:grid-cols-2 gap-8">
+                <!-- Project Details -->
+                <div class="space-y-8">
+                    <div class="bg-gray-50 rounded-xl p-6">
+                        <h3 class="text-xl font-semibold text-gray-900 mb-4">Project Overview</h3>
+                        <p class="text-gray-700 leading-relaxed">{{ project.description }}</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-6">
+                        <div class="bg-gray-50 rounded-xl p-6">
+                            <h4 class="text-sm font-medium text-gray-600 mb-2">Start Date</h4>
+                            <p class="text-lg font-semibold text-gray-900">{{ project.start_date }}</p>
                         </div>
-                        {% if assignment.role_in_project == 'Manager' %}
-                        <span class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm">Manager</span>
-                        {% endif %}
+                        <div class="bg-gray-50 rounded-xl p-6">
+                            <h4 class="text-sm font-medium text-gray-600 mb-2">Deadline</h4>
+                            <p class="text-lg font-semibold {% if project.is_overdue %}text-red-600{% else %}text-gray-900{% endif %}">
+                                {{ project.deadline }}
+                            </p>
+                            <button onclick="editDeadline('{{ project.deadline|date:'Y-m-d' }}')" class="mt-2 text-sm text-indigo-600 hover:text-indigo-800">
+                                Edit Deadline
+                            </button>
+                        </div>
                     </div>
-                    {% empty %}
-                    <div class="text-center py-6 text-gray-500">
-                        <p>No team members assigned yet</p>
+                </div>
+
+                <!-- Team Members Section -->
+                <div class="bg-gray-50 rounded-xl p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-semibold text-gray-900">Team Members</h3>
+                        <button onclick="document.getElementById('addMemberModal').classList.remove('hidden')"
+                            class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition duration-200">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                            </svg>
+                            Add Member
+                        </button>
                     </div>
-                    {% endfor %}
+                    
+                    <!-- Active Members -->
+                    <div class="space-y-4">
+                        {% for assignment in active_assignments %}
+                        <div class="bg-white rounded-xl p-4 shadow-sm flex justify-between items-center">
+                            <div class="flex items-center">
+                                <div class="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center mr-4">
+                                    <span class="text-xl font-semibold text-indigo-700">{{ assignment.user.get_full_name|make_list|first }}</span>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-gray-900">{{ assignment.user.get_full_name }}</p>
+                                    <p class="text-sm text-gray-600">{{ assignment.get_role_in_project_display }}</p>
+                                </div>
+                            </div>
+                            <div class="flex space-x-2">
+                                {% if assignment.role_in_project != 'Manager' %}
+                                <button onclick="changeRole('{{ assignment.user.id }}')"
+                                    class="p-2 text-gray-600 hover:text-indigo-600 rounded-lg hover:bg-gray-100">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                    </svg>
+                                </button>
+                                <button onclick="removeMember('{{ assignment.user.id }}')"
+                                    class="p-2 text-gray-600 hover:text-red-600 rounded-lg hover:bg-gray-100">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                                {% endif %}
+                                <button onclick="updateHours('{{ assignment.user.id }}', '{{ assignment.hours_worked }}')"
+                                    class="p-2 text-gray-600 hover:text-green-600 rounded-lg hover:bg-gray-100">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    {% if removed_assignments %}
+                    <!-- Removed Members -->
+                    <div class="mt-8">
+                        <h4 class="text-lg font-medium text-gray-900 mb-4">Previous Team Members</h4>
+                        <div class="space-y-3">
+                            {% for assignment in removed_assignments %}
+                            <div class="bg-gray-100 rounded-lg p-4 flex justify-between items-center">
+                                <div>
+                                    <p class="font-medium text-gray-800">{{ assignment.user.get_full_name }}</p>
+                                    <p class="text-sm text-gray-600">Removed: {{ assignment.end_date|date:"M d, Y" }}</p>
+                                </div>
+                                <button onclick="reactivateMember('{{ assignment.user.id }}')" class="text-indigo-600 hover:text-indigo-800 font-medium">
+                                    Reactivate
+                                </button>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
-        </div>
 
-        <!-- Action Buttons -->
-        <div class="flex justify-between mt-8 pt-6 border-t">
-
-            <!-- Add Employee Section (if the manager wants to add employees) -->
-            <a href=""
-                class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition duration-200 flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd"
-                        d="M12.293 2.707a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-7 7a1 1 0 01-.768.293h-3a1 1 0 01-1-1v-3a1 1 0 01.293-.768l7-7a1 1 0 011.414 0l3 3z"
-                        clip-rule="evenodd" />
-                </svg>
-                Add Employee to Project
-            </a>
-
-            <!-- Edit Project Section -->
-            <a href="{% url 'aps_manager:project_update' project_id=project.id %}"
-                class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition duration-200 flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd"
-                        d="M12.293 2.707a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-7 7a1 1 0 01-.768.293h-3a1 1 0 01-1-1v-3a1 1 0 01.293-.768l7-7a1 1 0 011.414 0l3 3z"
-                        clip-rule="evenodd" />
-                </svg>
-                Edit Project
-            </a>
+            <!-- Action Buttons -->
+            <div class="flex justify-end mt-8 pt-6 border-t">
+                <a href="{% url 'aps_manager:project_update' project_id=project.id %}"
+                    class="inline-flex items-center px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 shadow-sm transition duration-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                    </svg>
+                    Edit Project
+                </a>
+            </div>
         </div>
         {% endif %}
     </div>
-    {% endif %}
-
 </div>
+
+<!-- Add Member Modal -->
+<div id="addMemberModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Add Team Member</h3>
+            {% if project %}
+            <form method="POST" action="{% url 'aps_manager:manage_employees' project_id=project.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="assign">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Select Employee</label>
+                    <select name="user_id" required class="w-full p-2 border rounded-md">
+                        {% for employee in employees %}
+                            <option value="{{ employee.id }}">{{ employee.get_full_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Role</label>
+                    <select name="role" required class="w-full p-2 border rounded-md">
+                        {% for role, display in role_choices.items %}
+                            <option value="{{ role }}">{{ display }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="document.getElementById('addMemberModal').classList.add('hidden')"
+                        class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
+                        Add Member
+                    </button>
+                </div>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Edit Deadline Modal -->
+<div id="editDeadlineModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Edit Project Deadline</h3>
+            {% if project %}
+            <form method="POST" action="{% url 'aps_manager:project_update' project_id=project.id %}">
+                {% csrf_token %}
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">New Deadline</label>
+                    <input type="date" id="new_deadline" name="deadline" required class="w-full p-2 border rounded-md">
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="document.getElementById('editDeadlineModal').classList.add('hidden')"
+                        class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
+                        Update Deadline
+                    </button>
+                </div>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Update Hours Modal -->
+<script>
+function editDeadline(currentDeadline) {
+    document.getElementById('new_deadline').value = currentDeadline;
+    document.getElementById('editDeadlineModal').classList.remove('hidden');
+}
+
+function removeMember(userId) {
+    if (confirm('Are you sure you want to remove this team member?')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = "{% if project %}{% url 'aps_manager:manage_employees' project_id=project.id %}{% endif %}";
+        
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        
+        const actionInput = document.createElement('input');
+        actionInput.type = 'hidden';
+        actionInput.name = 'action';
+        actionInput.value = 'remove';
+        
+        const userInput = document.createElement('input');
+        userInput.type = 'hidden';
+        userInput.name = 'user_id';
+        userInput.value = userId;
+        
+        form.appendChild(csrfInput);
+        form.appendChild(actionInput);
+        form.appendChild(userInput);
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function reactivateMember(userId) {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = "{% if project %}{% url 'aps_manager:manage_employees' project_id=project.id %}{% endif %}";
+    
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'csrfmiddlewaretoken';
+    csrfInput.value = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    const actionInput = document.createElement('input');
+    actionInput.type = 'hidden';
+    actionInput.name = 'action';
+    actionInput.value = 'reactivate';
+    
+    const userInput = document.createElement('input');
+    userInput.type = 'hidden';
+    userInput.name = 'user_id';
+    userInput.value = userId;
+    
+    form.appendChild(csrfInput);
+    form.appendChild(actionInput);
+    form.appendChild(userInput);
+    document.body.appendChild(form);
+    form.submit();
+}
+
+function changeRole(userId) {
+    // Create a modal dialog for role selection
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center';
+    
+    const modalContent = document.createElement('div');
+    modalContent.className = 'p-5 border w-96 shadow-lg rounded-md bg-white';
+    
+    const title = document.createElement('h3');
+    title.className = 'text-lg font-medium text-gray-900 mb-4';
+    title.textContent = 'Change Team Member Role';
+    
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = "{% if project %}{% url 'aps_manager:manage_employees' project_id=project.id %}{% endif %}";
+    
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'csrfmiddlewaretoken';
+    csrfInput.value = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    const actionInput = document.createElement('input');
+    actionInput.type = 'hidden';
+    actionInput.name = 'action';
+    actionInput.value = 'change_role';
+    
+    const userInput = document.createElement('input');
+    userInput.type = 'hidden';
+    userInput.name = 'user_id';
+    userInput.value = userId;
+    
+    const roleLabel = document.createElement('label');
+    roleLabel.className = 'block text-sm font-medium text-gray-700 mb-2';
+    roleLabel.textContent = 'Select New Role';
+    
+    const roleSelect = document.createElement('select');
+    roleSelect.name = 'role';
+    roleSelect.required = true;
+    roleSelect.className = 'w-full p-2 border rounded-md mb-4';
+    
+    {% for role, display in role_choices.items %}
+    const option = document.createElement('option');
+    option.value = "{{ role }}";
+    option.textContent = "{{ display }}";
+    roleSelect.appendChild(option);
+    {% endfor %}
+    
+    const buttonContainer = document.createElement('div');
+    buttonContainer.className = 'flex justify-end space-x-3';
+    
+    const cancelButton = document.createElement('button');
+    cancelButton.type = 'button';
+    cancelButton.className = 'px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300';
+    cancelButton.textContent = 'Cancel';
+    cancelButton.onclick = function() {
+        document.body.removeChild(modal);
+    };
+    
+    const submitButton = document.createElement('button');
+    submitButton.type = 'submit';
+    submitButton.className = 'px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600';
+    submitButton.textContent = 'Change Role';
+    
+    buttonContainer.appendChild(cancelButton);
+    buttonContainer.appendChild(submitButton);
+    
+    form.appendChild(csrfInput);
+    form.appendChild(actionInput);
+    form.appendChild(userInput);
+    form.appendChild(roleLabel);
+    form.appendChild(roleSelect);
+    form.appendChild(buttonContainer);
+    
+    modalContent.appendChild(title);
+    modalContent.appendChild(form);
+    
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
+}
+
+function updateHours(userId, currentHours) {
+    const hours = prompt('Enter hours worked:', currentHours || '0');
+    if (hours !== null) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = "{% if project %}{% url 'aps_manager:manage_employees' project_id=project.id %}{% endif %}";
+        
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        
+        const actionInput = document.createElement('input');
+        actionInput.type = 'hidden';
+        actionInput.name = 'action';
+        actionInput.value = 'update_hours';
+        
+        const userInput = document.createElement('input');
+        userInput.type = 'hidden';
+        userInput.name = 'user_id';
+        userInput.value = userId;
+        
+        const hoursInput = document.createElement('input');
+        hoursInput.type = 'hidden';
+        hoursInput.name = 'hours';
+        hoursInput.value = hours;
+        
+        form.appendChild(csrfInput);
+        form.appendChild(actionInput);
+        form.appendChild(userInput);
+        form.appendChild(hoursInput);
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Add search and filter functionality
+document.getElementById('projectSearch').addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    const status = document.getElementById('statusFilter').value;
+    filterProjects(searchTerm, status);
+});
+
+document.getElementById('statusFilter').addEventListener('change', function(e) {
+    const searchTerm = document.getElementById('projectSearch').value.toLowerCase();
+    const status = e.target.value;
+    filterProjects(searchTerm, status);
+});
+
+function filterProjects(searchTerm, status) {
+    const projects = document.querySelectorAll('.project-card');
+    projects.forEach(project => {
+        const name = project.querySelector('.project-name').textContent.toLowerCase();
+        const projectStatus = project.querySelector('.project-status').textContent;
+        
+        const matchesSearch = name.includes(searchTerm);
+        const matchesStatus = !status || projectStatus === status;
+        
+        project.style.display = matchesSearch && matchesStatus ? 'block' : 'none';
+    });
+}
+</script>
 {% endblock %}
