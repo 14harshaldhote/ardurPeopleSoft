@@ -34,6 +34,8 @@ employee_patterns = [
     path('timesheet/', views.timesheet_view, name='timesheet'),
     path('leave/', views.leave_view, name='leave_view'),
     path('profile/', views.employee_profile, name='employee_profile'),
+    path('timesheet/details/<str:week_start_date>/', views.get_timesheet_details, name='timesheet_details'),
+
 ]
 
 # HR-specific URLs under 'truealign/hr/'
@@ -71,6 +73,8 @@ hr_patterns = [
 
 # Manager-specific URLs under 'truealign/manager/'
 manager_patterns = [
+    # Timesheet management
+    path('timesheets/<int:timesheet_id>/', views.timesheet_detail, name='timesheet_detail'),
     # Project management URLs
     path('projects/', views.manager_project_view, {'action': 'list'}, name='project_list'),
     path('projects/create/', views.manager_project_view, {'action': 'create'}, name='project_create'),

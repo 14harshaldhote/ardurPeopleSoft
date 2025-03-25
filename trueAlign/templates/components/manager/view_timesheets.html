@@ -1,305 +1,687 @@
 {% extends 'base.html' %}
 
 {% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Page Header -->
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-semibold text-gray-800">Timesheet Management</h2>
+        
+    </div>
 
-<div class="container mx-auto px-4 py-6">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-            <div>
-                <h1 class="text-3xl font-thin text-gray-800 mb-6">Timesheet Management</h1>    <!-- Header Section -->
-            </div>
-            <div class="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-                <form method="GET" class="flex-1 sm:flex-initial">
-                    <div class="flex items-center gap-3">
-                        <select id="time-filter" name="time-filter" 
-                            class="w-full sm:w-auto rounded-lg border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500 px-4 py-2.5 text-sm"
-                            onchange="this.form.submit()">
-                            <option value="7" {% if time_filter == '7' %}selected{% endif %}>Last 7 days</option>
-                            <option value="30" {% if time_filter == '30' %}selected{% endif %}>Last 30 days</option>
-                            <option value="90" {% if time_filter == '90' %}selected{% endif %}>Last 90 days</option>
-                            <option value="custom" {% if time_filter == 'custom' %}selected{% endif %}>Custom Range</option>
-                        </select>
-                        <button type="button" 
-                            class="px-4 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm flex items-center gap-2 shadow-sm">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                            </svg>
-                            Export
-                        </button>
+    <!-- Dashboard Statistics -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg shadow-md overflow-hidden">
+            <div class="px-4 py-5 sm:p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h5 class="text-xl font-bold text-white">{{ total_hours }}</h5>
+                        <div class="text-blue-100">Total Hours</div>
                     </div>
-                </form>
+                    <div class="rounded-full bg-white bg-opacity-30 p-3">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-lg shadow-md overflow-hidden">
+            <div class="px-4 py-5 sm:p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h5 class="text-xl font-bold text-white">{{ active_projects }}</h5>
+                        <div class="text-green-100">Active Projects</div>
+                    </div>
+                    <div class="rounded-full bg-white bg-opacity-30 p-3">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-lg shadow-md overflow-hidden">
+            <div class="px-4 py-5 sm:p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h5 class="text-xl font-bold text-white">{{ pending_approvals }}</h5>
+                        <div class="text-yellow-100">Pending Approvals</div>
+                    </div>
+                    <div class="rounded-full bg-white bg-opacity-30 p-3">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-lg shadow-md overflow-hidden">
+            <div class="px-4 py-5 sm:p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h5 class="text-xl font-bold text-white">{{ completion_rate }}%</h5>
+                        <div class="text-indigo-100">Completion Rate</div>
+                    </div>
+                    <div class="rounded-full bg-white bg-opacity-30 p-3">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Dashboard Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <!-- Cards remain the same -->
+    <!-- Filters and Search -->
+    <div class="bg-white rounded-lg shadow-md mb-6 overflow-hidden">
+        <div class="px-4 py-3 bg-gray-50 border-b border-gray-200">
+            <div class="flex items-center">
+                <svg class="w-5 h-5 text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                </svg>
+                <h3 class="text-lg font-medium text-gray-700">Filter Timesheets</h3>
+            </div>
+        </div>
+        <div class="p-4">
+            <form method="GET" action="{% url 'aps_manager:view_timesheets' %}" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                <div>
+                    <label for="time-filter" class="block text-sm font-medium text-gray-700 mb-1">Time Period</label>
+                    <select class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50" id="time-filter" name="time-filter">
+                        <option value="7" {% if time_filter == '7' %}selected{% endif %}>Last 7 days</option>
+                        <option value="14" {% if time_filter == '14' %}selected{% endif %}>Last 14 days</option>
+                        <option value="30" {% if time_filter == '30' %}selected{% endif %}>Last 30 days</option>
+                        <option value="custom" {% if time_filter == 'custom' %}selected{% endif %}>Custom range</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                    <input type="text" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50" id="search" name="search" placeholder="Search by name, project, task..." value="{{ search_query }}">
+                </div>
+                <div>
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                        Apply Filters
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
-
-    <!-- Main Content Area -->
-    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-        <div class="p-6 border-b border-gray-200">
-            <div class="flex flex-col md:flex-row justify-between gap-4">
-                <div class="flex items-center gap-3 batch-actions">
-                    <button type="submit" form="batch-actions-form" name="action" value="approve" 
-                        class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2" 
-                        disabled id="batch-approve">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+    <!-- Timesheet Entries -->
+    <div class="bg-white rounded-lg shadow-md mb-6 overflow-hidden">
+        <div class="px-4 py-3 bg-gray-50 border-b border-gray-200">
+            <div class="flex items-center">
+                <svg class="w-5 h-5 text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                </svg>
+                <h3 class="text-lg font-medium text-gray-700">Timesheet Entries</h3>
+            </div>
+        </div>
+        <div class="p-4">
+            <form id="bulk-action-form" method="POST" action="{% url 'aps_manager:bulk_update_timesheet' %}">
+                {% csrf_token %}
+                
+                <!-- Status Tabs with improved labels -->
+                <div class="border-b border-gray-200 mb-4">
+                    <nav class="flex -mb-px space-x-6" aria-label="Tabs">
+                        <button type="button" class="tab-btn active border-b-2 border-blue-500 py-3 px-1 text-sm font-medium text-blue-600 whitespace-nowrap focus:outline-none" id="all-tab" data-target="all">
+                            All Timesheets <span class="ml-1 bg-gray-200 text-gray-700 py-0.5 px-2 rounded-full text-xs">{{ page_obj.paginator.count }}</span>
+                        </button>
+                        <button type="button" class="tab-btn border-b-2 border-transparent py-3 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap focus:outline-none" id="pending-tab" data-target="pending">
+                            Needs Review <span class="ml-1 bg-yellow-200 text-yellow-800 py-0.5 px-2 rounded-full text-xs">{{ status_counts.pending }}</span>
+                        </button>
+                        <button type="button" class="tab-btn border-b-2 border-transparent py-3 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap focus:outline-none" id="approved-tab" data-target="approved">
+                            Approved <span class="ml-1 bg-green-200 text-green-800 py-0.5 px-2 rounded-full text-xs">{{ status_counts.approved }}</span>
+                        </button>
+                        <button type="button" class="tab-btn border-b-2 border-transparent py-3 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap focus:outline-none" id="rejected-tab" data-target="rejected">
+                            Rejected <span class="ml-1 bg-red-200 text-red-800 py-0.5 px-2 rounded-full text-xs">{{ status_counts.rejected }}</span>
+                        </button>
+                        <button type="button" class="tab-btn border-b-2 border-transparent py-3 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap focus:outline-none" id="clarification-tab" data-target="clarification">
+                            Clarification <span class="ml-1 bg-purple-200 text-purple-800 py-0.5 px-2 rounded-full text-xs">{{ status_counts.clarification }}</span>
+                        </button>
+                    </nav>
+                </div>
+                
+                <!-- Bulk Action Buttons with improved tooltips -->
+                <div class="flex flex-wrap gap-2 mb-4">
+                    <button type="button" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500" onclick="submitBulkAction('approve')" title="Approve selected timesheets">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                         </svg>
                         Approve Selected
                     </button>
-                    <button type="submit" form="batch-actions-form" name="action" value="reject" 
-                        class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2" 
-                        disabled id="batch-reject">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    <button type="button" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" onclick="showRejectionModal()" title="Reject selected timesheets with reason">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
                         Reject Selected
                     </button>
-                    <span id="selection-count" class="text-sm text-gray-600 ml-3"></span>
+                    <button type="button" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500" onclick="showClarificationModal()" title="Request additional information">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Request Clarification
+                    </button>
+                    <div class="ml-auto">
+                        <span class="text-sm text-gray-500">Select timesheets to perform actions</span>
+                    </div>
                 </div>
                 
-                <!-- Search form remains the same -->
+                <!-- Timesheet Table with improved accessibility -->
+                <div class="overflow-x-auto border border-gray-200 rounded-lg">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="select-all" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" aria-label="Select all timesheets">
+                                        <label for="select-all" class="ml-2">Select All</label>
+                                    </div>
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Employee
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Project
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Task
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Week Starting
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Hours
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Status
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Actions
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for timesheet in page_obj %}
+                            <tr class="status-{{ timesheet.approval_status|lower }} hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <input type="checkbox" id="timesheet-{{ timesheet.id }}" name="selected_timesheets[]" value="{{ timesheet.id }}" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 timesheet-checkbox">
+                                    <label for="timesheet-{{ timesheet.id }}" class="sr-only">Select timesheet for {{ timesheet.user.get_full_name }}</label>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">{{ timesheet.user.get_full_name }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">{{ timesheet.project.name }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900 max-w-xs truncate" title="{{ timesheet.task_name }}">{{ timesheet.task_name }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">{{ timesheet.week_start_date|date:"M d, Y" }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">{{ timesheet.hours }} hrs</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    {% if timesheet.approval_status == 'Pending' %}
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                        Needs Review
+                                    </span>
+                                    {% elif timesheet.approval_status == 'Approved' %}
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                        Approved
+                                    </span>
+                                    {% elif timesheet.approval_status == 'Rejected' %}
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                        Rejected
+                                    </span>
+                                    {% elif timesheet.approval_status == 'Clarification_Requested' %}
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
+                                        Clarification Needed
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <a href="{% url 'aps_manager:timesheet_detail' timesheet.id %}" class="text-blue-600 hover:text-blue-900 bg-blue-100 hover:bg-blue-200 p-2 rounded-full transition-colors" title="View timesheet details">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                        </svg>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="px-6 py-10 text-center text-sm text-gray-500">
+                                    <div class="flex flex-col items-center">
+                                        <svg class="w-12 h-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                        </svg>
+                                        <p>No timesheets found matching your criteria.</p>
+                                        <p class="mt-1 text-gray-400">Try adjusting your filters or search terms.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
                 
-                <form method="GET" class="flex-1 md:max-w-xs">
-                    <div class="relative">
-                        <input type="hidden" name="time-filter" value="{{ time_filter }}">
-                        <input type="text" name="search" value="{{ search_query }}"
-                            placeholder="Search timesheets..." 
-                            class="w-full rounded-lg border-gray-300 pl-10 pr-4 py-2.5 text-sm focus:border-yellow-500 focus:ring-yellow-500">
-                        <svg class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                        </svg>
-                    </div>
-                </form>
+                <!-- Hidden fields for form submission -->
+                <input type="hidden" name="action" id="bulk-action">
+                <input type="hidden" name="rejection_reason" id="rejection-reason">
+                <input type="hidden" name="manager_comments" id="manager-comments">
+            </form>
+            
+            <!-- Pagination with improved accessibility -->
+            {% if page_obj.has_other_pages %}
+            <div class="py-4">
+                <nav class="flex justify-center" aria-label="Pagination">
+                    <ul class="flex items-center">
+                        {% if page_obj.has_previous %}
+                        <li>
+                            <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if time_filter %}&time-filter={{ time_filter }}{% endif %}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50" aria-label="First page">
+                                <span class="sr-only">First page</span>
+                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                </svg>
+                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                </svg>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if time_filter %}&time-filter={{ time_filter }}{% endif %}" class="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50" aria-label="Previous page">
+                                <span class="sr-only">Previous page</span>
+                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                </svg>
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                            <li>
+                                <a href="#" aria-current="page" class="z-10 bg-blue-50 border-blue-500 text-blue-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium" aria-label="Page {{ num }}">
+                                    {{ num }}
+                                </a>
+                            </li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li>
+                                <a href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if time_filter %}&time-filter={{ time_filter }}{% endif %}" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium" aria-label="Page {{ num }}">
+                                    {{ num }}
+                                </a>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                        <li>
+                            <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if time_filter %}&time-filter={{ time_filter }}{% endif %}" class="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50" aria-label="Next page">
+                                <span class="sr-only">Next page</span>
+                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                                </svg>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if time_filter %}&time-filter={{ time_filter }}{% endif %}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50" aria-label="Last page">
+                                <span class="sr-only">Last page</span>
+                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                                </svg>
+                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                                </svg>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                <div class="text-center mt-2 text-sm text-gray-500">
+                    Showing page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} ({{ page_obj.paginator.count }} total timesheets)
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Export Timesheets Section with improved UI -->
+    <div class="mt-8 bg-white shadow overflow-hidden sm:rounded-lg">
+        <div class="px-4 py-5 sm:px-6 bg-gray-50 flex items-center">
+            <svg class="h-6 w-6 text-gray-500 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <div>
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Export Timesheets</h3>
+                <p class="mt-1 max-w-2xl text-sm text-gray-500">Download timesheet data for reporting and record-keeping</p>
             </div>
         </div>
+        <div class="border-t border-gray-200 px-4 py-5 sm:p-6">
+            <form action="{% url 'aps_manager:bulk_update_timesheet' %}" method="POST" class="space-y-4">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="export">
+                
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                    <div>
+                        <label for="export-date-from" class="block text-sm font-medium text-gray-700 mb-1">From Date</label>
+                        <input type="date" id="export-date-from" name="date_from" class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                        <p class="mt-1 text-xs text-gray-500">Start date for export range</p>
+                    </div>
+                    
+                    <div>
+                        <label for="export-date-to" class="block text-sm font-medium text-gray-700 mb-1">To Date</label>
+                        <input type="date" id="export-date-to" name="date_to" class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                        <p class="mt-1 text-xs text-gray-500">End date for export range</p>
+                    </div>
+                    
+                    <div>
+                        <label for="export-format" class="block text-sm font-medium text-gray-700 mb-1">Export Format</label>
+                        <select id="export-format" name="format" class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                            <option value="csv">CSV (Comma Separated Values)</option>
+                            <option value="excel">Excel Spreadsheet</option>
+                            <option value="pdf">PDF Document</option>
+                        </select>
+                        <p class="mt-1 text-xs text-gray-500">Choose your preferred file format</p>
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Filter by Status</label>
+                    <div class="grid grid-cols-2 gap-4 sm:grid-cols-5">
+                        <div class="flex items-center bg-white p-3 rounded-md border border-gray-200 hover:bg-gray-50">
+                            <input id="status-all" name="status" type="radio" value="all" checked class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300">
+                            <label for="status-all" class="ml-2 block text-sm text-gray-700">All Statuses</label>
+                        </div>
+                        <div class="flex items-center bg-white p-3 rounded-md border border-gray-200 hover:bg-gray-50">
+                            <input id="status-pending" name="status" type="radio" value="Pending" class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300">
+                            <label for="status-pending" class="ml-2 block text-sm text-gray-700">Pending Review</label>
+                        </div>
+                        <div class="flex items-center bg-white p-3 rounded-md border border-gray-200 hover:bg-gray-50">
+                            <input id="status-approved" name="status" type="radio" value="Approved" class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300">
+                            <label for="status-approved" class="ml-2 block text-sm text-gray-700">Approved</label>
+                        </div>
+                        <div class="flex items-center bg-white p-3 rounded-md border border-gray-200 hover:bg-gray-50">
+                            <input id="status-rejected" name="status" type="radio" value="Rejected" class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300">
+                            <label for="status-rejected" class="ml-2 block text-sm text-gray-700">Rejected</label>
+                        </div>
+                        <div class="flex items-center bg-white p-3 rounded-md border border-gray-200 hover:bg-gray-50">
+                            <input id="status-clarification" name="status" type="radio" value="Clarification_Requested" class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300">
+                            <label for="status-clarification" class="ml-2 block text-sm text-gray-700">Clarification Needed</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-6 flex items-center">
+                <div class="mt-4">
+                    <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                        Export Timesheets
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    </div>
+</div>
+<!-- Bulk Action Form (hidden) -->
+<form id="bulk-action-form" method="POST" action="{% url 'aps_manager:bulk_update_timesheet' %}">
+    {% csrf_token %}
+    <input type="hidden" id="bulk-action" name="action" value="">
+    <input type="hidden" id="rejection-reason" name="rejection_reason" value="">
+    <input type="hidden" id="manager-comments" name="manager_comments" value="">
+    <!-- Selected timesheet IDs will be added here dynamically -->
+</form>
 
-        <!-- Consolidated Timesheet Table -->
-        <form id="batch-actions-form" method="POST" action="{% url 'aps_manager:bulk_update_timesheet' %}">
-            {% csrf_token %}
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th scope="col" class="w-8 px-6 py-4">
-                                <input type="checkbox" id="select-all" 
-                                    class="rounded border-gray-300 text-yellow-500 focus:ring-yellow-500 cursor-pointer">
-                            </th>
-                            <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
-                            <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Hours</th>
-                            <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Projects</th>
-                            <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"></th>                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-200">
-                        {% regroup page_obj by user as user_timesheets %}
-                        {% for user_group in user_timesheets %}
-                        {% with user_entries=user_group.list %}
-                        <tr class="hover:bg-gray-50 group" data-user-id="{{ user_group.grouper.id }}">
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <input type="checkbox" name="selected_users[]" value="{{ user_group.grouper.id }}" 
-                                    class="user-checkbox rounded border-gray-300 text-yellow-500 focus:ring-yellow-500 cursor-pointer">
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="flex items-center">
-                                    <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-medium">
-                                        {{ user_group.grouper.first_name|first }}{{ user_group.grouper.last_name|first }}
-                                    </div>
-                                    <div class="ml-3">
-                                        <div class="text-sm font-medium text-gray-900">
-                                            {{ user_group.grouper.first_name }} {{ user_group.grouper.last_name }}
-                                        </div>
-                                        <div class="text-sm text-gray-500">{{ user_group.grouper.email }}</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm font-medium text-gray-900">
-                                    {% with total_hours=0 %}
-                                        {% for entry in user_entries %}
-                                            {% with total_hours=total_hours|add:entry.hours %}{% endwith %}
-                                        {% endfor %}
-                                        {{ total_hours|floatformat:1 }} hrs
-                                    {% endwith %}
-                                </div>
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="text-sm text-gray-900">
-                                    {{ user_entries|length }} projects
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="flex gap-2">
-                                    {% with pending_count=0 %}
-                                        {% for entry in user_entries %}
-                                            {% if entry.approval_status == 'Pending' %}
-                                                {% with pending_count=pending_count|add:1 %}{% endwith %}
-                                            {% endif %}
-                                        {% endfor %}
-                                        {% if pending_count > 0 %}
-                                            <span class="px-3 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
-                                                {{ pending_count }} Pending
-                                            </span>
-                                        {% endif %}
-                                    {% endwith %}
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-right">
-                                <button type="button" class="text-gray-500 hover:text-gray-700 transition-colors"
-                                    onclick="toggleDetails('{{ user_group.grouper.id }}')">
-                                    <svg class="w-5 h-5 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                        id="chevron-{{ user_group.grouper.id }}">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                                    </svg>
-                                </button>
-                            </td>
-                        </tr>
-                        <!-- Expandable Details Row -->
-                        <tr class="hidden" id="details-{{ user_group.grouper.id }}">
-                            <td colspan="6" class="px-2 py-2 bg-gray-50">
-                                <div class="space-y-1">
-                                    {% for timesheet in user_entries %}
-                                    <div class="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200">
-                                        <div class="flex items-center gap-4 w-full">
-                                            <input type="checkbox" 
-                                                name="selected_timesheets[]" 
-                                                value="{{ timesheet.id }}" 
-                                                class="timesheet-checkbox rounded border-gray-300 text-yellow-500 focus:ring-yellow-500 cursor-pointer">
-                                            <div class="flex-1">
-                                                <div class="font-medium text-gray-900">{{ timesheet.project.name }}</div>
-                                                <div class="text-sm text-gray-500">{{ timesheet.task_name }}</div>
-                                                <div class="text-sm text-gray-500">Week of {{ timesheet.week_start_date|date:"M. d, Y" }}</div>
-                                            </div>
-                                            <div class="flex items-center gap-4">
-                                                <div class="text-sm font-medium text-gray-900">{{ timesheet.hours }} hrs</div>
-                                                <span class="px-3 py-1 text-xs font-medium rounded-full 
-                                                    {% if timesheet.approval_status == 'Pending' %}bg-yellow-100 text-yellow-800
-                                                    {% elif timesheet.approval_status == 'Approved' %}bg-green-100 text-green-800
-                                                    {% else %}bg-red-100 text-red-800{% endif %}">
-                                                    {{ timesheet.approval_status }}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    {% endfor %}
-                                </div>
-                            </td>
-                        </tr>
-                        {% endwith %}
-                        {% endfor %}
-                    </tbody>
-                </table>
+<!-- Rejection Modal -->
+<div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50 hidden" id="rejectionModal">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+            <h3 class="text-lg font-medium text-gray-900">Reject Timesheets</h3>
+            <button type="button" class="text-gray-400 hover:text-gray-500" onclick="closeModal('rejectionModal')">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <div class="px-6 py-4">
+            <div class="mb-4">
+                <label for="rejection-reason-select" class="block text-sm font-medium text-gray-700 mb-1">Rejection Reason</label>
+                <select id="rejection-reason-select" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                    <option value="">Select a reason...</option>
+                    <option value="Insufficient_Detail">Insufficient Detail</option>
+                    <option value="Hours_Discrepancy">Hours Discrepancy</option>
+                    <option value="Wrong_Project">Wrong Project Allocation</option>
+                    <option value="Incomplete_Documentation">Incomplete Documentation</option>
+                    <option value="Other">Other</option>
+                </select>
             </div>
-        </form>
+            <div class="mb-4">
+                <label for="rejection-comments" class="block text-sm font-medium text-gray-700 mb-1">Comments</label>
+                <textarea id="rejection-comments" rows="3" class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md" placeholder="Provide additional details..."></textarea>
+            </div>
+        </div>
+        <div class="px-6 py-4 bg-gray-50 flex justify-end space-x-3 rounded-b-lg">
+            <button type="button" class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" onclick="closeModal('rejectionModal')">
+                Cancel
+            </button>
+            <button type="button" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" onclick="submitRejection()">
+                Reject Timesheets
+            </button>
+        </div>
+    </div>
+</div>
 
-
-        <!-- Pagination remains the same -->
+<!-- Clarification Modal -->
+<div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50 hidden" id="clarificationModal">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+            <h3 class="text-lg font-medium text-gray-900">Request Clarification</h3>
+            <button type="button" class="text-gray-400 hover:text-gray-500" onclick="closeModal('clarificationModal')">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <div class="px-6 py-4">
+            <div class="mb-4">
+                <label for="clarification-comments" class="block text-sm font-medium text-gray-700 mb-1">What needs clarification?</label>
+                <textarea id="clarification-comments" rows="3" class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md" placeholder="Specify what information you need..."></textarea>
+            </div>
+        </div>
+        <div class="px-6 py-4 bg-gray-50 flex justify-end space-x-3 rounded-b-lg">
+            <button type="button" class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" onclick="closeModal('clarificationModal')">
+                Cancel
+            </button>
+            <button type="button" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500" onclick="submitClarification()">
+                Request Clarification
+            </button>
+        </div>
     </div>
 </div>
 
 <script>
-function toggleDetails(userId) {
-    const detailsRow = document.getElementById(`details-${userId}`);
-    const chevron = document.getElementById(`chevron-${userId}`);
-    
-    detailsRow.classList.toggle('hidden');
-    chevron.style.transform = detailsRow.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
-}
-
-document.getElementById('select-all').addEventListener('change', function(e) {
-    document.querySelectorAll('.user-checkbox').forEach(checkbox => {
-        checkbox.checked = e.target.checked;
+    // Select all checkboxes
+    document.getElementById('select-all').addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('.timesheet-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
     });
-    updateBatchButtons();
-});
-
-document.querySelectorAll('.user-checkbox').forEach(checkbox => {
-    checkbox.addEventListener('change', updateBatchButtons);
-});
-
-function updateBatchButtons() {
-    const hasChecked = [...document.querySelectorAll('.user-checkbox')].some(cb => cb.checked);
-    document.getElementById('batch-approve').disabled = !hasChecked;
-    document.getElementById('batch-reject').disabled = !hasChecked;
-}
-</script>
-
-<!-- Enhanced JavaScript with better UX --><script>
-document.addEventListener('DOMContentLoaded', function() {
-    const selectAll = document.getElementById('select-all');
-    const timesheetCheckboxes = document.querySelectorAll('.timesheet-checkbox');
-    const batchApprove = document.getElementById('batch-approve');
-    const batchReject = document.getElementById('batch-reject');
     
-    // Toggle details function
-    window.toggleDetails = function(userId) {
-        const detailsRow = document.getElementById(`details-${userId}`);
-        const chevron = document.getElementById(`chevron-${userId}`);
+    // Submit bulk action
+    function submitBulkAction(action) {
+        const checkboxes = document.querySelectorAll('.timesheet-checkbox:checked');
+        if (checkboxes.length === 0) {
+            alert('Please select at least one timesheet.');
+            return;
+        }
         
-        if (detailsRow) {
-            detailsRow.classList.toggle('hidden');
-            if (chevron) {
-                chevron.style.transform = detailsRow.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
+        // Add selected timesheet IDs to the form
+        const selectedIds = Array.from(checkboxes).map(cb => cb.value);
+        
+        // Remove any existing hidden inputs for timesheet IDs
+        document.querySelectorAll('input[name="timesheet_ids"]').forEach(el => el.remove());
+        
+        // Add new hidden inputs for each selected timesheet ID
+        selectedIds.forEach(id => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'timesheet_ids';
+            input.value = id;
+            document.getElementById('bulk-action-form').appendChild(input);
+        });
+        
+        document.getElementById('bulk-action').value = action;
+        document.getElementById('bulk-action-form').submit();
+    }
+    
+    // Show rejection modal
+    function showRejectionModal() {
+        const checkboxes = document.querySelectorAll('.timesheet-checkbox:checked');
+        if (checkboxes.length === 0) {
+            alert('Please select at least one timesheet.');
+            return;
+        }
+        
+        document.getElementById('rejectionModal').classList.remove('hidden');
+    }
+    
+    // Show clarification modal
+    function showClarificationModal() {
+        const checkboxes = document.querySelectorAll('.timesheet-checkbox:checked');
+        if (checkboxes.length === 0) {
+            alert('Please select at least one timesheet.');
+            return;
+        }
+        
+        document.getElementById('clarificationModal').classList.remove('hidden');
+    }
+    
+    // Close modal
+    function closeModal(modalId) {
+        document.getElementById(modalId).classList.add('hidden');
+    }
+    
+    // Submit rejection
+    function submitRejection() {
+        const reason = document.getElementById('rejection-reason-select').value;
+        const comments = document.getElementById('rejection-comments').value;
+        
+        if (!reason) {
+            alert('Please select a rejection reason.');
+            return;
+        }
+        
+        document.getElementById('bulk-action').value = 'reject';
+        document.getElementById('rejection-reason').value = reason;
+        document.getElementById('manager-comments').value = comments;
+        document.getElementById('bulk-action-form').submit();
+    }
+    
+    // Submit clarification request
+    function submitClarification() {
+        const comments = document.getElementById('clarification-comments').value;
+        
+        if (!comments) {
+            alert('Please provide details about what needs clarification.');
+            return;
+        }
+        
+        document.getElementById('bulk-action').value = 'request_clarification';
+        document.getElementById('manager-comments').value = comments;
+        document.getElementById('bulk-action-form').submit();
+    }
+    
+    // Filter by status tabs
+    document.querySelectorAll('.status-tab').forEach(tab => {
+        tab.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.status-tab').forEach(t => {
+                t.classList.remove('bg-blue-500', 'text-white');
+                t.classList.add('bg-white', 'text-gray-700');
+            });
+            
+            // Add active class to clicked tab
+            this.classList.remove('bg-white', 'text-gray-700');
+            this.classList.add('bg-blue-500', 'text-white');
+            
+            const status = this.getAttribute('data-status');
+            const rows = document.querySelectorAll('tbody tr');
+            
+            if (status === 'all') {
+                rows.forEach(row => {
+                    row.classList.remove('hidden');
+                });
+            } else {
+                rows.forEach(row => {
+                    if (row.classList.contains(`status-${status}`)) {
+                        row.classList.remove('hidden');
+                    } else {
+                        row.classList.add('hidden');
+                    }
+                });
             }
+        });
+    });
+    
+    // Move approved timesheets to history section
+    function updateTimesheetHistory() {
+        const approvedTimesheets = document.querySelectorAll('.status-Approved');
+        const historySection = document.getElementById('timesheet-history') || createHistorySection();
+        
+        approvedTimesheets.forEach(timesheet => {
+            // Clone the timesheet row and add it to history section
+            const historyItem = timesheet.cloneNode(true);
+            historySection.querySelector('tbody').appendChild(historyItem);
+        });
+    }
+    
+    // Create history section if it doesn't exist
+    function createHistorySection() {
+        const historySection = document.createElement('div');
+        historySection.id = 'timesheet-history';
+        historySection.className = 'mt-8';
+        
+        const historyTitle = document.createElement('h3');
+        historyTitle.className = 'text-lg font-medium text-gray-900 mb-4';
+        historyTitle.textContent = 'Approved Timesheet History';
+        
+        const historyTable = document.createElement('table');
+        historyTable.className = 'min-w-full divide-y divide-gray-200';
+        historyTable.innerHTML = document.querySelector('table').innerHTML;
+        
+        historySection.appendChild(historyTitle);
+        historySection.appendChild(historyTable);
+        
+        document.querySelector('.container').appendChild(historySection);
+        return historySection;
+    }
+    
+    // Run when page loads and after approvals
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check if there are approved timesheets
+        const approvedTimesheets = document.querySelectorAll('.status-Approved');
+        if (approvedTimesheets.length > 0) {
+            updateTimesheetHistory();
+        }
+    });
+    
+    // Update history after approval action
+    const originalSubmitBulkAction = submitBulkAction;
+    submitBulkAction = function(action) {
+        originalSubmitBulkAction(action);
+        if (action === 'approve') {
+            // Add a small delay to ensure the DOM is updated
+            setTimeout(updateTimesheetHistory, 500);
         }
     };
-
-    // Select all functionality
-    selectAll.addEventListener('change', function() {
-        timesheetCheckboxes.forEach(checkbox => {
-            checkbox.checked = this.checked;
-            updateRowHighlight(checkbox);
-        });
-        updateBatchButtons();
-        updateSelectionCount();
-    });
-    
-    // Individual checkbox handling
-    timesheetCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', function(e) {
-            e.stopPropagation(); // Prevent row click handler from firing
-            updateRowHighlight(this);
-            updateBatchButtons();
-            updateSelectionCount();
-            updateSelectAllState();
-        });
-    });
-
-    function updateSelectAllState() {
-        const allChecked = Array.from(timesheetCheckboxes).every(cb => cb.checked);
-        const someChecked = Array.from(timesheetCheckboxes).some(cb => cb.checked);
-        selectAll.checked = allChecked;
-        selectAll.indeterminate = someChecked && !allChecked;
-    }
-    
-    function updateRowHighlight(checkbox) {
-        const timesheet = checkbox.closest('div');
-        if (timesheet) {
-            if (checkbox.checked) {
-                timesheet.classList.add('bg-yellow-50');
-            } else {
-                timesheet.classList.remove('bg-yellow-50');
-            }
-        }
-    }
-    
-    function updateBatchButtons() {
-        const checkedCount = document.querySelectorAll('.timesheet-checkbox:checked').length;
-        batchApprove.disabled = checkedCount === 0;
-        batchReject.disabled = checkedCount === 0;
-    }
-    
-    function updateSelectionCount() {
-        const checkedCount = document.querySelectorAll('.timesheet-checkbox:checked').length;
-        const total = timesheetCheckboxes.length;
-        const countElement = document.getElementById('selection-count');
-        countElement.textContent = checkedCount > 0 ? `Selected ${checkedCount} of ${total} timesheets` : '';
-    }
-
-    // Initial state setup
-    updateBatchButtons();
-    updateSelectionCount();
-});
 </script>
 {% endblock %}

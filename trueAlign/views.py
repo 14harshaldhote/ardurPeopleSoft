@@ -3081,122 +3081,243 @@ def timesheet_view(request):
         try:
             # Get the submitted data from the form
             week_start_date = request.POST.get('week_start_date')
-            project_names = request.POST.getlist('project_name[]')
+            project_ids = request.POST.getlist('project_id[]')
             task_names = request.POST.getlist('task_name[]')
+            task_descriptions = request.POST.getlist('task_description[]')
             hours = request.POST.getlist('hours[]')
 
-            # Validate that project names, task names, and hours lists are all the same length
-            if len(project_names) != len(task_names) or len(task_names) != len(hours):
-                messages.error(request, "Project name, task name, and hours should have the same number of entries.")
-                return redirect('aps:timesheet')
+            # Validate that all lists are the same length
+            if len(project_ids) != len(task_names) or len(task_names) != len(hours) or len(task_descriptions) != len(hours):
+                messages.error(request, "All form fields should have the same number of entries.")
+                return redirect('aps_employee:timesheet')
 
             # Create the Timesheet objects and save them to the database
-            for project_name, task_name, hour in zip(project_names, task_names, hours):
-                # Check if the timesheet for the same user, week, project, and task already exists
-                existing_timesheet = Timesheet.objects.filter(
-                    user=request.user,
-                    week_start_date=week_start_date,
-                    project__name=project_name,  # Changed to filter by project name
-                    task_name=task_name
-                ).first()
-
-                if existing_timesheet:
-                    existing_timesheet.hours += float(hour)  # Update hours if already exists
-                    existing_timesheet.save()
-                else:
-                    # Fetch project using the name
-                    project = Project.objects.get(name=project_name)
+            for project_id, task_name, task_description, hour in zip(project_ids, task_names, task_descriptions, hours):
+                try:
+                    # Convert hours to float and validate
+                    hours_float = float(hour)
+                    
+                    # Get the project
+                    project = Project.objects.get(id=project_id)
+                    
+                    # Create new timesheet entry
                     timesheet = Timesheet(
                         user=request.user,
                         week_start_date=week_start_date,
-                        project=project,  # Set project using name
+                        project=project,
                         task_name=task_name,
-                        hours=float(hour)
+                        task_description=task_description,
+                        hours=hours_float
                     )
+                    
+                    # This will run the clean method which validates hours limits
                     timesheet.save()
+                    
+                except ValidationError as ve:
+                    messages.error(request, f"Validation error: {str(ve)}")
+                    return redirect('aps_employee:timesheet')
+                except Project.DoesNotExist:
+                    messages.error(request, f"Project with ID {project_id} does not exist.")
+                    return redirect('aps_employee:timesheet')
 
             # Display success message
             messages.success(request, "Timesheet submitted successfully!")
-            return redirect('aps:timesheet')
+            return redirect('aps_employee:timesheet')
 
         except Exception as e:
             # If an error occurs, show an error message
-            messages.error(request, f"An error occurred: Fill the timesheet propley")
+            messages.error(request, f"An error occurred: {str(e)}")
             return redirect('aps_employee:timesheet')
 
     else:
         # If it's a GET request, show the current timesheet history
         today = timezone.now().date()
+        
+        # Calculate the start of the current week (Monday)
+        current_week_start = today - timedelta(days=today.weekday())
 
-        # Fetch the timesheet history for the logged-in employee, ordered by week start date
-        timesheet_history = Timesheet.objects.filter(user=request.user).order_by('-week_start_date')
+        # Fetch the timesheet history for the logged-in employee, ordered by week start date and version
+        timesheet_history = Timesheet.objects.filter(user=request.user).order_by('-week_start_date', '-version')
 
         # Fetch the list of projects the user is assigned to using the ProjectAssignment model
         assigned_projects = Project.objects.filter(projectassignment__user=request.user, projectassignment__is_active=True)
 
+        # Get weekly hours summary
+        week_end_date = current_week_start + timedelta(days=6)
+        weekly_hours = Timesheet.objects.filter(
+            user=request.user,
+            week_start_date__gte=current_week_start,
+            week_start_date__lte=week_end_date
+        ).aggregate(total_hours=Sum('hours'))['total_hours'] or 0
+        
+        remaining_hours = 45 - weekly_hours  # Updated to 45 hours weekly limit
+
         # Render the timesheet page with the data
         return render(request, 'components/employee/timesheet.html', {
             'today': today,
+            'current_week_start': current_week_start,
             'timesheet_history': timesheet_history,
-            'assigned_projects': assigned_projects,  # Pass the list of assigned projects
-            'todays': now().date()
+            'assigned_projects': assigned_projects,
+            'weekly_hours': weekly_hours,
+            'remaining_hours': remaining_hours
         })
 
+@login_required
+@user_passes_test(is_employee)
+def get_timesheet_details(request, week_start_date):
+    """
+    View to get detailed timesheet information for a specific week.
+    Returns JSON data for AJAX requests to populate the timesheet modal.
+    """
+    try:
+        # Try to parse the date with multiple possible formats
+        start_date = None
+        date_formats = ['%Y-%m-%d', '%B %d, %Y', '%m/%d/%Y', '%d-%m-%Y']
+        
+        for date_format in date_formats:
+            try:
+                start_date = timezone.datetime.strptime(week_start_date, date_format).date()
+                break
+            except ValueError:
+                continue
+        
+        if start_date is None:
+            raise ValueError(f"Could not parse date '{week_start_date}' with any supported format")
+        
+        # Get all timesheet entries for the specified week
+        timesheet_entries = Timesheet.objects.filter(
+            user=request.user,
+            week_start_date=start_date
+        ).select_related('project')
+        
+        if not timesheet_entries.exists():
+            return JsonResponse({
+                'success': False,
+                'message': 'No timesheet entries found for this week.'
+            })
+        
+        # Format the data for the response
+        entries_data = []
+        total_hours = 0
+        
+        for entry in timesheet_entries:
+            entries_data.append({
+                'id': entry.id,
+                'project_name': entry.project.name,
+                'project_id': entry.project.id,
+                'task_name': entry.task_name,
+                'task_description': entry.task_description,
+                'hours': entry.hours,
+                'approval_status': entry.approval_status,
+                'comments': entry.manager_comments or '',
+                'submitted_at': entry.submitted_at.isoformat() if hasattr(entry, 'submitted_at') else None,
+                'last_modified': entry.reviewed_at.isoformat() if hasattr(entry, 'reviewed_at') else None
+            })
+            total_hours += entry.hours
+        
+        # Return the formatted data
+        return JsonResponse({
+            'success': True,
+            'week_start': start_date.strftime('%Y-%m-%d'),
+            'week_end': (start_date + timedelta(days=6)).strftime('%Y-%m-%d'),
+            'total_hours': total_hours,
+            'entries': entries_data
+        })
+        
+    except Exception as e:
+        logger.error(f"Error retrieving timesheet details: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'message': f"An error occurred: {str(e)}"
+        })
 
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
-from .models import Timesheet
-from django.db.models import Sum, Count
+from .models import Timesheet, Project, ProjectAssignment
+from django.db.models import Sum, Count, Q
 from django.utils import timezone
-
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.utils import timezone
-from .models import Timesheet
-from django.db.models import Sum
+from django.core.exceptions import ValidationError
+from django.core.paginator import Paginator
 from datetime import timedelta
 from django.http import JsonResponse
+import logging
+logger = logging.getLogger(__name__)
 
 @login_required
 @user_passes_test(is_manager)
 def manager_view_timesheets(request):
+    """
+    View for managers to review and manage timesheets for their projects.
+    Includes filtering, search, and pagination functionality.
+    """
+    # Get filter parameters from request
     time_filter = request.GET.get('time-filter', '7')
     search_query = request.GET.get('search', '')
-    filter_days = int(time_filter)
+    
+    # Default to 7 days if custom filter not specified
+    if time_filter != 'custom':
+        filter_days = int(time_filter)
+        start_date = timezone.now().date() - timedelta(days=filter_days)
+    else:
+        # Handle custom date range if implemented
+        start_date_str = request.GET.get('start_date')
+        end_date_str = request.GET.get('end_date')
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        except (ValueError, TypeError):
+            start_date = timezone.now().date() - timedelta(days=30)  # Default fallback
+
+    # Get projects managed by the current user
+    managed_projects = Project.objects.filter(
+        projectassignment__user=request.user, 
+        projectassignment__role_in_project='Manager', 
+        projectassignment__is_active=True
+    ).distinct()
+    
+    managed_project_ids = managed_projects.values_list('id', flat=True)
 
     # Base queryset with prefetching for optimization
     timesheets = Timesheet.objects.select_related('project', 'user').filter(
-        week_start_date__gte=timezone.now() - timedelta(days=filter_days)
+        project_id__in=managed_project_ids
     )
+    
+    # Apply date filter
+    timesheets = timesheets.filter(week_start_date__gte=start_date)
 
-    # Search filter
+    # Apply search filter if provided
     if search_query:
         timesheets = timesheets.filter(
             Q(user__first_name__icontains=search_query) |
             Q(user__last_name__icontains=search_query) |
             Q(project__name__icontains=search_query) |
-            Q(task_name__icontains=search_query)
+            Q(task_name__icontains=search_query) |
+            Q(task_description__icontains=search_query)
         )
 
-    # Ordering and pagination
-    timesheets = timesheets.order_by('-week_start_date', 'user__first_name')
-    paginator = Paginator(timesheets, 20)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-
-    timesheets = timesheets.annotate(
-        user_total_hours=Sum('hours'),
-        user_pending_count=Count('id', filter=Q(approval_status='Pending'))
-    )
-
-    # Statistics calculation
+    # Calculate dashboard statistics
     total_hours = timesheets.aggregate(Sum('hours'))['hours__sum'] or 0
     active_projects = timesheets.values('project').distinct().count()
-    completion_rate = calculate_completion_rate(timesheets)
     pending_approvals = timesheets.filter(approval_status='Pending').count()
+    completion_rate = calculate_completion_rate(timesheets)
 
+    # Group timesheets by status for easier filtering in the template
+    status_counts = {
+        'pending': timesheets.filter(approval_status='Pending').count(),
+        'approved': timesheets.filter(approval_status='Approved').count(),
+        'rejected': timesheets.filter(approval_status='Rejected').count(),
+        'clarification': timesheets.filter(approval_status='Clarification_Requested').count()
+    }
+
+    # Order by most recent first, then by employee name
+    timesheets = timesheets.order_by('-week_start_date', 'user__first_name')
+    
+    # Paginate results
+    paginator = Paginator(timesheets, 20)  # 20 items per page
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+
+    # Prepare context for template
     context = {
         'page_obj': page_obj,
         'total_hours': total_hours,
@@ -3205,6 +3326,8 @@ def manager_view_timesheets(request):
         'pending_approvals': pending_approvals,
         'time_filter': time_filter,
         'search_query': search_query,
+        'status_counts': status_counts,
+        'managed_projects': managed_projects,
     }
 
     return render(request, 'components/manager/view_timesheets.html', context)
@@ -3213,29 +3336,43 @@ def manager_view_timesheets(request):
 @login_required
 @user_passes_test(is_manager)
 def bulk_update_timesheet(request):
+    """
+    Handle bulk actions on timesheets (approve, reject, request clarification).
+    Only allows managers to update timesheets for projects they manage.
+    """
     if request.method != 'POST':
-        return JsonResponse({'success': False, 'message': 'Invalid request method'}, status=405)
+        messages.error(request, 'Invalid request method')
+        return redirect('aps_manager:view_timesheets')
 
+    # Get parameters from request
     timesheet_ids = request.POST.getlist('selected_timesheets[]')
     action = request.POST.get('action')
+    rejection_reason = request.POST.get('rejection_reason')
+    manager_comments = request.POST.get('manager_comments', '')
 
+    # Validate input
     if not timesheet_ids:
-        messages.error(request, 'No timesheets selected.')
+        messages.error(request, 'No timesheets selected')
         return redirect('aps_manager:view_timesheets')
 
-    if action not in ['approve', 'reject']:
-        messages.error(request, 'Invalid action.')
+    if action not in ['approve', 'reject', 'request_clarification']:
+        messages.error(request, 'Invalid action')
         return redirect('aps_manager:view_timesheets')
 
+    # Map action to status
     status_map = {
         'approve': 'Approved',
-        'reject': 'Rejected'
+        'reject': 'Rejected',
+        'request_clarification': 'Clarification_Requested'
     }
 
     try:
-        managed_projects = ProjectAssignment.objects.filter(
-            user=request.user, role_in_project='Manager', is_active=True
-        ).values_list('project', flat=True)
+        # Get projects managed by the current user
+        managed_projects = Project.objects.filter(
+            projectassignment__user=request.user, 
+            projectassignment__role_in_project='Manager', 
+            projectassignment__is_active=True
+        ).values_list('id', flat=True)
 
         # Restrict timesheets to manager's projects
         timesheets = Timesheet.objects.filter(
@@ -3244,34 +3381,94 @@ def bulk_update_timesheet(request):
         )
 
         if not timesheets.exists():
-            messages.error(request, 'You are not authorized to update the selected timesheets.')
+            messages.error(request, 'You are not authorized to update the selected timesheets')
+            return redirect('aps_manager:view_timesheets')
+
+        # Validate rejection reason if rejecting
+        if action == 'reject' and not rejection_reason:
+            messages.error(request, 'Rejection reason is required')
             return redirect('aps_manager:view_timesheets')
 
         # Update timesheets
-        update_count = timesheets.update(
-            approval_status=status_map[action],
-            reviewed_at=timezone.now()
-        )
+        update_count = 0
+        for timesheet in timesheets:
+            timesheet.approval_status = status_map[action]
+            
+            if action == 'reject':
+                timesheet.rejection_reason = rejection_reason
+            
+            if manager_comments:
+                timesheet.manager_comments = manager_comments
+                
+            # reviewed_at will be updated by the signal
+            timesheet.save()
+            update_count += 1
 
-        messages.success(
-            request,
-            f'Successfully {action}d {update_count} timesheet{"s" if update_count != 1 else ""}.'
-        )
+        # Create success message based on action
+        action_display = 'approved' if action == 'approve' else 'rejected' if action == 'reject' else 'requested clarification for'
+        messages.success(request, f'Successfully {action_display} {update_count} timesheet{"s" if update_count != 1 else ""}.')
+        
+        return redirect('aps_manager:view_timesheets')
     except Exception as e:
-        logger.error(f"Error processing timesheets: {e}")
-        messages.error(request, 'An unexpected error occurred while processing timesheets.')
+        logger.error(f"Error processing timesheets: {e}", exc_info=True)
+        messages.error(request, f"An error occurred: {str(e)}")
+        return redirect('aps_manager:view_timesheets')
 
-    return redirect('aps_manager:view_timesheets')
+
+@login_required
+@user_passes_test(is_manager)
+def timesheet_detail(request, timesheet_id):
+    """
+    View a single timesheet in detail, with history of previous versions.
+    Only accessible to managers of the project.
+    """
+    try:
+        # Get the timesheet with related data
+        timesheet = Timesheet.objects.select_related('user', 'project').get(id=timesheet_id)
+        
+        # Check if user is manager of this project
+        is_project_manager = ProjectAssignment.objects.filter(
+            user=request.user,
+            project=timesheet.project,
+            role_in_project='Manager',
+            is_active=True
+        ).exists()
+        
+        if not is_project_manager:
+            messages.error(request, "You don't have permission to view this timesheet.")
+            return redirect('aps_manager:view_timesheets')
+        
+        # Get version history if this is a resubmission
+        version_history = []
+        if timesheet.original_submission_id:
+            version_history = Timesheet.objects.filter(
+                Q(id=timesheet.original_submission_id) | 
+                Q(original_submission_id=timesheet.original_submission_id)
+            ).order_by('version')
+        
+        context = {
+            'timesheet': timesheet,
+            'version_history': version_history
+        }
+        
+        return render(request, 'components/manager/timesheet_detail.html', context)
+        
+    except Timesheet.DoesNotExist:
+        messages.error(request, "Timesheet not found.")
+        return redirect('aps_manager:view_timesheets')
 
 
 def calculate_completion_rate(timesheets):
+    """Calculate the percentage of approved timesheets."""
     total_count = timesheets.count()
     if total_count == 0:
         return 0
 
     approved_count = timesheets.filter(approval_status='Approved').count()
     completion_rate = (approved_count / total_count) * 100
-    return round(completion_rate, 2)
+    return round(completion_rate, 1)
+
+
 ''' ---------------------------------------- LEAVE AREA ---------------------------------------- '''
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test

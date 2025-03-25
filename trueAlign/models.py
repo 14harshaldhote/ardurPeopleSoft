@@ -353,6 +353,7 @@ class Leave(models.Model):
         
         return earned - used
     
+    
 from datetime import time, timedelta
 from django.utils import timezone
 from django.db import models
@@ -450,7 +451,7 @@ class Attendance(models.Model):
             self.status = 'Late'
             print(f"User {self.user} is late. Status updated to Late.")
             
-            # Optional: Handle late count penalties
+            # Track late arrivals but don't create automatic leave deductions
             try:
                 late_count = Attendance.objects.filter(
                     user=self.user,
@@ -459,21 +460,10 @@ class Attendance(models.Model):
                 ).count()
                 
                 if late_count >= 3:
-                    # Assuming you have a Leave model
-                    from .models import Leave  # Import here to avoid circular imports
-                    
-                    Leave.objects.create(
-                        user=self.user,
-                        leave_type='Loss of Pay',
-                        start_date=self.date,
-                        end_date=self.date,
-                        half_day=True,
-                        reason='Automatic deduction for excessive late arrivals',
-                        status='Approved'
-                    )
-                    print(f"Created Loss of Pay leave for user {self.user} due to excessive late arrivals.")
+                    print(f"User {self.user} has {late_count} late arrivals this month.")
+                    # We're just logging this information without creating automatic leave deductions
             except Exception as e:
-                print(f"Error handling late count: {str(e)}")
+                print(f"Error counting late arrivals: {str(e)}")
 
     def save(self, recalculate=False, *args, **kwargs):
         # Set weekend flag
@@ -1022,32 +1012,101 @@ class SystemError(models.Model):
 
 
 ''' ------------------------------------------------- TIMESHEET AREA --------------------------------------------------- '''
-
 class Timesheet(models.Model):
+    APPROVAL_STATUS_CHOICES = [
+        ('Pending', 'Pending'),
+        ('Approved', 'Approved'),
+        ('Partially_Approved', 'Partially Approved'),
+        ('Rejected', 'Rejected'),
+        ('Clarification_Requested', 'Clarification Requested')
+    ]
+    
+    REJECTION_REASON_CHOICES = [
+        ('Insufficient_Detail', 'Insufficient Detail'),
+        ('Hours_Discrepancy', 'Hours Discrepancy'),
+        ('Wrong_Project', 'Wrong Project Allocation'),
+        ('Incomplete_Documentation', 'Incomplete Documentation'),
+        ('Other', 'Other')
+    ]
+    
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='timesheets')
     week_start_date = models.DateField()
-    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='timesheets')  # Linked to Project
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='timesheets')
     task_name = models.CharField(max_length=255)
+    task_description = models.TextField(help_text="Detailed description of work performed")
     hours = models.FloatField()
+    adjusted_hours = models.FloatField(null=True, blank=True, help_text="Hours adjusted by manager during review")
     approval_status = models.CharField(
-        max_length=10,
-        choices=[('Pending', 'Pending'), ('Approved', 'Approved'), ('Rejected', 'Rejected')],
+        max_length=25,
+        choices=APPROVAL_STATUS_CHOICES,
         default='Pending'
     )
-    manager_comments = models.TextField(blank=True, null=True)  # Allows manager to provide feedback
-    submitted_at = models.DateTimeField(auto_now_add=True)  # Tracks when the timesheet was submitted
-    reviewed_at = models.DateTimeField(null=True, blank=True)  # Tracks when the timesheet was reviewed
-
+    rejection_reason = models.CharField(
+        max_length=30,
+        choices=REJECTION_REASON_CHOICES,
+        null=True, 
+        blank=True
+    )
+    manager_comments = models.TextField(blank=True, null=True)
+    submitted_at = models.DateTimeField(auto_now_add=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    original_submission_id = models.IntegerField(null=True, blank=True, help_text="ID of original submission if this is a resubmission")
+    version = models.PositiveIntegerField(default=1, help_text="Version number of this timesheet entry")
+    
     def __str__(self):
-        return f"Timesheet for {self.project.name} - {self.week_start_date}"
-
+        return f"Timesheet for {self.project.name} - {self.week_start_date} (v{self.version})"
+    
+    def clean(self):
+        # Convert string dates to datetime.date objects if needed
+        if isinstance(self.week_start_date, str):
+            try:
+                from datetime import datetime
+                self.week_start_date = datetime.strptime(self.week_start_date, '%Y-%m-%d').date()
+            except ValueError:
+                raise ValidationError("Invalid date format for week_start_date")
+        
+        # Get current date for comparison
+        current_date = timezone.now().date()
+        
+        # Prevent backdated submissions beyond 14 days
+        if self.week_start_date < (current_date - timedelta(days=14)):
+            raise ValidationError("Cannot submit timesheet entries older than 14 days")
+        
+        # Prevent future submissions beyond current week
+        if self.week_start_date > current_date:
+            raise ValidationError("Cannot submit timesheet entries for future dates")
+        
+        # Enforce maximum hours per day (8 hours)
+        if self.hours > 8:
+            raise ValidationError("Maximum 8 hours can be logged per day per project")
+        
+        # Check weekly hour limit (45 hours) across all projects for this week
+        week_end_date = self.week_start_date + timedelta(days=6)
+        total_hours = Timesheet.objects.filter(
+            user=self.user,
+            week_start_date__gte=self.week_start_date,
+            week_start_date__lte=week_end_date
+        ).exclude(pk=self.pk).aggregate(models.Sum('hours'))['hours__sum'] or 0
+        
+        if total_hours + self.hours > 45:
+            raise ValidationError(f"Total weekly hours cannot exceed 45. Current total: {total_hours}")
+    
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
+    
     class Meta:
-        unique_together = ('user', 'week_start_date', 'project', 'task_name')  # Prevent duplicates
-        ordering = ['-week_start_date']
-# Signal to update 'reviewed_at' field when approval status changes
+        unique_together = ('user', 'week_start_date', 'project', 'task_name', 'version')
+        ordering = ['-week_start_date', '-version']
+        permissions = [
+            ("approve_timesheet", "Can approve or reject timesheets"),
+            ("view_team_timesheets", "Can view timesheets for team members"),
+        ]
 
+# Signal to update 'reviewed_at' field when approval status changes
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
+
 @receiver(pre_save, sender=Timesheet)
 def update_reviewed_at(sender, instance, **kwargs):
     if instance.pk:
@@ -1055,8 +1114,32 @@ def update_reviewed_at(sender, instance, **kwargs):
             old_instance = Timesheet.objects.get(pk=instance.pk)
             if old_instance.approval_status != instance.approval_status:
                 instance.reviewed_at = timezone.now()
+                
+                # If this is a rejection and no original submission exists yet
+                if instance.approval_status == 'Rejected' and not instance.original_submission_id:
+                    instance.original_submission_id = instance.pk
         except Timesheet.DoesNotExist:
             pass
+
+# Signal to create a new version when resubmitting after rejection
+@receiver(pre_save, sender=Timesheet)
+def handle_resubmission(sender, instance, **kwargs):
+    if instance.pk and instance.approval_status == 'Rejected':
+        # When resubmitting a rejected timesheet, create a new version
+        if not hasattr(instance, '_resubmitting') or not instance._resubmitting:
+            instance._resubmitting = True
+            # Create a new version with incremented version number
+            latest_version = Timesheet.objects.filter(
+                original_submission_id=instance.original_submission_id or instance.pk
+            ).order_by('-version').first()
+            
+            if latest_version:
+                instance.version = latest_version.version + 1
+            else:
+                instance.version = 2
+                
+            if not instance.original_submission_id:
+                instance.original_submission_id = instance.pk
 
 
 '''----------------------------- HR --------------------------'''

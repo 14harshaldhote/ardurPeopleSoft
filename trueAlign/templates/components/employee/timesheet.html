@@ -2,176 +2,513 @@
 
 {% block content %}
 <div class="container mx-auto px-4 py-6">
-    <h1 class="text-3xl font-thin text-gray-800 mb-6">Timesheet Management</h1>    <!-- Header Section -->
+    <h1 class="text-3xl font-thin text-black mb-6">Timesheet Management</h1>
 
-    <!-- Display Current Date and Time -->
-    <div class="bg-white rounded-lg shadow p-4 mb-6 flex justify-between items-center">
-        <div>
-            <div id="current-day" class="text-lg text-gray-700 font-medium"></div>
-            <div id="current-time" class="text-gray-600"></div>
+    <!-- Dashboard Summary Card -->
+    <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl shadow-lg p-6 mb-8 text-white">
+        <div class="flex justify-between items-center">
+            <div>
+                <div id="current-day" class="text-2xl font-semibold"></div>
+                <div id="current-time" class="text-lg opacity-90"></div>
+            </div>
+            <div class="text-right">
+                <div class="text-lg font-medium">Weekly Hours</div>
+                <div class="flex items-center gap-2">
+                    <div class="text-2xl font-bold">{{ weekly_hours|default:"0" }}/45</div>
+                    <div class="bg-white bg-opacity-20 px-3 py-1 rounded-full text-sm">
+                        {{ remaining_hours|default:"45" }} hours remaining
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="mt-4 w-full bg-white bg-opacity-20 rounded-full h-2.5">
+            <div class="bg-white h-2.5 rounded-full" style="width: {% widthratio weekly_hours|default:0 45 100 %}%"></div>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-1 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <!-- Daily Entry Form -->
-        <div class="bg-white rounded-lg shadow p-6">
-            <h2 class="text-xl font-semibold text-gray-800 mb-4">Daily Timesheet</h2>
+        <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-100 overflow-x-auto">
+            <h2 class="text-xl font-semibold text-gray-800 mb-6 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Add Time Entry
+            </h2>
 
-
-            <form method="post" action="{% url 'aps_employee:timesheet' %}">
+            <form method="post" action="{% url 'aps_employee:timesheet' %}" id="timesheet-form">
                 {% csrf_token %}
-                <div class="mb-4">
-                    <label for="week_start_date" class="block text-sm font-medium text-gray-700">Today's Date</label>
+                <div class="mb-6">
+                    <label for="week_start_date" class="block text-sm font-medium text-gray-700 mb-2">Date</label>
                     <input type="date" id="week_start_date" name="week_start_date"
-                           value="{{ todays|date:'Y-m-d' }}" 
-                           max="{{ todays|date:'Y-m-d' }}"
-                           class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500">
+                           value="{{ today|date:'Y-m-d' }}" 
+                           max="{{ today|date:'Y-m-d' }}"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 shadow-sm">
+                    <p class="text-xs text-gray-500 mt-1">You can submit entries for up to 14 days in the past</p>
                 </div>
                 
-            
-                <div class="border rounded-lg mb-4 overflow-hidden">
-                    <table class="w-full table-auto">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-600">Project</th>
-                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-600">Task</th>
-                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-600">Hours</th>
-                                <th class="w-16"></th>
-                            </tr>
-                        </thead>
-                        <tbody id="timesheet-rows">
-                            <tr class="border-t">
-                                <td class="p-3">
-                                    <select name="project_name[]" class="w-full px-3 py-2 border rounded">
-                                        <option value="">Select Project</option>
-                                        {% for project in assigned_projects %}
-                                            <option value="{{ project.name }}">{{ project.name }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </td>
-                                <td class="p-3"><input type="text" name="task_name[]" class="w-full px-3 py-2 border rounded"></td>
-                                <td class="p-3"><input type="number" name="hours[]" step="0.5" class="w-full px-3 py-2 border rounded"></td>
-                                <td class="p-3">
-                                    <button type="button" onclick="removeRow(this)" class="text-red-600 hover:text-red-800">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
-                                        </svg>
-                                    </button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <div id="timesheet-entries" class="space-y-4 mb-6">
+                    <div class="timesheet-entry bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Project</label>
+                                <select name="project_id[]" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 shadow-sm">
+                                    <option value="">Select Project</option>
+                                    {% for project in assigned_projects %}
+                                        <option value="{{ project.id }}">{{ project.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Task Name</label>
+                                <input type="text" name="task_name[]" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 shadow-sm">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                            <div class="md:col-span-3">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                                <textarea name="task_description[]" rows="2" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Hours</label>
+                                <input type="number" name="hours[]" min="0.5" max="8" step="0.5" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 shadow-sm">
+                                <p class="text-xs text-gray-500 mt-1">Max 8 hours/day</p>
+                            </div>
+                        </div>
+                        <div class="flex justify-end">
+                            <button type="button" onclick="removeEntry(this)" class="text-red-600 hover:text-red-800 flex items-center text-sm">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                                Remove
+                            </button>
+                        </div>
+                    </div>
                 </div>
             
-                <button type="button" onclick="addRow()" class="text-blue-600 hover:text-blue-800 mb-4 block">
-                    + Add Row
-                </button>
+                <div class="flex justify-between mb-6">
+                    <button type="button" onclick="addEntry()" class="flex items-center text-indigo-600 hover:text-indigo-800 font-medium">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
+                        </svg>
+                        Add Another Entry
+                    </button>
+                    <div class="text-sm text-gray-600">
+                        Weekly total: <span id="weekly-total-display">{{ weekly_hours|default:"0" }}</span>/45 hours
+                    </div>
+                </div>
             
-                <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                <button type="submit" class="w-full bg-indigo-600 text-white py-3 px-4 rounded-lg hover:bg-indigo-700 transition-colors shadow-md font-medium flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
                     Submit Timesheet
                 </button>
             </form>
-            
         </div>
 
         <!-- History Section -->
-        <!-- History Section -->
-<div class="bg-white rounded-lg shadow p-6">
-    <h2 class="text-xl font-semibold text-gray-800 mb-4">Timesheet History</h2>
+        <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+            <h2 class="text-xl font-semibold text-gray-800 mb-6 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Timesheet History
+            </h2>
 
-    <!-- Filters -->
-    <div class="flex flex-wrap gap-3 mb-6">
-        <input type="date" class="px-3 py-2 border border-gray-300 rounded text-sm shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-        <input type="text" class="px-3 py-2 border border-gray-300 rounded text-sm shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Filter by Project">
-        <button class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 shadow-md text-sm">
-            Filter
-        </button>
-    </div>
+            <!-- Filters -->
+            <div class="flex flex-wrap gap-3 mb-6">
+                <input type="date" id="filter-date" class="px-3 py-2 border border-gray-300 rounded-lg text-sm shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                <select id="filter-status" class="px-3 py-2 border border-gray-300 rounded-lg text-sm shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="">All Statuses</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Approved">Approved</option>
+                    <option value="Rejected">Rejected</option>
+                </select>
+                <button onclick="filterTimesheets()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 shadow-md text-sm">
+                    Filter
+                </button>
+            </div>
 
-    <!-- Timesheet Table -->
-    <div class="overflow-x-auto">
-        <table class="w-full table-auto border-collapse shadow-lg">
-            <thead class="bg-indigo-50 text-indigo-800">
-                <tr>
-                    <th class="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider">Date</th>
-                    <th class="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider">Project</th>
-                    <th class="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider">Task</th>
-                    <th class="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider">Hours</th>
-                    <th class="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider">Approval Status</th>
-                    <th class="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider">Manager Comments</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for timesheet in timesheet_history %}
-                <tr class="border-t hover:bg-indigo-50 transition ease-in-out">
-                    <td class="px-4 py-3 text-sm text-gray-700">{{ timesheet.week_start_date }}</td>
-                    <td class="px-4 py-3 text-sm text-gray-700">{{ timesheet.project.name }}</td>
-                    <td class="px-4 py-3 text-sm text-gray-700">{{ timesheet.task_name }}</td>
-                    <td class="px-4 py-3 text-sm text-gray-700">{{ timesheet.hours }}</td>
-                    <td class="px-4 py-3 text-sm font-light">
-                        {% if timesheet.approval_status == "Approved" %}
-                        <span class="text-green-600 bg-green-100 px-2 py-1 rounded-full">Approved</span>
-                        {% elif timesheet.approval_status == "Rejected" %}
-                        <span class="text-red-600 bg-red-100 px-2 py-1 rounded-full">Rejected</span>
+            <!-- Timesheet Table -->
+            <div class="overflow-x-auto rounded-lg border border-gray-200 h-96 overflow-y-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50 sticky top-0">
+                        <tr>
+                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th>
+                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task</th>
+                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hours</th>
+                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200" id="timesheet-history">
+                        {% for timesheet in timesheet_history %}
+                        <tr class="hover:bg-gray-50 transition-colors cursor-pointer" onclick="showTimesheetDetails('{{ timesheet.week_start_date }}')">
+                            <td class="px-4 py-3 text-sm text-gray-700">{{ timesheet.week_start_date|date:"M d, Y" }}</td>
+                            <td class="px-4 py-3 text-sm text-gray-700">{{ timesheet.project.name }}</td>
+                            <td class="px-4 py-3 text-sm text-gray-700">{{ timesheet.task_name }}</td>
+                            <td class="px-4 py-3 text-sm text-gray-700">{{ timesheet.hours }}</td>
+                            <td class="px-4 py-3 text-sm">
+                                {% if timesheet.approval_status == "Approved" %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    <svg class="mr-1.5 h-2 w-2 text-green-600" fill="currentColor" viewBox="0 0 8 8">
+                                        <circle cx="4" cy="4" r="3" />
+                                    </svg>
+                                    Approved
+                                </span>
+                                {% elif timesheet.approval_status == "Rejected" %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                    <svg class="mr-1.5 h-2 w-2 text-red-600" fill="currentColor" viewBox="0 0 8 8">
+                                        <circle cx="4" cy="4" r="3" />
+                                    </svg>
+                                    Rejected
+                                </span>
+                                {% elif timesheet.approval_status == "Clarification_Requested" %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                    <svg class="mr-1.5 h-2 w-2 text-orange-600" fill="currentColor" viewBox="0 0 8 8">
+                                        <circle cx="4" cy="4" r="3" />
+                                    </svg>
+                                    Clarification
+                                </span>
+                                {% else %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    <svg class="mr-1.5 h-2 w-2 text-blue-600" fill="currentColor" viewBox="0 0 8 8">
+                                        <circle cx="4" cy="4" r="3" />
+                                    </svg>
+                                    Pending
+                                </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="px-4 py-8 text-center text-gray-500">No timesheet entries found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <!-- Pagination -->
+            {% if timesheet_history.has_other_pages %}
+            <div class="flex justify-center mt-6">
+                <nav class="inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    {% if timesheet_history.has_previous %}
+                    <a href="?page={{ timesheet_history.previous_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                        <span class="sr-only">Previous</span>
+                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                        </svg>
+                    </a>
+                    {% endif %}
+                    
+                    {% for i in timesheet_history.paginator.page_range %}
+                        {% if timesheet_history.number == i %}
+                        <span class="relative inline-flex items-center px-4 py-2 border border-indigo-500 bg-indigo-50 text-sm font-medium text-indigo-600">{{ i }}</span>
                         {% else %}
-                        <span class="text-yellow-600 bg-yellow-100 px-2 py-1 rounded-full">Pending</span>
+                        <a href="?page={{ i }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">{{ i }}</a>
                         {% endif %}
-                    </td>
-                    <td class="px-4 py-3 text-sm text-gray-600 italic">{{ timesheet.manager_comments|default:"-" }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                    {% endfor %}
+                    
+                    {% if timesheet_history.has_next %}
+                    <a href="?page={{ timesheet_history.next_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                        <span class="sr-only">Next</span>
+                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                        </svg>
+                    </a>
+                    {% endif %}
+                </nav>
+            </div>
+            {% endif %}
+        </div>
     </div>
 </div>
 
+<!-- Timesheet Details Modal -->
+<div id="timesheet-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden flex items-center justify-center z-50">
+    <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-gray-900">Timesheet Details</h3>
+                <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <div id="timesheet-details-content" class="space-y-4">
+                <div class="animate-pulse">
+                    <div class="h-4 bg-gray-200 rounded w-3/4"></div>
+                    <div class="space-y-3 mt-4">
+                        <div class="h-4 bg-gray-200 rounded"></div>
+                        <div class="h-4 bg-gray-200 rounded w-5/6"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 flex justify-end space-x-3">
+                <button onclick="closeModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">
+                    Close
+                </button>
+                <button id="export-timesheet" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 hidden">
+                    Export PDF
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 
 <script>
-    // Add a new row in the timesheet form
-    function addRow() {
-        var newRow = document.createElement('tr');
-        newRow.classList.add('border-t');
-        newRow.innerHTML = `
-            <td class="p-3">
-                <select name="project_name[]" class="w-full px-3 py-2 border rounded">
-                    <option value="">Select Project</option>
-                    {% for project in assigned_projects %}
-                        <option value="{{ project.name }}">{{ project.name }}</option>
-                    {% endfor %}
-                </select>
-            </td>
-            <td class="p-3"><input type="text" name="task_name[]" class="w-full px-3 py-2 border rounded"></td>
-            <td class="p-3"><input type="number" name="hours[]" step="0.5" class="w-full px-3 py-2 border rounded"></td>
-            <td class="p-3">
-                <button type="button" onclick="removeRow(this)" class="text-red-600 hover:text-red-800">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+    // Add a new entry in the timesheet form
+    function addEntry() {
+        const entriesContainer = document.getElementById('timesheet-entries');
+        const newEntry = document.createElement('div');
+        newEntry.classList.add('timesheet-entry', 'bg-gray-50', 'p-4', 'rounded-lg', 'border', 'border-gray-200');
+        
+        newEntry.innerHTML = `
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Project</label>
+                    <select name="project_id[]" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 shadow-sm">
+                        <option value="">Select Project</option>
+                        {% for project in assigned_projects %}
+                            <option value="{{ project.id }}">{{ project.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Task Name</label>
+                    <input type="text" name="task_name[]" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 shadow-sm">
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                <div class="md:col-span-3">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea name="task_description[]" rows="2" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Hours</label>
+                    <input type="number" name="hours[]" min="0.5" max="8" step="0.5" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 shadow-sm">
+                    <p class="text-xs text-gray-500 mt-1">Max 8 hours/day</p>
+                </div>
+            </div>
+            <div class="flex justify-end">
+                <button type="button" onclick="removeEntry(this)" class="text-red-600 hover:text-red-800 flex items-center text-sm">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                     </svg>
+                    Remove
                 </button>
-            </td>
+            </div>
         `;
-        document.getElementById('timesheet-rows').appendChild(newRow);
+        
+        entriesContainer.appendChild(newEntry);
+        updateHoursTotals();
     }
 
-    // Remove a row from the timesheet form
-    function removeRow(button) {
-        button.closest('tr').remove();
+    // Remove an entry from the timesheet form
+    function removeEntry(button) {
+        const entry = button.closest('.timesheet-entry');
+        if (document.querySelectorAll('.timesheet-entry').length > 1) {
+            entry.remove();
+        } else {
+            alert('You must have at least one timesheet entry.');
+        }
+        updateHoursTotals();
     }
 
     // Update the date and time display
     function updateDateTime() {
         const now = new Date();
-        const day = now.toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-        const time = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const day = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        const time = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
         document.getElementById('current-day').textContent = day;
         document.getElementById('current-time').textContent = time;
     }
 
-    setInterval(updateDateTime, 1000);
-    updateDateTime();
-</script>
+    // Calculate and update the total hours
+    function updateHoursTotals() {
+        const hourInputs = document.querySelectorAll('input[name="hours[]"]');
+        let formTotal = 0;
+        
+        hourInputs.forEach(input => {
+            if (input.value) {
+                formTotal += parseFloat(input.value);
+            }
+        });
+        
+        const weeklyTotal = parseFloat("{{ weekly_hours|default:'0' }}");
+        const grandTotal = weeklyTotal + formTotal;
+        
+        document.getElementById('weekly-total-display').textContent = grandTotal.toFixed(1);
+        
+        // Warn if over 40 hours
+        if (grandTotal > 40) {
+            document.getElementById('weekly-total-display').classList.add('text-red-600', 'font-bold');
+        } else {
+            document.getElementById('weekly-total-display').classList.remove('text-red-600', 'font-bold');
+        }
+    }
 
+    // Filter timesheets
+    function filterTimesheets() {
+        const dateFilter = document.getElementById('filter-date').value;
+        const statusFilter = document.getElementById('filter-status').value;
+        
+        // This would typically be an AJAX call to the server
+        // For now, we'll just show an alert
+        alert(`Filtering by date: ${dateFilter || 'Any'}, status: ${statusFilter || 'Any'}`);
+    }
+    // Show timesheet details in modal
+    function showTimesheetDetails(weekStartDate) {
+        const modal = document.getElementById('timesheet-modal');
+        const content = document.getElementById('timesheet-details-content');
+        const exportBtn = document.getElementById('export-timesheet');
+        
+        modal.classList.remove('hidden');
+        content.innerHTML = `
+            <div class="animate-pulse">
+                <div class="h-4 bg-gray-200 rounded w-3/4"></div>
+                <div class="space-y-3 mt-4">
+                    <div class="h-4 bg-gray-200 rounded"></div>
+                    <div class="h-4 bg-gray-200 rounded w-5/6"></div>
+                </div>
+            </div>
+        `;
+        
+        // Fetch timesheet details using the correct URL pattern
+        fetch(`{% url 'aps_employee:timesheet_details' 'placeholder' %}`.replace('placeholder', weekStartDate))
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    content.innerHTML = `
+                        <div class="text-yellow-600 p-4">
+                            ${data.message || 'No timesheet entries found for this week.'}
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Format the week range
+                const weekStart = new Date(data.week_start);
+                const weekEnd = new Date(data.week_end);
+                const weekRange = `${weekStart.toLocaleDateString()} - ${weekEnd.toLocaleDateString()}`;
+                
+                // Get the status from the first entry if available
+                const status = data.entries.length > 0 ? data.entries[0].approval_status : 'Pending';
+                
+                let statusClass = {
+                    'Pending': 'bg-yellow-100 text-yellow-800',
+                    'Approved': 'bg-green-100 text-green-800',
+                    'Rejected': 'bg-red-100 text-red-800'
+                }[status] || 'bg-gray-100 text-gray-800';
+
+                content.innerHTML = `
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-sm text-gray-500">Week Range</p>
+                                <p class="font-medium">${weekRange}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500">Status</p>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass}">
+                                    ${status}
+                                </span>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500">Total Hours</p>
+                                <p class="font-medium">${data.total_hours}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <h4 class="font-medium text-gray-900 mb-2">Entries</h4>
+                        <div class="space-y-3">
+                            ${data.entries.map(entry => `
+                                <div class="border rounded-lg p-3">
+                                    <div class="flex justify-between items-start">
+                                        <div>
+                                            <h5 class="font-medium text-gray-900">${entry.project_name}</h5>
+                                            <p class="text-sm text-gray-500">${entry.task_name}</p>
+                                        </div>
+                                        <span class="text-sm font-medium">${entry.hours} hours</span>
+                                    </div>
+                                    <p class="text-sm text-gray-600 mt-2">${entry.task_description}</p>
+                                    ${entry.comments ? `<p class="text-sm text-gray-500 mt-2 italic">Comments: ${entry.comments}</p>` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div class="mt-4 text-sm text-gray-500">
+                        <p>Submitted: ${data.entries.length > 0 ? new Date(data.entries[0].submitted_at || Date.now()).toLocaleString() : 'N/A'}</p>
+                        <p>Last Modified: ${data.entries.length > 0 ? new Date(data.entries[0].last_modified || Date.now()).toLocaleString() : 'N/A'}</p>
+                    </div>
+                `;
+
+                // Show export button if timesheet exists
+                if (data.entries.length > 0) {
+                    exportBtn.classList.remove('hidden');
+                } else {
+                    exportBtn.classList.add('hidden');
+                }
+            })
+            .catch(error => {
+                console.error("Error fetching timesheet details:", error);
+                content.innerHTML = `
+                    <div class="text-red-600 p-4">
+                        Error loading timesheet details. Please try again.
+                    </div>
+                `;
+            });
+    }
+
+    function closeModal() {
+        const modal = document.getElementById('timesheet-modal');
+        modal.classList.add('hidden');
+    }
+
+    // Close modal when clicking outside
+    document.getElementById('timesheet-modal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeModal();
+        }
+    });
+
+    // Initialize the page
+    document.addEventListener('DOMContentLoaded', function() {
+        setInterval(updateDateTime, 1000);
+        updateDateTime();
+        
+        // Add event listeners to hour inputs for real-time total calculation
+        document.querySelectorAll('input[name="hours[]"]').forEach(input => {
+            input.addEventListener('input', updateHoursTotals);
+        });
+        
+        // Form validation
+        document.getElementById('timesheet-form').addEventListener('submit', function(e) {
+            const hourInputs = document.querySelectorAll('input[name="hours[]"]');
+            let formTotal = 0;
+            
+            hourInputs.forEach(input => {
+                if (input.value) {
+                    formTotal += parseFloat(input.value);
+                }
+            });
+            
+            const weeklyTotal = parseFloat("{{ weekly_hours|default:'0' }}");
+            const grandTotal = weeklyTotal + formTotal;
+            
+            if (grandTotal > 40) {
+                e.preventDefault();
+                alert('Your total weekly hours cannot exceed 40. Please adjust your entries.');
+            }
+        });
+    });
+</script>
 {% endblock %}
