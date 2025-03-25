@@ -6587,395 +6587,9 @@ def chat_home(request, chat_type=None, chat_id=None):
         messages.error(request, f'Error: {str(e)}')
         return redirect('dashboard')
 
-# @login_required
-# def chat_home(request, chat_type=None, chat_id=None):
-#     """Main chat view that renders the chat interface and handles all chat functionality"""
-#     try:
-#         # Get available users based on role
-#         is_admin = request.user.groups.filter(name='Admin').exists()
-#         is_manager = request.user.groups.filter(name='Manager').exists()
 
-#         available_users = User.objects.exclude(id=request.user.id)
-#         if not is_admin:
-#             if is_manager:
-#                 available_users = available_users.filter(groups__name='Employee')
-#             else:
-#                 available_users = available_users.filter(
-#                     Q(groups__name='Manager') | Q(groups__name='HR')
-#                 )
 
-#         # Get chat lists for sidebar - Updated query
-#         group_chats = ChatGroup.objects.filter(
-#             memberships__user=request.user,
-#             memberships__is_active=True,
-#             is_active=True
-#         ).annotate(
-#             unread_count=Count(
-#                 'messages',
-#                 filter=Q(
-#                     messages__read_receipts__user=request.user,
-#                     messages__read_receipts__read_at__isnull=True,
-#                     messages__is_deleted=False
-#                 )
-#             ),
-#             latest_message=Subquery(
-#                 Message.objects.filter(
-#                     group=OuterRef('pk'),
-#                     is_deleted=False
-#                 ).order_by('-sent_at').values('content')[:1]
-#             )
-#         ).prefetch_related('memberships', 'messages')
 
-#         direct_messages = DirectMessage.objects.filter(
-#             participants=request.user,
-#             is_active=True
-#         ).annotate(
-#             unread_count=Count(
-#                 'messages',
-#                 filter=Q(
-#                     messages__read_receipts__user=request.user,
-#                     messages__read_receipts__read_at__isnull=True,
-#                     messages__is_deleted=False
-#                 )
-#             ),
-#             latest_message=Subquery(
-#                 Message.objects.filter(
-#                     direct_message=OuterRef('pk'),
-#                     is_deleted=False
-#                 ).order_by('-sent_at').values('content')[:1]
-#             )
-#         ).prefetch_related('participants', 'messages')
-
-#         # Add other participant info for direct messages
-#         for dm in direct_messages:
-#             dm.other_user = dm.participants.exclude(id=request.user.id).first()
-
-#         context = {
-#             'group_chats': group_chats,
-#             'direct_messages': direct_messages,
-#             'available_users': available_users,
-#             'is_admin': is_admin,
-#             'is_manager': is_manager,
-#             'unread_counts': get_unread_counts(request.user)
-#         }
-
-#         # Handle chat detail view
-#         # if chat_type and chat_id:
-#         #     try:
-#         #         validate_user_in_chat(request.user, chat_id)
-                
-#         #         if chat_type == 'group':
-#         #             chat = get_object_or_404(ChatGroup, id=chat_id, is_active=True)
-#         #             other_participant = None
-#         #         else:
-#         #             chat = get_object_or_404(DirectMessage, id=chat_id, is_active=True)
-#         #             other_participant = chat.participants.exclude(id=request.user.id).first()
-
-#         #         messages_list = get_chat_history(chat_id, request.user, chat_type)
-#         #         mark_messages_as_read(chat_id, request.user, chat_type)
-                
-#         #         send_notification(
-#         #             request.user.id,
-#         #             "Messages marked as read",
-#         #             "read_status",
-#         #             chat_id
-#         #         )
-
-#         #         context.update({
-#         #             'chat': chat,
-#         #             'chat_type': chat_type,
-#         #             'messages': messages_list,
-#         #             'other_participant': other_participant,
-#         #             'can_manage': request.user.groups.filter(name__in=['Admin', 'Manager']).exists(),
-#         #             'chat_detail_view': True                
-#         #         })
-
-#         #     except Exception as e:
-#         #         # messages.error(request, f'Error loading chat: {str(e)}')
-#         #         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-#         #             return JsonResponse({'error'}, status=400)
-#         #         return redirect('dashboard')
-
-#         # Handle chat detail view
-#         if chat_type and chat_id:
-#             try:
-#                 validate_user_in_chat(request.user, chat_id)
-                
-#                 if chat_type == 'group':
-#                     chat = get_object_or_404(ChatGroup, id=chat_id, is_active=True)
-#                     other_participant = None
-#                 else:
-#                     chat = get_object_or_404(DirectMessage, id=chat_id, is_active=True)
-#                     other_participant = chat.participants.exclude(id=request.user.id).first()
-
-#                 messages_list = get_chat_history(chat_id, request.user, chat_type)
-                
-#                 # Mark messages as read and only send notification if messages were actually read
-#                 unread_count = mark_messages_as_read(chat_id, request.user, chat_type)
-                
-#                 # Only send notification if there were unread messages
-#                 if unread_count > 0:
-#                     try:
-#                         send_notification(
-#                             request.user.id,
-#                             "Messages marked as read",
-#                             "read_status",
-#                             chat_id
-#                         )
-#                     except Exception as notify_error:
-#                         # Log notification errors without breaking the app flow
-#                         import logging
-#                         logger = logging.getLogger(__name__)
-#                         logger.error(f"Notification error: {str(notify_error)}")
-                
-#                 context.update({
-#                     'chat': chat,
-#                     'chat_type': chat_type,
-#                     'messages': messages_list,
-#                     'other_participant': other_participant,
-#                     'can_manage': request.user.groups.filter(name__in=['Admin', 'Manager']).exists(),
-#                     'chat_detail_view': True                
-#                 })
-
-#             except Exception as e:
-#                 messages.error(request, f'Error loading chat: {str(e)}')
-#                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-#                      return JsonResponse({'error'}, status=400)
-#                 return redirect('dashboard')
-            
-
-#         # Handle create group chat
-#         if request.method == 'POST' and request.POST.get('action') == 'create_group':
-#             if not request.user.groups.filter(name__in=['Admin', 'Manager']).exists():
-#                 raise PermissionDenied("You don't have permission to create groups")
-                
-#             try:
-#                 name = request.POST.get('name')
-#                 description = request.POST.get('description', '')
-#                 member_ids = request.POST.getlist('members')
-
-#                 chat = create_group(name, request.user, description)
-#                 GroupMember.objects.bulk_create([
-#                     GroupMember(group=chat, user_id=member_id, role='member', is_active=True)
-#                     for member_id in member_ids
-#                 ])
-
-#                 for member_id in member_ids:
-#                     send_notification(
-#                         member_id,
-#                         f"You've been added to group chat: {name}",
-#                         "group_add",
-#                         chat.id,
-#                         request.user.username
-#                     )
-
-#                 messages.success(request, 'Group chat created successfully')
-#                 return redirect('chat:detail', chat_type='group', chat_id=chat.id)
-
-#             except Exception as e:
-#                 # messages.error(request, f'Error creating group: {str(e)}')
-#                 return redirect('dashboard')
-
-#         # Handle create direct message
-#         if request.method == 'POST' and request.POST.get('action') == 'create_direct':
-#             try:
-#                 user_id = request.POST.get('user_id')
-#                 if not user_id:
-#                     raise ValueError("No user_id provided")
-                    
-#                 other_user = get_object_or_404(User, id=user_id)
-
-#                 existing_chat = DirectMessage.objects.filter(
-#                     participants=request.user
-#                 ).filter(
-#                     participants=other_user,
-#                     is_active=True
-#                 ).first()
-
-#                 if existing_chat:
-#                     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-#                         return JsonResponse({'chat_id': existing_chat.id})
-#                     return redirect('chat:detail', chat_type='direct', chat_id=existing_chat.id)
-
-#                 chat = DirectMessage.objects.create(is_active=True)
-#                 chat.participants.add(request.user)
-#                 chat.participants.add(other_user)
-#                 chat.save()
-
-#                 send_notification(
-#                     other_user.id,
-#                     f"New message from {request.user.get_full_name() or request.user.username}",
-#                     "direct_message",
-#                     chat.id,
-#                     request.user.username
-#                 )
-
-#                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-#                     return JsonResponse({'chat_id': chat.id})
-#                 return redirect('chat:detail', chat_type='direct', chat_id=chat.id)
-
-#             except Exception as e:
-#                 # messages.error(request, f'Error creating chat: {str(e)}')
-#                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-#                     return JsonResponse({'error'}, status=400)
-#                 return redirect('dashboard')
-
-#     #     #Handle message sending
-#     #     if request.method == 'POST' and request.POST.get('message'):
-#     #         try:
-#     #             content = request.POST.get('message')
-#     #             message_type = request.POST.get('message_type', 'text')
-#     #             file_attachment = request.FILES.get('file_attachment')
-
-#     #             if chat_type == 'group':
-#     #                 chat = get_object_or_404(ChatGroup, id=chat_id)
-#     #                 message = Message.objects.create(
-#     #                     group=chat,
-#     #                     sender=request.user,
-#     #                     content=content,
-#     #                     message_type=message_type,
-#     #                     file_attachment=file_attachment
-#     #                 )
-#     #             else:
-#     #                 chat = get_object_or_404(DirectMessage, id=chat_id)
-#     #                 message = Message.objects.create(
-#     #                     direct_message=chat,
-#     #                     sender=request.user,
-#     #                     content=content,
-#     #                     message_type=message_type,
-#     #                     file_attachment=file_attachment
-#     #                 )
-
-#     #             # Create read receipt for sender
-#     #             MessageRead.objects.create(message=message, user=request.user, read_at=timezone.now())
-
-#     #             # Create read receipts for other participants
-#     #             if chat_type == 'group':
-#     #                 participants = User.objects.filter(
-#     #                     group_memberships__group=chat,
-#     #                     group_memberships__is_active=True
-#     #                 ).exclude(id=request.user.id)
-#     #             else:
-#     #                 participants = chat.participants.exclude(id=request.user.id)
-
-#     #             MessageRead.objects.bulk_create([
-#     #                 MessageRead(message=message, user=participant)
-#     #                 for participant in participants
-#     #             ])
-
-#     #             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-#     #                 return JsonResponse({'success': True})
-#     #             return redirect('chat:detail', chat_type=chat_type, chat_id=chat_id)
-
-#     #         except Exception as e:
-#     #             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-#     #                 return JsonResponse({'error'}, status=400)
-#     #             # messages.error(request, f'Error sending message: {str(e)}')
-#     #             return redirect('dashboard')
-
-#     #     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-#     #         return render(request, 'chat/chat_content.html', context)
-#     #     return render(request, 'chat/chat_home.html', context)
-
-#     # except Exception as e:
-#     #     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-#     #         return JsonResponse({'error': str(e)}, status=400)
-#     #     # messages.error(request, f'Error loading chat home: {str(e)}')
-#     #     return redirect('dashboard')
-#     # Handle message sending
-#         # Handle message sending
-#         if request.method == 'POST' and request.POST.get('message'):
-#             try:
-#                 content = request.POST.get('message')
-#                 message_type = request.POST.get('message_type', 'text')
-#                 file_attachment = request.FILES.get('file_attachment')
-                
-#                 # Start a database transaction to ensure message and read receipts are created atomically
-#                 from django.db import transaction
-                
-#                 with transaction.atomic():
-#                     if chat_type == 'group':
-#                         chat = get_object_or_404(ChatGroup, id=chat_id)
-#                         message = Message.objects.create(
-#                             group=chat,
-#                             sender=request.user,
-#                             content=content,
-#                             message_type=message_type,
-#                             file_attachment=file_attachment  # This allows attachments to be sent
-#                         )
-                        
-#                         # Get all active members for this group
-#                         participants = User.objects.filter(
-#                             group_memberships__group=chat,
-#                             group_memberships__is_active=True
-#                         )
-                        
-#                     else:
-#                         chat = get_object_or_404(DirectMessage, id=chat_id)
-#                         message = Message.objects.create(
-#                             direct_message=chat,
-#                             sender=request.user,
-#                             content=content,
-#                             message_type=message_type,
-#                             file_attachment=file_attachment  # This allows attachments to be sent
-#                         )
-                        
-#                         # Get all participants for this direct message
-#                         participants = chat.participants.all()
-                    
-#                     # Create read receipt for sender (already read)
-#                     MessageRead.objects.create(
-#                         message=message, 
-#                         user=request.user, 
-#                         read_at=timezone.now()
-#                     )
-                    
-#                     # Create read receipts for other participants (unread)
-#                     other_participants = participants.exclude(id=request.user.id)
-#                     read_receipts = [
-#                         MessageRead(message=message, user=participant)
-#                         for participant in other_participants
-#                     ]
-                    
-#                     if read_receipts:
-#                         MessageRead.objects.bulk_create(read_receipts)
-                        
-#                     # Notify other participants about the new message
-#                     for participant in other_participants:
-#                         try:
-#                             sender_name = request.user.get_full_name() or request.user.username
-#                             send_notification(
-#                                 participant.id,
-#                                 f"New message from {sender_name}",
-#                                 "new_message",
-#                                 chat_id,
-#                                 sender_name
-#                             )
-#                         except Exception as notify_error:
-#                             # Log notification errors without breaking the message flow
-#                             import logging
-#                             logger = logging.getLogger(__name__)
-#                             logger.error(f"Notification error: {str(notify_error)}")
-
-#             except Exception as e:
-#                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-#                     return JsonResponse({'error': str(e)}, status=400)
-#                 messages.error(request, f'Error sending message: {str(e)}')
-#                 return redirect('dashboard')
-                    
-#             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-#                 return JsonResponse({'success': True, 'message_id': message.id})
-#             return redirect('chat:detail', chat_type=chat_type, chat_id=chat_id)
-
-#     except Exception as e:
-#         import logging
-#         logger = logging.getLogger(__name__)
-#         logger.error(f"Error sending message: {str(e)}")
-                
-#         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-#             return JsonResponse({'error': str(e)}, status=400)
-#         messages.error(request, 'Error sending message')
-#         return redirect('chat:detail', chat_type=chat_type, chat_id=chat_id)
 
 '''-------------------------- MANUAL ATTENDACE BY HR  --------------------------------'''
 from django.shortcuts import render, get_object_or_404, redirect
@@ -7063,3 +6677,32 @@ def manual_attendance(request):
     except Exception as e:
         messages.error(request, f"An error occurred: {str(e)}")
         return redirect('aps_hr:manual_attendance')
+    
+
+'''----------------------------------- APPLICATION FOR EMPLOYEE --------------------------------'''
+
+def is_employee(user):
+    """
+    Check if user is an employee (not admin/management).
+    Returns True if user belongs to Employee group.
+    """
+    return user.groups.filter(name='Employee').exists()
+@login_required
+@user_passes_test(is_employee)
+def application_for_user(request):
+    """
+    Placeholder view that renders the application dashboard template.
+    This is currently a dummy view that will be implemented later.
+    """
+    try:
+        # Dummy data for now
+        context = {
+            'applications': {},
+            'user': request.user,
+            'page_title': 'Application Dashboard'
+        }
+        return render(request, 'components/employee/application_dashboard.html', context)
+
+    except Exception as e:
+        messages.error(request, f"Error loading application dashboard: {str(e)}")
+        return redirect('dashboard')

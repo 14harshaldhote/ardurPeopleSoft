@@ -35,6 +35,7 @@ employee_patterns = [
     path('leave/', views.leave_view, name='leave_view'),
     path('profile/', views.employee_profile, name='employee_profile'),
     path('timesheet/details/<str:week_start_date>/', views.get_timesheet_details, name='timesheet_details'),
+    path('applications/', views.application_for_user, name='application_for_user'),
 
 ]
 
