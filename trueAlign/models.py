@@ -179,7 +179,6 @@ from django.core.exceptions import ValidationError
 from django.db.models import Q, Sum, Avg
 from datetime import timedelta
 import calendar
-
 class Leave(models.Model):
     LEAVE_TYPES = [
         ('Sick Leave', 'Sick Leave'),
@@ -200,7 +199,7 @@ class Leave(models.Model):
     start_date = models.DateField()
     end_date = models.DateField()
     half_day = models.BooleanField(default=False)
-    leave_days = models.DecimalField(max_digits=4, decimal_places=1, null=True, blank=True)
+    leave_days = models.DecimalField(max_digits=4, decimal_places=1, default=0)  # Changed to have default=0
     reason = models.TextField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
     approver = models.ForeignKey(User, related_name='leave_approvals', on_delete=models.SET_NULL, null=True, blank=True)

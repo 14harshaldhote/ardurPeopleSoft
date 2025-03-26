@@ -74,6 +74,7 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Leave Type</label>
                         <select name="leave_type" id="leave_type" required class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="">Select Leave Type</option>
                             {% for leave_type in leave_types %}
                             <option value="{{ leave_type.0 }}">{{ leave_type.1 }}</option>
                             {% endfor %}

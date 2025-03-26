@@ -4064,10 +4064,16 @@ def leave_view(request):
             # Get half_day value properly from form
             half_day = request.POST.get('half_day') == 'true'
 
+            # Get leave type with default
+            leave_type = request.POST.get('leave_type')
+            if not leave_type:
+                messages.error(request, "Leave type is required")
+                return redirect('aps_employee:leave_view')
+
             # Create new leave request
             leave = Leave(
                 user=request.user,
-                leave_type=request.POST.get('leave_type'),
+                leave_type=leave_type,
                 start_date=start_date,
                 end_date=end_date,
                 reason=request.POST.get('reason'),
@@ -4076,17 +4082,23 @@ def leave_view(request):
             )
 
             # Auto convert leave type based on balance
-            leave.auto_convert_leave_type()
+            try:
+                leave.auto_convert_leave_type()
+            except Exception as e:
+                messages.error(request, f"Error converting leave type: {str(e)}")
+                return redirect('aps_employee:leave_view')
 
             # Run validations and save
             leave.full_clean()
             leave.save()
 
-            messages.success(request, f"Leave request submitted successfully.")
+            messages.success(request, "Leave request submitted successfully.")
             return redirect('aps_employee:leave_view')
 
         except ValidationError as e:
             messages.error(request, str(e))
+        except ValueError as e:
+            messages.error(request, "Invalid date format")
         except Exception as e:
             messages.error(request, f"Error submitting leave request: {str(e)}")
         return redirect('aps_employee:leave_view')
