@@ -1614,7 +1614,13 @@ def add_user(request):
                     onboarded_by=request.user,
                     onboarding_date=timezone.now(),
                     employee_type=request.POST.get('employee_type') or None,
-                    personal_address=request.POST.get('personal_address') or None
+                    # Replace personal_address with individual address fields
+                    address_line1=request.POST.get('address_line1') or None,
+                    address_line2=request.POST.get('address_line2') or None,
+                    city=request.POST.get('city') or None,
+                    state=request.POST.get('state') or None,
+                    postal_code=request.POST.get('postal_code') or None,
+                    country=request.POST.get('country') or None
                 )
                 
                 # Log user creation
@@ -1749,7 +1755,13 @@ def bulk_add_users(request):
                         'onboarded_by': request.user,
                         'onboarding_date': timezone.now(),
                         'employee_type': row.get('employee_type') or None,
-                        'personal_address': row.get('personal_address') or None
+                        # Replace personal_address with individual address fields
+                        'address_line1': row.get('address_line1') or None,
+                        'address_line2': row.get('address_line2') or None,
+                        'city': row.get('city') or None,
+                        'state': row.get('state') or None,
+                        'postal_code': row.get('postal_code') or None,
+                        'country': row.get('country') or None
                     }
                     
                     # Optional fields with validation
@@ -1778,6 +1790,15 @@ def bulk_add_users(request):
                     
                     if 'personal_email' in row and row['personal_email']:
                         user_details_fields['personal_email'] = row['personal_email']
+                    
+                    if 'emergency_contact_name' in row and row['emergency_contact_name']:
+                        user_details_fields['emergency_contact_name'] = row['emergency_contact_name']
+                        
+                    if 'emergency_contact_primary' in row and row['emergency_contact_primary']:
+                        user_details_fields['emergency_contact_primary'] = row['emergency_contact_primary']
+                        
+                    if 'emergency_contact_address' in row and row['emergency_contact_address']:
+                        user_details_fields['emergency_contact_address'] = row['emergency_contact_address']
                     
                     # Create UserDetails record
                     UserDetails.objects.create(**user_details_fields)

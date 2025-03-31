@@ -1,52 +1,106 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-6">
-    <div class="mb-4">
-        <a href="{% url 'aps_hr:hr_dashboard' %}" class="inline-flex items-center px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors">
+<div class="container mx-auto px-4 py-8 max-w-4xl">
+    <!-- Back Button with improved styling -->
+    <div class="mb-6">
+        <a href="{% url 'aps_hr:hr_dashboard' %}" 
+           class="inline-flex items-center px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+            </svg>
             <span>Back to Dashboard</span>
         </a>
     </div>
     
-    <!-- Add User Modal -->
-    <div class="max-w-md mx-auto bg-white rounded-lg shadow-md overflow-hidden">
-        <div class="flex items-center justify-between bg-gray-100 px-6 py-4 border-b">
-            <h5 class="text-xl font-semibold text-gray-800">Add New User</h5>
-            <button type="button" class="text-gray-500 hover:text-gray-700 focus:outline-none">
-                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                </svg>
-            </button>
+    <!-- Form Card with improved styling -->
+    <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+        <!-- Card Header -->
+        <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 border-b">
+            <h5 class="text-xl font-semibold text-white">Add New User</h5>
         </div>
+        
+        <!-- Notification area for form feedback (hidden by default) -->
+        <div id="notification" class="hidden px-6 py-3 mb-4 border-b"></div>
+        
+        <!-- Form Content -->
         <div class="p-6">
-            <form method="POST" action="{% url 'aps_hr:add_user' %}">
+            <form method="POST" action="{% url 'aps_hr:add_user' %}" id="addUserForm">
                 {% csrf_token %}
-                <div class="mb-4">
-                    <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                    <input type="email" name="email" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200" required>
+                
+                <!-- Form Layout - 2 columns on larger screens -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Email Field -->
+                    <div class="col-span-1 md:col-span-2">
+                        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email Address*</label>
+                        <div class="mt-1 relative rounded-md shadow-sm">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                                    <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                                </svg>
+                            </div>
+                            <input type="email" name="email" id="email" 
+                                   class="pl-10 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50" 
+                                   placeholder="user@example.com" required>
+                        </div>
+                    </div>
+                    
+                    <!-- First Name Field -->
+                    <div>
+                        <label for="first_name" class="block text-sm font-medium text-gray-700 mb-1">First Name*</label>
+                        <input type="text" name="first_name" id="first_name" 
+                               class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50" 
+                               required>
+                    </div>
+                    
+                    <!-- Last Name Field -->
+                    <div>
+                        <label for="last_name" class="block text-sm font-medium text-gray-700 mb-1">Last Name*</label>
+                        <input type="text" name="last_name" id="last_name" 
+                               class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50" 
+                               required>
+                    </div>
+                    
+                    <!-- Group Field with enhanced select -->
+                    <div>
+                        <label for="group" class="block text-sm font-medium text-gray-700 mb-1">Group*</label>
+                        <div class="relative">
+                            <select name="group" id="group" 
+                                   class="appearance-none w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50" 
+                                   required>
+                                <option value="">Select a group</option>
+                                {% for group in groups %}
+                                    <option value="{{ group.id }}">{{ group.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Work Location Field -->
+                    <div>
+                        <label for="work_location" class="block text-sm font-medium text-gray-700 mb-1">Work Location*</label>
+                        <input type="text" name="work_location" id="work_location" 
+                               class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50" 
+                               required>
+                    </div>
                 </div>
-                <div class="mb-4">
-                    <label for="first_name" class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
-                    <input type="text" name="first_name" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200" required>
-                </div>
-                <div class="mb-4">
-                    <label for="last_name" class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
-                    <input type="text" name="last_name" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200" required>
-                </div>
-                <div class="mb-4">
-                    <label for="group" class="block text-sm font-medium text-gray-700 mb-1">Group</label>
-                    <select name="group" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200" required>
-                        {% for group in groups %}
-                            <option value="{{ group.id }}">{{ group.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="mb-4">
-                    <label for="work_location" class="block text-sm font-medium text-gray-700 mb-1">Work Location</label>
-                    <input type="text" name="work_location" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200" required>
-                </div>
+                
+                <!-- Required Fields Note -->
+                <div class="mt-4 text-sm text-gray-500">* Required fields</div>
+                
+                <!-- Submit Button -->
                 <div class="mt-6">
-                    <button type="submit" class="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors">
+                    <button type="submit" 
+                            class="w-full px-6 py-3 bg-green-600 text-white text-lg font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                        </svg>
                         Add User
                     </button>
                 </div>
@@ -54,4 +108,40 @@
         </div>
     </div>
 </div>
+
+<!-- Optional JavaScript for form validation and feedback -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('addUserForm');
+    const notification = document.getElementById('notification');
+    
+    form.addEventListener('submit', function(event) {
+        // Display loading state
+        const submitButton = form.querySelector('button[type="submit"]');
+        const originalButtonText = submitButton.innerHTML;
+        submitButton.innerHTML = '<svg class="animate-spin h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Processing...';
+        submitButton.disabled = true;
+        
+        // Basic client-side validation example
+        const email = document.getElementById('email').value;
+        if (!email.includes('@')) {
+            event.preventDefault();
+            showNotification('Please enter a valid email address.', 'error');
+            submitButton.innerHTML = originalButtonText;
+            submitButton.disabled = false;
+        }
+    });
+    
+    function showNotification(message, type) {
+        notification.innerHTML = message;
+        notification.classList.remove('hidden', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
+        
+        if (type === 'success') {
+            notification.classList.add('bg-green-100', 'text-green-800');
+        } else {
+            notification.classList.add('bg-red-100', 'text-red-800');
+        }
+    }
+});
+</script>
 {% endblock %}
