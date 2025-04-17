@@ -251,8 +251,11 @@
                 this.idleThreshold = idleThresholdMinutes * 60 * 1000;
                 this.activityEvents = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart', 'touchmove'];
                 this.isIdle = false;
+                this.isFocused = document.visibilityState === 'visible';
                 this.setupEventListeners();
                 this.startIdleCheck();
+                // Add heartbeat mechanism
+                this.startHeartbeat();
             }
 
             getCookie(name) {
@@ -278,7 +281,9 @@
                             'Content-Type': 'application/json',
                             'X-CSRFToken': this.getCookie('csrftoken')
                         },
-                        body: body ? JSON.stringify(body) : null
+                        body: body ? JSON.stringify(body) : null,
+                        // Add credentials to ensure cookies are sent
+                        credentials: 'same-origin'
                     });
 
                     if (!response.ok) {
@@ -288,18 +293,43 @@
                     return await response.json();
                 } catch (error) {
                     console.error(`Error making request to ${url}:`, error);
+                    
+                    // Add retry for network errors
+                    if (error.name === 'TypeError' && !navigator.onLine) {
+                        this.queueRetry(url, method, body);
+                    }
+                    
                     throw error;
                 }
+            }
+            
+            // Add retry mechanism
+            queueRetry(url, method, body) {
+                const retryHandler = () => {
+                    this.makeRequest(url, method, body)
+                        .then(() => window.removeEventListener('online', retryHandler))
+                        .catch(() => console.log('Retry failed'));
+                };
+                
+                window.addEventListener('online', retryHandler, { once: true });
+                console.log('Request queued for retry when online');
             }
 
             async updateServerActivity() {
                 try {
                     const data = await this.makeRequest('/update-last-activity/', 'POST', {
-                        timestamp: new Date().toISOString()
+                        timestamp: new Date().toISOString(),
+                        isIdle: this.isIdle,
+                        isFocused: this.isFocused
                     });
 
                     if (data.status === 'success') {
                         console.log('Activity updated successfully');
+                        
+                        // Check if session expired on server
+                        if (data.sessionExpired) {
+                            window.location.reload();
+                        }
                     }
                 } catch (error) {
                     console.error('Failed to update activity:', error);
@@ -320,11 +350,15 @@
             }
 
             resetIdleTime() {
-                if (this.isIdle) {
-                    this.isIdle = false;
+                const wasIdle = this.isIdle;
+                
+                this.idleTime = 0;
+                this.isIdle = false;
+                
+                // Only update server when transitioning from idle to active
+                if (wasIdle) {
                     this.updateServerActivity();
                 }
-                this.idleTime = 0;
             }
 
             setupEventListeners() {
@@ -333,17 +367,25 @@
                     document.addEventListener(event, () => this.resetIdleTime());
                 });
 
-                // Visibility change
+                // Visibility change - improved handling
                 document.addEventListener('visibilitychange', () => {
-                    if (document.visibilityState === 'visible') {
+                    this.isFocused = document.visibilityState === 'visible';
+                    
+                    if (this.isFocused) {
                         this.resetIdleTime();
+                    } else {
+                        // When tab becomes hidden, update the server immediately
+                        this.updateServerActivity();
                     }
                 });
 
-                // Handle beforeunload event
-                window.addEventListener('beforeunload', async (event) => {
-                    // Try to update the server one last time
-                    await this.updateServerActivity();
+                // Handle beforeunload event with sendBeacon for reliability
+                window.addEventListener('beforeunload', () => {
+                    // Use sendBeacon for more reliable delivery during page unload
+                    navigator.sendBeacon('/update-last-activity/', JSON.stringify({
+                        timestamp: new Date().toISOString(),
+                        unloading: true
+                    }));
                 });
 
                 // Add click handler to logout buttons/links
@@ -359,6 +401,8 @@
                 // Check idle time every second
                 setInterval(() => {
                     this.idleTime += 1000;
+                    
+                    // If crossing the threshold into idle, update server
                     if (this.idleTime >= this.idleThreshold && !this.isIdle) {
                         this.isIdle = true;
                         console.log('User is idle');
@@ -366,7 +410,16 @@
                     }
                 }, 1000);
             }
+            
+            // Add heartbeat function
+            startHeartbeat() {
+                // Update the server every minute regardless of activity
+                setInterval(() => {
+                    this.updateServerActivity();
+                }, 60000); // 60 seconds
+            }
         }
+        
         // Initialize the session manager when the page loads
         document.addEventListener('DOMContentLoaded', () => {
             window.sessionManager = new SessionManager(1); // 1 minute threshold

@@ -25,6 +25,7 @@ admin_patterns = [
     path('attendance/', views.admin_attendance_view, name='attendance'),
     path('support/', views.admin_support, name='admin_support'),
     path('support/<uuid:ticket_id>/', views.admin_support, name='admin_support_with_ticket'),
+    path('user/<int:user_id>/sessions/<str:date_str>/', views.user_session_detail_view, name='user_session_detail'),
 ]
 
 # Employee-specific URLs under 'truealign/employee/'
@@ -121,6 +122,7 @@ urlpatterns = [
     path('set_password/<str:username>/', views.set_password_view, name='set_password'),
     path('profile/<int:user_id>/', views.user_profile, name='user_profile'),
     path('update-last-activity/', views.update_last_activity, name='update_last_activity'),
+    path('session-status/', views.get_session_status, name='get_session_status'),
     path('end-session/', views.end_session, name='end_session'),
     path('break/check/', views.check_active_break, name='check_active_break'),
     path('break/take/', views.take_break, name='take_break'),

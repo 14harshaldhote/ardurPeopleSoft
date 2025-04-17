@@ -34,6 +34,7 @@ class ClientProfile(models.Model):
 
     def __str__(self):
         return self.company_name
+    
 '''------------------------- USERSESSION --------------------'''
 from django.db import models
 from django.utils import timezone
@@ -42,10 +43,9 @@ from django.conf import settings
 import random
 import string
 
-
 class UserSession(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    session_key = models.CharField(max_length=40)  # Removed unique=True
+    session_key = models.CharField(max_length=40)
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     login_time = models.DateTimeField(default=timezone.now)
     logout_time = models.DateTimeField(null=True, blank=True)
@@ -53,10 +53,19 @@ class UserSession(models.Model):
     idle_time = models.DurationField(default=timedelta(0))
     last_activity = models.DateTimeField(default=timezone.now)
     location = models.CharField(max_length=50, null=True, blank=True)
+    # Add is_active flag for easier querying
+    is_active = models.BooleanField(default=True)
+
+    # Define constants at the model level
+    IDLE_THRESHOLD_MINUTES = 1
+    SESSION_TIMEOUT_MINUTES = 30
+    OFFICE_IPS = ['116.75.62.90']
 
     class Meta:
         indexes = [
             models.Index(fields=['user', 'login_time']),
+            # Add index for faster lookups
+            models.Index(fields=['is_active']),
         ]
 
     @staticmethod
@@ -67,108 +76,129 @@ class UserSession(models.Model):
     @classmethod
     def get_or_create_session(cls, user, session_key=None, ip_address=None):
         """Get existing active session or create new one"""
-        current_time = timezone.now()
+        from django.db import transaction
         
-        # Look for an active session from today
-        today_start = current_time.replace(hour=0, minute=0, second=0, microsecond=0)
-        existing_session = cls.objects.filter(
-            user=user,
-            login_time__gte=today_start,
-            logout_time__isnull=True
-        ).first()
-
-        if existing_session:
-            # If the user has been inactive for more than 30 minutes, end the session and create a new one
-            if (current_time - existing_session.last_activity) > timedelta(minutes=30):
-                existing_session.end_session()
-                session_key = cls.generate_session_key()  # Generate new session key
-                return cls.objects.create(
-                    user=user,
-                    session_key=session_key,
-                    ip_address=ip_address
-                )
-            else:
-                # Update last activity and continue with the same session
-                existing_session.update_activity()
-                return existing_session
-        
-        # If no active session, create a new session
-        if not session_key:
-            session_key = cls.generate_session_key()  # Generate a new session key
-        return cls.objects.create(
-            user=user,
-            session_key=session_key,
-            ip_address=ip_address
-        )
-    def save(self, *args, **kwargs):
-        current_time = timezone.now()
-
-        if not self.pk:
-            self.last_activity = self.login_time
-
-        if self.logout_time:
-            # Calculate the total duration and idle time when the session is ended
-            total_duration = self.logout_time - self.login_time
-            time_since_last_activity = self.logout_time - self.last_activity
-
-            # Only count as idle if more than 5 minutes of inactivity
-            if time_since_last_activity > timedelta(minutes=5):
-                self.idle_time = time_since_last_activity
+        with transaction.atomic():
+            current_time = timezone.now()
             
-            self.working_hours = total_duration - self.idle_time
-        else:
-            # Calculate the duration and idle time if the session is ongoing
-            time_since_login = current_time - self.login_time
-            time_since_last_activity = current_time - self.last_activity
+            # Look for an active session
+            existing_session = cls.objects.filter(
+                user=user,
+                is_active=True
+            ).select_for_update().first()
 
-            # Only count as idle if more than 5 minutes of inactivity
-            if time_since_last_activity > timedelta(minutes=5):
-                self.idle_time += time_since_last_activity
-
-            self.working_hours = time_since_login - self.idle_time
-
-        self.location = self.determine_location()
-        super().save(*args, **kwargs)
-
-
-        
-    """Determine if the user is working from home or office based on IP address."""
+            if existing_session:
+                # If the user has been inactive for more than 30 minutes, end the session and create a new one
+                if (current_time - existing_session.last_activity) > timedelta(minutes=cls.SESSION_TIMEOUT_MINUTES):
+                    existing_session.end_session()
+                    session_key = session_key or cls.generate_session_key()
+                    return cls.objects.create(
+                        user=user,
+                        session_key=session_key,
+                        ip_address=ip_address,
+                        last_activity=current_time,
+                        is_active=True
+                    )
+                else:
+                    # Update last activity and continue with the same session
+                    existing_session.update_activity(current_time)
+                    return existing_session
+            
+            # If no active session, create a new session
+            if not session_key:
+                session_key = cls.generate_session_key()
+                
+            new_session = cls.objects.create(
+                user=user,
+                session_key=session_key,
+                ip_address=ip_address,
+                last_activity=current_time,
+                is_active=True
+            )
+            
+            # Set location
+            new_session.location = new_session.determine_location()
+            new_session.save(update_fields=['location'])
+            
+            return new_session
 
     def determine_location(self):
-        office_ips = ['116.75.62.90']  # Ensure this matches the real office IP
-        ip = self.ip_address.strip()  # Remove spaces
-
-        print(f"Detected IP: {ip}")  # Debugging: See actual stored IP
-
-        return 'Office' if ip in office_ips else 'Home'
-
-
-    def update_activity(self):
-        """Update the last activity timestamp"""
-        current_time = timezone.now()
-        time_since_last_activity = current_time - self.last_activity
-        
-        # Only count as idle if more than 5 minutes of inactivity
-        if time_since_last_activity > timedelta(minutes=5):
-            self.idle_time += time_since_last_activity
+        """Determine if the user is working from home or office based on IP address."""
+        if not self.ip_address:
+            return 'Unknown'
             
-        self.last_activity = current_time
-        self.save(update_fields=['last_activity', 'idle_time'])
+        ip = self.ip_address.strip()
+        print(f"Determining location for IP: {ip}")
+        
+        return 'Office' if ip in self.OFFICE_IPS else 'Home'
 
-    def end_session(self):
-        """End the current session"""
-        if not self.logout_time:
-            current_time = timezone.now()
+    def update_activity(self, current_time=None):
+        """Update the last activity timestamp and calculate idle time"""
+        from django.db import transaction
+        
+        with transaction.atomic():
+            current_time = current_time or timezone.now()
+            
+            # Calculate idle time since last activity
             time_since_last_activity = current_time - self.last_activity
             
-            # Only count as idle if more than 5 minutes of inactivity
-            if time_since_last_activity > timedelta(minutes=5):
-                self.idle_time += time_since_last_activity
-                
-            self.logout_time = current_time
-            self.last_activity = current_time
-            self.save()
+            # If more than threshold, add to idle time
+            if time_since_last_activity > timedelta(minutes=self.IDLE_THRESHOLD_MINUTES):
+                # Use F() expression for atomic update
+                from django.db.models import F
+                UserSession.objects.filter(pk=self.pk).update(
+                    idle_time=F('idle_time') + time_since_last_activity,
+                    last_activity=current_time
+                )
+                # Refresh to get the updated values
+                self.refresh_from_db()
+            else:
+                # Just update last activity
+                self.last_activity = current_time
+                self.save(update_fields=['last_activity'])
+            
+            return self
 
+    def end_session(self, logout_time=None):
+        """End the current session"""
+        if not self.is_active:
+            return self
+            
+        from django.db import transaction
+        
+        with transaction.atomic():
+            logout_time = logout_time or timezone.now()
+            
+            # Calculate final idle time
+            time_since_last_activity = logout_time - self.last_activity
+            
+            # Add final idle time if needed
+            if time_since_last_activity > timedelta(minutes=self.IDLE_THRESHOLD_MINUTES):
+                from django.db.models import F
+                UserSession.objects.filter(pk=self.pk).update(
+                    idle_time=F('idle_time') + time_since_last_activity
+                )
+                # Refresh to get the updated idle_time
+                self.refresh_from_db(fields=['idle_time'])
+            
+            # Set logout time
+            self.logout_time = logout_time
+            self.is_active = False
+            
+            # Calculate working hours
+            total_duration = logout_time - self.login_time
+            self.working_hours = total_duration - self.idle_time
+            
+            self.save(update_fields=['logout_time', 'is_active', 'working_hours'])
+            
+            return self
+            
+    def save(self, *args, **kwargs):
+        # Remove complex business logic from save method
+        if not self.pk and not self.location:
+            self.location = self.determine_location()
+            
+        super().save(*args, **kwargs)
 
 
 '''---------- ATTENDANCE AREA ----------'''

@@ -87,6 +87,7 @@ TEMPLATES = [
                 'trueAlign.context_processors.is_hr',
                 'trueAlign.context_processors.is_backoffice',
                 'trueAlign.context_processors.is_management',
+                'trueAlign.context_processors.is_finance',
             ],
         },
     },

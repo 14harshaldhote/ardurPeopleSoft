@@ -46,46 +46,86 @@ def update_last_activity(request):
     """
     if request.method == 'POST':
         try:
-            # Get current user session
-            user_session = UserSession.objects.filter(
-                user=request.user,
-                session_key=request.session.session_key,
-                logout_time__isnull=True
-            ).last()
+            from django.db import transaction
+            
+            with transaction.atomic():
+                # Parse request data
+                try:
+                    data = json.loads(request.body)
+                except ValueError:
+                    # Handle non-JSON data (e.g., from sendBeacon)
+                    data = {}
+                
+                # Get client IP
+                x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+                ip_address = x_forwarded_for.split(',')[0] if x_forwarded_for else request.META.get('REMOTE_ADDR')
+                
+                # Get current user session
+                user_session = UserSession.objects.filter(
+                    user=request.user,
+                    is_active=True
+                ).select_for_update().first()
 
-            if not user_session:
+                if not user_session:
+                    # Create a new session if none exists
+                    user_session = UserSession.get_or_create_session(
+                        user=request.user,
+                        session_key=request.session.session_key,
+                        ip_address=ip_address
+                    )
+                    
+                    return JsonResponse({
+                        'status': 'success',
+                        'message': 'New session created',
+                        'session_id': user_session.id
+                    })
+
+                current_time = timezone.now()
+                
+                # Check if session has timed out
+                if (current_time - user_session.last_activity) > timedelta(minutes=UserSession.SESSION_TIMEOUT_MINUTES):
+                    # End current session
+                    user_session.end_session()
+                    
+                    # Create a new session
+                    new_session = UserSession.get_or_create_session(
+                        user=request.user,
+                        session_key=request.session.session_key,
+                        ip_address=ip_address
+                    )
+                    
+                    return JsonResponse({
+                        'status': 'success',
+                        'sessionExpired': True,
+                        'message': 'Previous session timed out, new session created',
+                        'session_id': new_session.id
+                    })
+                
+                # Update IP if it changed
+                if user_session.ip_address != ip_address:
+                    user_session.ip_address = ip_address
+                    user_session.location = user_session.determine_location()
+                    user_session.save(update_fields=['ip_address', 'location'])
+                
+                # Handle client-reported idle state
+                is_idle = data.get('isIdle', False)
+                is_focused = data.get('isFocused', True)
+                
+                # Update the user's activity
+                user_session.update_activity(current_time)
+                # Need to refresh to get latest data
+                user_session.refresh_from_db()
+
                 return JsonResponse({
-                    'status': 'error',
-                    'message': 'No active session found'
-                }, status=404)
-
-            current_time = timezone.now()
-            
-            # Calculate time since last activity
-            time_since_last_activity = current_time - user_session.last_activity
-            
-            # If more than 1 minute has passed, count it as idle time
-            if time_since_last_activity > timedelta(minutes=1):
-                user_session.idle_time += time_since_last_activity
-            
-            # Update last activity
-            user_session.last_activity = current_time
-            
-            # If working_hours is not set and we have both login and last activity
-            if user_session.working_hours is None and user_session.login_time:
-                user_session.working_hours = current_time - user_session.login_time
-
-            # Save only the modified fields
-            user_session.save(update_fields=['last_activity', 'idle_time', 'working_hours'])
-
-            return JsonResponse({
-                'status': 'success',
-                'last_activity': current_time.isoformat(),
-                'idle_time': str(user_session.idle_time),
-                'working_hours': str(user_session.working_hours) if user_session.working_hours else None
-            })
+                    'status': 'success',
+                    'last_activity': current_time.isoformat(),
+                    'idle_time': str(user_session.idle_time),
+                    'working_hours': str(user_session.working_hours) if user_session.working_hours else None,
+                    'location': user_session.location
+                })
 
         except Exception as e:
+            logger.error(f"Error updating last activity: {str(e)}")
             return JsonResponse({
                 'status': 'error',
                 'message': str(e)
@@ -97,34 +137,37 @@ def update_last_activity(request):
     }, status=405)
 
 @login_required
+@login_required
 def end_session(request):
     """
     View to handle session end/logout.
     Calculates final working hours and idle time.
     """
+    if request.method != 'POST':
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Invalid request method'
+        }, status=405)
+        
     try:
-        user_session = UserSession.objects.filter(
-            user=request.user,
-            session_key=request.session.session_key,
-            logout_time__isnull=True
-        ).last()
+        from django.db import transaction
+        
+        with transaction.atomic():
+            user_session = UserSession.objects.filter(
+                user=request.user,
+                is_active=True
+            ).select_for_update().first()
 
-        if user_session:
-            current_time = timezone.now()
-            
-            # Calculate final idle time
-            time_since_last_activity = current_time - user_session.last_activity
-            if time_since_last_activity > timedelta(minutes=1):
-                user_session.idle_time += time_since_last_activity
-            
-            # Set logout time
-            user_session.logout_time = current_time
-            
-            # Calculate total working hours
-            total_duration = current_time - user_session.login_time
-            user_session.working_hours = total_duration - user_session.idle_time
-            
-            user_session.save()
+            if not user_session:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'No active session found'
+                }, status=404)
+
+            # End the session
+            user_session.end_session()
+            # Refresh to get final values
+            user_session.refresh_from_db()
 
             return JsonResponse({
                 'status': 'success',
@@ -133,10 +176,41 @@ def end_session(request):
                 'idle_time': str(user_session.idle_time)
             })
 
+    except Exception as e:
+        logger.error(f"Error ending session: {str(e)}")
         return JsonResponse({
             'status': 'error',
-            'message': 'No active session found'
-        }, status=404)
+            'message': str(e)
+        }, status=400)
+    
+@login_required
+def get_session_status(request):
+    """Get the current session status"""
+    try:
+        user_session = UserSession.objects.filter(
+            user=request.user,
+            is_active=True
+        ).first()
+
+        if not user_session:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'No active session found'
+            }, status=404)
+
+        # Calculate current working hours
+        current_time = timezone.now()
+        total_duration = current_time - user_session.login_time
+        
+        return JsonResponse({
+            'status': 'success',
+            'session_id': user_session.id,
+            'login_time': user_session.login_time.isoformat(),
+            'last_activity': user_session.last_activity.isoformat(),
+            'idle_time': str(user_session.idle_time),
+            'location': user_session.location,
+            'session_duration': str(total_duration)
+        })
 
     except Exception as e:
         return JsonResponse({
@@ -2906,733 +2980,395 @@ def system_usage_view(request):
     except Exception as e:
         messages.error(request, f"An error occurred while fetching system usage data: {str(e)}")
         return redirect('dashboard')
-
-'''' -------------- usersession ---------------'''
-from django.db.models import Count, Min, Max, Sum, Case, When, BooleanField
-from django.db.models.functions import Coalesce
-from datetime import datetime, timedelta
+    
+    
+''' -------------- usersession ---------------'''
+from django.db.models import Count, Min, Max, Sum, Case, When, BooleanField, Avg, F, Q
+from django.db.models.functions import Coalesce, ExtractHour
+from datetime import datetime, date, timedelta
 from django.utils import timezone
 from django.contrib import messages
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
-from .models import UserSession, ProjectAssignment, Project
-from django.db.models import Q
-from django.db.models import Q
-from django.contrib import messages
-from django.shortcuts import render
-from django.utils import timezone
-from datetime import datetime, timedelta
+from .models import UserSession, User
+from django.core.paginator import Paginator
+import logging
+import json
 
+logger = logging.getLogger(__name__)
 
 @login_required
 @user_passes_test(is_admin)
 def user_sessions_view(request):
     """
-    Enhanced view to display user sessions with daily consolidation and detailed insights.
+    Enhanced view to display user sessions with advanced filtering, analytics and insights
+    for tracking employee productivity.
     """
     try:
-        # Advanced filtering parameters
+        # Advanced filtering parameters with defaults
         filters = {
             'username': request.GET.get('username', ''),
-            'date': request.GET.get('date', ''),
+            'date_from': request.GET.get('date_from', ''),
+            'date_to': request.GET.get('date_to', ''),
             'location': request.GET.get('location', ''),
-            'status': request.GET.get('status', '')
+            'status': request.GET.get('status', ''),
+            'min_hours': request.GET.get('min_hours', ''),
+            'max_hours': request.GET.get('max_hours', ''),
+            'idle_threshold': request.GET.get('idle_threshold', ''),
+            'ip_address': request.GET.get('ip_address', '')
         }
 
-        # Base queryset
-        sessions = UserSession.objects.all()
+        # Base queryset with select_related for performance
+        sessions = UserSession.objects.select_related('user').all()
 
-        # Apply filters
+        # Build complex filter conditions
         filter_conditions = Q()
         
-        # Username filtering
+        # Advanced username/user filtering
         if filters['username']:
             filter_conditions &= (
                 Q(user__username__icontains=filters['username']) | 
                 Q(user__first_name__icontains=filters['username']) | 
-                Q(user__last_name__icontains=filters['username'])
+                Q(user__last_name__icontains=filters['username']) |
+                Q(user__email__icontains=filters['username'])
             )
 
-        # Date filtering
-        if filters['date']:
+        # Date range filtering
+        if filters['date_from'] or filters['date_to']:
             try:
-                # Parse the date in multiple formats
-                date_obj = None
-                for fmt in ["%Y-%m-%d", "%d-%m-%Y", "%m/%d/%Y"]:
-                    try:
-                        date_obj = datetime.strptime(filters['date'], fmt).date()
-                        break
-                    except ValueError:
-                        continue
+                date_from = None
+                date_to = None
                 
-                if date_obj:
+                if filters['date_from']:
+                    date_from = datetime.strptime(filters['date_from'], "%Y-%m-%d")
+                if filters['date_to']:
+                    date_to = datetime.strptime(filters['date_to'], "%Y-%m-%d") + timedelta(days=1)
+                
+                if date_from and date_to:
                     filter_conditions &= (
-                        Q(login_time__date=date_obj) | 
-                        Q(logout_time__date=date_obj)
+                        Q(login_time__range=[date_from, date_to]) |
+                        Q(logout_time__range=[date_from, date_to])
                     )
-                else:
-                    messages.error(request, "Invalid date format. Use YYYY-MM-DD.")
-            except Exception as e:
-                messages.error(request, f"Date filtering error: {str(e)}")
+                elif date_from:
+                    filter_conditions &= Q(login_time__gte=date_from)
+                elif date_to:
+                    filter_conditions &= Q(login_time__lt=date_to)
+                    
+            except ValueError:
+                messages.error(request, "Invalid date format. Use YYYY-MM-DD.")
 
         # Location filtering
         if filters['location']:
             filter_conditions &= Q(location=filters['location'])
 
-        # Status filtering
+        # Enhanced status filtering
         if filters['status']:
             if filters['status'] == 'active':
-                filter_conditions &= Q(logout_time__isnull=True)
+                filter_conditions &= Q(is_active=True)
             elif filters['status'] == 'inactive':
-                filter_conditions &= Q(logout_time__isnull=False)
+                filter_conditions &= Q(is_active=False)
+            elif filters['status'] == 'idle':
+                idle_threshold = timedelta(minutes=UserSession.IDLE_THRESHOLD_MINUTES)
+                filter_conditions &= Q(idle_time__gt=idle_threshold)
 
-        # Apply filters
-        sessions = sessions.filter(filter_conditions).order_by('user', 'login_time')
+        # Working hours range filtering
+        if filters['min_hours']:
+            try:
+                min_hours = float(filters['min_hours'])
+                min_duration = timedelta(hours=min_hours)
+                filter_conditions &= Q(working_hours__gte=min_duration)
+            except ValueError:
+                messages.warning(request, "Invalid minimum hours value")
 
-        # Consolidate sessions
-        daily_user_sessions = consolidate_daily_sessions(sessions)
+        if filters['max_hours']:
+            try:
+                max_hours = float(filters['max_hours'])
+                max_duration = timedelta(hours=max_hours)
+                filter_conditions &= Q(working_hours__lte=max_duration)
+            except ValueError:
+                messages.warning(request, "Invalid maximum hours value")
 
-        # Calculate summary statistics
-        total_sessions = sum(len(day_sessions) for day_sessions in daily_user_sessions.values())
-        active_sessions = sum(
-            sum(1 for session in day_sessions if session['status'] == 'Active') 
-            for day_sessions in daily_user_sessions.values()
-        )
+        # Idle time threshold filtering
+        if filters['idle_threshold']:
+            try:
+                idle_mins = float(filters['idle_threshold'])
+                idle_duration = timedelta(minutes=idle_mins)
+                filter_conditions &= Q(idle_time__gte=idle_duration)
+            except ValueError:
+                messages.warning(request, "Invalid idle threshold value")
 
-        # Prepare context for template
+        # IP address filtering
+        if filters['ip_address']:
+            filter_conditions &= Q(ip_address__icontains=filters['ip_address'])
+
+        # Apply all filters
+        sessions = sessions.filter(filter_conditions).order_by('-login_time')
+        
+        # Pagination
+        paginator = Paginator(sessions, 20)  # Show 20 sessions per page
+        page_number = request.GET.get('page', 1)
+        page_obj = paginator.get_page(page_number)
+        
+        # Calculate analytics for all matching sessions
+        total_sessions = sessions.count()
+        
+        # Location distribution
+        location_distribution = dict(sessions.values('location')
+                                    .annotate(count=Count('id'))
+                                    .values_list('location', 'count'))
+        
+        # Calculate average working hours and idle time
+        avg_working_hours = sessions.exclude(working_hours=None).aggregate(
+            avg=Coalesce(Avg('working_hours'), timedelta())
+        )['avg']
+        
+        avg_idle_time = sessions.aggregate(
+            avg=Coalesce(Avg('idle_time'), timedelta())
+        )['avg']
+        
+        # Get peak activity hours
+        peak_hours = sessions.annotate(
+            hour=ExtractHour('login_time')
+        ).values('hour').annotate(count=Count('id')).order_by('-count')[:3]
+        
+        # Get most productive users
+        productive_users = sessions.values('user__username').annotate(
+            total_working_hours=Sum('working_hours'),
+            avg_idle_time=Avg('idle_time')
+        ).order_by('-total_working_hours')[:5]
+        
+        # Consolidate sessions by user and date
+        daily_user_sessions = consolidate_daily_sessions(page_obj)
+
+        # Prepare context with enhanced options
         context = {
+            'sessions': page_obj,
             'daily_sessions': daily_user_sessions,
             'filters': filters,
-            'summary': {
+            'analytics': {
                 'total_sessions': total_sessions,
-                'active_sessions': active_sessions
+                'active_sessions': sessions.filter(is_active=True).count(),
+                'avg_working_hours': avg_working_hours.total_seconds() / 3600 if avg_working_hours else 0,
+                'avg_idle_time': avg_idle_time.total_seconds() / 3600 if avg_idle_time else 0,
+                'location_distribution': location_distribution,
+                'peak_hours': peak_hours,
+                'productive_users': productive_users
             },
-            'location_choices': [('Home', 'Home'), ('Office', 'Office')],
-            'status_choices': [('active', 'Active'), ('inactive', 'Inactive')]
+            'location_choices': ['Office', 'Home', 'Unknown'],
+            'status_choices': [
+                ('active', 'Active'), 
+                ('inactive', 'Inactive'),
+                ('idle', 'Idle')
+            ],
+            'idle_thresholds': [
+                (15, '15 minutes'),
+                (30, '30 minutes'),
+                (60, '1 hour')
+            ]
         }
 
         return render(request, 'components/admin/user_sessions.html', context)
 
     except Exception as e:
-        raise e
-    
+        logger.error(f"Error in user_sessions_view: {str(e)}", exc_info=True)
+        messages.error(request, f"An error occurred while processing your request: {str(e)}")
+        return redirect('dashboard')
 
 def consolidate_daily_sessions(sessions):
     """
-    Consolidate user sessions into daily summaries.
-    
-    Returns a dictionary with structure:
-    {
-        (user_id, date): [
-            {
-                'user': user object,
-                'first_login': datetime,
-                'last_logout': datetime,
-                'total_hours': str (HH:MM),
-                'total_idle_time': str (X min),
-                'location': str,
-                'last_activity': datetime,
-                'status': str ('Active' or 'Inactive'),
-                'session_count': int,
-                'ip_address': str
-            },
-            ...
-        ],
-        ...
-    }
+    Consolidate user sessions by user and date to provide a comprehensive view
+    of daily productivity metrics.
     """
     daily_sessions = {}
-    current_time = timezone.now()
-
+    
     for session in sessions:
-        # Determine the date for this session
-        session_date = (session.login_time or session.logout_time).date()
+        # Use login date as the key date
+        if not session.login_time:
+            continue
+            
+        session_date = session.login_time.date()
         user_key = (session.user.id, session_date)
 
-        # Initialize daily sessions for this user and date if not exists
         if user_key not in daily_sessions:
-            daily_sessions[user_key] = []
+            daily_sessions[user_key] = {
+                'user': session.user,
+                'date': session_date,
+                'sessions': [],
+                'first_login': None,
+                'last_logout': None,
+                'total_working_hours': timedelta(),
+                'total_idle_time': timedelta(),
+                'locations': set(),
+                'ip_addresses': set(),
+                'session_count': 0,
+                'is_active': False
+            }
 
-        # Prepare session data
-        session_data = {
-            'user': session.user,
-            'first_login': session.login_time,
-            'last_logout': session.logout_time,
-            'total_working_hours': session.working_hours or timedelta(),
-            'total_idle_time': session.idle_time or timedelta(),
-            'location': session.location or 'Unknown',
-            'last_activity': session.last_activity,
-            'status': 'Active' if session.logout_time is None else 'Inactive',
-            'session_count': 1,
-            'ip_address': session.ip_address or 'Unknown'
+        # Add session data
+        daily_sessions[user_key]['sessions'].append(session)
+        daily_sessions[user_key]['session_count'] += 1
+        
+        # Update first login time
+        if session.login_time and (daily_sessions[user_key]['first_login'] is None or 
+                                  session.login_time < daily_sessions[user_key]['first_login']):
+            daily_sessions[user_key]['first_login'] = session.login_time
+        
+        # Update last logout time
+        if session.logout_time and (daily_sessions[user_key]['last_logout'] is None or 
+                                   session.logout_time > daily_sessions[user_key]['last_logout']):
+            daily_sessions[user_key]['last_logout'] = session.logout_time
+        
+        # Add working hours and idle time
+        if session.working_hours:
+            daily_sessions[user_key]['total_working_hours'] += session.working_hours
+        
+        if session.idle_time:
+            daily_sessions[user_key]['total_idle_time'] += session.idle_time
+        
+        # Add location and IP
+        if session.location:
+            daily_sessions[user_key]['locations'].add(session.location)
+        
+        if session.ip_address:
+            daily_sessions[user_key]['ip_addresses'].add(session.ip_address)
+        
+        # Check if any session is active
+        if session.is_active:
+            daily_sessions[user_key]['is_active'] = True
+
+    # Process the consolidated data for display
+    result = []
+    for data in daily_sessions.values():
+        # Calculate productivity score
+        total_duration = data['total_working_hours'] + data['total_idle_time']
+        if total_duration > timedelta():
+            productivity_score = (data['total_working_hours'].total_seconds() / total_duration.total_seconds()) * 100
+        else:
+            productivity_score = 0
+            
+        # Calculate total duration in hours
+        if data['first_login']:
+            end_time = data['last_logout'] or timezone.now()
+            total_duration = (end_time - data['first_login']).total_seconds() / 3600
+        else:
+            total_duration = 0
+            
+        # Format data for template with hours
+        result.append({
+            'user': data['user'],
+            'date': data['date'],
+            'first_login': data['first_login'],
+            'last_logout': data['last_logout'] or timezone.now() if data['is_active'] else data['last_logout'],
+            'total_working_hours': data['total_working_hours'].total_seconds() / 3600,
+            'total_idle_time': data['total_idle_time'].total_seconds() / 3600,
+            'locations': list(data['locations']),
+            'ip_addresses': list(data['ip_addresses']),
+            'session_count': data['session_count'],
+            'is_active': data['is_active'],
+            'productivity_score': round(productivity_score, 1),
+            'total_duration': round(total_duration, 1)
+        })
+    
+    # Sort by date (newest first) and then by username
+    return sorted(result, key=lambda x: (x['date'], x['user'].username), reverse=True)
+
+
+@login_required
+@user_passes_test(is_admin)
+def user_session_detail_view(request, user_id, date_str):
+    """
+    Detailed view of a user's sessions for a specific date.
+    """
+    try:
+        date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
+        user = User.objects.get(id=user_id)
+        
+        # Get all sessions for this user on this date
+        sessions = UserSession.objects.filter(
+            user=user,
+            login_time__date=date_obj
+        ).order_by('login_time')
+        
+        # For debugging
+        print(f"Found {len(sessions)} sessions for user {user.username} on {date_obj}")
+        
+        # Calculate metrics for each session
+        processed_sessions = []
+        total_working_hours = timedelta()
+        total_idle_time = timedelta()
+        
+        for session in sessions:
+            # Calculate working hours - handle large microsecond values
+            working_hours = timedelta()
+            if session.working_hours:
+                try:
+                    # Convert to seconds first to avoid overflow
+                    seconds = float(session.working_hours) / 1000000
+                    working_hours = timedelta(seconds=seconds)
+                    total_working_hours += working_hours
+                except (ValueError, OverflowError) as e:
+                    print(f"Error converting working_hours: {e}")
+                    working_hours = timedelta()
+            
+            # Calculate idle time - handle large microsecond values
+            idle_time = timedelta()
+            if session.idle_time:
+                try:
+                    # Convert to seconds first to avoid overflow
+                    seconds = float(session.idle_time) / 1000000
+                    idle_time = timedelta(seconds=seconds)
+                    total_idle_time += idle_time
+                except (ValueError, OverflowError) as e:
+                    print(f"Error converting idle_time: {e}")
+                    idle_time = timedelta()
+            
+            # Create session object with correctly formatted time values
+            processed_session = {
+                'login_time': session.login_time,
+                'logout_time': session.logout_time,
+                'working_hours': working_hours,
+                'idle_time': idle_time,
+                'location': session.location,
+                'ip_address': session.ip_address,
+                'is_active': session.is_active
+            }
+            processed_sessions.append(processed_session)
+        
+        # Calculate productivity score
+        total_duration = total_working_hours + total_idle_time
+        if total_duration > timedelta():
+            productivity_score = (total_working_hours.total_seconds() / total_duration.total_seconds()) * 100
+        else:
+            productivity_score = 0
+        
+        context = {
+            'user': user,
+            'date': date_obj,
+            'sessions': processed_sessions,
+            'total_working_hours': total_working_hours.total_seconds() / 3600,
+            'total_idle_time': total_idle_time.total_seconds() / 3600,
+            'productivity_score': round(productivity_score, 1)
         }
-
-        # Merge with existing daily sessions for this user
-        merged = False
-        for existing_session in daily_sessions[user_key]:
-            # Conditions for merging sessions (within 30 minutes of each other)
-            if (existing_session['status'] == 'Active' or 
-                session_data['status'] == 'Active' or 
-                (existing_session['last_logout'] and session_data['first_login'] and 
-                 abs((existing_session['last_logout'] - session_data['first_login']).total_seconds()) < 1800)):
-                
-                # Update first login (earliest)
-                if (not existing_session['first_login'] or 
-                    (session_data['first_login'] and 
-                     session_data['first_login'] < existing_session['first_login'])):
-                    existing_session['first_login'] = session_data['first_login']
-
-                # Update last logout (latest)
-                if (session_data['status'] == 'Active' or 
-                    (session_data['last_logout'] and 
-                     (not existing_session['last_logout'] or 
-                      session_data['last_logout'] > existing_session['last_logout']))):
-                    existing_session['last_logout'] = session_data['last_logout']
-                    existing_session['status'] = session_data['status']
-
-                # Accumulate working hours and idle time
-                existing_session['total_working_hours'] += session_data['total_working_hours']
-                existing_session['total_idle_time'] += session_data['total_idle_time']
-
-                # Update last activity
-                if (not existing_session['last_activity'] or 
-                    (session_data['last_activity'] and 
-                     session_data['last_activity'] > existing_session['last_activity'])):
-                    existing_session['last_activity'] = session_data['last_activity']
-
-                # Increment session count
-                existing_session['session_count'] += 1
-
-                # Merge locations if needed
-                if existing_session['location'] == 'Unknown':
-                    existing_session['location'] = session_data['location']
-
-                # Merge IP addresses if needed
-                if existing_session['ip_address'] == 'Unknown':
-                    existing_session['ip_address'] = session_data['ip_address']
-
-                merged = True
-                break
-
-        # If not merged, add as new daily session
-        if not merged:
-            daily_sessions[user_key].append(session_data)
-
-    # Post-process and format sessions
-    formatted_daily_sessions = {}
-    for (user_id, date), user_sessions in daily_sessions.items():
-        formatted_sessions = []
-        for session in user_sessions:
-            try:
-                # Format working hours
-                total_seconds = session['total_working_hours'].total_seconds()
-                hours, remainder = divmod(total_seconds, 3600)
-                minutes = remainder // 60
-
-                # Format idle time
-                idle_minutes = session['total_idle_time'].total_seconds() // 60
-
-                # Format last activity
-                if session['last_activity']:
-                    time_since_activity = current_time - session['last_activity']
-                    if time_since_activity.total_seconds() < 60:
-                        last_activity_str = "Just now"
-                    elif time_since_activity.total_seconds() < 3600:
-                        last_activity_str = f"{int(time_since_activity.total_seconds() // 60)} min ago"
-                    elif time_since_activity.total_seconds() < 86400:
-                        last_activity_str = f"{int(time_since_activity.total_seconds() // 3600)} hours ago"
-                    else:
-                        last_activity_str = f"{int(time_since_activity.total_seconds() // 86400)} days ago"
-                else:
-                    last_activity_str = "Unknown"
-
-                formatted_session = {
-                    'user': session['user'],
-                    'first_login': session['first_login'],
-                    'last_logout': session['last_logout'] or 'Active Session',
-                    'total_hours': f"{int(hours):02d}:{int(minutes):02d}",
-                    'total_idle': f"{int(idle_minutes)} min",
-                    'location': session['location'],
-                    'last_activity': session['last_activity'],
-                    'last_activity_str': last_activity_str,
-                    'status': session['status'],
-                    'session_count': session['session_count'],
-                    'ip_address': session['ip_address']
-                }
-                formatted_sessions.append(formatted_session)
-            except Exception as e:
-                import logging
-                logger = logging.getLogger(__name__)
-                logger.error(f"Error formatting session for user {session.get('user', 'Unknown')}: {e}")
-
-        # Sort sessions by first login time
-        formatted_sessions.sort(key=lambda x: x['first_login'], reverse=True)
-        formatted_daily_sessions[(user_id, date)] = formatted_sessions
-
-    return formatted_daily_sessions
-
-# def user_sessions_view(request):
-#     """Enhanced view to display user sessions with improved organization and insights."""
-#     try:
-#         # Advanced filtering parameters
-#         filters = {
-#             'username': request.GET.get('username', ''),
-#             'start_date': request.GET.get('start_date', ''),
-#             'end_date': request.GET.get('end_date', ''),
-#             'location': request.GET.get('location', ''),
-#             'status': request.GET.get('status', ''),
-#             'min_working_hours': request.GET.get('min_working_hours', ''),
-#             'max_idle_time': request.GET.get('max_idle_time', '')
-#         }
-
-#         # Base queryset with optimized related data fetching
-#         sessions = UserSession.objects.select_related('user')
-
-#         # Apply all filters at once using a single query
-#         filter_conditions = Q()
         
-#         # Username filtering
-#         if filters['username']:
-#             filter_conditions |= (
-#                 Q(user__username__icontains=filters['username']) | 
-#                 Q(user__first_name__icontains=filters['username']) | 
-#                 Q(user__last_name__icontains=filters['username'])
-#             )
-
-#         # Date range filtering
-#         for date_type, operator in [('start_date', 'gte'), ('end_date', 'lte')]:
-#             date_str = filters[date_type]
-#             if date_str:
-#                 try:
-#                     # Support multiple date formats
-#                     for fmt in ["%Y-%m-%d", "%d-%m-%Y", "%m/%d/%Y", "%d/%m/%Y"]:
-#                         try:
-#                             date_obj = datetime.strptime(date_str, fmt).date()
-#                             filter_conditions &= Q(**{f'login_time__date__{operator}': date_obj})
-#                             break
-#                         except ValueError:
-#                             continue
-#                     else:
-#                         messages.error(request, f"Invalid {date_type} format. Try YYYY-MM-DD or MM/DD/YYYY.")
-#                 except Exception as e:
-#                     messages.error(request, f"Error processing {date_type}: {str(e)}")
-
-#         # Status-based filtering
-#         if filters['status']:
-#             filter_conditions &= Q(logout_time__isnull=(filters['status'] == 'active'))
-
-#         # Location filtering
-#         if filters['location']:
-#             filter_conditions &= Q(location=filters['location'])
-
-#         # Apply all filters if any exist
-#         if filter_conditions:
-#             sessions = sessions.filter(filter_conditions)
-
-#         # Working hours and idle time filtering (these need separate handling)
-#         if filters['min_working_hours']:
-#             try:
-#                 # Support both HH:MM and decimal formats
-#                 if ':' in filters['min_working_hours']:
-#                     hours, minutes = map(int, filters['min_working_hours'].split(':'))
-#                 else:
-#                     hours = float(filters['min_working_hours'])
-#                     minutes = int((hours % 1) * 60)
-#                     hours = int(hours)
-#                 min_duration = timedelta(hours=hours, minutes=minutes)
-#                 sessions = sessions.filter(working_hours__gte=min_duration)
-#             except ValueError:
-#                 messages.error(request, "Invalid working hours format. Please use HH:MM or decimal hours.")
-
-#         if filters['max_idle_time']:
-#             try:
-#                 # Support both HH:MM and minute formats
-#                 if ':' in filters['max_idle_time']:
-#                     hours, minutes = map(int, filters['max_idle_time'].split(':'))
-#                     max_idle = timedelta(hours=hours, minutes=minutes)
-#                 else:
-#                     max_idle = timedelta(minutes=int(filters['max_idle_time']))
-#                 sessions = sessions.filter(idle_time__lte=max_idle)
-#             except ValueError:
-#                 messages.error(request, "Invalid idle time format. Please use HH:MM or minutes.")
-
-#         # Use the consolidated session function to properly merge user sessions
-#         formatted_sessions = consolidate_user_sessions(sessions)
+        return render(request, 'components/admin/user_session_detail.html', context)
         
-#         # Calculate summary statistics in one pass
-#         active_count = 0
-#         total_hours_seconds = 0
-#         total_sessions = len(formatted_sessions)
-        
-#         for session in formatted_sessions:
-#             if session['status'] == 'Active':
-#                 active_count += 1
-            
-#             if total_sessions > 0:
-#                 try:
-#                     hours, minutes = map(int, session['total_hours'].split(':'))
-#                     total_hours_seconds += hours * 3600 + minutes * 60
-#                 except (ValueError, AttributeError):
-#                     # Handle any parsing errors gracefully
-#                     pass
-        
-#         # Calculate average session duration
-#         if total_sessions > 0:
-#             avg_seconds = total_hours_seconds / total_sessions
-#             avg_hours = int(avg_seconds // 3600)
-#             avg_minutes = int((avg_seconds % 3600) // 60)
-#             avg_hours_display = f"{avg_hours:02d}:{avg_minutes:02d}"
-#         else:
-#             avg_hours_display = "00:00"
-
-#         # Get all unique locations for the filter dropdown
-#         all_locations = UserSession.objects.values_list('location', flat=True).distinct()
-#         location_choices = [(loc, loc) for loc in all_locations if loc]
-
-#         return render(request, 'components/admin/user_sessions.html', {
-#             'sessions': formatted_sessions,
-#             'filters': filters,
-#             'status_choices': [('active', 'Active'), ('inactive', 'Inactive')],
-#             'location_choices': location_choices or [('Home', 'Home'), ('Office', 'Office')],
-#             'summary': {
-#                 'total_sessions': total_sessions,
-#                 'active_sessions': active_count,
-#                 'average_session_duration': avg_hours_display
-#             }
-#         })
-
-#     except Exception as e:
-#         import logging
-#         logger = logging.getLogger(__name__)
-#         logger.error(f"User Sessions View Error: {e}")
-#         messages.error(request, f"An unexpected error occurred: {e}")
-#         return render(request, 'error.html', {'error': str(e)})
-
-# def consolidate_user_sessions(sessions):
-#     """
-#     Consolidate multiple sessions into a single coherent session record
-    
-#     Key Improvements:
-#     - Identify continuous or closely related sessions
-#     - Determine true first login and last logout
-#     - Handle active and completed sessions
-#     - Flexible datetime parsing and handling
-#     """
-#     consolidated_sessions = {}
-#     current_time = timezone.now()
-
-#     # Pre-fetch all sessions to avoid multiple database hits
-#     sessions = list(sessions.order_by('login_time'))
-    
-#     for session in sessions:
-#         user_id = session.user.id
-        
-#         # Initialize user session if not exists
-#         if user_id not in consolidated_sessions:
-#             consolidated_sessions[user_id] = {
-#                 'user': session.user,
-#                 'first_login': session.login_time,
-#                 'last_logout': session.logout_time,
-#                 'total_working_hours': session.working_hours or timedelta(),
-#                 'total_idle_time': session.idle_time or timedelta(),
-#                 'last_activity': session.last_activity,
-#                 'location': session.location or 'Unknown',
-#                 'status': 'Active' if session.logout_time is None else 'Inactive',
-#                 'session_count': 1,
-#                 'ip_address': session.ip_address
-#             }
-#             continue
-
-#         current_session = consolidated_sessions[user_id]
-
-#         # Update first login (earliest login time)
-#         if session.login_time and (not current_session['first_login'] or 
-#                                   session.login_time < current_session['first_login']):
-#             current_session['first_login'] = session.login_time
-
-#         # Update last logout and status
-#         if session.logout_time is None:
-#             current_session['status'] = 'Active'
-#             current_session['last_logout'] = 'Active Session'
-            
-#             # For active sessions, calculate working hours up to now
-#             if session.login_time:
-#                 elapsed = current_time - session.login_time
-#                 # Only add if it's reasonable (less than 24 hours)
-#                 if elapsed.total_seconds() < 86400:  # 24 hours in seconds
-#                     current_session['total_working_hours'] += elapsed
-#         elif current_session['last_logout'] == 'Active Session' or (
-#             session.logout_time and 
-#             (current_session['last_logout'] == 'Active Session' or 
-#              not isinstance(current_session['last_logout'], str) and
-#              session.logout_time > current_session['last_logout'])
-#         ):
-#             current_session['last_logout'] = session.logout_time
-#             # Only update status if not already active
-#             if current_session['status'] != 'Active':
-#                 current_session['status'] = 'Inactive'
-
-#         # Accumulate total hours and idle time
-#         if session.working_hours:
-#             current_session['total_working_hours'] += session.working_hours
-        
-#         if session.idle_time:
-#             current_session['total_idle_time'] += session.idle_time
-
-#         # Update last activity
-#         if session.last_activity and (not current_session['last_activity'] or 
-#                                      session.last_activity > current_session['last_activity']):
-#             current_session['last_activity'] = session.last_activity
-
-#         # Update location if current is unknown
-#         if current_session['location'] == 'Unknown' and session.location:
-#             current_session['location'] = session.location
-
-#         # Update IP address if missing
-#         if not current_session['ip_address'] and session.ip_address:
-#             current_session['ip_address'] = session.ip_address
-
-#         current_session['session_count'] += 1
-
-#     # Post-process and format sessions
-#     formatted_sessions = []
-    
-#     for user_data in consolidated_sessions.values():
-#         try:
-#             # Format working hours
-#             total_seconds = user_data['total_working_hours'].total_seconds()
-#             hours, remainder = divmod(total_seconds, 3600)
-#             minutes = remainder // 60
-            
-#             # Format idle time
-#             idle_minutes = user_data['total_idle_time'].total_seconds() // 60
-
-#             # Format last activity as time elapsed
-#             if user_data['last_activity']:
-#                 time_since_activity = current_time - user_data['last_activity']
-#                 if time_since_activity.total_seconds() < 60:
-#                     last_activity_str = "Just now"
-#                 elif time_since_activity.total_seconds() < 3600:
-#                     last_activity_str = f"{int(time_since_activity.total_seconds() // 60)} min ago"
-#                 elif time_since_activity.total_seconds() < 86400:
-#                     last_activity_str = f"{int(time_since_activity.total_seconds() // 3600)} hours ago"
-#                 else:
-#                     last_activity_str = f"{int(time_since_activity.total_seconds() // 86400)} days ago"
-#             else:
-#                 last_activity_str = "Unknown"
-
-#             formatted_sessions.append({
-#                 'user': user_data['user'],
-#                 'first_login': user_data['first_login'],
-#                 'last_logout': user_data['last_logout'],
-#                 'total_hours': f"{int(hours):02d}:{int(minutes):02d}",
-#                 'total_idle': f"{int(idle_minutes)} min",
-#                 'location': user_data['location'],
-#                 'last_activity': user_data['last_activity'],
-#                 'last_activity_str': last_activity_str,
-#                 'status': user_data['status'],
-#                 'session_count': user_data['session_count'],
-#                 'ip_address': user_data['ip_address'] or 'Unknown'
-#             })
-#         except Exception as e:
-#             # If there's an error processing a specific session, log it and continue
-#             import logging
-#             logger = logging.getLogger(__name__)
-#             logger.error(f"Error formatting session for user {user_data.get('user', 'Unknown')}: {e}")
-            
-#             # Add a simplified version of the session
-#             formatted_sessions.append({
-#                 'user': user_data.get('user', 'Unknown User'),
-#                 'first_login': user_data.get('first_login', 'Unknown'),
-#                 'last_logout': user_data.get('last_logout', 'Unknown'),
-#                 'total_hours': '00:00',
-#                 'total_idle': '0 min',
-#                 'location': user_data.get('location', 'Unknown'),
-#                 'last_activity': 'Error processing data',
-#                 'last_activity_str': 'Unknown',
-#                 'status': 'Unknown',
-#                 'session_count': user_data.get('session_count', 1),
-#                 'ip_address': user_data.get('ip_address', 'Unknown')
-#             })
-
-#     # Sort by first login, most recent first
-#     return sorted(formatted_sessions, key=lambda x: x['first_login'], reverse=True)
-
-# @login_required
-# @user_passes_test(is_admin)
-# def user_sessions_view(request):
-#     """View to display user sessions, accessible only by admins."""
-#     try:
-#         username = request.GET.get('username', '')
-#         start_date = request.GET.get('start_date', '')
-#         end_date = request.GET.get('end_date', '')
-#         location = request.GET.get('location', '')
-#         min_working_hours = request.GET.get('min_working_hours', '')
-#         max_idle_time = request.GET.get('max_idle_time', '')
-
-#         # Initialize base queryset
-#         sessions = UserSession.objects.select_related('user')
-
-#         # Apply filters
-#         if username:
-#             sessions = sessions.filter(user__username__icontains=username)
-
-#         if start_date:
-#             try:
-#                 start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
-#                 sessions = sessions.filter(login_time__date__gte=start_date)
-#             except ValueError:
-#                 messages.error(request, "Invalid start date format. Please use YYYY-MM-DD.")
-
-#         if end_date:
-#             try:
-#                 end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
-#                 sessions = sessions.filter(login_time__date__lte=end_date)
-#             except ValueError:
-#                 messages.error(request, "Invalid end date format. Please use YYYY-MM-DD.")
-
-#         if location:
-#             sessions = sessions.filter(location=location)
-
-#         if min_working_hours:
-#             try:
-#                 hours, minutes = map(int, min_working_hours.split(':'))
-#                 min_duration = timedelta(hours=hours, minutes=minutes)
-#                 sessions = sessions.filter(working_hours__gte=min_duration)
-#             except ValueError:
-#                 messages.error(request, "Invalid working hours format. Please use HH:MM.")
-
-#         if max_idle_time:
-#             try:
-#                 max_idle = timedelta(minutes=int(max_idle_time))
-#                 sessions = sessions.filter(idle_time__lte=max_idle)
-#             except ValueError:
-#                 messages.error(request, "Invalid idle time format. Please enter minutes.")
-
-#         # Group sessions by user and location
-#         grouped_sessions = (
-#             sessions
-#             .values('user__username', 'user__first_name', 'user__last_name', 'location')
-#             .annotate(
-#                 first_login=Min('login_time'),
-#                 last_logout=Max('logout_time'),
-#                 last_activity=Max('last_activity'),
-#                 total_working_hours=Coalesce(Sum('working_hours'), timedelta()),
-#                 total_idle_time=Coalesce(Sum('idle_time'), timedelta()),
-#                 is_active=Max(Case(
-#                     When(logout_time__isnull=True, then=True),
-#                     default=False,
-#                     output_field=BooleanField(),
-#                 ))
-#             )
-#             .order_by('-first_login')
-#         )
-
-#         # **Summary Counts**
-#         location_summary = sessions.values('location').annotate(count=Count('id'))
-
-#         # **Project-wise summary (Indirect Relationship)**
-#         project_summary = (
-#             ProjectAssignment.objects
-#             .filter(user__in=sessions.values('user'))  # Get projects for users with active sessions
-#             .values('project__name')
-#             .annotate(count=Count('user', distinct=True))  # Count unique users per project
-#         )
-
-#         # Process the grouped sessions for display
-#         for session in grouped_sessions:
-#             session['full_name'] = f"{session['user__first_name']} {session['user__last_name']} ({session['user__username']})"
-#             session['login_time_local'] = timezone.localtime(session['first_login'])
-#             session['logout_time_local'] = (
-#                 timezone.localtime(session['last_logout']) 
-#                 if session['last_logout'] and not session['is_active']
-#                 else None
-#             )
-#             session['last_activity_local'] = timezone.localtime(session['last_activity'])
-
-#             # Format working hours
-#             total_seconds = session['total_working_hours'].total_seconds()
-#             hours = int(total_seconds // 3600)
-#             minutes = int((total_seconds % 3600) // 60)
-#             session['working_hours_display'] = f"{hours:02d}:{minutes:02d}"
-
-#             # Format idle time
-#             if session['total_idle_time']:
-#                 idle_minutes = int(session['total_idle_time'].total_seconds() // 60)
-#                 session['idle_time_display'] = f"{idle_minutes} min"
-#             else:
-#                 session['idle_time_display'] = ""
-
-#         return render(request, 'components/admin/user_sessions.html', {
-#             'sessions': grouped_sessions,
-#             'location_summary': location_summary,
-#             'project_summary': project_summary,
-#             'filters': {
-#                 'username': username,
-#                 'start_date': start_date,
-#                 'end_date': end_date,
-#                 'location': location,
-#                 'min_working_hours': min_working_hours,
-#                 'max_idle_time': max_idle_time,
-#             },
-#             'location_choices': [('Office', 'Office'), ('Home', 'Home')],
-#         })
-
-#     except Exception as e:
-#         messages.error(request, f"An error occurred: {str(e)}")
-#         return render(request, 'error.html', {'error_message': str(e)})
-
-
-
-# View for System Usage Information
-@login_required
-@user_passes_test(is_admin)
-def system_usage_view(request):
-    """View to display system usage details."""
-    try:
-        system_usages = SystemUsage.objects.all().order_by('-peak_time_start')
-        return render(request, 'components/admin/system_usage.html', {'system_usages': system_usages})
-
     except Exception as e:
-        messages.error(request, f"An error occurred while fetching system usage data: {str(e)}")
-        return redirect('dashboard')
+        logger.error(f"Error in user_session_detail_view: {str(e)}", exc_info=True)
+        messages.error(request, f"An error occurred: {str(e)}")
+        return redirect('aps_admin:user_sessions')
+
+
+def calculate_productivity_score(working_hours, idle_time):
+    """Calculate productivity score based on working hours and idle time"""
+    total_duration = working_hours + idle_time
+    if total_duration <= timedelta():
+        return 0
+        
+    productivity = (working_hours.total_seconds() / total_duration.total_seconds()) * 100
+    return min(round(productivity, 1), 100)
 
 
 
-# View for Password Changes
-@login_required
-@user_passes_test(is_admin)
-def password_change_view(request):
-    """View to display password change logs."""
-    try:
-        password_changes = PasswordChange.objects.all().order_by('-change_time')
-        return render(request, 'components/admin/password_change.html', {'password_changes': password_changes})
-
-    except Exception as e:
-        messages.error(request, f"An error occurred while fetching password change logs: {str(e)}")
-        return redirect('dashboard')
-
-
-# View for Role Assignment Audit
-@login_required
-@user_passes_test(is_admin)
-def role_assignment_audit_view(request):
-    """View to display role assignment audit logs."""
-    try:
-        role_assignments = RoleAssignmentAudit.objects.all().order_by('-assigned_date')
-        return render(request, 'components/admin/role_assignment_audit.html', {'role_assignments': role_assignments})
-
-    except Exception as e:
-        messages.error(request, f"An error occurred while fetching role assignment audit logs: {str(e)}")
-        return redirect('dashboard')
-
-
-
-''' --------------------------------------------------------- EMPLOYEE AREA --------------------------------------------------------- '''
-
-def is_employee(user):
-    """Check if the user belongs to the Employee group."""
-    return user.groups.filter(name='Employee').exists()
 
 
 ''' ---------------------------------------- TIMESHEET AREA ---------------------------------------- '''
