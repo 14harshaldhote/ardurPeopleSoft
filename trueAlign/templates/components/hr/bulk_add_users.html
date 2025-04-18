@@ -1,32 +1,103 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-6">
-    <div class="mb-4">
-        <a href="{% url 'aps_hr:hr_dashboard' %}" class="inline-flex items-center px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors">
-            <span>Back to Dashboard</span>
-        </a>
+<div class="min-h-screen bg-gray-50">
+    <!-- Header Section -->
+    <div class="bg-gradient-to-r from-purple-700 to-indigo-500 text-white py-10 px-4 shadow-lg">
+        <div class="container mx-auto max-w-7xl">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-purple-200">
+                        Bulk User Import
+                    </h1>
+                    <p class="text-purple-100 mt-3 text-lg">Import multiple users efficiently with enhanced validation</p>
+                </div>
+                <a href="{% url 'aps_hr:hr_dashboard' %}" 
+                   class="inline-flex items-center px-6 py-3 bg-white/10 backdrop-blur-sm text-white rounded-full hover:bg-white/20 transition-all duration-300 border border-white/20">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    <span>Back to Dashboard</span>
+                </a>
+            </div>
+        </div>
     </div>
-    <div class="max-w-lg mx-auto bg-white rounded-lg shadow-md overflow-hidden">
-        <div class="p-6">
-            <h5 class="text-xl font-semibold text-gray-800 mb-4">Bulk Add Users</h5>
-            <form method="POST" action="{% url 'aps_hr:bulk_add_users' %}" enctype="multipart/form-data">
+
+    <!-- Main Content Section -->
+    <div class="container mx-auto max-w-7xl px-4 py-8">
+        <!-- Template Download Section -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Download Template</h2>
+            <p class="text-gray-600 mb-4">Download the template file in your preferred format to ensure correct data formatting.</p>
+            <div class="flex gap-4">
+                <a href="{{ template_path }}&format=csv" 
+                   class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200">
+                    <i class="fas fa-file-csv mr-2"></i>
+                    CSV Template
+                </a>
+                <a href="{{ template_path }}&format=excel"
+                   class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200">
+                    <i class="fas fa-file-excel mr-2"></i>
+                    Excel Template
+                </a>
+            </div>
+        </div>
+
+        <!-- Upload Form Section -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Upload Users</h2>
+            <form method="POST" enctype="multipart/form-data" class="space-y-6">
                 {% csrf_token %}
-                <div class="mb-4">
-                    <label for="csv_file" class="block text-sm font-medium text-gray-700 mb-1">Upload CSV File</label>
-                    <input type="file" name="csv_file" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200" accept=".csv" required>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Upload CSV File</label>
+                    <input type="file" name="csv_file" accept=".csv" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500">
                 </div>
-                <div class="form-check mb-4">
-                    <input class="form-check-input" type="checkbox" name="send_welcome_emails" id="send_welcome_emails">
-                    <label class="form-check-label" for="send_welcome_emails">
-                        Send welcome emails to new users
-                    </label>
+                <div class="flex items-center">
+                    <input type="checkbox" name="send_welcome_emails" id="send_welcome_emails" class="h-4 w-4 text-purple-600">
+                    <label for="send_welcome_emails" class="ml-2 text-sm text-gray-700">Send welcome emails to new users</label>
                 </div>
-                <button type="submit" class="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
-                    Upload and Process
+                <button type="submit" 
+                        class="w-full bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2">
+                    Import Users
                 </button>
             </form>
         </div>
+
+        <!-- Error Display Section -->
+        {% if error_rows %}
+        <div class="mt-8 bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Import Results</h2>
+            {% if success_count > 0 %}
+            <div class="mb-4 p-4 bg-green-50 text-green-700 rounded-md">
+                Successfully imported {{ success_count }} users
+            </div>
+            {% endif %}
+            <div class="bg-red-50 p-4 rounded-md">
+                <h3 class="text-lg font-medium text-red-800 mb-2">Errors Occurred</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead>
+                            <tr>
+                                <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase">Row</th>
+                                <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                                <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                                <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase">Error</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for error in error_rows %}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ error.row_num }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ error.email }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ error.name }}</td>
+                                <td class="px-6 py-4 text-sm text-red-600">{{ error.error }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

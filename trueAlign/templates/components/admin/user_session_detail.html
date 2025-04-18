@@ -29,7 +29,7 @@
             </div>
             <div class="bg-white rounded-xl shadow-sm p-6">
                 <h3 class="text-lg font-medium text-gray-900 mb-2">Productivity Score</h3>
-                <p class="text-3xl font-bold text-green-600">{{ productivity_score|floatformat:1 }}%</p>
+                <p class="text-3xl font-bold text-green-600">{{ productivity_score }}%</p>
             </div>
         </div>
 
@@ -62,10 +62,10 @@
                                 {% endif %}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {{ session.working_hours.total_seconds|divisibleby:3600|floatformat:1 }} hrs
+                                {{ session.working_hours|floatformat:1 }} hrs
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {{ session.idle_time.total_seconds|divisibleby:3600|floatformat:1 }} hrs
+                                {{ session.idle_time|floatformat:1 }} hrs
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ session.location|default:"Unknown" }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ session.ip_address|default:"Unknown" }}</td>

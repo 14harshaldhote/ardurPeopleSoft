@@ -1152,48 +1152,94 @@ def is_employee(user):
 
 # Helper function to generate employee ID
 def generate_employee_id(work_location=None):
-    prefix = "EMP"
-    
-    # Add year (last 2 digits)
-    current_year = str(datetime.now().year)[2:]
-    
-    # Add location code if provided
-    location_code = ""
-    if work_location:
-        # Extract first 3 letters of location and uppercase them
-        location_code = work_location[:3].upper()
-    
-    # Find the last employee ID with this pattern
-    last_id_pattern = f"{prefix}-{current_year}"
-    if location_code:
-        last_id_pattern += f"-{location_code}"
-        
-    last_user = UserDetails.objects.filter(
-        user__username__startswith=last_id_pattern
-    ).order_by('-user__username').first()
-    
-    # Extract the sequence number or start at 1
-    if last_user and last_user.user.username.startswith(last_id_pattern):
-        # Extract the sequence number
-        parts = last_user.user.username.split('-')
-        seq_num = int(parts[-1]) + 1
-    else:
-        seq_num = 1
-    
+    """
+    Generate employee ID based on work location with consistent formatting
+    """
     # Format with leading zeros (4 digits)
-    formatted_seq = f"{seq_num:04d}"
-    
-    # Construct final ID
-    if location_code:
-        employee_id = f"{prefix}-{current_year}-{location_code}-{formatted_seq}"
+    if work_location and work_location.lower() == 'betul':
+        prefix = "ATS"
+        # Look for both potential formats to catch existing IDs
+        betul_users = UserDetails.objects.filter(
+            user__username__startswith=prefix
+        ).order_by('-user__username')
+        
+        if betul_users.exists():
+            last_user = betul_users.first()
+            # Extract the sequence number, handle potential format variations
+            username_parts = last_user.user.username.split('-')
+            if len(username_parts) > 1:
+                try:
+                    seq_num = int(username_parts[-1]) + 1
+                except ValueError:
+                    # If format was irregular, start from a safe number
+                    seq_num = 1000
+            else:
+                seq_num = 1000
+        else:
+            seq_num = 1
+            
+        formatted_seq = f"{seq_num:04d}"
+        employee_id = f"{prefix}-{formatted_seq}"
+        
+    elif work_location and work_location.lower() == 'pune':
+        prefix = "AT"
+        # Check both potential formats for Pune
+        pune_users = UserDetails.objects.filter(
+            Q(user__username__startswith=f"{prefix}-") | 
+            Q(user__username__startswith=prefix)
+        ).order_by('-user__username')
+        
+        if pune_users.exists():
+            last_user = pune_users.first()
+            # Handle potential format variations
+            if '-' in last_user.user.username:
+                try:
+                    seq_num = int(last_user.user.username.split('-')[-1]) + 1
+                except ValueError:
+                    seq_num = 1000
+            else:
+                # If no hyphen, assume different format and start from consistent number
+                seq_num = 1000
+        else:
+            seq_num = 1
+            
+        formatted_seq = f"{seq_num:04d}"
+        employee_id = f"{prefix}-{formatted_seq}"
+        
     else:
+        # Default case
+        prefix = "EMP"
+        current_year = str(datetime.now().year)[2:]
+        last_id_pattern = f"{prefix}-{current_year}"
+        
+        last_user = UserDetails.objects.filter(
+            user__username__startswith=last_id_pattern
+        ).order_by('-user__username').first()
+        
+        if last_user and last_user.user.username.startswith(last_id_pattern):
+            try:
+                seq_num = int(last_user.user.username.split('-')[-1]) + 1
+            except ValueError:
+                seq_num = 1
+        else:
+            seq_num = 1
+            
+        formatted_seq = f"{seq_num:04d}"
         employee_id = f"{prefix}-{current_year}-{formatted_seq}"
     
+    # Final validation to ensure ID doesn't already exist
+    if User.objects.filter(username=employee_id).exists():
+        # If ID exists, recursively try again with incremented sequence
+        return generate_employee_id(work_location)
+        
     return employee_id
 
 # Helper function to send welcome email
 def send_welcome_email(user, password):
     """Send welcome email with login credentials"""
+    from django.core.mail import EmailMessage, EmailMultiAlternatives
+    from django.template.loader import render_to_string
+
     subject = "Welcome to Our Company Portal"
     
     # Plain text email body
@@ -1219,7 +1265,7 @@ def send_welcome_email(user, password):
         html_message = render_to_string('components/hr/emails/welcome_email.html', {
             'user': user,
             'password': password,
-            'login_url': 'http://yourcompanyportal.com/login/'
+            'login_url': 'https://home.ardurtechnology.com/login/'
         })
         
         # Send email with both HTML and plain text
@@ -1664,8 +1710,11 @@ def add_user(request):
                 )
                 
                 # Add user to group
-                group = Group.objects.get(id=group_id)
-                user.groups.add(group)
+                try:
+                    group = Group.objects.get(id=int(group_id))
+                    user.groups.add(group)
+                except (ValueError, Group.DoesNotExist):
+                    raise ValueError("Invalid group selected")
                 
                 # Create UserDetails with comprehensive information
                 user_details = UserDetails.objects.create(
@@ -1738,181 +1787,239 @@ def add_user(request):
 @login_required
 @user_passes_test(is_hr)
 def bulk_add_users(request):
-    """Enhanced view to import multiple users from CSV"""
+    """Enhanced view to import multiple users from CSV with improved validation and error handling"""
     if request.method == 'POST' and request.FILES.get('csv_file'):
         csv_file = request.FILES['csv_file']
         
         # Check if file is CSV
         if not csv_file.name.endswith('.csv'):
             messages.error(request, 'File must be a CSV')
-            return redirect('bulk_add_users')
+            return redirect('aps_hr:bulk_add_users')
         
         # Process CSV file
-        decoded_file = csv_file.read().decode('utf-8')
-        io_string = io.StringIO(decoded_file)
-        reader = csv.DictReader(io_string)
-        
-        # Validate CSV structure
-        required_fields = ['email', 'first_name', 'last_name', 'group', 'work_location']
-        first_row = next(reader, None)
-        if not first_row:
-            messages.error(request, 'CSV file is empty')
-            return redirect('bulk_add_users')
-        
-        for field in required_fields:
-            if field not in first_row:
-                messages.error(request, f'CSV missing required field: {field}')
-                return redirect('bulk_add_users')
-        
-        # Reset file pointer
-        io_string.seek(0)
-        next(reader)  # Skip header row
-        
-        success_count = 0
-        error_rows = []
-        
-        # Process each row
-        for row_num, row in enumerate(reader, start=2):  # Start at 2 for header offset
+        try:
+            decoded_file = csv_file.read().decode('utf-8-sig')  # Handle BOM if present
+            io_string = io.StringIO(decoded_file)
+            
+            # First, try to detect the csv dialect
+            sample = io_string.read(1024)
+            io_string.seek(0)
+            dialect = csv.Sniffer().sniff(sample)
+            
+            # Try to handle possible CSV format issues
+            reader = None
             try:
-                with transaction.atomic():
-                    email = row['email'].strip()
-                    first_name = row['first_name'].strip()
-                    last_name = row['last_name'].strip()
-                    group_name = row['group'].strip()
-                    work_location = row['work_location'].strip()
-                    
-                    # Validate required fields
-                    if not (email and first_name and last_name and group_name and work_location):
-                        raise ValueError("Missing required fields")
-                    
-                    # Check if email already exists
-                    if User.objects.filter(email=email).exists():
-                        raise ValueError(f"Email '{email}' already exists")
-                    
-                    # Check if group exists
-                    try:
-                        group = Group.objects.get(name=group_name)
-                    except Group.DoesNotExist:
-                        raise ValueError(f"Group '{group_name}' does not exist")
-                    
-                    # Generate employee ID
-                    employee_id = generate_employee_id(work_location)
-                    
-                    while User.objects.filter(username=employee_id).exists():
-                        # In the rare case of a duplicate, regenerate
-                        employee_id = generate_employee_id(work_location)
-                    
-                    # Generate a random password
-                    password = ''.join(random.choices(string.ascii_letters + string.digits + string.punctuation, k=12))
-                    
-                    # Create new user
-                    user = User.objects.create_user(
-                        username=employee_id,
-                        email=email,
-                        password=password,
-                        first_name=first_name,
-                        last_name=last_name
-                    )
-                    
-                    # Add user to group
-                    user.groups.add(group)
-                    
-                    # Map CSV columns to UserDetails fields
-                    user_details_fields = {
-                        'user': user,
-                        'group': group,
-                        'hire_date': row.get('hire_date') or datetime.now().date(),
-                        'start_date': row.get('start_date') or datetime.now().date(),
-                        'employment_status': 'active',
-                        'work_location': work_location,
-                        'job_description': row.get('job_description') or None,
-                        'onboarded_by': request.user,
-                        'onboarding_date': timezone.now(),
-                        'employee_type': row.get('employee_type') or None,
-                        # Replace personal_address with individual address fields
-                        'address_line1': row.get('address_line1') or None,
-                        'address_line2': row.get('address_line2') or None,
-                        'city': row.get('city') or None,
-                        'state': row.get('state') or None,
-                        'postal_code': row.get('postal_code') or None,
-                        'country': row.get('country') or None
-                    }
-                    
-                    # Optional fields with validation
-                    if 'dob' in row and row['dob']:
-                        try:
-                            dob = datetime.strptime(row['dob'], '%Y-%m-%d').date()
-                            user_details_fields['dob'] = dob
-                        except ValueError:
-                            pass  # Skip invalid date
-                    
-                    if 'gender' in row and row['gender']:
-                        gender = row['gender']
-                        if gender in dict(UserDetails._meta.get_field('gender').choices):
-                            user_details_fields['gender'] = gender
-                    
-                    if 'blood_group' in row and row['blood_group']:
-                        blood_group = row['blood_group']
-                        if blood_group in dict(UserDetails._meta.get_field('blood_group').choices):
-                            user_details_fields['blood_group'] = blood_group
-                    
-                    if 'contact_number_primary' in row and row['contact_number_primary']:
-                        user_details_fields['contact_number_primary'] = row['contact_number_primary']
-                    
-                    if 'country_code' in row and row['country_code']:
-                        user_details_fields['country_code'] = row['country_code']
-                    
-                    if 'personal_email' in row and row['personal_email']:
-                        user_details_fields['personal_email'] = row['personal_email']
-                    
-                    if 'emergency_contact_name' in row and row['emergency_contact_name']:
-                        user_details_fields['emergency_contact_name'] = row['emergency_contact_name']
-                        
-                    if 'emergency_contact_primary' in row and row['emergency_contact_primary']:
-                        user_details_fields['emergency_contact_primary'] = row['emergency_contact_primary']
-                        
-                    if 'emergency_contact_address' in row and row['emergency_contact_address']:
-                        user_details_fields['emergency_contact_address'] = row['emergency_contact_address']
-                    
-                    # Create UserDetails record
-                    UserDetails.objects.create(**user_details_fields)
-                    
-                    # Log user creation
-                    UserActionLog.objects.create(
-                        user=user,
-                        action_type='create',
-                        action_by=request.user,
-                        details=f"User created via bulk import with ID: {employee_id}, role: {group.name}"
-                    )
-                    
-                    # Send welcome email if requested
-                    if request.POST.get('send_welcome_emails') == 'on':
-                        try:
-                            send_welcome_email(user, password)
-                        except Exception as e:
-                            logger.error(f"Error sending welcome email to {email}: {str(e)}")
-                    
-                    success_count += 1
-                    
+                reader = csv.DictReader(io_string, dialect=dialect)
+                # Handle case where header might have extra characters
+                clean_fieldnames = [field.strip().replace('*', '') for field in reader.fieldnames or []]
+                reader.fieldnames = clean_fieldnames
             except Exception as e:
-                logger.error(f"Error in row {row_num}: {str(e)}", exc_info=True)
-                error_rows.append({
-                    'row_num': row_num,
-                    'data': row,
-                    'error': str(e)
-                })
+                logger.warning(f"Could not use detected dialect: {str(e)}")
+                io_string.seek(0)
+                # Fall back to default reader
+                reader = csv.DictReader(io_string)
+                if reader.fieldnames:
+                    clean_fieldnames = [field.strip().replace('*', '') for field in reader.fieldnames]
+                    reader.fieldnames = clean_fieldnames
+            
+            # Validate CSV structure
+            required_fields = ['email', 'first_name', 'last_name', 'group', 'work_location']
+            csv_fields = reader.fieldnames if reader else []
+            
+            if not csv_fields:
+                messages.error(request, 'CSV file is empty or has invalid format')
+                return redirect('aps_hr:bulk_add_users')
+            
+            # Check for missing fields (after cleaning field names)
+            missing_fields = [field for field in required_fields if field not in csv_fields]
+            if missing_fields:
+                messages.error(request, f'CSV missing required fields: {", ".join(missing_fields)}')
+                return redirect('aps_hr:bulk_add_users')
+            
+            # Process each row
+            success_count = 0
+            error_rows = []
+            
+            for row_num, row in enumerate(reader, start=2):  # Start at 2 for header offset
+                try:
+                    with transaction.atomic():
+                        # Clean data by removing extra spaces and asterisks
+                        cleaned_row = {k: v.strip().replace('*', '') if isinstance(v, str) else v for k, v in row.items()}
+                        
+                        # Extract and validate basic user information
+                        email = cleaned_row.get('email', '').strip()
+                        first_name = cleaned_row.get('first_name', '').strip()
+                        last_name = cleaned_row.get('last_name', '').strip()
+                        group_name = cleaned_row.get('group', '').strip()
+                        work_location = cleaned_row.get('work_location', '').strip()
+                        
+                        # Debug logging
+                        logger.debug(f"Processing row {row_num}: {email}, {first_name}, {last_name}, {group_name}, {work_location}")
+                        
+                        # Skip empty rows
+                        if not any([email, first_name, last_name, group_name, work_location]):
+                            logger.info(f"Skipping empty row {row_num}")
+                            continue
+                        
+                        # Validate required fields
+                        if not all([email, first_name, last_name, group_name, work_location]):
+                            missing = []
+                            if not email: missing.append("email")
+                            if not first_name: missing.append("first_name")
+                            if not last_name: missing.append("last_name")
+                            if not group_name: missing.append("group")
+                            if not work_location: missing.append("work_location")
+                            raise ValueError(f"Missing required fields: {', '.join(missing)}")
+                        
+                        # Email validation
+                        if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+                            raise ValueError(f"Invalid email format: {email}")
+                            
+                        if User.objects.filter(email=email).exists():
+                            raise ValueError(f"Email '{email}' already exists")
+                        
+                        # Check if group exists
+                        try:
+                            group = Group.objects.get(name=group_name)
+                        except Group.DoesNotExist:
+                            raise ValueError(f"Group '{group_name}' does not exist")
+                        
+                        # Generate employee ID
+                        employee_id = generate_employee_id(work_location)
+                        while User.objects.filter(username=employee_id).exists():
+                            employee_id = generate_employee_id(work_location)
+                        
+                        # Generate a strong random password
+                        password = ''.join(random.choices(string.ascii_letters + string.digits + string.punctuation, k=12))
+                        
+                        # Create new user
+                        user = User.objects.create_user(
+                            username=employee_id,
+                            email=email,
+                            password=password,
+                            first_name=first_name,
+                            last_name=last_name
+                        )
+                        
+                        # Add user to group
+                        user.groups.add(group)
+                        
+                        # Create basic UserDetails
+                        user_details = UserDetails(
+                            user=user,
+                            group=group,
+                            work_location=work_location,
+                            employment_status='active',
+                            onboarded_by=request.user,
+                            onboarding_date=timezone.now()
+                        )
+                        
+                        # Save UserDetails
+                        user_details.save()
+                        
+                        # Log user creation
+                        UserActionLog.objects.create(
+                            user=user,
+                            action_type='create',
+                            action_by=request.user,
+                            details=f"User created via bulk import with ID: {employee_id}, role: {group.name}"
+                        )
+                        
+                        # Send welcome email if requested
+                        if request.POST.get('send_welcome_emails') == 'on':
+                            try:
+                                send_welcome_email(user, password)
+                            except Exception as e:
+                                logger.error(f"Error sending welcome email to {email}: {str(e)}")
+                        
+                        success_count += 1
+                        logger.info(f"Successfully created user: {email}")
+                
+                except Exception as e:
+                    error_details = str(e)
+                    logger.error(f"Error in row {row_num}: {error_details}", exc_info=True)
+                    error_rows.append({
+                        'row_num': row_num,
+                        'email': row.get('email', 'N/A') if row else 'N/A',
+                        'name': f"{row.get('first_name', '')} {row.get('last_name', '')}".strip() if row else 'N/A',
+                        'error': error_details
+                    })
         
+        except UnicodeDecodeError:
+            messages.error(request, 'Invalid file encoding. Please ensure the CSV file is UTF-8 encoded.')
+            return redirect('aps_hr:bulk_add_users')
+        except Exception as e:
+            messages.error(request, f'Error processing CSV file: {str(e)}')
+            logger.error(f"CSV processing error: {str(e)}", exc_info=True)
+            return redirect('aps_hr:bulk_add_users')
+        
+        # Report results
         if success_count > 0:
             messages.success(request, f"Successfully imported {success_count} users")
         
         if error_rows:
             request.session['import_errors'] = error_rows
-            return redirect('import_errors')
+            return render(request, 'components/hr/bulk_add_users.html', {
+                'groups': Group.objects.all().values_list('name', flat=True),
+                'error_rows': error_rows,
+                'success_count': success_count
+            })
         
-        return redirect('hr_dashboard')
+        return redirect('aps_hr:hr_dashboard')
+        
+    # Rest of the code for template downloads remains the same
+    try:
+        import os
+        from django.conf import settings
+        import pandas as pd
+        from django.http import HttpResponse
+        
+        # Define template paths for both formats
+        csv_template_path = os.path.join(settings.MEDIA_ROOT, 'templates', 'bulk_users_template.csv')
+        excel_template_path = os.path.join(settings.MEDIA_ROOT, 'templates', 'bulk_users_template.xlsx')
+        
+        # Define headers for template
+        headers = ['email', 'first_name', 'last_name', 'group', 'work_location']
+        
+        # Create DataFrame with headers only
+        df = pd.DataFrame(columns=headers)
+        
+        # Create directory if it doesn't exist
+        os.makedirs(os.path.dirname(csv_template_path), exist_ok=True)
+        
+        # Create templates if they don't exist or if force update requested
+        force_update = request.GET.get('update_template') == 'true'
+        if not os.path.exists(csv_template_path) or force_update:
+            df.to_csv(csv_template_path, index=False)
+            
+        if not os.path.exists(excel_template_path) or force_update:
+            df.to_excel(excel_template_path, index=False)
+        
+        # Handle template download requests
+        if request.GET.get('download_template'):
+            format = request.GET.get('format', 'csv')
+            
+            if format == 'excel':
+                with open(excel_template_path, 'rb') as f:
+                    response = HttpResponse(
+                        f.read(),
+                        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                    )
+                    response['Content-Disposition'] = 'attachment; filename="bulk_users_template.xlsx"'
+                    return response
+            else:
+                with open(csv_template_path, 'rb') as f:
+                    response = HttpResponse(f.read(), content_type='text/csv')
+                    response['Content-Disposition'] = 'attachment; filename="bulk_users_template.csv"'
+                    return response
+        
+    except Exception as e:
+        logger.error(f"Error handling templates: {str(e)}")
     
+    # GET request - show upload form
     return render(request, 'components/hr/bulk_add_users.html', {
         'groups': Group.objects.all().values_list('name', flat=True),
+        'template_path': '{}?download_template=true'.format(request.path)
     })
 
 @login_required
@@ -3272,75 +3379,92 @@ def consolidate_daily_sessions(sessions):
     # Sort by date (newest first) and then by username
     return sorted(result, key=lambda x: (x['date'], x['user'].username), reverse=True)
 
-
 @login_required
 @user_passes_test(is_admin)
 def user_session_detail_view(request, user_id, date_str):
     """
     Detailed view of a user's sessions for a specific date.
+    Shows session timeline and productivity metrics.
     """
     try:
-        date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
-        user = User.objects.get(id=user_id)
-        
-        # Get all sessions for this user on this date
+        # Parse date and get user, with validation
+        try:
+            date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
+            user = User.objects.get(id=user_id)
+            logger.debug(f"Looking for sessions for user ID {user_id} ({user.username}) on {date_str}")
+        except (ValueError, User.DoesNotExist) as e:
+            logger.error(f"Invalid date format or user not found: {str(e)}")
+            messages.error(request, "Invalid date format or user not found")
+            return redirect('aps_admin:user_sessions')
+
+        # Debug: Check all sessions for this user
+        debug_sessions = UserSession.objects.filter(user=user)
+        logger.debug(f"All sessions for user {user.username}: {debug_sessions.count()}")
+        if debug_sessions.exists():
+            recent = debug_sessions.order_by('-login_time').first()
+            logger.debug(f"Most recent session: {recent.login_time} - Working: {recent.working_hours}, Idle: {recent.idle_time}")
+
+        # Get all sessions for this user on this date, using proper datetime range
         sessions = UserSession.objects.filter(
             user=user,
-            login_time__date=date_obj
+            login_time__gte=datetime.combine(date_obj, datetime.min.time(), tzinfo=timezone.get_current_timezone()),
+            login_time__lt=datetime.combine(date_obj + timedelta(days=1), datetime.min.time(), tzinfo=timezone.get_current_timezone())
         ).order_by('login_time')
+
+        logger.debug(f"Found {sessions.count()} sessions for date {date_str}")
         
-        # For debugging
-        print(f"Found {len(sessions)} sessions for user {user.username} on {date_obj}")
-        
-        # Calculate metrics for each session
-        processed_sessions = []
+        if sessions.count() == 0:
+            all_user_sessions = UserSession.objects.filter(user=user).count()
+            logger.debug(f"User has {all_user_sessions} total sessions across all dates")
+
+        # Initialize totals
         total_working_hours = timedelta()
         total_idle_time = timedelta()
-        
+        processed_sessions = []
+
+        # Process each session
         for session in sessions:
-            # Calculate working hours - handle large microsecond values
-            working_hours = timedelta()
-            if session.working_hours:
-                try:
-                    # Convert to seconds first to avoid overflow
-                    seconds = float(session.working_hours) / 1000000
-                    working_hours = timedelta(seconds=seconds)
-                    total_working_hours += working_hours
-                except (ValueError, OverflowError) as e:
-                    print(f"Error converting working_hours: {e}")
-                    working_hours = timedelta()
-            
-            # Calculate idle time - handle large microsecond values
-            idle_time = timedelta()
-            if session.idle_time:
-                try:
-                    # Convert to seconds first to avoid overflow
-                    seconds = float(session.idle_time) / 1000000
-                    idle_time = timedelta(seconds=seconds)
-                    total_idle_time += idle_time
-                except (ValueError, OverflowError) as e:
-                    print(f"Error converting idle_time: {e}")
-                    idle_time = timedelta()
-            
-            # Create session object with correctly formatted time values
+            # Get working and idle hours, defaulting to 0 if None
+            working_hours = session.working_hours or timedelta()
+            idle_time = session.idle_time or timedelta()
+
+            # Add to running totals
+            total_working_hours += working_hours
+            total_idle_time += idle_time
+
+            # For active sessions, calculate current working/idle time
+            if session.is_active:
+                current_time = timezone.now()
+                time_since_last = current_time - session.last_activity
+                
+                # Add idle time if exceeds threshold
+                if time_since_last > timedelta(minutes=session.IDLE_THRESHOLD_MINUTES):
+                    idle_time += time_since_last
+
+            # Create session object with all required fields
             processed_session = {
                 'login_time': session.login_time,
                 'logout_time': session.logout_time,
                 'working_hours': working_hours,
                 'idle_time': idle_time,
-                'location': session.location,
-                'ip_address': session.ip_address,
+                'location': session.location or 'Unknown',
+                'ip_address': session.ip_address or 'Unknown',
                 'is_active': session.is_active
             }
             processed_sessions.append(processed_session)
-        
+
+        # Debug processed sessions
+        logger.debug(f"Sessions being sent to template: {len(processed_sessions)}")
+        for i, s in enumerate(processed_sessions):
+            logger.debug(f"Session {i+1}: Login {s['login_time']}, Working: {s['working_hours']}")
+
         # Calculate productivity score
         total_duration = total_working_hours + total_idle_time
         if total_duration > timedelta():
             productivity_score = (total_working_hours.total_seconds() / total_duration.total_seconds()) * 100
         else:
             productivity_score = 0
-        
+
         context = {
             'user': user,
             'date': date_obj,
@@ -3349,12 +3473,12 @@ def user_session_detail_view(request, user_id, date_str):
             'total_idle_time': total_idle_time.total_seconds() / 3600,
             'productivity_score': round(productivity_score, 1)
         }
-        
+
         return render(request, 'components/admin/user_session_detail.html', context)
-        
+
     except Exception as e:
         logger.error(f"Error in user_session_detail_view: {str(e)}", exc_info=True)
-        messages.error(request, f"An error occurred: {str(e)}")
+        messages.error(request, "An error occurred while processing the request")
         return redirect('aps_admin:user_sessions')
 
 
