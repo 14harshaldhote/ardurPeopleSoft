@@ -1149,12 +1149,22 @@ def is_manager(user):
 
 def is_employee(user):
     return user.groups.filter(name='Employee').exists()
-
 # Helper function to generate employee ID
-def generate_employee_id(work_location=None):
+def generate_employee_id(work_location=None, group_id=None):
     """
-    Generate employee ID based on work location with consistent formatting
+    Generate employee ID based on work location with role-based reserved ranges
+    
+    Reserved ranges:
+    - 301-400: Management and Finance groups (IDs 7 and 8)
     """
+    from django.db.models import Q
+    from datetime import datetime
+    
+    # Check if user belongs to Finance or Management groups based on group_id
+    is_reserved_role = False
+    if group_id and group_id in ['7', '8']:  # Finance or Management
+        is_reserved_role = True
+    
     # Format with leading zeros (4 digits)
     if work_location and work_location.lower() == 'betul':
         prefix = "ATS"
@@ -1163,21 +1173,44 @@ def generate_employee_id(work_location=None):
             user__username__startswith=prefix
         ).order_by('-user__username')
         
-        if betul_users.exists():
-            last_user = betul_users.first()
-            # Extract the sequence number, handle potential format variations
-            username_parts = last_user.user.username.split('-')
-            if len(username_parts) > 1:
+        # Handle reserved range for Management and Finance roles
+        if is_reserved_role:
+            # For reserved roles, use range 301-400
+            seq_num = 301
+            
+            # Find the highest existing ID in the reserved range
+            reserved_users = UserDetails.objects.filter(
+                user__username__regex=r'^{}-0(3[0-9][1-9]|400)$'.format(prefix)
+            ).order_by('-user__username')
+            
+            if reserved_users.exists():
+                last_user = reserved_users.first()
+                username_parts = last_user.user.username.split('-')
                 try:
                     seq_num = int(username_parts[-1]) + 1
+                    # If we've reached the end of reserved range, start over
+                    if seq_num > 400:
+                        seq_num = 301
                 except ValueError:
-                    # If format was irregular, start from a safe number
-                    seq_num = 1000
-            else:
-                seq_num = 1000
+                    seq_num = 301
         else:
-            seq_num = 1
-            
+            # Normal sequence generation avoiding reserved range
+            if betul_users.exists():
+                last_user = betul_users.first()
+                username_parts = last_user.user.username.split('-')
+                if len(username_parts) > 1:
+                    try:
+                        seq_num = int(username_parts[-1]) + 1
+                        # Skip reserved range
+                        if 301 <= seq_num <= 400:
+                            seq_num = 401
+                    except ValueError:
+                        seq_num = 1
+                else:
+                    seq_num = 1
+            else:
+                seq_num = 1
+        
         formatted_seq = f"{seq_num:04d}"
         employee_id = f"{prefix}-{formatted_seq}"
         
@@ -1189,20 +1222,48 @@ def generate_employee_id(work_location=None):
             Q(user__username__startswith=prefix)
         ).order_by('-user__username')
         
-        if pune_users.exists():
-            last_user = pune_users.first()
-            # Handle potential format variations
-            if '-' in last_user.user.username:
-                try:
-                    seq_num = int(last_user.user.username.split('-')[-1]) + 1
-                except ValueError:
-                    seq_num = 1000
-            else:
-                # If no hyphen, assume different format and start from consistent number
-                seq_num = 1000
-        else:
-            seq_num = 1
+        # Handle reserved range for Management and Finance roles
+        if is_reserved_role:
+            # For reserved roles, use range 301-400
+            seq_num = 301
             
+            # Find the highest existing ID in the reserved range
+            reserved_users = UserDetails.objects.filter(
+                Q(user__username__regex=r'^{}-0(3[0-9][1-9]|400)$'.format(prefix)) |
+                Q(user__username__regex=r'^{}0(3[0-9][1-9]|400)$'.format(prefix))
+            ).order_by('-user__username')
+            
+            if reserved_users.exists():
+                last_user = reserved_users.first()
+                username = last_user.user.username
+                try:
+                    # Extract sequence number whether format is AT-0301 or AT0301
+                    seq_str = ''.join(filter(str.isdigit, username))
+                    seq_num = int(seq_str) + 1
+                    # If we've reached the end of reserved range, start over
+                    if seq_num > 400:
+                        seq_num = 301
+                except ValueError:
+                    seq_num = 301
+            else:
+                seq_num = 301
+        else:
+            # Normal sequence generation avoiding reserved range
+            if pune_users.exists():
+                last_user = pune_users.first()
+                username = last_user.user.username
+                try:
+                    # Extract sequence number whether format is AT-0301 or AT0301
+                    seq_str = ''.join(filter(str.isdigit, username))
+                    seq_num = int(seq_str) + 1
+                    # Skip reserved range
+                    if 301 <= seq_num <= 400:
+                        seq_num = 401
+                except ValueError:
+                    seq_num = 1
+            else:
+                seq_num = 1
+        
         formatted_seq = f"{seq_num:04d}"
         employee_id = f"{prefix}-{formatted_seq}"
         
@@ -1212,25 +1273,50 @@ def generate_employee_id(work_location=None):
         current_year = str(datetime.now().year)[2:]
         last_id_pattern = f"{prefix}-{current_year}"
         
-        last_user = UserDetails.objects.filter(
-            user__username__startswith=last_id_pattern
-        ).order_by('-user__username').first()
-        
-        if last_user and last_user.user.username.startswith(last_id_pattern):
-            try:
-                seq_num = int(last_user.user.username.split('-')[-1]) + 1
-            except ValueError:
-                seq_num = 1
-        else:
-            seq_num = 1
+        # Handle reserved range for Management and Finance roles
+        if is_reserved_role:
+            # For reserved roles, use range 301-400
+            seq_num = 301
             
+            # Find the highest existing ID in the reserved range
+            reserved_pattern = f"{prefix}-{current_year}"
+            reserved_users = UserDetails.objects.filter(
+                user__username__regex=r'^{}-{}-0(3[0-9][1-9]|400)$'.format(prefix, current_year)
+            ).order_by('-user__username')
+            
+            if reserved_users.exists():
+                last_user = reserved_users.first()
+                try:
+                    seq_num = int(last_user.user.username.split('-')[-1]) + 1
+                    # If we've reached the end of reserved range, start over
+                    if seq_num > 400:
+                        seq_num = 301
+                except ValueError:
+                    seq_num = 301
+        else:
+            # Normal sequence generation avoiding reserved range
+            last_user = UserDetails.objects.filter(
+                user__username__startswith=last_id_pattern
+            ).order_by('-user__username').first()
+            
+            if last_user and last_user.user.username.startswith(last_id_pattern):
+                try:
+                    seq_num = int(last_user.user.username.split('-')[-1]) + 1
+                    # Skip reserved range
+                    if 301 <= seq_num <= 400:
+                        seq_num = 401
+                except ValueError:
+                    seq_num = 1
+            else:
+                seq_num = 1
+        
         formatted_seq = f"{seq_num:04d}"
         employee_id = f"{prefix}-{current_year}-{formatted_seq}"
     
     # Final validation to ensure ID doesn't already exist
     if User.objects.filter(username=employee_id).exists():
         # If ID exists, recursively try again with incremented sequence
-        return generate_employee_id(work_location)
+        return generate_employee_id(work_location, group_id)
         
     return employee_id
 
@@ -1240,7 +1326,7 @@ def send_welcome_email(user, password):
     from django.core.mail import EmailMessage, EmailMultiAlternatives
     from django.template.loader import render_to_string
 
-    subject = "Welcome to Our Company Portal"
+    subject = "Welcome to Ardur Company Portal"
     
     # Plain text email body
     email_body = f"""
@@ -1252,7 +1338,7 @@ def send_welcome_email(user, password):
     Username: {user.username}
     Password: {password}
     
-    Please log in at: http://yourcompanyportal.com/login/
+    Please log in at: https://home.ardurtechnology.com/login/
     
     For security reasons, we recommend changing your password after first login.
     
@@ -1691,11 +1777,13 @@ def add_user(request):
                     raise ValueError(f"Email '{email}' already exists")
                 
                 # Generate employee ID for username
-                employee_id = generate_employee_id(work_location)
+                employee_id = generate_employee_id(work_location, group_id)
+
                 
                 while User.objects.filter(username=employee_id).exists():
                     # In the rare case of a duplicate, regenerate
-                    employee_id = generate_employee_id(work_location)
+                    employee_id = generate_employee_id(work_location, group_id)
+
                 
                 # Generate a random password
                 password = ''.join(random.choices(string.ascii_letters + string.digits + string.punctuation, k=12))
@@ -1885,9 +1973,9 @@ def bulk_add_users(request):
                             raise ValueError(f"Group '{group_name}' does not exist")
                         
                         # Generate employee ID
-                        employee_id = generate_employee_id(work_location)
+                        employee_id = generate_employee_id(work_location, group_id)
                         while User.objects.filter(username=employee_id).exists():
-                            employee_id = generate_employee_id(work_location)
+                            employee_id = generate_employee_id(work_location, group_id)
                         
                         # Generate a strong random password
                         password = ''.join(random.choices(string.ascii_letters + string.digits + string.punctuation, k=12))
