@@ -907,6 +907,9 @@ class Project(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     users = models.ManyToManyField(User, through='ProjectAssignment', related_name='projects_assigned')
     clients = models.ManyToManyField(User, related_name='projects_as_client', limit_choices_to={'groups__name': 'Client'})
+    total_value = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    delivery_format = models.CharField(max_length=50, default='CSV')  # CSV, JSON, XLSX, etc.
+
 
     def __str__(self):
         return self.name
@@ -1578,3 +1581,70 @@ class Presence(models.Model):
 
     def __str__(self):
         return f"{self.user.first_name} {self.user.last_name} - {self.date} - {self.get_status_display()}"
+
+'''---------------------------------- Finance ----------------------------------'''
+from django.db import models
+from django.contrib.auth.models import User
+
+TRANSACTION_TYPES = (
+    ('income', 'Income'),
+    ('expense', 'Expense'),
+    ('transfer', 'Transfer'),
+)
+
+
+
+class ChartOfAccount(models.Model):
+    name = models.CharField(max_length=100)
+    account_type = models.CharField(max_length=50)  # asset, liability, income, expense
+    code = models.CharField(max_length=20, unique=True)
+
+    def __str__(self):
+        return f"{self.code} - {self.name}"
+
+
+class Transaction(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.SET_NULL, null=True, blank=True)
+    account = models.ForeignKey(ChartOfAccount, on_delete=models.PROTECT)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPES)
+    date = models.DateField(auto_now_add=True)
+    description = models.TextField(blank=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+
+    def __str__(self):
+        return f"{self.transaction_type} - {self.amount} ({self.account.name})"
+
+
+class Vendor(models.Model):
+    name = models.CharField(max_length=100)
+    service = models.CharField(max_length=100, blank=True)  # e.g., "OCR API", "Cloud Hosting"
+    email = models.EmailField(blank=True)
+    phone = models.CharField(max_length=20, blank=True)
+
+    def __str__(self):
+        return self.name
+
+
+class Payment(models.Model):
+    vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE)
+    project = models.ForeignKey(Project, on_delete=models.SET_NULL, null=True, blank=True)
+    date = models.DateField()
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    paid_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    description = models.TextField(blank=True)
+
+    def __str__(self):
+        return f"Payment to {self.vendor.name} - {self.amount}"
+
+
+class ClientPayment(models.Model):
+    client = models.ForeignKey(ClientProfile, on_delete=models.CASCADE)
+    project = models.ForeignKey(Project, on_delete=models.SET_NULL, null=True, blank=True)
+    date = models.DateField()
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    received_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    reference_note = models.TextField(blank=True)
+
+    def __str__(self):
+        return f"Payment from {self.client.company_name} - {self.amount}"

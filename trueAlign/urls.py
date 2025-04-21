@@ -28,6 +28,15 @@ admin_patterns = [
     path('user/<int:user_id>/sessions/<str:date_str>/', views.user_session_detail_view, name='user_session_detail'),
 ]
 
+finance_patterns = [
+    path('projects/', views.project_list, name='project_list'),
+    path('transactions/', views.transaction_list, name='transaction_list'), 
+    path('accounts/', views.chart_of_accounts, name='chart_of_accounts'),
+    path('vendors/', views.vendor_list, name='vendor_list'),
+    path('payments/', views.payment_list, name='payment_list'),
+    path('client-payments/', views.client_payment_list, name='client_payment_list'),
+]
+
 # Employee-specific URLs under 'truealign/employee/'
 employee_patterns = [
     path('support/', views.employee_support, name='employee_support'),
@@ -137,6 +146,9 @@ urlpatterns = [
 
     # Employee-specific URLs under 'truealign/employee/'
     path('truealign/employee/', include((employee_patterns, 'aps'), namespace='aps_employee')),
+    
+    
+    path('truealign/finance/', include((finance_patterns, 'aps'), namespace='aps_finance')),
 
     # HR-specific URLs under 'truealign/hr/'
     path('truealign/hr/', include((hr_patterns, 'aps'), namespace='aps_hr')),

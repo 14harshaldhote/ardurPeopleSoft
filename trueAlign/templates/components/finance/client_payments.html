@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Client Payments{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4">
+    <div class="flex items-center justify-between mb-8 mt-8">
+        <h1 class="text-3xl font-bold text-gray-800">Client Payments</h1>
+        <div class="flex space-x-4">
+            <button type="button" onclick="exportPayments('pdf')" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200">
+                <i class="fas fa-file-pdf mr-2"></i>
+                Export PDF
+            </button>
+            <button type="button" onclick="exportPayments('excel')" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200">
+                <i class="fas fa-file-excel mr-2"></i>
+                Export Excel
+            </button>
+        </div>
+    </div>
+
+    <!-- Client Payment Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {% for summary in client_summaries %}
+        <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100 hover:shadow-md transition duration-200">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">{{ summary.client.user.get_full_name }}</h3>
+                <div class="bg-blue-50 rounded-full p-3">
+                    <i class="fas fa-user text-blue-500"></i>
+                </div>
+            </div>
+            <div class="space-y-3">
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-500">Total Project Value:</span>
+                    <span class="text-sm font-medium text-gray-900">₹{{ summary.total_project_value|floatformat:2 }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-500">Total Payments:</span>
+                    <span class="text-sm font-medium text-green-600">₹{{ summary.total_payments|floatformat:2 }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-500">Outstanding:</span>
+                    <span class="text-sm font-medium {% if summary.outstanding > 0 %}text-red-600{% else %}text-green-600{% endif %}">
+                        ₹{{ summary.outstanding|floatformat:2 }}
+                    </span>
+                </div>
+            </div>
+            <div class="mt-4 pt-4 border-t border-gray-100">
+                <h4 class="text-sm font-medium text-gray-700 mb-2">Recent Payments</h4>
+                <div class="space-y-2">
+                    {% for payment in summary.recent_payments %}
+                    <div class="flex justify-between text-sm bg-gray-50 p-2 rounded">
+                        <span class="text-gray-500">{{ payment.date|date:"d M Y" }}</span>
+                        <span class="font-medium text-gray-900">₹{{ payment.amount|floatformat:2 }}</span>
+                    </div>
+                    {% empty %}
+                    <p class="text-sm text-gray-500 text-center py-2">No recent payments</p>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="mt-4 flex space-x-2">
+                <button type="button" onclick="addPayment('{{ summary.client.id }}')" class="flex-1 px-3 py-2 text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200">
+                    <i class="fas fa-plus mr-2"></i>
+                    Add Payment
+                </button>
+                <button type="button" onclick="viewHistory('{{ summary.client.id }}')" class="flex-1 px-3 py-2 text-sm font-medium rounded-md text-indigo-600 bg-white border border-indigo-600 hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200">
+                    <i class="fas fa-history mr-2"></i>
+                    History
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function exportPayments(type) {
+        Swal.fire({
+            icon: 'info',
+            title: 'Export Feature Coming Soon',
+            text: 'The export functionality is currently under development.',
+            confirmButtonText: 'OK'
+        });
+    }
+
+    function addPayment(clientId) {
+        // Add payment modal logic
+    }
+
+    function viewHistory(clientId) {
+        // View history modal logic  
+    }
+</script>
+{% endblock %}

@@ -4,9 +4,10 @@ from .models import (UserSession, Attendance, SystemError,
                     Support, FailedLoginAttempt, PasswordChange, 
                     RoleAssignmentAudit, FeatureUsage, SystemUsage, 
                     Timesheet,GlobalUpdate,
-                     UserDetails,ProjectUpdate, Presence, PresenceStatus)
+                     UserDetails,ProjectUpdate, Presence, PresenceStatus, Transaction, ChartOfAccount, Vendor, Payment, ClientPayment, Project, TRANSACTION_TYPES, ClientProfile)
 from django.db.models import Q
 from datetime import datetime, timedelta, date
+from decimal import Decimal
 from django.utils import timezone
 from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
@@ -1156,6 +1157,7 @@ def generate_employee_id(work_location=None, group_id=None):
     
     Reserved ranges:
     - 301-400: Management and Finance groups (IDs 7 and 8)
+    - Regular employees use 101-300 and 401+ ranges
     """
     from django.db.models import Q
     from datetime import datetime
@@ -1165,22 +1167,13 @@ def generate_employee_id(work_location=None, group_id=None):
     if group_id and group_id in ['7', '8']:  # Finance or Management
         is_reserved_role = True
     
-    # Format with leading zeros (4 digits)
     if work_location and work_location.lower() == 'betul':
         prefix = "ATS"
-        # Look for both potential formats to catch existing IDs
-        betul_users = UserDetails.objects.filter(
-            user__username__startswith=prefix
-        ).order_by('-user__username')
         
-        # Handle reserved range for Management and Finance roles
         if is_reserved_role:
-            # For reserved roles, use range 301-400
-            seq_num = 301
-            
-            # Find the highest existing ID in the reserved range
+            # For Management/Finance roles, use range 301-400
             reserved_users = UserDetails.objects.filter(
-                user__username__regex=r'^{}-0(3[0-9][1-9]|400)$'.format(prefix)
+                user__username__regex=r'^{}0(3[0-9][0-9])$'.format(prefix)
             ).order_by('-user__username')
             
             if reserved_users.exists():
@@ -1188,130 +1181,150 @@ def generate_employee_id(work_location=None, group_id=None):
                 username_parts = last_user.user.username.split('-')
                 try:
                     seq_num = int(username_parts[-1]) + 1
-                    # If we've reached the end of reserved range, start over
+                    # If we've reached the end of reserved range, find an available ID
                     if seq_num > 400:
-                        seq_num = 301
+                        # Find first available ID in reserved range
+                        all_reserved_ids = set(int(u.user.username.split('-')[-1]) 
+                                            for u in reserved_users)
+                        for potential_id in range(301, 401):
+                            if potential_id not in all_reserved_ids:
+                                seq_num = potential_id
+                                break
+                        else:  # No gaps found in reserved range
+                            seq_num = 301  # Start over from beginning of range
                 except ValueError:
                     seq_num = 301
-        else:
-            # Normal sequence generation avoiding reserved range
-            if betul_users.exists():
-                last_user = betul_users.first()
-                username_parts = last_user.user.username.split('-')
-                if len(username_parts) > 1:
-                    try:
-                        seq_num = int(username_parts[-1]) + 1
-                        # Skip reserved range
-                        if 301 <= seq_num <= 400:
-                            seq_num = 401
-                    except ValueError:
-                        seq_num = 1
-                else:
-                    seq_num = 1
             else:
-                seq_num = 1
-        
-        formatted_seq = f"{seq_num:04d}"
-        employee_id = f"{prefix}-{formatted_seq}"
-        
-    elif work_location and work_location.lower() == 'pune':
-        prefix = "AT"
-        # Check both potential formats for Pune
-        pune_users = UserDetails.objects.filter(
-            Q(user__username__startswith=f"{prefix}-") | 
-            Q(user__username__startswith=prefix)
-        ).order_by('-user__username')
-        
-        # Handle reserved range for Management and Finance roles
-        if is_reserved_role:
-            # For reserved roles, use range 301-400
-            seq_num = 301
-            
-            # Find the highest existing ID in the reserved range
-            reserved_users = UserDetails.objects.filter(
-                Q(user__username__regex=r'^{}-0(3[0-9][1-9]|400)$'.format(prefix)) |
-                Q(user__username__regex=r'^{}0(3[0-9][1-9]|400)$'.format(prefix))
+                seq_num = 301  # First management/finance user
+        else:
+            # Regular employees use ranges 101-300 and 401+
+            regular_users = UserDetails.objects.filter(
+                user__username__startswith=prefix
+            ).exclude(
+                user__username__regex=r'^{}0(3[0-9][0-9])$'.format(prefix)
             ).order_by('-user__username')
             
-            if reserved_users.exists():
-                last_user = reserved_users.first()
-                username = last_user.user.username
+            if regular_users.exists():
+                last_user = regular_users.first()
+                username_parts = last_user.user.username.split('-')
                 try:
-                    # Extract sequence number whether format is AT-0301 or AT0301
-                    seq_str = ''.join(filter(str.isdigit, username))
-                    seq_num = int(seq_str) + 1
-                    # If we've reached the end of reserved range, start over
-                    if seq_num > 400:
-                        seq_num = 301
-                except ValueError:
-                    seq_num = 301
-            else:
-                seq_num = 301
-        else:
-            # Normal sequence generation avoiding reserved range
-            if pune_users.exists():
-                last_user = pune_users.first()
-                username = last_user.user.username
-                try:
-                    # Extract sequence number whether format is AT-0301 or AT0301
-                    seq_str = ''.join(filter(str.isdigit, username))
-                    seq_num = int(seq_str) + 1
+                    seq_num = int(username_parts[-1]) + 1
                     # Skip reserved range
                     if 301 <= seq_num <= 400:
                         seq_num = 401
                 except ValueError:
-                    seq_num = 1
+                    seq_num = 101  # Start regular employees from 101
             else:
-                seq_num = 1
+                seq_num = 101  # First regular employee starts at 101
         
         formatted_seq = f"{seq_num:04d}"
-        employee_id = f"{prefix}-{formatted_seq}"
+        employee_id = f"{prefix}{formatted_seq}"
+        
+    elif work_location and work_location.lower() == 'pune':
+        prefix = "AT"
+        
+        if is_reserved_role:
+            # For Management/Finance roles, use range 301-400
+            reserved_users = UserDetails.objects.filter(
+                user__username__regex=r'^{}0(3[0-9][0-9])$'.format(prefix)
+            ).order_by('-user__username')
+            
+            if reserved_users.exists():
+                last_user = reserved_users.first()
+                try:
+                    seq_num = int(last_user.user.username.split('-')[-1]) + 1
+                    # If we've reached the end of reserved range, find an available ID
+                    if seq_num > 400:
+                        # Find first available ID in reserved range
+                        all_reserved_ids = set(int(u.user.username.split('-')[-1]) 
+                                            for u in reserved_users)
+                        for potential_id in range(301, 401):
+                            if potential_id not in all_reserved_ids:
+                                seq_num = potential_id
+                                break
+                        else:  # No gaps found in reserved range
+                            seq_num = 301  # Start over from beginning of range
+                except ValueError:
+                    seq_num = 301
+            else:
+                seq_num = 301  # First management/finance user
+        else:
+            # Regular employees use ranges 101-300 and 401+
+            regular_users = UserDetails.objects.filter(
+                Q(user__username__startswith=f"{prefix}")
+            ).exclude(
+                user__username__regex=r'^{}0(3[0-9][0-9])$'.format(prefix)
+            ).order_by('-user__username')
+            
+            if regular_users.exists():
+                last_user = regular_users.first()
+                try:
+                    seq_num = int(last_user.user.username.split('-')[-1]) + 1
+                    # Skip reserved range
+                    if 301 <= seq_num <= 400:
+                        seq_num = 401
+                except ValueError:
+                    seq_num = 101  # Start regular employees from 101
+            else:
+                seq_num = 101  # First regular employee starts at 101
+        
+        formatted_seq = f"{seq_num:04d}"
+        employee_id = f"{prefix}{formatted_seq}"
         
     else:
         # Default case
         prefix = "EMP"
         current_year = str(datetime.now().year)[2:]
-        last_id_pattern = f"{prefix}-{current_year}"
         
-        # Handle reserved range for Management and Finance roles
         if is_reserved_role:
-            # For reserved roles, use range 301-400
-            seq_num = 301
-            
-            # Find the highest existing ID in the reserved range
-            reserved_pattern = f"{prefix}-{current_year}"
+            # For Management/Finance roles, use range 301-400
+            reserved_pattern = f"{prefix}{current_year}"
             reserved_users = UserDetails.objects.filter(
-                user__username__regex=r'^{}-{}-0(3[0-9][1-9]|400)$'.format(prefix, current_year)
+                user__username__regex=r'^{}{}-0(3[0-9][0-9])$'.format(prefix, current_year)
             ).order_by('-user__username')
             
             if reserved_users.exists():
                 last_user = reserved_users.first()
                 try:
                     seq_num = int(last_user.user.username.split('-')[-1]) + 1
-                    # If we've reached the end of reserved range, start over
+                    # If we've reached the end of reserved range, find an available ID
                     if seq_num > 400:
-                        seq_num = 301
+                        # Find first available ID in reserved range
+                        all_reserved_ids = set(int(u.user.username.split('-')[-1]) 
+                                            for u in reserved_users)
+                        for potential_id in range(301, 401):
+                            if potential_id not in all_reserved_ids:
+                                seq_num = potential_id
+                                break
+                        else:  # No gaps found in reserved range
+                            seq_num = 301  # Start over from beginning of range
                 except ValueError:
                     seq_num = 301
+            else:
+                seq_num = 301  # First management/finance user
         else:
-            # Normal sequence generation avoiding reserved range
-            last_user = UserDetails.objects.filter(
-                user__username__startswith=last_id_pattern
-            ).order_by('-user__username').first()
+            # Regular employees use ranges 101-300 and 401+
+            regular_pattern = f"{prefix}{current_year}"
+            regular_users = UserDetails.objects.filter(
+                user__username__startswith=regular_pattern
+            ).exclude(
+                user__username__regex=r'^{}{}-0(3[0-9][0-9])$'.format(prefix, current_year)
+            ).order_by('-user__username')
             
-            if last_user and last_user.user.username.startswith(last_id_pattern):
+            if regular_users.exists():
+                last_user = regular_users.first()
                 try:
                     seq_num = int(last_user.user.username.split('-')[-1]) + 1
                     # Skip reserved range
                     if 301 <= seq_num <= 400:
                         seq_num = 401
                 except ValueError:
-                    seq_num = 1
+                    seq_num = 101  # Start regular employees from 101
             else:
-                seq_num = 1
+                seq_num = 101  # First regular employee starts at 101
         
         formatted_seq = f"{seq_num:04d}"
-        employee_id = f"{prefix}-{current_year}-{formatted_seq}"
+        employee_id = f"{prefix}{current_year}{formatted_seq}"
     
     # Final validation to ensure ID doesn't already exist
     if User.objects.filter(username=employee_id).exists():
@@ -6687,3 +6700,256 @@ def application_for_user(request):
     except Exception as e:
         messages.error(request, f"Error loading application dashboard: {str(e)}")
         return redirect('dashboard')
+
+
+'''----------------------------------- FINANCE --------------------------------'''
+
+@login_required
+@user_passes_test(lambda u: u.groups.filter(name__in=['Finance', 'Admin']).exists())
+def chart_of_accounts(request):
+    """View to manage chart of accounts"""
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+                name = request.POST.get('name')
+                account_type = request.POST.get('account_type') 
+                code = request.POST.get('code')
+
+                # Validate account code uniqueness
+                if ChartOfAccount.objects.filter(code=code).exists():
+                    raise ValueError("Account code must be unique")
+
+                ChartOfAccount.objects.create(
+                    name=name,
+                    account_type=account_type,
+                    code=code
+                )
+                messages.success(request, 'Account created successfully')
+                return redirect('aps_finance:chart_of_accounts')
+
+        except Exception as e:
+            messages.error(request, str(e))
+
+    accounts = ChartOfAccount.objects.all().order_by('code')
+    account_types = ['asset', 'liability', 'income', 'expense']
+    
+    return render(request, 'components/finance/chart_of_accounts.html', {
+        'accounts': accounts,
+        'account_types': account_types
+    })
+@login_required
+@user_passes_test(lambda u: u.groups.filter(name__in=['Finance', 'Admin']).exists())
+def vendor_list(request):
+    """View to manage vendors"""
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+                name = request.POST.get('name')
+                service = request.POST.get('service')
+                email = request.POST.get('email')
+                phone = request.POST.get('phone')
+
+                Vendor.objects.create(
+                    name=name,
+                    service=service,
+                    email=email,
+                    phone=phone
+                )
+                messages.success(request, 'Vendor added successfully')
+                return redirect('aps_finance:vendor_list')
+
+        except Exception as e:
+            messages.error(request, str(e))
+
+    vendors = Vendor.objects.all()
+    
+    # Get all vendor payments in a single query
+    vendor_payments = Payment.objects.filter(vendor__in=vendors)\
+                            .values('vendor')\
+                            .annotate(
+                                total_payments=Sum('amount'),
+                                last_payment_date=Max('date'),
+                                last_payment_amount=F('amount')
+                            )
+    
+    # Create vendor transactions dict
+    vendor_transactions = {}
+    for payment in vendor_payments:
+        vendor_transactions[payment['vendor']] = {
+            'total_payments': payment['total_payments'] or 0,
+            'last_payment': {
+                'date': payment['last_payment_date'],
+                'amount': payment['last_payment_amount']
+            } if payment['last_payment_date'] else None
+        }
+
+    return render(request, 'components/finance/vendor_list.html', {
+        'vendors': vendors,
+        'vendor_transactions': vendor_transactions
+    })
+
+@login_required
+@user_passes_test(lambda u: u.groups.filter(name__in=['Finance', 'Admin']).exists())
+def client_payment_list(request):
+    """View to manage client payments and financial relationships"""
+    clients = ClientProfile.objects.all()
+    client_summaries = []
+
+    for client in clients:
+        payments = ClientPayment.objects.filter(client=client)
+        projects = Project.objects.filter(clients=client.user)
+        
+        total_value = projects.aggregate(Sum('total_value'))['total_value__sum'] or 0
+        total_paid = payments.aggregate(Sum('amount'))['amount__sum'] or 0
+        
+        client_summaries.append({
+            'client': client,
+            'total_project_value': total_value,
+            'total_payments': total_paid,
+            'outstanding': total_value - total_paid,
+            'recent_payments': payments.order_by('-date')[:5]
+        })
+
+    return render(request, 'components/finance/client_payments.html', {
+        'client_summaries': client_summaries
+    })
+
+@login_required
+@user_passes_test(lambda u: u.groups.filter(name__in=['Finance', 'Admin']).exists())
+def payment_list(request):
+    """View to manage payments and expenses"""
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+                vendor_id = request.POST.get('vendor')
+                project_id = request.POST.get('project')
+                amount = request.POST.get('amount')
+                description = request.POST.get('description')
+                
+                payment = Payment.objects.create(
+                    vendor_id=vendor_id,
+                    project_id=project_id,
+                    amount=amount,
+                    date=timezone.now(),
+                    paid_by=request.user,
+                    description=description
+                )
+
+                # Create corresponding transaction
+                Transaction.objects.create(
+                    project_id=project_id,
+                    account=ChartOfAccount.objects.get(code='EXPENSES'),
+                    amount=amount,
+                    transaction_type='expense',
+                    description=f"Payment to {payment.vendor.name}",
+                    created_by=request.user
+                )
+
+                messages.success(request, 'Payment recorded successfully')
+                return redirect('aps_finance:payment_list')
+
+        except Exception as e:
+            messages.error(request, str(e))
+
+    payments = Payment.objects.all().order_by('-date')
+    vendors = Vendor.objects.all()
+    projects = Project.objects.all()
+
+    return render(request, 'components/finance/payments.html', {
+        'payments': payments,
+        'vendors': vendors,
+        'projects': projects
+    })
+
+@login_required
+@user_passes_test(lambda u: u.groups.filter(name__in=['Finance', 'Admin']).exists())
+def transaction_list(request):
+    """View to manage transactions and journal entries"""
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+                account_id = request.POST.get('account')
+                amount = Decimal(request.POST.get('amount'))
+                transaction_type = request.POST.get('type')
+                description = request.POST.get('description')
+                project_id = request.POST.get('project')
+
+                # Validate double entry
+                if transaction_type == 'transfer':
+                    to_account_id = request.POST.get('to_account')
+                    if not to_account_id:
+                        raise ValueError("Transfer requires destination account")
+
+                    # Create debit and credit entries
+                    Transaction.objects.create(
+                        account_id=account_id,
+                        amount=amount,
+                        transaction_type='expense',
+                        description=description,
+                        project_id=project_id,
+                        created_by=request.user
+                    )
+                    Transaction.objects.create(
+                        account_id=to_account_id,
+                        amount=amount,
+                        transaction_type='income',
+                        description=description,
+                        project_id=project_id,
+                        created_by=request.user
+                    )
+                else:
+                    Transaction.objects.create(
+                        account_id=account_id,
+                        amount=amount,
+                        transaction_type=transaction_type,
+                        description=description,
+                        project_id=project_id,
+                        created_by=request.user
+                    )
+
+                messages.success(request, 'Transaction recorded successfully')
+                return redirect('aps_finance:transaction_list')
+
+        except Exception as e:
+            messages.error(request, str(e))
+
+    transactions = Transaction.objects.all().order_by('-date')
+    accounts = ChartOfAccount.objects.all()
+    projects = Project.objects.all()
+
+    return render(request, 'components/finance/transactions.html', {
+        'transactions': transactions,
+        'accounts': accounts,
+        'projects': projects,
+        'transaction_types': TRANSACTION_TYPES
+    })
+@login_required
+@user_passes_test(lambda u: u.groups.filter(name__in=['Finance', 'Admin']).exists())
+def project_list(request):
+    """View to manage project finances"""
+    projects = Project.objects.all()
+    project_finances = []
+
+    for project in projects:
+        income = Transaction.objects.filter(
+            project=project, 
+            transaction_type='income'
+        ).aggregate(Sum('amount'))['amount__sum'] or 0
+        
+        expenses = Transaction.objects.filter(
+            project=project, 
+            transaction_type='expense'
+        ).aggregate(Sum('amount'))['amount__sum'] or 0
+        
+        project_finances.append({
+            'project': project,
+            'total_value': project.total_value,
+            'income': income,
+            'expenses': expenses,
+            'profit': income - expenses,
+            'margin': ((income - expenses) / income * 100) if income > 0 else 0
+        })
+
+    return render(request, 'components/finance/project_list.html', {
+        'project_finances': project_finances
+    })

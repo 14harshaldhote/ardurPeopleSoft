@@ -1,0 +1,267 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Project Financial Summary{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-7xl">
+    <div class="flex items-center justify-between mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Project Financial Summary</h1>
+        <button type="button" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
+            <i class="fas fa-download mr-2"></i>
+            Export Report
+        </button>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100 hover:shadow-md transition duration-200">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Total Portfolio Value</p>
+                    <h3 class="text-2xl font-bold text-gray-900 mt-1">₹{{ total_value|floatformat:2 }}</h3>
+                </div>
+                <div class="bg-blue-50 rounded-full p-3">
+                    <i class="fas fa-chart-line text-blue-500 text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100 hover:shadow-md transition duration-200">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Total Income</p>
+                    <h3 class="text-2xl font-bold text-green-600 mt-1">₹{{ total_income|floatformat:2 }}</h3>
+                </div>
+                <div class="bg-green-50 rounded-full p-3">
+                    <i class="fas fa-arrow-up text-green-500 text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100 hover:shadow-md transition duration-200">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Total Expenses</p>
+                    <h3 class="text-2xl font-bold text-red-600 mt-1">₹{{ total_expenses|floatformat:2 }}</h3>
+                </div>
+                <div class="bg-red-50 rounded-full p-3">
+                    <i class="fas fa-arrow-down text-red-500 text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100 hover:shadow-md transition duration-200">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Average Margin</p>
+                    <h3 class="text-2xl font-bold text-purple-600 mt-1">{{ avg_margin|floatformat:1 }}%</h3>
+                </div>
+                <div class="bg-purple-50 rounded-full p-3">
+                    <i class="fas fa-percentage text-purple-500 text-xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+        <div class="px-6 py-4 border-b border-gray-100">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <i class="fas fa-project-diagram text-indigo-500 text-xl mr-3"></i>
+                    <h2 class="text-xl font-semibold text-gray-900">Project Details</h2>
+                </div>
+                <div class="flex space-x-2">
+                    <button type="button" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
+                        <i class="fas fa-filter mr-2"></i>
+                        Filter
+                    </button>
+                    <button type="button" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
+                        <i class="fas fa-sort mr-2"></i>
+                        Sort
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200" id="projectFinancialTable">
+                <thead>
+                    <tr class="bg-gray-50">
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Value</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Income</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Expenses</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profit</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Margin %</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for finance in project_finances %}
+                    <tr class="hover:bg-gray-50 transition duration-150">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="h-10 w-10 flex-shrink-0">
+                                    <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                                        <span class="text-indigo-700 font-medium text-sm">{{ finance.project.name|slice:":2"|upper }}</span>
+                                    </div>
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">{{ finance.project.name }}</div>
+                                    <div class="text-sm text-gray-500">ID: #{{ finance.project.id }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₹{{ finance.total_value|floatformat:2 }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 text-xs font-medium text-green-800 bg-green-100 rounded-full">
+                                ₹{{ finance.income|floatformat:2 }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 text-xs font-medium text-red-800 bg-red-100 rounded-full">
+                                ₹{{ finance.expenses|floatformat:2 }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 text-xs font-medium {% if finance.profit > 0 %}text-green-800 bg-green-100{% else %}text-red-800 bg-red-100{% endif %} rounded-full">
+                                ₹{{ finance.profit|floatformat:2 }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <span class="text-sm {% if finance.margin > 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                                    {{ finance.margin|floatformat:1 }}%
+                                </span>
+                                <div class="ml-2 w-16 bg-gray-200 rounded-full h-2">
+                                    <div class="{% if finance.margin > 0 %}bg-green-500{% else %}bg-red-500{% endif %} rounded-full h-2" style="width: {{ finance.margin }}%"></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <div class="flex space-x-2">
+                                <button type="button" class="inline-flex items-center px-3 py-2 border border-indigo-500 text-sm font-medium rounded-md text-indigo-500 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out" data-bs-toggle="modal" data-bs-target="#transactionModal{{ finance.project.id }}">
+                                    <i class="fas fa-plus mr-2"></i>
+                                    Add Transaction
+                                </button>
+                                <button type="button" class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out" onclick="viewProjectDetails({{ finance.project.id }})">
+                                    <i class="fas fa-chart-bar mr-2"></i>
+                                    Details
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Transaction Modal Template -->
+{% for finance in project_finances %}
+<div class="modal fade" id="transactionModal{{ finance.project.id }}" tabindex="-1" aria-labelledby="transactionModalLabel{{ finance.project.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-xl shadow-xl border-0">
+            <div class="modal-header border-b border-gray-100 px-6 py-4">
+                <div class="flex items-center">
+                    <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center mr-3">
+                        <span class="text-indigo-700 font-medium text-sm">{{ finance.project.name|slice:":2"|upper }}</span>
+                    </div>
+                    <h5 class="text-xl font-semibold text-gray-900" id="transactionModalLabel{{ finance.project.id }}">
+                        New Transaction<br>
+                        <span class="text-sm text-gray-500">{{ finance.project.name }}</span>
+                    </h5>
+                </div>
+                <button type="button" class="text-gray-400 hover:text-gray-500 focus:outline-none" data-bs-dismiss="modal" aria-label="Close">
+                    <span class="sr-only">Close</span>
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form method="post" action="{% url 'aps_finance:transaction_list' %}" class="space-y-6">
+                {% csrf_token %}
+                <div class="px-6 py-4">
+                    <input type="hidden" name="project" value="{{ finance.project.id }}">
+                    <div class="space-y-4">
+                        <div>
+                            <label for="type{{ finance.project.id }}" class="block text-sm font-medium text-gray-700">Transaction Type</label>
+                            <select class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition duration-150 ease-in-out" id="type{{ finance.project.id }}" name="type" required>
+                                <option value="income">Income</option>
+                                <option value="expense">Expense</option>
+                                <option value="transfer">Transfer</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="account{{ finance.project.id }}" class="block text-sm font-medium text-gray-700">Account</label>
+                            <select class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition duration-150 ease-in-out" id="account{{ finance.project.id }}" name="account" required>
+                                <option value="">Select Account</option>
+                                {% for account in accounts %}
+                                <option value="{{ account.id }}">{{ account.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label for="amount{{ finance.project.id }}" class="block text-sm font-medium text-gray-700">Amount</label>
+                            <div class="mt-1 relative rounded-lg shadow-sm">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <span class="text-gray-500 sm:text-sm">₹</span>
+                                </div>
+                                <input type="number" class="pl-7 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition duration-150 ease-in-out" id="amount{{ finance.project.id }}" name="amount" step="0.01" required>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="description{{ finance.project.id }}" class="block text-sm font-medium text-gray-700">Description</label>
+                            <textarea class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition duration-150 ease-in-out" id="description{{ finance.project.id }}" name="description" rows="3" required></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-6 py-4 flex justify-end space-x-3 rounded-b-xl">
+                    <button type="button" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
+                        <i class="fas fa-save mr-2"></i>
+                        Save Transaction
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        $('#projectFinancialTable').DataTable({
+            order: [[4, 'desc']], 
+            pageLength: 10,
+            language: {
+                search: "Search projects:",
+                paginate: {
+                    next: '<i class="fas fa-chevron-right"></i>',
+                    previous: '<i class="fas fa-chevron-left"></i>'
+                }
+            },
+            dom: '<"flex flex-col md:flex-row justify-between items-center mb-4"lf>rt<"flex flex-col md:flex-row justify-between items-center mt-4"ip>',
+            drawCallback: function() {
+                // Add smooth transitions to table rows
+                $('tbody tr').addClass('transition-all duration-200');
+            }
+        });
+
+        // Add smooth transitions to modal
+        $('.modal').on('show.bs.modal', function() {
+            $(this).addClass('fade-in');
+        });
+
+        // Initialize tooltips
+        $('[data-toggle="tooltip"]').tooltip();
+    });
+
+    function viewProjectDetails(projectId) {
+        window.location.href = `/finance/projects/${projectId}/details/`;
+    }
+</script>
+{% endblock %}
