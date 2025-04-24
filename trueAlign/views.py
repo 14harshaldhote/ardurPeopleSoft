@@ -1832,155 +1832,276 @@ def add_user(request):
 @login_required
 @user_passes_test(is_hr)
 def bulk_add_users(request):
-    """Enhanced view to import multiple users from CSV with improved validation and error handling"""
-    if request.method == 'POST' and request.FILES.get('csv_file'):
-        csv_file = request.FILES['csv_file']
+    """View to add multiple users to the system at once from a text file or pasted content"""
+    
+    if request.method == 'POST':
+        user_data = request.POST.get('user_data', '').strip()
+        selected_group_id = request.POST.get('group')
+        work_location = request.POST.get('work_location')
         
-        if not csv_file.name.endswith('.csv'):
-            messages.error(request, 'File must be a CSV')
+        if not user_data:
+            messages.error(request, "No user data provided.")
             return redirect('aps_hr:bulk_add_users')
         
+        if not selected_group_id:
+            messages.error(request, "Please select a group for the users.")
+            return redirect('aps_hr:bulk_add_users')
+            
         try:
-            decoded_file = csv_file.read().decode('utf-8-sig')
-            io_string = io.StringIO(decoded_file)
-            reader = csv.DictReader(io_string)
-            
-            required_fields = ['email', 'first_name', 'last_name', 'group', 'work_location']
-            csv_fields = reader.fieldnames
-            
-            if not csv_fields:
-                messages.error(request, 'CSV file is empty or has invalid format')
-                return redirect('aps_hr:bulk_add_users')
-            
-            missing_fields = [field for field in required_fields if field not in csv_fields]
-            if missing_fields:
-                messages.error(request, f'CSV missing required fields: {", ".join(missing_fields)}')
-                return redirect('aps_hr:bulk_add_users')
-            
-            success_count = 0
-            error_rows = []
-            
-            for row_num, row in enumerate(reader, start=2):
-                try:
-                    with transaction.atomic():
-                        email = row['email'].strip()
-                        first_name = row['first_name'].strip()
-                        last_name = row['last_name'].strip()
-                        group_id = row['group'].strip()
-                        work_location = row['work_location'].strip()
-                        
-                        if not all([first_name, last_name, group_id, work_location]):
-                            raise ValueError("First name, last name, group, and work location are required fields")
-                        
-                        if email and User.objects.filter(email=email).exists():
-                            raise ValueError(f"Email '{email}' already exists")
-                        
-                        employee_id = generate_employee_id(work_location, group_id)
-                        password = ''.join(random.choices(string.ascii_letters + string.digits + string.punctuation, k=12))
-                        
-                        user = User.objects.create_user(
-                            username=employee_id,
-                            email=email if email else None,
-                            password=password,
-                            first_name=first_name,
-                            last_name=last_name
-                        )
-                        
-                        try:
-                            group = Group.objects.get(id=int(group_id))
-                            user.groups.add(group)
-                        except (ValueError, Group.DoesNotExist):
-                            raise ValueError("Invalid group selected")
-                        
-                        UserDetails.objects.create(
-                            user=user,
-                            group=group,
-                            hire_date=row.get('hire_date') or datetime.now().date(),
-                            start_date=row.get('start_date') or datetime.now().date(),
-                            employment_status='active',
-                            work_location=work_location,
-                            job_description=row.get('job_description'),
-                            dob=row.get('dob'),
-                            gender=row.get('gender'),
-                            blood_group=row.get('blood_group'),
-                            country_code=row.get('country_code'),
-                            contact_number_primary=row.get('contact_number_primary'),
-                            personal_email=row.get('personal_email'),
-                            emergency_contact_name=row.get('emergency_contact_name'),
-                            emergency_contact_primary=row.get('emergency_contact_primary'),
-                            emergency_contact_address=row.get('emergency_contact_address'),
-                            onboarded_by=request.user,
-                            onboarding_date=timezone.now(),
-                            employee_type=row.get('employee_type'),
-                            address_line1=row.get('address_line1'),
-                            address_line2=row.get('address_line2'),
-                            city=row.get('city'),
-                            state=row.get('state'),
-                            postal_code=row.get('postal_code'),
-                            country=row.get('country')
-                        )
-                        
-                        UserActionLog.objects.create(
-                            user=user,
-                            action_type='create',
-                            action_by=request.user,
-                            details=f"User created via bulk import with ID: {employee_id}, role: {group.name}"
-                        )
-                        
-                        if email and request.POST.get('send_welcome_emails') == 'on':
-                            try:
-                                send_welcome_email(user, password)
-                                messages.success(request, f"Welcome email sent to {email} with login credentials.")
-                            except ConnectionRefusedError:
-                                logger.error("Email server connection refused. Check email server settings.", exc_info=True)
-                                messages.warning(request, f"User created successfully, but welcome email could not be sent due to email server connection issues.")
-                            except Exception as e:
-                                logger.error(f"Error sending welcome email: {str(e)}", exc_info=True)
-                                messages.warning(request, f"User created successfully, but welcome email could not be sent: {str(e)}")
-                        
-                        success_count += 1
-                
-                except Exception as e:
-                    error_rows.append({
-                        'row_num': row_num,
-                        'email': row.get('email', 'N/A'),
-                        'name': f"{row.get('first_name', '')} {row.get('last_name', '')}".strip(),
-                        'error': str(e)
-                    })
-        
-        except Exception as e:
-            messages.error(request, f'Error processing CSV file: {str(e)}')
+            group = Group.objects.get(id=int(selected_group_id))
+        except (ValueError, Group.DoesNotExist):
+            messages.error(request, "Invalid group selected.")
             return redirect('aps_hr:bulk_add_users')
+        
+        # Process the user data
+        lines = user_data.strip().split('\n')
+        success_count = 0
+        skipped_count = 0
+        error_messages = []
+        
+        with transaction.atomic():
+            for line in lines:
+                line = line.strip()
+                if not line:
+                    continue
+                    
+                parts = line.split('\t')
+                if len(parts) < 2:
+                    error_messages.append(f"Invalid line format: {line}")
+                    continue
+                
+                username = parts[0].strip()
+                full_name = parts[1].strip()
+                
+                # Skip empty entries
+                if not username or not full_name:
+                    skipped_count += 1
+                    continue
+                
+                # Split full name into first and last name
+                name_parts = full_name.split()
+                if len(name_parts) > 1:
+                    first_name = name_parts[0]
+                    last_name = ' '.join(name_parts[1:])
+                else:
+                    first_name = full_name
+                    last_name = ""
+                
+                # Check if user already exists
+                if User.objects.filter(username=username).exists():
+                    error_messages.append(f"Username '{username}' already exists - skipped")
+                    skipped_count += 1
+                    continue
+                
+                try:
+                    # Create user with standard password
+                    user = User.objects.create_user(
+                        username=username,
+                        password="number@123",
+                        first_name=first_name,
+                        last_name=last_name
+                    )
+                    
+                    # Add user to the selected group
+                    user.groups.add(group)
+                    
+                    # Create UserDetails
+                    UserDetails.objects.create(
+                        user=user,
+                        group=group,
+                        hire_date=datetime.now().date(),
+                        start_date=datetime.now().date(),
+                        employment_status='active',
+                        work_location=work_location,
+                        onboarded_by=request.user,
+                        onboarding_date=timezone.now()
+                    )
+                    
+                    # Log user creation
+                    UserActionLog.objects.create(
+                        user=user,
+                        action_type='create',
+                        action_by=request.user,
+                        details=f"User created in bulk import with ID: {username}, role: {group.name}"
+                    )
+                    
+                    success_count += 1
+                    
+                except Exception as e:
+                    error_messages.append(f"Error creating user {username}: {str(e)}")
         
         if success_count > 0:
-            messages.success(request, f"Successfully imported {success_count} users")
+            messages.success(request, f"Successfully added {success_count} users.")
         
-        if error_rows:
-            request.session['import_errors'] = error_rows
-            return render(request, 'components/hr/bulk_add_users.html', {
-                'groups': Group.objects.all(),
-                'error_rows': error_rows,
-                'success_count': success_count
-            })
+        if skipped_count > 0:
+            messages.warning(request, f"Skipped {skipped_count} entries (blank or already existing).")
+            
+        if error_messages:
+            for msg in error_messages[:10]:  # Show first 10 errors
+                messages.error(request, msg)
+            
+            if len(error_messages) > 10:
+                messages.error(request, f"...and {len(error_messages) - 10} more errors.")
         
         return redirect('aps_hr:hr_dashboard')
     
-    # Generate CSV template for download
-    if request.GET.get('download_template') == 'csv':
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="bulk_add_users_template.csv"'
-        writer = csv.writer(response)
-        writer.writerow(['email', 'first_name', 'last_name', 'group', 'work_location'])
-        return response
-
+    # For GET request, show the upload form
     return render(request, 'components/hr/bulk_add_users.html', {
         'groups': Group.objects.all(),
-        'today': date.today(),
-        'blood_group_choices': UserDetails._meta.get_field('blood_group').choices,
-        'gender_choices': UserDetails._meta.get_field('gender').choices,
-        'employment_status_choices': UserDetails._meta.get_field('employment_status').choices,
-        'employee_type_choices': UserDetails._meta.get_field('employee_type').choices,
     })
+
+# @login_required
+# @user_passes_test(is_hr)
+# def bulk_add_users(request):
+#     """Enhanced view to import multiple users from CSV with improved validation and error handling"""
+#     if request.method == 'POST' and request.FILES.get('csv_file'):
+#         csv_file = request.FILES['csv_file']
+        
+#         if not csv_file.name.endswith('.csv'):
+#             messages.error(request, 'File must be a CSV')
+#             return redirect('aps_hr:bulk_add_users')
+        
+#         try:
+#             decoded_file = csv_file.read().decode('utf-8-sig')
+#             io_string = io.StringIO(decoded_file)
+#             reader = csv.DictReader(io_string)
+            
+#             required_fields = ['email', 'first_name', 'last_name', 'group', 'work_location']
+#             csv_fields = reader.fieldnames
+            
+#             if not csv_fields:
+#                 messages.error(request, 'CSV file is empty or has invalid format')
+#                 return redirect('aps_hr:bulk_add_users')
+            
+#             missing_fields = [field for field in required_fields if field not in csv_fields]
+#             if missing_fields:
+#                 messages.error(request, f'CSV missing required fields: {", ".join(missing_fields)}')
+#                 return redirect('aps_hr:bulk_add_users')
+            
+#             success_count = 0
+#             error_rows = []
+            
+#             for row_num, row in enumerate(reader, start=2):
+#                 try:
+#                     with transaction.atomic():
+#                         email = row['email'].strip()
+#                         first_name = row['first_name'].strip()
+#                         last_name = row['last_name'].strip()
+#                         group_id = row['group'].strip()
+#                         work_location = row['work_location'].strip()
+                        
+#                         if not all([first_name, last_name, group_id, work_location]):
+#                             raise ValueError("First name, last name, group, and work location are required fields")
+                        
+#                         if email and User.objects.filter(email=email).exists():
+#                             raise ValueError(f"Email '{email}' already exists")
+                        
+#                         employee_id = generate_employee_id(work_location, group_id)
+#                         password = ''.join(random.choices(string.ascii_letters + string.digits + string.punctuation, k=12))
+                        
+#                         user = User.objects.create_user(
+#                             username=employee_id,
+#                             email=email if email else None,
+#                             password=password,
+#                             first_name=first_name,
+#                             last_name=last_name
+#                         )
+                        
+#                         try:
+#                             group = Group.objects.get(id=int(group_id))
+#                             user.groups.add(group)
+#                         except (ValueError, Group.DoesNotExist):
+#                             raise ValueError("Invalid group selected")
+                        
+#                         UserDetails.objects.create(
+#                             user=user,
+#                             group=group,
+#                             hire_date=row.get('hire_date') or datetime.now().date(),
+#                             start_date=row.get('start_date') or datetime.now().date(),
+#                             employment_status='active',
+#                             work_location=work_location,
+#                             job_description=row.get('job_description'),
+#                             dob=row.get('dob'),
+#                             gender=row.get('gender'),
+#                             blood_group=row.get('blood_group'),
+#                             country_code=row.get('country_code'),
+#                             contact_number_primary=row.get('contact_number_primary'),
+#                             personal_email=row.get('personal_email'),
+#                             emergency_contact_name=row.get('emergency_contact_name'),
+#                             emergency_contact_primary=row.get('emergency_contact_primary'),
+#                             emergency_contact_address=row.get('emergency_contact_address'),
+#                             onboarded_by=request.user,
+#                             onboarding_date=timezone.now(),
+#                             employee_type=row.get('employee_type'),
+#                             address_line1=row.get('address_line1'),
+#                             address_line2=row.get('address_line2'),
+#                             city=row.get('city'),
+#                             state=row.get('state'),
+#                             postal_code=row.get('postal_code'),
+#                             country=row.get('country')
+#                         )
+                        
+#                         UserActionLog.objects.create(
+#                             user=user,
+#                             action_type='create',
+#                             action_by=request.user,
+#                             details=f"User created via bulk import with ID: {employee_id}, role: {group.name}"
+#                         )
+                        
+#                         if email and request.POST.get('send_welcome_emails') == 'on':
+#                             try:
+#                                 send_welcome_email(user, password)
+#                                 messages.success(request, f"Welcome email sent to {email} with login credentials.")
+#                             except ConnectionRefusedError:
+#                                 logger.error("Email server connection refused. Check email server settings.", exc_info=True)
+#                                 messages.warning(request, f"User created successfully, but welcome email could not be sent due to email server connection issues.")
+#                             except Exception as e:
+#                                 logger.error(f"Error sending welcome email: {str(e)}", exc_info=True)
+#                                 messages.warning(request, f"User created successfully, but welcome email could not be sent: {str(e)}")
+                        
+#                         success_count += 1
+                
+#                 except Exception as e:
+#                     error_rows.append({
+#                         'row_num': row_num,
+#                         'email': row.get('email', 'N/A'),
+#                         'name': f"{row.get('first_name', '')} {row.get('last_name', '')}".strip(),
+#                         'error': str(e)
+#                     })
+        
+#         except Exception as e:
+#             messages.error(request, f'Error processing CSV file: {str(e)}')
+#             return redirect('aps_hr:bulk_add_users')
+        
+#         if success_count > 0:
+#             messages.success(request, f"Successfully imported {success_count} users")
+        
+#         if error_rows:
+#             request.session['import_errors'] = error_rows
+#             return render(request, 'components/hr/bulk_add_users.html', {
+#                 'groups': Group.objects.all(),
+#                 'error_rows': error_rows,
+#                 'success_count': success_count
+#             })
+        
+#         return redirect('aps_hr:hr_dashboard')
+    
+#     # Generate CSV template for download
+#     if request.GET.get('download_template') == 'csv':
+#         response = HttpResponse(content_type='text/csv')
+#         response['Content-Disposition'] = 'attachment; filename="bulk_add_users_template.csv"'
+#         writer = csv.writer(response)
+#         writer.writerow(['email', 'first_name', 'last_name', 'group', 'work_location'])
+#         return response
+
+#     return render(request, 'components/hr/bulk_add_users.html', {
+#         'groups': Group.objects.all(),
+#         'today': date.today(),
+#         'blood_group_choices': UserDetails._meta.get_field('blood_group').choices,
+#         'gender_choices': UserDetails._meta.get_field('gender').choices,
+#         'employment_status_choices': UserDetails._meta.get_field('employment_status').choices,
+#         'employee_type_choices': UserDetails._meta.get_field('employee_type').choices,
+#     })
 
 @login_required
 @user_passes_test(is_hr)

@@ -65,8 +65,10 @@ hr_patterns = [
     path('employees/', views.employee_directory, name='employee_directory'),
     path('mark_attendance/', views.manual_attendance, name='manual_attendance'),
     path('user/add/', views.add_user, name='add_user'),
-    path('user/bulk-add/', views.bulk_add_users, name='bulk_add_users'),
+    # path('user/bulk-add/', views.bulk_add_users, name='bulk_add_users'),
     path('user/import-errors/', views.import_errors, name='import_errors'),
+    path('bulk-add-users/', views.bulk_add_users, name='bulk_add_users'),
+
     
     # User Actions
     path('user/<int:user_id>/reset-password/', views.reset_user_password, name='reset_user_password'),
