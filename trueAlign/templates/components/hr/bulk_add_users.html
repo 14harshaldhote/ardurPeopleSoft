@@ -26,17 +26,12 @@
         <!-- Template Download Section -->
         <div class="bg-white rounded-lg shadow-md p-6 mb-8">
             <h2 class="text-2xl font-semibold text-gray-800 mb-4">Download Template</h2>
-            <p class="text-gray-600 mb-4">Download the template file in your preferred format to ensure correct data formatting.</p>
+            <p class="text-gray-600 mb-4">Download the template file to ensure correct data formatting.</p>
             <div class="flex gap-4">
-                <a href="{{ template_path }}&format=csv" 
+                <a href="{% url 'aps_hr:bulk_add_users' %}?download_template=csv" 
                    class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200">
                     <i class="fas fa-file-csv mr-2"></i>
                     CSV Template
-                </a>
-                <a href="{{ template_path }}&format=excel"
-                   class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200">
-                    <i class="fas fa-file-excel mr-2"></i>
-                    Excel Template
                 </a>
             </div>
         </div>

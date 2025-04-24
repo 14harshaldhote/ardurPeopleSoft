@@ -112,6 +112,13 @@
                             <option value="{{ role_item.name }}" {% if role_item.name == role_filter %}selected{% endif %}>{{ role_item.name }}</option>
                             {% endfor %}
                         </select>
+                        <select id="employee_type" name="employee_type" 
+                            class="px-3 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-400">
+                            <option value="">Employee Type</option>
+                            {% for type in employee_type_choices %}
+                            <option value="{{ type.0 }}" {% if type.0 == employee_type_filter %}selected{% endif %}>{{ type.1 }}</option>
+                            {% endfor %}
+                        </select>
                         <button type="submit" 
                             class="px-5 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                             <i class="fas fa-filter mr-2"></i>Apply Filters
@@ -120,31 +127,6 @@
                 </div>
             </form>
         </div>
-
-        <!-- Status Distribution -->
-        <!-- <div class="bg-white rounded-xl p-6 shadow-md mb-8">
-            <h3 class="text-xl font-semibold text-gray-800 mb-4">Employment Status Distribution</h3>
-            <div class="space-y-4">
-                {% for status in status_counts %}
-                <div>
-                    <div class="flex justify-between mb-1">
-                        <span class="text-sm font-medium text-gray-700">{{ status.employment_status|title }}</span>
-                        <span class="text-sm font-medium text-gray-700">{{ status.count }}</span>
-                    </div>
-                    <div class="w-full bg-gray-200 rounded-full h-2.5">
-                        <div class="h-2.5 rounded-full 
-                            {% if status.employment_status == 'active' %}bg-green-600
-                            {% elif status.employment_status == 'inactive' %}bg-gray-500
-                            {% elif status.employment_status == 'terminated' %}bg-red-600
-                            {% elif status.employment_status == 'on_leave' %}bg-yellow-500
-                            {% else %}bg-blue-600{% endif %}"
-                            style="width: {% widthratio status.count total_users 100 %}%">
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        </div> -->
 
         <!-- Employee Directory -->
         <div class="mb-12">
@@ -296,8 +278,40 @@
             {% endif %}
         </div>
             
-          
-            
+        <!-- Pagination -->
+        {% if page_obj.paginator.num_pages > 1 %}
+        <div class="flex justify-center mt-8">
+            <nav class="inline-flex rounded-md shadow">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                    Previous
+                </a>
+                {% endif %}
+                
+                {% for page_num in page_range %}
+                    {% if page_num == page_obj.number %}
+                    <span class="px-3 py-2 border border-gray-300 bg-blue-50 text-sm font-medium text-blue-600">
+                        {{ page_num }}
+                    </span>
+                    {% elif page_num == '...' %}
+                    <span class="px-3 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                        ...
+                    </span>
+                    {% else %}
+                    <a href="?page={{ page_num }}" class="px-3 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                        {{ page_num }}
+                    </a>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                    Next
+                </a>
+                {% endif %}
+            </nav>
+        </div>
+        {% endif %}
             
         </div>
     </div>

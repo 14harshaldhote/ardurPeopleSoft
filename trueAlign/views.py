@@ -1150,187 +1150,126 @@ def is_manager(user):
 
 def is_employee(user):
     return user.groups.filter(name='Employee').exists()
+
+    
 # Helper function to generate employee ID
 def generate_employee_id(work_location=None, group_id=None):
     """
     Generate employee ID based on work location with role-based reserved ranges
     
-    Reserved ranges:
-    - 301-400: Management and Finance groups (IDs 7 and 8)
-    - Regular employees use 101-300 and 401+ ranges
+    Reserved ranges for Management and Finance groups (IDs 7 and 8):
+    - 1-15: First priority range
+    - 301-400: Second priority range
+    
+    Regular employees use 101-300 and 401+ ranges
     """
     from django.db.models import Q
     from datetime import datetime
+    import re
     
     # Check if user belongs to Finance or Management groups based on group_id
     is_reserved_role = False
     if group_id and group_id in ['7', '8']:  # Finance or Management
         is_reserved_role = True
     
+    # Determine prefix based on location
     if work_location and work_location.lower() == 'betul':
         prefix = "ATS"
-        
-        if is_reserved_role:
-            # For Management/Finance roles, use range 301-400
-            reserved_users = UserDetails.objects.filter(
-                user__username__regex=r'^{}0(3[0-9][0-9])$'.format(prefix)
-            ).order_by('-user__username')
-            
-            if reserved_users.exists():
-                last_user = reserved_users.first()
-                username_parts = last_user.user.username.split('-')
-                try:
-                    seq_num = int(username_parts[-1]) + 1
-                    # If we've reached the end of reserved range, find an available ID
-                    if seq_num > 400:
-                        # Find first available ID in reserved range
-                        all_reserved_ids = set(int(u.user.username.split('-')[-1]) 
-                                            for u in reserved_users)
-                        for potential_id in range(301, 401):
-                            if potential_id not in all_reserved_ids:
-                                seq_num = potential_id
-                                break
-                        else:  # No gaps found in reserved range
-                            seq_num = 301  # Start over from beginning of range
-                except ValueError:
-                    seq_num = 301
-            else:
-                seq_num = 301  # First management/finance user
-        else:
-            # Regular employees use ranges 101-300 and 401+
-            regular_users = UserDetails.objects.filter(
-                user__username__startswith=prefix
-            ).exclude(
-                user__username__regex=r'^{}0(3[0-9][0-9])$'.format(prefix)
-            ).order_by('-user__username')
-            
-            if regular_users.exists():
-                last_user = regular_users.first()
-                username_parts = last_user.user.username.split('-')
-                try:
-                    seq_num = int(username_parts[-1]) + 1
-                    # Skip reserved range
-                    if 301 <= seq_num <= 400:
-                        seq_num = 401
-                except ValueError:
-                    seq_num = 101  # Start regular employees from 101
-            else:
-                seq_num = 101  # First regular employee starts at 101
-        
-        formatted_seq = f"{seq_num:04d}"
-        employee_id = f"{prefix}{formatted_seq}"
-        
+        separator = ""
+        year_suffix = ""
     elif work_location and work_location.lower() == 'pune':
         prefix = "AT"
-        
-        if is_reserved_role:
-            # For Management/Finance roles, use range 301-400
-            reserved_users = UserDetails.objects.filter(
-                user__username__regex=r'^{}0(3[0-9][0-9])$'.format(prefix)
-            ).order_by('-user__username')
-            
-            if reserved_users.exists():
-                last_user = reserved_users.first()
-                try:
-                    seq_num = int(last_user.user.username.split('-')[-1]) + 1
-                    # If we've reached the end of reserved range, find an available ID
-                    if seq_num > 400:
-                        # Find first available ID in reserved range
-                        all_reserved_ids = set(int(u.user.username.split('-')[-1]) 
-                                            for u in reserved_users)
-                        for potential_id in range(301, 401):
-                            if potential_id not in all_reserved_ids:
-                                seq_num = potential_id
-                                break
-                        else:  # No gaps found in reserved range
-                            seq_num = 301  # Start over from beginning of range
-                except ValueError:
-                    seq_num = 301
-            else:
-                seq_num = 301  # First management/finance user
-        else:
-            # Regular employees use ranges 101-300 and 401+
-            regular_users = UserDetails.objects.filter(
-                Q(user__username__startswith=f"{prefix}")
-            ).exclude(
-                user__username__regex=r'^{}0(3[0-9][0-9])$'.format(prefix)
-            ).order_by('-user__username')
-            
-            if regular_users.exists():
-                last_user = regular_users.first()
-                try:
-                    seq_num = int(last_user.user.username.split('-')[-1]) + 1
-                    # Skip reserved range
-                    if 301 <= seq_num <= 400:
-                        seq_num = 401
-                except ValueError:
-                    seq_num = 101  # Start regular employees from 101
-            else:
-                seq_num = 101  # First regular employee starts at 101
-        
-        formatted_seq = f"{seq_num:04d}"
-        employee_id = f"{prefix}{formatted_seq}"
-        
+        separator = ""
+        year_suffix = ""
     else:
-        # Default case
         prefix = "EMP"
         current_year = str(datetime.now().year)[2:]
+        year_suffix = current_year
+        separator = "-"
+    
+    # Function to extract numeric ID from username
+    def extract_id(username):
+        # Extract numbers at the end of the string
+        match = re.search(r'(\d+)$', username)
+        if match:
+            try:
+                return int(match.group(1))
+            except ValueError:
+                return None
+        return None
+    
+    # Set ID ranges based on role
+    if is_reserved_role:
+        # Check if there's a gap in priority range 1-15
+        used_ids = []
         
-        if is_reserved_role:
-            # For Management/Finance roles, use range 301-400
-            reserved_pattern = f"{prefix}{current_year}"
-            reserved_users = UserDetails.objects.filter(
-                user__username__regex=r'^{}{}-0(3[0-9][0-9])$'.format(prefix, current_year)
-            ).order_by('-user__username')
-            
-            if reserved_users.exists():
-                last_user = reserved_users.first()
-                try:
-                    seq_num = int(last_user.user.username.split('-')[-1]) + 1
-                    # If we've reached the end of reserved range, find an available ID
-                    if seq_num > 400:
-                        # Find first available ID in reserved range
-                        all_reserved_ids = set(int(u.user.username.split('-')[-1]) 
-                                            for u in reserved_users)
-                        for potential_id in range(301, 401):
-                            if potential_id not in all_reserved_ids:
-                                seq_num = potential_id
-                                break
-                        else:  # No gaps found in reserved range
-                            seq_num = 301  # Start over from beginning of range
-                except ValueError:
-                    seq_num = 301
-            else:
-                seq_num = 301  # First management/finance user
+        # Query all users with the prefix
+        all_users = User.objects.filter(username__startswith=prefix)
+        
+        # Find all used IDs in the priority range
+        for user in all_users:
+            user_id = extract_id(user.username)
+            if user_id and 1 <= user_id <= 15:
+                used_ids.append(user_id)
+        
+        # Look for the first available ID in priority range
+        for i in range(1, 16):
+            if i not in used_ids:
+                seq_num = i
+                break
         else:
-            # Regular employees use ranges 101-300 and 401+
-            regular_pattern = f"{prefix}{current_year}"
-            regular_users = UserDetails.objects.filter(
-                user__username__startswith=regular_pattern
-            ).exclude(
-                user__username__regex=r'^{}{}-0(3[0-9][0-9])$'.format(prefix, current_year)
-            ).order_by('-user__username')
+            # Priority range is full, check reserved range 301-400
+            used_ids = []
+            for user in all_users:
+                user_id = extract_id(user.username)
+                if user_id and 301 <= user_id <= 400:
+                    used_ids.append(user_id)
             
-            if regular_users.exists():
-                last_user = regular_users.first()
-                try:
-                    seq_num = int(last_user.user.username.split('-')[-1]) + 1
-                    # Skip reserved range
-                    if 301 <= seq_num <= 400:
-                        seq_num = 401
-                except ValueError:
-                    seq_num = 101  # Start regular employees from 101
+            # Look for the first available ID in reserved range
+            for i in range(301, 401):
+                if i not in used_ids:
+                    seq_num = i
+                    break
             else:
-                seq_num = 101  # First regular employee starts at 101
+                # Both ranges are full, generate fallback ID
+                timestamp = int(datetime.now().timestamp())
+                return f"{prefix}{separator}{timestamp}"
+    else:
+        # Regular employees use 101-300 and 401+
+        all_users = User.objects.filter(username__startswith=prefix)
+        highest_id = 100  # Start from 101
         
-        formatted_seq = f"{seq_num:04d}"
-        employee_id = f"{prefix}{current_year}{formatted_seq}"
+        # Find the highest used ID outside reserved ranges
+        for user in all_users:
+            user_id = extract_id(user.username)
+            if user_id and user_id > highest_id and user_id not in range(1, 16) and user_id not in range(301, 401):
+                highest_id = user_id
+        
+        # Start from highest + 1
+        seq_num = highest_id + 1
+        
+        # Skip reserved ranges
+        if 1 <= seq_num <= 15:
+            seq_num = 101
+        elif 301 <= seq_num <= 400:
+            seq_num = 401
+    
+    # Format the sequence number and build the ID
+    formatted_seq = f"{seq_num:04d}"
+    if year_suffix:
+        employee_id = f"{prefix}{year_suffix}{separator}{formatted_seq}"
+    else:
+        employee_id = f"{prefix}{formatted_seq}"
     
     # Final validation to ensure ID doesn't already exist
     if User.objects.filter(username=employee_id).exists():
-        # If ID exists, recursively try again with incremented sequence
-        return generate_employee_id(work_location, group_id)
-        
+        # If this ID is taken, recurse with a timestamp-based ID
+        timestamp = int(datetime.now().timestamp())
+        if year_suffix:
+            return f"{prefix}{year_suffix}{separator}{timestamp}"
+        else:
+            return f"{prefix}{separator}{timestamp}"
+    
     return employee_id
 
 # Helper function to send welcome email
@@ -1396,7 +1335,7 @@ def send_welcome_email(user, password):
 @login_required
 @user_passes_test(is_hr)
 def hr_dashboard(request):
-    """HR Dashboard with improved filtering and query optimization"""
+    """HR Dashboard with improved filtering, query optimization, and pagination"""
     # Get filter parameters
     search_query = request.GET.get('search', '')
     department_filter = request.GET.get('department', '')
@@ -1416,7 +1355,11 @@ def hr_dashboard(request):
             Q(username__icontains=search_query) |
             Q(email__icontains=search_query) |
             Q(userdetails__job_description__icontains=search_query) |
-            Q(userdetails__personal_address__icontains=search_query)
+            Q(userdetails__address_line1__icontains=search_query) |
+            Q(userdetails__address_line2__icontains=search_query) |
+            Q(userdetails__city__icontains=search_query) |
+            Q(userdetails__state__icontains=search_query) |
+            Q(userdetails__country__icontains=search_query)
         ).distinct()
 
     # Apply employment status filter
@@ -1488,9 +1431,13 @@ def hr_dashboard(request):
     ).order_by('-date_joined')[:5]
     
     # Pagination
-    paginator = Paginator(users, 20)  # Show 20 users per page
+    page_size = int(request.GET.get('page_size', 20))  # Default to 20, but allow user to change
+    paginator = Paginator(users, page_size)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+    
+    # Calculate page range to display
+    page_range = paginator.get_elided_page_range(page_obj.number, on_each_side=2, on_ends=1)
     
     # Get all available departments and work locations for filter dropdowns
     work_locations = UserDetails.objects.exclude(
@@ -1503,6 +1450,8 @@ def hr_dashboard(request):
     
     context = {
         'page_obj': page_obj,
+        'page_range': page_range,
+        'page_size': page_size,
         'role': 'HR',
         'employment_status_choices': UserDetails._meta.get_field('employment_status').choices,
         'employee_type_choices': UserDetails._meta.get_field('employee_type').choices,
@@ -1775,36 +1724,30 @@ def add_user(request):
         try:
             with transaction.atomic():
                 # Extract basic user information
-                email = request.POST.get('email')
+                email = request.POST.get('email', '').strip()
                 first_name = request.POST.get('first_name')
                 last_name = request.POST.get('last_name')
                 group_id = request.POST.get('group')
                 work_location = request.POST.get('work_location')
                 
                 # Validate required fields
-                if not (email and first_name and last_name and group_id):
-                    raise ValueError("All required fields must be filled")
+                if not (first_name and last_name and group_id):
+                    raise ValueError("First name, last name, and group are required fields")
                 
-                # Check if email already exists
-                if User.objects.filter(email=email).exists():
+                # Check if email already exists (only if provided)
+                if email and User.objects.filter(email=email).exists():
                     raise ValueError(f"Email '{email}' already exists")
                 
                 # Generate employee ID for username
                 employee_id = generate_employee_id(work_location, group_id)
 
-                
-                while User.objects.filter(username=employee_id).exists():
-                    # In the rare case of a duplicate, regenerate
-                    employee_id = generate_employee_id(work_location, group_id)
-
-                
                 # Generate a random password
                 password = ''.join(random.choices(string.ascii_letters + string.digits + string.punctuation, k=12))
                 
                 # Create new user
                 user = User.objects.create_user(
                     username=employee_id,
-                    email=email,
+                    email=email if email else None,
                     password=password,
                     first_name=first_name,
                     last_name=last_name
@@ -1855,16 +1798,17 @@ def add_user(request):
                     details=f"User created with ID: {employee_id}, role: {group.name}"
                 )
                 
-                # Send welcome email with better exception handling
-                try:
-                    send_welcome_email(user, password)
-                    messages.success(request, f"Welcome email sent to {email} with login credentials.")
-                except ConnectionRefusedError:
-                    logger.error("Email server connection refused. Check email server settings.", exc_info=True)
-                    messages.warning(request, f"User created successfully, but welcome email could not be sent due to email server connection issues.")
-                except Exception as e:
-                    logger.error(f"Error sending welcome email: {str(e)}", exc_info=True)
-                    messages.warning(request, f"User created successfully, but welcome email could not be sent: {str(e)}")
+                # Send welcome email with better exception handling (only if email is provided)
+                if email:
+                    try:
+                        send_welcome_email(user, password)
+                        messages.success(request, f"Welcome email sent to {email} with login credentials.")
+                    except ConnectionRefusedError:
+                        logger.error("Email server connection refused. Check email server settings.", exc_info=True)
+                        messages.warning(request, f"User created successfully, but welcome email could not be sent due to email server connection issues.")
+                    except Exception as e:
+                        logger.error(f"Error sending welcome email: {str(e)}", exc_info=True)
+                        messages.warning(request, f"User created successfully, but welcome email could not be sent: {str(e)}")
                 
                 messages.success(request, f"User {employee_id} ({first_name} {last_name}) created successfully.")
                 # Fix the URL name to include the namespace
@@ -1892,133 +1836,90 @@ def bulk_add_users(request):
     if request.method == 'POST' and request.FILES.get('csv_file'):
         csv_file = request.FILES['csv_file']
         
-        # Check if file is CSV
         if not csv_file.name.endswith('.csv'):
             messages.error(request, 'File must be a CSV')
             return redirect('aps_hr:bulk_add_users')
         
-        # Process CSV file
         try:
-            decoded_file = csv_file.read().decode('utf-8-sig')  # Handle BOM if present
+            decoded_file = csv_file.read().decode('utf-8-sig')
             io_string = io.StringIO(decoded_file)
+            reader = csv.DictReader(io_string)
             
-            # First, try to detect the csv dialect
-            sample = io_string.read(1024)
-            io_string.seek(0)
-            dialect = csv.Sniffer().sniff(sample)
-            
-            # Try to handle possible CSV format issues
-            reader = None
-            try:
-                reader = csv.DictReader(io_string, dialect=dialect)
-                # Handle case where header might have extra characters
-                clean_fieldnames = [field.strip().replace('*', '') for field in reader.fieldnames or []]
-                reader.fieldnames = clean_fieldnames
-            except Exception as e:
-                logger.warning(f"Could not use detected dialect: {str(e)}")
-                io_string.seek(0)
-                # Fall back to default reader
-                reader = csv.DictReader(io_string)
-                if reader.fieldnames:
-                    clean_fieldnames = [field.strip().replace('*', '') for field in reader.fieldnames]
-                    reader.fieldnames = clean_fieldnames
-            
-            # Validate CSV structure
             required_fields = ['email', 'first_name', 'last_name', 'group', 'work_location']
-            csv_fields = reader.fieldnames if reader else []
+            csv_fields = reader.fieldnames
             
             if not csv_fields:
                 messages.error(request, 'CSV file is empty or has invalid format')
                 return redirect('aps_hr:bulk_add_users')
             
-            # Check for missing fields (after cleaning field names)
             missing_fields = [field for field in required_fields if field not in csv_fields]
             if missing_fields:
                 messages.error(request, f'CSV missing required fields: {", ".join(missing_fields)}')
                 return redirect('aps_hr:bulk_add_users')
             
-            # Process each row
             success_count = 0
             error_rows = []
             
-            for row_num, row in enumerate(reader, start=2):  # Start at 2 for header offset
+            for row_num, row in enumerate(reader, start=2):
                 try:
                     with transaction.atomic():
-                        # Clean data by removing extra spaces and asterisks
-                        cleaned_row = {k: v.strip().replace('*', '') if isinstance(v, str) else v for k, v in row.items()}
+                        email = row['email'].strip()
+                        first_name = row['first_name'].strip()
+                        last_name = row['last_name'].strip()
+                        group_id = row['group'].strip()
+                        work_location = row['work_location'].strip()
                         
-                        # Extract and validate basic user information
-                        email = cleaned_row.get('email', '').strip()
-                        first_name = cleaned_row.get('first_name', '').strip()
-                        last_name = cleaned_row.get('last_name', '').strip()
-                        group_name = cleaned_row.get('group', '').strip()
-                        work_location = cleaned_row.get('work_location', '').strip()
+                        if not all([first_name, last_name, group_id, work_location]):
+                            raise ValueError("First name, last name, group, and work location are required fields")
                         
-                        # Debug logging
-                        logger.debug(f"Processing row {row_num}: {email}, {first_name}, {last_name}, {group_name}, {work_location}")
-                        
-                        # Skip empty rows
-                        if not any([email, first_name, last_name, group_name, work_location]):
-                            logger.info(f"Skipping empty row {row_num}")
-                            continue
-                        
-                        # Validate required fields
-                        if not all([email, first_name, last_name, group_name, work_location]):
-                            missing = []
-                            if not email: missing.append("email")
-                            if not first_name: missing.append("first_name")
-                            if not last_name: missing.append("last_name")
-                            if not group_name: missing.append("group")
-                            if not work_location: missing.append("work_location")
-                            raise ValueError(f"Missing required fields: {', '.join(missing)}")
-                        
-                        # Email validation
-                        if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
-                            raise ValueError(f"Invalid email format: {email}")
-                            
-                        if User.objects.filter(email=email).exists():
+                        if email and User.objects.filter(email=email).exists():
                             raise ValueError(f"Email '{email}' already exists")
                         
-                        # Check if group exists
-                        try:
-                            group = Group.objects.get(name=group_name)
-                        except Group.DoesNotExist:
-                            raise ValueError(f"Group '{group_name}' does not exist")
-                        
-                        # Generate employee ID
                         employee_id = generate_employee_id(work_location, group_id)
-                        while User.objects.filter(username=employee_id).exists():
-                            employee_id = generate_employee_id(work_location, group_id)
-                        
-                        # Generate a strong random password
                         password = ''.join(random.choices(string.ascii_letters + string.digits + string.punctuation, k=12))
                         
-                        # Create new user
                         user = User.objects.create_user(
                             username=employee_id,
-                            email=email,
+                            email=email if email else None,
                             password=password,
                             first_name=first_name,
                             last_name=last_name
                         )
                         
-                        # Add user to group
-                        user.groups.add(group)
+                        try:
+                            group = Group.objects.get(id=int(group_id))
+                            user.groups.add(group)
+                        except (ValueError, Group.DoesNotExist):
+                            raise ValueError("Invalid group selected")
                         
-                        # Create basic UserDetails
-                        user_details = UserDetails(
+                        UserDetails.objects.create(
                             user=user,
                             group=group,
-                            work_location=work_location,
+                            hire_date=row.get('hire_date') or datetime.now().date(),
+                            start_date=row.get('start_date') or datetime.now().date(),
                             employment_status='active',
+                            work_location=work_location,
+                            job_description=row.get('job_description'),
+                            dob=row.get('dob'),
+                            gender=row.get('gender'),
+                            blood_group=row.get('blood_group'),
+                            country_code=row.get('country_code'),
+                            contact_number_primary=row.get('contact_number_primary'),
+                            personal_email=row.get('personal_email'),
+                            emergency_contact_name=row.get('emergency_contact_name'),
+                            emergency_contact_primary=row.get('emergency_contact_primary'),
+                            emergency_contact_address=row.get('emergency_contact_address'),
                             onboarded_by=request.user,
-                            onboarding_date=timezone.now()
+                            onboarding_date=timezone.now(),
+                            employee_type=row.get('employee_type'),
+                            address_line1=row.get('address_line1'),
+                            address_line2=row.get('address_line2'),
+                            city=row.get('city'),
+                            state=row.get('state'),
+                            postal_code=row.get('postal_code'),
+                            country=row.get('country')
                         )
                         
-                        # Save UserDetails
-                        user_details.save()
-                        
-                        # Log user creation
                         UserActionLog.objects.create(
                             user=user,
                             action_type='create',
@@ -2026,101 +1927,59 @@ def bulk_add_users(request):
                             details=f"User created via bulk import with ID: {employee_id}, role: {group.name}"
                         )
                         
-                        # Send welcome email if requested
-                        if request.POST.get('send_welcome_emails') == 'on':
+                        if email and request.POST.get('send_welcome_emails') == 'on':
                             try:
                                 send_welcome_email(user, password)
+                                messages.success(request, f"Welcome email sent to {email} with login credentials.")
+                            except ConnectionRefusedError:
+                                logger.error("Email server connection refused. Check email server settings.", exc_info=True)
+                                messages.warning(request, f"User created successfully, but welcome email could not be sent due to email server connection issues.")
                             except Exception as e:
-                                logger.error(f"Error sending welcome email to {email}: {str(e)}")
+                                logger.error(f"Error sending welcome email: {str(e)}", exc_info=True)
+                                messages.warning(request, f"User created successfully, but welcome email could not be sent: {str(e)}")
                         
                         success_count += 1
-                        logger.info(f"Successfully created user: {email}")
                 
                 except Exception as e:
-                    error_details = str(e)
-                    logger.error(f"Error in row {row_num}: {error_details}", exc_info=True)
                     error_rows.append({
                         'row_num': row_num,
-                        'email': row.get('email', 'N/A') if row else 'N/A',
-                        'name': f"{row.get('first_name', '')} {row.get('last_name', '')}".strip() if row else 'N/A',
-                        'error': error_details
+                        'email': row.get('email', 'N/A'),
+                        'name': f"{row.get('first_name', '')} {row.get('last_name', '')}".strip(),
+                        'error': str(e)
                     })
         
-        except UnicodeDecodeError:
-            messages.error(request, 'Invalid file encoding. Please ensure the CSV file is UTF-8 encoded.')
-            return redirect('aps_hr:bulk_add_users')
         except Exception as e:
             messages.error(request, f'Error processing CSV file: {str(e)}')
-            logger.error(f"CSV processing error: {str(e)}", exc_info=True)
             return redirect('aps_hr:bulk_add_users')
         
-        # Report results
         if success_count > 0:
             messages.success(request, f"Successfully imported {success_count} users")
         
         if error_rows:
             request.session['import_errors'] = error_rows
             return render(request, 'components/hr/bulk_add_users.html', {
-                'groups': Group.objects.all().values_list('name', flat=True),
+                'groups': Group.objects.all(),
                 'error_rows': error_rows,
                 'success_count': success_count
             })
         
         return redirect('aps_hr:hr_dashboard')
-        
-    # Rest of the code for template downloads remains the same
-    try:
-        import os
-        from django.conf import settings
-        import pandas as pd
-        from django.http import HttpResponse
-        
-        # Define template paths for both formats
-        csv_template_path = os.path.join(settings.MEDIA_ROOT, 'templates', 'bulk_users_template.csv')
-        excel_template_path = os.path.join(settings.MEDIA_ROOT, 'templates', 'bulk_users_template.xlsx')
-        
-        # Define headers for template
-        headers = ['email', 'first_name', 'last_name', 'group', 'work_location']
-        
-        # Create DataFrame with headers only
-        df = pd.DataFrame(columns=headers)
-        
-        # Create directory if it doesn't exist
-        os.makedirs(os.path.dirname(csv_template_path), exist_ok=True)
-        
-        # Create templates if they don't exist or if force update requested
-        force_update = request.GET.get('update_template') == 'true'
-        if not os.path.exists(csv_template_path) or force_update:
-            df.to_csv(csv_template_path, index=False)
-            
-        if not os.path.exists(excel_template_path) or force_update:
-            df.to_excel(excel_template_path, index=False)
-        
-        # Handle template download requests
-        if request.GET.get('download_template'):
-            format = request.GET.get('format', 'csv')
-            
-            if format == 'excel':
-                with open(excel_template_path, 'rb') as f:
-                    response = HttpResponse(
-                        f.read(),
-                        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-                    )
-                    response['Content-Disposition'] = 'attachment; filename="bulk_users_template.xlsx"'
-                    return response
-            else:
-                with open(csv_template_path, 'rb') as f:
-                    response = HttpResponse(f.read(), content_type='text/csv')
-                    response['Content-Disposition'] = 'attachment; filename="bulk_users_template.csv"'
-                    return response
-        
-    except Exception as e:
-        logger.error(f"Error handling templates: {str(e)}")
     
-    # GET request - show upload form
+    # Generate CSV template for download
+    if request.GET.get('download_template') == 'csv':
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="bulk_add_users_template.csv"'
+        writer = csv.writer(response)
+        writer.writerow(['email', 'first_name', 'last_name', 'group', 'work_location'])
+        return response
+
     return render(request, 'components/hr/bulk_add_users.html', {
-        'groups': Group.objects.all().values_list('name', flat=True),
-        'template_path': '{}?download_template=true'.format(request.path)
+        'groups': Group.objects.all(),
+        'today': date.today(),
+        'blood_group_choices': UserDetails._meta.get_field('blood_group').choices,
+        'gender_choices': UserDetails._meta.get_field('gender').choices,
+        'employment_status_choices': UserDetails._meta.get_field('employment_status').choices,
+        'employee_type_choices': UserDetails._meta.get_field('employee_type').choices,
     })
 
 @login_required
