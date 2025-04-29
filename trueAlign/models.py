@@ -628,29 +628,32 @@ from django.core.exceptions import ValidationError
 from django.db.models import Q, Sum, Avg
 from datetime import timedelta
 import calendar
+
 class Attendance(models.Model):
     STATUS_CHOICES = [
         ('Present', 'Present'),
-        ('Absent', 'Absent'), 
-        ('Late', 'Late'),
+        ('Present & Late', 'Present & Late'),
+        ('Absent', 'Absent'),
+        ('Late', 'Late'), 
         ('Half Day', 'Half Day'),
         ('On Leave', 'On Leave'),
         ('Work From Home', 'Work From Home'),
         ('Weekend', 'Weekend'),
         ('Holiday', 'Holiday'),
-        ('Comp Off', 'Comp Off')
+        ('Comp Off', 'Comp Off'),
+        ('Not Marked', 'Not Marked') # Added new status for unmarked attendance
     ]
 
     LOCATION_CHOICES = [
         ('Office', 'Office'),
-        ('Home', 'Home'),
+        ('Home', 'Home'), 
         ('Remote', 'Remote'),
         ('Other', 'Other')
     ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     date = models.DateField()
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Absent')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Not Marked') # Changed default to Not Marked
     is_half_day = models.BooleanField(default=False)
     leave_type = models.CharField(max_length=50, null=True, blank=True)
     clock_in_time = models.DateTimeField(null=True, blank=True)
@@ -691,48 +694,70 @@ class Attendance(models.Model):
         return f"{self.user.username} - {self.date} - {self.status}"
 
     def check_late_arrival(self):
+        """Check if user arrived late based on shift timing"""
         if not self.clock_in_time:
-            self.status = 'Absent'
+            self.status = 'Not Marked' # Changed to Not Marked instead of Absent
             return
+
         try:
+            # Get user's shift if not set
             if not self.shift:
                 from .models import ShiftAssignment
                 self.shift = ShiftAssignment.get_user_current_shift(self.user, self.date)
                 if not self.shift:
                     self.status = 'Present'
                     return
-            shift_date = self.date
-            start_time = timezone.make_aware(
-                timezone.datetime.combine(shift_date, self.shift.start_time)
+
+            # Get shift start time for the date
+            shift_start = timezone.make_aware(
+                timezone.datetime.combine(self.date, self.shift.start_time)
             )
+
+            # Add grace period if defined
             grace_period = getattr(self.shift, 'grace_period', timedelta(minutes=0))
-            if self.clock_in_time > (start_time + grace_period):
-                self.status = 'Late'
-                late_duration = self.clock_in_time - (start_time + grace_period)
+            latest_allowed_time = shift_start + grace_period
+
+            # Compare clock in time with allowed time
+            if self.clock_in_time > latest_allowed_time:
+                self.status = 'Present & Late'
+                # Calculate late minutes
+                late_duration = self.clock_in_time - latest_allowed_time
                 self.late_minutes = int(late_duration.total_seconds() // 60)
             else:
                 self.status = 'Present'
+
         except Exception as e:
             import traceback
-            print(f"Error in check_late_arrival: {str(e)}")
+            print(f"Error checking late arrival: {str(e)}")
             print(f"Traceback: {traceback.format_exc()}")
             self.status = 'Present'
 
     def calculate_hours(self):
+        """Calculate total working hours excluding breaks"""
         if not (self.clock_in_time and self.clock_out_time):
             return None
+
         try:
+            # Ensure times are timezone aware
             clock_in = self.ensure_timezone_aware(self.clock_in_time)
             clock_out = self.ensure_timezone_aware(self.clock_out_time)
+
+            # Calculate total duration
             total_time = (clock_out - clock_in).total_seconds() / 3600
+
+            # Subtract break time
             break_time = self.calculate_break_time()
-            regular_hours = self.expected_hours or (self.shift.expected_hours() if self.shift else 8.0)
             total_worked = total_time - break_time
+
+            # Calculate overtime if applicable
+            regular_hours = self.expected_hours or (self.shift.expected_hours() if self.shift else 8.0)
             if total_worked > float(regular_hours):
                 self.overtime_hours = round(total_worked - float(regular_hours), 2)
             else:
                 self.overtime_hours = 0
+
             return round(total_worked, 2)
+
         except Exception as e:
             import traceback
             print(f"Error calculating hours: {str(e)}")
@@ -740,14 +765,18 @@ class Attendance(models.Model):
             return None
 
     def calculate_break_time(self):
+        """Calculate total break time in hours"""
         break_time = 0
         if not self.breaks:
             return break_time
+
         try:
             if isinstance(self.breaks, list):
                 for break_data in self.breaks:
                     start = break_data.get('start')
                     end = break_data.get('end')
+
+                    # Convert string times to datetime if needed
                     if isinstance(start, str):
                         try:
                             start = timezone.datetime.fromisoformat(start)
@@ -758,20 +787,28 @@ class Attendance(models.Model):
                             end = timezone.datetime.fromisoformat(end)
                         except ValueError:
                             continue
+
+                    # Ensure timezone awareness
                     start = self.ensure_timezone_aware(start)
                     end = self.ensure_timezone_aware(end)
+
                     if start and end and end > start:
                         break_time += (end - start).total_seconds() / 3600
+
         except Exception as e:
             print(f"Error calculating break time: {str(e)}")
+
         return break_time
 
     def ensure_timezone_aware(self, datetime_obj):
+        """Ensure datetime is timezone aware"""
         if datetime_obj and timezone.is_naive(datetime_obj):
             return timezone.make_aware(datetime_obj)
         return datetime_obj
 
     def determine_attendance_status(self):
+        """Determine final attendance status based on various factors"""
+        # Check for approved leave
         from .models import Leave
         leave = Leave.objects.filter(
             user=self.user,
@@ -779,38 +816,61 @@ class Attendance(models.Model):
             end_date__gte=self.date,
             status='Approved'
         ).first()
+
         if leave:
             self.status = 'On Leave'
             self.leave_type = leave.leave_type
             self.is_half_day = leave.half_day
             return
+
+        # Check for holiday
         if self.is_holiday:
             self.status = 'Holiday'
             return
+
+        # Check for weekend and shift work days
         if self.is_weekend:
-            if self.shift and self.shift.is_working_day(self.date):
-                pass
+            if self.shift:
+                # Check if custom work days are defined
+                if self.shift.work_days == 'Custom':
+                    custom_days = self.shift.custom_work_days.split(',')
+                    weekday = calendar.day_name[self.date.weekday()]
+                    if weekday not in custom_days:
+                        self.status = 'Weekend'
+                        return
+                elif self.shift.work_days != 'All Days':
+                    self.status = 'Weekend'
+                    return
             else:
                 self.status = 'Weekend'
                 return
+
+        # Handle no clock in
         if not self.clock_in_time:
-            self.status = 'Absent'
+            self.status = 'Not Marked' # Changed to Not Marked instead of Absent
             return
+
+        # Handle work from home
         if self.location == 'Home':
             self.status = 'Work From Home'
+
+        # Check for half day based on hours worked
         if self.clock_in_time and self.clock_out_time and self.total_hours is not None:
-            expected = self.expected_hours or (self.shift.expected_hours() if self.shift else 8.0)
+            expected = self.expected_hours or (self.shift.shift_duration if self.shift else 8.0)
             half_day_threshold = float(expected) / 2
+
             if float(self.total_hours) < half_day_threshold:
                 self.status = 'Half Day'
                 self.is_half_day = True
-            elif self.status not in ['Late', 'Work From Home']:
+            elif self.status not in ['Late', 'Present & Late', 'Work From Home']:
                 self.status = 'Present'
 
     def clean(self):
+        """Validate attendance data"""
         if self.clock_in_time and self.clock_out_time:
             if self.clock_out_time < self.clock_in_time:
                 raise ValidationError("Clock out must be after clock in")
+
         if self.breaks:
             try:
                 for break_data in self.breaks:
@@ -828,9 +888,10 @@ class Attendance(models.Model):
 
     def save(self, recalculate=False, *args, **kwargs):
         try:
+            # Ensure timezone awareness
             self.clock_in_time = self.ensure_timezone_aware(self.clock_in_time)
             self.clock_out_time = self.ensure_timezone_aware(self.clock_out_time)
-            
+
             # Handle breaks timezone awareness
             if self.breaks and isinstance(self.breaks, list):
                 for i, break_data in enumerate(self.breaks):
@@ -860,16 +921,16 @@ class Attendance(models.Model):
 
             # Set expected hours from shift
             if self.shift:
-                self.expected_hours = self.shift.expected_hours()
+                self.expected_hours = self.shift.shift_duration
 
             # Calculate total hours and determine status
-            if recalculate or not self.status or self.status == 'Absent':
+            if recalculate or not self.status or self.status == 'Not Marked': # Changed from Absent to Not Marked
                 if self.clock_in_time and self.clock_out_time:
                     self.total_hours = self.calculate_hours()
-                
+
                 if self.clock_in_time and not str(self.status).startswith(('On Leave', 'Holiday', 'Weekend')):
                     self.check_late_arrival()
-                
+
                 self.determine_attendance_status()
 
             # Force WFH status if location is Home
@@ -886,22 +947,34 @@ class Attendance(models.Model):
             super().save(*args, **kwargs)
 
     def check_if_holiday(self):
+        """Check if date is a holiday"""
         from .models import Holiday
         return Holiday.is_holiday(self.date)
 
     @classmethod
     def determine_shift_date(cls, user, clock_in_time):
+        """Determine the shift date and get shift for clock in time"""
         try:
             attendance_date = clock_in_time.date()
             from .models import ShiftAssignment
             shift = ShiftAssignment.get_user_current_shift(user, attendance_date)
+            
+            # Handle overnight shifts
+            if shift and shift.start_time > shift.end_time:
+                # If clock in is before midnight, use current date
+                # If clock in is after midnight, use previous date
+                if clock_in_time.time() < shift.end_time:
+                    attendance_date = attendance_date - timedelta(days=1)
+            
             return attendance_date, shift
+            
         except Exception as e:
             print(f"Error in determine_shift_date: {str(e)}")
             return clock_in_time.date(), None
 
     @classmethod
     def create_attendance(cls, user, clock_in_time, location="Office", ip_address=None, device_info=None):
+        """Create new attendance record"""
         try:
             # Get active user session
             from .models import UserSession
@@ -927,7 +1000,15 @@ class Attendance(models.Model):
             from .models import Holiday
             is_holiday = Holiday.is_holiday(shift_date)
             is_weekend = shift_date.weekday() >= 5
-            is_working_day = shift and shift.is_working_day(shift_date)
+            
+            # Check if it's a working day based on shift
+            is_working_day = True
+            if shift:
+                if shift.work_days == 'Custom':
+                    weekday = calendar.day_name[shift_date.weekday()]
+                    is_working_day = weekday in shift.custom_work_days.split(',')
+                elif shift.work_days != 'All Days':
+                    is_working_day = not is_weekend
 
             # Determine initial status
             if existing_leave:
@@ -962,7 +1043,7 @@ class Attendance(models.Model):
                     'ip_address': ip_address,
                     'device_info': device_info,
                     'shift': shift,
-                    'expected_hours': shift.expected_hours() if shift else 8.0,
+                    'expected_hours': shift.shift_duration if shift else 8.0,
                     'is_weekend': is_weekend,
                     'is_holiday': is_holiday,
                     'leave_type': leave_type,
@@ -1001,7 +1082,9 @@ class Attendance(models.Model):
 
     @classmethod
     def clock_out(cls, user, clock_out_time, breaks=None):
+        """Record clock out time for user"""
         try:
+            # Get current date's attendance
             today = clock_out_time.date()
             attendance = cls.objects.filter(
                 user=user,
@@ -1009,6 +1092,16 @@ class Attendance(models.Model):
                 clock_in_time__isnull=False,
                 clock_out_time__isnull=True
             ).first()
+
+            # For overnight shifts, also check previous day
+            if not attendance:
+                yesterday = today - timedelta(days=1)
+                attendance = cls.objects.filter(
+                    user=user,
+                    date=yesterday,
+                    clock_in_time__isnull=False,
+                    clock_out_time__isnull=True
+                ).first()
 
             if attendance:
                 attendance.clock_out_time = clock_out_time
@@ -1028,6 +1121,7 @@ class Attendance(models.Model):
 
     @classmethod
     def get_attendance_summary(cls, user, year=None, month=None):
+        """Get monthly attendance summary"""
         if not year:
             year = timezone.now().year
         if not month:
@@ -1050,8 +1144,17 @@ class Attendance(models.Model):
         current_date = start_date
         from .models import Holiday
         while current_date <= end_date:
-            if shift and shift.is_working_day(current_date) and not Holiday.is_holiday(current_date):
-                working_days += 1
+            if shift:
+                if shift.work_days == 'Custom':
+                    weekday = calendar.day_name[current_date.weekday()]
+                    if weekday in shift.custom_work_days.split(',') and not Holiday.is_holiday(current_date):
+                        working_days += 1
+                elif shift.work_days == 'All Days' or (shift.work_days != 'Custom' and current_date.weekday() < 5):
+                    if not Holiday.is_holiday(current_date):
+                        working_days += 1
+            else:
+                if current_date.weekday() < 5 and not Holiday.is_holiday(current_date):
+                    working_days += 1
             current_date += timedelta(days=1)
 
         summary = {
@@ -1062,7 +1165,7 @@ class Attendance(models.Model):
             'present_days': attendances.filter(status='Present').count(),
             'late_days': attendances.filter(status='Late').count(),
             'wfh_days': attendances.filter(status='Work From Home').count(),
-            'absent_days': attendances.filter(status='Absent').count(),
+            'absent_days': attendances.filter(status='Not Marked').count(), # Changed from Absent to Not Marked
             'half_days': attendances.filter(is_half_day=True).count(),
             'leave_days': attendances.filter(status='On Leave').count(),
             'total_hours': sum(att.total_hours or 0 for att in attendances),
@@ -1086,6 +1189,7 @@ class Attendance(models.Model):
 
     @classmethod
     def get_annual_report(cls, user, year):
+        """Get annual attendance report"""
         annual_data = []
         for month in range(1, 13):
             monthly_summary = cls.get_attendance_summary(user, year, month)
