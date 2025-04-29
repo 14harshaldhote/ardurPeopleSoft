@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-2 sidebar">
+            <h4 class="text-center mb-4">Shift Management</h4>
+            <nav class="nav flex-column">
+                <a class="nav-link {% if request.resolver_match.url_name == 'shift_dashboard' %}active{% endif %}" 
+                   href="{% url 'aps_manager:shift_dashboard' %}">
+                    <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                </a>
+                <a class="nav-link {% if request.resolver_match.url_name == 'shift_list' %}active{% endif %}" 
+                   href="{% url 'aps_manager:shift_list' %}">
+                    <i class="fas fa-clock me-2"></i>Shifts
+                </a>
+                <a class="nav-link {% if request.resolver_match.url_name == 'assignment_list' %}active{% endif %}" 
+                   href="{% url 'aps_manager:assignment_list' %}">
+                    <i class="fas fa-user-clock me-2"></i>Assignments
+                </a>
+                <a class="nav-link {% if request.resolver_match.url_name == 'holiday_list' %}active{% endif %}" 
+                   href="{% url 'aps_manager:holiday_list' %}">
+                    <i class="fas fa-calendar me-2"></i>Holidays
+                </a>
+                <a class="nav-link {% if request.resolver_match.url_name == 'shift_calendar' %}active{% endif %}" 
+                   href="{% url 'aps_manager:shift_calendar' %}">
+                    <i class="fas fa-calendar-alt me-2"></i>Calendar
+                </a>
+            </nav>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="col-md-10 content">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+            
+            {% block inner_content %}{% endblock %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .sidebar {
+        min-height: 100vh;
+        background-color: #f8f9fa;
+        padding-top: 20px;
+    }
+    .content {
+        padding: 20px;
+    }
+    .nav-link {
+        color: #333;
+        padding: 8px 16px;
+        margin: 4px 0;
+        border-radius: 4px;
+    }
+    .nav-link:hover {
+        background-color: #e9ecef;
+    }
+    .nav-link.active {
+        background-color: #0d6efd;
+        color: white;
+    }
+</style>
+{% block inner_extra_css %}{% endblock %}
+{% endblock %}

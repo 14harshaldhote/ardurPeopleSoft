@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+
+{% block title %}Shift Management System{% endblock %}
+
+{% block content %}
+<!-- Horizontal Navigation Bar -->
+<nav class="bg-gradient-to-r from-indigo-600 to-purple-600 shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+            <div class="flex items-center space-x-8">
+                <a href="{% url 'aps_manager:shift_dashboard' %}"
+                    class="flex items-center px-3 py-2 rounded-md text-sm font-medium transition-all duration-300 {% if request.resolver_match.url_name == 'shift_dashboard' %}bg-white text-indigo-600{% else %}text-white hover:bg-white/20{% endif %}">
+                    <svg class="mr-2 h-5 w-5 {% if request.resolver_match.url_name == 'shift_dashboard' %}text-indigo-500{% else %}text-white{% endif %}"
+                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                    Shift Home
+                </a>
+                <a href="{% url 'aps_manager:shift_calendar' %}"
+                    class="flex items-center px-3 py-2 rounded-md text-sm font-medium transition-all duration-300 {% if request.resolver_match.url_name == 'shift_calendar' %}bg-white text-indigo-600{% else %}text-white hover:bg-white/20{% endif %}">
+                    <svg class="mr-2 h-5 w-5 {% if request.resolver_match.url_name == 'shift_calendar' %}text-indigo-500{% else %}text-white{% endif %}"
+                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    Calendar View
+                </a>
+                <a href="{% url 'aps_manager:shift_list' %}"
+                    class="flex items-center px-3 py-2 rounded-md text-sm font-medium transition-all duration-300 {% if 'shift' in request.resolver_match.url_name and request.resolver_match.url_name != 'shift_dashboard' and request.resolver_match.url_name != 'shift_calendar' %}bg-white text-indigo-600{% else %}text-white hover:bg-white/20{% endif %}">
+                    <svg class="mr-2 h-5 w-5 {% if 'shift' in request.resolver_match.url_name and request.resolver_match.url_name != 'shift_dashboard' and request.resolver_match.url_name != 'shift_calendar' %}text-indigo-500{% else %}text-white{% endif %}"
+                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Shift Types
+                </a>
+                <a href="{% url 'aps_manager:assignment_list' %}"
+                    class="flex items-center px-3 py-2 rounded-md text-sm font-medium transition-all duration-300 {% if 'assignment' in request.resolver_match.url_name %}bg-white text-indigo-600{% else %}text-white hover:bg-white/20{% endif %}">
+                    <svg class="mr-2 h-5 w-5 {% if 'assignment' in request.resolver_match.url_name %}text-indigo-500{% else %}text-white{% endif %}"
+                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    Employee Assignments
+                </a>
+                <a href="{% url 'aps_manager:holiday_list' %}"
+                    class="flex items-center px-3 py-2 rounded-md text-sm font-medium transition-all duration-300 {% if 'holiday' in request.resolver_match.url_name %}bg-white text-indigo-600{% else %}text-white hover:bg-white/20{% endif %}">
+                    <svg class="mr-2 h-5 w-5 {% if 'holiday' in request.resolver_match.url_name %}text-indigo-500{% else %}text-white{% endif %}"
+                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                    </svg>
+                    Holidays
+                </a>
+            </div>
+            
+        </div>
+    </div>
+</nav>
+
+
+{% if request.resolver_match.url_name == 'shift_dashboard' %}
+<!-- Main content -->
+<main
+    class="flex-1 relative overflow-y-auto focus:outline-none bg-gradient-to-br from-gray-50 to-indigo-50 min-h-screen">
+    <div class="py-6 px-4 sm:px-6 lg:px-8">
+        <!-- Dashboard Summary Cards -->
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+                <div
+                    class="bg-white/80 backdrop-blur-sm shadow-lg rounded-xl p-5 flex items-center transform hover:scale-105 transition-all duration-300">
+                    <div class="flex-shrink-0 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full p-3">
+                        <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <div class="text-sm text-gray-500">Total Shifts</div>
+                        <div
+                            class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+                            {{ total_shifts }}</div>
+                    </div>
+                </div>
+                <div
+                    class="bg-white/80 backdrop-blur-sm shadow-lg rounded-xl p-5 flex items-center transform hover:scale-105 transition-all duration-300">
+                    <div class="flex-shrink-0 bg-gradient-to-br from-green-500 to-emerald-500 rounded-full p-3">
+                        <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <div class="text-sm text-gray-500">Active Shifts</div>
+                        <div
+                            class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-emerald-600">
+                            {{ active_shifts }}</div>
+                    </div>
+                </div>
+                <div
+                    class="bg-white/80 backdrop-blur-sm shadow-lg rounded-xl p-5 flex items-center transform hover:scale-105 transition-all duration-300">
+                    <div class="flex-shrink-0 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-full p-3">
+                        <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <div class="text-sm text-gray-500">Total Holidays</div>
+                        <div
+                            class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-amber-600 to-yellow-600">
+                            {{ total_holidays }}</div>
+                    </div>
+                </div>
+                <div
+                    class="bg-white/80 backdrop-blur-sm shadow-lg rounded-xl p-5 flex items-center transform hover:scale-105 transition-all duration-300">
+                    <div class="flex-shrink-0 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full p-3">
+                        <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <div class="text-sm text-gray-500">Current Shift</div>
+                        <div
+                            class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-cyan-600">
+                            {% if user_shift %}
+                            {{ user_shift.shift.name }}
+                            {% else %}
+                            None
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upcoming Holidays and Recent Assignments -->
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Upcoming Holidays -->
+            <div
+                class="bg-white/80 backdrop-blur-sm shadow-lg rounded-xl p-6 transform hover:scale-[1.02] transition-all duration-300">
+                <div class="flex items-center justify-between mb-4">
+                    <h2
+                        class="text-lg font-semibold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+                        Upcoming Holidays</h2>
+                    <a href="{% url 'aps_manager:holiday_list' %}"
+                        class="text-indigo-600 hover:text-purple-600 transition-colors duration-300 text-sm">View
+                        All</a>
+                </div>
+                <ul class="space-y-3">
+                    {% for holiday in upcoming_holidays %}
+                    <li
+                        class="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0 hover:bg-indigo-50/50 rounded-lg transition-colors duration-300 px-2">
+                        <span class="text-gray-700 font-medium">{{ holiday.name }}</span>
+                        <span class="text-gray-500 text-sm bg-indigo-100 px-3 py-1 rounded-full">{{ holiday.date|date:"M d, Y" }}</span>
+                    </li>
+                    {% empty %}
+                    <li class="text-gray-500 text-center py-4">No upcoming holidays.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <!-- Recent Assignments -->
+            <div
+                class="bg-white/80 backdrop-blur-sm shadow-lg rounded-xl p-6 transform hover:scale-[1.02] transition-all duration-300">
+                <div class="flex items-center justify-between mb-4">
+                    <h2
+                        class="text-lg font-semibold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+                        Recent Shift Assignments</h2>
+                    <a href="{% url 'aps_manager:assignment_list' %}"
+                        class="text-indigo-600 hover:text-purple-600 transition-colors duration-300 text-sm">View
+                        All</a>
+                </div>
+                <ul class="space-y-3">
+                    {% for assignment in recent_assignments %}
+                    <li
+                        class="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0 hover:bg-indigo-50/50 rounded-lg transition-colors duration-300 px-2">
+                        <span class="flex flex-col sm:flex-row sm:items-center gap-1">
+                            <span class="font-medium text-gray-800">{{ assignment.user.get_full_name|default:assignment.user.username }}</span>
+                            <span class="text-gray-500 text-xs sm:mx-1">assigned to</span>
+                            <span class="font-medium text-indigo-600">{{ assignment.shift.name }}</span>
+                        </span>
+                        <span
+                            class="text-gray-500 text-sm bg-indigo-100 px-3 py-1 rounded-full whitespace-nowrap ml-2">{{ assignment.created_at|date:"M d, Y H:i" }}</span>
+                    </li>
+                    {% empty %}
+                    <li class="text-gray-500 text-center py-4">No recent assignments.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</main>
+{% else %}
+{% block shift_content %}{% endblock %}
+{% endif %}
+{% endblock %}

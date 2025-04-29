@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block title %}Shift Info - {{ user.get_full_name|default:user.username }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Shift Information</h2>
+        <a href="{% url 'aps_manager:assignment_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>New Assignment
+        </a>
+    </div>
+
+    <div class="row">
+        <!-- User Info -->
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Employee Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        <div class="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" 
+                             style="width: 80px; height: 80px;">
+                            <i class="fas fa-user fa-2x text-primary"></i>
+                        </div>
+                        <h4 class="mb-0">{{ user.get_full_name|default:user.username }}</h4>
+                        <p class="text-muted">{{ user.email }}</p>
+                    </div>
+
+                    <hr>
+
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4">Current Shift</dt>
+                        <dd class="col-sm-8">
+                            {% if shift %}
+                            <span class="badge bg-success">{{ shift.name }}</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Not Assigned</span>
+                            {% endif %}
+                        </dd>
+
+                        <dt class="col-sm-4">Status</dt>
+                        <dd class="col-sm-8">
+                            {% if is_working_day %}
+                            <span class="badge bg-success">Working Day</span>
+                            {% else %}
+                            <span class="badge bg-warning">Off Day</span>
+                            {% endif %}
+                        </dd>
+
+                        {% if is_holiday %}
+                        <dt class="col-sm-4">Holiday</dt>
+                        <dd class="col-sm-8">
+                            <span class="badge bg-danger">Holiday</span>
+                        </dd>
+                        {% endif %}
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <!-- Schedule -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">7-Day Schedule</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Day</th>
+                                    <th>Status</th>
+                                    <th>Timing</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for day in schedule %}
+                                <tr>
+                                    <td>{{ day.date }}</td>
+                                    <td>{{ day.day_name }}</td>
+                                    <td>
+                                        {% if day.is_holiday %}
+                                        <span class="badge bg-danger">Holiday</span>
+                                        {% elif day.is_working_day %}
+                                        <span class="badge bg-success">Working</span>
+                                        {% else %}
+                                        <span class="badge bg-warning">Off</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if day.is_working_day and not day.is_holiday %}
+                                        {{ day.shift_start }} - {{ day.shift_end }}
+                                        {% else %}
+                                        -
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_css %}
+<style>
+    .badge {
+        font-size: 0.9rem;
+        padding: 0.5em 0.8em;
+    }
+</style>
+{% endblock %}
+{% endblock %} 

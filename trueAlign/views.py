@@ -4,7 +4,9 @@ from .models import (UserSession, Attendance, SystemError,
                     Support, FailedLoginAttempt, PasswordChange, 
                     RoleAssignmentAudit, FeatureUsage, SystemUsage, 
                     Timesheet,GlobalUpdate,
-                     UserDetails,ProjectUpdate, Presence, PresenceStatus, Transaction, ChartOfAccount, Vendor, Payment, ClientPayment, Project, TRANSACTION_TYPES, ClientProfile)
+                     UserDetails,ProjectUpdate, Presence, PresenceStatus, 
+                     Transaction, ChartOfAccount, Vendor, Payment, ClientPayment, Project, TRANSACTION_TYPES,
+                       ClientProfile, ShiftMaster,ShiftAssignment )
 from django.db.models import Q
 from datetime import datetime, timedelta, date
 from decimal import Decimal
@@ -48,84 +50,87 @@ def update_last_activity(request):
     if request.method == 'POST':
         try:
             from django.db import transaction
-            
+
             with transaction.atomic():
                 # Parse request data
                 try:
                     data = json.loads(request.body)
                 except ValueError:
-                    # Handle non-JSON data (e.g., from sendBeacon)
                     data = {}
-                
+
                 # Get client IP
                 x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
                 ip_address = x_forwarded_for.split(',')[0] if x_forwarded_for else request.META.get('REMOTE_ADDR')
-                
-                # Get current user session
+
+                # Get or create user session using model logic
                 user_session = UserSession.objects.filter(
                     user=request.user,
                     is_active=True
                 ).select_for_update().first()
 
+                current_time = timezone.now()
+
                 if not user_session:
-                    # Create a new session if none exists
+                    # Use model method to create session
                     user_session = UserSession.get_or_create_session(
                         user=request.user,
                         session_key=request.session.session_key,
-                        ip_address=ip_address
+                        ip_address=ip_address,
+                        user_agent=request.META.get('HTTP_USER_AGENT', None)
                     )
-                    
                     return JsonResponse({
                         'status': 'success',
                         'message': 'New session created',
                         'session_id': user_session.id
                     })
 
-                current_time = timezone.now()
-                
-                # Check if session has timed out
+                # Check for session timeout using model constant
                 if (current_time - user_session.last_activity) > timedelta(minutes=UserSession.SESSION_TIMEOUT_MINUTES):
-                    # End current session
                     user_session.end_session()
-                    
-                    # Create a new session
                     new_session = UserSession.get_or_create_session(
                         user=request.user,
                         session_key=request.session.session_key,
-                        ip_address=ip_address
+                        ip_address=ip_address,
+                        user_agent=request.META.get('HTTP_USER_AGENT', None)
                     )
-                    
                     return JsonResponse({
                         'status': 'success',
                         'sessionExpired': True,
                         'message': 'Previous session timed out, new session created',
                         'session_id': new_session.id
                     })
-                
-                # Update IP if it changed
+
+                # Update IP and location if changed
                 if user_session.ip_address != ip_address:
                     user_session.ip_address = ip_address
                     user_session.location = user_session.determine_location()
                     user_session.save(update_fields=['ip_address', 'location'])
-                
-                # Handle client-reported idle state
+
+                # Handle client-reported idle state - THIS IS THE CRITICAL FIX
                 is_idle = data.get('isIdle', False)
                 is_focused = data.get('isFocused', True)
                 
-                # Update the user's activity
-                user_session.update_activity(current_time)
-                # Need to refresh to get latest data
+                # Only update activity if NOT idle - this allows idle time to accumulate
+                if not is_idle and is_focused:
+                    user_session.update_activity(current_time)
+                else:
+                    # If idle or not focused, we don't update last_activity,
+                    # which allows idle time to accumulate in the next update_activity call
+                    print(f"User {request.user.username} is idle or tab not focused. Not updating last_activity.")
+
                 user_session.refresh_from_db()
 
                 return JsonResponse({
                     'status': 'success',
-                    'last_activity': current_time.isoformat(),
+                    'last_activity': user_session.last_activity.isoformat(),
                     'idle_time': str(user_session.idle_time),
                     'working_hours': str(user_session.working_hours) if user_session.working_hours else None,
                     'location': user_session.location
                 })
 
         except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
             logger.error(f"Error updating last activity: {str(e)}")
             return JsonResponse({
                 'status': 'error',
@@ -138,7 +143,6 @@ def update_last_activity(request):
     }, status=405)
 
 @login_required
-@login_required
 def end_session(request):
     """
     View to handle session end/logout.
@@ -149,10 +153,10 @@ def end_session(request):
             'status': 'error',
             'message': 'Invalid request method'
         }, status=405)
-        
+
     try:
         from django.db import transaction
-        
+
         with transaction.atomic():
             user_session = UserSession.objects.filter(
                 user=request.user,
@@ -165,9 +169,8 @@ def end_session(request):
                     'message': 'No active session found'
                 }, status=404)
 
-            # End the session
+            # Use model method to end session
             user_session.end_session()
-            # Refresh to get final values
             user_session.refresh_from_db()
 
             return JsonResponse({
@@ -178,12 +181,14 @@ def end_session(request):
             })
 
     except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
         logger.error(f"Error ending session: {str(e)}")
         return JsonResponse({
             'status': 'error',
             'message': str(e)
         }, status=400)
-    
+
 @login_required
 def get_session_status(request):
     """Get the current session status"""
@@ -199,10 +204,9 @@ def get_session_status(request):
                 'message': 'No active session found'
             }, status=404)
 
-        # Calculate current working hours
         current_time = timezone.now()
         total_duration = current_time - user_session.login_time
-        
+
         return JsonResponse({
             'status': 'success',
             'session_id': user_session.id,
@@ -1949,159 +1953,6 @@ def bulk_add_users(request):
     return render(request, 'components/hr/bulk_add_users.html', {
         'groups': Group.objects.all(),
     })
-
-# @login_required
-# @user_passes_test(is_hr)
-# def bulk_add_users(request):
-#     """Enhanced view to import multiple users from CSV with improved validation and error handling"""
-#     if request.method == 'POST' and request.FILES.get('csv_file'):
-#         csv_file = request.FILES['csv_file']
-        
-#         if not csv_file.name.endswith('.csv'):
-#             messages.error(request, 'File must be a CSV')
-#             return redirect('aps_hr:bulk_add_users')
-        
-#         try:
-#             decoded_file = csv_file.read().decode('utf-8-sig')
-#             io_string = io.StringIO(decoded_file)
-#             reader = csv.DictReader(io_string)
-            
-#             required_fields = ['email', 'first_name', 'last_name', 'group', 'work_location']
-#             csv_fields = reader.fieldnames
-            
-#             if not csv_fields:
-#                 messages.error(request, 'CSV file is empty or has invalid format')
-#                 return redirect('aps_hr:bulk_add_users')
-            
-#             missing_fields = [field for field in required_fields if field not in csv_fields]
-#             if missing_fields:
-#                 messages.error(request, f'CSV missing required fields: {", ".join(missing_fields)}')
-#                 return redirect('aps_hr:bulk_add_users')
-            
-#             success_count = 0
-#             error_rows = []
-            
-#             for row_num, row in enumerate(reader, start=2):
-#                 try:
-#                     with transaction.atomic():
-#                         email = row['email'].strip()
-#                         first_name = row['first_name'].strip()
-#                         last_name = row['last_name'].strip()
-#                         group_id = row['group'].strip()
-#                         work_location = row['work_location'].strip()
-                        
-#                         if not all([first_name, last_name, group_id, work_location]):
-#                             raise ValueError("First name, last name, group, and work location are required fields")
-                        
-#                         if email and User.objects.filter(email=email).exists():
-#                             raise ValueError(f"Email '{email}' already exists")
-                        
-#                         employee_id = generate_employee_id(work_location, group_id)
-#                         password = ''.join(random.choices(string.ascii_letters + string.digits + string.punctuation, k=12))
-                        
-#                         user = User.objects.create_user(
-#                             username=employee_id,
-#                             email=email if email else None,
-#                             password=password,
-#                             first_name=first_name,
-#                             last_name=last_name
-#                         )
-                        
-#                         try:
-#                             group = Group.objects.get(id=int(group_id))
-#                             user.groups.add(group)
-#                         except (ValueError, Group.DoesNotExist):
-#                             raise ValueError("Invalid group selected")
-                        
-#                         UserDetails.objects.create(
-#                             user=user,
-#                             group=group,
-#                             hire_date=row.get('hire_date') or datetime.now().date(),
-#                             start_date=row.get('start_date') or datetime.now().date(),
-#                             employment_status='active',
-#                             work_location=work_location,
-#                             job_description=row.get('job_description'),
-#                             dob=row.get('dob'),
-#                             gender=row.get('gender'),
-#                             blood_group=row.get('blood_group'),
-#                             country_code=row.get('country_code'),
-#                             contact_number_primary=row.get('contact_number_primary'),
-#                             personal_email=row.get('personal_email'),
-#                             emergency_contact_name=row.get('emergency_contact_name'),
-#                             emergency_contact_primary=row.get('emergency_contact_primary'),
-#                             emergency_contact_address=row.get('emergency_contact_address'),
-#                             onboarded_by=request.user,
-#                             onboarding_date=timezone.now(),
-#                             employee_type=row.get('employee_type'),
-#                             address_line1=row.get('address_line1'),
-#                             address_line2=row.get('address_line2'),
-#                             city=row.get('city'),
-#                             state=row.get('state'),
-#                             postal_code=row.get('postal_code'),
-#                             country=row.get('country')
-#                         )
-                        
-#                         UserActionLog.objects.create(
-#                             user=user,
-#                             action_type='create',
-#                             action_by=request.user,
-#                             details=f"User created via bulk import with ID: {employee_id}, role: {group.name}"
-#                         )
-                        
-#                         if email and request.POST.get('send_welcome_emails') == 'on':
-#                             try:
-#                                 send_welcome_email(user, password)
-#                                 messages.success(request, f"Welcome email sent to {email} with login credentials.")
-#                             except ConnectionRefusedError:
-#                                 logger.error("Email server connection refused. Check email server settings.", exc_info=True)
-#                                 messages.warning(request, f"User created successfully, but welcome email could not be sent due to email server connection issues.")
-#                             except Exception as e:
-#                                 logger.error(f"Error sending welcome email: {str(e)}", exc_info=True)
-#                                 messages.warning(request, f"User created successfully, but welcome email could not be sent: {str(e)}")
-                        
-#                         success_count += 1
-                
-#                 except Exception as e:
-#                     error_rows.append({
-#                         'row_num': row_num,
-#                         'email': row.get('email', 'N/A'),
-#                         'name': f"{row.get('first_name', '')} {row.get('last_name', '')}".strip(),
-#                         'error': str(e)
-#                     })
-        
-#         except Exception as e:
-#             messages.error(request, f'Error processing CSV file: {str(e)}')
-#             return redirect('aps_hr:bulk_add_users')
-        
-#         if success_count > 0:
-#             messages.success(request, f"Successfully imported {success_count} users")
-        
-#         if error_rows:
-#             request.session['import_errors'] = error_rows
-#             return render(request, 'components/hr/bulk_add_users.html', {
-#                 'groups': Group.objects.all(),
-#                 'error_rows': error_rows,
-#                 'success_count': success_count
-#             })
-        
-#         return redirect('aps_hr:hr_dashboard')
-    
-#     # Generate CSV template for download
-#     if request.GET.get('download_template') == 'csv':
-#         response = HttpResponse(content_type='text/csv')
-#         response['Content-Disposition'] = 'attachment; filename="bulk_add_users_template.csv"'
-#         writer = csv.writer(response)
-#         writer.writerow(['email', 'first_name', 'last_name', 'group', 'work_location'])
-#         return response
-
-#     return render(request, 'components/hr/bulk_add_users.html', {
-#         'groups': Group.objects.all(),
-#         'today': date.today(),
-#         'blood_group_choices': UserDetails._meta.get_field('blood_group').choices,
-#         'gender_choices': UserDetails._meta.get_field('gender').choices,
-#         'employment_status_choices': UserDetails._meta.get_field('employment_status').choices,
-#         'employee_type_choices': UserDetails._meta.get_field('employee_type').choices,
-#     })
 
 @login_required
 @user_passes_test(is_hr)
@@ -5558,6 +5409,37 @@ def employee_attendance_view(request):
     ).select_related('user')
     print(f"User attendance records: {user_attendance.count()} found")
     
+    # Get daily attendance aggregates (earliest clock in and latest clock out)
+    daily_attendance = {}
+    for attendance in user_attendance:
+        date = attendance.date
+        if date not in daily_attendance:
+            daily_attendance[date] = {
+                'first_clock_in': attendance.clock_in_time,
+                'last_clock_out': attendance.clock_out_time,
+                'total_hours': attendance.total_hours,
+                'status': attendance.status,
+                'location': attendance.location,
+                'is_half_day': attendance.is_half_day,
+                'regularization_status': attendance.regularization_status,
+                'regularization_reason': attendance.regularization_reason,
+                'breaks': attendance.breaks
+            }
+        else:
+            # Update earliest clock in
+            if attendance.clock_in_time and (not daily_attendance[date]['first_clock_in'] or 
+                attendance.clock_in_time < daily_attendance[date]['first_clock_in']):
+                daily_attendance[date]['first_clock_in'] = attendance.clock_in_time
+            
+            # Update latest clock out
+            if attendance.clock_out_time and (not daily_attendance[date]['last_clock_out'] or
+                attendance.clock_out_time > daily_attendance[date]['last_clock_out']):
+                daily_attendance[date]['last_clock_out'] = attendance.clock_out_time
+                
+            # Accumulate total hours
+            if attendance.total_hours:
+                daily_attendance[date]['total_hours'] = (daily_attendance[date]['total_hours'] or 0) + attendance.total_hours
+    
     leaves = Leave.objects.filter(
         user=request.user,
         status='Approved',
@@ -5594,15 +5476,7 @@ def employee_attendance_view(request):
                 date = make_aware(datetime(current_year, current_month, day))
                 leave_status = None
                 leave_type = None
-                clock_in_time = None
-                clock_out_time = None
-                total_hours = None
-                breaks = None
-                location = None
-                is_half_day = False
-                regularization_status = None
-                regularization_reason = None
-
+                
                 # Check if leave exists for the day
                 leave_on_day = leaves.filter(start_date__lte=date, end_date__gte=date).first()
                 if leave_on_day:
@@ -5610,35 +5484,25 @@ def employee_attendance_view(request):
                     leave_type = leave_on_day.leave_type
                     print(f"Leave on day {day}: {leave_status}, Type: {leave_type}")
 
-                # Check if attendance exists for the day
-                attendance_on_day = user_attendance.filter(date=date.date()).first()
-                if attendance_on_day:
-                    leave_status = attendance_on_day.status
-                    clock_in_time = attendance_on_day.clock_in_time
-                    clock_out_time = attendance_on_day.clock_out_time
-                    total_hours = attendance_on_day.total_hours
-                    breaks = attendance_on_day.breaks if attendance_on_day.breaks else []
-                    location = attendance_on_day.location
-                    is_half_day = attendance_on_day.is_half_day
-                    regularization_status = attendance_on_day.regularization_status
-                    regularization_reason = attendance_on_day.regularization_reason
-                    print(f"Attendance on day {day}: Status: {leave_status}, Clock In: {clock_in_time}, Clock Out: {clock_out_time}")
+                # Get aggregated attendance data for the day
+                attendance_date = date.date()
+                attendance_data = daily_attendance.get(attendance_date, {})
 
                 week_data.append({
                     'date': day,
                     'is_today': date.date() == current_date.date(),
-                    'status': leave_status,
+                    'status': leave_status or attendance_data.get('status'),
                     'leave_type': leave_type,
-                    'clock_in_time': clock_in_time,
-                    'clock_out_time': clock_out_time,
-                    'total_hours': total_hours,
-                    'breaks': breaks,
-                    'location': location,
-                    'is_half_day': is_half_day,
+                    'clock_in_time': attendance_data.get('first_clock_in'),
+                    'clock_out_time': attendance_data.get('last_clock_out'),
+                    'total_hours': attendance_data.get('total_hours'),
+                    'breaks': attendance_data.get('breaks'),
+                    'location': attendance_data.get('location'),
+                    'is_half_day': attendance_data.get('is_half_day', False),
                     'is_sunday': date.weekday() == 6,
                     'is_weekend': date.weekday() >= 5,  # Saturday and Sunday
-                    'regularization_status': regularization_status,
-                    'regularization_reason': regularization_reason,
+                    'regularization_status': attendance_data.get('regularization_status'),
+                    'regularization_reason': attendance_data.get('regularization_reason'),
                     'empty': False
                 })
         calendar_data.append(week_data)
@@ -5649,7 +5513,7 @@ def employee_attendance_view(request):
     print(f"Pagination page: {page}")
     try:
         records = paginator.get_page(page)
-        print(f"Records on page: {len(records)}")  # Fixed: using len() instead of count()
+        print(f"Records on page: {len(records)}")
     except (EmptyPage, PageNotAnInteger):
         records = paginator.page(1)
         print("No valid page number provided, defaulting to page 1")
@@ -5695,7 +5559,6 @@ def manager_attendance_view(request):
     return render(request, 'components/manager/manager_attendance.html', {
         'team_attendance': team_records
     })
-
 @login_required
 @user_passes_test(is_hr)
 def hr_attendance_view(request):
@@ -5708,18 +5571,20 @@ def hr_attendance_view(request):
     first_day = datetime(year, month, 1).date()
     last_day = datetime(year, month, calendar.monthrange(year, month)[1]).date()
 
-    # Get all users (not just employees)
+    # Get all users with their details
     users = User.objects.select_related('userdetails').all().order_by('username')
 
-    # Get all attendance records for the month
+    # Get all attendance records for the month with related data
     attendance_records = Attendance.objects.filter(
         date__range=[first_day, last_day]
-    ).select_related('user')
+    ).select_related('user', 'shift', 'user_session').prefetch_related('modified_by')
 
-    # Get manual presence records for upper management
-    presence_records = Presence.objects.filter(
-        date__range=[first_day, last_day]
-    ).select_related('user')
+    # Get leave records for the month
+    leave_records = Leave.objects.filter(
+        start_date__lte=last_day,
+        end_date__gte=first_day,
+        status='Approved'
+    ).select_related('user', 'approver')
 
     # Create attendance matrix
     attendance_matrix = []
@@ -5736,13 +5601,23 @@ def hr_attendance_view(request):
         for day in range(1, days_in_month + 1):
             current_date = datetime(year, month, day).date()
             day_name = current_date.strftime('%a')
-            is_weekend = current_date.weekday() == 6  # Sunday
+            is_weekend = current_date.weekday() >= 5  # Saturday or Sunday
             
             user_row['attendance'][current_date] = {
                 'status': 'Weekend' if is_weekend else 'Absent',
                 'working_hours': None,
                 'day_name': day_name,
-                'is_weekend': is_weekend
+                'is_weekend': is_weekend,
+                'is_holiday': False,
+                'overtime_hours': 0,
+                'late_minutes': 0,
+                'breaks': [],
+                'location': None,
+                'regularization_status': None,
+                'regularization_reason': None,
+                'shift': None,
+                'modified_by': None,
+                'remarks': None
             }
 
         # Fill in actual attendance records
@@ -5761,50 +5636,49 @@ def hr_attendance_view(request):
                 'day_name': day_name,
                 'is_weekend': record.is_weekend,
                 'is_holiday': record.is_holiday,
+                'overtime_hours': record.overtime_hours,
+                'late_minutes': record.late_minutes,
+                'breaks': record.breaks,
                 'location': record.location,
-                'regularization_status': record.regularization_status
+                'regularization_status': record.regularization_status,
+                'regularization_reason': record.regularization_reason,
+                'shift': record.shift.name if record.shift else None,
+                'modified_by': record.modified_by.username if record.modified_by else None,
+                'remarks': record.remarks,
+                'clock_in': record.clock_in_time.strftime('%H:%M') if record.clock_in_time else None,
+                'clock_out': record.clock_out_time.strftime('%H:%M') if record.clock_out_time else None
             }
 
-        # Fill in manual presence records for upper management
-        user_presence_records = presence_records.filter(user=user)
-        for record in user_presence_records:
-            day_name = record.date.strftime('%a')
+        # Fill in leave records
+        user_leaves = leave_records.filter(user=user)
+        for leave in user_leaves:
+            leave_dates = [first_day + timedelta(days=x) for x in range((last_day-first_day).days + 1)]
+            leave_dates = [d for d in leave_dates if leave.start_date <= d <= leave.end_date]
             
-            user_row['attendance'][record.date] = {
-                'status': record.get_status_display(),
-                'working_hours': None,  # Manual records don't track hours
-                'day_name': day_name,
-                'is_weekend': record.date.weekday() == 6,
-                'is_holiday': False,  # Manual records don't track holidays
-                'marked_by': record.marked_by,
-                'notes': record.notes
-            }
+            for date in leave_dates:
+                if date in user_row['attendance']:
+                    user_row['attendance'][date].update({
+                        'status': 'On Leave',
+                        'leave_type': leave.leave_type,
+                        'is_half_day': leave.half_day,
+                        'leave_reason': leave.reason,
+                        'leave_approver': leave.approver.username if leave.approver else None
+                    })
 
         attendance_matrix.append(user_row)
 
-    # Calculate summary counts for the month using both attendance and presence records
-    summary = attendance_records.aggregate(
-        present_count=Count('id', filter=Q(status='Present')),
-        absent_count=Count('id', filter=Q(status='Absent')),
-        leave_count=Count('id', filter=Q(status='On Leave')),
-        wfh_count=Count('id', filter=Q(status='Work From Home')),
-        late_count=Count('id', filter=Q(status='Late')),
-        half_day_count=Count('id', filter=Q(status='Half Day')),
-        weekend_work_count=Count('id', filter=Q(is_weekend=True, status='Present'))
-    )
-
-    # Add presence records to summary
-    presence_summary = presence_records.aggregate(
-        present_count=Count('id', filter=Q(status=PresenceStatus.PRESENT)),
-        absent_count=Count('id', filter=Q(status=PresenceStatus.ABSENT)),
-        leave_count=Count('id', filter=Q(status=PresenceStatus.LEAVE)),
-        wfh_count=Count('id', filter=Q(status=PresenceStatus.WORK_FROM_HOME)),
-        late_count=Count('id', filter=Q(status=PresenceStatus.LATE))
-    )
-
-    # Combine both summaries
-    for key in presence_summary:
-        summary[key] = summary.get(key, 0) + presence_summary[key]
+    # Calculate summary statistics
+    summary = {
+        'present_count': attendance_records.filter(status='Present').count(),
+        'absent_count': attendance_records.filter(status='Absent').count(),
+        'late_count': attendance_records.filter(status='Late').count(),
+        'leave_count': attendance_records.filter(status='On Leave').count(),
+        'wfh_count': attendance_records.filter(status='Work From Home').count(),
+        'half_day_count': attendance_records.filter(is_half_day=True).count(),
+        'weekend_work_count': attendance_records.filter(is_weekend=True, status='Present').count(),
+        'total_overtime_hours': attendance_records.aggregate(Sum('overtime_hours'))['overtime_hours__sum'] or 0,
+        'avg_working_hours': attendance_records.filter(total_hours__isnull=False).aggregate(Avg('total_hours'))['total_hours__avg'] or 0
+    }
 
     # Get previous and next month links
     prev_month = 12 if month == 1 else month - 1
@@ -5834,7 +5708,6 @@ def hr_attendance_view(request):
 
     return render(request, 'components/hr/hr_admin_attendance.html', context)
 
-
 def handle_attendance_download(request):
     """Handle attendance download requests for both direct and custom month downloads"""
     try:
@@ -5855,9 +5728,9 @@ def handle_attendance_download(request):
         first_day = datetime(year, month, 1).date()
         last_day = datetime(year, month, calendar.monthrange(year, month)[1]).date()
 
-        # Get all employees with their details
-        employees = User.objects.select_related('userdetails').filter(
-            groups__name='Employee'
+        # Get all users except clients
+        employees = User.objects.select_related('userdetails').exclude(
+            groups__name='Client'
         ).order_by('username')
 
         # Get attendance records for the month
@@ -5903,7 +5776,7 @@ def export_attendance_excel(employees, attendance_records, month, year):
     dates = [datetime(year, month, day).date() for day in range(1, days_in_month + 1)]
     
     # Write headers
-    headers = ['Employee', 'Username', 'Location'] + [d.strftime('%d') for d in dates]
+    headers = ['Employee', 'Username', 'Location', 'Role'] + [d.strftime('%d') for d in dates]
     for col, header in enumerate(headers, 1):
         cell = ws.cell(row=1, column=col, value=header)
         cell.fill = header_fill
@@ -5916,8 +5789,9 @@ def export_attendance_excel(employees, attendance_records, month, year):
         ws.cell(row=row, column=1, value=f"{employee.first_name} {employee.last_name}").alignment = center_align
         ws.cell(row=row, column=2, value=employee.username).alignment = center_align
         ws.cell(row=row, column=3, value=employee.userdetails.work_location or 'Unknown').alignment = center_align
+        ws.cell(row=row, column=4, value=', '.join(group.name for group in employee.groups.all())).alignment = center_align
         
-        col = 4
+        col = 5
         for date in dates:
             try:
                 record = attendance_records.get(user=employee, date=date)
@@ -5966,7 +5840,7 @@ def export_attendance_csv(employees, attendance_records, month, year):
     dates = [datetime(year, month, day).date() for day in range(1, days_in_month + 1)]
     
     # Write headers
-    headers = ['Employee', 'Username', 'Location'] + [d.strftime('%d') for d in dates]
+    headers = ['Employee', 'Username', 'Location', 'Role'] + [d.strftime('%d') for d in dates]
     writer.writerow(headers)
     
     # Write data
@@ -5974,7 +5848,8 @@ def export_attendance_csv(employees, attendance_records, month, year):
         row = [
             f"{employee.first_name} {employee.last_name}",
             employee.username,
-            employee.userdetails.work_location or 'Unknown'
+            employee.userdetails.work_location or 'Unknown',
+            ', '.join(group.name for group in employee.groups.all())
         ]
         
         for date in dates:
@@ -6933,3 +6808,860 @@ def project_list(request):
     return render(request, 'components/finance/project_list.html', {
         'project_finances': project_finances
     })
+"""
+SHIFT MASTER VIEWS
+This module provides views for managing shifts, assignments and holidays.
+Access is restricted to users in the 'Manager' or 'Admin' groups.
+"""
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib import messages
+from django.utils import timezone
+from django.db.models import Q, Count, Prefetch
+from django.core.paginator import Paginator
+from django.http import JsonResponse, HttpResponseBadRequest
+from django.contrib.auth.models import User
+from django.db import transaction
+from datetime import timedelta, datetime
+
+from .models import ShiftMaster, ShiftAssignment, Holiday
+
+def is_manager_or_admin(user):
+    return user.groups.filter(name__in=['Manager', 'Admin']).exists() or user.is_superuser
+@login_required
+@user_passes_test(is_manager_or_admin)
+def shift_dashboard(request):
+    # Get shift statistics
+    shift_stats = ShiftMaster.objects.aggregate(
+        total_shifts=Count('id'),
+        active_shifts=Count('id', filter=Q(is_active=True))
+    )
+
+    # Get upcoming holidays
+    today = timezone.now().date()
+    upcoming_holidays = Holiday.objects.filter(
+        date__gte=today
+    ).order_by('date')[:5]
+
+    # Get current user's shift
+    user_shift = ShiftAssignment.get_user_current_shift(request.user)
+
+    # Get recent shift assignments with user and shift details
+    recent_assignments = ShiftAssignment.objects.filter(
+        is_current=True
+    ).select_related(
+        'user',
+        'shift'
+    ).order_by(
+        '-created_at'
+    )[:10]
+
+    context = {
+        'total_shifts': shift_stats['total_shifts'],
+        'active_shifts': shift_stats['active_shifts'], 
+        'total_holidays': Holiday.objects.count(),
+        'upcoming_holidays': upcoming_holidays,
+        'user_shift': user_shift,
+        'recent_assignments': recent_assignments,
+    }
+
+    return render(request, 'components/manager/shifts/dashboard.html', context)
+
+@login_required
+@user_passes_test(is_manager_or_admin)
+def shift_list(request):
+    try:
+        is_active = request.GET.get('is_active')
+        search_query = request.GET.get('search', '')
+        shifts = ShiftMaster.objects.all()
+        if is_active in ['true', 'false']:
+            shifts = shifts.filter(is_active=(is_active == 'true'))
+        if search_query:
+            shifts = shifts.filter(Q(name__icontains=search_query))
+        shifts = shifts.prefetch_related(
+            Prefetch(
+                'shiftassignment_set',
+                queryset=ShiftAssignment.objects.filter(is_current=True),
+                to_attr='current_assignments'
+            )
+        ).order_by('-created_at')
+        paginator = Paginator(shifts, 10)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        
+        # Get shift detail if requested
+        shift_detail = None
+        shift_pk = request.GET.get('shift_detail')
+        assignments = None
+        total_assigned = None
+        if shift_pk:
+            try:
+                shift_detail = get_object_or_404(ShiftMaster, pk=shift_pk)
+                assignments = ShiftAssignment.objects.filter(
+                    shift=shift_detail,
+                    is_current=True
+                ).select_related('user')
+                total_assigned = assignments.count()
+            except ShiftMaster.DoesNotExist:
+                messages.error(request, "Requested shift does not exist.")
+                return redirect('aps_manager:shift_list')
+        
+        context = {
+            'page_obj': page_obj,
+            'search_query': search_query,
+            'is_active': is_active,
+            'weekdays': ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+            'shift_detail': shift_detail,
+            'assignments': assignments,
+            'total_assigned': total_assigned,
+        }
+        
+        # If editing a shift, add it to context
+        shift_edit_pk = request.GET.get('shift_edit')
+        if shift_edit_pk:
+            try:
+                shift = get_object_or_404(ShiftMaster, pk=shift_edit_pk)
+                context['shift'] = shift
+                context['selected_days'] = shift.custom_work_days.split(',') if shift.custom_work_days else []
+            except ShiftMaster.DoesNotExist:
+                messages.error(request, "Shift to edit does not exist.")
+                return redirect('aps_manager:shift_list')
+        
+        # If deleting a shift, add delete context
+        shift_delete_pk = request.GET.get('shift_delete')
+        if shift_delete_pk:
+            try:
+                shift = get_object_or_404(ShiftMaster, pk=shift_delete_pk)
+                active_assignments = ShiftAssignment.objects.filter(shift=shift, is_current=True)
+                has_active_assignments = active_assignments.exists()
+                all_assignments = ShiftAssignment.objects.filter(shift=shift)
+                has_any_assignments = all_assignments.exists()
+                
+                context['shift'] = shift
+                context['has_active_assignments'] = has_active_assignments
+                context['has_any_assignments'] = has_any_assignments
+                context['assignment_count'] = all_assignments.count()
+            except ShiftMaster.DoesNotExist:
+                messages.error(request, "Shift to delete does not exist.")
+                return redirect('aps_manager:shift_list')
+        
+        return render(request, 'components/manager/shifts/shift_list.html', context)
+        
+    except Exception as e:
+        messages.error(request, f"An error occurred while loading shifts: {str(e)}")
+        return redirect('aps_manager:shift_list')
+
+@login_required
+@user_passes_test(is_manager_or_admin)
+def shift_detail(request, pk):
+    try:
+        # Redirect to shift_list with shift_detail parameter
+        return redirect(f'aps_manager:shift_list')
+    except Exception as e:
+        messages.error(request, f"Error accessing shift detail: {str(e)}")
+        return redirect('aps_manager:shift_list')
+
+@login_required
+@user_passes_test(is_manager_or_admin)
+def shift_create(request):
+    try:
+        if request.method == 'POST':
+            name = request.POST.get('name')
+            start_time = request.POST.get('start_time')
+            end_time = request.POST.get('end_time')
+            is_active = request.POST.get('is_active') == 'on'
+            work_days = request.POST.get('work_days')
+            
+            if not name or not start_time or not end_time or not work_days:
+                messages.error(request, "All fields are required.")
+                return redirect('aps_manager:shift_list')
+            
+            # Handle custom work days
+            custom_work_days = None
+            if work_days == 'Custom':
+                custom_days = request.POST.getlist('custom_days')
+                if not custom_days:
+                    messages.error(request, "Please select at least one day for custom schedule.")
+                    return redirect('aps_manager:shift_list')
+                custom_work_days = ','.join(custom_days)
+            
+            try:
+                shift = ShiftMaster.objects.create(
+                    name=name,
+                    start_time=start_time,
+                    end_time=end_time,
+                    is_active=is_active,
+                    work_days=work_days,
+                    custom_work_days=custom_work_days
+                )
+                messages.success(request, f"Shift '{shift.name}' created successfully!")
+                return redirect('aps_manager:shift_list')
+            except Exception as e:
+                messages.error(request, f"Error creating shift: {str(e)}")
+                return redirect('aps_manager:shift_list')
+        
+        # For GET requests, redirect to shift_list with shift_create parameter
+        return redirect('aps_manager:shift_list')
+    except Exception as e:
+        messages.error(request, f"An unexpected error occurred: {str(e)}")
+        return redirect('aps_manager:shift_list')
+
+@login_required
+@user_passes_test(is_manager_or_admin)
+def shift_update(request, pk):
+    try:
+        shift = get_object_or_404(ShiftMaster, pk=pk)
+        if request.method == 'POST':
+            try:
+                name = request.POST.get('name')
+                start_time = request.POST.get('start_time')
+                end_time = request.POST.get('end_time')
+                is_active = request.POST.get('is_active') == 'on'
+                work_days = request.POST.get('work_days')
+                
+                if not name or not start_time or not end_time or not work_days:
+                    messages.error(request, "All fields are required.")
+                    return redirect('aps_manager:shift_list')
+                    
+                # Handle custom work days
+                custom_work_days = None
+                if work_days == 'Custom':
+                    custom_days = request.POST.getlist('custom_days')
+                    if not custom_days:
+                        messages.error(request, "Please select at least one day for custom schedule.")
+                        return redirect('aps_manager:shift_list')
+                    custom_work_days = ','.join(custom_days)
+                    
+                shift.name = name
+                shift.start_time = start_time
+                shift.end_time = end_time
+                shift.is_active = is_active
+                shift.work_days = work_days
+                shift.custom_work_days = custom_work_days
+                shift.save()
+                messages.success(request, f"Shift '{shift.name}' updated successfully!")
+                return redirect('aps_manager:shift_list')
+            except Exception as e:
+                messages.error(request, f"Error updating shift: {str(e)}")
+                return redirect('aps_manager:shift_list')
+        else:
+            # Redirect to shift_list with shift_edit parameter
+            return redirect(f'aps_manager:shift_list')
+    except ShiftMaster.DoesNotExist:
+        messages.error(request, "Shift not found.")
+        return redirect('aps_manager:shift_list')
+    except Exception as e:
+        messages.error(request, f"An unexpected error occurred: {str(e)}")
+        return redirect('aps_manager:shift_list')
+
+@login_required
+@user_passes_test(is_manager_or_admin)
+def shift_delete(request, pk):
+    try:
+        shift = get_object_or_404(ShiftMaster, pk=pk)
+        
+        if request.method == 'POST':
+            try:
+                # Check for active assignments
+                active_assignments = ShiftAssignment.objects.filter(shift=shift, is_current=True)
+                has_active_assignments = active_assignments.exists()
+                all_assignments = ShiftAssignment.objects.filter(shift=shift)
+                
+                # Check if force delete option was selected
+                force_delete = request.POST.get('force_delete') == 'true'
+                
+                if has_active_assignments and not force_delete:
+                    # Only show warning if not forcing deletion
+                    messages.warning(
+                        request,
+                        f"Shift '{shift.name}' has active assignments. Use the force delete option to delete anyway."
+                    )
+                    return redirect('aps_manager:shift_list')
+                
+                with transaction.atomic():
+                    shift_name = shift.name
+                    # Delete all assignments related to this shift
+                    all_assignments.delete()
+                    shift.delete()
+                    messages.success(request, f"Shift '{shift_name}' deleted successfully!")
+                
+                return redirect('aps_manager:shift_list')
+            except Exception as e:
+                messages.error(request, f"Error during shift deletion: {str(e)}")
+                return redirect('aps_manager:shift_list')
+        else:
+            # Redirect to shift_list with shift_delete parameter
+            return redirect(f'aps_manager:shift_list')
+    except ShiftMaster.DoesNotExist:
+        messages.error(request, "Shift not found.")
+        return redirect('aps_manager:shift_list')
+    except Exception as e:
+        messages.error(request, f"An unexpected error occurred: {str(e)}")
+        return redirect('aps_manager:shift_list')
+
+@login_required
+@user_passes_test(is_manager_or_admin)
+def holiday_list(request):
+    year = request.GET.get('year', timezone.now().year)
+    try:
+        year = int(year)
+    except (ValueError, TypeError):
+        year = timezone.now().year
+    recurring_only = request.GET.get('recurring_only') == 'true'
+    
+    # Fix: Initialize holidays query properly
+    if recurring_only:
+        holidays = Holiday.objects.filter(recurring_yearly=True)
+    else:
+        start_date = datetime(year, 1, 1).date()
+        end_date = datetime(year, 12, 31).date()
+        holidays = Holiday.objects.filter(
+            Q(recurring_yearly=True) | 
+            Q(date__range=(start_date, end_date))
+        )
+    
+    # Use database-agnostic way to extract month and day
+    holidays = holidays.order_by('date__month', 'date__day')
+    
+    current_year = timezone.now().year
+    year_range = range(current_year - 2, current_year + 3)
+    paginator = Paginator(holidays, 15)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    context = {
+        'page_obj': page_obj,
+        'year': year,
+        'year_range': year_range,
+        'recurring_only': recurring_only,
+    }
+    return render(request, 'components/manager/shifts/holiday_list.html', context)
+
+@login_required
+@user_passes_test(is_manager_or_admin)
+def holiday_create(request):
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        date = request.POST.get('date')
+        recurring_yearly = request.POST.get('recurring_yearly') == 'on'
+        if not name or not date:
+            messages.error(request, "Name and date are required.")
+            return redirect('aps_manager:holiday_list')
+        try:
+            # Validate date format before creating
+            date_obj = datetime.strptime(date, '%Y-%m-%d').date()
+            holiday = Holiday.objects.create(
+                name=name,
+                date=date_obj,
+                recurring_yearly=recurring_yearly
+            )
+            messages.success(request, f"Holiday '{holiday.name}' created successfully!")
+            return redirect('aps_manager:holiday_list')
+        except ValueError:
+            messages.error(request, "Invalid date format. Please use YYYY-MM-DD.")
+            return redirect('aps_manager:holiday_list')
+        except Exception as e:
+            messages.error(request, f"Error creating holiday: {str(e)}")
+            return redirect('aps_manager:holiday_list')
+    else:
+        return redirect('aps_manager:holiday_list')
+
+@login_required
+@user_passes_test(is_manager_or_admin)
+def holiday_update(request, pk):
+    holiday = get_object_or_404(Holiday, pk=pk)
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        date = request.POST.get('date')
+        recurring_yearly = request.POST.get('recurring_yearly') == 'on'
+        if not name or not date:
+            messages.error(request, "Name and date are required.")
+            return redirect('aps_manager:holiday_list')
+        try:
+            # Validate date format before updating
+            date_obj = datetime.strptime(date, '%Y-%m-%d').date()
+            holiday.name = name
+            holiday.date = date_obj
+            holiday.recurring_yearly = recurring_yearly
+            holiday.save()
+            messages.success(request, f"Holiday '{holiday.name}' updated successfully!")
+            return redirect('aps_manager:holiday_list')
+        except ValueError:
+            messages.error(request, "Invalid date format. Please use YYYY-MM-DD.")
+            return redirect('aps_manager:holiday_list')
+        except Exception as e:
+            messages.error(request, f"Error updating holiday: {str(e)}")
+            return redirect('aps_manager:holiday_list')
+    else:
+        return redirect('aps_manager:holiday_list')
+
+@login_required
+@user_passes_test(is_manager_or_admin)
+def holiday_delete(request, pk):
+    holiday = get_object_or_404(Holiday, pk=pk)
+    if request.method == 'POST':
+        with transaction.atomic():
+            holiday_name = holiday.name
+            holiday.delete()
+            messages.success(request, f"Holiday '{holiday_name}' deleted successfully!")
+        return redirect('aps_manager:holiday_list')
+    else:
+        return redirect('aps_manager:holiday_list')
+
+@login_required
+@user_passes_test(is_manager_or_admin)
+def assignment_list(request):
+    assignments = ShiftAssignment.objects.all().select_related('user', 'shift')
+    current_only = request.GET.get('current_only') == 'true'
+    user_id = request.GET.get('user_id')
+    shift_id = request.GET.get('shift_id')
+    if current_only:
+        assignments = assignments.filter(is_current=True)
+    if user_id and user_id.isdigit():
+        assignments = assignments.filter(user_id=int(user_id))
+    if shift_id and shift_id.isdigit():
+        assignments = assignments.filter(shift_id=int(shift_id))
+    assignments = assignments.order_by('-created_at')
+    paginator = Paginator(assignments, 15)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    users = User.objects.all().order_by('username')
+    shifts = ShiftMaster.objects.filter(is_active=True).order_by('name')
+    context = {
+        'page_obj': page_obj,
+        'users': users,
+        'shifts': shifts,
+        'current_only': current_only,
+        'selected_user': int(user_id) if user_id and user_id.isdigit() else None,
+        'selected_shift': int(shift_id) if shift_id and shift_id.isdigit() else None,
+    }
+    return render(request, 'components/manager/shifts/assignment_list.html', context)
+
+@login_required
+@user_passes_test(is_manager_or_admin)
+def assignment_create(request):
+    if request.method != 'POST':
+        return HttpResponseBadRequest("Only POST requests are allowed")
+    user_id = request.POST.get('user')
+    shift_id = request.POST.get('shift')
+    effective_from = request.POST.get('effective_from')
+    effective_to = request.POST.get('effective_to')
+    is_current = request.POST.get('is_current') == 'on'
+    # Validate required fields
+    if not user_id or not shift_id or not effective_from:
+        messages.error(request, "User, shift, and effective from date are required.")
+        return redirect('aps_manager:assignment_list')
+    # Validate date format
+    try:
+        effective_from_date = datetime.strptime(effective_from, "%Y-%m-%d").date()
+    except (ValueError, TypeError):
+        messages.error(request, "Effective from date must be in YYYY-MM-DD format.")
+        return redirect('aps_manager:assignment_list')
+    effective_to_date = None
+    if effective_to:
+        try:
+            effective_to_date = datetime.strptime(effective_to, "%Y-%m-%d").date()
+            # Validate date range
+            if effective_to_date < effective_from_date:
+                messages.error(request, "Effective to date cannot be earlier than effective from date.")
+                return redirect('aps_manager:assignment_list')
+        except (ValueError, TypeError):
+            messages.error(request, "Effective to date must be in YYYY-MM-DD format.")
+            return redirect('aps_manager:assignment_list')
+    try:
+        user = User.objects.get(pk=user_id)
+        shift = ShiftMaster.objects.get(pk=shift_id)
+        
+        # Check if shift is active
+        if not shift.is_active:
+            messages.error(request, f"Cannot assign inactive shift '{shift.name}'.")
+            return redirect('aps_manager:assignment_list')
+            
+        assignment = ShiftAssignment.objects.create(
+            user=user,
+            shift=shift,
+            effective_from=effective_from_date,
+            effective_to=effective_to_date,
+            is_current=is_current
+        )
+        messages.success(request, f"Shift assignment for {assignment.user.username} created successfully!")
+    except User.DoesNotExist:
+        messages.error(request, "Selected user does not exist.")
+    except ShiftMaster.DoesNotExist:
+        messages.error(request, "Selected shift does not exist.")
+    except Exception as e:
+        messages.error(request, f"Failed to create shift assignment: {str(e)}")
+    return redirect('aps_manager:assignment_list')
+
+@login_required
+@user_passes_test(is_manager_or_admin)
+def bulk_assignment(request):
+    if request.method != 'POST':
+        return HttpResponseBadRequest("Only POST requests are allowed")
+    user_ids = request.POST.getlist('user_ids')
+    if not user_ids:
+        messages.error(request, "No users selected for bulk assignment")
+        return redirect('aps_manager:assignment_list')
+    shift_id = request.POST.get('shift_id')
+    effective_from = request.POST.get('effective_from')
+    effective_to = request.POST.get('effective_to')
+    is_current = request.POST.get('is_current') == 'on'
+    # Validate required fields
+    if not shift_id or not effective_from:
+        messages.error(request, "Shift and effective from date are required for adding users")
+        return redirect('aps_manager:assignment_list')
+    # Validate date format
+    try:
+        effective_from_date = datetime.strptime(effective_from, "%Y-%m-%d").date()
+    except (ValueError, TypeError):
+        messages.error(request, "Effective from date must be in YYYY-MM-DD format.")
+        return redirect('aps_manager:assignment_list')
+    effective_to_date = None
+    if effective_to:
+        try:
+            effective_to_date = datetime.strptime(effective_to, "%Y-%m-%d").date()
+            # Validate date range
+            if effective_to_date < effective_from_date:
+                messages.error(request, "Effective to date cannot be earlier than effective from date.")
+                return redirect('aps_manager:assignment_list')
+        except (ValueError, TypeError):
+            messages.error(request, "Effective to date must be in YYYY-MM-DD format.")
+            return redirect('aps_manager:assignment_list')
+    try:
+        shift = ShiftMaster.objects.get(pk=shift_id)
+        # Check if shift is active
+        if not shift.is_active:
+            messages.error(request, f"Cannot assign inactive shift '{shift.name}'.")
+            return redirect('aps_manager:assignment_list')
+    except ShiftMaster.DoesNotExist:
+        messages.error(request, "Selected shift does not exist")
+        return redirect('aps_manager:assignment_list')
+    created_count = 0
+    errors = []
+    with transaction.atomic():
+        for user_id in user_ids:
+            try:
+                user = User.objects.get(pk=user_id)
+                exists = ShiftAssignment.objects.filter(
+                    user=user,
+                    shift=shift,
+                    effective_from=effective_from_date,
+                    effective_to=effective_to_date,
+                ).exists()
+                if not exists:
+                    ShiftAssignment.objects.create(
+                        user=user,
+                        shift=shift,
+                        effective_from=effective_from_date,
+                        effective_to=effective_to_date,
+                        is_current=is_current,
+                    )
+                    created_count += 1
+            except User.DoesNotExist:
+                errors.append(f"User ID {user_id}: User does not exist")
+            except ValueError as ve:
+                errors.append(f"User ID {user_id}: Invalid date format. {str(ve)}")
+            except Exception as e:
+                errors.append(f"User ID {user_id}: {str(e)}")
+    if created_count:
+        messages.success(request, f"Shift assigned to {created_count} employee(s) successfully!")
+    if errors:
+        messages.error(request, "Some assignments failed: " + "; ".join(errors))
+    return redirect('aps_manager:assignment_list')
+
+@login_required
+@user_passes_test(is_manager_or_admin)
+def assignment_update(request, pk):
+    if request.method != 'POST':
+        return HttpResponseBadRequest("Only POST requests are allowed")
+    assignment = get_object_or_404(ShiftAssignment, pk=pk)
+    user_id = request.POST.get('user')
+    shift_id = request.POST.get('shift')
+    effective_from = request.POST.get('effective_from')
+    effective_to = request.POST.get('effective_to')
+    is_current = request.POST.get('is_current') == 'on'
+    # Validate required fields
+    if not user_id or not shift_id or not effective_from:
+        messages.error(request, "User, shift, and effective from date are required.")
+        return redirect('aps_manager:assignment_list')
+    # Validate date format
+    try:
+        effective_from_date = datetime.strptime(effective_from, "%Y-%m-%d").date()
+    except (ValueError, TypeError):
+        messages.error(request, "Effective from date must be in YYYY-MM-DD format.")
+        return redirect('aps_manager:assignment_list')
+    effective_to_date = None
+    if effective_to:
+        try:
+            effective_to_date = datetime.strptime(effective_to, "%Y-%m-%d").date()
+            # Validate date range
+            if effective_to_date < effective_from_date:
+                messages.error(request, "Effective to date cannot be earlier than effective from date.")
+                return redirect('aps_manager:assignment_list')
+        except (ValueError, TypeError):
+            messages.error(request, "Effective to date must be in YYYY-MM-DD format.")
+            return redirect('aps_manager:assignment_list')
+    try:
+        user = User.objects.get(pk=user_id)
+        shift = ShiftMaster.objects.get(pk=shift_id)
+        
+        # Check if shift is active
+        if not shift.is_active:
+            messages.error(request, f"Cannot assign inactive shift '{shift.name}'.")
+            return redirect('aps_manager:assignment_list')
+            
+        assignment.user = user
+        assignment.shift = shift
+        assignment.effective_from = effective_from_date
+        assignment.effective_to = effective_to_date
+        assignment.is_current = is_current
+        assignment.save()
+        messages.success(request, f"Shift assignment for {assignment.user.username} updated successfully!")
+    except User.DoesNotExist:
+        messages.error(request, "Selected user does not exist.")
+    except ShiftMaster.DoesNotExist:
+        messages.error(request, "Selected shift does not exist.")
+    except Exception as e:
+        messages.error(request, f"Failed to update shift assignment: {str(e)}")
+    return redirect('aps_manager:assignment_list')
+
+@login_required
+@user_passes_test(is_manager_or_admin)
+def assignment_delete(request, pk):
+    if request.method != 'POST':
+        return HttpResponseBadRequest("Only POST requests are allowed")
+    assignment = get_object_or_404(ShiftAssignment, pk=pk)
+    try:
+        with transaction.atomic():
+            user_name = assignment.user.username
+            assignment.delete()
+            messages.success(request, f"Shift assignment for {user_name} deleted successfully!")
+    except Exception as e:
+        messages.error(request, f"Failed to delete shift assignment: {str(e)}")
+    return redirect('aps_manager:assignment_list')
+
+@login_required
+@user_passes_test(is_manager_or_admin)
+def user_shift_info(request, user_id=None):
+    try:
+        if user_id:
+            user = get_object_or_404(User, pk=user_id)
+        else:
+            user = request.user
+        current_date = timezone.now().date()
+        shift = ShiftAssignment.get_user_current_shift(user, current_date)
+        if not shift:
+            context = {
+                'user': user,
+                'shift': None,
+                'error': "No active shift assignment found for this user"
+            }
+            return render(request, 'components/manager/shifts/user_shift_info.html', context)
+        is_holiday = Holiday.is_holiday(current_date)
+        is_working_day = shift.is_working_day(current_date) and not is_holiday
+        
+        # Get holidays for the next 7 days
+        date_range = [current_date + timedelta(days=i) for i in range(7)]
+        holidays = Holiday.objects.filter(date__in=date_range)
+        recurring_holidays = Holiday.objects.filter(recurring_yearly=True)
+        
+        schedule = []
+        for i in range(7):
+            date = current_date + timedelta(days=i)
+            
+            # Check if date is a holiday (exact match or recurring)
+            is_day_holiday = False
+            holiday_name = None
+            
+            # Check exact date match
+            exact_holiday = holidays.filter(date=date).first()
+            if exact_holiday:
+                is_day_holiday = True
+                holiday_name = exact_holiday.name
+            else:
+                # Check recurring holidays
+                for h in recurring_holidays:
+                    if h.date.day == date.day and h.date.month == date.month:
+                        is_day_holiday = True
+                        holiday_name = h.name
+                        break
+            
+            is_day_working = shift.is_working_day(date) and not is_day_holiday
+            schedule.append({
+                'date': date.strftime('%Y-%m-%d'),
+                'day_name': date.strftime('%A'),
+                'is_working_day': is_day_working,
+                'is_holiday': is_day_holiday,
+                'holiday_name': holiday_name,
+                'shift_start': shift.start_time.strftime('%H:%M') if is_day_working else 'Off',
+                'shift_end': shift.end_time.strftime('%H:%M') if is_day_working else 'Off',
+            })
+        context = {
+            'user': user,
+            'shift': shift,
+            'is_holiday': is_holiday,
+            'is_working_day': is_working_day,
+            'schedule': schedule,
+        }
+        return render(request, 'components/manager/shifts/user_shift_info.html', context)
+    except Exception as e:
+        context = {
+            'user': user if 'user' in locals() else request.user,
+            'error': f"Error retrieving shift information: {str(e)}"
+        }
+        return render(request, 'components/manager/shifts/user_shift_info.html', context)
+
+@login_required
+@user_passes_test(is_manager_or_admin)
+def shift_calendar(request):
+    today = timezone.now().date()
+    try:
+        start_date_str = request.GET.get('start_date')
+        if start_date_str:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        else:
+            start_date = today.replace(day=1)
+    except ValueError:
+        start_date = today.replace(day=1)
+    try:
+        end_date_str = request.GET.get('end_date')
+        if end_date_str:
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+        else:
+            if start_date.month == 12:
+                end_date = start_date.replace(year=start_date.year+1, month=1, day=1) - timedelta(days=1)
+            else:
+                end_date = start_date.replace(month=start_date.month+1, day=1) - timedelta(days=1)
+    except ValueError:
+        if start_date.month == 12:
+            end_date = start_date.replace(year=start_date.year+1, month=1, day=1) - timedelta(days=1)
+        else:
+            end_date = start_date.replace(month=start_date.month+1, day=1) - timedelta(days=1)
+    
+    # Get all holidays that might apply to the date range
+    date_specific_holidays = Holiday.objects.filter(
+        date__range=(start_date, end_date),
+        recurring_yearly=False
+    )
+    recurring_holidays = Holiday.objects.filter(recurring_yearly=True)
+    
+    calendar_data = []
+    current_date = start_date
+    while current_date <= end_date:
+        is_holiday = False
+        holiday_name = None
+        
+        # Check for date-specific holiday
+        date_holiday = date_specific_holidays.filter(date=current_date).first()
+        if date_holiday:
+            is_holiday = True
+            holiday_name = date_holiday.name
+        else:
+            # Check for recurring holiday
+            for h in recurring_holidays:
+                if h.date.day == current_date.day and h.date.month == current_date.month:
+                    is_holiday = True
+                    holiday_name = h.name
+                    break
+        
+        shift_assignments = []
+        if request.GET.get('show_shifts') == 'true':
+            active_assignments = ShiftAssignment.objects.filter(
+                is_current=True,
+                effective_from__lte=current_date,
+            ).filter(
+                Q(effective_to__isnull=True) | Q(effective_to__gte=current_date)
+            ).select_related('user', 'shift')[:5]
+            for assignment in active_assignments:
+                if assignment.shift.is_working_day(current_date) and not is_holiday:
+                    shift_assignments.append({
+                        'user': assignment.user.get_full_name() or assignment.user.username,
+                        'shift_name': assignment.shift.name,
+                        'start_time': assignment.shift.start_time.strftime('%H:%M'),
+                        'end_time': assignment.shift.end_time.strftime('%H:%M'),
+                    })
+        calendar_data.append({
+            'date': current_date,
+            'day_name': current_date.strftime('%a'),
+            'is_holiday': is_holiday,
+            'holiday_name': holiday_name,
+            'is_weekend': current_date.weekday() >= 5,
+            'shift_assignments': shift_assignments,
+            'is_today': current_date == today,
+        })
+        current_date += timedelta(days=1)
+    if start_date.day == 1:
+        prev_month = (start_date - timedelta(days=1)).replace(day=1)
+        if start_date.month == 12:
+            next_month = start_date.replace(year=start_date.year+1, month=1, day=1)
+        else:
+            next_month = start_date.replace(month=start_date.month+1, day=1)
+    else:
+        days_displayed = (end_date - start_date).days + 1
+        prev_month = start_date - timedelta(days=days_displayed)
+        next_month = end_date + timedelta(days=1)
+    context = {
+        'calendar_data': calendar_data,
+        'start_date': start_date,
+        'end_date': end_date,
+        'prev_month': prev_month,
+        'next_month': next_month,
+        'show_shifts': request.GET.get('show_shifts') == 'true',
+        'today': today,
+    }
+    return render(request, 'components/manager/shifts/shift_calendar.html', context)
+
+@login_required
+@user_passes_test(is_manager_or_admin)
+def api_get_shift_users(request, shift_id):
+    shift = get_object_or_404(ShiftMaster, pk=shift_id)
+    assignments = ShiftAssignment.objects.filter(
+        shift=shift,
+        is_current=True
+    ).select_related('user')
+    users = [{
+        'id': a.user.id,
+        'username': a.user.username,
+        'full_name': a.user.get_full_name(),
+        'email': a.user.email,
+        'assignment_id': a.id,
+        'effective_from': a.effective_from.strftime('%Y-%m-%d'),
+        'effective_to': a.effective_to.strftime('%Y-%m-%d') if a.effective_to else None,
+    } for a in assignments]
+    return JsonResponse({'users': users})
+
+@login_required
+@user_passes_test(is_manager_or_admin)
+def api_get_user_shift(request, user_id):
+    user = get_object_or_404(User, pk=user_id)
+    current_date = timezone.now().date()
+    shift = ShiftAssignment.get_user_current_shift(user, current_date)
+    if not shift:
+        return JsonResponse({'success': False, 'error': 'No active shift found for this user'})
+    is_holiday = Holiday.is_holiday(current_date)
+    is_working_day = shift.is_working_day(current_date) and not is_holiday
+    shift_data = {
+        'id': shift.id,
+        'name': shift.name,
+        'description': getattr(shift, 'description', ''),
+        'start_time': shift.start_time.strftime('%H:%M'),
+        'end_time': shift.end_time.strftime('%H:%M'),
+        'is_active': shift.is_active,
+        'working_days': shift.working_days,
+        'is_working_today': is_working_day,
+        'is_holiday_today': is_holiday,
+    }
+    return JsonResponse({'success': True, 'shift': shift_data})
+
+@login_required
+@user_passes_test(is_manager_or_admin)
+def api_toggle_shift_active(request, pk):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Only POST requests are allowed'})
+    shift = get_object_or_404(ShiftMaster, pk=pk)
+    try:
+        with transaction.atomic():
+            shift.is_active = not shift.is_active
+            shift.save()
+        return JsonResponse({'success': True, 'is_active': shift.is_active})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})

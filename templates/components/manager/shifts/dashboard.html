@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block title %}Shift Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2 class="mb-4">Shift Management Dashboard</h2>
+    
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Shifts</h5>
+                    <h2 class="card-text">{{ total_shifts }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Active Shifts</h5>
+                    <h2 class="card-text">{{ active_shifts }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Holidays</h5>
+                    <h2 class="card-text">{{ total_holidays }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Your Current Shift</h5>
+                    <h2 class="card-text">{{ user_shift.shift.name|default:"Not Assigned" }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Recent Assignments -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Recent Shift Assignments</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Shift</th>
+                                    <th>Assigned On</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for assignment in recent_assignments %}
+                                <tr>
+                                    <td>{{ assignment.user.get_full_name|default:assignment.user.username }}</td>
+                                    <td>{{ assignment.shift.name }}</td>
+                                    <td>{{ assignment.created_at|date:"M d, Y" }}</td>
+                                    <td>
+                                        <a href="{% url 'aps_manager:user_shift_info' assignment.user.id %}" 
+                                           class="btn btn-sm btn-info">
+                                            <i class="fas fa-info-circle"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center">No recent assignments</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upcoming Holidays -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Upcoming Holidays</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for holiday in upcoming_holidays %}
+                        <div class="list-group-item">
+                            <h6 class="mb-1">{{ holiday.name }}</h6>
+                            <small class="text-muted">{{ holiday.date|date:"F d, Y" }}</small>
+                        </div>
+                        {% empty %}
+                        <div class="list-group-item">
+                            <p class="mb-0">No upcoming holidays</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

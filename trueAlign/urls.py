@@ -83,7 +83,6 @@ hr_patterns = [
     path('reports/', views.user_reports, name='user_reports'),
     path('leave/', views.leave_view, name='leave_view'),
 ]
-
 # Manager-specific URLs under 'truealign/manager/'
 manager_patterns = [
     # Timesheet management
@@ -104,7 +103,6 @@ manager_patterns = [
     path('employee/', views.manager_employee_profile, name='manager_employee_profile'),
     path('user/<int:user_id>/', views.manager_user_detail, name='manager_user_detail'),
     path('assign-tasks/', views.assign_tasks, name='assign_tasks'),
-
     # Reports and monitoring
     path('report/', views.manager_report_view, name='report'),
     path('reports/breaks/', views.break_report_view_manager, name='break_report_view_manager'),
@@ -116,6 +114,41 @@ manager_patterns = [
     # Leave management
     path('leave/requests/', views.view_leave_requests_manager, name='view_leave_requests_manager'),
     path('leave/<int:leave_id>/<str:action>/', views.manage_leave_request_manager, name='manage_leave_manager'),
+
+    # Shift Management URLs (improved, explicit, RESTful)
+    # Dashboard
+    path('shifts/dashboard/', views.shift_dashboard, name='shift_dashboard'),
+    # Shift CRUD
+    path('shifts/', views.shift_list, name='shift_list'),
+    path('shifts/new/', views.shift_create, name='shift_create'),
+    path('shifts/<int:pk>/', views.shift_detail, name='shift_detail'),
+    path('shifts/<int:pk>/update/', views.shift_update, name='shift_update'),
+    path('shifts/<int:pk>/delete/', views.shift_delete, name='shift_delete'),
+    path('shifts/<int:pk>/toggle-active/', views.api_toggle_shift_active, name='toggle_shift_active'),
+
+    # Holiday CRUD
+    path('holidays/', views.holiday_list, name='holiday_list'),
+    path('holidays/create/', views.holiday_create, name='holiday_create'),
+    path('holidays/<int:pk>/update/', views.holiday_update, name='holiday_update'),
+    path('holidays/<int:pk>/delete/', views.holiday_delete, name='holiday_delete'),
+
+    # Shift Assignment CRUD
+    path('assignments/', views.assignment_list, name='assignment_list'),
+    path('assignments/create/', views.assignment_create, name='assignment_create'),
+    path('assignments/bulk-add/', views.bulk_assignment, name='bulk_assignment'),
+    path('assignments/<int:pk>/update/', views.assignment_update, name='assignment_update'),
+    path('assignments/<int:pk>/delete/', views.assignment_delete, name='assignment_delete'),
+
+    # User shift info
+    path('user-shift/', views.user_shift_info, name='user_shift_info'),
+    path('user-shift/<int:user_id>/', views.user_shift_info, name='user_shift_info_specific'),
+
+    # Shift calendar
+    path('shift-calendar/', views.shift_calendar, name='shift_calendar'),
+
+    # API endpoints
+    path('api/shifts/<int:shift_id>/users/', views.api_get_shift_users, name='api_get_shift_users'),
+    path('api/users/<int:user_id>/shift/', views.api_get_user_shift, name='api_get_user_shift'),
 ]
 
 # Chat URL patterns

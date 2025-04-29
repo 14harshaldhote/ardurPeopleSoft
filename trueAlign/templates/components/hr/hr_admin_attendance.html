@@ -1,303 +1,308 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <div class="max-w-7xl mx-auto">
-        <!-- Header -->
+<div class="min-h-screen ">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <!-- Page Header -->
         <div class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-900">Monthly Attendance Report</h1>
-            <p class="text-gray-600">{{ month_name }} {{ year }}</p>
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-4xl font-bold text-gray-900">Attendance Dashboard</h1>
+                    <div class="flex items-center mt-2">
+                        <p class="text-lg text-gray-600 mr-3">Viewing:</p>
+                        <div class="relative">
+                            <input type="month" 
+                                   class="form-input rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                   value="{{ year }}-{% if month < 10 %}0{% endif %}{{ month }}"
+                                   onchange="window.location.href='?month=' + this.value.split('-')[1] + '&year=' + this.value.split('-')[0]">
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="relative inline-block text-left">
+                        <button type="button" onclick="toggleExportDropdown()" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            <i class="fas fa-download mr-2"></i>
+                            Export Report
+                        </button>
+                        <div id="exportDropdown" class="hidden origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
+                            <div class="py-1" role="menu">
+                                <a href="?format=excel&month={{ month }}&year={{ year }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Export as Excel</a>
+                                <a href="?format=csv&month={{ month }}&year={{ year }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Export as CSV</a>
+                                <a href="?format=pdf&month={{ month }}&year={{ year }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Export as PDF</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
         </div>
 
-        <!-- Advanced Search Section -->
-        <div class="mb-8 bg-white p-6 rounded-lg shadow-md">
-            <form method="GET" class="space-y-4" id="searchForm">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <!-- Employee Search -->
-                    <div class="relative">
-                        <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Employee Name/ID</label>
-                        <div class="relative">
+        <!-- Stats Overview -->
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+            <!-- Present -->
+            <div class="bg-white overflow-hidden shadow-lg rounded-2xl">
+                <div class="p-6">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 p-3 rounded-xl bg-green-100">
+                            <i class="fas fa-user-check text-2xl text-green-600"></i>
+                        </div>
+                        <div class="ml-5">
+                            <p class="text-sm font-medium text-gray-500">Present Today</p>
+                            <div class="flex items-baseline">
+                                <p class="text-2xl font-semibold text-gray-900">{{ present_count }}</p>
+                                <p class="ml-2 text-sm font-medium text-green-600">+2.5%</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Absent -->
+            <div class="bg-white overflow-hidden shadow-lg rounded-2xl">
+                <div class="p-6">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 p-3 rounded-xl bg-red-100">
+                            <i class="fas fa-user-times text-2xl text-red-600"></i>
+                        </div>
+                        <div class="ml-5">
+                            <p class="text-sm font-medium text-gray-500">Absent Today</p>
+                            <div class="flex items-baseline">
+                                <p class="text-2xl font-semibold text-gray-900">{{ absent_count }}</p>
+                                <p class="ml-2 text-sm font-medium text-red-600">-1.2%</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Late -->
+            <div class="bg-white overflow-hidden shadow-lg rounded-2xl">
+                <div class="p-6">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 p-3 rounded-xl bg-amber-100">
+                            <i class="fas fa-clock text-2xl text-amber-600"></i>
+                        </div>
+                        <div class="ml-5">
+                            <p class="text-sm font-medium text-gray-500">Late Arrivals</p>
+                            <div class="flex items-baseline">
+                                <p class="text-2xl font-semibold text-gray-900">{{ late_count }}</p>
+                                <p class="ml-2 text-sm font-medium text-amber-600">+0.8%</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- WFH -->
+            <div class="bg-white overflow-hidden shadow-lg rounded-2xl">
+                <div class="p-6">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 p-3 rounded-xl bg-blue-100">
+                            <i class="fas fa-home text-2xl text-blue-600"></i>
+                        </div>
+                        <div class="ml-5">
+                            <p class="text-sm font-medium text-gray-500">Working Remote</p>
+                            <div class="flex items-baseline">
+                                <p class="text-2xl font-semibold text-gray-900">{{ wfh_count }}</p>
+                                <p class="ml-2 text-sm font-medium text-blue-600">+5.3%</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Advanced Search & Filters -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+            <form method="GET" class="space-y-6" id="searchForm">
+                <div class="grid grid-cols-1 gap-6 md:grid-cols-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Employee Search</label>
+                        <div class="mt-1 relative rounded-md shadow-sm">
                             <input type="text" 
-                                   id="search" 
                                    name="search" 
                                    value="{{ request.GET.search|default:'' }}"
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pl-10"
-                                   placeholder="Search employees...">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                   class="block w-full pr-10 pl-4 py-3 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                                   placeholder="Search by name or ID...">
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                                 <i class="fas fa-search text-gray-400"></i>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Location Filter -->
                     <div>
-                        <label for="location" class="block text-sm font-medium text-gray-700 mb-1">Location</label>
-                        <select id="location" 
-                                name="location" 
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <label class="block text-sm font-medium text-gray-700">Department</label>
+                        <select class="mt-1 block w-full pl-3 pr-10 py-3 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-lg">
+                            <option>All Departments</option>
+                            <option>Engineering</option>
+                            <option>Marketing</option>
+                            <option>Sales</option>
+                            <option>HR</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Location</label>
+                        <select name="location" class="mt-1 block w-full pl-3 pr-10 py-3 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-lg">
                             <option value="">All Locations</option>
                             <option value="Pune" {% if request.GET.location == 'Pune' %}selected{% endif %}>Pune</option>
                             <option value="Mumbai" {% if request.GET.location == 'Mumbai' %}selected{% endif %}>Mumbai</option>
                         </select>
                     </div>
 
-                    <!-- Status Filter -->
                     <div>
-                        <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                        <select id="status" 
-                                name="status" 
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <label class="block text-sm font-medium text-gray-700">Status</label>
+                        <select name="status" class="mt-1 block w-full pl-3 pr-10 py-3 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-lg">
                             <option value="">All Status</option>
                             <option value="Present" {% if request.GET.status == 'Present' %}selected{% endif %}>Present</option>
                             <option value="Absent" {% if request.GET.status == 'Absent' %}selected{% endif %}>Absent</option>
-                            <option value="Leave" {% if request.GET.status == 'Leave' %}selected{% endif %}>On Leave</option>
-                            <option value="WFH" {% if request.GET.status == 'WFH' %}selected{% endif %}>Work From Home</option>
+                            <option value="Late" {% if request.GET.status == 'Late' %}selected{% endif %}>Late</option>
+                            <option value="WFH" {% if request.GET.status == 'WFH' %}selected{% endif %}>Remote Work</option>
                         </select>
                     </div>
                 </div>
 
-                <div class="flex items-center justify-between mt-4">
-                    <div class="flex items-center space-x-4">
-                        <button type="submit" 
-                                class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                            <i class="fas fa-search mr-2"></i>Search
+                <div class="flex items-center justify-between pt-4">
+                    <div class="flex space-x-3">
+                        <button type="submit" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">
+                            Apply Filters
                         </button>
-                        <button type="reset" 
-                                class="bg-gray-100 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-                                onclick="window.location.href='?month={{ month }}&year={{ year }}'">
-                            <i class="fas fa-undo mr-2"></i>Reset
+                        <button type="reset" onclick="window.location.href='?month={{ month }}&year={{ year }}'" class="inline-flex items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50">
+                            Reset
                         </button>
                     </div>
-                    
-                    <!-- Quick Filters -->
-                    <div class="flex items-center space-x-2">
-                        <span class="text-sm text-gray-500">Quick Filters:</span>
-                        <button type="button" 
-                                onclick="quickFilter('late')"
-                                class="px-3 py-1 text-sm rounded-full bg-orange-100 text-orange-700 hover:bg-orange-200">
-                            Late
+
+                    <div class="flex items-center space-x-3">
+                        <button type="button" onclick="quickFilter('late')" class="inline-flex items-center px-4 py-2 rounded-full bg-amber-100 text-amber-800 hover:bg-amber-200">
+                            <span class="text-sm font-medium">Late ({{ late_count }})</span>
                         </button>
-                        <button type="button"
-                                onclick="quickFilter('absent')" 
-                                class="px-3 py-1 text-sm rounded-full bg-red-100 text-red-700 hover:bg-red-200">
-                            Absent
+                        <button type="button" onclick="quickFilter('absent')" class="inline-flex items-center px-4 py-2 rounded-full bg-red-100 text-red-800 hover:bg-red-200">
+                            <span class="text-sm font-medium">Absent ({{ absent_count }})</span>
                         </button>
-                        <button type="button"
-                                onclick="quickFilter('wfh')"
-                                class="px-3 py-1 text-sm rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200">
-                            WFH
+                        <button type="button" onclick="quickFilter('wfh')" class="inline-flex items-center px-4 py-2 rounded-full bg-blue-100 text-blue-800 hover:bg-blue-200">
+                            <span class="text-sm font-medium">Remote ({{ wfh_count }})</span>
                         </button>
                     </div>
                 </div>
             </form>
         </div>
 
-        <!-- Month Navigation and Download Options -->
-        <div class="flex justify-between items-center mb-8">
-            <div class="flex items-center gap-4">
-                <a href="?month={{ prev_month }}&year={{ prev_year }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.location %}&location={{ request.GET.location }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" 
-                   class="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">
-                    <i class="fas fa-chevron-left mr-2"></i>Previous Month
-                </a>
-                <div class="text-lg font-semibold">{{ month_name }} {{ year }}</div>
-                <a href="?month={{ next_month }}&year={{ next_year }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.location %}&location={{ request.GET.location }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" 
-                   class="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">
-                    Next Month<i class="fas fa-chevron-right ml-2"></i>
-                </a>
-            </div>
-
-            <!-- Download Options -->
-            <div class="flex items-center gap-3">
-                <div class="relative">
-                    <button id="downloadBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center">
-                        <i class="fas fa-download mr-2"></i>Download Report
-                        <i class="fas fa-chevron-down ml-2"></i>
-                    </button>
-                    <div id="downloadMenu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-50">
-                        <a href="?month={{ month }}&year={{ year }}&format=excel{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.location %}&location={{ request.GET.location }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" 
-                           class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
-                            <i class="fas fa-file-excel mr-2 text-green-600"></i>Excel Format
-                        </a>
-                        <a href="?month={{ month }}&year={{ year }}&format=pdf{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.location %}&location={{ request.GET.location }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" 
-                           class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
-                            <i class="fas fa-file-pdf mr-2 text-red-600"></i>PDF Format
-                        </a>
-                        <a href="?month={{ month }}&year={{ year }}&format=csv{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.location %}&location={{ request.GET.location }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" 
-                           class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
-                            <i class="fas fa-file-csv mr-2 text-blue-600"></i>CSV Format
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Custom Month Download -->
-                <div class="relative">
-                    <button id="customMonthBtn" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center">
-                        <i class="fas fa-calendar-alt mr-2"></i>Custom Month
-                    </button>
-                    <div id="customMonthMenu" class="hidden absolute right-0 mt-2 p-4 w-64 bg-white rounded-lg shadow-lg z-50">
-                        <form action="" method="GET" class="space-y-3">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Select Month</label>
-                                <input type="month" name="custom_month" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Format</label>
-                                <select name="format" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                                    <option value="excel">Excel</option>
-                                    <option value="pdf">PDF</option>
-                                    <option value="csv">CSV</option>
-                                </select>
-                            </div>
-                            {% if request.GET.search %}<input type="hidden" name="search" value="{{ request.GET.search }}">{% endif %}
-                            {% if request.GET.location %}<input type="hidden" name="location" value="{{ request.GET.location }}">{% endif %}
-                            {% if request.GET.status %}<input type="hidden" name="status" value="{{ request.GET.status }}">{% endif %}
-                            <button type="submit" class="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
-                                Download
-                            </button>
-                        </form>
-                    </div>
-                </div>
+        <!-- Attendance Table -->
+        <div class="bg-white shadow-lg rounded-2xl ">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50 sticky top-0 z-20">
+                        <tr>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase sticky left-0 bg-gray-50 z-30 tracking-wider shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Employee</th>
+                            {% for day in days_range %}
+                            <th scope="col" class="px-4 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                {{ day|date:"d" }}<br>
+                                <span class="text-gray-400">{{ day|date:"D" }}</span>
+                            </th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200 overflow-y-auto">
+                        {% for row in attendance_matrix %}
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap sticky left-0 bg-white z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                                <div class="flex items-center">
+                                
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-gray-900">{{ row.employee.username }}</div>
+                                        <div class="text-sm text-gray-500">{{ row.employee.first_name }} {{ row.employee.last_name }}</div>
+                                        <div class="text-sm text-gray-400">{{ row.work_location }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            {% for date, data in row.attendance.items %}
+                            <td class="px-2 py-4 text-center">
+                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full
+                                    {% if data.status == 'Present' %}bg-green-100 text-green-800
+                                    {% elif data.status == 'Absent' %}bg-red-100 text-red-800
+                                    {% elif data.status == 'Late' %}bg-amber-100 text-amber-800
+                                    {% elif data.status == 'On Leave' %}bg-purple-100 text-purple-800
+                                    {% elif data.status == 'Work From Home' %}bg-blue-100 text-blue-800
+                                    {% elif data.status == 'Weekend' %}bg-gray-100 text-gray-600
+                                    {% elif data.status == 'Holiday' %}bg-teal-100 text-teal-800
+                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {{ data.status|slice:":1" }}
+                                </span>
+                                {% if data.working_hours %}
+                                <div class="text-xs text-gray-500 mt-1">{{ data.working_hours }}</div>
+                                {% endif %}
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
-
-        <!-- Attendance Table -->
-        <div class="bg-white rounded-lg shadow overflow-x-auto">
-            <table class="min-w-full">
-                <thead class="bg-gray-50 sticky top-0 z-10">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50">Employee</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-40 bg-gray-50">Location</th>
-                        {% for day in days_range %}
-                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
-                            {{ day|date:"D" }}<br>{{ day|date:"d" }}
-                        </th>
-                        {% endfor %}
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200" style="max-height: calc(100vh - 300px); overflow-y: auto;">
-                    {% for row in attendance_matrix %}
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4 whitespace-nowrap sticky left-0 bg-white">
-                            <div class="flex items-center">
-                                <div class="flex-shrink-0 h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                                    {% if row.employee.first_name and row.employee.last_name %}
-                                        {{ row.employee.first_name|first|upper }}{{ row.employee.last_name|first|upper }}
-                                    {% else %}
-                                        --
-                                    {% endif %}
-                                </div>
-                                <div class="ml-4">
-                                    <div class="text-sm font-medium text-gray-900">
-                                        {% if row.employee.first_name and row.employee.last_name %}
-                                            {{ row.employee.first_name }} {{ row.employee.last_name }}
-                                        {% else %}
-                                            Unknown Employee
-                                        {% endif %}
-                                    </div>
-                                    <div class="text-sm text-gray-500">{{ row.employee.username|default:"No email" }}</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap sticky left-40 bg-white">
-                            <span class="px-2 py-1 text-xs rounded-full {% if row.work_location == 'Pune' %}bg-blue-100 text-blue-800{% else %}bg-purple-100 text-purple-800{% endif %}">
-                                {{ row.work_location|default:"Unknown" }}
-                            </span>
-                        </td>
-                        {% for day, data in row.attendance.items %}
-                        <td class="px-4 py-4 text-center whitespace-nowrap">
-                            <div class="flex flex-col items-center">
-                                {% if data.status == 'Present' %}
-                                    <span class="h-3 w-3 rounded-full bg-green-500" title="Present"></span>
-                                {% elif data.status == 'Absent' %}
-                                    <span class="h-3 w-3 rounded-full bg-red-500" title="Absent"></span>
-                                {% elif data.status == 'On Leave' %}
-                                    <span class="h-3 w-3 rounded-full bg-yellow-500" title="On Leave"></span>
-                                {% elif data.status == 'Work From Home' %}
-                                    <span class="h-3 w-3 rounded-full bg-blue-500" title="Work From Home"></span>
-                                {% elif data.status == 'Late' %}
-                                    <span class="h-3 w-3 rounded-full bg-orange-500" title="Late"></span>
-                                {% elif data.status == 'Half Day' %}
-                                    <span class="h-3 w-3 rounded-full bg-purple-500" title="Half Day"></span>
-                                {% elif data.status == 'Weekend Work' %}
-                                    <span class="h-3 w-3 rounded-full bg-indigo-500" title="Weekend Work"></span>
-                                {% elif data.is_holiday %}
-                                    <span class="h-3 w-3 rounded-full bg-gray-500" title="Holiday"></span>
-                                {% else %}
-                                    <span class="h-3 w-3 rounded-full bg-gray-200" title="No Record"></span>
-                                {% endif %}
-                                {% if data.working_hours %}
-                                    <span class="text-xs text-gray-500 mt-1">{{ data.working_hours }}</span>
-                                {% endif %}
-                            </div>
-                        </td>
-                        {% endfor %}
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="30" class="px-6 py-4 text-center text-gray-500">
-                            No attendance records found
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <!-- Month Navigation and Pagination -->
+        <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6 rounded-b-2xl">
+            <div class="flex-1 flex justify-between sm:hidden">
+                <a href="?month={{ prev_month }}&year={{ prev_year }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    <i class="fas fa-chevron-left mr-2"></i>
+                    {{ prev_month }}/{{ prev_year }}
+                </a>
+                <a href="?month={{ next_month }}&year={{ next_year }}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    {{ next_month }}/{{ next_year }}
+                    <i class="fas fa-chevron-right ml-2"></i>
+                </a>
+            </div>
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm text-gray-700">
+                        Viewing attendance for <span class="font-medium">{{ month_name }} {{ year }}</span>
+                    </p>
+                </div>
+                <div>
+                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Month Navigation">
+                        <a href="?month={{ prev_month }}&year={{ prev_year }}" class="relative inline-flex items-center px-4 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <i class="fas fa-chevron-left mr-2"></i>
+                            {{ prev_month }}/{{ prev_year }}
+                        </a>
+                        
+                        <!-- Current Month Selector -->
+                        <div class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                            <input type="month" 
+                                   class="form-input border-0 focus:ring-0" 
+                                   value="{{ year }}-{% if month < 10 %}0{% endif %}{{ month }}"
+                                   onchange="window.location.href='?month=' + this.value.split('-')[1] + '&year=' + this.value.split('-')[0]">
+                        </div>
+                        
+                        <a href="?month={{ next_month }}&year={{ next_year }}" class="relative inline-flex items-center px-4 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            {{ next_month }}/{{ next_year }}
+                            <i class="fas fa-chevron-right ml-2"></i>
+                        </a>
+                    </nav>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- JavaScript for Dropdowns and Search -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Download dropdown toggle
-    const downloadBtn = document.getElementById('downloadBtn');
-    const downloadMenu = document.getElementById('downloadMenu');
-    
-    if (downloadBtn && downloadMenu) {
-        downloadBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            downloadMenu.classList.toggle('hidden');
-            if (customMonthMenu) {
-                customMonthMenu.classList.add('hidden');
-            }
-        });
-    }
-    
-    // Custom month dropdown toggle
-    const customMonthBtn = document.getElementById('customMonthBtn');
-    const customMonthMenu = document.getElementById('customMonthMenu');
-    
-    if (customMonthBtn && customMonthMenu) {
-        customMonthBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            customMonthMenu.classList.toggle('hidden');
-            if (downloadMenu) {
-                downloadMenu.classList.add('hidden');
-            }
-        });
-    }
-    
-    // Close dropdowns when clicking outside
-    document.addEventListener('click', function(e) {
-        if (downloadMenu && !downloadBtn?.contains(e.target) && !downloadMenu.contains(e.target)) {
-            downloadMenu.classList.add('hidden');
-        }
-        if (customMonthMenu && !customMonthBtn?.contains(e.target) && !customMonthMenu.contains(e.target)) {
-            customMonthMenu.classList.add('hidden');
+    // Export dropdown toggle
+    window.toggleExportDropdown = function() {
+        const dropdown = document.getElementById('exportDropdown');
+        dropdown.classList.toggle('hidden');
+    };
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(event) {
+        const dropdown = document.getElementById('exportDropdown');
+        const exportButton = event.target.closest('button');
+        if (!exportButton && !dropdown.contains(event.target)) {
+            dropdown.classList.add('hidden');
         }
     });
-    
-    // Initialize month input with current month
-    const monthInput = document.querySelector('input[name="custom_month"]');
-    if (monthInput) {
-        const today = new Date();
-        const year = today.getFullYear();
-        const month = String(today.getMonth() + 1).padStart(2, '0');
-        monthInput.value = `${year}-${month}`;
-    }
 
     // Quick Filter Function
     window.quickFilter = function(type) {
-        const statusSelect = document.getElementById('status');
+        const statusSelect = document.querySelector('select[name="status"]');
         switch(type) {
             case 'late':
                 statusSelect.value = 'Late';
@@ -312,21 +317,8 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('searchForm').submit();
     }
 
-    // Handle download form submission
-    const downloadForm = document.querySelector('#customMonthMenu form');
-    if (downloadForm) {
-        downloadForm.addEventListener('submit', function(e) {
-            const monthInput = this.querySelector('input[name="custom_month"]');
-            if (!monthInput.value) {
-                e.preventDefault();
-                alert('Please select a month');
-                return false;
-            }
-        });
-    }
-
-    // Enhanced search functionality with debounce
-    const searchInput = document.getElementById('search');
+    // Enhanced search with debounce
+    const searchInput = document.querySelector('input[name="search"]');
     let searchTimeout;
 
     if (searchInput) {

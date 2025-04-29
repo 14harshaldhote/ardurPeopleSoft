@@ -1,0 +1,317 @@
+{% extends "components/manager/shifts/dashboard.html" %}
+
+{% block shift_content %}
+<section class="max-w-6xl mx-auto px-4 py-8">
+    <section class="flex flex-col sm:flex-row justify-between items-center mb-8">
+        <h2 class="text-3xl font-bold text-gray-900 mb-2 sm:mb-0 flex items-center gap-3">
+            <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <rect x="3" y="4" width="18" height="18" rx="4" stroke="currentColor" stroke-width="2" fill="none"/>
+                <path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            Holiday Management
+        </h2>
+        <div class="flex space-x-3">
+            <!-- Button to open Add Holiday Modal -->
+            <button type="button"
+                onclick="document.getElementById('add-holiday-modal').classList.remove('hidden')"
+                class="inline-flex items-center px-5 py-2.5 bg-indigo-600 text-white rounded-lg shadow-lg hover:bg-indigo-700 transition-all duration-200 font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                </svg>
+                Add Holiday
+            </button>
+            <button type="button"
+                onclick="window.history.back();"
+                class="inline-flex items-center px-5 py-2.5 bg-white text-gray-700 rounded-lg shadow-lg hover:bg-gray-50 transition-all duration-200 font-semibold focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 border border-gray-200"
+                title="Back">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+                </svg>
+                Back
+            </button>
+        </div>
+    </section>
+
+    <!-- Add Holiday Modal -->
+    <div id="add-holiday-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm hidden transition-all">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-8 relative animate-fade-in">
+            <button type="button" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+                onclick="document.getElementById('add-holiday-modal').classList.add('hidden')"
+                aria-label="Close">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <h2 class="text-2xl font-bold mb-6 text-indigo-700 flex items-center gap-3">
+                <svg class="w-7 h-7 text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                </svg>
+                Add New Holiday
+            </h2>
+            <form method="post" action="{% url 'aps_manager:holiday_create' %}" class="space-y-5">
+                {% csrf_token %}
+                <div>
+                    <label for="holiday_name" class="block text-sm font-semibold text-gray-700 mb-2">Holiday Name <span class="text-red-500">*</span></label>
+                    <input type="text" name="name" id="holiday_name" placeholder="Enter holiday name" class="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-shadow" required autocomplete="off">
+                </div>
+                <div>
+                    <label for="holiday_date" class="block text-sm font-semibold text-gray-700 mb-2">Holiday Date <span class="text-red-500">*</span></label>
+                    <input type="date" name="date" id="holiday_date" class="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-shadow" required>
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" name="recurring_yearly" id="holiday_recurring" class="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 transition-colors">
+                    <label for="holiday_recurring" class="ml-3 block text-sm text-gray-700">Recurring Yearly Holiday</label>
+                </div>
+                <div class="flex justify-end space-x-3 mt-8">
+                    <button type="button" onclick="document.getElementById('add-holiday-modal').classList.add('hidden')" class="px-5 py-2.5 bg-white text-gray-700 rounded-lg hover:bg-gray-50 transition-all duration-200 text-sm font-semibold border border-gray-200 shadow-sm">Cancel</button>
+                    <button type="submit" class="px-5 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all duration-200 text-sm font-semibold shadow-lg">Add Holiday</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Holiday Modal -->
+    <div id="edit-holiday-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm hidden transition-all">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-8 relative animate-fade-in">
+            <button type="button" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+                onclick="document.getElementById('edit-holiday-modal').classList.add('hidden')"
+                aria-label="Close">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <h2 class="text-2xl font-bold mb-6 text-yellow-700 flex items-center gap-3">
+                <svg class="w-7 h-7 text-yellow-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 20h9" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 3.5a2.121 2.121 0 113 3L7 19.5 3 21l1.5-4L16.5 3.5z" />
+                </svg>
+                Edit Holiday
+            </h2>
+            <form id="edit-holiday-form" method="post" class="space-y-5">
+                {% csrf_token %}
+                <input type="hidden" name="holiday_id" id="edit_holiday_id">
+                <div>
+                    <label for="edit_holiday_name" class="block text-sm font-semibold text-gray-700 mb-2">Holiday Name <span class="text-red-500">*</span></label>
+                    <input type="text" name="name" id="edit_holiday_name" placeholder="Enter holiday name" class="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-sm transition-shadow" required autocomplete="off">
+                </div>
+                <div>
+                    <label for="edit_holiday_date" class="block text-sm font-semibold text-gray-700 mb-2">Holiday Date <span class="text-red-500">*</span></label>
+                    <input type="date" name="date" id="edit_holiday_date" class="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-sm transition-shadow" required>
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" name="recurring_yearly" id="edit_holiday_recurring" class="h-5 w-5 rounded border-gray-300 text-yellow-500 focus:ring-yellow-500 transition-colors">
+                    <label for="edit_holiday_recurring" class="ml-3 block text-sm text-gray-700">Recurring Yearly Holiday</label>
+                </div>
+                <div class="flex justify-end space-x-3 mt-8">
+                    <button type="button" onclick="document.getElementById('edit-holiday-modal').classList.add('hidden')" class="px-5 py-2.5 bg-white text-gray-700 rounded-lg hover:bg-gray-50 transition-all duration-200 text-sm font-semibold border border-gray-200 shadow-sm">Cancel</button>
+                    <button type="submit" class="px-5 py-2.5 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-all duration-200 text-sm font-semibold shadow-lg">Update Holiday</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Holiday Modal -->
+    <div id="delete-holiday-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm hidden transition-all">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-8 relative animate-fade-in">
+            <button type="button" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+                onclick="document.getElementById('delete-holiday-modal').classList.add('hidden')"
+                aria-label="Close">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <div class="flex items-center gap-4 mb-6">
+                <div class="bg-red-100 p-3 rounded-full">
+                    <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold text-red-700">Delete Holiday</h2>
+            </div>
+            <p class="mb-6 text-gray-700 text-lg" id="delete-holiday-message">Are you sure you want to delete this holiday?</p>
+            <form id="delete-holiday-form" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="holiday_id" id="delete_holiday_id">
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="document.getElementById('delete-holiday-modal').classList.add('hidden')" class="px-5 py-2.5 bg-white text-gray-700 rounded-lg hover:bg-gray-50 transition-all duration-200 text-sm font-semibold border border-gray-200 shadow-sm">Cancel</button>
+                    <button type="submit" class="px-5 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-200 text-sm font-semibold shadow-lg">Delete Holiday</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <section class="bg-white shadow-xl rounded-xl">
+        <div class="p-6">
+            <!-- Filter Bar -->
+            <form method="get" class="flex flex-col md:flex-row md:items-end md:space-x-6 mb-8 space-y-4 md:space-y-0 bg-gray-50 p-4 rounded-lg">
+                <div>
+                    <label for="year" class="block text-sm font-semibold text-gray-700 mb-2">Select Year</label>
+                    <select name="year" id="year" class="border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm min-w-[120px]">
+                        {% for y in year_range %}
+                            <option value="{{ y }}" {% if year == y %}selected{% endif %}>{{ y }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" name="recurring_only" id="recurring_only" value="true" class="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" {% if recurring_only %}checked{% endif %}>
+                    <label for="recurring_only" class="ml-3 text-sm text-gray-700 font-medium">Show Recurring Holidays Only</label>
+                </div>
+                <div class="flex space-x-3">
+                    <button type="submit" class="inline-flex items-center px-5 py-2.5 bg-indigo-600 text-white rounded-lg shadow-lg hover:bg-indigo-700 transition-all duration-200 font-semibold">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v16a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm4 5h8m-8 4h8m-8 4h8"/>
+                        </svg>
+                        Apply Filter
+                    </button>
+                    <a href="{% url 'aps_manager:holiday_list' %}" class="inline-flex items-center px-5 py-2.5 bg-white text-gray-700 rounded-lg shadow hover:bg-gray-50 transition-all duration-200 text-sm font-semibold border border-gray-200">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                        Reset
+                    </a>
+                </div>
+            </form>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Name</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Recurring</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-100">
+                        {% for holiday in page_obj %}
+                        <tr class="hover:bg-indigo-50/50 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap text-gray-900 font-medium">{{ holiday.name }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-gray-700">
+                                {{ holiday.date|date:"M d, Y" }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {% if holiday.recurring_yearly %}
+                                <span class="inline-flex items-center px-3 py-1 text-sm font-semibold rounded-full bg-green-100 text-green-800">
+                                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                                    </svg>
+                                    Yes
+                                </span>
+                                {% else %}
+                                <span class="inline-flex items-center px-3 py-1 text-sm font-semibold rounded-full bg-gray-100 text-gray-700">
+                                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <circle cx="12" cy="12" r="6" stroke="currentColor" stroke-width="2" fill="none"/>
+                                    </svg>
+                                    No
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex space-x-3">
+                                    <button type="button"
+                                        class="inline-flex items-center px-3 py-1.5 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 transition-colors text-sm font-semibold"
+                                        title="Edit Holiday"
+                                        onclick="openEditHolidayModal({{ holiday.pk }}, '{{ holiday.name|escapejs }}', '{{ holiday.date }}', {{ holiday.recurring_yearly|yesno:'true,false' }})">
+                                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6-6 3 3-6 6H9v-3z"/>
+                                        </svg>
+                                        Edit
+                                    </button>
+                                    <button type="button"
+                                        class="inline-flex items-center px-3 py-1.5 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-sm font-semibold"
+                                        title="Delete Holiday"
+                                        onclick="openDeleteHolidayModal({{ holiday.pk }}, '{{ holiday.name|escapejs }}')">
+                                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                                        </svg>
+                                        Delete
+                                    </button>
+                                </div>
+                                <!-- Hidden forms for update/delete -->
+                                <form id="update-holiday-form-{{ holiday.pk }}" method="post" action="{% url 'aps_manager:holiday_update' holiday.pk %}" style="display:none;">
+                                    {% csrf_token %}
+                                </form>
+                                <form id="delete-holiday-form-{{ holiday.pk }}" method="post" action="{% url 'aps_manager:holiday_delete' holiday.pk %}" style="display:none;">
+                                    {% csrf_token %}
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="px-6 py-8 text-center text-gray-500">
+                                <div class="flex flex-col items-center">
+                                    <svg class="w-12 h-12 text-gray-400 mb-3" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5m-9-6h.008v.008H12v-.008zM12 15h.008v.008H12V15zm0 2.25h.008v.008H12v-.008zM9.75 15h.008v.008H9.75V15zm0 2.25h.008v.008H9.75v-.008zM7.5 15h.008v.008H7.5V15zm0 2.25h.008v.008H7.5v-.008zm6.75-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V15zm0 2.25h.008v.008h-.008v-.008zm2.25-4.5h.008v.008H16.5v-.008zm0 2.25h.008v.008H16.5V15z"/>
+                                    </svg>
+                                    <p class="text-lg font-medium">No holidays found</p>
+                                    <p class="text-sm text-gray-400">Try adjusting your filters or add a new holiday</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if page_obj.has_other_pages %}
+            <nav aria-label="Page navigation" class="mt-8 flex justify-center">
+                <ul class="inline-flex -space-x-px rounded-md shadow-sm">
+                    {% if page_obj.has_previous %}
+                    <li>
+                        <a href="?{% if recurring_only %}recurring_only=true&{% endif %}year={{ year }}&page={{ page_obj.previous_page_number }}" class="px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-l-lg hover:bg-gray-50 focus:z-20 focus:outline-offset-0 transition-colors">Previous</a>
+                    </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                    <li>
+                        <a href="?{% if recurring_only %}recurring_only=true&{% endif %}year={{ year }}&page={{ num }}" class="px-4 py-2 text-sm font-medium border {% if page_obj.number == num %}z-10 bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700{% else %}text-gray-500 bg-white border-gray-300 hover:bg-gray-50{% endif %} focus:z-20 focus:outline-offset-0 transition-colors">{{ num }}</a>
+                    </li>
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                    <li>
+                        <a href="?{% if recurring_only %}recurring_only=true&{% endif %}year={{ year }}&page={{ page_obj.next_page_number }}" class="px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-lg hover:bg-gray-50 focus:z-20 focus:outline-offset-0 transition-colors">Next</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </section>
+</section>
+
+<script>
+function openEditHolidayModal(id, name, date, recurring) {
+    document.getElementById('edit_holiday_id').value = id;
+    document.getElementById('edit_holiday_name').value = name;
+    document.getElementById('edit_holiday_date').value = date;
+    document.getElementById('edit_holiday_recurring').checked = recurring === true || recurring === 'true';
+    // Set form action
+    document.getElementById('edit-holiday-form').action = "{% url 'aps_manager:holiday_update' 0 %}".replace('0', id);
+    document.getElementById('edit-holiday-modal').classList.remove('hidden');
+}
+
+function openDeleteHolidayModal(id, name) {
+    document.getElementById('delete_holiday_id').value = id;
+    document.getElementById('delete-holiday-message').innerHTML = "Are you sure you want to delete <span class='font-semibold text-red-700'>&quot;" + name + "&quot;</span>?";
+    // Set form action
+    document.getElementById('delete-holiday-form').action = "{% url 'aps_manager:holiday_delete' 0 %}".replace('0', id);
+    document.getElementById('delete-holiday-modal').classList.remove('hidden');
+}
+
+// Optional: Close modals on ESC
+document.addEventListener('keydown', function(e) {
+    if (e.key === "Escape") {
+        document.getElementById('add-holiday-modal').classList.add('hidden');
+        document.getElementById('edit-holiday-modal').classList.add('hidden');
+        document.getElementById('delete-holiday-modal').classList.add('hidden');
+    }
+});
+</script>
+<style>
+@keyframes fade-in {
+    from { opacity: 0; transform: scale(0.98);}
+    to { opacity: 1; transform: scale(1);}
+}
+.animate-fade-in { animation: fade-in 0.2s ease; }
+</style>
+{% endblock %}

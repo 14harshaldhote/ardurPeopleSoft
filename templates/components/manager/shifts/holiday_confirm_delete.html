@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Holiday{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">Confirm Delete</h5>
+                </div>
+                <div class="card-body">
+                    <p class="lead mb-4">
+                        Are you sure you want to delete the holiday "{{ holiday.name }}"?
+                    </p>
+                    
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        This action cannot be undone.
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="mb-0">Holiday Details</h6>
+                        </div>
+                        <div class="card-body">
+                            <dl class="row mb-0">
+                                <dt class="col-sm-4">Name</dt>
+                                <dd class="col-sm-8">{{ holiday.name }}</dd>
+
+                                <dt class="col-sm-4">Date</dt>
+                                <dd class="col-sm-8">{{ holiday.date|date:"F d, Y" }}</dd>
+
+                                <dt class="col-sm-4">Type</dt>
+                                <dd class="col-sm-8">
+                                    {% if holiday.recurring_yearly %}
+                                    <span class="badge bg-info">Yearly Recurring</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">One-time</span>
+                                    {% endif %}
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'aps_manager:holiday_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash me-2"></i>Delete Holiday
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

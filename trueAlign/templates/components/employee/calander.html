@@ -50,6 +50,12 @@
             </div>
         </div>
 
+        <!-- Average Working Hours -->
+        <div class="mb-6 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+            <div class="text-sm text-indigo-600 font-medium">Average Working Hours</div>
+            <div class="text-2xl font-bold text-indigo-700">{{ avg_hours }} hrs</div>
+        </div>
+
         <!-- Calendar Grid -->
         <div class="grid grid-cols-7 gap-px bg-gray-200">
             <!-- Week Headers -->
@@ -67,7 +73,7 @@
             {% if day.empty %}
             <div class="h-24 bg-gray-50"></div>
             {% else %}
-            <div class="h-24 bg-white p-4 hover:bg-purple-50 transition-all duration-200 transform hover:scale-110 hover:translate-y-[-8px] hover:transform-origin-top-left shadow-sm rounded-lg {% if day.is_today %}ring-2 ring-blue-100{% endif %} {% if day.is_sunday %}bg-gray-50{% endif %}">
+            <div class="h-24 bg-white p-4 hover:bg-purple-50 transition-all duration-200 transform hover:scale-110 hover:translate-y-[-8px] hover:transform-origin-top-left shadow-sm rounded-lg {% if day.is_today %}ring-2 ring-blue-100{% endif %} {% if day.is_sunday %}bg-gray-50{% endif %} {% if day.is_weekend %}bg-gray-50{% endif %}">
                 {% if day.is_today %}
                     <div class="w-4 h-4 bg-blue-400 rounded-full animate-ping absolute top-0 right-0 mt-1 mr-1 z-10"></div>
                 {% endif %}
@@ -87,6 +93,7 @@
                             {% else %}bg-gray-100 text-gray-700{% endif %}
                             transition-colors duration-200">
                             {{ day.status }}
+                            {% if day.is_half_day %} (Half){% endif %}
                         </span>
                     {% endif %}
                 </div>
@@ -103,7 +110,12 @@
                         {% endif %}
                         {% if day.total_hours %}
                         <div class="font-extralight text-gray-700">
-                            Hours: <span class="text-sm text-gray-500">{{ day.total_hours }}</span>
+                            Hours: <span class="text-sm text-gray-500">{{ day.total_hours|floatformat:2 }}</span>
+                        </div>
+                        {% endif %}
+                        {% if day.breaks %}
+                        <div class="font-extralight text-gray-700">
+                            Breaks: <span class="text-sm text-gray-500">{{ day.breaks }}</span>
                         </div>
                         {% endif %}
                     </div>
@@ -112,6 +124,27 @@
                 {% if day.leave_type %}
                     <div class="mt-2 text-xs text-gray-600">
                         <div class="font-extralight text-gray-700">Type: <span class="text-sm text-gray-700">{{ day.leave_type }}</span></div>
+                    </div>
+                {% endif %}
+
+                {% if day.regularization_status %}
+                    <div class="mt-2 text-xs text-gray-600">
+                        <div class="font-extralight text-gray-700">
+                            Status: <span class="text-sm text-gray-500">{{ day.regularization_status }}</span>
+                        </div>
+                        {% if day.regularization_reason %}
+                        <div class="font-extralight text-gray-700">
+                            Reason: <span class="text-sm text-gray-500">{{ day.regularization_reason }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+
+                {% if day.location %}
+                    <div class="mt-2 text-xs text-gray-600">
+                        <div class="font-extralight text-gray-700">
+                            Location: <span class="text-sm text-gray-500">{{ day.location }}</span>
+                        </div>
                     </div>
                 {% endif %}
             </div>
@@ -155,6 +188,29 @@
                 <span class="text-sm text-gray-600">Holiday</span>
             </div>
         </div>
+
+        <!-- Pagination -->
+        {% if records.has_other_pages %}
+        <div class="mt-6 flex justify-center">
+            <nav class="inline-flex rounded-md shadow">
+                {% if records.has_previous %}
+                    <a href="?page={{ records.previous_page_number }}" class="px-3 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">Previous</a>
+                {% endif %}
+                
+                {% for num in records.paginator.page_range %}
+                    {% if records.number == num %}
+                        <span class="px-3 py-2 border border-gray-300 bg-blue-50 text-sm font-medium text-blue-700">{{ num }}</span>
+                    {% else %}
+                        <a href="?page={{ num }}" class="px-3 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">{{ num }}</a>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if records.has_next %}
+                    <a href="?page={{ records.next_page_number }}" class="px-3 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">Next</a>
+                {% endif %}
+            </nav>
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

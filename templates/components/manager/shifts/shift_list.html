@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block title %}Shifts{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Shifts</h2>
+        <a href="{% url 'aps_manager:shift_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Create New Shift
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Start Time</th>
+                            <th>End Time</th>
+                            <th>Status</th>
+                            <th>Working Days</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for shift in page_obj %}
+                        <tr>
+                            <td>{{ shift.name }}</td>
+                            <td>{{ shift.start_time|time:"H:i" }}</td>
+                            <td>{{ shift.end_time|time:"H:i" }}</td>
+                            <td>
+                                {% if shift.is_active %}
+                                <span class="badge bg-success">Active</span>
+                                {% else %}
+                                <span class="badge bg-danger">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if shift.monday %}<span class="badge bg-info me-1">Mon</span>{% endif %}
+                                {% if shift.tuesday %}<span class="badge bg-info me-1">Tue</span>{% endif %}
+                                {% if shift.wednesday %}<span class="badge bg-info me-1">Wed</span>{% endif %}
+                                {% if shift.thursday %}<span class="badge bg-info me-1">Thu</span>{% endif %}
+                                {% if shift.friday %}<span class="badge bg-info me-1">Fri</span>{% endif %}
+                                {% if shift.saturday %}<span class="badge bg-info me-1">Sat</span>{% endif %}
+                                {% if shift.sunday %}<span class="badge bg-info me-1">Sun</span>{% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{% url 'aps_manager:shift_detail' shift.pk %}" 
+                                       class="btn btn-sm btn-info">
+                                        <i class="fas fa-info-circle"></i>
+                                    </a>
+                                    <a href="{% url 'aps_manager:shift_update' shift.pk %}" 
+                                       class="btn btn-sm btn-warning">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'aps_manager:shift_delete' shift.pk %}" 
+                                       class="btn btn-sm btn-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center">No shifts found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if page_obj.has_other_pages %}
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Previous</span>
+                    </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                    <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Next</span>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

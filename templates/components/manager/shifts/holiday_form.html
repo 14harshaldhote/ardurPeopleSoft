@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ action }} Holiday{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">{{ action }} Holiday</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                            {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <div class="mb-3">
+                            <label for="{{ form.name.id_for_label }}" class="form-label">Holiday Name</label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.name.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.date.id_for_label }}" class="form-label">Date</label>
+                            {{ form.date }}
+                            {% if form.date.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.date.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="form-check">
+                                {{ form.recurring_yearly }}
+                                <label class="form-check-label" for="{{ form.recurring_yearly.id_for_label }}">
+                                    Recurring Yearly
+                                </label>
+                            </div>
+                            {% if form.recurring_yearly.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.recurring_yearly.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            <small class="text-muted">
+                                Check this if the holiday occurs on the same date every year
+                            </small>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'aps_manager:holiday_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to List
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>{{ action }} Holiday
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_css %}
+<style>
+    .form-control {
+        border-radius: 0.25rem;
+    }
+    .form-check-input {
+        cursor: pointer;
+    }
+    .form-check-label {
+        cursor: pointer;
+        user-select: none;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add Bootstrap form classes to form elements
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('input[type="text"], input[type="date"]').forEach(function(el) {
+            el.classList.add('form-control');
+        });
+        document.querySelectorAll('input[type="checkbox"]').forEach(function(el) {
+            el.classList.add('form-check-input');
+        });
+    });
+</script>
+{% endblock %}
+
+{% endblock %} 

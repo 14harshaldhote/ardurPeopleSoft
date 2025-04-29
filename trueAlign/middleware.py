@@ -14,11 +14,12 @@ class IdleTimeTrackingMiddleware:
         # Only process authenticated users
         if request.user.is_authenticated:
             # Skip certain paths to avoid unnecessary processing
-            if not request.path.startswith(('/static/', '/media/', '/update-last-activity/')):
+            if not request.path.startswith(('/static/', '/media/', '/update-last-activity/', '/end-session/')):
                 try:
                     # Get client IP
                     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
                     ip_address = x_forwarded_for.split(',')[0] if x_forwarded_for else request.META.get('REMOTE_ADDR')
+                    user_agent = request.META.get('HTTP_USER_AGENT')
 
                     # Get or initialize session
                     user_session = UserSession.objects.filter(
@@ -36,10 +37,12 @@ class IdleTimeTrackingMiddleware:
                             UserSession.get_or_create_session(
                                 user=request.user,
                                 session_key=request.session.session_key,
-                                ip_address=ip_address
+                                ip_address=ip_address,
+                                user_agent=user_agent
                             )
                         else:
-                            # Update IP if changed
+                            # IMPORTANT: Don't update activity here as it resets idle time
+                            # Only update IP if changed
                             if user_session.ip_address != ip_address:
                                 user_session.ip_address = ip_address
                                 user_session.location = user_session.determine_location()
@@ -49,7 +52,8 @@ class IdleTimeTrackingMiddleware:
                         UserSession.get_or_create_session(
                             user=request.user,
                             session_key=request.session.session_key,
-                            ip_address=ip_address
+                            ip_address=ip_address,
+                            user_agent=user_agent
                         )
                         
                 except Exception as e:
