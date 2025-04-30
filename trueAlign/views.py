@@ -5580,8 +5580,8 @@ def hr_attendance_view(request):
     first_day = datetime(year, month, 1).date()
     last_day = datetime(year, month, calendar.monthrange(year, month)[1]).date()
 
-    # Get all users with their details
-    users = User.objects.select_related('userdetails').all().order_by('username')
+    # Get all users with their details - FIXED: changed userdetails to profile
+    users = User.objects.select_related('profile').all().order_by('username')
 
     # Get all attendance records for the month with related data
     attendance_records = Attendance.objects.filter(
@@ -5602,7 +5602,8 @@ def hr_attendance_view(request):
     for user in users:
         user_row = {
             'employee': user,
-            'work_location': getattr(user.userdetails, 'work_location', 'Not set'),
+            # FIXED: changed userdetails to profile
+            'work_location': getattr(user.profile, 'work_location', 'Not set'),
             'attendance': {}
         }
 
