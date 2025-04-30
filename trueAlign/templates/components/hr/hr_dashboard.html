@@ -6,7 +6,7 @@
     <div class="bg-gradient-to-r from-blue-700 to-indigo-400 text-white py-8 px-4 shadow-md">
         <div class="container mx-auto max-w-7xl">
             <h1 class="text-3xl md:text-4xl font-bold text-center">HR Command Center</h1>
-            <p class="text-center text-blue-100 mt-2">Your centralized hub for employee management</p>
+            <p class="text-center text-blue-100 mt-2">Your centralized hub for employee management and insights</p>
         </div>
     </div>
 
@@ -17,29 +17,29 @@
             <h2 class="text-2xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
             <div class="grid grid-cols-1 md:grid-cols-5 gap-4 w-full">
                 <a href="{% url 'aps_hr:add_user' %}" 
-                   class="flex items-center justify-center gap-2 h-10 text-white bg-blue-400 hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium rounded-full text-sm dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                   class="flex items-center justify-center gap-2 h-10 text-white bg-blue-400 hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium rounded-full text-sm dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 transition-all duration-300">
                     <i class="fas fa-user-plus"></i>
                     <span>Add User</span>
                 </a>
                 <a href="{% url 'aps_hr:bulk_add_users' %}" 
-                   class="flex items-center justify-center gap-2 h-10 text-white bg-purple-400 hover:bg-purple-800 focus:outline-none focus:ring-4 focus:ring-purple-300 font-medium rounded-full text-sm dark:bg-purple-600 dark:hover:bg-purple-700 dark:focus:ring-purple-900">
+                   class="flex items-center justify-center gap-2 h-10 text-white bg-purple-400 hover:bg-purple-800 focus:outline-none focus:ring-4 focus:ring-purple-300 font-medium rounded-full text-sm dark:bg-purple-600 dark:hover:bg-purple-700 dark:focus:ring-purple-900 transition-all duration-300">
                     <i class="fas fa-users"></i>
                     <span>Bulk Add</span>
                 </a>
                 <a href="{% url 'aps_hr:user_reports' %}" 
-                   class="flex items-center justify-center gap-2 h-10 text-white bg-yellow-200 hover:bg-yellow-500 focus:outline-none focus:ring-4 focus:ring-yellow-300 font-medium rounded-full text-sm dark:focus:ring-yellow-900">
+                   class="flex items-center justify-center gap-2 h-10 text-white bg-yellow-200 hover:bg-yellow-500 focus:outline-none focus:ring-4 focus:ring-yellow-300 font-medium rounded-full text-sm dark:focus:ring-yellow-900 transition-all duration-300">
                     <i class="fas fa-chart-bar"></i>
                     <span>Reports</span>
                 </a>
                 <a href="{% url 'aps_hr:user_action_logs' %}" 
-                   class="flex items-center justify-center gap-2 h-10 text-white bg-green-400 hover:bg-green-800 focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-full text-sm dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
+                   class="flex items-center justify-center gap-2 h-10 text-white bg-green-400 hover:bg-green-800 focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-full text-sm dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800 transition-all duration-300">
                     <i class="fas fa-history"></i>
-                    <span>Logs</span>
+                    <span>Activity Logs</span>
                 </a>
                 <a href="{% url 'aps_hr:session_logs' %}" 
-                   class="flex items-center justify-center gap-2 h-10 text-white bg-gray-400 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-full text-sm dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700">
+                   class="flex items-center justify-center gap-2 h-10 text-white bg-gray-400 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-full text-sm dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 transition-all duration-300">
                     <i class="fas fa-sign-in-alt"></i>
-                    <span>Sessions</span>
+                    <span>Login Sessions</span>
                 </a>
             </div>
         </div>
@@ -47,35 +47,35 @@
 
         <!-- Stats Overview -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="bg-white rounded-xl p-6 shadow-md border-l-4 border-blue-500">
+            <div class="bg-white rounded-xl p-6 shadow-md border-l-4 border-blue-500 hover:shadow-lg transition-shadow duration-300">
                 <div class="flex items-center justify-between">
                     <h3 class="text-lg font-semibold text-gray-700">Total Users</h3>
                     <div class="p-2 bg-blue-100 rounded-full">
                         <i class="fas fa-users text-blue-600"></i>
                     </div>
                 </div>
-                <p class="text-3xl font-bold text-blue-600 mt-2">{{ total_users }}</p>
-                <div class="mt-2 text-sm text-gray-500">All registered employees</div>
+                <p class="text-3xl font-bold text-blue-600 mt-2">{{ stats.total_users }}</p>
+                <div class="mt-2 text-sm text-gray-500">All registered employees in system</div>
             </div>
-            <div class="bg-white rounded-xl p-6 shadow-md border-l-4 border-green-500">
+            <div class="bg-white rounded-xl p-6 shadow-md border-l-4 border-green-500 hover:shadow-lg transition-shadow duration-300">
                 <div class="flex items-center justify-between">
                     <h3 class="text-lg font-semibold text-gray-700">Active Users</h3>
                     <div class="p-2 bg-green-100 rounded-full">
                         <i class="fas fa-user-check text-green-600"></i>
                     </div>
                 </div>
-                <p class="text-3xl font-bold text-green-600 mt-2">{{ active_users }}</p>
+                <p class="text-3xl font-bold text-green-600 mt-2">{{ stats.active_users }}</p>
                 <div class="mt-2 text-sm text-gray-500">Currently active employees</div>
             </div>
-            <div class="bg-white rounded-xl p-6 shadow-md border-l-4 border-red-500">
+            <div class="bg-white rounded-xl p-6 shadow-md border-l-4 border-red-500 hover:shadow-lg transition-shadow duration-300">
                 <div class="flex items-center justify-between">
                     <h3 class="text-lg font-semibold text-gray-700">Inactive Users</h3>
                     <div class="p-2 bg-red-100 rounded-full">
                         <i class="fas fa-user-times text-red-600"></i>
                     </div>
                 </div>
-                <p class="text-3xl font-bold text-red-600 mt-2">{{ inactive_users }}</p>
-                <div class="mt-2 text-sm text-gray-500">Inactive or terminated</div>
+                <p class="text-3xl font-bold text-red-600 mt-2">{{ stats.inactive_users }}</p>
+                <div class="mt-2 text-sm text-gray-500">Inactive or terminated employees</div>
             </div>
         </div>
 
@@ -85,42 +85,42 @@
             <form method="GET" action="{% url 'aps_hr:hr_dashboard' %}">
                 <div class="flex flex-col md:flex-row gap-3">
                     <div class="flex-grow relative">
-                        <input type="text" id="search" name="search" placeholder="Search by name, username, or email..." 
-                            value="{{ search_query }}" 
-                            class="w-full pl-10 pr-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-400 focus:border-blue-400">
+                        <input type="text" id="search" name="search" placeholder="Search by name, username, email, job description or location..." 
+                            value="{{ filters.search }}" 
+                            class="w-full pl-10 pr-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200">
                         <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                     </div>
                     <div class="flex flex-wrap gap-2">
                         <select id="status" name="status" 
-                            class="px-3 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-400">
-                            <option value="">Status</option>
-                            {% for status in employment_status_choices %}
-                            <option value="{{ status.0 }}" {% if status.0 == status_filter %}selected{% endif %}>{{ status.1 }}</option>
+                            class="px-3 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-400 transition-all duration-200">
+                            <option value="">Employment Status</option>
+                            {% for status in filter_options.employment_status_choices %}
+                            <option value="{{ status.0 }}" {% if status.0 == filters.status %}selected{% endif %}>{{ status.1 }}</option>
                             {% endfor %}
                         </select>
                         <select id="work_location" name="work_location" 
-                            class="px-3 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-400">
+                            class="px-3 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-400 transition-all duration-200">
                             <option value="">📍 Location</option>
-                            {% for location in work_locations %}
-                            <option value="{{ location }}" {% if location == work_location_filter %}selected{% endif %}>{{ location }}</option>
+                            {% for location in filter_options.work_locations %}
+                            <option value="{{ location }}" {% if location == filters.work_location %}selected{% endif %}>{{ location }}</option>
                             {% endfor %}
                         </select>
                         <select id="role" name="role" 
-                            class="px-3 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-400">
-                            <option value="">Role</option>
-                            {% for role_item in roles %}
-                            <option value="{{ role_item.name }}" {% if role_item.name == role_filter %}selected{% endif %}>{{ role_item.name }}</option>
+                            class="px-3 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-400 transition-all duration-200">
+                            <option value="">Role/Position</option>
+                            {% for role_item in filter_options.roles %}
+                            <option value="{{ role_item.name }}" {% if role_item.name == filters.role %}selected{% endif %}>{{ role_item.name }}</option>
                             {% endfor %}
                         </select>
                         <select id="employee_type" name="employee_type" 
-                            class="px-3 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-400">
+                            class="px-3 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-400 transition-all duration-200">
                             <option value="">Employee Type</option>
-                            {% for type in employee_type_choices %}
-                            <option value="{{ type.0 }}" {% if type.0 == employee_type_filter %}selected{% endif %}>{{ type.1 }}</option>
+                            {% for type in filter_options.employee_type_choices %}
+                            <option value="{{ type.0 }}" {% if type.0 == filters.employee_type %}selected{% endif %}>{{ type.1 }}</option>
                             {% endfor %}
                         </select>
                         <button type="submit" 
-                            class="px-5 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            class="px-5 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transform hover:scale-105">
                             <i class="fas fa-filter mr-2"></i>Apply Filters
                         </button>
                     </div>
@@ -171,9 +171,9 @@
                                         <div class="ml-4">
                                             <div class="text-sm font-medium text-gray-900">{{ user.first_name }} {{ user.last_name }}</div>
                                             <div class="text-xs text-gray-500">@{{ user.username }}</div>
-                                            {% if user.userdetails.job_description %}
+                                            {% if user.profile.job_description %}
                                             <div class="text-xs text-gray-500 max-w-xs truncate hidden group-hover:block mt-1 italic">
-                                                {{ user.userdetails.job_description }}
+                                                {{ user.profile.job_description }}
                                             </div>
                                             {% endif %}
                                         </div>
@@ -182,26 +182,26 @@
                                 
                                 <!-- Status Column -->
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    {% if user.userdetails.employment_status %}
+                                    {% if user.profile.employment_status %}
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                                        {% if user.userdetails.employment_status == 'active' %}bg-green-100 text-green-800
-                                        {% elif user.userdetails.employment_status == 'inactive' %}bg-gray-100 text-gray-800
-                                        {% elif user.userdetails.employment_status == 'terminated' %}bg-red-100 text-red-800
+                                        {% if user.profile.employment_status == 'active' %}bg-green-100 text-green-800
+                                        {% elif user.profile.employment_status == 'inactive' %}bg-gray-100 text-gray-800
+                                        {% elif user.profile.employment_status == 'terminated' %}bg-red-100 text-red-800
                                         {% else %}bg-yellow-100 text-yellow-800{% endif %}">
                                         <span class="w-1.5 h-1.5 rounded-full mr-1.5 
-                                            {% if user.userdetails.employment_status == 'active' %}bg-green-500
-                                            {% elif user.userdetails.employment_status == 'inactive' %}bg-gray-500
-                                            {% elif user.userdetails.employment_status == 'terminated' %}bg-red-500
+                                            {% if user.profile.employment_status == 'active' %}bg-green-500
+                                            {% elif user.profile.employment_status == 'inactive' %}bg-gray-500
+                                            {% elif user.profile.employment_status == 'terminated' %}bg-red-500
                                             {% else %}bg-yellow-500{% endif %}">
                                         </span>
-                                        {{ user.userdetails.employment_status|title }}
+                                        {{ user.profile.employment_status|title }}
                                     </span>
                                     {% endif %}
                                     
-                                    {% if user.last_login_today %}
+                                    {% if user.today_sessions %}
                                     <div class="text-xs text-blue-600 mt-1 hidden group-hover:block">
                                         <i class="fas fa-clock text-blue-500 mr-1"></i>
-                                        Last login: {{ user.last_login_today|time }}
+                                        Last login: {{ user.today_sessions.0.login_time|time }}
                                     </div>
                                     {% endif %}
                                 </td>
@@ -215,33 +215,33 @@
                                     </div>
                                     {% endif %}
                                     
-                                    {% if user.userdetails.contact_number_primary %}
+                                    {% if user.profile.contact_number_primary %}
                                     <div class="text-xs text-gray-500 mt-1 hidden group-hover:block">
                                         <i class="fas fa-phone text-gray-400 mr-1.5"></i>
-                                        {{ user.userdetails.contact_number_primary }}
+                                        {{ user.profile.contact_number_primary }}
                                     </div>
                                     {% endif %}
                                 </td>
                                 
                                 <!-- Location Column -->
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    {% if user.userdetails.work_location %}
+                                    {% if user.profile.work_location %}
                                     <div class="text-sm text-gray-900">
                                         <i class="fas fa-map-marker-alt text-gray-400 mr-1.5"></i>
-                                        {{ user.userdetails.work_location }}
+                                        {{ user.profile.work_location }}
                                     </div>
                                     {% endif %}
                                 </td>
                                 
                                 <!-- Tenure Column -->
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    {% if user.userdetails.hire_date %}
+                                    {% if user.profile.hire_date %}
                                     <div class="text-sm text-gray-900">
                                         <i class="fas fa-calendar text-gray-400 mr-1.5"></i>
-                                        {{ user.userdetails.hire_date|date:"M Y" }}
+                                        {{ user.profile.hire_date|date:"M Y" }}
                                     </div>
                                     <div class="text-xs text-gray-500 hidden group-hover:block mt-1">
-                                        {% with days=user.userdetails.hire_date|timesince %}
+                                        {% with days=user.profile.hire_date|timesince %}
                                         {{ days }} tenure
                                         {% endwith %}
                                     </div>
@@ -252,21 +252,23 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex justify-end space-x-2">
                                         <a href="{% url 'aps_hr:hr_user_detail' user.id %}" 
-                                            class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 p-2 rounded-full transition-colors">
+                                            class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 p-2 rounded-full transition-colors" title="Edit Profile">
                                             <i class="fas fa-user-edit"></i>
                                         </a>
-                                        <button type="button" 
-                                            class="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 p-2 rounded-full transition-colors">
+                                        <a href="mailto:{{ user.email }}" 
+                                            class="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 p-2 rounded-full transition-colors" title="Send Email">
                                             <i class="fas fa-envelope"></i>
-                                        </button>
-                                        <button type="button" 
-                                            class="text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100 p-2 rounded-full transition-colors">
+                                        </a>
+                                        {% if user.profile.contact_number_primary %}
+                                        <a href="tel:{{ user.profile.contact_number_primary }}" 
+                                            class="text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100 p-2 rounded-full transition-colors" title="Call">
                                             <i class="fas fa-phone"></i>
-                                        </button>
+                                        </a>
+                                        {% endif %}
                                     </div>
                                     <a href="{% url 'aps_hr:hr_user_detail' user.id %}" 
                                         class="text-indigo-600 hover:text-indigo-900 group-hover:hidden">
-                                        View <i class="fas fa-chevron-right ml-1 text-xs"></i>
+                                        View Profile <i class="fas fa-chevron-right ml-1 text-xs"></i>
                                     </a>
                                 </td>
                             </tr>
@@ -275,16 +277,31 @@
                     </table>
                 </div>
             </div>
+            {% else %}
+            <div class="bg-white rounded-xl p-8 shadow-md text-center">
+                <div class="text-gray-400 mb-4"><i class="fas fa-search fa-3x"></i></div>
+                <h3 class="text-xl font-medium text-gray-700 mb-2">No employees found</h3>
+                <p class="text-gray-500">Try adjusting your search or filter criteria</p>
+            </div>
             {% endif %}
         </div>
             
         <!-- Pagination -->
         {% if page_obj.paginator.num_pages > 1 %}
-        <div class="flex justify-center mt-8">
+        <div class="flex flex-col md:flex-row justify-between items-center mt-8 mb-12">
+            <div class="mb-4 md:mb-0">
+                <span class="text-sm text-gray-700">
+                    Showing <span class="font-medium">{{ page_obj.start_index }}</span> to 
+                    <span class="font-medium">{{ page_obj.end_index }}</span> of 
+                    <span class="font-medium">{{ page_obj.paginator.count }}</span> employees
+                </span>
+            </div>
+            
             <nav class="inline-flex rounded-md shadow">
                 {% if page_obj.has_previous %}
-                <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                    Previous
+                <a href="?page={{ page_obj.previous_page_number }}{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                   class="px-3 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                    <i class="fas fa-chevron-left mr-1"></i> Previous
                 </a>
                 {% endif %}
                 
@@ -298,18 +315,38 @@
                         ...
                     </span>
                     {% else %}
-                    <a href="?page={{ page_num }}" class="px-3 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                    <a href="?page={{ page_num }}{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                       class="px-3 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
                         {{ page_num }}
                     </a>
                     {% endif %}
                 {% endfor %}
                 
                 {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                    Next
+                <a href="?page={{ page_obj.next_page_number }}{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                   class="px-3 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                    Next <i class="fas fa-chevron-right ml-1"></i>
                 </a>
                 {% endif %}
             </nav>
+            
+            <div class="mt-4 md:mt-0">
+                <form method="GET" class="flex items-center space-x-2">
+                    {% for key, value in filters.items %}
+                    {% if value %}
+                    <input type="hidden" name="{{ key }}" value="{{ value }}">
+                    {% endif %}
+                    {% endfor %}
+                    <label for="page_size" class="text-sm text-gray-600">Show:</label>
+                    <select id="page_size" name="page_size" onchange="this.form.submit()" 
+                            class="px-2 py-1 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                        <option value="10" {% if page_size == 10 %}selected{% endif %}>10</option>
+                        <option value="20" {% if page_size == 20 %}selected{% endif %}>20</option>
+                        <option value="50" {% if page_size == 50 %}selected{% endif %}>50</option>
+                        <option value="100" {% if page_size == 100 %}selected{% endif %}>100</option>
+                    </select>
+                </form>
+            </div>
         </div>
         {% endif %}
             

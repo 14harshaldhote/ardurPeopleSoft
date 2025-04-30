@@ -1132,7 +1132,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 from django.template.loader import render_to_string
-from django.core.mail import EmailMessage
+from django.core.mail import EmailMessage, EmailMultiAlternatives
 from django.utils import timezone
 import logging
 import re
@@ -1141,7 +1141,7 @@ import io
 import random
 import string
 from datetime import date, datetime, timedelta
-from .models import UserDetails, UserActionLog, UserSession
+from .models import UserDetails, UserActionLog, UserSession, validate_pan, validate_aadhar
 
 logger = logging.getLogger(__name__)
 
@@ -1340,148 +1340,117 @@ def send_welcome_email(user, password):
 @user_passes_test(is_hr)
 def hr_dashboard(request):
     """HR Dashboard with improved filtering, query optimization, and pagination"""
-    # Get filter parameters
-    search_query = request.GET.get('search', '')
-    department_filter = request.GET.get('department', '')
-    status_filter = request.GET.get('status', '')
-    work_location_filter = request.GET.get('work_location', '')
-    role_filter = request.GET.get('role', '')
-    employee_type_filter = request.GET.get('employee_type', '')
-    
-    # Start with all users and prefetch userdetails to avoid N+1 query problem
-    users = User.objects.select_related('userdetails').all()
-    
-    # Apply filters
-    if search_query:
+    # Get filter parameters with defaults
+    filters = {
+        'search': request.GET.get('search', ''),
+        'department': request.GET.get('department', ''),
+        'status': request.GET.get('status', ''),
+        'work_location': request.GET.get('work_location', ''),
+        'role': request.GET.get('role', ''),
+        'employee_type': request.GET.get('employee_type', '')
+    }
+
+    # Start with optimized base queryset
+    users = User.objects.select_related('profile').prefetch_related(
+        'groups',
+        Prefetch(
+            'usersession_set',
+            queryset=UserSession.objects.filter(
+                login_time__date=datetime.now().date()
+            ).order_by('-login_time'),
+            to_attr='today_sessions'
+        )
+    )
+
+    # Apply search filter
+    if filters['search']:
         users = users.filter(
-            Q(first_name__icontains=search_query) |
-            Q(last_name__icontains=search_query) |
-            Q(username__icontains=search_query) |
-            Q(email__icontains=search_query) |
-            Q(userdetails__job_description__icontains=search_query) |
-            Q(userdetails__address_line1__icontains=search_query) |
-            Q(userdetails__address_line2__icontains=search_query) |
-            Q(userdetails__city__icontains=search_query) |
-            Q(userdetails__state__icontains=search_query) |
-            Q(userdetails__country__icontains=search_query)
+            Q(first_name__icontains=filters['search']) |
+            Q(last_name__icontains=filters['search']) |
+            Q(username__icontains=filters['search']) |
+            Q(email__icontains=filters['search']) |
+            Q(profile__job_description__icontains=filters['search']) |
+            Q(profile__current_city__icontains=filters['search']) |
+            Q(profile__current_state__icontains=filters['search'])
         ).distinct()
 
-    # Apply employment status filter
-    if status_filter:
-        users = users.filter(userdetails__employment_status=status_filter)
-    
-    # Apply work location filter
-    if work_location_filter:
-        users = users.filter(userdetails__work_location=work_location_filter)
-    
-    # Apply role/group filter
-    if role_filter:
-        users = users.filter(groups__name=role_filter)
+    # Apply other filters
+    if filters['status']:
+        users = users.filter(profile__employment_status=filters['status'])
+    if filters['work_location']:
+        users = users.filter(profile__work_location=filters['work_location'])
+    if filters['role']:
+        users = users.filter(groups__name=filters['role'])
+    if filters['employee_type']:
+        users = users.filter(profile__employee_type=filters['employee_type'])
 
-    # Apply employee type filter
-    if employee_type_filter:
-        users = users.filter(userdetails__employee_type=employee_type_filter)
-    
-    # Handle case where UserDetails might not exist for some users
+    # Create missing profiles
     for user in users:
-        if not hasattr(user, 'userdetails'):
-            # Create default UserDetails for users who don't have it
+        if not hasattr(user, 'profile'):
             UserDetails.objects.create(user=user)
-    
-    # Get session data for users
-    user_ids = [user.id for user in users]
-    today = datetime.now().date()
-    recent_sessions = UserSession.objects.filter(
-        user_id__in=user_ids,
-        login_time__date=today
-    ).values('user_id').annotate(
-        last_login=Max('login_time')
-    )
-    
-    # Create a dict for quick lookup
-    session_data = {s['user_id']: s['last_login'] for s in recent_sessions}
-    
-    # Add last login information to users
-    for user in users:
-        user.last_login_today = session_data.get(user.id)
-    
-    # Get user statistics
-    total_users = users.count()
-    active_users = users.filter(is_active=True).count()
-    inactive_users = users.filter(is_active=False).count()
-    
-    # Get users by status
-    status_counts = UserDetails.objects.values('employment_status').annotate(
-        count=Count('id')
-    ).order_by('employment_status')
-    
-    # Get users by location
-    location_counts = UserDetails.objects.exclude(
-        work_location__isnull=True
-    ).exclude(
-        work_location=''
-    ).values('work_location').annotate(
-        count=Count('id')
-    ).order_by('-count')
 
-    # Get users by employee type
-    employee_type_counts = UserDetails.objects.values('employee_type').annotate(
-        count=Count('id')
-    ).order_by('employee_type')
-    
-    # Recent user additions (last 7 days)
-    recent_users = User.objects.filter(
-        date_joined__gte=today - timedelta(days=7)
-    ).order_by('-date_joined')[:5]
-    
-    # Pagination
-    page_size = int(request.GET.get('page_size', 20))  # Default to 20, but allow user to change
+    # Get dashboard statistics using aggregation
+    stats = {
+        'total_users': users.count(),
+        'active_users': users.filter(is_active=True).count(),
+        'inactive_users': users.filter(is_active=False).count(),
+        'status_counts': UserDetails.objects.values('employment_status').annotate(
+            count=Count('id'),
+            active_count=Count('user', filter=Q(user__is_active=True))
+        ),
+        'location_counts': UserDetails.objects.exclude(
+            Q(work_location__isnull=True) | Q(work_location='')
+        ).values('work_location').annotate(
+            count=Count('id'),
+            active_count=Count('user', filter=Q(user__is_active=True))
+        ).order_by('-count'),
+        'employee_type_counts': UserDetails.objects.values('employee_type').annotate(
+            count=Count('id'),
+            active_count=Count('user', filter=Q(user__is_active=True))
+        ),
+        'recent_users': User.objects.select_related('profile').filter(
+            date_joined__gte=datetime.now().date() - timedelta(days=7)
+        ).order_by('-date_joined')[:5]
+    }
+
+    # Handle pagination with remembered page size
+    page_size = request.session.get('hr_dashboard_page_size', 20)
+    if 'page_size' in request.GET:
+        page_size = int(request.GET['page_size'])
+        request.session['hr_dashboard_page_size'] = page_size
+
     paginator = Paginator(users, page_size)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    
-    # Calculate page range to display
-    page_range = paginator.get_elided_page_range(page_obj.number, on_each_side=2, on_ends=1)
-    
-    # Get all available departments and work locations for filter dropdowns
-    work_locations = UserDetails.objects.exclude(
-        work_location__isnull=True
-    ).exclude(
-        work_location=''
-    ).values_list('work_location', flat=True).distinct()
-    
-    roles = Group.objects.all()
-    
+    page_obj = paginator.get_page(request.GET.get('page'))
+
+    # Get filter options from model
+    filter_options = {
+        'employment_status_choices': UserDetails.EMPLOYMENT_STATUS_CHOICES,
+        'employee_type_choices': UserDetails.EMPLOYEE_TYPE_CHOICES,
+        'work_locations': UserDetails.objects.exclude(
+            Q(work_location__isnull=True) | Q(work_location='')
+        ).values_list('work_location', flat=True).distinct(),
+        'roles': Group.objects.all()
+    }
+
     context = {
         'page_obj': page_obj,
-        'page_range': page_range,
+        'page_range': paginator.get_elided_page_range(
+            page_obj.number,
+            on_each_side=2,
+            on_ends=1
+        ),
         'page_size': page_size,
-        'role': 'HR',
-        'employment_status_choices': UserDetails._meta.get_field('employment_status').choices,
-        'employee_type_choices': UserDetails._meta.get_field('employee_type').choices,
-        'work_locations': work_locations,
-        'roles': roles,
-        'search_query': search_query,
-        'status_filter': status_filter,
-        'work_location_filter': work_location_filter,
-        'role_filter': role_filter,
-        'department_filter': department_filter,
-        'employee_type_filter': employee_type_filter,
-        'total_users': total_users,
-        'active_users': active_users,
-        'inactive_users': inactive_users,
-        'status_counts': status_counts,
-        'location_counts': location_counts,
-        'employee_type_counts': employee_type_counts,
-        'recent_users': recent_users,
+        'filters': filters,
+        'filter_options': filter_options,
+        'stats': stats,
+        'role': 'HR'
     }
-    
-    return render(request, 'components/hr/hr_dashboard.html', context)
 
+    return render(request, 'components/hr/hr_dashboard.html', context)
 @login_required
 @user_passes_test(is_hr)
 def hr_user_detail(request, user_id):
-    """Enhanced view for HR to view and edit user details"""
+    """Enhanced view for HR to view and edit comprehensive user details"""
     import re
     from datetime import date, datetime
     
@@ -1517,76 +1486,130 @@ def hr_user_detail(request, user_id):
                     raise ValueError('Employee must be at least 18 years old.')
 
             # Validate contact numbers
-            def validate_contact(country_code, number, field_name):
+            def validate_contact(number, field_name):
                 if not number:
                     return None
                     
-                if not number.isdigit() or len(number) != 10:
-                    raise ValueError(f'{field_name} must be exactly 10 digits.')
+                # Remove any non-digit characters for validation
+                cleaned_number = ''.join(c for c in number if c.isdigit())
+                
+                # Check if the number is valid (allowing for international format)
+                if len(cleaned_number) < 10 or len(cleaned_number) > 15:
+                    raise ValueError(f'{field_name} must be between 10 and 15 digits.')
                     
-                if not country_code or not country_code.startswith('+'):
-                    raise ValueError(f'Invalid country code for {field_name}')
-                    
-                return f"{country_code}{number}"
+                return number
 
             # Primary contact validation
-            primary_country_code = data.get('country_code', '').strip()
             primary_number = data.get('contact_number_primary', '').strip()
-            primary_full_contact = validate_contact(
-                primary_country_code, 
-                primary_number,
-                'Primary contact number'
-            ) if primary_number else None
+            primary_contact = validate_contact(primary_number, 'Primary contact number')
 
             # Emergency contact validation  
-            emergency_country_code = data.get('emergency_country_code', '').strip()
-            emergency_number = data.get('emergency_contact_primary', '').strip()
-            emergency_full_contact = validate_contact(
-                emergency_country_code,
-                emergency_number, 
-                'Emergency contact number'
-            ) if emergency_number else None
+            emergency_number = data.get('emergency_contact_number', '').strip()
+            emergency_contact = validate_contact(emergency_number, 'Emergency contact number')
+            
+            # Secondary emergency contact validation
+            secondary_emergency_number = data.get('secondary_emergency_contact_number', '').strip()
+            secondary_emergency_contact = validate_contact(secondary_emergency_number, 'Secondary emergency contact number')
 
-            # Validate PAN
-            pan = data.get('panno')
-            if pan and not re.match(r'^[A-Z]{5}[0-9]{4}[A-Z]$', pan):
-                raise ValueError('Invalid PAN number format')
+            # Validate PAN using model validator
+            pan = data.get('pan_number')
+            if pan:
+                validate_pan(pan)
 
-            # Validate Aadhar
-            aadhar = data.get('aadharno', '').replace(' ', '')
-            if aadhar and (not aadhar.isdigit() or len(aadhar) != 12):
-                raise ValueError('Aadhar number must be exactly 12 digits.')
+            # Validate Aadhar using model validator  
+            aadhar = data.get('aadhar_number', '').replace(' ', '')
+            if aadhar:
+                validate_aadhar(aadhar)
 
             # Validate email
             email = data.get('personal_email')
             if email and not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
                 raise ValueError('Invalid email format')
+                
+            company_email = data.get('company_email')
+            if company_email and not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', company_email):
+                raise ValueError('Invalid company email format')
 
-            # Dictionary of fields to update
+            # Dictionary of fields to update based on UserDetails model fields
             fields_to_update = {
+                # Personal Information
                 'dob': dob or None,
                 'blood_group': data.get('blood_group') or None,
-                'hire_date': data.get('hire_date') or None,
                 'gender': data.get('gender') or None,
-                'panno': pan or None,
-                'job_description': data.get('job_description') or None,
-                'employment_status': data.get('employment_status') or None,
-                'employee_type': data.get('employee_type') or None,
-                'emergency_contact_address': data.get('emergency_contact_address') or None,
-                'emergency_contact_primary': emergency_full_contact,
-                'emergency_contact_name': data.get('emergency_contact_name') or None,
-                'start_date': data.get('start_date') or None,
-                'work_location': data.get('work_location') or None,
-                'contact_number_primary': primary_number,
+                'marital_status': data.get('marital_status') or None,
+                
+                # Contact Information
+                'contact_number_primary': primary_contact,
                 'personal_email': email or None,
-                'aadharno': aadhar or None,
-                'country_code': primary_country_code or None,
-                'address_line1': data.get('address_line1') or None,
-                'address_line2': data.get('address_line2') or None,
-                'city': data.get('city') or None,
-                'state': data.get('state') or None,
-                'postal_code': data.get('postal_code') or None,
-                'country': data.get('country') or None
+                'company_email': company_email or None,
+                
+                # Current Address
+                'current_address_line1': data.get('current_address_line1') or None,
+                'current_address_line2': data.get('current_address_line2') or None,
+                'current_city': data.get('current_city') or None,
+                'current_state': data.get('current_state') or None,
+                'current_postal_code': data.get('current_postal_code') or None,
+                'current_country': data.get('current_country') or None,
+                
+                # Permanent Address
+                'permanent_address_line1': data.get('permanent_address_line1') or None,
+                'permanent_address_line2': data.get('permanent_address_line2') or None,
+                'permanent_city': data.get('permanent_city') or None,
+                'permanent_state': data.get('permanent_state') or None,
+                'permanent_postal_code': data.get('permanent_postal_code') or None,
+                'permanent_country': data.get('permanent_country') or None,
+                'is_current_same_as_permanent': data.get('is_current_same_as_permanent') == 'on',
+                
+                # Emergency Contact
+                'emergency_contact_name': data.get('emergency_contact_name') or None,
+                'emergency_contact_number': emergency_contact,
+                'emergency_contact_relationship': data.get('emergency_contact_relationship') or None,
+                
+                # Secondary Emergency Contact
+                'secondary_emergency_contact_name': data.get('secondary_emergency_contact_name') or None,
+                'secondary_emergency_contact_number': secondary_emergency_contact,
+                'secondary_emergency_contact_relationship': data.get('secondary_emergency_contact_relationship') or None,
+                
+                # Employment Information
+                'employee_type': data.get('employee_type') or None,
+                'reporting_manager_id': data.get('reporting_manager') or None,
+                'hire_date': data.get('hire_date') or None,
+                'start_date': data.get('start_date') or None,
+                'probation_end_date': data.get('probation_end_date') or None,
+                'notice_period_days': data.get('notice_period_days') or 30,
+                'job_description': data.get('job_description') or None,
+                'work_location': data.get('work_location') or None,
+                'employment_status': data.get('employment_status') or None,
+                'exit_date': data.get('exit_date') or None,
+                'exit_reason': data.get('exit_reason') or None,
+                'rehire_eligibility': data.get('rehire_eligibility') == 'on',
+                
+                # Compensation Details
+                'salary_currency': data.get('salary_currency') or 'INR',
+                'base_salary': data.get('base_salary') or None,
+                'salary_frequency': data.get('salary_frequency') or 'monthly',
+                
+                # Government IDs
+                'pan_number': pan or None,
+                'aadhar_number': aadhar or None,
+                'passport_number': data.get('passport_number') or None,
+                'passport_expiry': data.get('passport_expiry') or None,
+                
+                # Banking Details
+                'bank_name': data.get('bank_name') or None,
+                'bank_account_number': data.get('bank_account_number') or None,
+                'bank_ifsc': data.get('bank_ifsc') or None,
+                
+                # Previous Employment
+                'previous_company': data.get('previous_company') or None,
+                'previous_position': data.get('previous_position') or None,
+                'previous_experience_years': data.get('previous_experience_years') or None,
+                
+                # Skills and Competencies
+                'skills': data.get('skills') or None,
+                
+                # Additional HR Notes
+                'confidential_notes': data.get('confidential_notes') if request.user.has_perm('view_confidential_notes') else user_detail.confidential_notes
             }
 
             # Check if role/group is being updated
@@ -1595,17 +1618,10 @@ def hr_user_detail(request, user_id):
             if new_group_id:
                 new_group = Group.objects.get(id=new_group_id)
                 
-                # Only process if the group has changed
                 if not old_group or old_group.id != new_group.id:
-                    # Remove user from all current groups
                     user.groups.clear()
-                    # Add user to new group
                     user.groups.add(new_group)
                     
-                    # Update UserDetails group
-                    fields_to_update['group'] = new_group
-                    
-                    # Log the role change
                     UserActionLog.objects.create(
                         user=user,
                         action_type='role_change',
@@ -1613,20 +1629,11 @@ def hr_user_detail(request, user_id):
                         details=f"Role changed from {old_group.name if old_group else 'None'} to {new_group.name}"
                     )
 
-            # Check for employment status change
+            # Handle employment status changes based on model choices
             old_status = user_detail.employment_status
             new_status = data.get('employment_status')
             
             if old_status != new_status and new_status:
-                # Log the status change
-                UserActionLog.objects.create(
-                    user=user,
-                    action_type='status_change',
-                    action_by=request.user,
-                    details=f"Employment status changed from {old_status if old_status else 'None'} to {new_status}"
-                )
-                
-                # If deactivating user
                 if new_status in ['inactive', 'terminated', 'resigned', 'suspended', 'absconding']:
                     if user.is_active:
                         user.is_active = False
@@ -1638,7 +1645,6 @@ def hr_user_detail(request, user_id):
                             action_by=request.user,
                             details=f"User account deactivated due to status change to {new_status}"
                         )
-                # If reactivating user
                 elif new_status == 'active' and not user.is_active:
                     user.is_active = True
                     user.save()
@@ -1650,23 +1656,19 @@ def hr_user_detail(request, user_id):
                         details="User account activated due to status change to active"
                     )
 
-            # Remove empty values to avoid unnecessary updates
+            # Remove empty values
             fields_to_update = {k: v for k, v in fields_to_update.items() if v is not None}
 
             # Validate against model choices
-            if fields_to_update.get('blood_group') and fields_to_update['blood_group'] not in dict(UserDetails._meta.get_field('blood_group').choices):
-                raise ValueError('Invalid blood group')
+            model_fields = UserDetails._meta.get_fields()
+            for field_name, value in fields_to_update.items():
+                field = next((f for f in model_fields if f.name == field_name), None)
+                if hasattr(field, 'choices') and field.choices and value:
+                    valid_choices = dict(field.choices)
+                    if value not in valid_choices:
+                        raise ValueError(f'Invalid value for {field_name}')
 
-            if fields_to_update.get('gender') and fields_to_update['gender'] not in dict(UserDetails._meta.get_field('gender').choices):
-                raise ValueError('Invalid gender')
-
-            if fields_to_update.get('employment_status') and fields_to_update['employment_status'] not in dict(UserDetails._meta.get_field('employment_status').choices):
-                raise ValueError('Invalid employment status')
-
-            if fields_to_update.get('employee_type') and fields_to_update['employee_type'] not in dict(UserDetails._meta.get_field('employee_type').choices):
-                raise ValueError('Invalid employee type')
-
-            # Check if basic user details are being updated
+            # Update basic user details if provided
             first_name = data.get('first_name')
             last_name = data.get('last_name')
             email = data.get('email')
@@ -1677,7 +1679,6 @@ def hr_user_detail(request, user_id):
                 user.email = email or user.email
                 user.save()
                 
-                # Log the user update
                 UserActionLog.objects.create(
                     user=user,
                     action_type='update',
@@ -1687,9 +1688,10 @@ def hr_user_detail(request, user_id):
 
             # Perform atomic update
             with transaction.atomic():
-                UserDetails.objects.filter(user=user).update(**fields_to_update)
+                for field, value in fields_to_update.items():
+                    setattr(user_detail, field, value)
+                user_detail.save()
                 
-                # Log the general update
                 UserActionLog.objects.create(
                     user=user,
                     action_type='update',
@@ -1707,18 +1709,29 @@ def hr_user_detail(request, user_id):
             logger.error(f"Unexpected error for user {user_id}: {str(e)}", exc_info=True)
             messages.error(request, 'An unexpected error occurred while updating user details.')
 
-    return render(request, 'components/hr/hr_user_detail.html', {
+    # Prepare context with user details and metadata
+    context = {
         'user_obj': user,
         'user_detail': user_detail,
         'action_logs': action_logs,
         'recent_sessions': recent_sessions,
         'today': date.today(),
-        'blood_group_choices': UserDetails._meta.get_field('blood_group').choices,
-        'gender_choices': UserDetails._meta.get_field('gender').choices,
-        'employment_status_choices': UserDetails._meta.get_field('employment_status').choices,
-        'employee_type_choices': UserDetails._meta.get_field('employee_type').choices,
+        'blood_group_choices': UserDetails.BLOOD_GROUP_CHOICES,
+        'gender_choices': UserDetails.GENDER_CHOICES,
+        'marital_status_choices': UserDetails.MARITAL_STATUS_CHOICES,
+        'employment_status_choices': UserDetails.EMPLOYMENT_STATUS_CHOICES,
+        'employee_type_choices': UserDetails.EMPLOYEE_TYPE_CHOICES,
         'groups': Group.objects.all(),
-    })
+        'employment_duration': user_detail.employment_duration,
+        'status_display': user_detail.status_display,
+        'reporting_chain': user_detail.get_reporting_chain,
+        'salary_frequencies': [('monthly', 'Monthly'), ('bi_weekly', 'Bi-Weekly'), ('weekly', 'Weekly')],
+        'remaining_notice_period': user_detail.remaining_notice_period if user_detail.is_on_notice else None,
+        'age': user_detail.age,
+        'managers': User.objects.filter(groups__name='Manager').order_by('first_name', 'last_name')
+    }
+
+    return render(request, 'components/hr/hr_user_detail.html', context)
 
 @login_required
 @user_passes_test(is_hr)
@@ -1767,7 +1780,6 @@ def add_user(request):
                 # Create UserDetails with comprehensive information
                 user_details = UserDetails.objects.create(
                     user=user,
-                    group=group,
                     hire_date=request.POST.get('hire_date') or datetime.now().date(),
                     start_date=request.POST.get('start_date') or datetime.now().date(),
                     employment_status='active',
@@ -1776,22 +1788,20 @@ def add_user(request):
                     dob=request.POST.get('dob') or None,
                     gender=request.POST.get('gender') or None,
                     blood_group=request.POST.get('blood_group') or None,
-                    country_code=request.POST.get('country_code') or None,
                     contact_number_primary=request.POST.get('contact_number_primary') or None,
                     personal_email=request.POST.get('personal_email') or None,
                     emergency_contact_name=request.POST.get('emergency_contact_name') or None,
-                    emergency_contact_primary=request.POST.get('emergency_contact_primary') or None,
-                    emergency_contact_address=request.POST.get('emergency_contact_address') or None,
+                    emergency_contact_number=request.POST.get('emergency_contact_primary') or None,
+                    emergency_contact_relationship=request.POST.get('emergency_contact_relationship') or None,
                     onboarded_by=request.user,
                     onboarding_date=timezone.now(),
                     employee_type=request.POST.get('employee_type') or None,
-                    # Replace personal_address with individual address fields
-                    address_line1=request.POST.get('address_line1') or None,
-                    address_line2=request.POST.get('address_line2') or None,
-                    city=request.POST.get('city') or None,
-                    state=request.POST.get('state') or None,
-                    postal_code=request.POST.get('postal_code') or None,
-                    country=request.POST.get('country') or None
+                    current_address_line1=request.POST.get('address_line1') or None,
+                    current_address_line2=request.POST.get('address_line2') or None,
+                    current_city=request.POST.get('city') or None,
+                    current_state=request.POST.get('state') or None,
+                    current_postal_code=request.POST.get('postal_code') or None,
+                    current_country=request.POST.get('country') or None
                 )
                 
                 # Log user creation
@@ -1827,10 +1837,10 @@ def add_user(request):
     return render(request, 'components/hr/add_user.html', {
         'groups': Group.objects.all(),
         'today': date.today(),
-        'blood_group_choices': UserDetails._meta.get_field('blood_group').choices,
-        'gender_choices': UserDetails._meta.get_field('gender').choices,
-        'employment_status_choices': UserDetails._meta.get_field('employment_status').choices,
-        'employee_type_choices': UserDetails._meta.get_field('employee_type').choices,
+        'blood_group_choices': UserDetails.BLOOD_GROUP_CHOICES,
+        'gender_choices': UserDetails.GENDER_CHOICES,
+        'employment_status_choices': UserDetails.EMPLOYMENT_STATUS_CHOICES,
+        'employee_type_choices': UserDetails.EMPLOYEE_TYPE_CHOICES,
     })
 
 @login_required
@@ -1912,7 +1922,6 @@ def bulk_add_users(request):
                     # Create UserDetails
                     UserDetails.objects.create(
                         user=user,
-                        group=group,
                         hire_date=datetime.now().date(),
                         start_date=datetime.now().date(),
                         employment_status='active',
