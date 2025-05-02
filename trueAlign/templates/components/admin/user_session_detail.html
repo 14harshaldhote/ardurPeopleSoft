@@ -22,10 +22,12 @@
             <div class="bg-white rounded-xl shadow-sm p-6">
                 <h3 class="text-lg font-medium text-gray-900 mb-2">Working Hours</h3>
                 <p class="text-3xl font-bold text-blue-600">{{ total_working_hours|floatformat:1 }} hrs</p>
+                <p class="text-sm text-gray-500">{{ total_working_hours_display }}</p>
             </div>
             <div class="bg-white rounded-xl shadow-sm p-6">
                 <h3 class="text-lg font-medium text-gray-900 mb-2">Idle Time</h3>
                 <p class="text-3xl font-bold text-orange-600">{{ total_idle_time|floatformat:1 }} hrs</p>
+                <p class="text-sm text-gray-500">{{ total_idle_time_display }}</p>
             </div>
             <div class="bg-white rounded-xl shadow-sm p-6">
                 <h3 class="text-lg font-medium text-gray-900 mb-2">Productivity Score</h3>
@@ -48,6 +50,7 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Idle Time</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IP Address</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
@@ -56,23 +59,34 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ session.login_time|date:"H:i:s" }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                 {% if session.is_active %}
-                                    <span class="text-green-600">Active</span>
+                                    <span class="text-gray-500">--</span>
                                 {% else %}
                                     {{ session.logout_time|date:"H:i:s" }}
                                 {% endif %}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {{ session.working_hours|floatformat:1 }} hrs
+                                {{ session.working_hours_display }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {{ session.idle_time|floatformat:1 }} hrs
+                                {{ session.idle_time_display }}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ session.location|default:"Unknown" }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ session.ip_address|default:"Unknown" }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ session.location }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ session.ip_address }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {% if session.is_active %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        Active
+                                    </span>
+                                {% else %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                        Completed
+                                    </span>
+                                {% endif %}
+                            </td>
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="6" class="px-6 py-4 text-center text-gray-500">
+                            <td colspan="7" class="px-6 py-4 text-center text-gray-500">
                                 No sessions found for this date. Please check the date or user selection.
                             </td>
                         </tr>

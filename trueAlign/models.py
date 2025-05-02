@@ -6,6 +6,12 @@ from django.utils.timezone import now
 from django.conf import settings
 from django.dispatch import receiver
 from datetime import time, timedelta, date
+from datetime import datetime
+from django.db import transaction
+from django.utils.timezone import localtime
+from django.db import transaction
+
+
 
 
 IST_TIMEZONE = pytz.timezone('Asia/Kolkata')
@@ -35,44 +41,64 @@ class ClientProfile(models.Model):
         return self.company_name
     
 '''------------------------- USERSESSION --------------------'''
-from django.db import models
-from django.utils import timezone
-from datetime import timedelta
-from django.conf import settings
-import random
-import string
 
 class UserSession(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     session_key = models.CharField(max_length=40)
     ip_address = models.GenericIPAddressField(null=True, blank=True)
-    user_agent = models.TextField(null=True, blank=True)  # Added missing field
-    login_time = models.DateTimeField(default=timezone.now)
+    user_agent = models.TextField(null=True, blank=True)
+    login_time = models.DateTimeField(default=timezone.now)  # Stored in UTC
     logout_time = models.DateTimeField(null=True, blank=True)
     working_hours = models.DurationField(null=True, blank=True)
     idle_time = models.DurationField(default=timedelta(0))
-    last_activity = models.DateTimeField(default=timezone.now)
+    last_activity = models.DateTimeField(default=timezone.now)  # Stored in UTC
     location = models.CharField(max_length=50, null=True, blank=True)
-    session_duration = models.FloatField(null=True, blank=True)  # Added missing field for duration in minutes
-    # Add is_active flag for easier querying
+    session_duration = models.FloatField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
 
     # Define constants at the model level
-    IDLE_THRESHOLD_MINUTES = 1
+    IDLE_THRESHOLD_MINUTES = 5
     SESSION_TIMEOUT_MINUTES = 30
     OFFICE_IPS = ['116.75.62.90']
 
     class Meta:
         indexes = [
             models.Index(fields=['user', 'login_time']),
-            # Add index for faster lookups
             models.Index(fields=['is_active']),
         ]
 
     @staticmethod
     def generate_session_key():
         """Generate a unique session key"""
+        import random
+        import string
         return ''.join(random.choices(string.ascii_letters + string.digits, k=40))
+    @staticmethod
+    def get_current_time_utc():
+        """Get current time in UTC for database operations"""
+        # Django's timezone.now() returns timezone-aware UTC time by default
+        # When USE_TZ=True, Django stores datetime in UTC regardless of TIME_ZONE setting
+        return timezone.now()
+
+    @staticmethod
+    def convert_to_local_time(utc_time):
+        """Convert UTC time to local timezone (e.g., IST)"""
+        if utc_time is None:
+            return None
+        from django.utils.timezone import localtime
+        return localtime(utc_time)
+
+    def get_login_time_local(self):
+        """Get login time in local timezone"""
+        return self.convert_to_local_time(self.login_time)
+
+    def get_last_activity_local(self):
+        """Get last activity time in local timezone"""
+        return self.convert_to_local_time(self.last_activity)
+    
+    def get_logout_time_local(self):
+        """Get logout time in local timezone"""
+        return self.convert_to_local_time(self.logout_time)
 
     @classmethod
     def get_or_create_session(cls, user, session_key=None, ip_address=None, user_agent=None):
@@ -80,7 +106,7 @@ class UserSession(models.Model):
         from django.db import transaction
         
         with transaction.atomic():
-            current_time = timezone.now()
+            current_time = cls.get_current_time_utc()  # Get current UTC time
             
             # Look for an active session
             existing_session = cls.objects.filter(
@@ -97,7 +123,8 @@ class UserSession(models.Model):
                         user=user,
                         session_key=session_key,
                         ip_address=ip_address,
-                        user_agent=user_agent,  # Added user_agent
+                        user_agent=user_agent,
+                        login_time=current_time,
                         last_activity=current_time,
                         is_active=True
                     )
@@ -114,7 +141,8 @@ class UserSession(models.Model):
                 user=user,
                 session_key=session_key,
                 ip_address=ip_address,
-                user_agent=user_agent,  # Added user_agent
+                user_agent=user_agent,
+                login_time=current_time,
                 last_activity=current_time,
                 is_active=True
             )
@@ -131,57 +159,50 @@ class UserSession(models.Model):
             return 'Unknown'
             
         ip = self.ip_address.strip()
-        print(f"Determining location for IP: {ip}")
-        
         return 'Office' if ip in self.OFFICE_IPS else 'Home'
 
-    def update_activity(self, current_time=None):
+    def update_activity(self, current_time=None, is_idle=False):
         """Update the last activity timestamp and calculate idle time"""
         from django.db import transaction
         
         with transaction.atomic():
-            current_time = current_time or timezone.now()
+            current_time = current_time or self.get_current_time_utc()
             
-            # Calculate idle time since last activity
+            # Calculate time since last activity
             time_since_last_activity = current_time - self.last_activity
             
-            # If more than threshold, add to idle time
-            if time_since_last_activity > timedelta(minutes=self.IDLE_THRESHOLD_MINUTES):
-                # Use F() expression for atomic update
+            # Only update idle time if the frontend reports user as idle
+            if is_idle:
                 from django.db.models import F
                 UserSession.objects.filter(pk=self.pk).update(
                     idle_time=F('idle_time') + time_since_last_activity,
                     last_activity=current_time
                 )
-                # Refresh to get the updated values
                 self.refresh_from_db()
             else:
-                # Just update last activity
+                # If not idle, just update last_activity
                 self.last_activity = current_time
                 self.save(update_fields=['last_activity'])
             
             return self
 
-    def end_session(self, logout_time=None):
+    def end_session(self, logout_time=None, is_idle=False):
         """End the current session"""
         if not self.is_active:
             return self
-            
-        from django.db import transaction
         
         with transaction.atomic():
-            logout_time = logout_time or timezone.now()
+            logout_time = logout_time or self.get_current_time_utc()
             
             # Calculate final idle time
             time_since_last_activity = logout_time - self.last_activity
             
-            # Add final idle time if needed
-            if time_since_last_activity > timedelta(minutes=self.IDLE_THRESHOLD_MINUTES):
+            # Only add to idle time if the user was reported as idle
+            if is_idle:
                 from django.db.models import F
                 UserSession.objects.filter(pk=self.pk).update(
                     idle_time=F('idle_time') + time_since_last_activity
                 )
-                # Refresh to get the updated idle_time
                 self.refresh_from_db(fields=['idle_time'])
             
             # Set logout time
@@ -198,22 +219,61 @@ class UserSession(models.Model):
             self.save(update_fields=['logout_time', 'is_active', 'working_hours', 'session_duration'])
             
             return self
+    
+    def get_session_duration_display(self):
+        """Get formatted session duration"""
+        if self.session_duration is None:
+            return "Session active"
+        
+        hours = int(self.session_duration // 60)
+        minutes = int(self.session_duration % 60)
+        
+        if hours > 0:
+            return f"{hours}h {minutes}m"
+        return f"{minutes}m"
+    
+    def get_total_working_hours_display(self):
+        """Get formatted working hours"""
+        if self.working_hours is None:
+            if self.is_active:
+                # Calculate working hours for active session
+                current_time = self.get_current_time_utc()
+                total_duration = current_time - self.login_time
+                working_hours = total_duration - self.idle_time
+                total_seconds = working_hours.total_seconds()
+            else:
+                return "N/A"
+        else:
+            total_seconds = self.working_hours.total_seconds()
+            
+        # Ensure we don't show negative time
+        total_seconds = max(0, total_seconds)
+        
+        hours = int(total_seconds // 3600)
+        minutes = int((total_seconds % 3600) // 60)
+        
+        return f"{hours}h {minutes}m"
             
     def save(self, *args, **kwargs):
-        # Remove complex business logic from save method
+        # Set location if not already set for new sessions
         if not self.pk and not self.location:
             self.location = self.determine_location()
             
+        # Ensure all times are timezone aware
+        if self.login_time and timezone.is_naive(self.login_time):
+            self.login_time = timezone.make_aware(self.login_time)
+            
+        if self.last_activity and timezone.is_naive(self.last_activity):
+            self.last_activity = timezone.make_aware(self.last_activity)
+            
+        if self.logout_time and timezone.is_naive(self.logout_time):
+            self.logout_time = timezone.make_aware(self.logout_time)
+            
         super().save(*args, **kwargs)
+        
 
 '''---------- ATTENDANCE AREA ----------'''
-from django.db import models
-from django.contrib.auth.models import User
-from django.utils import timezone
-from django.core.exceptions import ValidationError
-from django.db.models import Q, Sum, Avg
-from datetime import timedelta
-import calendar
+
 class Leave(models.Model):
     LEAVE_TYPES = [
         ('Sick Leave', 'Sick Leave'),
@@ -628,32 +688,31 @@ from django.core.exceptions import ValidationError
 from django.db.models import Q, Sum, Avg
 from datetime import timedelta
 import calendar
-
 class Attendance(models.Model):
     STATUS_CHOICES = [
         ('Present', 'Present'),
-        ('Present & Late', 'Present & Late'),
+        ('Present & Late', 'Present & Late'), 
         ('Absent', 'Absent'),
-        ('Late', 'Late'), 
+        ('Late', 'Late'),
         ('Half Day', 'Half Day'),
         ('On Leave', 'On Leave'),
         ('Work From Home', 'Work From Home'),
         ('Weekend', 'Weekend'),
         ('Holiday', 'Holiday'),
         ('Comp Off', 'Comp Off'),
-        ('Not Marked', 'Not Marked') # Added new status for unmarked attendance
+        ('Not Marked', 'Not Marked')
     ]
 
     LOCATION_CHOICES = [
         ('Office', 'Office'),
-        ('Home', 'Home'), 
-        ('Remote', 'Remote'),
+        ('Home', 'Home'),
+        ('Remote', 'Remote'), 
         ('Other', 'Other')
     ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     date = models.DateField()
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Not Marked') # Changed default to Not Marked
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Not Marked')
     is_half_day = models.BooleanField(default=False)
     leave_type = models.CharField(max_length=50, null=True, blank=True)
     clock_in_time = models.DateTimeField(null=True, blank=True)
@@ -708,20 +767,30 @@ class Attendance(models.Model):
                     self.status = 'Present'
                     return
 
-            # Get shift start time for the date
-            shift_start = timezone.make_aware(
-                timezone.datetime.combine(self.date, self.shift.start_time)
+            # Convert clock_in_time to local timezone (IST)
+            user_clock_in = timezone.localtime(self.clock_in_time)
+            
+            # Get the date in local timezone to properly handle day boundaries
+            local_date = timezone.localtime(timezone.make_aware(
+                datetime.combine(self.date, time(0, 0)),
+                timezone.get_current_timezone()
+            )).date()
+            
+            # Create shift start time in local timezone
+            local_shift_start = timezone.make_aware(
+                datetime.combine(local_date, self.shift.start_time),
+                timezone.get_current_timezone()
             )
-
-            # Add grace period if defined
+            
+            # Add grace period
             grace_period = getattr(self.shift, 'grace_period', timedelta(minutes=10))
-            latest_allowed_time = shift_start + grace_period
-
-            # Compare clock in time with allowed time
-            if self.clock_in_time > latest_allowed_time:
+            latest_allowed_time = local_shift_start + grace_period
+            
+            # Compare clock in time with allowed time - now both are in local timezone
+            if user_clock_in > latest_allowed_time:
                 self.status = 'Present & Late'
                 # Calculate late minutes
-                late_duration = self.clock_in_time - latest_allowed_time
+                late_duration = user_clock_in - latest_allowed_time
                 self.late_minutes = int(late_duration.total_seconds() // 60)
             else:
                 self.status = 'Present'
@@ -738,16 +807,20 @@ class Attendance(models.Model):
             return False
         
         try:
-            # Get shift end time for the date
+            # Convert clock_out_time to user's timezone
+            user_clock_out = timezone.localtime(self.clock_out_time)
+            
+            # Get shift end time for the date in user's timezone
             shift_end = timezone.make_aware(
-                timezone.datetime.combine(self.date, self.shift.end_time)
+                timezone.datetime.combine(self.date, self.shift.end_time),
+                timezone.get_current_timezone()
             )
             
             # Consider grace period for leaving early (10 minutes)
             early_leave_threshold = shift_end - timedelta(minutes=10)
             
-            if self.clock_out_time < early_leave_threshold:
-                early_minutes = int((shift_end - self.clock_out_time).total_seconds() // 60)
+            if user_clock_out < early_leave_threshold:
+                early_minutes = int((shift_end - user_clock_out).total_seconds() // 60)
                 self.remarks = f"{self.remarks or ''} Left early by {early_minutes} minutes."
                 return True
             return False
@@ -761,12 +834,12 @@ class Attendance(models.Model):
             return None
 
         try:
-            # Ensure times are timezone aware
-            clock_in = self.ensure_timezone_aware(self.clock_in_time)
-            clock_out = self.ensure_timezone_aware(self.clock_out_time)
+            # Convert times to user's timezone
+            user_clock_in = timezone.localtime(self.clock_in_time)
+            user_clock_out = timezone.localtime(self.clock_out_time)
 
             # Calculate total duration
-            total_time = (clock_out - clock_in).total_seconds() / 3600
+            total_time = (user_clock_out - user_clock_in).total_seconds() / 3600
 
             # Subtract break time
             break_time = self.calculate_break_time()
@@ -811,9 +884,9 @@ class Attendance(models.Model):
                         except ValueError:
                             continue
 
-                    # Ensure timezone awareness
-                    start = self.ensure_timezone_aware(start)
-                    end = self.ensure_timezone_aware(end)
+                    # Convert to user's timezone
+                    start = timezone.localtime(start)
+                    end = timezone.localtime(end)
 
                     if start and end and end > start:
                         break_time += (end - start).total_seconds() / 3600
@@ -1052,7 +1125,10 @@ class Attendance(models.Model):
     def determine_shift_date(cls, user, clock_in_time):
         """Determine the shift date and get shift for clock in time"""
         try:
-            attendance_date = clock_in_time.date()
+            # Convert clock_in_time to user's timezone
+            user_clock_in = timezone.localtime(clock_in_time)
+            attendance_date = user_clock_in.date()
+            
             from .models import ShiftAssignment
             shift = ShiftAssignment.get_user_current_shift(user, attendance_date)
             
@@ -1060,7 +1136,7 @@ class Attendance(models.Model):
             if shift and shift.start_time > shift.end_time:
                 # If clock in is before midnight, use current date
                 # If clock in is after midnight, use previous date
-                if clock_in_time.time() < shift.end_time:
+                if user_clock_in.time() < shift.end_time:
                     attendance_date = attendance_date - timedelta(days=1)
             
             return attendance_date, shift
@@ -1181,8 +1257,11 @@ class Attendance(models.Model):
     def clock_out(cls, user, clock_out_time, breaks=None):
         """Record clock out time for user"""
         try:
+            # Convert clock_out_time to user's timezone
+            user_clock_out = timezone.localtime(clock_out_time)
+            today = user_clock_out.date()
+            
             # Get current date's attendance
-            today = clock_out_time.date()
             attendance = cls.objects.filter(
                 user=user,
                 date=today,
@@ -1262,7 +1341,7 @@ class Attendance(models.Model):
             'present_days': attendances.filter(status='Present').count(),
             'late_days': attendances.filter(status__in=['Late', 'Present & Late']).count(),
             'wfh_days': attendances.filter(status='Work From Home').count(),
-            'absent_days': attendances.filter(status='Not Marked').count(), # Changed from Absent to Not Marked
+            'absent_days': attendances.filter(status='Not Marked').count(),
             'half_days': attendances.filter(is_half_day=True).count(),
             'leave_days': attendances.filter(status='On Leave').count(),
             'comp_off_days': attendances.filter(status='Comp Off').count(),

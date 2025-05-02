@@ -13,15 +13,17 @@ def track_login_time(sender, request, user, **kwargs):
         # Import models here to avoid circular imports
         from .models import UserSession, Attendance, ShiftAssignment, Holiday
         
-        # Get current time with timezone awareness
-        local_now = timezone.localtime(timezone.now())
+        # Get current time with timezone awareness - Django stores in UTC internally
+        utc_now = timezone.now()
+        # Convert to local time (Asia/Kolkata) for display and calculations
+        local_now = timezone.localtime(utc_now)
+        print(f"DEBUG: Current UTC time: {utc_now}")
         print(f"DEBUG: Current localized time: {local_now}")
         today_date = local_now.date()
 
         # Device/location info
         ip_address = request.META.get('REMOTE_ADDR', '')
         user_agent = request.META.get('HTTP_USER_AGENT', '')
-        location = request.session.get('location', 'Office')  # Default to Office if not specified
         
         # Create basic device info
         device_info = {
@@ -30,7 +32,7 @@ def track_login_time(sender, request, user, **kwargs):
             'device_type': _detect_device_type(user_agent)
         }
 
-        # Create user session - FIXED to use get_or_create_session
+        # Create user session using get_or_create_session (uses UTC internally)
         session = UserSession.get_or_create_session(
             user=user,
             session_key=request.session.session_key,
@@ -38,11 +40,16 @@ def track_login_time(sender, request, user, **kwargs):
             user_agent=user_agent
         )
         print(f"DEBUG: Session created: {session}")
+        print(f"DEBUG: Session login time (UTC): {session.login_time}")
+        print(f"DEBUG: Session login time (local): {session.get_login_time_local()}")
 
-        # Create attendance record using the proper method
+        # Get location from session
+        location = session.location
+
+        # Create attendance record using the proper method - ensure we're using local time
         attendance = Attendance.create_attendance(
             user=user,
-            clock_in_time=local_now,
+            clock_in_time=local_now,  # Pass local time for consistency
             location=location,
             ip_address=ip_address,
             device_info=device_info
@@ -67,24 +74,30 @@ def track_logout_time(sender, request, user, **kwargs):
         from .models import UserSession, Attendance
         
         # Get current time with timezone awareness
-        local_now = timezone.localtime(timezone.now())
+        utc_now = timezone.now()
+        local_now = timezone.localtime(utc_now)
+        print(f"DEBUG: Current UTC time at logout: {utc_now}")
         print(f"DEBUG: Current localized time at logout: {local_now}")
 
-        # Find and end active session
+        # Find and end active session - end_session handles UTC conversion internally
         active_session = UserSession.objects.filter(
             user=user,
-            session_key=request.session.session_key,
             is_active=True
         ).first()
 
         if active_session:
-            active_session.end_session(logout_time=local_now)
-            print(f"DEBUG: Session updated with logout time: {active_session}")
+            active_session.end_session(logout_time=utc_now)  # Pass UTC time for consistency
+            print(f"DEBUG: Session ended: {active_session}")
+            print(f"DEBUG: Session logout time (UTC): {active_session.logout_time}")
+            print(f"DEBUG: Session logout time (local): {active_session.get_logout_time_local()}")
+            print(f"DEBUG: Working hours: {active_session.get_total_working_hours_display()}")
+            print(f"DEBUG: Session duration: {active_session.get_session_duration_display()}")
 
-        # Use the Attendance.clock_out class method to handle the clock out
-        attendance = Attendance.clock_out(user, local_now)
+        # Use the Attendance.clock_out class method to handle the clock out with local time
+        attendance = Attendance.clock_out(user, local_now)  # Pass local time for consistency
         if attendance:
             print(f"DEBUG: Attendance updated with clock out time: {attendance}")
+            print(f"DEBUG: Attendance clock out time: {attendance.clock_out_time}")
         else:
             print(f"DEBUG: No active attendance record found to clock out")
 
