@@ -11,8 +11,8 @@
                     </svg>
                     <h1 class="text-3xl font-bold text-indigo-600">Appraisals Dashboard</h1>
                 </div>
-                {% if not is_special_user %}
                 <div class="flex space-x-3">
+                    {% if not is_special_user %}
                     <a href="{% url 'appraisal:appraisal_create' %}" 
                        class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 shadow-md">
                         <svg class="mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -20,8 +20,17 @@
                         </svg>
                         Create New Appraisal
                     </a>
+                    {% endif %}
+                    {% if is_management or is_hr or is_finance %}
+                    <a href="{% url 'appraisal:appraisal_dashboard' %}"
+                       class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-xl text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 shadow-md">
+                        <svg class="mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        View Analytics
+                    </a>
+                    {% endif %}
                 </div>
-                {% endif %}
             </div>
         </div>
 
@@ -161,11 +170,11 @@
                                 </span>
                                 <p class="text-sm text-gray-500">{{ appraisal.period_start|date:"M d, Y" }} - {{ appraisal.period_end|date:"M d, Y" }}</p>
                                 
-                                {% if is_manager and appraisal.status == 'submitted' or is_hr and appraisal.status == 'hr_review' %}
+                                {% if is_manager and appraisal.status == 'submitted' or is_hr and appraisal.status == 'hr_review' or is_finance and appraisal.status == 'finance_review' %}
                                 <a href="{% url 'appraisal:appraisal_review' appraisal.id %}" class="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
                                     Review
                                 </a>
-                                {% elif is_manager or is_hr and appraisal.status in 'approved,rejected' %}
+                                {% else %}
                                 <a href="{% url 'appraisal:appraisal_detail' appraisal.id %}" class="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-gray-600 bg-gray-100 hover:bg-gray-200">
                                     View Details
                                 </a>

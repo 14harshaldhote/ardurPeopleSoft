@@ -7749,7 +7749,6 @@ def api_toggle_shift_active(request, pk):
     
 
 '''---------------------------------- APPRAISAL --------------------------------'''
-
 from .models import Appraisal, AppraisalItem, AppraisalAttachment, AppraisalWorkflow
 
 
@@ -7764,6 +7763,7 @@ def is_finance_or_admin(user):
 
 def is_management_or_admin(user):
     return user.groups.filter(name="Management").exists() or user.is_superuser
+
 @login_required
 def appraisal_list(request):
     """View for listing appraisals based on user role"""
@@ -7862,6 +7862,27 @@ def appraisal_detail(request, pk):
     
     print(f"[DEBUG] Appraisal details - Items: {context['items'].count()}, Attachments: {context['attachments'].count()}")
     return render(request, 'components/appraisal/appraisal_detail.html', context)
+def is_valid_status_transition(from_status, to_status):
+    """
+    Validates that status transitions follow the correct workflow
+    
+    Valid transitions:
+    - draft -> submitted
+    - submitted -> hr_review (if approved by manager)
+    - submitted -> rejected (if rejected by manager)
+    - hr_review -> finance_review (if approved by HR)
+    - hr_review -> rejected (if rejected by HR)
+    - finance_review -> approved (if approved by Finance)
+    - finance_review -> rejected (if rejected by Finance)
+    """
+    valid_transitions = {
+        'draft': ['submitted'],
+        'submitted': ['hr_review', 'rejected'],
+        'hr_review': ['finance_review', 'rejected'],
+        'finance_review': ['approved', 'rejected']
+    }
+    
+    return to_status in valid_transitions.get(from_status, [])
 
 @login_required
 def appraisal_create(request):
@@ -7915,6 +7936,20 @@ def appraisal_create(request):
                 # Handle appraisal items
                 items_data = json.loads(request.POST.get('items', '[]'))
                 print(f"[DEBUG] Processing {len(items_data)} appraisal items")
+                
+                # Require at least one item
+                if not items_data:
+                    raise ValueError("At least one appraisal item is required")
+                
+                # Additional validation for items - ensure required fields exist
+                for idx, item in enumerate(items_data):
+                    if not item.get('category'):
+                        raise ValueError(f"Category is required for item #{idx+1}")
+                    if not item.get('title'):
+                        raise ValueError(f"Title is required for item #{idx+1}")
+                    if not item.get('description'):
+                        raise ValueError(f"Description is required for item #{idx+1}")
+                
                 for item in items_data:
                     AppraisalItem.objects.create(
                         appraisal=appraisal,
@@ -7986,6 +8021,11 @@ def appraisal_update(request, pk):
                 # Update items
                 items_data = json.loads(request.POST.get('items', '[]'))
                 print(f"[DEBUG] Deleting existing items and creating {len(items_data)} new items")
+                
+                # Require at least one item
+                if not items_data:
+                    raise ValueError("At least one appraisal item is required")
+                    
                 appraisal.items.all().delete()  # Remove existing items
                 for item in items_data:
                     AppraisalItem.objects.create(
@@ -8010,6 +8050,9 @@ def appraisal_update(request, pk):
 
                 print("[DEBUG] Successfully updated appraisal")
                 return JsonResponse({'success': True})
+        except ValueError as e:
+            print(f"[DEBUG] Validation error: {str(e)}")
+            return JsonResponse({'success': False, 'error': str(e)})
         except Exception as e:
             print(f"[DEBUG] Error updating appraisal: {str(e)}")
             return JsonResponse({'success': False, 'error': str(e)})
@@ -8031,6 +8074,26 @@ def appraisal_submit(request, pk):
             # Verify manager is assigned
             if not appraisal.manager:
                 raise ValueError("Cannot submit appraisal without assigned manager")
+                
+            # Enhanced verification that appraisal has valid items
+            items = appraisal.items.all()
+            if not items.exists():
+                raise ValueError("Cannot submit appraisal without any items")
+            
+            # Check that all required item fields are filled
+            for item in items:
+                if not item.category:
+                    raise ValueError(f"Category is required for item: {item.title}")
+                if not item.title:
+                    raise ValueError("Title is required for all items")
+                if not item.description:
+                    raise ValueError(f"Description is required for item: {item.title}")
+                if not item.employee_rating:
+                    raise ValueError(f"Self-rating is required for item: {item.title}")
+            
+            # Validate status transition
+            if not is_valid_status_transition('draft', 'submitted'):
+                raise ValueError("Invalid status transition from draft")
                 
             appraisal.status = 'submitted'
             appraisal.submitted_at = timezone.now()
@@ -8057,7 +8120,7 @@ def appraisal_submit(request, pk):
         print(f"[DEBUG] Error submitting appraisal: {str(e)}")
         messages.error(request, "An error occurred while submitting the appraisal")
         return redirect('appraisal:appraisal_detail', pk=appraisal.id)
-
+    
 @login_required
 @user_passes_test(lambda u: is_manager_or_admin(u) or is_hr_or_admin(u) or is_finance_or_admin(u))
 def appraisal_review(request, pk):
@@ -8076,18 +8139,60 @@ def appraisal_review(request, pk):
                 print(f"[DEBUG] Review action: {action}, Current status: {from_status}")
 
                 # Manager Review
-                if user.groups.filter(name='Manager').exists() and appraisal.status == 'submitted':
+                if is_manager_or_admin(user) and appraisal.status == 'submitted':
                     print(f"[DEBUG] Processing manager review for user {user} on appraisal {appraisal.id}")
                     
                     if user != appraisal.manager:
                         print(f"[DEBUG] Permission denied for manager {user} - not assigned manager {appraisal.manager}")
                         raise PermissionDenied
+                        
+                    if appraisal.items.count() == 0:
+                        print(f"[DEBUG] Appraisal {appraisal.id} has no items, cannot be reviewed")
+                        raise ValueError("Cannot review an appraisal with no items")
                     
-                    # Update manager ratings and comments
-                    items_data = json.loads(request.POST.get('items', '[]'))
-                    print(f"[DEBUG] Items data received: {items_data}")
+                    # Get all appraisal items that need review
+                    appraisal_items = appraisal.items.all()
+                    
+                    # Process form data - NEW CODE STARTS HERE
+                    print("[DEBUG] Extracting item data from form")
+                    items_data = []
+                    
+                    # Extract data from POST dictionary
+                    for item in appraisal_items:
+                        item_id = str(item.id)
+                        manager_rating = request.POST.get(f'items[{item_id}][manager_rating]')
+                        manager_comments = request.POST.get(f'items[{item_id}][manager_comments]', '')
+                        
+                        print(f"[DEBUG] Extracted data for item {item_id}: Rating={manager_rating}, Comments={manager_comments}")
+                        
+                        if manager_rating:
+                            items_data.append({
+                                'id': item_id,
+                                'manager_rating': manager_rating,
+                                'manager_comments': manager_comments
+                            })
+                    # NEW CODE ENDS HERE
+                    
+                    print(f"[DEBUG] Items data processed: {items_data}")
+                    
+                    # Validate that all items have ratings
+                    if not items_data:
+                        print("[DEBUG] No items data received")
+                        raise ValueError("Manager must provide ratings for all items")
+                        
+                    if len(items_data) != appraisal_items.count():
+                        print(f"[DEBUG] Mismatch in items count - Expected: {appraisal_items.count()}, Received: {len(items_data)}")
+                        raise ValueError(f"Manager must rate all appraisal items. Expected {appraisal_items.count()} items, received {len(items_data)}.")
+                    
+                    # Validate each item has a rating
+                    for item_data in items_data:
+                        if not item_data.get('manager_rating'):
+                            print(f"[DEBUG] Missing manager rating for item: {item_data.get('id')}")
+                            raise ValueError("Manager rating is required for all items")
+                    
                     print(f"[DEBUG] Updating {len(items_data)} items with manager ratings")
                     
+                    # Process item updates only after all validations pass
                     for item_data in items_data:
                         print(f"[DEBUG] Processing item data: {item_data}")
                         item = get_object_or_404(AppraisalItem, pk=item_data['id'])
@@ -8105,17 +8210,26 @@ def appraisal_review(request, pk):
                         print(f"  - Comments changed from '{old_comments}' to '{item.manager_comments}'")
                     
                     to_status = 'hr_review' if action == 'approve' else 'rejected'
+                    if not is_valid_status_transition(from_status, to_status):
+                        print(f"[DEBUG] Invalid status transition from {from_status} to {to_status}")
+                        raise ValueError(f"Invalid status transition")
                     print(f"[DEBUG] Setting new status to: {to_status} based on action: {action}")
 
                 # HR Review
-                elif user.groups.filter(name='HR').exists() and appraisal.status == 'hr_review':
+                elif is_hr_or_admin(user) and appraisal.status == 'hr_review':
                     print("[DEBUG] Processing HR review")
                     to_status = 'finance_review' if action == 'approve' else 'rejected'
+                    if not is_valid_status_transition(from_status, to_status):
+                        print(f"[DEBUG] Invalid status transition from {from_status} to {to_status}")
+                        raise ValueError(f"Invalid status transition")
 
                 # Finance Review
-                elif user.groups.filter(name='Finance').exists() and appraisal.status == 'finance_review':
+                elif is_finance_or_admin(user) and appraisal.status == 'finance_review':
                     print("[DEBUG] Processing Finance review")
                     to_status = 'approved' if action == 'approve' else 'rejected'
+                    if not is_valid_status_transition(from_status, to_status):
+                        print(f"[DEBUG] Invalid status transition from {from_status} to {to_status}")
+                        raise ValueError(f"Invalid status transition")
                     if to_status == 'approved':
                         appraisal.approved_at = timezone.now()
                 else:
@@ -8138,6 +8252,10 @@ def appraisal_review(request, pk):
                 AppraisalWorkflow.objects.create(**workflow_data)
                 print("[DEBUG] Successfully completed review")
                 return redirect('appraisal:appraisal_list')
+        except ValueError as e:
+            print(f"[DEBUG] Validation error: {str(e)}")
+            messages.error(request, str(e))
+            return redirect('appraisal:appraisal_review', pk=appraisal.pk)
         except Exception as e:
             print(f"[DEBUG] Error during review: {str(e)}")
             messages.error(request, f"Error during review: {str(e)}")
@@ -8146,49 +8264,158 @@ def appraisal_review(request, pk):
     context = {
         'appraisal': appraisal,
         'items': appraisal.items.all(),
-        'workflow_history': appraisal.workflow_history.all()
+        'workflow_history': appraisal.workflow_history.all(),
+        'is_manager': is_manager_or_admin(user),
+        'is_hr': is_hr_or_admin(user),
+        'is_finance': is_finance_or_admin(user)
     }
     print(f"[DEBUG] Rendering review template with {context['items'].count()} items")
     return render(request, 'components/appraisal/appraisal_review.html', context)
 
+from django.db.models.functions import TruncMonth
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import user_passes_test
+from django.db.models import Count, Avg, Min, Max, F, Q, FloatField, DurationField
+from django.db.models.functions import Cast, TruncMonth
+from django.utils import timezone
+from datetime import timedelta
+
 @login_required
-@user_passes_test(is_management_or_admin)
+@user_passes_test(lambda u: is_management_or_admin(u) or is_hr_or_admin(u) or is_finance_or_admin(u))
 def appraisal_dashboard(request):
-    """Dashboard view for management"""
+    """Dashboard view for management and HR"""
     print("[DEBUG] Accessing appraisal dashboard view")
-    # Get filter parameters
-    period_start = request.GET.get('period_start')
-    period_end = request.GET.get('period_end')
-    manager_id = request.GET.get('manager')
-    user_id = request.GET.get('user')
-    
-    print(f"[DEBUG] Filter params - period_start: {period_start}, period_end: {period_end}, manager_id: {manager_id}, user_id: {user_id}")
 
-    # Base queryset
-    appraisals = Appraisal.objects.all()
+    # Base queryset with related fields
+    appraisals = Appraisal.objects.select_related('user', 'manager').all()
 
-    # Apply filters
-    if period_start and period_end:
-        appraisals = appraisals.filter(period_start__gte=period_start, period_end__lte=period_end)
-    if manager_id:
-        appraisals = appraisals.filter(manager_id=manager_id)
-    if user_id:
-        appraisals = appraisals.filter(user_id=user_id)
+    # Calculate overall statistics
+    total_appraisals = appraisals.count()
+    completed_appraisals = appraisals.filter(status__in=['approved', 'rejected']).count()
+    in_progress = appraisals.exclude(status__in=['approved', 'rejected', 'draft']).count()
+    pending_reviews = appraisals.filter(status='submitted').count()
 
-    print(f"[DEBUG] Filtered appraisals count: {appraisals.count()}")
-
-    # Calculate statistics
-    stats = {
-        'total_appraisals': appraisals.count(),
-        'status_counts': appraisals.values('status').annotate(count=Count('id')),
-        'avg_ratings': {
-            'employee': AppraisalItem.objects.filter(employee_rating__isnull=False).aggregate(Avg('employee_rating')),
-            'manager': AppraisalItem.objects.filter(manager_rating__isnull=False).aggregate(Avg('manager_rating'))
-        },
-        'submission_trend': appraisals.values('submitted_at__month').annotate(count=Count('id')),
-        'approval_rate': appraisals.filter(status='approved').count() / appraisals.count() if appraisals.exists() else 0,
-        'rejection_rate': appraisals.filter(status='rejected').count() / appraisals.count() if appraisals.exists() else 0
+    # Calculate status distribution
+    status_counts = appraisals.values('status').annotate(count=Count('id'))
+    status_distribution = {
+        status: count for status_obj in status_counts 
+        for status, count in [(status_obj['status'], status_obj['count'])]
     }
+
+    # Calculate monthly trends - using a safer approach
+    # Get time range for trends
+    end_date = timezone.now().date()
+    start_date = end_date - timedelta(days=365)  # Last 12 months
     
-    print(f"[DEBUG] Dashboard statistics: {stats}")
-    return render(request, 'components/appraisal/dashboard.html', stats)
+    # Get all appraisals within date range
+    period_appraisals = appraisals.filter(
+        created_at__date__range=(start_date, end_date)
+    )
+    
+    # Manual monthly aggregation
+    monthly_trends = []
+    current_date = start_date.replace(day=1)
+    end_month = end_date.replace(day=1)
+    
+    while current_date <= end_month:
+        next_month = (current_date.replace(day=28) + timedelta(days=4)).replace(day=1)
+        month_appraisals = period_appraisals.filter(
+            created_at__date__gte=current_date,
+            created_at__date__lt=next_month
+        )
+        
+        monthly_data = {
+            'month': current_date,
+            'total': month_appraisals.count(),
+            'approved': month_appraisals.filter(status='approved').count(),
+            'rejected': month_appraisals.filter(status='rejected').count()
+        }
+        monthly_trends.append(monthly_data)
+        current_date = next_month
+
+    # Calculate completion time statistics without relying on database duration calculations
+    completed_appraisals_data = appraisals.filter(
+        status__in=['approved', 'rejected'],
+        submitted_at__isnull=False,
+        approved_at__isnull=False
+    )
+    
+    # Calculate durations in Python rather than at the database level
+    completion_durations = []
+    for appraisal in completed_appraisals_data:
+        if appraisal.submitted_at and appraisal.approved_at:
+            try:
+                duration = appraisal.approved_at - appraisal.submitted_at
+                completion_durations.append(duration.total_seconds())
+            except (TypeError, ValueError):
+                continue
+    
+    # Convert durations to human readable strings
+    completion_times = {}
+    if completion_durations:
+        avg_seconds = sum(completion_durations)/len(completion_durations)
+        min_seconds = min(completion_durations)
+        max_seconds = max(completion_durations)
+        
+        completion_times = {
+            'avg_time': f"{int(avg_seconds/86400)} days {int((avg_seconds%86400)/3600)} hours",
+            'min_time': f"{int(min_seconds/86400)} days {int((min_seconds%86400)/3600)} hours",
+            'max_time': f"{int(max_seconds/86400)} days {int((max_seconds%86400)/3600)} hours",
+        }
+    else:
+        completion_times = {
+            'avg_time': None,
+            'min_time': None,
+            'max_time': None
+        }
+
+    # Calculate rating statistics
+    employee_ratings = AppraisalItem.objects.filter(
+        appraisal__in=appraisals,
+        employee_rating__isnull=False
+    ).values_list('employee_rating', flat=True)
+    
+    manager_ratings = AppraisalItem.objects.filter(
+        appraisal__in=appraisals,
+        manager_rating__isnull=False
+    ).values_list('manager_rating', flat=True)
+    
+    employee_ratings_list = list(employee_ratings)
+    manager_ratings_list = list(manager_ratings)
+    
+    rating_stats = {
+        'employee': {
+            'avg': sum(employee_ratings_list) / len(employee_ratings_list) if employee_ratings_list else None,
+            'min': min(employee_ratings_list) if employee_ratings_list else None,
+            'max': max(employee_ratings_list) if employee_ratings_list else None,
+        },
+        'manager': {
+            'avg': sum(manager_ratings_list) / len(manager_ratings_list) if manager_ratings_list else None,
+            'min': min(manager_ratings_list) if manager_ratings_list else None,
+            'max': max(manager_ratings_list) if manager_ratings_list else None,
+        }
+    }
+
+    context = {
+        'overview_stats': {
+            'total_appraisals': total_appraisals,
+            'completed_appraisals': completed_appraisals,
+            'in_progress': in_progress,
+            'pending_reviews': pending_reviews,
+        },
+        'status_distribution': status_distribution,
+        'monthly_trends': monthly_trends,
+        'completion_times': completion_times,
+        'rating_stats': rating_stats,
+        'filter_options': {
+            'managers': User.objects.filter(groups__name='Manager'),
+            'statuses': dict(Appraisal.STATUS_CHOICES),
+            'date_range': {
+                'start': start_date,
+                'end': end_date
+            }
+        }
+    }
+
+    print(f"[DEBUG] Dashboard statistics prepared: {context}")
+    return render(request, 'components/appraisal/dashboard.html', context)
