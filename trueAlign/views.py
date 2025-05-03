@@ -6,7 +6,7 @@ from .models import (UserSession, Attendance, SystemError,
                     Timesheet,GlobalUpdate,
                      UserDetails,ProjectUpdate, Presence, PresenceStatus, 
                      Transaction, ChartOfAccount, Vendor, Payment, ClientPayment, Project, TRANSACTION_TYPES,
-                       ClientProfile, ShiftMaster,ShiftAssignment )
+                       ClientProfile, ShiftMaster,ShiftAssignment, Appraisal, AppraisalItem, AppraisalWorkflow )
 from django.db.models import Q
 from datetime import datetime, timedelta, date
 from decimal import Decimal
@@ -7746,3 +7746,449 @@ def api_toggle_shift_active(request, pk):
         return JsonResponse({'success': True, 'is_active': shift.is_active})
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
+    
+
+'''---------------------------------- APPRAISAL --------------------------------'''
+
+from .models import Appraisal, AppraisalItem, AppraisalAttachment, AppraisalWorkflow
+
+
+def is_manager_or_admin(user):
+    return user.groups.filter(name="Manager").exists() or user.is_superuser
+
+def is_hr_or_admin(user):
+    return user.groups.filter(name="HR").exists() or user.is_superuser
+
+def is_finance_or_admin(user):
+    return user.groups.filter(name="Finance").exists() or user.is_superuser
+
+def is_management_or_admin(user):
+    return user.groups.filter(name="Management").exists() or user.is_superuser
+@login_required
+def appraisal_list(request):
+    """View for listing appraisals based on user role"""
+    print(f"[DEBUG] Accessing appraisal_list view for user: {request.user}")
+    context = {}
+    user = request.user
+
+    # Check if user is in any of the special groups
+    special_groups = ["Manager", "HR", "Finance", "Management"]
+    is_special_user = user.groups.filter(name__in=special_groups).exists()
+    context['is_special_user'] = is_special_user
+    print(f"[DEBUG] User {user} is_special_user: {is_special_user}")
+
+    if user.groups.filter(name="Manager").exists():
+        print("[DEBUG] User is in Manager group")
+        # Managers see appraisals where they are assigned as manager and status is submitted
+        appraisals = Appraisal.objects.filter(
+            manager=user,
+            status='submitted'  # Only show submitted appraisals to manager
+        )
+        pending_reviews = appraisals.count()
+        print(f"[DEBUG] Manager pending reviews: {pending_reviews}")
+        context['pending_reviews'] = pending_reviews
+
+    elif user.groups.filter(name="HR").exists():
+        print("[DEBUG] User is in HR group")
+        # HR sees appraisals in HR review status
+        appraisals = Appraisal.objects.filter(status='hr_review')
+        pending_reviews = appraisals.count()
+        print(f"[DEBUG] HR pending reviews: {pending_reviews}")
+        context['pending_reviews'] = pending_reviews
+
+    elif user.groups.filter(name="Finance").exists():
+        print("[DEBUG] User is in Finance group")
+        # Finance sees appraisals in finance review status
+        appraisals = Appraisal.objects.filter(status='finance_review')
+        pending_reviews = appraisals.count()
+        print(f"[DEBUG] Finance pending reviews: {pending_reviews}")
+        context['pending_reviews'] = pending_reviews
+
+    else:
+        print("[DEBUG] User is regular employee")
+        # Regular employees see their own appraisals
+        appraisals = Appraisal.objects.filter(user=user)
+
+    # Add special group flags to context
+    group_flags = {
+        'is_manager': user.groups.filter(name="Manager").exists(),
+        'is_hr': user.groups.filter(name="HR").exists(), 
+        'is_finance': user.groups.filter(name="Finance").exists(),
+        'is_management': user.groups.filter(name="Management").exists()
+    }
+    print(f"[DEBUG] User group flags: {group_flags}")
+    context.update(group_flags)
+
+    # Add stats for management view
+    if group_flags['is_management']:
+        all_appraisals = Appraisal.objects.all()
+        context.update({
+            'total_appraisals': all_appraisals.count(),
+            'pending_reviews': all_appraisals.filter(status='submitted').count(),
+            'approved_appraisals': all_appraisals.filter(status='approved').count(),
+            'rejected_appraisals': all_appraisals.filter(status='rejected').count()
+        })
+
+    context['appraisals'] = appraisals
+    print(f"[DEBUG] Total appraisals in context: {appraisals.count()}")
+    return render(request, 'components/appraisal/appraisal_list.html', context)
+
+@login_required
+def appraisal_detail(request, pk):
+    """View for displaying appraisal details"""
+    print(f"[DEBUG] Accessing appraisal_detail view for pk: {pk}")
+    appraisal = get_object_or_404(Appraisal, pk=pk)
+    user = request.user
+
+    print(f"[DEBUG] User {user} accessing appraisal for user {appraisal.user}")
+
+    # Check permissions based on role and status
+    if not (user == appraisal.user or 
+            user == appraisal.manager or
+            user.groups.filter(name__in=['HR', 'Finance', 'Management']).exists()):
+        print(f"[DEBUG] Permission denied for user {user}")
+        raise PermissionDenied
+
+    context = {
+        'appraisal': appraisal,
+        'items': appraisal.items.all(),
+        'attachments': appraisal.attachments.all(),
+        'workflow_history': appraisal.workflow_history.all()
+    }
+    
+    # Add ability to change status from draft to submit
+    if appraisal.status == 'draft' and user == appraisal.user:
+        context['can_submit'] = True
+    
+    print(f"[DEBUG] Appraisal details - Items: {context['items'].count()}, Attachments: {context['attachments'].count()}")
+    return render(request, 'components/appraisal/appraisal_detail.html', context)
+
+@login_required
+def appraisal_create(request):
+    """View for creating new appraisal"""
+    print(f"[DEBUG] Accessing appraisal_create view for user: {request.user}")
+    
+    if request.method == 'POST':
+        print("[DEBUG] Processing POST request for appraisal creation")
+        try:
+            with transaction.atomic():
+                # Get manager user object
+                manager_id = request.POST.get('manager')
+                print(f"[DEBUG] Selected manager ID: {manager_id}")
+                
+                if not manager_id:
+                    raise ValueError("Manager selection is required")
+                    
+                manager = User.objects.get(id=manager_id)
+                
+                # Validate required fields
+                required_fields = ['title', 'overview', 'period_start', 'period_end']
+                for field in required_fields:
+                    if not request.POST.get(field):
+                        raise ValueError(f"{field} is required")
+                
+                # Create main appraisal
+                appraisal_data = {
+                    'user': request.user,
+                    'manager': manager,
+                    'title': request.POST['title'],
+                    'overview': request.POST['overview'],
+                    'period_start': request.POST['period_start'],
+                    'period_end': request.POST['period_end'],
+                    'status': 'draft',
+                    'submitted_at': None
+                }
+                print(f"[DEBUG] Creating appraisal with data: {appraisal_data}")
+                appraisal = Appraisal.objects.create(**appraisal_data)
+
+                # Create initial workflow history entry
+                workflow_data = {
+                    'appraisal': appraisal,
+                    'from_status': None,
+                    'to_status': 'draft',
+                    'action_by': request.user,
+                    'comments': 'Initial appraisal creation'
+                }
+                print(f"[DEBUG] Creating initial workflow history: {workflow_data}")
+                AppraisalWorkflow.objects.create(**workflow_data)
+
+                # Handle appraisal items
+                items_data = json.loads(request.POST.get('items', '[]'))
+                print(f"[DEBUG] Processing {len(items_data)} appraisal items")
+                for item in items_data:
+                    AppraisalItem.objects.create(
+                        appraisal=appraisal,
+                        category=item['category'],
+                        title=item['title'],
+                        description=item['description'],
+                        date=item.get('date'),
+                        employee_rating=item.get('employee_rating')
+                    )
+
+                # Handle file attachments
+                attachments = request.FILES.getlist('attachments')
+                print(f"[DEBUG] Processing {len(attachments)} file attachments")
+                for file in attachments:
+                    AppraisalAttachment.objects.create(
+                        appraisal=appraisal,
+                        file=file,
+                        title=file.name,
+                        uploaded_by=request.user
+                    )
+
+                # Notify manager
+                print(f"[DEBUG] Notifying manager {manager.email} about new appraisal")
+
+                print(f"[DEBUG] Successfully created appraisal with ID: {appraisal.id}")
+                return JsonResponse({'success': True, 'appraisal_id': appraisal.id})
+        except ValueError as e:
+            print(f"[DEBUG] Validation error: {str(e)}")
+            return JsonResponse({'success': False, 'error': str(e)})
+        except Exception as e:
+            print(f"[DEBUG] Error creating appraisal: {str(e)}")
+            return JsonResponse({'success': False, 'error': str(e)})
+
+    # Get managers for select field
+    managers = User.objects.filter(groups__name='Manager')
+    print(f"[DEBUG] Available managers: {managers.count()}")
+    
+    # Get category choices from model
+    categories = dict(AppraisalItem.CATEGORY_CHOICES)
+    print(f"[DEBUG] Available categories: {categories}")
+
+    context = {
+        'managers': managers,
+        'categories': categories
+    }
+    return render(request, 'components/appraisal/appraisal_form.html', context)
+
+@login_required
+def appraisal_update(request, pk):
+    """View for updating appraisal"""
+    print(f"[DEBUG] Accessing appraisal_update view for pk: {pk}")
+    appraisal = get_object_or_404(Appraisal, pk=pk)
+    
+    # Only allow updates if user owns the appraisal and it's in draft
+    if not (request.user == appraisal.user and appraisal.status == 'draft'):
+        print(f"[DEBUG] Permission denied for user {request.user}")
+        raise PermissionDenied
+        
+    if request.method == 'POST':
+        print("[DEBUG] Processing POST request for appraisal update")
+        try:
+            with transaction.atomic():
+                # Update main appraisal
+                appraisal.title = request.POST['title']
+                appraisal.overview = request.POST['overview']
+                appraisal.save()
+                print(f"[DEBUG] Updated appraisal main details for ID: {appraisal.id}")
+
+                # Update items
+                items_data = json.loads(request.POST.get('items', '[]'))
+                print(f"[DEBUG] Deleting existing items and creating {len(items_data)} new items")
+                appraisal.items.all().delete()  # Remove existing items
+                for item in items_data:
+                    AppraisalItem.objects.create(
+                        appraisal=appraisal,
+                        category=item['category'],
+                        title=item['title'],
+                        description=item['description'],
+                        date=item.get('date'),
+                        employee_rating=item.get('employee_rating')
+                    )
+
+                # Handle new attachments
+                new_attachments = request.FILES.getlist('attachments')
+                print(f"[DEBUG] Processing {len(new_attachments)} new attachments")
+                for file in new_attachments:
+                    AppraisalAttachment.objects.create(
+                        appraisal=appraisal,
+                        file=file,
+                        title=file.name,
+                        uploaded_by=request.user
+                    )
+
+                print("[DEBUG] Successfully updated appraisal")
+                return JsonResponse({'success': True})
+        except Exception as e:
+            print(f"[DEBUG] Error updating appraisal: {str(e)}")
+            return JsonResponse({'success': False, 'error': str(e)})
+        
+    return render(request, 'components/appraisal/appraisal_form.html', {'appraisal': appraisal})
+
+@login_required
+def appraisal_submit(request, pk):
+    """View for submitting appraisal for review"""
+    print(f"[DEBUG] Accessing appraisal_submit view for pk: {pk}")
+    appraisal = get_object_or_404(Appraisal, pk=pk)
+    
+    if not (request.user == appraisal.user and appraisal.status == 'draft'):
+        print(f"[DEBUG] Permission denied for user {request.user}")
+        raise PermissionDenied
+        
+    try:
+        with transaction.atomic():
+            # Verify manager is assigned
+            if not appraisal.manager:
+                raise ValueError("Cannot submit appraisal without assigned manager")
+                
+            appraisal.status = 'submitted'
+            appraisal.submitted_at = timezone.now()
+            appraisal.save()
+            print(f"[DEBUG] Updated appraisal status to submitted for ID: {appraisal.id}")
+            
+            # Log workflow transition
+            workflow_data = {
+                'appraisal': appraisal,
+                'from_status': 'draft',
+                'to_status': 'submitted',
+                'action_by': request.user,
+                'comments': request.POST.get('comments', '')
+            }
+            print(f"[DEBUG] Creating workflow history entry: {workflow_data}")
+            AppraisalWorkflow.objects.create(**workflow_data)
+            print("[DEBUG] Successfully submitted appraisal")
+            return redirect('appraisal:appraisal_detail', pk=appraisal.id)
+    except ValueError as e:
+        print(f"[DEBUG] Validation error: {str(e)}")
+        messages.error(request, str(e))
+        return redirect('appraisal:appraisal_detail', pk=appraisal.id)
+    except Exception as e:
+        print(f"[DEBUG] Error submitting appraisal: {str(e)}")
+        messages.error(request, "An error occurred while submitting the appraisal")
+        return redirect('appraisal:appraisal_detail', pk=appraisal.id)
+
+@login_required
+@user_passes_test(lambda u: is_manager_or_admin(u) or is_hr_or_admin(u) or is_finance_or_admin(u))
+def appraisal_review(request, pk):
+    """View for reviewing appraisals (Manager/HR/Finance)"""
+    print(f"[DEBUG] Accessing appraisal_review view for pk: {pk}")
+    appraisal = get_object_or_404(Appraisal, pk=pk)
+    user = request.user
+    
+    if request.method == 'POST':
+        print("[DEBUG] Processing POST request for appraisal review")
+        try:
+            with transaction.atomic():
+                action = request.POST.get('action')
+                from_status = appraisal.status
+                comments = request.POST.get('comments', '')
+                print(f"[DEBUG] Review action: {action}, Current status: {from_status}")
+
+                # Manager Review
+                if user.groups.filter(name='Manager').exists() and appraisal.status == 'submitted':
+                    print(f"[DEBUG] Processing manager review for user {user} on appraisal {appraisal.id}")
+                    
+                    if user != appraisal.manager:
+                        print(f"[DEBUG] Permission denied for manager {user} - not assigned manager {appraisal.manager}")
+                        raise PermissionDenied
+                    
+                    # Update manager ratings and comments
+                    items_data = json.loads(request.POST.get('items', '[]'))
+                    print(f"[DEBUG] Items data received: {items_data}")
+                    print(f"[DEBUG] Updating {len(items_data)} items with manager ratings")
+                    
+                    for item_data in items_data:
+                        print(f"[DEBUG] Processing item data: {item_data}")
+                        item = get_object_or_404(AppraisalItem, pk=item_data['id'])
+                        print(f"[DEBUG] Found appraisal item {item.id}")
+                        
+                        old_rating = item.manager_rating
+                        old_comments = item.manager_comments
+                        
+                        item.manager_rating = item_data.get('manager_rating')
+                        item.manager_comments = item_data.get('manager_comments', '')
+                        item.save()
+                        
+                        print(f"[DEBUG] Updated item {item.id}:")
+                        print(f"  - Rating changed from {old_rating} to {item.manager_rating}")
+                        print(f"  - Comments changed from '{old_comments}' to '{item.manager_comments}'")
+                    
+                    to_status = 'hr_review' if action == 'approve' else 'rejected'
+                    print(f"[DEBUG] Setting new status to: {to_status} based on action: {action}")
+
+                # HR Review
+                elif user.groups.filter(name='HR').exists() and appraisal.status == 'hr_review':
+                    print("[DEBUG] Processing HR review")
+                    to_status = 'finance_review' if action == 'approve' else 'rejected'
+
+                # Finance Review
+                elif user.groups.filter(name='Finance').exists() and appraisal.status == 'finance_review':
+                    print("[DEBUG] Processing Finance review")
+                    to_status = 'approved' if action == 'approve' else 'rejected'
+                    if to_status == 'approved':
+                        appraisal.approved_at = timezone.now()
+                else:
+                    print(f"[DEBUG] Invalid review state for user {user}")
+                    raise PermissionDenied
+
+                appraisal.status = to_status
+                appraisal.save()
+                print(f"[DEBUG] Updated appraisal status to: {to_status}")
+
+                # Log workflow transition
+                workflow_data = {
+                    'appraisal': appraisal,
+                    'from_status': from_status,
+                    'to_status': to_status,
+                    'action_by': user,
+                    'comments': comments
+                }
+                print(f"[DEBUG] Creating workflow history entry: {workflow_data}")
+                AppraisalWorkflow.objects.create(**workflow_data)
+                print("[DEBUG] Successfully completed review")
+                return redirect('appraisal:appraisal_list')
+        except Exception as e:
+            print(f"[DEBUG] Error during review: {str(e)}")
+            messages.error(request, f"Error during review: {str(e)}")
+            return redirect('appraisal:appraisal_review', pk=appraisal.pk)
+
+    context = {
+        'appraisal': appraisal,
+        'items': appraisal.items.all(),
+        'workflow_history': appraisal.workflow_history.all()
+    }
+    print(f"[DEBUG] Rendering review template with {context['items'].count()} items")
+    return render(request, 'components/appraisal/appraisal_review.html', context)
+
+@login_required
+@user_passes_test(is_management_or_admin)
+def appraisal_dashboard(request):
+    """Dashboard view for management"""
+    print("[DEBUG] Accessing appraisal dashboard view")
+    # Get filter parameters
+    period_start = request.GET.get('period_start')
+    period_end = request.GET.get('period_end')
+    manager_id = request.GET.get('manager')
+    user_id = request.GET.get('user')
+    
+    print(f"[DEBUG] Filter params - period_start: {period_start}, period_end: {period_end}, manager_id: {manager_id}, user_id: {user_id}")
+
+    # Base queryset
+    appraisals = Appraisal.objects.all()
+
+    # Apply filters
+    if period_start and period_end:
+        appraisals = appraisals.filter(period_start__gte=period_start, period_end__lte=period_end)
+    if manager_id:
+        appraisals = appraisals.filter(manager_id=manager_id)
+    if user_id:
+        appraisals = appraisals.filter(user_id=user_id)
+
+    print(f"[DEBUG] Filtered appraisals count: {appraisals.count()}")
+
+    # Calculate statistics
+    stats = {
+        'total_appraisals': appraisals.count(),
+        'status_counts': appraisals.values('status').annotate(count=Count('id')),
+        'avg_ratings': {
+            'employee': AppraisalItem.objects.filter(employee_rating__isnull=False).aggregate(Avg('employee_rating')),
+            'manager': AppraisalItem.objects.filter(manager_rating__isnull=False).aggregate(Avg('manager_rating'))
+        },
+        'submission_trend': appraisals.values('submitted_at__month').annotate(count=Count('id')),
+        'approval_rate': appraisals.filter(status='approved').count() / appraisals.count() if appraisals.exists() else 0,
+        'rejection_rate': appraisals.filter(status='rejected').count() / appraisals.count() if appraisals.exists() else 0
+    }
+    
+    print(f"[DEBUG] Dashboard statistics: {stats}")
+    return render(request, 'components/appraisal/dashboard.html', stats)

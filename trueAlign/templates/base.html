@@ -245,7 +245,7 @@
     <!-- Add this to your base.html or main template -->
     <script>
         class SessionManager {
-            constructor(idleThresholdMinutes = 1) {
+            constructor(idleThresholdMinutes = 5) { // Changed to 5 minutes default
                 this.idleTime = 0;
                 this.idleThreshold = idleThresholdMinutes * 60 * 1000; // Convert to milliseconds
                 this.activityEvents = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart', 'touchmove'];
@@ -277,7 +277,7 @@
 
             async makeRequest(url, method = 'POST', body = null) {
                 try {
-                    const response = await fetch(url, {
+                    const response = await fetch("{% url 'update_last_activity' %}", {
                         method: method,
                         headers: {
                             'Content-Type': 'application/json',
@@ -323,7 +323,7 @@
                     // Debug logging
                     console.log(`Updating server activity: isIdle=${this.isIdle}, isFocused=${this.isFocused}, time since last update: ${timeSinceLastUpdate/1000}s`);
                     
-                    const data = await this.makeRequest('/update-last-activity/', 'POST', {
+                    const data = await this.makeRequest("{% url 'update_last_activity' %}", 'POST', {
                         timestamp: now.toISOString(),
                         isIdle: this.isIdle,
                         isFocused: this.isFocused
@@ -347,13 +347,13 @@
             async handleLogout() {
                 try {
                     // First try to end the session properly
-                    await this.makeRequest('/end-session/', 'POST');
+                    await this.makeRequest("{% url 'end_session' %}", 'POST');
                     console.log('Session ended successfully');
                 } catch (error) {
                     console.error('Error ending session:', error);
                 } finally {
                     // Always proceed with logout
-                    window.location.href = '/logout/';
+                    window.location.href = "{% url 'logout' %}";
                 }
             }
 
@@ -394,7 +394,7 @@
                 // Use sendBeacon for more reliable delivery during page unload
                 window.addEventListener('beforeunload', () => {
                     console.log('Page unloading, sending final activity update');
-                    navigator.sendBeacon('/update-last-activity/', JSON.stringify({
+                    navigator.sendBeacon("{% url 'update_last_activity' %}", JSON.stringify({
                         timestamp: new Date().toISOString(),
                         isIdle: this.isIdle,
                         isFocused: false,
@@ -437,7 +437,7 @@
         
         // Initialize when the page loads
         document.addEventListener('DOMContentLoaded', () => {
-            window.sessionManager = new SessionManager(1); // 1 minute idle threshold
+            window.sessionManager = new SessionManager(5); // Changed to 5 minutes idle threshold
             console.log('Session manager initialized');
         });
     </script>

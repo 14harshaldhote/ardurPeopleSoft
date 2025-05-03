@@ -1,0 +1,285 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="min-h-screen  py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-white shadow-xl rounded-2xl overflow-hidden backdrop-blur-lg backdrop-filter">
+            <div class="relative px-6 py-8 border-b border-gray-200">
+                <div class="absolute top-0 right-0 -mt-6 -mr-8">
+                    <svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" class="opacity-10">
+                        <path d="M100 0L200 100L100 200L0 100L100 0Z" fill="currentColor" class="text-indigo-500"/>
+                    </svg>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-900 flex items-center">
+                    <svg class="w-8 h-8 mr-3 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    {% if appraisal %}Edit{% else %}Create New{% endif %} Appraisal
+                </h3>
+            </div>
+
+            <div class="px-6 py-8">
+                <form id="appraisalForm" method="POST" enctype="multipart/form-data" class="space-y-8">
+                    {% csrf_token %}
+                    
+                    <div class="space-y-8">
+                        <div class="relative group">
+                            <label for="title" class="block text-sm font-semibold text-gray-700 mb-2 transition-all group-focus-within:text-indigo-600">Title</label>
+                            <div class="relative">
+                                <svg class="w-5 h-5 absolute left-3 top-3 text-gray-400 group-focus-within:text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <input type="text" class="pl-10 w-full border-2 border-gray-300 rounded-xl shadow-sm py-3 px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all" id="title" name="title" required value="{{ appraisal.title|default:'' }}" placeholder="Enter appraisal title">
+                            </div>
+                        </div>
+
+                        <div class="relative group">
+                            <label for="overview" class="block text-sm font-semibold text-gray-700 mb-2 transition-all group-focus-within:text-indigo-600">Overview</label>
+                            <div class="relative">
+                                <svg class="w-5 h-5 absolute left-3 top-3 text-gray-400 group-focus-within:text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                                <textarea class="pl-10 w-full border-2 border-gray-300 rounded-xl shadow-sm py-3 px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all" id="overview" name="overview" rows="4" required placeholder="Provide an overview">{{ appraisal.overview|default:'' }}</textarea>
+                            </div>
+                        </div>
+
+                        {% if not appraisal %}
+                        <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
+                            <div class="relative group">
+                                <label for="period_start" class="block text-sm font-semibold text-gray-700 mb-2">Period Start</label>
+                                <div class="relative">
+                                    <svg class="w-5 h-5 absolute left-3 top-3 text-gray-400 group-focus-within:text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                    </svg>
+                                    <input type="date" class="pl-10 w-full border-2 border-gray-300 rounded-xl shadow-sm py-3 px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all" id="period_start" name="period_start" required>
+                                </div>
+                            </div>
+
+                            <div class="relative group">
+                                <label for="period_end" class="block text-sm font-semibold text-gray-700 mb-2">Period End</label>
+                                <div class="relative">
+                                    <svg class="w-5 h-5 absolute left-3 top-3 text-gray-400 group-focus-within:text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                    </svg>
+                                    <input type="date" class="pl-10 w-full border-2 border-gray-300 rounded-xl shadow-sm py-3 px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all" id="period_end" name="period_end" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="relative group">
+                            <label for="manager" class="block text-sm font-semibold text-gray-700 mb-2">Manager</label>
+                            <div class="relative">
+                                <svg class="w-5 h-5 absolute left-3 top-3 text-gray-400 group-focus-within:text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                </svg>
+                                <select class="pl-10 w-full border-2 border-gray-300 rounded-xl shadow-sm py-3 px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all appearance-none" id="manager" name="manager" required>
+                                    <option value="">Select Manager</option>
+                                    {% for manager in managers %}
+                                    <option value="{{ manager.id }}">{{ manager.get_full_name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="bg-white shadow-lg rounded-2xl overflow-hidden">
+                            <div class="px-6 py-5 border-b border-gray-200 flex items-center justify-between">
+                                <h3 class="text-xl font-bold text-gray-900 flex items-center">
+                                    <svg class="w-6 h-6 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                                    </svg>
+                                    Appraisal Items
+                                </h3>
+                            </div>
+                            <div class="px-6 py-5">
+                                <div id="appraisalItems" class="space-y-6">
+                                    {% if appraisal %}
+                                        {% for item in appraisal.items.all %}
+                                        <div class="appraisal-item bg-gray-50 rounded-xl p-6 border-2 border-gray-200 hover:border-indigo-500 transition-all duration-300">
+                                            <div class="relative group mb-4">
+                                                <input type="text" class="w-full border-2 border-gray-300 rounded-xl shadow-sm py-3 px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all" name="item_category" placeholder="Category" value="{{ item.category }}">
+                                            </div>
+                                            <div class="relative group mb-4">
+                                                <input type="text" class="w-full border-2 border-gray-300 rounded-xl shadow-sm py-3 px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all" name="item_title" placeholder="Title" value="{{ item.title }}">
+                                            </div>
+                                            <div class="relative group mb-4">
+                                                <textarea class="w-full border-2 border-gray-300 rounded-xl shadow-sm py-3 px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all" name="item_description" placeholder="Description">{{ item.description }}</textarea>
+                                            </div>
+                                            <div class="relative group mb-4">
+                                                <input type="date" class="w-full border-2 border-gray-300 rounded-xl shadow-sm py-3 px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all" name="item_date" value="{{ item.date|date:'Y-m-d' }}">
+                                            </div>
+                                            <div class="relative group mb-4">
+                                                <input type="number" class="w-full border-2 border-gray-300 rounded-xl shadow-sm py-3 px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all" name="item_rating" placeholder="Rating (1-5)" min="1" max="5" value="{{ item.employee_rating }}">
+                                            </div>
+                                            <button type="button" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-xl text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-300 remove-item">
+                                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                </svg>
+                                                Remove
+                                            </button>
+                                        </div>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                                <button type="button" id="addItem" class="mt-6 inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                                    </svg>
+                                    Add Item
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="relative group">
+                            <label for="attachments" class="block text-sm font-semibold text-gray-700 mb-2">Attachments</label>
+                            <div class="relative">
+                                <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-xl hover:border-indigo-500 transition-all duration-300">
+                                    <div class="space-y-1 text-center">
+                                        <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                        <div class="flex text-sm text-gray-600">
+                                            <label for="attachments" class="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
+                                                <span>Upload files</span>
+                                                <input id="attachments" name="attachments" type="file" class="sr-only" multiple>
+                                            </label>
+                                            <p class="pl-1">or drag and drop</p>
+                                        </div>
+                                        <p class="text-xs text-gray-500">PNG, JPG, PDF up to 10MB</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if appraisal %}
+                        <div class="bg-gray-50 rounded-xl p-6">
+                            <h5 class="text-lg font-semibold text-gray-900 mb-4">Current Attachments</h5>
+                            <ul class="divide-y divide-gray-200">
+                                {% for attachment in appraisal.attachments.all %}
+                                <li class="py-4 flex items-center">
+                                    <svg class="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
+                                    </svg>
+                                    <a href="{{ attachment.file.url }}" target="_blank" class="text-indigo-600 hover:text-indigo-900 font-medium">{{ attachment.title }}</a>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+
+                        <div class="flex justify-end space-x-4">
+                            <a href="{% url 'appraisal:appraisal_list' %}" class="inline-flex items-center px-6 py-3 border-2 border-gray-300 shadow-sm text-base font-medium rounded-xl text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                                Cancel
+                            </a>
+                            <button type="submit" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                Save
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const itemsContainer = document.getElementById('appraisalItems');
+    const addItemBtn = document.getElementById('addItem');
+    const form = document.getElementById('appraisalForm');
+
+    addItemBtn.addEventListener('click', function() {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'appraisal-item bg-gray-50 rounded-xl p-6 border-2 border-gray-200 hover:border-indigo-500 transition-all duration-300';
+        itemDiv.innerHTML = `
+            <div class="relative group mb-4">
+                <select class="w-full border-2 border-gray-300 rounded-xl shadow-sm py-3 px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all" name="item_category" required>
+                    <option value="">Select Category</option>
+                    <option value="goal">Goal</option>
+                    <option value="achievement">Achievement</option>
+                    <option value="improvement">Area for Improvement</option>
+                    <option value="training">Training Completed</option>
+                    <option value="feedback">Feedback Received</option>
+                </select>
+            </div>
+            <div class="relative group mb-4">
+                <input type="text" class="w-full border-2 border-gray-300 rounded-xl shadow-sm py-3 px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all" name="item_title" placeholder="Title" required>
+            </div>
+            <div class="relative group mb-4">
+                <textarea class="w-full border-2 border-gray-300 rounded-xl shadow-sm py-3 px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all" name="item_description" placeholder="Description" required></textarea>
+            </div>
+            <div class="relative group mb-4">
+                <input type="date" class="w-full border-2 border-gray-300 rounded-xl shadow-sm py-3 px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all" name="item_date">
+            </div>
+            <div class="relative group mb-4">
+                <input type="number" class="w-full border-2 border-gray-300 rounded-xl shadow-sm py-3 px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all" name="item_rating" placeholder="Rating (1-5)" min="1" max="5">
+            </div>
+            <button type="button" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-xl text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-300 remove-item">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+                Remove
+            </button>
+        `;
+        itemsContainer.appendChild(itemDiv);
+    });
+
+    itemsContainer.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-item') || e.target.closest('.remove-item')) {
+            const item = e.target.closest('.appraisal-item');
+            item.classList.add('opacity-0', 'scale-95');
+            setTimeout(() => {
+                item.remove();
+            }, 300);
+        }
+    });
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(form);
+        const items = [];
+
+        document.querySelectorAll('.appraisal-item').forEach(item => {
+            items.push({
+                category: item.querySelector('[name="item_category"]').value,
+                title: item.querySelector('[name="item_title"]').value,
+                description: item.querySelector('[name="item_description"]').value,
+                date: item.querySelector('[name="item_date"]').value,
+                employee_rating: item.querySelector('[name="item_rating"]').value
+            });
+        });
+
+        formData.append('items', JSON.stringify(items));
+
+        fetch(form.action, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = "{% url 'appraisal:appraisal_list' %}";
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while saving the appraisal');
+        });
+    });
+});
+</script>
+{% endblock %}

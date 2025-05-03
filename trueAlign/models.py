@@ -2764,3 +2764,101 @@ class ClientPayment(models.Model):
 
     def __str__(self):
         return f"Payment from {self.client.company_name} - {self.amount}"
+
+
+# models.py - Enhanced models for appraisal workflow
+
+from django.db import models
+from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.utils import timezone
+from django.urls import reverse
+from django.db.models.signals import pre_save, post_save
+from django.dispatch import receiver
+
+
+class Appraisal(models.Model):
+    """Model for employee appraisals with workflow states"""
+    STATUS_CHOICES = (
+        ('draft', 'Draft'),
+        ('submitted', 'Submitted'), 
+        ('manager_review', 'Manager Review'),
+        ('hr_review', 'HR Review'),
+        ('finance_review', 'Finance Review'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    )
+    
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='appraisals')
+    manager = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True,
+                               related_name='managed_appraisals')
+    title = models.CharField(max_length=255)
+    overview = models.TextField(blank=True)
+    period_start = models.DateField()
+    period_end = models.DateField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    # Additional fields for tracking
+    submitted_at = models.DateTimeField(null=True, blank=True)
+    approved_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.title} - {self.user}"
+    
+        
+
+
+class AppraisalWorkflow(models.Model):
+    """Model to track appraisal workflow history"""
+    appraisal = models.ForeignKey('Appraisal', on_delete=models.CASCADE, related_name='workflow_history')
+    from_status = models.CharField(max_length=20, null=True, blank=True)
+    to_status = models.CharField(max_length=20)
+    action_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='workflow_actions')
+    timestamp = models.DateTimeField(auto_now_add=True)
+    comments = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['timestamp']
+
+    def __str__(self):
+        return f"Appraisal #{self.appraisal_id}: {self.from_status or 'initial'} → {self.to_status}"
+
+
+class AppraisalItem(models.Model):
+    """Model for individual items/achievements in an appraisal"""
+    CATEGORY_CHOICES = (
+        ('goal', 'Goal'),
+        ('achievement', 'Achievement'),
+        ('improvement', 'Area for Improvement'),
+        ('training', 'Training Completed'),
+        ('feedback', 'Feedback Received'),
+    )
+    
+    appraisal = models.ForeignKey('Appraisal', on_delete=models.CASCADE, related_name='items')
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    date = models.DateField(null=True, blank=True)
+    
+    # Additional evaluation fields
+    employee_rating = models.PositiveSmallIntegerField(null=True, blank=True, choices=[(i, i) for i in range(1, 6)])
+    manager_rating = models.PositiveSmallIntegerField(null=True, blank=True, choices=[(i, i) for i in range(1, 6)])
+    manager_comments = models.TextField(blank=True)
+
+    def __str__(self):
+        return f"{self.title} ({self.category})"
+
+
+class AppraisalAttachment(models.Model):
+    """Model for attachments to appraisals (certificates, evidence, etc.)"""
+    appraisal = models.ForeignKey('Appraisal', on_delete=models.CASCADE, related_name='attachments')
+    file = models.FileField(upload_to='appraisal_attachments/%Y/%m/')
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+    upload_date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title

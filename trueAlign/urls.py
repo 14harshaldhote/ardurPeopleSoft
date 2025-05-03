@@ -2,6 +2,17 @@
 from django.urls import path, include
 from . import views
 
+# Appraisal URL patterns
+appraisal_patterns = [
+    # Basic CRUD operations
+    path('list/', views.appraisal_list, name='appraisal_list'),
+    path('create/', views.appraisal_create, name='appraisal_create'),
+    path('<int:pk>/', views.appraisal_detail, name='appraisal_detail'),
+    path('<int:pk>/update/', views.appraisal_update, name='appraisal_update'),
+    path('<int:pk>/submit/', views.appraisal_submit, name='appraisal_submit'),
+    path('<int:pk>/review/', views.appraisal_review, name='appraisal_review'),
+    path('dashboard/', views.appraisal_dashboard, name='appraisal_dashboard'),
+]
 
 # Admin-specific URLs under 'truealign/admin/'
 admin_patterns = [
@@ -46,7 +57,6 @@ employee_patterns = [
     path('profile/', views.employee_profile, name='employee_profile'),
     path('timesheet/details/<str:week_start_date>/', views.get_timesheet_details, name='timesheet_details'),
     path('applications/', views.application_for_user, name='application_for_user'),
-
 ]
 
 # HR-specific URLs under 'truealign/hr/'
@@ -65,10 +75,8 @@ hr_patterns = [
     path('employees/', views.employee_directory, name='employee_directory'),
     path('mark_attendance/', views.manual_attendance, name='manual_attendance'),
     path('user/add/', views.add_user, name='add_user'),
-    # path('user/bulk-add/', views.bulk_add_users, name='bulk_add_users'),
     path('user/import-errors/', views.import_errors, name='import_errors'),
     path('bulk-add-users/', views.bulk_add_users, name='bulk_add_users'),
-
     
     # User Actions
     path('user/<int:user_id>/reset-password/', views.reset_user_password, name='reset_user_password'),
@@ -83,6 +91,7 @@ hr_patterns = [
     path('reports/', views.user_reports, name='user_reports'),
     path('leave/', views.leave_view, name='leave_view'),
 ]
+
 # Manager-specific URLs under 'truealign/manager/'
 manager_patterns = [
     # Timesheet management
@@ -182,7 +191,6 @@ urlpatterns = [
     # Employee-specific URLs under 'truealign/employee/'
     path('truealign/employee/', include((employee_patterns, 'aps'), namespace='aps_employee')),
     
-    
     path('truealign/finance/', include((finance_patterns, 'aps'), namespace='aps_finance')),
 
     # HR-specific URLs under 'truealign/hr/'
@@ -191,6 +199,8 @@ urlpatterns = [
     # Manager-specific URLs under 'truealign/manager/'
     path('truealign/manager/', include((manager_patterns, 'aps'), namespace='aps_manager')),
 
-    path('reset-password/', views.reset_password, name='reset_password'),
+    # Appraisal URLs
+    path('appraisal/', include((appraisal_patterns, 'appraisal'))),
 
+    path('reset-password/', views.reset_password, name='reset_password'),
 ]

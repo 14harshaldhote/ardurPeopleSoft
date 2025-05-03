@@ -88,6 +88,7 @@ TEMPLATES = [
                 'trueAlign.context_processors.is_backoffice',
                 'trueAlign.context_processors.is_management',
                 'trueAlign.context_processors.is_finance',
+                'trueAlign.context_processors.appraisal_navigation',
             ],
         },
     },

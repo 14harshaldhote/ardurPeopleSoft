@@ -30,8 +30,8 @@ class IdleTimeTrackingMiddleware:
                     if user_session:
                         current_time = timezone.now()
                         
-                        # Check if session has timed out
-                        if (current_time - user_session.last_activity) > timedelta(minutes=UserSession.SESSION_TIMEOUT_MINUTES):
+                        # Check if session has timed out (5 minutes)
+                        if (current_time - user_session.last_activity) > timedelta(minutes=5):
                             # End the session and create a new one
                             user_session.end_session()
                             UserSession.get_or_create_session(

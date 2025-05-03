@@ -31,7 +31,7 @@
             </div>
             <div class="bg-white rounded-xl shadow-sm p-6">
                 <h3 class="text-lg font-medium text-gray-900 mb-2">Productivity Score</h3>
-                <p class="text-3xl font-bold text-green-600">{{ productivity_score }}%</p>
+                <p class="text-3xl font-bold {% if productivity_score >= 80 %}text-green-600{% elif productivity_score >= 50 %}text-yellow-600{% else %}text-red-600{% endif %}">{{ productivity_score }}%</p>
             </div>
         </div>
 
@@ -59,7 +59,7 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ session.login_time|date:"H:i:s" }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                 {% if session.is_active %}
-                                    <span class="text-gray-500">--</span>
+                                    <span class="text-gray-500">Active</span>
                                 {% else %}
                                     {{ session.logout_time|date:"H:i:s" }}
                                 {% endif %}
