@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice {{ invoice.invoice_number }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .invoice-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 40px;
+        }
+        .company-info {
+            width: 50%;
+        }
+        .invoice-info {
+            width: 40%;
+            text-align: right;
+        }
+        .invoice-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #2563eb;
+        }
+        .client-info {
+            margin-bottom: 30px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th {
+            background-color: #f3f4f6;
+            text-align: left;
+            padding: 10px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .totals {
+            width: 40%;
+            margin-left: auto;
+        }
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+        }
+        .grand-total {
+            font-weight: bold;
+            font-size: 18px;
+            border-top: 2px solid #333;
+            padding-top: 10px;
+        }
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 12px;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+    <div class="invoice-header">
+        <div class="company-info">
+            <h1>TrueAlign</h1>
+            <p>123 Business Street<br>
+            City, State 12345<br>
+            Phone: (123) 456-7890<br>
+            Email: billing@truealign.com</p>
+        </div>
+        <div class="invoice-info">
+            <div class="invoice-title">INVOICE</div>
+            <p><strong>Invoice Number:</strong> {{ invoice.invoice_number }}<br>
+            <strong>Date:</strong> {{ invoice.invoice_date|date:"F d, Y" }}<br>
+            <strong>Due Date:</strong> {{ invoice.due_date|date:"F d, Y" }}<br>
+            <strong>Status:</strong> {{ invoice.get_status_display }}</p>
+        </div>
+    </div>
+
+    <div class="client-info">
+        <h3>Bill To:</h3>
+        <p><strong>{{ invoice.client.name }}</strong><br>
+        {{ invoice.client.address }}<br>
+        {% if invoice.client.email %}Email: {{ invoice.client.email }}{% endif %}<br>
+        {% if invoice.client.phone %}Phone: {{ invoice.client.phone }}{% endif %}</p>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Description</th>
+                <th>Quantity</th>
+                <th>Unit Price</th>
+                <th>Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td>{{ item.description }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>${{ item.unit_price|floatformat:2 }}</td>
+                <td>${{ item.amount|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="totals">
+        <div class="total-row">
+            <span>Subtotal:</span>
+            <span>${{ invoice.subtotal|floatformat:2 }}</span>
+        </div>
+        
+        {% for tax in taxes %}
+        <div class="total-row">
+            <span>{{ tax.name }} ({{ tax.rate }}%):</span>
+            <span>${{ tax.amount|floatformat:2 }}</span>
+        </div>
+        {% endfor %}
+        
+        <div class="total-row grand-total">
+            <span>Total:</span>
+            <span>${{ invoice.total_amount|floatformat:2 }}</span>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>Thank you for your business!</p>
+        <p>Payment is due by {{ invoice.due_date|date:"F d, Y" }}. Please make checks payable to TrueAlign.</p>
+        {% if invoice.notes %}
+        <p><strong>Notes:</strong> {{ invoice.notes }}</p>
+        {% endif %}
+    </div>
+</body>
+</html>

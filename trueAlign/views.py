@@ -5,7 +5,7 @@ from .models import (UserSession, Attendance, SystemError,
                     RoleAssignmentAudit, FeatureUsage, SystemUsage, 
                     Timesheet,GlobalUpdate,
                      UserDetails,ProjectUpdate, Presence, PresenceStatus, 
-                     Transaction, ChartOfAccount, Vendor, Payment, ClientPayment, Project, TRANSACTION_TYPES,
+                     Project,
                        ClientProfile, ShiftMaster,ShiftAssignment, Appraisal, AppraisalItem, AppraisalWorkflow )
 from django.db.models import Q
 from datetime import datetime, timedelta, date
@@ -6638,257 +6638,8 @@ def application_for_user(request):
         return redirect('dashboard')
 
 
-'''----------------------------------- FINANCE --------------------------------'''
 
-@login_required
-@user_passes_test(lambda u: u.groups.filter(name__in=['Finance', 'Admin']).exists())
-def chart_of_accounts(request):
-    """View to manage chart of accounts"""
-    if request.method == 'POST':
-        try:
-            with transaction.atomic():
-                name = request.POST.get('name')
-                account_type = request.POST.get('account_type') 
-                code = request.POST.get('code')
-
-                # Validate account code uniqueness
-                if ChartOfAccount.objects.filter(code=code).exists():
-                    raise ValueError("Account code must be unique")
-
-                ChartOfAccount.objects.create(
-                    name=name,
-                    account_type=account_type,
-                    code=code
-                )
-                messages.success(request, 'Account created successfully')
-                return redirect('aps_finance:chart_of_accounts')
-
-        except Exception as e:
-            messages.error(request, str(e))
-
-    accounts = ChartOfAccount.objects.all().order_by('code')
-    account_types = ['asset', 'liability', 'income', 'expense']
-    
-    return render(request, 'components/finance/chart_of_accounts.html', {
-        'accounts': accounts,
-        'account_types': account_types
-    })
-@login_required
-@user_passes_test(lambda u: u.groups.filter(name__in=['Finance', 'Admin']).exists())
-def vendor_list(request):
-    """View to manage vendors"""
-    if request.method == 'POST':
-        try:
-            with transaction.atomic():
-                name = request.POST.get('name')
-                service = request.POST.get('service')
-                email = request.POST.get('email')
-                phone = request.POST.get('phone')
-
-                Vendor.objects.create(
-                    name=name,
-                    service=service,
-                    email=email,
-                    phone=phone
-                )
-                messages.success(request, 'Vendor added successfully')
-                return redirect('aps_finance:vendor_list')
-
-        except Exception as e:
-            messages.error(request, str(e))
-
-    vendors = Vendor.objects.all()
-    
-    # Get all vendor payments in a single query
-    vendor_payments = Payment.objects.filter(vendor__in=vendors)\
-                            .values('vendor')\
-                            .annotate(
-                                total_payments=Sum('amount'),
-                                last_payment_date=Max('date'),
-                                last_payment_amount=F('amount')
-                            )
-    
-    # Create vendor transactions dict
-    vendor_transactions = {}
-    for payment in vendor_payments:
-        vendor_transactions[payment['vendor']] = {
-            'total_payments': payment['total_payments'] or 0,
-            'last_payment': {
-                'date': payment['last_payment_date'],
-                'amount': payment['last_payment_amount']
-            } if payment['last_payment_date'] else None
-        }
-
-    return render(request, 'components/finance/vendor_list.html', {
-        'vendors': vendors,
-        'vendor_transactions': vendor_transactions
-    })
-
-@login_required
-@user_passes_test(lambda u: u.groups.filter(name__in=['Finance', 'Admin']).exists())
-def client_payment_list(request):
-    """View to manage client payments and financial relationships"""
-    clients = ClientProfile.objects.all()
-    client_summaries = []
-
-    for client in clients:
-        payments = ClientPayment.objects.filter(client=client)
-        projects = Project.objects.filter(clients=client.user)
-        
-        total_value = projects.aggregate(Sum('total_value'))['total_value__sum'] or 0
-        total_paid = payments.aggregate(Sum('amount'))['amount__sum'] or 0
-        
-        client_summaries.append({
-            'client': client,
-            'total_project_value': total_value,
-            'total_payments': total_paid,
-            'outstanding': total_value - total_paid,
-            'recent_payments': payments.order_by('-date')[:5]
-        })
-
-    return render(request, 'components/finance/client_payments.html', {
-        'client_summaries': client_summaries
-    })
-
-@login_required
-@user_passes_test(lambda u: u.groups.filter(name__in=['Finance', 'Admin']).exists())
-def payment_list(request):
-    """View to manage payments and expenses"""
-    if request.method == 'POST':
-        try:
-            with transaction.atomic():
-                vendor_id = request.POST.get('vendor')
-                project_id = request.POST.get('project')
-                amount = request.POST.get('amount')
-                description = request.POST.get('description')
-                
-                payment = Payment.objects.create(
-                    vendor_id=vendor_id,
-                    project_id=project_id,
-                    amount=amount,
-                    date=timezone.now(),
-                    paid_by=request.user,
-                    description=description
-                )
-
-                # Create corresponding transaction
-                Transaction.objects.create(
-                    project_id=project_id,
-                    account=ChartOfAccount.objects.get(code='EXPENSES'),
-                    amount=amount,
-                    transaction_type='expense',
-                    description=f"Payment to {payment.vendor.name}",
-                    created_by=request.user
-                )
-
-                messages.success(request, 'Payment recorded successfully')
-                return redirect('aps_finance:payment_list')
-
-        except Exception as e:
-            messages.error(request, str(e))
-
-    payments = Payment.objects.all().order_by('-date')
-    vendors = Vendor.objects.all()
-    projects = Project.objects.all()
-
-    return render(request, 'components/finance/payments.html', {
-        'payments': payments,
-        'vendors': vendors,
-        'projects': projects
-    })
-
-@login_required
-@user_passes_test(lambda u: u.groups.filter(name__in=['Finance', 'Admin']).exists())
-def transaction_list(request):
-    """View to manage transactions and journal entries"""
-    if request.method == 'POST':
-        try:
-            with transaction.atomic():
-                account_id = request.POST.get('account')
-                amount = Decimal(request.POST.get('amount'))
-                transaction_type = request.POST.get('type')
-                description = request.POST.get('description')
-                project_id = request.POST.get('project')
-
-                # Validate double entry
-                if transaction_type == 'transfer':
-                    to_account_id = request.POST.get('to_account')
-                    if not to_account_id:
-                        raise ValueError("Transfer requires destination account")
-
-                    # Create debit and credit entries
-                    Transaction.objects.create(
-                        account_id=account_id,
-                        amount=amount,
-                        transaction_type='expense',
-                        description=description,
-                        project_id=project_id,
-                        created_by=request.user
-                    )
-                    Transaction.objects.create(
-                        account_id=to_account_id,
-                        amount=amount,
-                        transaction_type='income',
-                        description=description,
-                        project_id=project_id,
-                        created_by=request.user
-                    )
-                else:
-                    Transaction.objects.create(
-                        account_id=account_id,
-                        amount=amount,
-                        transaction_type=transaction_type,
-                        description=description,
-                        project_id=project_id,
-                        created_by=request.user
-                    )
-
-                messages.success(request, 'Transaction recorded successfully')
-                return redirect('aps_finance:transaction_list')
-
-        except Exception as e:
-            messages.error(request, str(e))
-
-    transactions = Transaction.objects.all().order_by('-date')
-    accounts = ChartOfAccount.objects.all()
-    projects = Project.objects.all()
-
-    return render(request, 'components/finance/transactions.html', {
-        'transactions': transactions,
-        'accounts': accounts,
-        'projects': projects,
-        'transaction_types': TRANSACTION_TYPES
-    })
-@login_required
-@user_passes_test(lambda u: u.groups.filter(name__in=['Finance', 'Admin']).exists())
-def project_list(request):
-    """View to manage project finances"""
-    projects = Project.objects.all()
-    project_finances = []
-
-    for project in projects:
-        income = Transaction.objects.filter(
-            project=project, 
-            transaction_type='income'
-        ).aggregate(Sum('amount'))['amount__sum'] or 0
-        
-        expenses = Transaction.objects.filter(
-            project=project, 
-            transaction_type='expense'
-        ).aggregate(Sum('amount'))['amount__sum'] or 0
-        
-        project_finances.append({
-            'project': project,
-            'total_value': project.total_value,
-            'income': income,
-            'expenses': expenses,
-            'profit': income - expenses,
-            'margin': ((income - expenses) / income * 100) if income > 0 else 0
-        })
-
-    return render(request, 'components/finance/project_list.html', {
-        'project_finances': project_finances
-    })
+'''------------------------------------- SHIFTS ----------------------------------'''
 """
 SHIFT MASTER VIEWS
 This module provides views for managing shifts, assignments and holidays.
@@ -8419,3 +8170,1154 @@ def appraisal_dashboard(request):
 
     print(f"[DEBUG] Dashboard statistics prepared: {context}")
     return render(request, 'components/appraisal/dashboard.html', context)
+
+
+'''--------------------------------- FINANCE --------------------------'''
+from django.utils import timezone
+from datetime import datetime, timedelta
+from django.db.models import Sum, Count, Q, F, Case, When, Value, DecimalField
+from django.core.paginator import Paginator
+from django.shortcuts import render, get_object_or_404, redirect
+from django.http import HttpResponse, JsonResponse
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib import messages
+from django.urls import reverse
+from .models import (
+    Transaction, Entity, DynamicParameter, ChartOfAccount, 
+    Invoice, InvoiceItem, InvoiceTax, Payment, ProductService,
+    SalaryStructure, SalaryComponent, EmployeeSalary, SalarySlip, SalarySlipDetail,
+    AuditLog, CalculationRule
+)
+import csv
+import json
+from decimal import Decimal, ROUND_HALF_UP
+from io import BytesIO
+import tempfile
+from reportlab.pdfgen import canvas
+from xhtml2pdf import pisa
+
+
+
+def is_finance(user):
+    return user.groups.filter(name="Finance").exists() if user.is_authenticated else False
+
+@login_required
+@user_passes_test(is_finance)
+def finance_dashboard(request):
+    # Date ranges for filtering
+    today = timezone.now().date()
+    start_date = request.GET.get('start_date', (today - timedelta(days=30)).isoformat())
+    end_date = request.GET.get('end_date', today.isoformat())
+    
+    # System health indicators
+    recent_date = timezone.now() - timedelta(days=7)
+    
+    # Active users and transaction metrics
+    active_users_count = User.objects.filter(last_login__gte=recent_date).count()
+    
+    # Transaction statistics
+    recent_transactions = Transaction.objects.filter(created_at__gte=recent_date)
+    recent_transactions_count = recent_transactions.count()
+    recent_transactions_amount = recent_transactions.aggregate(
+        total=Sum('amount'))['total'] or Decimal('0.00')
+    
+    # Income vs Expense
+    income_total = Transaction.objects.filter(
+        transaction_type='income',
+        date__range=[start_date, end_date]
+    ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+    
+    expense_total = Transaction.objects.filter(
+        transaction_type='expense',
+        date__range=[start_date, end_date]
+    ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+    
+    # Invoice statistics
+    invoice_stats = Invoice.objects.filter(
+        invoice_date__range=[start_date, end_date]
+    ).aggregate(
+        total_count=Count('id'),
+        total_amount=Sum('total_amount'),
+        paid_amount=Sum(Case(
+            When(status='paid', then=F('total_amount')),
+            default=Value(0),
+            output_field=DecimalField()
+        )),
+        overdue_amount=Sum(Case(
+            When(status='overdue', then=F('total_amount')),
+            default=Value(0),
+            output_field=DecimalField()
+        ))
+    )
+    
+    # Payment statistics
+    payment_stats = Payment.objects.filter(
+        payment_date__range=[start_date, end_date]
+    ).aggregate(
+        total_count=Count('id'),
+        total_amount=Sum('amount')
+    )
+    
+    # Salary statistics
+    salary_stats = SalarySlip.objects.filter(
+        period_start__range=[start_date, end_date]
+    ).aggregate(
+        total_count=Count('id'),
+        gross_total=Sum('gross_salary'),
+        net_total=Sum('net_salary'),
+        deduction_total=Sum('total_deductions')
+    )
+    
+    # Entity statistics
+    entity_metrics = Entity.objects.aggregate(
+        total_active=Count('id', filter=Q(is_active=True)),
+        total_inactive=Count('id', filter=Q(is_active=False)),
+        clients=Count('id', filter=Q(entity_type='client', is_active=True)),
+        vendors=Count('id', filter=Q(entity_type='vendor', is_active=True))
+    )
+    
+    # System parameters
+    global_parameters = DynamicParameter.objects.filter(
+        is_global=True,
+        valid_from__lte=today
+    ).filter(
+        Q(valid_to__isnull=True) | Q(valid_to__gte=today)
+    )
+    # Recent activity
+    recent_invoices = Invoice.objects.order_by('-created_at')[:5]
+    recent_payments = Payment.objects.order_by('-created_at')[:5]
+    recent_transactions_list = Transaction.objects.order_by('-created_at')[:5]
+    
+    # Chart data
+    monthly_income = Transaction.objects.filter(
+        transaction_type='income',
+        date__range=[today - timedelta(days=180), today]
+    ).extra(
+        select={'month': "EXTRACT(MONTH FROM date)"}
+    ).values('month').annotate(
+        total=Sum('amount')
+    ).order_by('month')
+    
+    monthly_expense = Transaction.objects.filter(
+        transaction_type='expense',
+        date__range=[today - timedelta(days=180), today]
+    ).extra(
+        select={'month': "EXTRACT(MONTH FROM date)"}
+    ).values('month').annotate(
+        total=Sum('amount')
+    ).order_by('month')
+    
+    context = {
+        'active_users_count': active_users_count,
+        'recent_transactions_count': recent_transactions_count,
+        'recent_transactions_amount': recent_transactions_amount,
+        'income_total': income_total,
+        'expense_total': expense_total,
+        'net_income': income_total - expense_total,
+        'invoice_stats': invoice_stats,
+        'payment_stats': payment_stats,
+        'salary_stats': salary_stats,
+        'entity_metrics': entity_metrics,
+        'global_parameters': global_parameters,
+        'recent_activity': {
+            'invoices': recent_invoices,
+            'payments': recent_payments,
+            'transactions': recent_transactions_list
+        },
+        'chart_data': {
+            'monthly_income': list(monthly_income),
+            'monthly_expense': list(monthly_expense)
+        },
+        'date_range': {
+            'start': start_date,
+            'end': end_date
+        }
+    }
+    
+    return render(request, 'components/finance/dashboard.html', context)
+
+# Transaction Management Views
+@login_required
+@user_passes_test(is_finance)
+def transaction_list(request):
+    transactions = Transaction.objects.all().order_by('-date')
+    
+    # Filter options
+    transaction_type = request.GET.get('type')
+    entity_id = request.GET.get('entity')
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    min_amount = request.GET.get('min_amount')
+    max_amount = request.GET.get('max_amount')
+    
+    if transaction_type:
+        transactions = transactions.filter(transaction_type=transaction_type)
+    
+    if entity_id:
+        transactions = transactions.filter(entity_id=entity_id)
+    
+    if start_date:
+        transactions = transactions.filter(date__gte=start_date)
+    
+    if end_date:
+        transactions = transactions.filter(date__lte=end_date)
+    
+    if min_amount:
+        transactions = transactions.filter(amount__gte=min_amount)
+    
+    if max_amount:
+        transactions = transactions.filter(amount__lte=max_amount)
+    
+    # Pagination
+    paginator = Paginator(transactions, 25)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'page_obj': page_obj,
+        'filter_options': {
+            'transaction_types': dict(Transaction.TRANSACTION_TYPES),
+            'entities': Entity.objects.filter(is_active=True),
+            'current_filters': {
+                'type': transaction_type,
+                'entity': entity_id,
+                'start_date': start_date,
+                'end_date': end_date,
+                'min_amount': min_amount,
+                'max_amount': max_amount
+            }
+        }
+    }
+    
+    return render(request, 'components/finance/transaction_list.html', context)
+
+@login_required
+@user_passes_test(is_finance)
+def transaction_detail(request, transaction_id):
+    transaction = get_object_or_404(Transaction, id=transaction_id)
+    
+    # Get related audit logs
+    audit_logs = AuditLog.objects.filter(
+        record_type='Transaction',
+        record_id=transaction_id
+    ).order_by('-created_at')
+    
+    context = {
+        'transaction': transaction,
+        'audit_logs': audit_logs
+    }
+    
+    return render(request, 'components/finance/transaction_detail.html', context)
+
+@login_required
+@user_passes_test(is_finance)
+def transaction_create(request):
+    if request.method == 'POST':
+        # Process form data
+        transaction_type = request.POST.get('transaction_type')
+        entity_id = request.POST.get('entity')
+        account_id = request.POST.get('account')
+        amount = request.POST.get('amount')
+        date = request.POST.get('date')
+        description = request.POST.get('description')
+        reference_number = request.POST.get('reference_number')
+        notes = request.POST.get('notes')
+        
+        try:
+            # Create new transaction
+            transaction = Transaction(
+                transaction_number=generate_transaction_number(),
+                transaction_type=transaction_type,
+                entity_id=entity_id,
+                account_id=account_id,
+                amount=Decimal(amount),
+                date=date,
+                description=description,
+                reference_number=reference_number,
+                notes=notes,
+                created_by=request.user
+            )
+            transaction.save()
+            
+            # Log the action
+            AuditLog.objects.create(
+                user=request.user,
+                action='create',
+                module='finance',
+                record_type='Transaction',
+                record_id=transaction.id,
+                new_values={
+                    'transaction_type': transaction_type,
+                    'entity_id': entity_id,
+                    'amount': str(amount),
+                    'date': date
+                }
+            )
+            
+            messages.success(request, 'Transaction created successfully.')
+            return redirect('transaction_detail', transaction_id=transaction.id)
+        
+        except Exception as e:
+            messages.error(request, f'Error creating transaction: {str(e)}')
+    
+    # GET request - show form
+    context = {
+        'transaction_types': Transaction.TRANSACTION_TYPES,
+        'entities': Entity.objects.filter(is_active=True),
+        'accounts': ChartOfAccount.objects.filter(is_active=True)
+    }
+    
+    return render(request, 'components/finance/transaction_form.html', context)
+
+# Invoice Management Views
+@login_required
+@user_passes_test(is_finance)
+def invoice_list(request):
+    invoices = Invoice.objects.all().order_by('-invoice_date')
+    
+    # Filter options
+    status = request.GET.get('status')
+    client_id = request.GET.get('client')
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    min_amount = request.GET.get('min_amount')
+    max_amount = request.GET.get('max_amount')
+    
+    if status:
+        invoices = invoices.filter(status=status)
+    
+    if client_id:
+        invoices = invoices.filter(client_id=client_id)
+    
+    if start_date:
+        invoices = invoices.filter(invoice_date__gte=start_date)
+    
+    if end_date:
+        invoices = invoices.filter(invoice_date__lte=end_date)
+    
+    if min_amount:
+        invoices = invoices.filter(total_amount__gte=min_amount)
+    
+    if max_amount:
+        invoices = invoices.filter(total_amount__lte=max_amount)
+    
+    # Pagination
+    paginator = Paginator(invoices, 25)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'page_obj': page_obj,
+        'filter_options': {
+            'statuses': dict(Invoice.INVOICE_STATUS),
+            'clients': Entity.objects.filter(entity_type='client', is_active=True),
+            'current_filters': {
+                'status': status,
+                'client': client_id,
+                'start_date': start_date,
+                'end_date': end_date,
+                'min_amount': min_amount,
+                'max_amount': max_amount
+            }
+        }
+    }
+    
+    return render(request, 'components/finance/invoice_list.html', context)
+
+@login_required
+@user_passes_test(is_finance)
+def invoice_detail(request, invoice_id):
+    invoice = get_object_or_404(Invoice, id=invoice_id)
+    
+    # Get related items, taxes, and payments
+    items = invoice.items.all()
+    taxes = invoice.taxes.all()
+    payments = invoice.payments.all()
+    
+    # Calculate payment status
+    total_paid = payments.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+    balance = invoice.total_amount - total_paid
+    
+    context = {
+        'invoice': invoice,
+        'items': items,
+        'taxes': taxes,
+        'payments': payments,
+        'total_paid': total_paid,
+        'balance': balance
+    }
+    
+    return render(request, 'components/finance/invoice_detail.html', context)
+
+@login_required
+@user_passes_test(is_finance)
+def generate_invoice_pdf(request, invoice_id):
+    invoice = get_object_or_404(Invoice, id=invoice_id)
+    items = invoice.items.all()
+    taxes = invoice.taxes.all()
+    
+    # Render HTML content
+    html_string = render_to_string('components/finance/invoice_pdf.html', {
+        'invoice': invoice,
+        'items': items,
+        'taxes': taxes
+    })
+    
+    # Generate PDF
+    html = HTML(string=html_string, base_url=request.build_absolute_uri())
+    result = html.write_pdf()
+    
+    # Create HTTP response
+    response = HttpResponse(result, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="invoice_{invoice.invoice_number}.pdf"'
+    
+    return response
+
+# Payment Management Views
+@login_required
+@user_passes_test(is_finance)
+def payment_list(request):
+    payments = Payment.objects.all().order_by('-payment_date')
+    
+    # Filter options
+    payment_method = request.GET.get('method')
+    entity_id = request.GET.get('entity')
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    
+    if payment_method:
+        payments = payments.filter(payment_method=payment_method)
+    
+    if entity_id:
+        payments = payments.filter(entity_id=entity_id)
+    
+    if start_date:
+        payments = payments.filter(payment_date__gte=start_date)
+    
+    if end_date:
+        payments = payments.filter(payment_date__lte=end_date)
+    
+    # Pagination
+    paginator = Paginator(payments, 25)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'page_obj': page_obj,
+        'filter_options': {
+            'payment_methods': dict(Payment.PAYMENT_METHODS),
+            'entities': Entity.objects.filter(is_active=True),
+            'current_filters': {
+                'method': payment_method,
+                'entity': entity_id,
+                'start_date': start_date,
+                'end_date': end_date
+            }
+        }
+    }
+    
+    return render(request, 'components/finance/payment_list.html', context)
+
+@login_required
+@user_passes_test(is_finance)
+def record_payment(request, invoice_id=None):
+    if request.method == 'POST':
+        # Process form data
+        invoice_id = request.POST.get('invoice')
+        entity_id = request.POST.get('entity')
+        payment_date = request.POST.get('payment_date')
+        payment_method = request.POST.get('payment_method')
+        reference_number = request.POST.get('reference_number')
+        amount = request.POST.get('amount')
+        notes = request.POST.get('notes')
+        
+        try:
+            # Create new payment
+            payment = Payment(
+                invoice_id=invoice_id,
+                entity_id=entity_id,
+                payment_date=payment_date,
+                payment_method=payment_method,
+                reference_number=reference_number,
+                amount=Decimal(amount),
+                notes=notes,
+                created_by=request.user
+            )
+            payment.save()
+            
+            # Update invoice status if needed
+            if invoice_id:
+                invoice = Invoice.objects.get(id=invoice_id)
+                total_paid = invoice.payments.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+                
+                if total_paid >= invoice.total_amount:
+                    invoice.status = 'paid'
+                elif total_paid > 0:
+                    invoice.status = 'partially_paid'
+                
+                invoice.save()
+            
+            messages.success(request, 'Payment recorded successfully.')
+            return redirect('payment_list')
+        
+        except Exception as e:
+            messages.error(request, f'Error recording payment: {str(e)}')
+    
+    # GET request - show form
+    invoice = None
+    if invoice_id:
+        invoice = get_object_or_404(Invoice, id=invoice_id)
+    
+    context = {
+        'invoice': invoice,
+        'payment_methods': Payment.PAYMENT_METHODS,
+        'entities': Entity.objects.filter(is_active=True)
+    }
+    
+    return render(request, 'components/finance/payment_form.html', context)
+
+# Salary Management Views
+@login_required
+@user_passes_test(is_finance)
+def salary_slip_list(request):
+    salary_slips = SalarySlip.objects.all().order_by('-year', '-month')
+    
+    # Filter options
+    status = request.GET.get('status')
+    employee_id = request.GET.get('employee')
+    month = request.GET.get('month')
+    year = request.GET.get('year')
+    
+    if status:
+        salary_slips = salary_slips.filter(status=status)
+    
+    if employee_id:
+        salary_slips = salary_slips.filter(employee_id=employee_id)
+    
+    if month:
+        salary_slips = salary_slips.filter(month=month)
+    
+    if year:
+        salary_slips = salary_slips.filter(year=year)
+    
+    # Pagination
+    paginator = Paginator(salary_slips, 25)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'page_obj': page_obj,
+        'filter_options': {
+            'statuses': dict(SalarySlip.PAYMENT_STATUS),
+            'employees': User.objects.filter(is_active=True),
+            'months': [(i, datetime(2000, i, 1).strftime('%B')) for i in range(1, 13)],
+            'years': range(datetime.now().year - 2, datetime.now().year + 1),
+            'current_filters': {
+                'status': status,
+                'employee': employee_id,
+                'month': month,
+                'year': year
+            }
+        }
+    }
+    
+    return render(request, 'components/finance/salary_slip_list.html', context)
+
+@login_required
+@user_passes_test(is_finance)
+def generate_salary_slip_pdf(request, slip_id):
+    salary_slip = get_object_or_404(SalarySlip, id=slip_id)
+    details = salary_slip.details.all()
+    
+    # Group components by type
+    earnings = details.filter(component__component_type='earning')
+    deductions = details.filter(component__component_type='deduction')
+    
+    # Render HTML content
+    html_string = render_to_string('components/finance/salary_slip_pdf.html', {
+        'salary_slip': salary_slip,
+        'earnings': earnings,
+        'deductions': deductions
+    })
+    
+    # Generate PDF
+    html = HTML(string=html_string, base_url=request.build_absolute_uri())
+    result = html.write_pdf()
+    
+    # Create HTTP response
+    response = HttpResponse(result, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="salary_slip_{salary_slip.employee.username}_{salary_slip.month}_{salary_slip.year}.pdf"'
+    
+    return response
+
+# Reporting Views
+@login_required
+@user_passes_test(is_finance)
+def financial_report(request):
+    report_type = request.GET.get('type', 'income_expense')
+    start_date = request.GET.get('start_date', (timezone.now().date() - timedelta(days=30)).isoformat())
+    end_date = request.GET.get('end_date', timezone.now().date().isoformat())
+    
+    # Generate report data based on type
+    report_data = {}
+    
+    if report_type == 'income_expense':
+        # Income vs Expense report
+        income_by_account = Transaction.objects.filter(
+            transaction_type='income',
+            date__range=[start_date, end_date]
+        ).values('account__name').annotate(
+            total=Sum('amount')
+        ).order_by('-total')
+        
+        expense_by_account = Transaction.objects.filter(
+            transaction_type='expense',
+            date__range=[start_date, end_date]
+        ).values('account__name').annotate(
+            total=Sum('amount')
+        ).order_by('-total')
+        
+        report_data = {
+            'income_by_account': income_by_account,
+            'expense_by_account': expense_by_account,
+            'income_total': sum(item['total'] for item in income_by_account),
+            'expense_total': sum(item['total'] for item in expense_by_account)
+        }
+    
+    elif report_type == 'invoice_aging':
+        # Invoice aging report
+        today = timezone.now().date()
+        
+        aging_buckets = {
+            'current': Q(due_date__gte=today),
+            '1_30': Q(due_date__lt=today, due_date__gte=today - timedelta(days=30)),
+            '31_60': Q(due_date__lt=today - timedelta(days=30), due_date__gte=today - timedelta(days=60)),
+            '61_90': Q(due_date__lt=today - timedelta(days=60), due_date__gte=today - timedelta(days=90)),
+            'over_90': Q(due_date__lt=today - timedelta(days=90))
+        }
+        
+        aging_data = {}
+        for bucket, query in aging_buckets.items():
+            invoices = Invoice.objects.filter(
+                query,
+                status__in=['sent', 'partially_paid', 'overdue']
+            )
+            
+            total_amount = invoices.aggregate(total=Sum('total_amount'))['total'] or Decimal('0.00')
+            paid_amount = Payment.objects.filter(invoice__in=invoices).aggregate(
+                total=Sum('amount'))['total'] or Decimal('0.00')
+            
+            aging_data[bucket] = {
+                'invoices': invoices,
+                'total_amount': total_amount,
+                'paid_amount': paid_amount,
+                'outstanding': total_amount - paid_amount
+            }
+        
+        report_data = {
+            'aging_data': aging_data,
+            'total_outstanding': sum(data['outstanding'] for data in aging_data.values())
+        }
+    
+    elif report_type == 'salary_summary':
+        # Salary summary report
+        salary_by_month = SalarySlip.objects.filter(
+            period_start__range=[start_date, end_date]
+        ).extra(
+            select={'month_year': "TO_CHAR(period_start, 'YYYY-MM')"}
+        ).values('month_year').annotate(
+            gross_total=Sum('gross_salary'),
+            net_total=Sum('net_salary'),
+            deduction_total=Sum('total_deductions'),
+            count=Count('id')
+        ).order_by('month_year')
+        
+        report_data = {
+            'salary_by_month': salary_by_month,
+            'total_gross': sum(item['gross_total'] for item in salary_by_month),
+            'total_net': sum(item['net_total'] for item in salary_by_month),
+            'total_deductions': sum(item['deduction_total'] for item in salary_by_month)
+        }
+    
+    context = {
+        'report_type': report_type,
+        'start_date': start_date,
+        'end_date': end_date,
+        'report_data': report_data
+    }
+    
+    # Handle export requests
+    export_format = request.GET.get('export')
+    if export_format:
+        if export_format == 'pdf':
+            return export_report_pdf(request, context)
+        elif export_format == 'excel':
+            return export_report_excel(request, context)
+        elif export_format == 'csv':
+            return export_report_csv(request, context)
+    
+    return render(request, 'components/finance/financial_report.html', context)
+# Helper functions
+def generate_transaction_number():
+    """Generate a unique transaction number"""
+    prefix = "TXN"
+    date_part = timezone.now().strftime('%Y%m%d')
+    last_transaction = Transaction.objects.order_by('-id').first()
+    
+    if last_transaction and last_transaction.transaction_number.startswith(f"{prefix}{date_part}"):
+        last_number = int(last_transaction.transaction_number[len(prefix) + len(date_part):])
+        new_number = last_number + 1
+    else:
+        new_number = 1
+    
+    return f"{prefix}{date_part}{new_number:04d}"
+
+def export_report_pdf(request, context):
+    """Export report as PDF"""
+    report_type = context['report_type']
+    
+    # Render HTML content
+    html_string = render_to_string(f'components/finance/reports/{report_type}_pdf.html', context)
+    
+    # Generate PDF
+    html = HTML(string=html_string, base_url=request.build_absolute_uri())
+    result = html.write_pdf()
+    
+    # Create HTTP response
+    response = HttpResponse(result, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{report_type}_report.pdf"'
+    
+    return response
+
+def export_report_excel(request, context):
+    """Export report as Excel"""
+    report_type = context['report_type']
+    report_data = context['report_data']
+    
+    # Create Excel file
+    output = BytesIO()
+    workbook = xlsxwriter.Workbook(output)
+    worksheet = workbook.add_worksheet()
+    
+    # Define formats
+    header_format = workbook.add_format({'bold': True, 'bg_color': '#F2F2F2'})
+    money_format = workbook.add_format({'num_format': '#,##0.00'})
+    
+    # Write data based on report type
+    if report_type == 'income_expense':
+        # Headers
+        worksheet.write(0, 0, 'Account', header_format)
+        worksheet.write(0, 1, 'Income', header_format)
+        worksheet.write(0, 2, 'Expense', header_format)
+        
+        # Data
+        income_accounts = {item['account__name']: item['total'] for item in report_data['income_by_account']}
+        expense_accounts = {item['account__name']: item['total'] for item in report_data['expense_by_account']}
+        
+        all_accounts = set(list(income_accounts.keys()) + list(expense_accounts.keys()))
+        
+        row = 1
+        for account in all_accounts:
+            worksheet.write(row, 0, account)
+            worksheet.write(row, 1, income_accounts.get(account, 0), money_format)
+            worksheet.write(row, 2, expense_accounts.get(account, 0), money_format)
+            row += 1
+        
+        # Totals
+        worksheet.write(row + 1, 0, 'Total', header_format)
+        worksheet.write(row + 1, 1, report_data['income_total'], money_format)
+        worksheet.write(row + 1, 2, report_data['expense_total'], money_format)
+    
+    # Finalize and return
+    workbook.close()
+    output.seek(0)
+    
+    response = HttpResponse(output.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename="{report_type}_report.xlsx"'
+    
+    return response
+
+def export_report_csv(request, context):
+    """Export report as CSV"""
+    report_type = context['report_type']
+    report_data = context['report_data']
+    
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="{report_type}_report.csv"'
+    
+    writer = csv.writer(response)
+    
+    # Write data based on report type
+    if report_type == 'income_expense':
+        writer.writerow(['Account', 'Income', 'Expense'])
+        
+        income_accounts = {item['account__name']: item['total'] for item in report_data['income_by_account']}
+        expense_accounts = {item['account__name']: item['total'] for item in report_data['expense_by_account']}
+        
+        all_accounts = set(list(income_accounts.keys()) + list(expense_accounts.keys()))
+        
+        for account in all_accounts:
+            writer.writerow([
+                account,
+                income_accounts.get(account, 0),
+                expense_accounts.get(account, 0)
+            ])
+        
+        # Write totals
+        writer.writerow(['Total', report_data['income_total'], report_data['expense_total']])
+    
+    elif report_type == 'invoice_aging':
+        writer.writerow(['Aging Period', 'Number of Invoices', 'Total Amount', 'Paid Amount', 'Outstanding'])
+        
+        aging_data = report_data['aging_data']
+        aging_labels = {
+            'current': 'Current',
+            '1_30': '1-30 Days',
+            '31_60': '31-60 Days',
+            '61_90': '61-90 Days',
+            'over_90': 'Over 90 Days'
+        }
+        
+        for bucket, label in aging_labels.items():
+            data = aging_data[bucket]
+            writer.writerow([
+                label,
+                data['invoices'].count(),
+                data['total_amount'],
+                data['paid_amount'],
+                data['outstanding']
+            ])
+        
+        writer.writerow(['Total', '', '', '', report_data['total_outstanding']])
+    
+    elif report_type == 'salary_summary':
+        writer.writerow(['Month', 'Employees', 'Gross Salary', 'Deductions', 'Net Salary'])
+        
+        for item in report_data['salary_by_month']:
+            writer.writerow([
+                item['month_year'],
+                item['count'],
+                item['gross_total'],
+                item['deduction_total'],
+                item['net_total']
+            ])
+        
+        writer.writerow([
+            'Total',
+            sum(item['count'] for item in report_data['salary_by_month']),
+            report_data['total_gross'],
+            report_data['total_deductions'],
+            report_data['total_net']
+        ])
+    
+    return response
+
+# Dynamic Parameter Management
+@login_required
+@user_passes_test(is_finance)
+def parameter_list(request):
+    """View to list and manage dynamic parameters"""
+    parameters = DynamicParameter.objects.all().order_by('key')
+    
+    # Filter options
+    param_type = request.GET.get('type')
+    is_global = request.GET.get('is_global')
+    
+    if param_type:
+        parameters = parameters.filter(value_type=param_type)
+    
+    if is_global is not None:
+        is_global_bool = is_global.lower() == 'true'
+        parameters = parameters.filter(is_global=is_global_bool)
+    
+    # Pagination
+    paginator = Paginator(parameters, 25)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'page_obj': page_obj,
+        'parameter_types': dict(DynamicParameter.PARAMETER_TYPES),
+        'filter_options': {
+            'current_filters': {
+                'type': param_type,
+                'is_global': is_global
+            }
+        }
+    }
+    
+    return render(request, 'components/finance/parameter_list.html', context)
+
+@login_required
+@user_passes_test(is_finance)
+def parameter_create(request):
+    """View to create a new dynamic parameter"""
+    if request.method == 'POST':
+        key = request.POST.get('key')
+        name = request.POST.get('name')
+        value = request.POST.get('value')
+        value_type = request.POST.get('value_type')
+        is_global = request.POST.get('is_global', 'off') == 'on'
+        entity_id = request.POST.get('entity_id') or None
+        entity_type = request.POST.get('entity_type') or None
+        valid_from = request.POST.get('valid_from')
+        valid_to = request.POST.get('valid_to') or None
+        
+        try:
+            parameter = DynamicParameter(
+                key=key,
+                name=name,
+                value=value,
+                value_type=value_type,
+                is_global=is_global,
+                entity_id=entity_id,
+                entity_type=entity_type,
+                valid_from=valid_from,
+                valid_to=valid_to,
+                created_by=request.user
+            )
+            parameter.save()
+            
+            # Log the action
+            AuditLog.objects.create(
+                user=request.user,
+                action='create',
+                module='finance',
+                record_type='DynamicParameter',
+                record_id=parameter.id,
+                new_values={
+                    'key': key,
+                    'name': name,
+                    'value': value,
+                    'value_type': value_type
+                }
+            )
+            
+            messages.success(request, 'Parameter created successfully.')
+            return redirect('parameter_list')
+        
+        except Exception as e:
+            messages.error(request, f'Error creating parameter: {str(e)}')
+    
+    context = {
+        'parameter_types': DynamicParameter.PARAMETER_TYPES,
+        'entities': Entity.objects.filter(is_active=True)
+    }
+    
+    return render(request, 'components/finance/parameter_form.html', context)
+
+@login_required
+@user_passes_test(is_finance)
+def parameter_edit(request, parameter_id):
+    """View to edit an existing dynamic parameter"""
+    parameter = get_object_or_404(DynamicParameter, id=parameter_id)
+    
+    if request.method == 'POST':
+        old_values = {
+            'key': parameter.key,
+            'name': parameter.name,
+            'value': parameter.value,
+            'value_type': parameter.value_type
+        }
+        
+        parameter.key = request.POST.get('key')
+        parameter.name = request.POST.get('name')
+        parameter.value = request.POST.get('value')
+        parameter.value_type = request.POST.get('value_type')
+        parameter.is_global = request.POST.get('is_global', 'off') == 'on'
+        parameter.entity_id = request.POST.get('entity_id') or None
+        parameter.entity_type = request.POST.get('entity_type') or None
+        parameter.valid_from = request.POST.get('valid_from')
+        parameter.valid_to = request.POST.get('valid_to') or None
+        parameter.updated_by = request.user
+        
+        try:
+            parameter.save()
+            
+            # Log the action
+            AuditLog.objects.create(
+                user=request.user,
+                action='update',
+                module='finance',
+                record_type='DynamicParameter',
+                record_id=parameter.id,
+                old_values=old_values,
+                new_values={
+                    'key': parameter.key,
+                    'name': parameter.name,
+                    'value': parameter.value,
+                    'value_type': parameter.value_type
+                }
+            )
+            
+            messages.success(request, 'Parameter updated successfully.')
+            return redirect('parameter_list')
+        
+        except Exception as e:
+            messages.error(request, f'Error updating parameter: {str(e)}')
+    
+    context = {
+        'parameter': parameter,
+        'parameter_types': DynamicParameter.PARAMETER_TYPES,
+        'entities': Entity.objects.filter(is_active=True)
+    }
+    
+    return render(request, 'components/finance/parameter_form.html', context)
+
+# Calculation Rules Management
+@login_required
+@user_passes_test(is_finance)
+def calculation_rule_list(request):
+    """View to list and manage calculation rules"""
+    rules = CalculationRule.objects.all().order_by('applies_to', 'priority')
+    
+    # Filter options
+    applies_to = request.GET.get('applies_to')
+    is_active = request.GET.get('is_active')
+    
+    if applies_to:
+        rules = rules.filter(applies_to=applies_to)
+    
+    if is_active is not None:
+        is_active_bool = is_active.lower() == 'true'
+        rules = rules.filter(is_active=is_active_bool)
+    
+    # Pagination
+    paginator = Paginator(rules, 25)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'page_obj': page_obj,
+        'filter_options': {
+            'applies_to_options': {
+                'invoice': 'Invoice',
+                'salary': 'Salary',
+                'tax': 'Tax',
+                'discount': 'Discount'
+            },
+            'current_filters': {
+                'applies_to': applies_to,
+                'is_active': is_active
+            }
+        }
+    }
+    
+    return render(request, 'components/finance/calculation_rule_list.html', context)
+
+@login_required
+@user_passes_test(is_finance)
+def calculation_rule_create(request):
+    """View to create a new calculation rule"""
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        description = request.POST.get('description')
+        formula = request.POST.get('formula')
+        applies_to = request.POST.get('applies_to')
+        priority = request.POST.get('priority')
+        is_active = request.POST.get('is_active', 'off') == 'on'
+        
+        try:
+            rule = CalculationRule(
+                name=name,
+                description=description,
+                formula=formula,
+                applies_to=applies_to,
+                priority=priority,
+                is_active=is_active,
+                created_by=request.user
+            )
+            rule.save()
+            
+            # Log the action
+            AuditLog.objects.create(
+                user=request.user,
+                action='create',
+                module='finance',
+                record_type='CalculationRule',
+                record_id=rule.id,
+                new_values={
+                    'name': name,
+                    'formula': formula,
+                    'applies_to': applies_to,
+                    'priority': priority
+                }
+            )
+            
+            messages.success(request, 'Calculation rule created successfully.')
+            return redirect('calculation_rule_list')
+        
+        except Exception as e:
+            messages.error(request, f'Error creating calculation rule: {str(e)}')
+    
+    context = {
+        'applies_to_options': {
+            'invoice': 'Invoice',
+            'salary': 'Salary',
+            'tax': 'Tax',
+            'discount': 'Discount'
+        }
+    }
+    
+    return render(request, 'components/finance/calculation_rule_form.html', context)
+
+@login_required
+@user_passes_test(is_finance)
+def calculation_rule_edit(request, rule_id):
+    """View to edit an existing calculation rule"""
+    rule = get_object_or_404(CalculationRule, id=rule_id)
+    
+    if request.method == 'POST':
+        old_values = {
+            'name': rule.name,
+            'formula': rule.formula,
+            'applies_to': rule.applies_to,
+            'priority': rule.priority
+        }
+        
+        rule.name = request.POST.get('name')
+        rule.description = request.POST.get('description')
+        rule.formula = request.POST.get('formula')
+        rule.applies_to = request.POST.get('applies_to')
+        rule.priority = request.POST.get('priority')
+        rule.is_active = request.POST.get('is_active', 'off') == 'on'
+        rule.updated_by = request.user
+        
+        try:
+            rule.save()
+            
+            # Log the action
+            AuditLog.objects.create(
+                user=request.user,
+                action='update',
+                module='finance',
+                record_type='CalculationRule',
+                record_id=rule.id,
+                old_values=old_values,
+                new_values={
+                    'name': rule.name,
+                    'formula': rule.formula,
+                    'applies_to': rule.applies_to,
+                    'priority': rule.priority
+                }
+            )
+            
+            messages.success(request, 'Calculation rule updated successfully.')
+            return redirect('calculation_rule_list')
+        
+        except Exception as e:
+            messages.error(request, f'Error updating calculation rule: {str(e)}')
+    
+    context = {
+        'rule': rule,
+        'applies_to_options': {
+            'invoice': 'Invoice',
+            'salary': 'Salary',
+            'tax': 'Tax',
+            'discount': 'Discount'
+        }
+    }
+    
+    return render(request, 'components/finance/calculation_rule_form.html', context)
+
+

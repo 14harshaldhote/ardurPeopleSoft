@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto p-4">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-semibold">Transaction Details</h1>
+        <div class="flex space-x-2">
+            <a href="{% url 'transaction_list' %}" class="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded">
+                Back to List
+            </a>
+            <a href="{% url 'transaction_edit' transaction.id %}" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded">
+                Edit
+            </a>
+        </div>
+    </div>
+
+    <div class="bg-white shadow rounded-lg overflow-hidden mb-6">
+        <div class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h2 class="text-lg font-medium mb-4">Transaction Information</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="text-gray-600">Transaction Number:</div>
+                        <div class="font-medium">{{ transaction.transaction_number }}</div>
+                        
+                        <div class="text-gray-600">Type:</div>
+                        <div class="font-medium">{{ transaction.get_transaction_type_display }}</div>
+                        
+                        <div class="text-gray-600">Amount:</div>
+                        <div class="font-medium">₹{{ transaction.amount|floatformat:2 }}</div>
+                        
+                        <div class="text-gray-600">Date:</div>
+                        <div class="font-medium">{{ transaction.date|date:"F j, Y" }}</div>
+                        
+                        <div class="text-gray-600">Status:</div>
+                        <div class="font-medium">
+                            {% if transaction.is_reconciled %}
+                                <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">Reconciled</span>
+                            {% else %}
+                                <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs">Pending</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h2 class="text-lg font-medium mb-4">Related Information</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="text-gray-600">Entity:</div>
+                        <div class="font-medium">{{ transaction.entity.name }}</div>
+                        
+                        <div class="text-gray-600">Account:</div>
+                        <div class="font-medium">{{ transaction.account.name }}</div>
+                        
+                        <div class="text-gray-600">Reference Number:</div>
+                        <div class="font-medium">{{ transaction.reference_number|default:"--" }}</div>
+                        
+                        <div class="text-gray-600">Created By:</div>
+                        <div class="font-medium">{{ transaction.created_by.get_full_name }}</div>
+                        
+                        <div class="text-gray-600">Created On:</div>
+                        <div class="font-medium">{{ transaction.created_at|date:"F j, Y H:i" }}</div>
+                    </div>
+                </div>
+            </div>
+            
+            {% if transaction.description or transaction.notes %}
+            <div class="mt-6">
+                <h2 class="text-lg font-medium mb-4">Additional Details</h2>
+                
+                {% if transaction.description %}
+                <div class="mb-4">
+                    <div class="text-gray-600 mb-1">Description:</div>
+                    <div class="bg-gray-50 p-3 rounded">{{ transaction.description }}</div>
+                </div>
+                {% endif %}
+                
+                {% if transaction.notes %}
+                <div>
+                    <div class="text-gray-600 mb-1">Notes:</div>
+                    <div class="bg-gray-50 p-3 rounded">{{ transaction.notes }}</div>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Audit Logs Section -->
+    {% if audit_logs %}
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+        <div class="px-6 py-4 border-b">
+            <h2 class="text-lg font-medium">Audit History</h2>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Changes</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for log in audit_logs %}
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ log.created_at|date:"M d, Y H:i" }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ log.user.get_full_name }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ log.action|title }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500">
+                            {% if log.new_values %}
+                                <ul class="list-disc list-inside">
+                                {% for key, value in log.new_values.items %}
+                                    <li><strong>{{ key|title }}:</strong> {{ value }}</li>
+                                {% endfor %}
+                                </ul>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

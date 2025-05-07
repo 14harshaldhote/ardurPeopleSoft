@@ -39,14 +39,14 @@ admin_patterns = [
     path('user/<int:user_id>/sessions/<str:date_str>/', views.user_session_detail_view, name='user_session_detail'),
 ]
 
-finance_patterns = [
-    path('projects/', views.project_list, name='project_list'),
-    path('transactions/', views.transaction_list, name='transaction_list'), 
-    path('accounts/', views.chart_of_accounts, name='chart_of_accounts'),
-    path('vendors/', views.vendor_list, name='vendor_list'),
-    path('payments/', views.payment_list, name='payment_list'),
-    path('client-payments/', views.client_payment_list, name='client_payment_list'),
-]
+# finance_patterns = [
+#     path('projects/', views.project_list, name='project_list'),
+#     path('transactions/', views.transaction_list, name='transaction_list'), 
+#     path('accounts/', views.chart_of_accounts, name='chart_of_accounts'),
+#     path('vendors/', views.vendor_list, name='vendor_list'),
+#     path('payments/', views.payment_list, name='payment_list'),
+#     path('client-payments/', views.client_payment_list, name='client_payment_list'),
+# ]
 
 # Employee-specific URLs under 'truealign/employee/'
 employee_patterns = [
@@ -167,6 +167,39 @@ chat_patterns = [
     path('send_message/<str:chat_type>/<int:chat_id>/', views.chat_home, name='send_message'),
 ]
 
+finance_patterns = [
+    # Dashboard
+    path('', views.finance_dashboard, name='dashboard'),
+    
+    # Transactions
+    path('transactions/', views.transaction_list, name='transaction_list'),
+    path('transactions/create/', views.transaction_create, name='transaction_create'),
+    path('transactions/<int:transaction_id>/', views.transaction_detail, name='transaction_detail'),
+    
+    # Invoices
+    path('invoices/', views.invoice_list, name='invoice_list'),
+    path('invoices/<int:invoice_id>/', views.invoice_detail, name='invoice_detail'),
+    path('invoices/<int:invoice_id>/pdf/', views.generate_invoice_pdf, name='generate_invoice_pdf'),
+    
+    # Payments
+    path('payments/', views.payment_list, name='payment_list'),
+    
+    # # Reports
+    # path('reports/', views.report_dashboard, name='report_dashboard'),
+    # path('reports/<str:report_type>/', views.generate_report, name='generate_report'),
+    # path('reports/<str:report_type>/export/<str:format>/', views.export_report, name='export_report'),
+    
+    # Parameters
+    path('parameters/', views.parameter_list, name='parameter_list'),
+    path('parameters/create/', views.parameter_create, name='parameter_create'),
+    path('parameters/<int:parameter_id>/edit/', views.parameter_edit, name='parameter_edit'),
+    
+    # Calculation Rules
+    path('rules/', views.calculation_rule_list, name='calculation_rule_list'),
+    path('rules/create/', views.calculation_rule_create, name='calculation_rule_create'),
+    path('rules/<int:rule_id>/edit/', views.calculation_rule_edit, name='calculation_rule_edit'),
+]
+
 # Main URL configuration for the project
 urlpatterns = [
     path('', views.home_view, name='home'),
@@ -191,7 +224,8 @@ urlpatterns = [
     # Employee-specific URLs under 'truealign/employee/'
     path('truealign/employee/', include((employee_patterns, 'aps'), namespace='aps_employee')),
     
-    path('truealign/finance/', include((finance_patterns, 'aps'), namespace='aps_finance')),
+    #finance related URLS
+path('finance/', include((finance_patterns, 'aps'), namespace='aps_finance')),
 
     # HR-specific URLs under 'truealign/hr/'
     path('truealign/hr/', include((hr_patterns, 'aps'), namespace='aps_hr')),
