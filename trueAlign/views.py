@@ -1840,7 +1840,6 @@ def add_user(request):
         'employment_status_choices': UserDetails.EMPLOYMENT_STATUS_CHOICES,
         'employee_type_choices': UserDetails.EMPLOYEE_TYPE_CHOICES,
     })
-
 @login_required
 @user_passes_test(is_hr)
 def bulk_add_users(request):
@@ -1852,17 +1851,17 @@ def bulk_add_users(request):
         work_location = request.POST.get('work_location')
         
         if not user_data:
-            messages.error(request, "No user data provided.")
+            messages.error(request, "No user data provided. Please enter user data in the text area.")
             return redirect('aps_hr:bulk_add_users')
         
         if not selected_group_id:
-            messages.error(request, "Please select a group for the users.")
+            messages.error(request, "Please select a role/group for the users from the dropdown menu.")
             return redirect('aps_hr:bulk_add_users')
             
         try:
             group = Group.objects.get(id=int(selected_group_id))
         except (ValueError, Group.DoesNotExist):
-            messages.error(request, "Invalid group selected.")
+            messages.error(request, "Invalid group selected. Please select a valid group from the dropdown.")
             return redirect('aps_hr:bulk_add_users')
         
         # Process the user data
@@ -1872,14 +1871,16 @@ def bulk_add_users(request):
         error_messages = []
         
         with transaction.atomic():
-            for line in lines:
+            for line_number, line in enumerate(lines, 1):
                 line = line.strip()
                 if not line:
                     continue
                     
-                parts = line.split('\t')
+                # Split by tab or space if tab not found
+                parts = line.split('\t') if '\t' in line else line.split(maxsplit=1)
+                
                 if len(parts) < 2:
-                    error_messages.append(f"Invalid line format: {line}")
+                    error_messages.append(f"Line {line_number}: Invalid format - '{line}'. Expected format: 'Username FirstName LastName'")
                     continue
                 
                 username = parts[0].strip()
@@ -1887,6 +1888,7 @@ def bulk_add_users(request):
                 
                 # Skip empty entries
                 if not username or not full_name:
+                    error_messages.append(f"Line {line_number}: Empty username or name - '{line}'")
                     skipped_count += 1
                     continue
                 
@@ -1901,7 +1903,7 @@ def bulk_add_users(request):
                 
                 # Check if user already exists
                 if User.objects.filter(username=username).exists():
-                    error_messages.append(f"Username '{username}' already exists - skipped")
+                    error_messages.append(f"Line {line_number}: Username '{username}' already exists in the system")
                     skipped_count += 1
                     continue
                 
@@ -1939,20 +1941,21 @@ def bulk_add_users(request):
                     success_count += 1
                     
                 except Exception as e:
-                    error_messages.append(f"Error creating user {username}: {str(e)}")
+                    error_messages.append(f"Line {line_number}: Error creating user '{username}' - {str(e)}")
         
         if success_count > 0:
-            messages.success(request, f"Successfully added {success_count} users.")
+            messages.success(request, f"Successfully added {success_count} users to the system.")
         
         if skipped_count > 0:
-            messages.warning(request, f"Skipped {skipped_count} entries (blank or already existing).")
+            messages.warning(request, f"Skipped {skipped_count} entries due to duplicates or invalid data.")
             
         if error_messages:
+            messages.error(request, "The following errors occurred during import:")
             for msg in error_messages[:10]:  # Show first 10 errors
                 messages.error(request, msg)
             
             if len(error_messages) > 10:
-                messages.error(request, f"...and {len(error_messages) - 10} more errors.")
+                messages.error(request, f"...and {len(error_messages) - 10} more errors. Please check your input data and try again.")
         
         return redirect('aps_hr:hr_dashboard')
     
