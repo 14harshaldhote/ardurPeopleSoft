@@ -8174,5 +8174,418 @@ def appraisal_dashboard(request):
     print(f"[DEBUG] Dashboard statistics prepared: {context}")
     return render(request, 'components/appraisal/dashboard.html', context)
 
-
 '''--------------------------------- FINANCE --------------------------'''
+# Finance Views
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib import messages
+from django.http import JsonResponse, HttpResponse, FileResponse
+from django.db.models import Sum, Count, Q, F, Value, Case, When
+from django.db.models.functions import Coalesce, ExtractMonth, ExtractYear
+from django.utils import timezone
+from datetime import datetime, timedelta
+from decimal import Decimal
+import json
+from io import BytesIO
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.platypus import Table, TableStyle
+
+from .models import (
+    DailyExpense, Voucher, VoucherDetail, BankAccount, 
+    BankPayment, Subscription, ClientInvoice, ChartOfAccount
+)
+from django.contrib.auth.decorators import user_passes_test
+from django.db.models import DecimalField
+
+def is_finance(user):
+    return user.groups.filter(name='Finance').exists()
+@login_required
+@user_passes_test(is_finance)
+def expense_entry(request):
+    """Handle daily expense entry and listing with advanced filtering and calculations"""
+    if request.method == 'POST':
+        try:
+            # Create expense
+            expense = DailyExpense.objects.create(
+                expense_id=f"EXP-{timezone.now().strftime('%Y%m%d%H%M%S')}",
+                department_id=request.POST.get('department'),
+                date=request.POST.get('date'),
+                category=request.POST.get('category'),
+                description=request.POST.get('description'),
+                amount=request.POST.get('amount'),
+                paid_by=request.user,
+                status='draft',
+                attachments=request.FILES.get('attachments')
+            )
+
+            messages.success(request, 'Expense recorded successfully')
+            return JsonResponse({'status': 'success', 'expense_id': expense.expense_id})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+
+    # Advanced filtering and aggregation
+    filters = {}
+    if request.GET.get('start_date'):
+        filters['date__gte'] = request.GET.get('start_date')
+    if request.GET.get('end_date'):
+        filters['date__lte'] = request.GET.get('end_date')
+    if request.GET.get('category'):
+        filters['category'] = request.GET.get('category')
+    if request.GET.get('status'):
+        filters['status'] = request.GET.get('status')
+
+    expenses = DailyExpense.objects.filter(**filters).order_by('-date')
+    
+    # Calculate statistics
+    stats = expenses.aggregate(
+        total_amount=Coalesce(Sum('amount'), Value(0, output_field=DecimalField(max_digits=15, decimal_places=2))),
+        avg_amount=Coalesce(
+            Sum('amount') / Cast(Count('id'), DecimalField(max_digits=15, decimal_places=2)),
+            Value(0),
+            output_field=DecimalField(max_digits=15, decimal_places=2)
+        ),
+        count=Count('id')
+    )
+
+    # Monthly trend analysis
+    monthly_trend = expenses.annotate(
+        month=ExtractMonth('date'),
+        year=ExtractYear('date')
+    ).values('month', 'year').annotate(
+        total=Sum('amount')
+    ).order_by('year', 'month')
+
+    context = {
+        'expenses': expenses,
+        'expense_categories': dict(DailyExpense.EXPENSE_CATEGORIES),
+        'expense_statuses': dict(DailyExpense.EXPENSE_STATUS),
+        'stats': stats,
+        'monthly_trend': list(monthly_trend),
+        'filters': request.GET
+    }
+    return render(request, 'components/finance/expense_entry.html', context)
+
+@login_required
+@user_passes_test(is_finance)
+def voucher_entry(request):
+    """Handle voucher creation and management with validation and auto-calculations"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            
+            # Validate debit/credit equality
+            total_debit = sum(Decimal(entry['debit']) for entry in data['entries'])
+            total_credit = sum(Decimal(entry['credit']) for entry in data['entries'])
+            
+            if total_debit != total_credit:
+                raise ValueError("Total debit must equal total credit")
+
+            # Create voucher with transaction
+            voucher = Voucher.objects.create(
+                voucher_number=f"V-{timezone.now().strftime('%Y%m%d%H%M%S')}",
+                type=data['type'],
+                date=data['date'],
+                party_name=data['party_name'],
+                purpose=data['purpose'],
+                amount=total_debit,
+                status='draft'
+            )
+
+            # Create voucher details with validation
+            for entry in data['entries']:
+                if Decimal(entry['debit']) > 0 and Decimal(entry['credit']) > 0:
+                    raise ValueError("An entry cannot have both debit and credit")
+                    
+                VoucherDetail.objects.create(
+                    voucher=voucher,
+                    account_id=entry['account'],
+                    debit_amount=Decimal(entry['debit']),
+                    credit_amount=Decimal(entry['credit'])
+                )
+
+            return JsonResponse({'status': 'success', 'voucher_id': voucher.id})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+
+    # Get vouchers with filters
+    filters = {}
+    if request.GET.get('type'):
+        filters['type'] = request.GET.get('type')
+    if request.GET.get('status'):
+        filters['status'] = request.GET.get('status')
+    if request.GET.get('date_from'):
+        filters['date__gte'] = request.GET.get('date_from')
+    if request.GET.get('date_to'):
+        filters['date__lte'] = request.GET.get('date_to')
+
+    vouchers = Voucher.objects.filter(**filters).order_by('-date')
+    accounts = ChartOfAccount.objects.filter(is_active=True)
+
+    # Calculate voucher statistics
+    stats = vouchers.aggregate(
+        total_amount=Sum('amount'),
+        count=Count('id'),
+        pending_approval=Count('id', filter=Q(status='pending_approval'))
+    )
+
+    context = {
+        'vouchers': vouchers,
+        'accounts': accounts,
+        'voucher_types': dict(Voucher.VOUCHER_TYPES),
+        'voucher_statuses': dict(Voucher.VOUCHER_STATUS),
+        'stats': stats,
+        'filters': request.GET
+    }
+    return render(request, 'components/finance/voucher_entry.html', context)
+
+
+
+@login_required
+@user_passes_test(is_finance)
+def invoice_generation(request):
+    """Handle client invoice generation with calculations"""
+    if request.method == 'POST':
+        try:
+            # Calculate invoice amounts
+            rate = Decimal(request.POST.get('rate'))
+            
+            # Get the appropriate count based on billing model
+            billing_model = request.POST.get('billing_model')
+            if billing_model == 'per_order':
+                count = Decimal(request.POST.get('order_count') or 0)
+                fte_count = None
+                order_count = count
+            else:  # per_fte
+                count = Decimal(request.POST.get('fte_count') or 0)
+                fte_count = count
+                order_count = None
+                
+            subtotal = rate * count
+            
+            tax_rate = Decimal(request.POST.get('tax_rate', '0'))
+            tax_amount = (subtotal * tax_rate) / 100
+            
+            discount = Decimal(request.POST.get('discount', '0'))
+            total_amount = subtotal + tax_amount - discount
+
+            invoice = ClientInvoice.objects.create(
+                invoice_number=f"INV-{timezone.now().strftime('%Y%m%d%H%M%S')}",
+                client_id=request.POST.get('client'),
+                billing_model=billing_model,
+                billing_cycle_start=request.POST.get('cycle_start'),
+                billing_cycle_end=request.POST.get('cycle_end'),
+                order_count=order_count,
+                fte_count=fte_count,
+                rate=rate,
+                subtotal=subtotal,
+                tax_amount=tax_amount,
+                discount=discount,
+                total_amount=total_amount,
+                due_date=request.POST.get('due_date'),
+                status='draft'
+            )
+            
+            messages.success(request, 'Invoice generated successfully')
+            return redirect('aps_finance:invoice_detail', invoice_id=invoice.id)
+        except Exception as e:
+            messages.error(request, f'Error generating invoice: {str(e)}')
+    
+    # Get invoices with filters
+    filters = {}
+    if request.GET.get('status'):
+        filters['status'] = request.GET.get('status')
+    if request.GET.get('client'):
+        filters['client'] = request.GET.get('client')
+    if request.GET.get('date_from'):
+        filters['billing_cycle_start__gte'] = request.GET.get('date_from')
+
+    invoices = ClientInvoice.objects.filter(**filters).order_by('-created_at')
+    
+    # Calculate invoice statistics
+    stats = {
+        'total_amount': invoices.aggregate(total=Sum('total_amount'))['total'] or 0,
+        'total_pending': invoices.filter(status='pending_approval').aggregate(total=Sum('total_amount'))['total'] or 0,
+        'count': invoices.count()
+    }
+
+    # Get all clients from Client group
+    clients = User.objects.filter(groups__name='Client')
+
+    context = {
+        'invoices': invoices,
+        'clients': clients,
+        'billing_models': dict(ClientInvoice.BILLING_MODELS),
+        'invoice_statuses': dict(ClientInvoice.INVOICE_STATUS),
+        'stats': stats,
+        'filters': request.GET
+    }
+    return render(request, 'components/finance/invoice_generation.html', context)
+
+
+@login_required
+@user_passes_test(is_finance)
+def invoice_detail(request, invoice_id):
+    """Show detailed view of an invoice"""
+    invoice = get_object_or_404(ClientInvoice, id=invoice_id)
+    
+    context = {
+        'invoice': invoice,
+        'billing_models': dict(ClientInvoice.BILLING_MODELS),
+        'invoice_statuses': dict(ClientInvoice.INVOICE_STATUS),
+        'user_is_finance': is_finance(request.user)
+    }
+    return render(request, 'components/finance/invoice_detail.html', context)
+
+
+@login_required
+@user_passes_test(is_finance)
+def invoice_print(request, invoice_id):
+    """Generate printable invoice view"""
+    invoice = get_object_or_404(ClientInvoice, id=invoice_id)
+    
+    context = {
+        'invoice': invoice,
+        'billing_models': dict(ClientInvoice.BILLING_MODELS),
+        'invoice_statuses': dict(ClientInvoice.INVOICE_STATUS),
+    }
+    return render(request, 'components/finance/invoice_print.html', context)
+
+
+@login_required
+@user_passes_test(is_finance)
+def invoice_update_status(request, invoice_id):
+    """Update invoice status"""
+    if request.method == 'POST':
+        invoice = get_object_or_404(ClientInvoice, id=invoice_id)
+        new_status = request.POST.get('status')
+        
+        if new_status in dict(ClientInvoice.INVOICE_STATUS).keys():
+            invoice.status = new_status
+            invoice.save()
+            messages.success(request, f'Invoice status updated to {dict(ClientInvoice.INVOICE_STATUS)[new_status]}')
+        else:
+            messages.error(request, 'Invalid status value')
+            
+    return redirect('aps_finance:invoice_detail', invoice_id=invoice_id)
+
+
+@login_required
+@user_passes_test(is_finance)
+def invoice_edit(request, invoice_id):
+    """Edit an existing invoice"""
+    invoice = get_object_or_404(ClientInvoice, id=invoice_id)
+    
+    # Only draft invoices can be edited
+    if invoice.status != 'draft':
+        messages.error(request, 'Only draft invoices can be edited')
+        return redirect('aps_finance:invoice_detail', invoice_id=invoice.id)
+    
+    if request.method == 'POST':
+        try:
+            # Update invoice data
+            rate = Decimal(request.POST.get('rate'))
+            
+            # Get the appropriate count based on billing model
+            billing_model = request.POST.get('billing_model')
+            if billing_model == 'per_order':
+                count = Decimal(request.POST.get('order_count') or 0)
+                invoice.fte_count = None
+                invoice.order_count = count
+            else:  # per_fte
+                count = Decimal(request.POST.get('fte_count') or 0)
+                invoice.fte_count = count
+                invoice.order_count = None
+                
+            subtotal = rate * count
+            
+            tax_rate = Decimal(request.POST.get('tax_rate', '0'))
+            tax_amount = (subtotal * tax_rate) / 100
+            
+            discount = Decimal(request.POST.get('discount', '0'))
+            total_amount = subtotal + tax_amount - discount
+
+            # Update invoice fields
+            invoice.client_id = request.POST.get('client')
+            invoice.billing_model = billing_model
+            invoice.billing_cycle_start = request.POST.get('cycle_start')
+            invoice.billing_cycle_end = request.POST.get('cycle_end')
+            invoice.rate = rate
+            invoice.subtotal = subtotal
+            invoice.tax_amount = tax_amount
+            invoice.discount = discount
+            invoice.total_amount = total_amount
+            invoice.due_date = request.POST.get('due_date')
+            invoice.save()
+            
+            messages.success(request, 'Invoice updated successfully')
+            return redirect('aps_finance:invoice_detail', invoice_id=invoice.id)
+        except Exception as e:
+            messages.error(request, f'Error updating invoice: {str(e)}')
+    
+    # Get all clients from Client group
+    clients = User.objects.filter(groups__name='Client')
+    
+    context = {
+        'invoice': invoice,
+        'clients': clients,
+        'billing_models': dict(ClientInvoice.BILLING_MODELS),
+    }
+    return render(request, 'components/finance/invoice_edit.html', context)
+
+
+@login_required
+@user_passes_test(is_finance)
+def finance_dashboard(request):
+    """Finance module dashboard with key metrics and reports"""
+    today = timezone.now().date()
+    start_date = today - timedelta(days=30)
+    
+    # Expense metrics
+    expense_metrics = DailyExpense.objects.filter(
+        date__gte=start_date
+    ).aggregate(
+        total=Sum('amount'),
+        count=Count('id'),
+        pending=Count('id', filter=Q(status='pending_approval'))
+    )
+
+    # Invoice metrics
+    invoice_metrics = ClientInvoice.objects.filter(
+        created_at__date__gte=start_date
+    ).aggregate(
+        total=Sum('total_amount'),
+        pending=Sum('total_amount', filter=Q(status='pending_approval')),
+        overdue=Count('id', filter=Q(status='overdue'))
+    )
+
+    # Monthly trends
+    monthly_expenses = DailyExpense.objects.filter(
+        date__gte=start_date
+    ).annotate(
+        month=ExtractMonth('date')
+    ).values('month').annotate(
+        total=Sum('amount')
+    ).order_by('month')
+
+    monthly_invoices = ClientInvoice.objects.filter(
+        created_at__date__gte=start_date
+    ).annotate(
+        month=ExtractMonth('created_at')
+    ).values('month').annotate(
+        total=Sum('total_amount')
+    ).order_by('month')
+
+    context = {
+        'expense_metrics': expense_metrics,
+        'invoice_metrics': invoice_metrics,
+        'monthly_expenses': list(monthly_expenses),
+        'monthly_invoices': list(monthly_invoices),
+        'date_range': {
+            'start': start_date,
+            'end': today
+        }
+    }
+    return render(request, 'components/finance/dashboard.html', context)

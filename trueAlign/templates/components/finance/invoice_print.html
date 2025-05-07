@@ -1,0 +1,298 @@
+{% extends 'basic/base_print.html' %}
+{% load finance_extras %}
+{% load static %}
+{% block title %}Invoice {{ invoice.invoice_number }}{% endblock %}
+
+{% block extra_head %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          primary: {
+            DEFAULT: '#2E7D32',
+            light: '#E8F5E9',
+          },
+          accent: {
+            DEFAULT: '#FF6B00',
+            light: '#FFF3E0',
+          },
+          danger: {
+            DEFAULT: '#C62828',
+            light: '#FFEBEE',
+          },
+        }
+      }
+    }
+  }
+</script>
+<style>
+  @page {
+    size: A4;
+    margin: 1cm;
+  }
+  @media print {
+    body {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .no-print {
+      display: none !important;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto bg-white shadow-md rounded-lg p-6 my-6">
+  <!-- Action Buttons -->
+  <div class="flex justify-end space-x-3 mb-6 no-print">
+    <button onclick="window.print()" class="bg-primary text-white px-4 py-2 rounded-md font-medium flex items-center">
+      <i class="fas fa-print mr-2"></i> Print Invoice
+    </button>
+    <a href="{% url 'aps_finance:invoice_detail' invoice.id %}" class="bg-accent text-white px-4 py-2 rounded-md font-medium flex items-center">
+      <i class="fas fa-arrow-left mr-2"></i> Back to Details
+    </a>
+    <button onclick="payNow()" class="bg-primary text-white px-4 py-2 rounded-md font-medium flex items-center">
+      <i class="fas fa-credit-card mr-2"></i> Pay Now
+    </button>
+  </div>
+  
+  <!-- Invoice Header -->
+  <div class="flex flex-col md:flex-row justify-between border-b border-gray-200 pb-6 mb-6">
+    <!-- Company Info -->
+    <div class="mb-4 md:mb-0">
+      <img src="{% static 'images/ardurtech.png' %}" alt="Ardur Technology Logo" class="w-48 mb-4">
+      <h2 class="text-xl font-semibold text-primary mb-2">Ardur Technology</h2>
+      <p class="text-gray-700">
+        USA Centre Head<br>
+        1964 Heritage Oaks Street<br>
+        Las Vegas, NV 89119. U.S.A
+      </p>
+      <p class="text-gray-700 mt-2">
+        Contact Person: Ken Jourdan<br>
+        Tel: +1 (702) 809 2713<br>
+        Email: k.jourdan@ardurtechnology.com
+      </p>
+    </div>
+    
+    <!-- Invoice Meta -->
+    <div class="md:text-right">
+      <div class="text-2xl font-bold text-accent mb-1">INVOICE</div>
+      <div><span class="font-semibold">Invoice #:</span> {{ invoice.invoice_number }}</div>
+      <div><span class="font-semibold">Issue Date:</span> {{ invoice.created_at|date:"F d, Y" }}</div>
+      <div><span class="font-semibold">Due Date:</span> {{ invoice.due_date|date:"F d, Y" }}</div>
+      
+      <div class="mt-4">
+        {% with display_status=invoice|calculate_due_status %}
+        <span class="px-3 py-1 rounded-full text-sm font-semibold uppercase
+          {% if display_status == 'approved' or display_status == 'paid' %}
+            bg-primary-light text-primary
+          {% elif display_status == 'pending_approval' %}
+            bg-accent-light text-accent
+          {% elif display_status == 'overdue' %}
+            bg-danger-light text-danger
+          {% else %}
+            bg-gray-100 text-gray-700
+          {% endif %}">
+          {{ invoice_statuses|get_item:display_status }}
+        </span>
+        {% endwith %}
+      </div>
+    </div>
+  </div>
+  
+  <!-- Invoice Details -->
+  <div class="grid md:grid-cols-2 gap-6 mb-8">
+    <!-- Client Info -->
+    <div class="relative bg-white p-5 border border-gray-200 rounded-lg shadow-sm">
+      <span class="absolute -top-3 left-4 bg-primary text-white px-3 py-1 text-xs font-semibold rounded-full">Bill To</span>
+      <div class="mt-2">
+        <div class="font-semibold">{{ invoice.client.get_full_name }}</div>
+        <div>{{ invoice.client.email }}</div>
+        {% if invoice.client.company %}
+        <div>{{ invoice.client.company }}</div>
+        {% endif %}
+        {% if invoice.client.address %}
+        <div>{{ invoice.client.address }}</div>
+        {% endif %}
+      </div>
+    </div>
+    
+    <!-- Invoice Info -->
+    <div class="relative bg-white p-5 border border-gray-200 rounded-lg shadow-sm">
+      <span class="absolute -top-3 left-4 bg-primary text-white px-3 py-1 text-xs font-semibold rounded-full">Invoice Details</span>
+      <div class="mt-2">
+        <div>
+          <span class="font-semibold">Billing Period:</span> 
+          <span class="text-primary font-medium">{{ invoice.billing_cycle_start|date:"M d, Y" }} - {{ invoice.billing_cycle_end|date:"M d, Y" }}</span>
+        </div>
+        <div><span class="font-semibold">Billing Model:</span> {{ billing_models|get_item:invoice.billing_model }}</div>
+        {% if invoice.order_count %}
+        <div><span class="font-semibold">Order Count:</span> {{ invoice.order_count }}</div>
+        {% endif %}
+        {% if invoice.fte_count %}
+        <div><span class="font-semibold">FTE Count:</span> {{ invoice.fte_count }}</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  
+  <!-- Invoice Table -->
+  <div class="overflow-hidden rounded-lg shadow-sm border border-gray-200 mb-8">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead>
+        <tr class="bg-primary text-white">
+          <th class="w-1/2 px-6 py-3 text-left text-sm font-medium">Description</th>
+          <th class="w-1/6 px-6 py-3 text-left text-sm font-medium">Rate</th>
+          <th class="w-1/6 px-6 py-3 text-left text-sm font-medium">Quantity</th>
+          <th class="w-1/6 px-6 py-3 text-right text-sm font-medium">Amount</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-200">
+        <tr>
+          <td class="px-6 py-4">
+            <div class="font-medium">
+              {% if invoice.billing_model == 'per_order' %}
+              Order Processing Services
+              {% elif invoice.billing_model == 'per_fte' %}
+              Full-Time Equivalent Services
+              {% else %}
+              Professional Services
+              {% endif %}
+            </div>
+            <div class="text-sm text-gray-500">
+              For period: {{ invoice.billing_cycle_start|date:"M d, Y" }} - {{ invoice.billing_cycle_end|date:"M d, Y" }}
+            </div>
+          </td>
+          <td class="px-6 py-4">${{ invoice.rate|floatformat:2 }}</td>
+          <td class="px-6 py-4">
+            {% if invoice.order_count %}
+            {{ invoice.order_count }} orders
+            {% elif invoice.fte_count %}
+            {{ invoice.fte_count }} FTEs
+            {% endif %}
+          </td>
+          <td class="px-6 py-4 text-right">${{ invoice.subtotal|floatformat:2 }}</td>
+        </tr>
+        {% if invoice.additional_items %}
+        {% for item in invoice.additional_items %}
+        <tr>
+          <td class="px-6 py-4">{{ item.description }}</td>
+          <td class="px-6 py-4">${{ item.rate|floatformat:2 }}</td>
+          <td class="px-6 py-4">{{ item.quantity }}</td>
+          <td class="px-6 py-4 text-right">${{ item.amount|floatformat:2 }}</td>
+        </tr>
+        {% endfor %}
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+  
+  <!-- Invoice Summary -->
+  <div class="ml-auto w-64 bg-gray-50 rounded-lg shadow-sm overflow-hidden">
+    <div class="px-4 py-2 border-b border-gray-200 flex justify-between">
+      <div>Subtotal:</div>
+      <div>${{ invoice.subtotal|floatformat:2 }}</div>
+    </div>
+    <div class="px-4 py-2 border-b border-gray-200 flex justify-between">
+      <div>Tax ({{ invoice.tax_rate|floatformat:1 }}%):</div>
+      <div>${{ invoice.tax_amount|floatformat:2 }}</div>
+    </div>
+    {% if invoice.discount > 0 %}
+    <div class="px-4 py-2 border-b border-gray-200 flex justify-between">
+      <div>Discount:</div>
+      <div>-${{ invoice.discount|floatformat:2 }}</div>
+    </div>
+    {% endif %}
+    <div class="px-4 py-3 bg-primary text-white flex justify-between font-semibold text-lg">
+      <div>Total Due:</div>
+      <div>${{ invoice.total_amount|floatformat:2 }}</div>
+    </div>
+  </div>
+  
+  <!-- Payment Information -->
+  <div class="mt-8 relative border-2 border-accent rounded-lg bg-accent-light p-6 grid md:grid-cols-3 gap-4">
+    <span class="absolute -top-3 left-4 bg-accent text-white px-3 py-1 text-xs font-semibold rounded-full">Payment Options</span>
+    
+    <!-- Payment Methods -->
+    <div class="md:col-span-2 space-y-4 mt-2">
+      <p class="font-semibold">
+        Please make payment by: 
+        <span class="text-primary">{{ invoice.due_date|date:"F d, Y" }}</span>
+      </p>
+      
+      <!-- Bank Transfer -->
+      <div class="flex items-start space-x-3">
+        <div class="bg-primary text-white rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">
+          <i class="fas fa-university"></i>
+        </div>
+        <div>
+          <div class="font-semibold">Bank Transfer</div>
+          <div class="text-sm">
+            Bank: Example Bank<br>
+            Account Name: TrueAlign People Software<br>
+            Account Number: 123456789<br>
+            Routing Number: 987654321
+          </div>
+        </div>
+      </div>
+      
+      <!-- Credit Card -->
+      <div class="flex items-start space-x-3">
+        <div class="bg-primary text-white rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">
+          <i class="fas fa-credit-card"></i>
+        </div>
+        <div>
+          <div class="font-semibold">Credit Card</div>
+          <div class="text-sm">
+            Visit our secure payment portal:<br>
+            <a href="https://pay.ardurtechnology.com" class="text-primary font-medium hover:underline">pay.ardurtechnology.com</a>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Payment Terms -->
+      <div class="flex items-start space-x-3">
+        <div class="bg-primary text-white rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">
+          <i class="fas fa-file-invoice-dollar"></i>
+        </div>
+        <div>
+          <div class="font-semibold">Payment Terms</div>
+          <div class="text-sm">
+            Net 30 days from invoice date.<br>
+            <span class="text-danger">Late payments subject to 1.5% monthly interest.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- QR Code -->
+    <div class="flex flex-col items-center justify-center">
+      <div class="bg-white p-2 rounded-md shadow-sm mb-2">
+        <div class="w-24 h-24 flex items-center justify-center border border-gray-200 rounded">
+          <i class="fas fa-qrcode text-4xl text-gray-400"></i>
+        </div>
+      </div>
+      <div class="text-sm font-semibold text-center">Scan to Pay</div>
+    </div>
+  </div>
+  
+  <!-- Footer -->
+  <div class="mt-8 text-center text-gray-500 text-sm">
+    <p>If you have any questions about this invoice, please contact our finance department at <span class="font-semibold">finance@ardurtechnology.com</span></p>
+    <p class="mt-1">Invoice ID: <span class="font-semibold">{{ invoice.id }}</span> | Thank you for your business!</p>
+  </div>
+</div>
+
+<script>
+  // Function to handle the Pay Now button
+  function payNow() {
+    // In a real implementation, this would redirect to a payment gateway
+    alert('Redirecting to payment portal...');
+    window.location.href = 'https://pay.ardurtechnology.com/?invoice={{ invoice.invoice_number }}';
+  }
+</script>
+{% endblock %}

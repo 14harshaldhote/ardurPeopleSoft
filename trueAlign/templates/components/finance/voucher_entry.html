@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="bg-white shadow overflow-hidden sm:rounded-lg">
+    <!-- Statistics Section -->
+    <div class="px-4 py-5 sm:px-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <h3 class="text-lg font-medium text-gray-900">Total Amount</h3>
+                <p class="mt-1 text-2xl font-semibold text-indigo-600">${{ stats.total_amount|default:"0.00"|floatformat:2 }}</p>
+            </div>
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <h3 class="text-lg font-medium text-gray-900">Total Vouchers</h3>
+                <p class="mt-1 text-2xl font-semibold text-indigo-600">{{ stats.count|default:"0" }}</p>
+            </div>
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <h3 class="text-lg font-medium text-gray-900">Pending Approval</h3>
+                <p class="mt-1 text-2xl font-semibold text-yellow-600">{{ stats.pending_approval|default:"0" }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Voucher Entry Form -->
+    <div class="px-4 py-5 sm:p-6">
+        <form id="voucherForm" class="space-y-6">
+            {% csrf_token %}
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Voucher Type</label>
+                    <select name="type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        {% for key, value in voucher_types.items %}
+                            <option value="{{ key }}">{{ value }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Date</label>
+                    <input type="date" name="date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Party Name</label>
+                    <input type="text" name="party_name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Purpose</label>
+                <textarea name="purpose" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></textarea>
+            </div>
+
+            <!-- Dynamic Voucher Entries -->
+            <div id="voucherEntries" class="space-y-4">
+                <div class="entry grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Account</label>
+                        <select name="account" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            {% for account in accounts %}
+                                <option value="{{ account.id }}">{{ account.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Debit Amount</label>
+                        <input type="number" step="0.01" name="debit" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Credit Amount</label>
+                        <input type="number" step="0.01" name="credit" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+                    <div class="flex items-end">
+                        <button type="button" class="remove-entry mt-1 px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700">Remove</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-between">
+                <button type="button" id="addEntry" class="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                    Add Entry
+                </button>
+                <button type="submit" class="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
+                    Save Voucher
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Vouchers List -->
+    <div class="px-4 py-5 sm:p-6">
+        <div class="flex flex-col">
+            <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
+                    <div class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Voucher No</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Party Name</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% for voucher in vouchers %}
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ voucher.date }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ voucher.voucher_number }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ voucher.get_type_display }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ voucher.party_name }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${{ voucher.amount|floatformat:2 }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                            {% if voucher.status == 'approved' %}bg-green-100 text-green-800
+                                            {% elif voucher.status == 'pending_approval' %}bg-yellow-100 text-yellow-800
+                                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                            {{ voucher.get_status_display }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    document.getElementById('addEntry').addEventListener('click', function() {
+        const template = document.querySelector('.entry').cloneNode(true);
+        template.querySelectorAll('input').forEach(input => input.value = '');
+        document.getElementById('voucherEntries').appendChild(template);
+    });
+
+    document.getElementById('voucherEntries').addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-entry')) {
+            if (document.querySelectorAll('.entry').length > 1) {
+                e.target.closest('.entry').remove();
+            }
+        }
+    });
+
+    document.getElementById('voucherForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const entries = [];
+        document.querySelectorAll('.entry').forEach(entry => {
+            entries.push({
+                account: entry.querySelector('[name="account"]').value,
+                debit: entry.querySelector('[name="debit"]').value || '0',
+                credit: entry.querySelector('[name="credit"]').value || '0'
+            });
+        });
+
+        const data = {
+            type: document.querySelector('[name="type"]').value,
+            date: document.querySelector('[name="date"]').value,
+            party_name: document.querySelector('[name="party_name"]').value,
+            purpose: document.querySelector('[name="purpose"]').value,
+            entries: entries
+        };
+
+        fetch('', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                window.location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}

@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-3xl mx-auto">
+        <h1 class="text-3xl font-bold mb-8 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Edit Invoice</h1>
+
+        <form method="POST" class="bg-white shadow-lg rounded-lg p-6">
+            {% csrf_token %}
+            
+            <!-- Client Selection -->
+            <div class="mb-6">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="client">Client</label>
+                <select name="client" id="client" class="w-full border rounded-lg px-3 py-2" required>
+                    {% for client in clients %}
+                        <option value="{{ client.id }}" {% if client.id == invoice.client_id %}selected{% endif %}>
+                            {{ client.get_full_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Billing Model -->
+            <div class="mb-6">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Billing Model</label>
+                <div class="flex gap-4">
+                    {% for value, label in billing_models.items %}
+                        <label class="inline-flex items-center">
+                            <input type="radio" name="billing_model" value="{{ value }}" 
+                                   {% if invoice.billing_model == value %}checked{% endif %}
+                                   class="form-radio text-blue-600" required>
+                            <span class="ml-2">{{ label }}</span>
+                        </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Billing Details -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="cycle_start">Billing Cycle Start</label>
+                    <input type="date" name="cycle_start" id="cycle_start" 
+                           value="{{ invoice.billing_cycle_start|date:'Y-m-d' }}"
+                           class="w-full border rounded-lg px-3 py-2" required>
+                </div>
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="cycle_end">Billing Cycle End</label>
+                    <input type="date" name="cycle_end" id="cycle_end" 
+                           value="{{ invoice.billing_cycle_end|date:'Y-m-d' }}"
+                           class="w-full border rounded-lg px-3 py-2" required>
+                </div>
+            </div>
+
+            <!-- Rate and Count -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="rate">Rate</label>
+                    <input type="number" step="0.01" name="rate" id="rate" 
+                           value="{{ invoice.rate }}"
+                           class="w-full border rounded-lg px-3 py-2" required>
+                </div>
+                <div id="fte_count_field" {% if invoice.billing_model == 'per_order' %}style="display: none;"{% endif %}>
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="fte_count">FTE Count</label>
+                    <input type="number" step="0.01" name="fte_count" id="fte_count" 
+                           value="{{ invoice.fte_count }}"
+                           class="w-full border rounded-lg px-3 py-2">
+                </div>
+                <div id="order_count_field" {% if invoice.billing_model == 'per_fte' %}style="display: none;"{% endif %}>
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="order_count">Order Count</label>
+                    <input type="number" step="1" name="order_count" id="order_count" 
+                           value="{{ invoice.order_count }}"
+                           class="w-full border rounded-lg px-3 py-2">
+                </div>
+            </div>
+
+            <!-- Tax and Discount -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="tax_rate">Tax Rate (%)</label>
+                    <input type="number" step="0.01" name="tax_rate" id="tax_rate" 
+                           value="{{ invoice.tax_rate }}"
+                           class="w-full border rounded-lg px-3 py-2">
+                </div>
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="discount">Discount Amount</label>
+                    <input type="number" step="0.01" name="discount" id="discount" 
+                           value="{{ invoice.discount }}"
+                           class="w-full border rounded-lg px-3 py-2">
+                </div>
+            </div>
+
+            <!-- Due Date -->
+            <div class="mb-6">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="due_date">Due Date</label>
+                <input type="date" name="due_date" id="due_date" 
+                       value="{{ invoice.due_date|date:'Y-m-d' }}"
+                       class="w-full border rounded-lg px-3 py-2" required>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="flex justify-end gap-4">
+                <a href="{% url 'aps_finance:invoice_detail' invoice_id=invoice.id %}" 
+                   class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg">Cancel</a>
+                <button type="submit" 
+                        class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg">
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Toggle between FTE and Order count fields based on billing model
+    document.querySelectorAll('input[name="billing_model"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const fteField = document.getElementById('fte_count_field');
+            const orderField = document.getElementById('order_count_field');
+            
+            if (this.value === 'per_fte') {
+                fteField.style.display = 'block';
+                orderField.style.display = 'none';
+                document.getElementById('order_count').value = '';
+            } else {
+                fteField.style.display = 'none';
+                orderField.style.display = 'block';
+                document.getElementById('fte_count').value = '';
+            }
+        });
+    });
+</script>
+{% endblock %}

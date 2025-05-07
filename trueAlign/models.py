@@ -2696,466 +2696,221 @@ class Presence(models.Model):
 
     def __str__(self):
         return f"{self.user.first_name} {self.user.last_name} - {self.date} - {self.get_status_display()}"
-
 '''---------------------------------- Finance ----------------------------------'''
 
-# Enhanced models.py for core financial system
+# Core financial models for expense tracking, vouchers, bank transactions, and payroll
 
 from django.db import models
 from django.contrib.auth.models import User
 
-# Dynamic parameter system
-class DynamicParameter(models.Model):
-    PARAMETER_TYPES = (
-        ('numeric', 'Numeric'),
-        ('percentage', 'Percentage'),
-        ('text', 'Text'),
-        ('json', 'JSON'),
-        ('boolean', 'Boolean'),
-        ('date', 'Date'),
+class DailyExpense(models.Model):
+    EXPENSE_STATUS = (
+        ('draft', 'Draft'),
+        ('submitted', 'Submitted'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+        ('paid', 'Paid')
     )
     
-    key = models.CharField(max_length=100)
-    name = models.CharField(max_length=255)
-    value = models.TextField()
-    value_type = models.CharField(max_length=20, choices=PARAMETER_TYPES)
-    is_global = models.BooleanField(default=True)
-    entity_id = models.IntegerField(null=True, blank=True)
-    entity_type = models.CharField(max_length=50, null=True, blank=True)
-    valid_from = models.DateField()
-    valid_to = models.DateField(null=True, blank=True)
-    created_by = models.ForeignKey(User, on_delete=models.PROTECT, related_name='created_parameters')
+    EXPENSE_CATEGORIES = (
+        ('travel', 'Travel'),
+        ('utility', 'Utility'), 
+        ('stationery', 'Stationery'),
+        ('food', 'Food & Beverages'),
+        ('other', 'Other')
+    )
+    
+    expense_id = models.CharField(max_length=50, unique=True)
+    department = models.ForeignKey('Department', on_delete=models.PROTECT)
+    date = models.DateField()
+    category = models.CharField(max_length=20, choices=EXPENSE_CATEGORIES)
+    description = models.TextField()
+    amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    paid_by = models.ForeignKey(User, on_delete=models.PROTECT, related_name='expenses_paid')
+    status = models.CharField(max_length=20, choices=EXPENSE_STATUS, default='draft')
+    attachments = models.FileField(upload_to='expenses/', null=True, blank=True)
+    approved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='expenses_approved')
+    approved_at = models.DateTimeField(null=True, blank=True)
+    rejection_reason = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_by = models.ForeignKey(User, on_delete=models.PROTECT, null=True, related_name='updated_parameters')
     updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        unique_together = ('key', 'entity_id', 'entity_type', 'valid_from')
-        indexes = [
-            models.Index(fields=['key']),
-            models.Index(fields=['entity_id', 'entity_type']),
-        ]
-    
-    def __str__(self):
-        return f"{self.name} ({self.key})"
 
-# Entity model for companies, departments, clients, vendors
-class Entity(models.Model):
-    ENTITY_TYPES = (
-        ('company', 'Company'),
-        ('branch', 'Branch'),
-        ('department', 'Department'),
-        ('client', 'Client'),
-        ('vendor', 'Vendor'),
+    class Meta:
+        ordering = ['-date']
+
+    def __str__(self):
+        return f"{self.expense_id} - {self.category} - {self.amount}"
+
+class Voucher(models.Model):
+    VOUCHER_TYPES = (
+        ('payment', 'Payment'),
+        ('receipt', 'Receipt'),
+        ('journal', 'Journal')
+    )
+    VOUCHER_STATUS = (
+        ('draft', 'Draft'),
+        ('pending_approval', 'Pending Department Head Approval'),
+        ('pending_finance', 'Pending Finance Approval'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+        ('posted', 'Posted to Accounts')
     )
     
+    voucher_number = models.CharField(max_length=50, unique=True)
+    type = models.CharField(max_length=20, choices=VOUCHER_TYPES)
+    date = models.DateField()
+    reference_no = models.CharField(max_length=100, blank=True, null=True)
+    party_name = models.CharField(max_length=255)
+    purpose = models.TextField()
+    amount = models.DecimalField(max_digits=15, decimal_places=2)
+    status = models.CharField(max_length=25, choices=VOUCHER_STATUS, default='draft')
+    attachments = models.FileField(upload_to='vouchers/', null=True, blank=True)
+    department_approved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='dept_approved_vouchers')
+    finance_approved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='finance_approved_vouchers')
+    created_by = models.ForeignKey(User, on_delete=models.PROTECT, related_name='created_vouchers')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.voucher_number} - {self.type} - {self.amount}"
+
+class VoucherDetail(models.Model):
+    voucher = models.ForeignKey(Voucher, on_delete=models.CASCADE, related_name='details')
+    account = models.ForeignKey('ChartOfAccount', on_delete=models.PROTECT)
+    debit_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    credit_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    description = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.voucher.voucher_number} - {self.account.name}"
+
+class BankAccount(models.Model):
     name = models.CharField(max_length=255)
-    code = models.CharField(max_length=50, unique=True)
-    entity_type = models.CharField(max_length=20, choices=ENTITY_TYPES)
-    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='children')
-    gstin = models.CharField(max_length=15, null=True, blank=True)
-    pan = models.CharField(max_length=10, null=True, blank=True)
-    tax_number = models.CharField(max_length=50, null=True, blank=True)
-    address = models.TextField(null=True, blank=True)
-    contact_person = models.CharField(max_length=255, null=True, blank=True)
-    contact_email = models.EmailField(null=True, blank=True)
-    contact_phone = models.CharField(max_length=20, null=True, blank=True)
+    account_number = models.CharField(max_length=50, unique=True)
+    bank_name = models.CharField(max_length=255)
+    branch = models.CharField(max_length=255)
+    ifsc_code = models.CharField(max_length=20)
+    current_balance = models.DecimalField(max_digits=15, decimal_places=2)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        verbose_name_plural = "Entities"
-        indexes = [
-            models.Index(fields=['entity_type', 'is_active']),
-        ]
-    
-    def __str__(self):
-        return f"{self.name} ({self.get_entity_type_display()})"
 
-# Enhanced Chart of Accounts
+    def __str__(self):
+        return f"{self.bank_name} - {self.account_number}"
+
+class BankPayment(models.Model):
+    PAYMENT_STATUS = (
+        ('pending', 'Pending'),
+        ('verified', 'Verified'),
+        ('approved', 'Approved'),
+        ('executed', 'Payment Executed'),
+        ('failed', 'Failed')
+    )
+    
+    payment_id = models.CharField(max_length=50, unique=True)
+    bank_account = models.ForeignKey(BankAccount, on_delete=models.PROTECT)
+    party_name = models.CharField(max_length=255)
+    payment_reason = models.TextField()
+    amount = models.DecimalField(max_digits=15, decimal_places=2)
+    payment_date = models.DateField()
+    reference_number = models.CharField(max_length=100, null=True, blank=True)
+    status = models.CharField(max_length=20, choices=PAYMENT_STATUS, default='pending')
+    attachments = models.FileField(upload_to='bank_payments/', null=True, blank=True)
+    verified_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='verified_payments')
+    approved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='approved_payments')
+    created_by = models.ForeignKey(User, on_delete=models.PROTECT)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.payment_id} - {self.party_name} - {self.amount}"
+
+class Subscription(models.Model):
+    FREQUENCY_CHOICES = (
+        ('monthly', 'Monthly'),
+        ('quarterly', 'Quarterly'),
+        ('yearly', 'Yearly')
+    )
+    STATUS_CHOICES = (
+        ('active', 'Active'),
+        ('cancelled', 'Cancelled'),
+        ('expired', 'Expired')
+    )
+    
+    name = models.CharField(max_length=255)
+    vendor = models.CharField(max_length=255)
+    subscription_type = models.CharField(max_length=100)
+    amount = models.DecimalField(max_digits=15, decimal_places=2)
+    frequency = models.CharField(max_length=20, choices=FREQUENCY_CHOICES)
+    start_date = models.DateField()
+    next_payment_date = models.DateField()
+    auto_renew = models.BooleanField(default=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
+    alert_days = models.IntegerField(default=5)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.name} - {self.vendor}"
+
+        
+class ClientInvoice(models.Model):
+    BILLING_MODELS = (
+        ('per_order', 'Per Order'),
+        ('per_fte', 'Per FTE'), 
+        ('hybrid', 'Hybrid')
+    )
+    
+    INVOICE_STATUS = (
+        ('draft', 'Draft'),
+        ('pending_approval', 'Pending Approval'),
+        ('approved', 'Approved'),
+        ('sent', 'Sent to Client'),
+        ('paid', 'Paid'),
+        ('overdue', 'Overdue')
+    )
+    
+    invoice_number = models.CharField(max_length=50, unique=True)
+    client = models.ForeignKey(User, on_delete=models.PROTECT, limit_choices_to={'groups__name': 'Client'}, related_name='client_invoices')
+    billing_model = models.CharField(max_length=20, choices=BILLING_MODELS)
+    billing_cycle_start = models.DateField()
+    billing_cycle_end = models.DateField()
+    order_count = models.IntegerField(null=True, blank=True)
+    fte_count = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    rate = models.DecimalField(max_digits=10, decimal_places=2)
+    subtotal = models.DecimalField(max_digits=15, decimal_places=2)
+    tax_amount = models.DecimalField(max_digits=15, decimal_places=2)
+    discount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    total_amount = models.DecimalField(max_digits=15, decimal_places=2)
+    status = models.CharField(max_length=20, choices=INVOICE_STATUS, default='draft')
+    due_date = models.DateField()
+    approved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='approved_invoices')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.invoice_number} - {self.client.get_full_name()}"
+
 class ChartOfAccount(models.Model):
     ACCOUNT_TYPES = (
         ('asset', 'Asset'),
         ('liability', 'Liability'),
         ('equity', 'Equity'),
         ('income', 'Income'),
-        ('expense', 'Expense'),
+        ('expense', 'Expense')
     )
     
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=255)
     code = models.CharField(max_length=20, unique=True)
     account_type = models.CharField(max_length=20, choices=ACCOUNT_TYPES)
     parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='children')
-    description = models.TextField(blank=True, null=True)
+    description = models.TextField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
-    
-    class Meta:
-        verbose_name_plural = "Chart of Accounts"
-        ordering = ['code']
-    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
     def __str__(self):
         return f"{self.code} - {self.name}"
-
-# Enhanced Transaction model
-class Transaction(models.Model):
-    TRANSACTION_TYPES = (
-        ('income', 'Income'),
-        ('expense', 'Expense'),
-        ('transfer', 'Transfer'), 
-        ('journal', 'Journal Entry'),
-    )
-    
-    transaction_number = models.CharField(max_length=50, unique=True)
-    account = models.ForeignKey(ChartOfAccount, on_delete=models.PROTECT, related_name='transactions')
-    entity = models.ForeignKey(Entity, on_delete=models.PROTECT, related_name='transactions')
-    amount = models.DecimalField(max_digits=15, decimal_places=2)
-    transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPES)
-    reference_number = models.CharField(max_length=50, blank=True, null=True)
-    date = models.DateField()
-    description = models.TextField(blank=True)
-    notes = models.TextField(blank=True)
-    created_by = models.ForeignKey(User, on_delete=models.PROTECT, related_name='created_transactions')
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_by = models.ForeignKey(User, on_delete=models.PROTECT, null=True, related_name='updated_transactions')
-    updated_at = models.DateTimeField(auto_now=True)
-    is_reconciled = models.BooleanField(default=False)
-    
-    class Meta:
-        indexes = [
-            models.Index(fields=['transaction_type']),
-            models.Index(fields=['date']),
-            models.Index(fields=['entity']),
-        ]
-    
-    def __str__(self):
-        return f"{self.transaction_number} - {self.get_transaction_type_display()} - {self.amount}"
-
-
-
-
-class AuditLog(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
-    action = models.CharField(max_length=50)
-    module = models.CharField(max_length=50)
-    record_id = models.IntegerField(null=True, blank=True)
-    record_type = models.CharField(max_length=50, null=True, blank=True)
-    old_values = models.JSONField(null=True, blank=True)
-    new_values = models.JSONField(null=True, blank=True)
-    ip_address = models.CharField(max_length=45, null=True, blank=True)
-    user_agent = models.TextField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    class Meta:
-        indexes = [
-            models.Index(fields=['user']),
-            models.Index(fields=['module', 'action']),
-            models.Index(fields=['record_type', 'record_id']),
-            models.Index(fields=['created_at']),
-        ]
-    
-    def __str__(self):
-        return f"{self.user.username if self.user else 'System'} - {self.action} - {self.module}"
-
-
-
-# models.py for Billing Module
-
-class ProductService(models.Model):
-    ITEM_TYPES = (
-        ('product', 'Product'),
-        ('service', 'Service'),
-    )
-    
-    code = models.CharField(max_length=50, unique=True)
-    name = models.CharField(max_length=255)
-    description = models.TextField(blank=True, null=True)
-    item_type = models.CharField(max_length=10, choices=ITEM_TYPES)
-    hsn_sac = models.CharField(max_length=20, blank=True, null=True)
-    base_price = models.DecimalField(max_digits=15, decimal_places=2)
-    tax_category = models.CharField(max_length=50, blank=True, null=True)
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        verbose_name_plural = "Products & Services"
-        indexes = [
-            models.Index(fields=['item_type', 'is_active']),
-        ]
-    
-    def __str__(self):
-        return f"{self.code} - {self.name}"
-
-class Invoice(models.Model):
-    INVOICE_STATUS = (
-        ('draft', 'Draft'),
-        ('sent', 'Sent'),
-        ('paid', 'Paid'),
-        ('partially_paid', 'Partially Paid'),
-        ('overdue', 'Overdue'),
-        ('cancelled', 'Cancelled'),
-        ('refunded', 'Refunded'),
-    )
-    
-    invoice_number = models.CharField(max_length=50, unique=True)
-    reference_number = models.CharField(max_length=50, blank=True, null=True)
-    invoice_date = models.DateField()
-    due_date = models.DateField()
-    client = models.ForeignKey(Entity, on_delete=models.PROTECT, related_name='client_invoices', 
-                              limit_choices_to={'entity_type': 'client'})
-    billing_address = models.TextField(blank=True, null=True)
-    shipping_address = models.TextField(blank=True, null=True)
-    client_gstin = models.CharField(max_length=15, blank=True, null=True)
-    status = models.CharField(max_length=15, choices=INVOICE_STATUS, default='draft')
-    subtotal = models.DecimalField(max_digits=15, decimal_places=2)
-    tax_total = models.DecimalField(max_digits=15, decimal_places=2)
-    discount_total = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
-    total_amount = models.DecimalField(max_digits=15, decimal_places=2)
-    notes = models.TextField(blank=True, null=True)
-    terms_conditions = models.TextField(blank=True, null=True)
-    created_by = models.ForeignKey(User, on_delete=models.PROTECT, related_name='created_invoices')
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        indexes = [
-            models.Index(fields=['client', 'status']),
-            models.Index(fields=['invoice_date']),
-        ]
-    
-    def __str__(self):
-        return f"{self.invoice_number} - {self.client.name} - {self.total_amount}"
-
-class InvoiceItem(models.Model):
-    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, related_name='items')
-    product = models.ForeignKey(ProductService, on_delete=models.PROTECT)
-    description = models.TextField(blank=True, null=True)
-    quantity = models.DecimalField(max_digits=10, decimal_places=2)
-    unit_price = models.DecimalField(max_digits=15, decimal_places=2)
-    discount_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
-    discount_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
-    tax_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
-    tax_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
-    total_amount = models.DecimalField(max_digits=15, decimal_places=2)
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    def __str__(self):
-        return f"{self.invoice.invoice_number} - {self.product.name} - {self.quantity}"
-
-class InvoiceTax(models.Model):
-    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, related_name='taxes')
-    tax_name = models.CharField(max_length=100)
-    tax_percentage = models.DecimalField(max_digits=5, decimal_places=2)
-    tax_amount = models.DecimalField(max_digits=15, decimal_places=2)
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    def __str__(self):
-        return f"{self.invoice.invoice_number} - {self.tax_name} - {self.tax_amount}"
-
-class Payment(models.Model):
-    PAYMENT_METHODS = (
-        ('cash', 'Cash'),
-        ('bank_transfer', 'Bank Transfer'),
-        ('cheque', 'Cheque'),
-        ('credit_card', 'Credit Card'),
-        ('upi', 'UPI'),
-        ('other', 'Other'),
-    )
-    
-    invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT, null=True, blank=True, related_name='payments')
-    entity = models.ForeignKey(Entity, on_delete=models.PROTECT)
-    payment_date = models.DateField()
-    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHODS)
-    reference_number = models.CharField(max_length=100, blank=True, null=True)
-    amount = models.DecimalField(max_digits=15, decimal_places=2)
-    notes = models.TextField(blank=True, null=True)
-    created_by = models.ForeignKey(User, on_delete=models.PROTECT, related_name='created_payments')
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        indexes = [
-            models.Index(fields=['invoice']),
-            models.Index(fields=['entity']),
-            models.Index(fields=['payment_date']),
-        ]
-    
-    def __str__(self):
-        return f"{self.payment_method} - {self.amount} - {self.entity.name}"
-# Day 5-6: Salary and Employee Management
-# Implement Employee model
-# Build Salary Structure and Components
-# Create Salary Slip generation system
-
-# python
-# # models.py for Salary Module
-
-
-class SalaryStructure(models.Model):
-    name = models.CharField(max_length=255)
-    description = models.TextField(blank=True, null=True)
-    is_active = models.BooleanField(default=True)
-    created_by = models.ForeignKey(User, on_delete=models.PROTECT)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        indexes = [
-            models.Index(fields=['is_active']),
-        ]
-    
-    def __str__(self):
-        return self.name
-
-class SalaryComponent(models.Model):
-    COMPONENT_TYPES = (
-        ('earning', 'Earning'),
-        ('deduction', 'Deduction'),
-    )
-    CALCULATION_TYPES = (
-        ('fixed', 'Fixed Amount'),
-        ('percentage', 'Percentage'),
-        ('formula', 'Formula'),
-        ('manual', 'Manual Entry'),
-    )
-    
-    name = models.CharField(max_length=100)
-    component_type = models.CharField(max_length=10, choices=COMPONENT_TYPES)
-    calculation_type = models.CharField(max_length=10, choices=CALCULATION_TYPES)
-    calculation_value = models.TextField(help_text="Value or formula for calculation")
-    calculation_base = models.CharField(max_length=100, blank=True, null=True)
-    is_taxable = models.BooleanField(default=False)
-    is_pf_applicable = models.BooleanField(default=False)
-    is_esi_applicable = models.BooleanField(default=False)
-    display_in_payslip = models.BooleanField(default=True)
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        indexes = [
-            models.Index(fields=['component_type', 'is_active']),
-        ]
-    
-    def __str__(self):
-        return f"{self.name} ({self.get_component_type_display()})"
-
-class EmployeeSalary(models.Model):
-    employee = models.ForeignKey(User, on_delete=models.CASCADE, related_name='salary_details')
-    salary_structure = models.ForeignKey(SalaryStructure, on_delete=models.PROTECT)
-    effective_from = models.DateField()
-    effective_to = models.DateField(null=True, blank=True)
-    gross_salary = models.DecimalField(max_digits=15, decimal_places=2)
-    is_active = models.BooleanField(default=True)
-    created_by = models.ForeignKey(User, on_delete=models.PROTECT)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        verbose_name_plural = "Employee Salaries"
-    
-    def __str__(self):
-        return f"{self.employee.first_name} - {self.gross_salary}"
-
-class EmployeeSalaryComponent(models.Model):
-    employee_salary = models.ForeignKey(EmployeeSalary, on_delete=models.CASCADE, related_name='components')
-    component = models.ForeignKey(SalaryComponent, on_delete=models.PROTECT)
-    value = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    def __str__(self):
-        return f"{self.employee_salary.employee.first_name} - {self.component.name}"
-
-class SalarySlip(models.Model):
-    PAYMENT_STATUS = (
-        ('draft', 'Draft'),
-        ('processed', 'Processed'),
-        ('paid', 'Paid'),
-        ('cancelled', 'Cancelled'),
-    )
-    employee = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_salary_slips')    
-    month = models.IntegerField()
-    year = models.IntegerField()
-    period_start = models.DateField()
-    period_end = models.DateField()
-    working_days = models.IntegerField()
-    paid_days = models.DecimalField(max_digits=5, decimal_places=2)
-    leave_without_pay = models.DecimalField(max_digits=5, decimal_places=2, default=0)
-    gross_salary = models.DecimalField(max_digits=15, decimal_places=2)
-    total_deductions = models.DecimalField(max_digits=15, decimal_places=2)
-    net_salary = models.DecimalField(max_digits=15, decimal_places=2)
-    status = models.CharField(max_length=10, choices=PAYMENT_STATUS, default='draft')
-    payment_date = models.DateField(null=True, blank=True)
-    notes = models.TextField(blank=True, null=True)
-    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_salary_slips')
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        unique_together = ('employee', 'month', 'year')
-        indexes = [
-            models.Index(fields=['status']),
-            models.Index(fields=['month', 'year']),
-        ]
-    
-    def __str__(self):
-        return f"{self.employee.first_name} - {self.month}/{self.year} - {self.net_salary}"
-
-class SalarySlipDetail(models.Model):
-    salary_slip = models.ForeignKey(SalarySlip, on_delete=models.CASCADE, related_name='details')
-    component = models.ForeignKey(SalaryComponent, on_delete=models.PROTECT)
-    amount = models.DecimalField(max_digits=15, decimal_places=2)
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    def __str__(self):
-        return f"{self.salary_slip} - {self.component.name} - {self.amount}"
-
-
-
-class AuditLog(models.Model):
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
-    action = models.CharField(max_length=50)
-    module = models.CharField(max_length=50)
-    record_id = models.IntegerField(null=True, blank=True)
-    record_type = models.CharField(max_length=50, null=True, blank=True)
-    old_values = models.JSONField(null=True, blank=True)
-    new_values = models.JSONField(null=True, blank=True)
-    ip_address = models.CharField(max_length=45, null=True, blank=True)
-    user_agent = models.TextField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    class Meta:
-        indexes = [
-            models.Index(fields=['user']),
-            models.Index(fields=['module', 'action']),
-            models.Index(fields=['record_type', 'record_id']),
-            models.Index(fields=['created_at']),
-        ]
-    
-    def __str__(self):
-        return f"{self.user.username if self.user else 'System'} - {self.action} - {self.module}"
-
-
-class CalculationRule(models.Model):
-    name = models.CharField(max_length=255)
-    description = models.TextField(blank=True, null=True)
-    formula = models.TextField()
-    is_active = models.BooleanField(default=True)
-    applies_to = models.CharField(max_length=50)
-    priority = models.IntegerField(default=1)
-    created_by = models.ForeignKey(User, on_delete=models.PROTECT, related_name='created_rules')
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_by = models.ForeignKey(User, on_delete=models.PROTECT, null=True, related_name='updated_rules')
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        indexes = [
-            models.Index(fields=['applies_to', 'is_active']),
-        ]
-    
-    def __str__(self):
-        return f"{self.name} ({self.applies_to})"
-
 
 
 # models.py - Enhanced models for appraisal workflow

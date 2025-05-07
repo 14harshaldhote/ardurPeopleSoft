@@ -1,0 +1,250 @@
+{% extends 'base.html' %}
+{% load finance_extras %}
+{% block content %}
+<div class="bg-white shadow-lg rounded-xl overflow-hidden ">
+    <div class="px-6 py-8 ">
+        <h3 class="text-2xl font-bold text-black">Invoice Generation</h3>
+        <p class="mt-2 text-blue-100">Generate and manage client invoices efficiently</p>
+    </div>
+
+    <!-- Statistics -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition duration-300">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Total Amount</p>
+                    <p class="text-3xl font-bold text-gray-900 mt-2">${{ stats.total_amount|default:"0"|floatformat:2 }}</p>
+                </div>
+                <div class="p-3 bg-green-100 rounded-full">
+                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition duration-300">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Pending Amount</p>
+                    <p class="text-3xl font-bold text-gray-900 mt-2">${{ stats.total_pending|default:"0"|floatformat:2 }}</p>
+                </div>
+                <div class="p-3 bg-yellow-100 rounded-full">
+                    <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition duration-300">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Total Invoices</p>
+                    <p class="text-3xl font-bold text-gray-900 mt-2">{{ stats.count|default:"0" }}</p>
+                </div>
+                <div class="p-3 bg-blue-100 rounded-full">
+                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Controls -->
+    <div class="p-4 bg-gray-50 border-t border-gray-200">
+        <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Client</label>
+                <select name="client" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    <option value="">All Clients</option>
+                    {% for client in clients %}
+                    <option value="{{ client.id }}" {% if filters.client == client.id|stringformat:"s" %}selected{% endif %}>
+                        {{ client.get_full_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Status</label>
+                <select name="status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    <option value="">All Statuses</option>
+                    {% for key, value in invoice_statuses.items %}
+                    <option value="{{ key }}" {% if filters.status == key %}selected{% endif %}>{{ value }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">From Date</label>
+                <input type="date" name="date_from" value="{{ filters.date_from|default:'' }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+            </div>
+            <div class="flex items-end">
+                <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                    Filter
+                </button>
+                <a href="{% url 'aps_finance:invoice_generation' %}" class="ml-2 inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Reset
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Invoice Form -->
+    <div class="p-4">
+        <h4 class="text-md font-medium text-gray-900 mb-4">Generate New Invoice</h4>
+        <form method="POST" class="space-y-4">
+            {% csrf_token %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Client</label>
+                    <select name="client" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <option value="">Select Client</option>
+                        {% for client in clients %}
+                        <option value="{{ client.id }}">{{ client.get_full_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Billing Model</label>
+                    <select name="billing_model" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        {% for key, value in billing_models.items %}
+                        <option value="{{ key }}">{{ value }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Cycle Start</label>
+                    <input type="date" name="cycle_start" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Cycle End</label>
+                    <input type="date" name="cycle_end" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Rate</label>
+                    <input type="number" step="0.01" name="rate" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                </div>
+                <div class="billing-count" id="order-count-section">
+                    <label class="block text-sm font-medium text-gray-700">Order Count</label>
+                    <input type="number" name="order_count" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                </div>
+                <div class="billing-count" id="fte-count-section" style="display:none;">
+                    <label class="block text-sm font-medium text-gray-700">FTE Count</label>
+                    <input type="number" name="fte_count" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Tax Rate (%)</label>
+                    <input type="number" step="0.01" name="tax_rate" value="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Discount</label>
+                    <input type="number" step="0.01" name="discount" value="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Due Date</label>
+                    <input type="date" name="due_date" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                </div>
+            </div>
+            <div class="flex justify-end">
+                <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Generate Invoice
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Invoice List -->
+    <div class="mt-8">
+        <div class="flex flex-col">
+            <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
+                    <div class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Invoice Number</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Billing Period</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% for invoice in invoices %}
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ invoice.invoice_number }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ invoice.client.get_full_name }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {{ invoice.billing_cycle_start|date:"M d, Y" }} - {{ invoice.billing_cycle_end|date:"M d, Y" }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${{ invoice.total_amount|floatformat:2 }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        {% with display_status=invoice|calculate_due_status %}
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                            {% if display_status == 'approved' or display_status == 'paid' %}bg-green-100 text-green-800
+                                            {% elif display_status == 'pending_approval' %}bg-yellow-100 text-yellow-800
+                                            {% elif display_status == 'overdue' %}bg-red-100 text-red-800
+                                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                            {{ invoice_statuses|get_item:display_status }}
+                                        </span>
+                                        {% endwith %}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <a href="{% url 'aps_finance:invoice_detail' invoice.id %}" class="text-indigo-600 hover:text-indigo-900">View</a>
+                                        <a href="{% url 'aps_finance:invoice_print' invoice.id %}" class="ml-3 text-indigo-600 hover:text-indigo-900">Print</a>
+                                        {% if invoice.status == 'draft' %}
+                                        <a href="{% url 'aps_finance:invoice_edit' invoice.id %}" class="ml-3 text-indigo-600 hover:text-indigo-900">Edit</a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">
+                                        No invoices found. Create one using the form above.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    // Toggle between Order Count and FTE Count based on billing model
+    document.addEventListener('DOMContentLoaded', function() {
+        const billingModel = document.querySelector('select[name="billing_model"]');
+        const orderCountSection = document.getElementById('order-count-section');
+        const fteCountSection = document.getElementById('fte-count-section');
+        
+        // Set initial state based on default billing model
+        updateCountFields(billingModel.value);
+        
+        // Add event listener for changes
+        billingModel.addEventListener('change', function() {
+            updateCountFields(this.value);
+        });
+        
+        function updateCountFields(value) {
+            if (value === 'per_order') {
+                orderCountSection.style.display = 'block';
+                fteCountSection.style.display = 'none';
+                document.querySelector('input[name="fte_count"]').value = '';
+                document.querySelector('input[name="order_count"]').required = true;
+                document.querySelector('input[name="fte_count"]').required = false;
+            } else if (value === 'per_fte') {
+                orderCountSection.style.display = 'none';
+                fteCountSection.style.display = 'block';
+                document.querySelector('input[name="order_count"]').value = '';
+                document.querySelector('input[name="order_count"]').required = false;
+                document.querySelector('input[name="fte_count"]').required = true;
+            }
+        }
+    });
+</script>
+{% endblock %}
+{% endblock %}

@@ -168,36 +168,48 @@ chat_patterns = [
 ]
 
 finance_patterns = [
-    # Dashboard
+    # # Dashboard
     path('', views.finance_dashboard, name='dashboard'),
+    # Expense Management
+    path('expenses/', views.expense_entry, name='expense_entry'),
     
-    # Transactions
-    path('transactions/', views.transaction_list, name='transaction_list'),
-    path('transactions/create/', views.transaction_create, name='transaction_create'),
-    path('transactions/<int:transaction_id>/', views.transaction_detail, name='transaction_detail'),
+    # Voucher Management  
+    path('vouchers/', views.voucher_entry, name='voucher_entry'),
     
-    # Invoices
-    path('invoices/', views.invoice_list, name='invoice_list'),
+    # Invoice Management
+    path('invoices/', views.invoice_generation, name='invoice_generation'),
     path('invoices/<int:invoice_id>/', views.invoice_detail, name='invoice_detail'),
-    path('invoices/<int:invoice_id>/pdf/', views.generate_invoice_pdf, name='generate_invoice_pdf'),
+    path('invoices/<int:invoice_id>/print/', views.invoice_print, name='invoice_print'),
+    path('invoices/<int:invoice_id>/edit/', views.invoice_edit, name='invoice_edit'),
+    path('invoices/<int:invoice_id>/status/', views.invoice_update_status, name='invoice_update_status'),
     
-    # Payments
-    path('payments/', views.payment_list, name='payment_list'),
+    # # Transactions
+    # path('transactions/', views.transaction_list, name='transaction_list'),
+    # path('transactions/create/', views.transaction_create, name='transaction_create'),
+    # path('transactions/<int:transaction_id>/', views.transaction_detail, name='transaction_detail'),
     
-    # # Reports
-    # path('reports/', views.report_dashboard, name='report_dashboard'),
-    # path('reports/<str:report_type>/', views.generate_report, name='generate_report'),
-    # path('reports/<str:report_type>/export/<str:format>/', views.export_report, name='export_report'),
+    # # Invoices
+    # path('invoices/', views.invoice_list, name='invoice_list'),
+    # path('invoices/<int:invoice_id>/', views.invoice_detail, name='invoice_detail'),
+    # path('invoices/<int:invoice_id>/pdf/', views.generate_invoice_pdf, name='generate_invoice_pdf'),
     
-    # Parameters
-    path('parameters/', views.parameter_list, name='parameter_list'),
-    path('parameters/create/', views.parameter_create, name='parameter_create'),
-    path('parameters/<int:parameter_id>/edit/', views.parameter_edit, name='parameter_edit'),
+    # # Payments
+    # path('payments/', views.payment_list, name='payment_list'),
     
-    # Calculation Rules
-    path('rules/', views.calculation_rule_list, name='calculation_rule_list'),
-    path('rules/create/', views.calculation_rule_create, name='calculation_rule_create'),
-    path('rules/<int:rule_id>/edit/', views.calculation_rule_edit, name='calculation_rule_edit'),
+    # # # Reports
+    # # path('reports/', views.report_dashboard, name='report_dashboard'),
+    # # path('reports/<str:report_type>/', views.generate_report, name='generate_report'),
+    # # path('reports/<str:report_type>/export/<str:format>/', views.export_report, name='export_report'),
+    
+    # # Parameters
+    # path('parameters/', views.parameter_list, name='parameter_list'),
+    # path('parameters/create/', views.parameter_create, name='parameter_create'),
+    # path('parameters/<int:parameter_id>/edit/', views.parameter_edit, name='parameter_edit'),
+    
+    # # Calculation Rules
+    # path('rules/', views.calculation_rule_list, name='calculation_rule_list'),
+    # path('rules/create/', views.calculation_rule_create, name='calculation_rule_create'),
+    # path('rules/<int:rule_id>/edit/', views.calculation_rule_edit, name='calculation_rule_edit'),
 ]
 
 # Main URL configuration for the project
