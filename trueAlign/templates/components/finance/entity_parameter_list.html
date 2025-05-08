@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h2 class="text-2xl font-bold text-gray-900 mb-2">Financial Parameters for {{ entity_name }}</h2>
+    <p class="text-sm text-gray-600 mb-6">Entity Type: {{ entity_type|title }}</p>
+
+    {% if current_parameters %}
+    <div class="bg-white rounded-xl shadow-lg border border-gray-100 mb-8">
+        <div class="border-b border-gray-200 px-6 py-4">
+            <h5 class="text-lg font-semibold text-gray-900">Currently Active Parameters</h5>
+        </div>
+        <div class="p-6">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Key</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Value</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Source</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for key, value in current_parameters.items %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ key }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ value }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {% if key in entity_parameters.values_list 'key' flat=True %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Entity-specific</span>
+                                {% else %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Global</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="bg-white rounded-xl shadow-lg border border-gray-100">
+        <div class="border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+            <h5 class="text-lg font-semibold text-gray-900">Entity-Specific Parameters</h5>
+            <a href="{% url 'aps_finance:financial_parameter_create' %}?content_type_id={{ content_type_id }}&object_id={{ entity_id }}" 
+               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                Add Parameter
+            </a>
+        </div>
+        <div class="p-6">
+            {% if entity_parameters %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Key</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Value</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valid From</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valid To</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for param in entity_parameters %}
+                        <tr class="{% if param.valid_from <= today and param.valid_to|default:today >= today %}bg-blue-50{% endif %} hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ param.key }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ param.name }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ param.get_typed_value }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ param.valid_from }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ param.valid_to|default:"--" }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {% if param.is_approved %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Approved</span>
+                                {% else %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Pending</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <div class="flex space-x-2">
+                                    <a href="{% url 'aps_finance:financial_parameter_detail' param.pk %}" 
+                                       class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200">View</a>
+                                    <a href="{% url 'aps_finance:financial_parameter_update' param.pk %}" 
+                                       class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-gray-700 bg-gray-100 hover:bg-gray-200">Edit</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-sm text-gray-500">No entity-specific parameters defined yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -182,6 +182,16 @@ finance_patterns = [
     path('invoices/<int:invoice_id>/print/', views.invoice_print, name='invoice_print'),
     path('invoices/<int:invoice_id>/edit/', views.invoice_edit, name='invoice_edit'),
     path('invoices/<int:invoice_id>/status/', views.invoice_update_status, name='invoice_update_status'),
+
+    path('parameters/', views.financial_parameter_list, name='financial_parameter_list'),
+    path('parameters/create/', views.financial_parameter_create, name='financial_parameter_create'),
+    path('parameters/<int:pk>/', views.financial_parameter_detail, name='financial_parameter_detail'),
+    path('parameters/<int:pk>/update/', views.financial_parameter_update, name='financial_parameter_update'),
+    path('parameters/<int:pk>/delete/', views.financial_parameter_delete, name='financial_parameter_delete'),
+    path('parameters/<int:pk>/duplicate/', views.financial_parameter_duplicate, name='financial_parameter_duplicate'),
+    path('parameters/entity/<int:content_type_id>/<int:object_id>/', views.entity_parameter_list, name='entity_parameter_list'),
+    path('parameters/history/<str:key>/', views.parameter_history, name='parameter_history'),
+    path('parameters/<int:pk>/approve/', views.approve_parameter, name='approve_parameter'),
     
     # # Transactions
     # path('transactions/', views.transaction_list, name='transaction_list'),

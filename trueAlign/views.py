@@ -8202,6 +8202,446 @@ from django.db.models import DecimalField
 
 def is_finance(user):
     return user.groups.filter(name='Finance').exists()
+
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib import messages
+from django.core.paginator import Paginator
+from django.utils import timezone
+from django.db.models import Q
+from django.contrib.contenttypes.models import ContentType
+
+from .models import FinancialParameter
+
+
+
+@login_required
+@user_passes_test(is_finance)
+def financial_parameter_list(request):
+    """List view with extensive filtering options"""
+    # Base queryset
+    queryset = FinancialParameter.objects.all().order_by('-updated_at')
+    
+    # Filter options
+    key_filter = request.GET.get('key', '')
+    name_filter = request.GET.get('name', '')
+    category_filter = request.GET.get('category', '')
+    value_type_filter = request.GET.get('value_type', '')
+    is_global_filter = request.GET.get('is_global', '')
+    fiscal_year_filter = request.GET.get('fiscal_year', '')
+    is_approved_filter = request.GET.get('is_approved', '')
+    
+    # Apply filters
+    if key_filter:
+        queryset = queryset.filter(key__icontains=key_filter)
+    if name_filter:
+        queryset = queryset.filter(name__icontains=name_filter)
+    if category_filter:
+        queryset = queryset.filter(category=category_filter)
+    if value_type_filter:
+        queryset = queryset.filter(value_type=value_type_filter)
+    if is_global_filter:
+        is_global_value = is_global_filter == 'true'
+        queryset = queryset.filter(is_global=is_global_value)
+    if fiscal_year_filter:
+        queryset = queryset.filter(fiscal_year=fiscal_year_filter)
+    if is_approved_filter:
+        is_approved_value = is_approved_filter == 'true'
+        queryset = queryset.filter(is_approved=is_approved_value)
+    
+    # Get unique values for dropdowns
+    fiscal_years = FinancialParameter.objects.values_list('fiscal_year', flat=True).distinct()
+    fiscal_years = [fy for fy in fiscal_years if fy]  # Remove None values
+    
+    # Pagination
+    paginator = Paginator(queryset, 15)
+    page = request.GET.get('page')
+    parameters = paginator.get_page(page)
+    
+    context = {
+        'parameters': parameters,
+        'value_type_choices': FinancialParameter.VALUE_TYPE_CHOICES,
+        'category_choices': FinancialParameter.CATEGORY_CHOICES,
+        'fiscal_years': sorted(fiscal_years, reverse=True),
+        'filters': {
+            'key': key_filter,
+            'name': name_filter,
+            'category': category_filter,
+            'value_type': value_type_filter,
+            'is_global': is_global_filter,
+            'fiscal_year': fiscal_year_filter,
+            'is_approved': is_approved_filter,
+        }
+    }
+    
+    return render(request, 'components/finance/financial_parameter_list.html', context)
+
+
+@login_required
+@user_passes_test(is_finance)
+def financial_parameter_create(request):
+    """Create a new financial parameter"""
+    if request.method == 'POST':
+        data = request.POST
+        try:
+            # Create parameter with basic fields
+            parameter = FinancialParameter(
+                key=data.get('key'),
+                name=data.get('name'),
+                description=data.get('description'),
+                category=data.get('category'),
+                value_type=data.get('value_type'),
+                is_global=data.get('is_global') == 'on',
+                valid_from=data.get('valid_from'),
+                valid_to=data.get('valid_to') or None,
+                fiscal_year=data.get('fiscal_year') or None,
+                fiscal_quarter=data.get('fiscal_quarter') or None,
+                created_by=request.user,
+                updated_by=request.user
+            )
+            
+            # Handle entity relation if not global
+            if not parameter.is_global and data.get('content_type_id') and data.get('object_id'):
+                parameter.content_type_id = data.get('content_type_id')
+                parameter.object_id = data.get('object_id')
+            
+            # Set the value with proper type conversion
+            parameter.set_value(data.get('value'))
+            
+            # Save the parameter
+            parameter.save()
+            
+            # Auto-approve if user has permission
+            if request.user.has_perm('finance.approve_financialparameter'):
+                parameter.approve(request.user)
+                messages.success(request, 'Parameter created and approved successfully.')
+            else:
+                messages.success(request, 'Parameter created successfully. Awaiting approval.')
+                
+            return redirect('finance:financial_parameter_detail', pk=parameter.pk)
+        except Exception as e:
+            messages.error(request, f'Error creating parameter: {str(e)}')
+    
+    # Get content types for entity selection
+    content_types = ContentType.objects.all().order_by('app_label', 'model')
+    
+    context = {
+        'title': 'Create Financial Parameter',
+        'value_type_choices': FinancialParameter.VALUE_TYPE_CHOICES,
+        'category_choices': FinancialParameter.CATEGORY_CHOICES,
+        'content_types': content_types,
+        'can_approve': request.user.has_perm('finance.approve_financialparameter'),
+    }
+    return render(request, 'components/finance/financial_parameter_form.html', context)
+
+
+@login_required
+@user_passes_test(is_finance)
+def financial_parameter_detail(request, pk):
+    """View a single parameter's details"""
+    parameter = get_object_or_404(FinancialParameter, pk=pk)
+    
+    # Get entity details if not global
+    entity_details = None
+    if not parameter.is_global and parameter.content_type and parameter.object_id:
+        try:
+            entity_model = parameter.content_type.model_class()
+            entity = entity_model.objects.get(pk=parameter.object_id)
+            entity_details = {
+                'type': parameter.content_type.model,
+                'id': parameter.object_id,
+                'name': str(entity)
+            }
+        except:
+            entity_details = {
+                'type': parameter.content_type.model,
+                'id': parameter.object_id,
+                'name': 'Unknown or deleted entity'
+            }
+    
+    # Check if user can approve
+    can_approve = request.user.has_perm('finance.approve_financialparameter')
+    
+    # Handle approval action
+    if request.method == 'POST' and 'approve' in request.POST:
+        if can_approve:
+            parameter.approve(request.user)
+            messages.success(request, 'Parameter approved successfully.')
+            return redirect('aps_finance:financial_parameter_detail', pk=parameter.pk)
+        else:
+            messages.error(request, 'You do not have permission to approve parameters.')
+    
+    context = {
+        'parameter': parameter,
+        'entity_details': entity_details,
+        'typed_value': parameter.get_typed_value(),
+        'can_approve': can_approve and not parameter.is_approved,
+    }
+    return render(request, 'components/finance/financial_parameter_detail.html', context)
+
+
+@login_required
+@user_passes_test(is_finance)
+def financial_parameter_update(request, pk):
+    """Update an existing parameter"""
+    parameter = get_object_or_404(FinancialParameter, pk=pk)
+    
+    # Check if user has permission to edit
+    if parameter.is_approved and not request.user.has_perm('finance.change_approved_financialparameter'):
+        messages.error(request, 'Cannot edit an approved parameter. Create a new version instead.')
+        return redirect('aps_finance:financial_parameter_detail', pk=parameter.pk)
+    
+    if request.method == 'POST':
+        data = request.POST
+        try:
+            # Update basic fields
+            parameter.key = data.get('key')
+            parameter.name = data.get('name')
+            parameter.description = data.get('description')
+            parameter.category = data.get('category')
+            parameter.value_type = data.get('value_type')
+            parameter.is_global = data.get('is_global') == 'on'
+            parameter.valid_from = data.get('valid_from')
+            parameter.valid_to = data.get('valid_to') or None
+            parameter.fiscal_year = data.get('fiscal_year') or None
+            parameter.fiscal_quarter = data.get('fiscal_quarter') or None
+            parameter.updated_by = request.user
+            
+            # Handle entity relation
+            if not parameter.is_global and data.get('content_type_id') and data.get('object_id'):
+                parameter.content_type_id = data.get('content_type_id')
+                parameter.object_id = data.get('object_id')
+            elif parameter.is_global:
+                parameter.content_type = None
+                parameter.object_id = None
+            
+            # Set the value with proper type conversion
+            parameter.set_value(data.get('value'))
+            
+            # Save changes
+            parameter.save()
+            
+            # Auto-approve if user has permission
+            if not parameter.is_approved and request.user.has_perm('finance.approve_financialparameter'):
+                if data.get('approve') == 'on':
+                    parameter.approve(request.user)
+                    messages.success(request, 'Parameter updated and approved successfully.')
+                else:
+                    messages.success(request, 'Parameter updated successfully. Not approved.')
+            else:
+                messages.success(request, 'Parameter updated successfully.')
+                
+            return redirect('aps_finance:financial_parameter_detail', pk=parameter.pk)
+        except Exception as e:
+            messages.error(request, f'Error updating parameter: {str(e)}')
+    
+    # Get content types for entity selection
+    content_types = ContentType.objects.all().order_by('app_label', 'model')
+    
+    # Get entity details if not global
+    selected_entity = None
+    if not parameter.is_global and parameter.content_type and parameter.object_id:
+        try:
+            entity_model = parameter.content_type.model_class()
+            entity = entity_model.objects.get(pk=parameter.object_id)
+            selected_entity = {
+                'content_type_id': parameter.content_type.id,
+                'object_id': parameter.object_id,
+                'name': str(entity)
+            }
+        except:
+            selected_entity = {
+                'content_type_id': parameter.content_type.id,
+                'object_id': parameter.object_id,
+                'name': 'Unknown or deleted entity'
+            }
+    
+    context = {
+        'parameter': parameter,
+        'title': 'Update Financial Parameter',
+        'value_type_choices': FinancialParameter.VALUE_TYPE_CHOICES,
+        'category_choices': FinancialParameter.CATEGORY_CHOICES,
+        'content_types': content_types,
+        'selected_entity': selected_entity,
+        'can_approve': not parameter.is_approved and request.user.has_perm('finance.approve_financialparameter'),
+    }
+    return render(request, 'components/finance/financial_parameter_form.html', context)
+
+
+@login_required
+@user_passes_test(is_finance)
+def financial_parameter_delete(request, pk):
+    """Delete a parameter"""
+    parameter = get_object_or_404(FinancialParameter, pk=pk)
+    
+    # Prevent deletion of approved parameters without special permission
+    if parameter.is_approved and not request.user.has_perm('finance.delete_approved_financialparameter'):
+        messages.error(request, 'Cannot delete an approved parameter.')
+        return redirect('aps_finance:financial_parameter_detail', pk=parameter.pk)
+    
+    if request.method == 'POST':
+        parameter.delete()
+        messages.success(request, 'Parameter deleted successfully.')
+        return redirect('aps_finance:financial_parameter_list')
+        
+    return render(request, 'components/finance/financial_parameter_confirm_delete.html', {
+        'parameter': parameter
+    })
+
+
+@login_required
+@user_passes_test(is_finance)
+def financial_parameter_duplicate(request, pk):
+    """Create a new parameter based on an existing one"""
+    source_parameter = get_object_or_404(FinancialParameter, pk=pk)
+    
+    # Create a new parameter as a copy but with unique identifiers
+    new_parameter = FinancialParameter(
+        key=source_parameter.key,
+        name=f"Copy of {source_parameter.name}",
+        description=source_parameter.description,
+        category=source_parameter.category,
+        value=source_parameter.value,
+        value_type=source_parameter.value_type,
+        is_global=source_parameter.is_global,
+        content_type=source_parameter.content_type,
+        object_id=source_parameter.object_id,
+        valid_from=timezone.now().date(),  # Start from today
+        fiscal_year=source_parameter.fiscal_year,
+        fiscal_quarter=source_parameter.fiscal_quarter,
+        created_by=request.user,
+        updated_by=request.user
+    )
+    
+    # Save without validating unique constraints yet - will be changed in form
+    new_parameter.save(force_insert=True)
+    
+    messages.info(request, 'Created a duplicate. Please modify as needed and save.')
+    return redirect('aps_finance:financial_parameter_update', pk=new_parameter.pk)
+
+
+@login_required
+@user_passes_test(is_finance)
+def entity_parameter_list(request, content_type_id, object_id):
+    """View all parameters for a specific entity"""
+    content_type = get_object_or_404(ContentType, pk=content_type_id)
+    
+    try:
+        # Try to get the actual entity
+        model_class = content_type.model_class()
+        entity = model_class.objects.get(pk=object_id)
+        entity_name = str(entity)
+    except:
+        entity = None
+        entity_name = f"{content_type.model} #{object_id} (not found)"
+    
+    # Get parameters specific to this entity
+    entity_parameters = FinancialParameter.objects.filter(
+        content_type_id=content_type_id,
+        object_id=object_id,
+        is_global=False
+    ).order_by('key', '-valid_from')
+    
+    # Get today's date for parameter applicability
+    today = timezone.now().date()
+    
+    # Get all current applicable parameters (both entity-specific and global)
+    current_parameters = {}
+    if entity:
+        # Get all parameter keys first
+        keys = FinancialParameter.objects.filter(
+            Q(is_global=True) | 
+            Q(content_type_id=content_type_id, object_id=object_id, is_global=False)
+        ).values_list('key', flat=True).distinct()
+        
+        # For each key, get the applicable value
+        for key in keys:
+            value = FinancialParameter.get_param(key, entity=entity)
+            if value is not None:
+                current_parameters[key] = value
+    
+    context = {
+        'entity_type': content_type.model,
+        'entity_id': object_id,
+        'entity_name': entity_name,
+        'entity_parameters': entity_parameters,
+        'current_parameters': current_parameters,
+        'today': today,
+    }
+    
+    return render(request, 'components/finance/entity_parameter_list.html', context)
+
+
+@login_required
+@user_passes_test(is_finance)
+def parameter_history(request, key):
+    """View historical values of a parameter"""
+    # Get all versions of this parameter, ordered by validity date
+    parameters = FinancialParameter.objects.filter(
+        key=key
+    ).order_by('-valid_from')
+    
+    # Group by entity/global
+    global_parameters = parameters.filter(is_global=True)
+    entity_parameters = parameters.filter(is_global=False)
+    
+    # Group entity parameters by entity type
+    entity_groups = {}
+    for param in entity_parameters:
+        entity_key = (param.content_type_id, param.object_id)
+        if entity_key not in entity_groups:
+            # Try to get entity name
+            try:
+                model_class = param.content_type.model_class()
+                entity = model_class.objects.get(pk=param.object_id)
+                entity_name = str(entity)
+            except:
+                entity_name = f"{param.content_type.model} #{param.object_id} (not found)"
+                
+            entity_groups[entity_key] = {
+                'type': param.content_type.model,
+                'id': param.object_id,
+                'name': entity_name,
+                'parameters': []
+            }
+        
+        entity_groups[entity_key]['parameters'].append(param)
+    
+    context = {
+        'parameter_key': key,
+        'global_parameters': global_parameters,
+        'entity_groups': entity_groups.values(),
+    }
+    
+    return render(request, 'components/finance/parameter_history.html', context)
+
+
+@login_required
+@user_passes_test(lambda u: is_finance(u) or is_management(u))
+def approve_parameter(request, pk):
+    """Approve a parameter (separate view for approval-only)"""
+    parameter = get_object_or_404(FinancialParameter, pk=pk)
+    
+    # Check if user can approve - either finance or management
+    if not (is_finance(request.user) or is_management(request.user)):
+        messages.error(request, 'You do not have permission to approve parameters.')
+        return redirect('aps_finance:financial_parameter_detail', pk=parameter.pk)
+    
+    # Check if already approved
+    if parameter.is_approved:
+        messages.warning(request, 'This parameter is already approved.')
+        return redirect('aps_finance:financial_parameter_detail', pk=parameter.pk)
+    
+    if request.method == 'POST':
+        parameter.approve(request.user)
+        messages.success(request, 'Parameter approved successfully.')
+        return redirect('aps_finance:financial_parameter_detail', pk=parameter.pk)
+    
+    return render(request, 'components/finance/parameter_approve.html', {
+        'parameter': parameter,
+    })
+
 @login_required
 @user_passes_test(is_finance)
 def expense_entry(request):

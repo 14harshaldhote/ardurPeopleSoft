@@ -2699,6 +2699,273 @@ class Presence(models.Model):
 '''---------------------------------- Finance ----------------------------------'''
 
 # Core financial models for expense tracking, vouchers, bank transactions, and payroll
+from django.db import models
+from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.utils import timezone
+import json
+from decimal import Decimal
+
+
+class FinancialParameter(models.Model):
+    """
+    Dynamic parameter model for financial values that can change over time
+    such as tax rates, thresholds, and calculation constants.
+    
+    Parameters can be global or associated with specific entities.
+    """
+    VALUE_TYPE_CHOICES = [
+        ('decimal', 'Decimal'),  # For precise financial calculations
+        ('percentage', 'Percentage'),  # Tax rates, etc.
+        ('integer', 'Integer'),  # Whole number values
+        ('text', 'Text'),  # Text identifiers or codes
+        ('json', 'JSON'),  # Complex structured data
+        ('boolean', 'Boolean'),  # Flag values
+        ('date', 'Date'),  # Date-based parameters
+    ]
+    
+    CATEGORY_CHOICES = [
+        ('tax', 'Tax'),
+        ('fee', 'Fee'),
+        ('rate', 'Rate'),
+        ('threshold', 'Threshold'),
+        ('limit', 'Limit'),
+        ('rule', 'Rule'),
+        ('other', 'Other'),
+    ]
+    
+    # Parameter identification
+    key = models.CharField(max_length=100, db_index=True, 
+                          help_text="Unique identifier for the parameter")
+    name = models.CharField(max_length=255,
+                          help_text="Human-readable name")
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='other',
+                              help_text="Category for organizing parameters")
+    description = models.TextField(blank=True, null=True,
+                                 help_text="Detailed description of the parameter's purpose")
+    
+    # Value storage and typing
+    value = models.TextField(help_text="String representation of the parameter value")
+    value_type = models.CharField(max_length=20, choices=VALUE_TYPE_CHOICES,
+                                help_text="Data type of the parameter")
+    
+    # Entity association for flexible application
+    is_global = models.BooleanField(default=True,
+                                  help_text="If True, applies globally; if False, applies to specific entity")
+    content_type = models.ForeignKey(
+        ContentType, 
+        on_delete=models.CASCADE,
+        null=True, 
+        blank=True,
+        help_text="Entity type this parameter is associated with"
+    )
+    object_id = models.PositiveIntegerField(null=True, blank=True,
+                                          help_text="ID of the specific entity")
+    entity = GenericForeignKey('content_type', 'object_id')
+    
+    # Time validity
+    valid_from = models.DateField(help_text="Date from which this parameter value is valid")
+    valid_to = models.DateField(null=True, blank=True, 
+                              help_text="Date until which this parameter value is valid (null = indefinite)")
+    
+    # Financial period association
+    fiscal_year = models.CharField(max_length=9, blank=True, null=True,
+                                 help_text="Fiscal year in YYYY-YYYY format")
+    fiscal_quarter = models.CharField(max_length=6, blank=True, null=True,
+                                    help_text="Fiscal quarter in YYYY-Q# format")
+    
+    # Audit fields
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name='created_fin_parameters'
+    )
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        on_delete=models.PROTECT,
+        related_name='updated_fin_parameters'
+    )
+    
+    # Approval tracking for financial governance
+    is_approved = models.BooleanField(default=False,
+                                    help_text="Whether this parameter has been approved for use")
+    approved_at = models.DateTimeField(null=True, blank=True)
+    approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name='approved_fin_parameters'
+    )
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['key'], name='fin_param_key_idx'),
+            models.Index(fields=['category'], name='fin_param_cat_idx'),
+            models.Index(fields=['content_type', 'object_id'], name='fin_param_entity_idx'),
+            models.Index(fields=['valid_from', 'valid_to'], name='fin_param_validity_idx'),
+            models.Index(fields=['fiscal_year'], name='fin_param_fiscal_yr_idx'),
+        ]
+        unique_together = ('key', 'content_type', 'object_id', 'valid_from')
+        verbose_name = "Financial Parameter"
+        verbose_name_plural = "Financial Parameters"
+    
+    def __str__(self):
+        base = f"{self.name} ({self.key})"
+        if self.fiscal_year:
+            base += f" - FY{self.fiscal_year}"
+        if not self.is_global:
+            base += f" for {self.content_type.model}:{self.object_id}"
+        return base
+    
+    def get_typed_value(self):
+        """Return the value converted to its appropriate type"""
+        if not self.value:
+            return None
+            
+        if self.value_type == 'decimal':
+            return Decimal(self.value)
+        elif self.value_type == 'percentage':
+            return Decimal(self.value) / Decimal('100')
+        elif self.value_type == 'integer':
+            return int(self.value)
+        elif self.value_type == 'boolean':
+            return self.value.lower() in ('true', 'yes', '1', 'y')
+        elif self.value_type == 'json':
+            return json.loads(self.value)
+        elif self.value_type == 'date':
+            from django.utils.dateparse import parse_date
+            return parse_date(self.value)
+        # Default to text
+        return self.value
+    
+    @classmethod
+    def get_param(cls, key, entity=None, date=None, category=None, fiscal_year=None):
+        """
+        Get parameter value for a given key and entity
+        
+        Args:
+            key (str): Parameter key
+            entity (Model instance, optional): The entity to get specific parameters for
+            date (date, optional): Date for which parameter should be valid (defaults to today)
+            category (str, optional): Filter by category
+            fiscal_year (str, optional): Filter by fiscal year
+            
+        Returns:
+            The typed parameter value or None if not found
+        """
+        if date is None:
+            date = timezone.now().date()
+            
+        query = cls.objects.filter(
+            key=key,
+            valid_from__lte=date,
+            is_approved=True
+        ).filter(
+            models.Q(valid_to__isnull=True) | models.Q(valid_to__gte=date)
+        )
+        
+        if category:
+            query = query.filter(category=category)
+            
+        if fiscal_year:
+            query = query.filter(fiscal_year=fiscal_year)
+        
+        # First try to get entity-specific parameter
+        if entity is not None:
+            content_type = ContentType.objects.get_for_model(entity)
+            entity_param = query.filter(
+                content_type=content_type,
+                object_id=entity.pk,
+                is_global=False
+            ).order_by('-valid_from').first()
+            
+            if entity_param:
+                return entity_param.get_typed_value()
+        
+        # Fall back to global parameter
+        global_param = query.filter(is_global=True).order_by('-valid_from').first()
+        if global_param:
+            return global_param.get_typed_value()
+            
+        return None
+    
+    @classmethod
+    def get_all_params(cls, category=None, entity=None, date=None, fiscal_year=None):
+        """Get all parameters for a given category and/or entity"""
+        if date is None:
+            date = timezone.now().date()
+            
+        query = cls.objects.filter(
+            valid_from__lte=date,
+            is_approved=True
+        ).filter(
+            models.Q(valid_to__isnull=True) | models.Q(valid_to__gte=date)
+        )
+        
+        if category:
+            query = query.filter(category=category)
+            
+        if fiscal_year:
+            query = query.filter(fiscal_year=fiscal_year)
+            
+        # Get all keys to check
+        keys = query.values_list('key', flat=True).distinct()
+        result = {}
+        
+        # For each key, get the most specific value
+        for key in keys:
+            param_value = cls.get_param(
+                key=key, 
+                entity=entity, 
+                date=date, 
+                category=category,
+                fiscal_year=fiscal_year
+            )
+            result[key] = param_value
+            
+        return result
+        
+    def approve(self, user):
+        """Approve this parameter for use"""
+        self.is_approved = True
+        self.approved_at = timezone.now()
+        self.approved_by = user
+        self.save(update_fields=['is_approved', 'approved_at', 'approved_by'])
+        
+    def set_value(self, value):
+        """Set the value with appropriate type conversion"""
+        if value is None:
+            self.value = None
+            return
+            
+        if self.value_type == 'decimal':
+            self.value = str(Decimal(str(value)))
+        elif self.value_type == 'percentage':
+            # Store percentages as their actual percentage value (15% = "15")
+            if isinstance(value, Decimal):
+                self.value = str(value * Decimal('100'))
+            else:
+                self.value = str(Decimal(str(value)) * Decimal('100'))
+        elif self.value_type == 'integer':
+            self.value = str(int(value))
+        elif self.value_type == 'boolean':
+            self.value = str(bool(value)).lower()
+        elif self.value_type == 'json':
+            self.value = json.dumps(value)
+        elif self.value_type == 'date':
+            from django.utils.dateparse import parse_date
+            if hasattr(value, 'isoformat'):
+                self.value = value.isoformat()
+            else:
+                self.value = parse_date(value).isoformat()
+        else:  # text
+            self.value = str(value)
+
 
 from django.db import models
 from django.contrib.auth.models import User

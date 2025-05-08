@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="bg-white rounded-lg shadow-md">
+        <div class="border-b border-gray-200 px-6 py-4">
+            <h4 class="text-xl font-semibold text-gray-900">Approve Financial Parameter</h4>
+        </div>
+        <div class="p-6">
+            <dl class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <dt class="text-sm font-medium text-gray-500">Name</dt>
+                <dd class="text-sm text-gray-900 md:col-span-2">{{ parameter.name }}</dd>
+
+                <dt class="text-sm font-medium text-gray-500">Key</dt>
+                <dd class="text-sm text-gray-900 md:col-span-2">{{ parameter.key }}</dd>
+
+                <dt class="text-sm font-medium text-gray-500">Category</dt>
+                <dd class="text-sm text-gray-900 md:col-span-2">{{ parameter.get_category_display }}</dd>
+
+                <dt class="text-sm font-medium text-gray-500">Value</dt>
+                <dd class="text-sm text-gray-900 md:col-span-2">{{ parameter.value }}</dd>
+
+                <dt class="text-sm font-medium text-gray-500">Valid From</dt>
+                <dd class="text-sm text-gray-900 md:col-span-2">{{ parameter.valid_from }}</dd>
+
+                <dt class="text-sm font-medium text-gray-500">Valid To</dt>
+                <dd class="text-sm text-gray-900 md:col-span-2">{{ parameter.valid_to|default:"No end date" }}</dd>
+
+                <dt class="text-sm font-medium text-gray-500">Description</dt>
+                <dd class="text-sm text-gray-900 md:col-span-2">{{ parameter.description|default:"--" }}</dd>
+            </dl>
+
+            <form method="post" class="mt-8">
+                {% csrf_token %}
+                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+                    <p class="text-yellow-700">Are you sure you want to approve this financial parameter?</p>
+                    <p class="text-sm text-yellow-600 mt-2">Once approved, this parameter will be available for use in financial calculations.</p>
+                </div>
+                <div class="flex justify-end space-x-4">
+                    <a href="{% url 'aps_finance:financial_parameter_detail' parameter.pk %}" 
+                       class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                        Cancel
+                    </a>
+                    <button type="submit" 
+                            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                        Approve Parameter
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
