@@ -3907,20 +3907,1364 @@ def calculate_completion_rate(timesheets):
 
 
 ''' ---------------------------------------- LEAVE AREA ---------------------------------------- '''
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse, HttpResponse
+from django.views.decorators.http import require_POST, require_GET
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.core.paginator import Paginator
+from django.db.models import Sum, Count, Q
+from django.contrib import messages
+from django.utils import timezone
+from datetime import datetime, timedelta
+import csv
+import json
+
+from .models import (
+    LeavePolicy, LeaveType, LeaveAllocation, UserLeaveBalance,
+    LeaveRequest, CompOffRequest, Attendance
+)
+from .forms import (
+    LeavePolicyForm, LeaveTypeForm, LeaveAllocationForm,
+    LeaveRequestForm, CompOffRequestForm, BulkLeaveAllocationForm
+)
+
+# Permission utilities
+def is_hr(user):
+    return user.groups.filter(name="HR").exists()
+
+def is_manager(user):
+    return user.groups.filter(name="Manager").exists()
+
+def is_admin(user):
+    return user.groups.filter(name="Admin").exists()
+
+def is_finance(user):
+    return user.groups.filter(name="Finance").exists()
+def is_management(user):
+    return {'is_management': request.user.groups.filter(name="Management").exists()} if request.user.is_authenticated else {'is_management': False}
+
+def is_backoffice(user):
+    return user.groups.filter(name="Backoffice").exists()
+
+def is_client(user):
+    return user.groups.filter(name="Client").exists()
+
+def is_employee(user):
+    return user.groups.filter(name="Employee").exists()
+
+def can_approve_leave(user):
+    """Check if user can approve leave requests"""
+    return any([
+        is_hr(user),
+        is_manager(user),
+        is_admin(user),
+    ])
+    
+@login_required
+@user_passes_test(is_hr)
+def hr_leave_view(request):
+    """View for HR to manage all leave-related functions"""
+    
+    # Get counts for quick stats
+    total_leave_types = LeaveType.objects.count()
+    total_leave_policies = LeavePolicy.objects.count()
+    pending_leave_requests = LeaveRequest.objects.filter(status='Pending').count()
+    
+    # Get recent leave requests
+    recent_leave_requests = LeaveRequest.objects.all().select_related(
+        'user', 'leave_type', 'approver'
+    ).order_by('-created_at')[:5]
+    
+    # Get HR's own leave balances
+    user_balances = UserLeaveBalance.objects.filter(
+        user=request.user,
+        year=timezone.now().year
+    ).select_related('leave_type')
+    
+    context = {
+        'total_leave_types': total_leave_types,
+        'total_leave_policies': total_leave_policies, 
+        'pending_leave_requests': pending_leave_requests,
+        'recent_leave_requests': recent_leave_requests,
+        'user_balances': user_balances,
+        
+        # URLs for leave type management
+        'leave_type_urls': {
+            'list': reverse('aps_leave:leave_type_list'),
+            'create': reverse('aps_leave:leave_type_create'),
+        },
+        
+        # URLs for leave policy management  
+        'leave_policy_urls': {
+            'list': reverse('aps_leave:leave_policy_list'),
+            'create': reverse('aps_leave:leave_policy_create'),
+        },
+        
+        # URLs for HR's own leave management
+        'leave_request_urls': {
+            'create': reverse('aps_leave:leave_request_create'),
+            'list': reverse('aps_leave:leave_request_list'),
+        },
+        'leave_balance_urls': {
+            'bulk_create': reverse('aps_leave:bulk_leave_balance_create'),
+            'list': reverse('aps_leave:leave_request_list'),
+        },
+    }
+    
+    return render(request, 'components/leave_management/hr_leave_dashboard.html', context)
+
+@login_required
+@user_passes_test(is_finance)
+def finance_leave_view(request):
+    """View for Finance to manage leave-related functions"""
+    
+    # Get approved leave requests for reporting
+    approved_leaves = LeaveRequest.objects.filter(
+        status='Approved'
+    ).select_related(
+        'user', 'leave_type', 'approver', 'user__profile'
+    ).order_by('-start_date')[:10]
+    
+    # Get leave stats by department
+    department_stats = LeaveRequest.objects.filter(
+        status='Approved'
+    ).values('user__profile__department').annotate(
+        total_leaves=Count('id'),
+        total_days=Sum('leave_days')
+    )
+    
+    context = {
+        'approved_leaves': approved_leaves,
+        'department_stats': department_stats
+    }
+    
+    return render(request, 'components/leave_management/finance_leave_dashboard.html', context)
+
+@login_required 
+@user_passes_test(is_management)
+def management_leave_view(request):
+    """View for Management to oversee leave operations"""
+    
+    # Get overall leave stats
+    total_employees = User.objects.filter(is_active=True).count()
+    employees_on_leave = LeaveRequest.objects.filter(
+        status='Approved',
+        start_date__lte=timezone.now().date(),
+        end_date__gte=timezone.now().date()
+    ).count()
+    
+    # Get department-wise leave stats
+    department_stats = LeaveRequest.objects.filter(
+        status='Approved'
+    ).values('user__profile__department').annotate(
+        total_requests=Count('id'),
+        total_days=Sum('leave_days')
+    )
+    
+    # Get recent leave requests
+    recent_requests = LeaveRequest.objects.all().select_related(
+        'user', 'leave_type', 'approver', 'user__profile'
+    ).order_by('-created_at')[:10]
+    
+    context = {
+        'total_employees': total_employees,
+        'employees_on_leave': employees_on_leave,
+        'department_stats': department_stats,
+        'recent_requests': recent_requests
+    }
+    
+    return render(request, 'components/leave_management/management_leave_dashboard.html', context)
+
+@login_required
+@user_passes_test(is_manager) 
+def manager_leave_view(request):
+    """View for Managers to handle team leave requests"""
+    
+    department = request.user.profile.department
+    
+    # Get team members' leave requests
+    team_requests = LeaveRequest.objects.filter(
+        user__profile__department=department
+    ).exclude(
+        user=request.user
+    ).select_related(
+        'user', 'leave_type', 'approver', 'user__profile'
+    ).order_by('-created_at')[:10]
+    
+    # Get pending approvals
+    pending_approvals = LeaveRequest.objects.filter(
+        status='Pending',
+        user__profile__department=department
+    ).exclude(
+        user=request.user
+    ).select_related(
+        'user', 'leave_type', 'user__profile'
+    )
+    
+    # Get team leave calendar
+    upcoming_leaves = LeaveRequest.objects.filter(
+        status='Approved',
+        user__profile__department=department,
+        start_date__gte=timezone.now().date()
+    ).select_related(
+        'user', 'leave_type', 'user__profile'
+    ).order_by('start_date')[:10]
+    
+    context = {
+        'team_requests': team_requests,
+        'pending_approvals': pending_approvals,
+        'upcoming_leaves': upcoming_leaves,
+        'department': department
+    }
+    
+    return render(request, 'components/leave_management/manager_leave_dashboard.html', context)
+
+@login_required
+def employee_leave_view(request):
+    """View for employees to manage their leave requests"""
+    
+    # Get user's leave requests
+    user_requests = LeaveRequest.objects.filter(
+        user=request.user
+    ).select_related(
+        'leave_type', 'approver'
+    ).order_by('-created_at')[:10]
+    
+    # Get pending requests
+    pending_requests = LeaveRequest.objects.filter(
+        user=request.user,
+        status='Pending'
+    ).select_related('leave_type')
+    
+    # Get upcoming approved leaves
+    upcoming_leaves = LeaveRequest.objects.filter(
+        user=request.user,
+        status='Approved',
+        start_date__gte=timezone.now().date()
+    ).select_related('leave_type').order_by('start_date')[:10]
+    
+    # Get leave balances for current year
+    leave_balances = UserLeaveBalance.objects.filter(
+        user=request.user,
+        year=timezone.now().year
+    ).select_related('leave_type')
+    
+    context = {
+        'user_requests': user_requests,
+        'pending_requests': pending_requests,
+        'upcoming_leaves': upcoming_leaves,
+        'leave_balances': leave_balances
+    }
+    
+    return render(request, 'components/leave_management/employee_leave_dashboard.html', context)
+
+
+# ============= 1. LEAVE TYPE MANAGEMENT VIEWS (HR ONLY) =============
+
+@login_required
+@user_passes_test(is_hr)
+def leave_type_list(request):
+    """View to list all leave types"""
+    leave_types = LeaveType.objects.all().order_by('name')
+    return render(request, 'components/leave_management/leave_type_list.html', {
+        'leave_types': leave_types
+    })
+
+@login_required
+@user_passes_test(is_hr)
+def leave_type_create(request):
+    """View to create a new leave type"""
+    if request.method == 'POST':
+        form = LeaveTypeForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Leave type created successfully!')
+            return redirect('aps_leave:leave_type_list')
+    else:
+        form = LeaveTypeForm()
+    
+    return render(request, 'components/leave_management/leave_type_form.html', {
+        'form': form,
+        'action': 'Create'
+    })
+
+@login_required
+@user_passes_test(is_hr)
+def leave_type_update(request, pk):
+    """View to update an existing leave type"""
+    leave_type = get_object_or_404(LeaveType, pk=pk)
+    
+    if request.method == 'POST':
+        form = LeaveTypeForm(request.POST, instance=leave_type)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Leave type updated successfully!')
+            return redirect('aps_leave:leave_type_list')
+    else:
+        form = LeaveTypeForm(instance=leave_type)
+    
+    return render(request, 'components/leave_management/leave_type_form.html', {
+        'form': form,
+        'leave_type': leave_type,
+        'action': 'Update'
+    })
+
+@login_required
+@user_passes_test(is_hr)
+def leave_type_delete(request, pk):
+    """View to delete a leave type"""
+    leave_type = get_object_or_404(LeaveType, pk=pk)
+    
+    if request.method == 'POST':
+        # Check if there are any leave requests using this type
+        if LeaveRequest.objects.filter(leave_type=leave_type).exists():
+            messages.error(request, 'Cannot delete this leave type as it is being used in leave requests.')
+            return redirect('aps_leave:leave_type_list')
+        
+        leave_type.delete()
+        messages.success(request, 'Leave type deleted successfully!')
+        return redirect('aps_leave:leave_type_list')
+    
+    return render(request, 'components/leave_management/leave_type_confirm_delete.html', {
+        'leave_type': leave_type
+    })
+
+# ============= 2. LEAVE POLICY & ALLOCATION VIEWS (HR ONLY) =============
+
+@login_required
+@user_passes_test(is_hr)
+def leave_policy_list(request):
+    """View to list all leave policies"""
+    policies = LeavePolicy.objects.all().order_by('group__name')
+    return render(request, 'components/leave_management/leave_policy_list.html', {
+        'policies': policies
+    })
+
+@login_required
+@user_passes_test(is_hr)
+def leave_policy_create(request):
+    """View to create a new leave policy"""
+    if request.method == 'POST':
+        form = LeavePolicyForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Leave policy created successfully!')
+            return redirect('aps_leave:leave_policy_list')
+    else:
+        form = LeavePolicyForm()
+    
+    return render(request, 'components/leave_management/leave_policy_form.html', {
+        'form': form,
+        'action': 'Create'
+    })
+
+@login_required
+@user_passes_test(is_hr)
+def leave_policy_update(request, pk):
+    """View to update an existing leave policy"""
+    policy = get_object_or_404(LeavePolicy, pk=pk)
+    
+    if request.method == 'POST':
+        form = LeavePolicyForm(request.POST, instance=policy)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Leave policy updated successfully!')
+            return redirect('aps_leave:leave_policy_list')
+    else:
+        form = LeavePolicyForm(instance=policy)
+    
+    return render(request, 'components/leave_management/leave_policy_form.html', {
+        'form': form,
+        'policy': policy,
+        'action': 'Update'
+    })
+
+@login_required
+@user_passes_test(is_hr)
+def leave_policy_delete(request, pk):
+    """View to delete a leave policy"""
+    policy = get_object_or_404(LeavePolicy, pk=pk)
+    
+    if request.method == 'POST':
+        policy.delete()
+        messages.success(request, 'Leave policy deleted successfully!')
+        return redirect('aps_leave:leave_policy_list')
+    
+    return render(request, 'components/leave_management/leave_policy_confirm_delete.html', {
+        'policy': policy
+    })
+    
+@login_required
+@user_passes_test(is_hr)
+def leave_allocation_manage(request, policy_id):
+    """View to manage leave allocations for a specific policy"""
+    policy = get_object_or_404(LeavePolicy, pk=policy_id)
+    leave_types = LeaveType.objects.filter(is_active=True)
+    
+    if request.method == 'POST':
+        # Process the form data for multiple allocations
+        for leave_type in leave_types:
+            annual_days = request.POST.get(f'annual_days_{leave_type.id}', 0)
+            carry_forward = request.POST.get(f'carry_forward_{leave_type.id}', 0)
+            max_consecutive = request.POST.get(f'max_consecutive_{leave_type.id}', 0)
+            advance_notice = request.POST.get(f'advance_notice_{leave_type.id}', 0)
+            
+            if annual_days:  # Only create/update if days are specified
+                LeaveAllocation.objects.update_or_create(
+                    policy=policy,
+                    leave_type=leave_type,
+                    defaults={
+                        'annual_days': annual_days,
+                        'carry_forward_limit': carry_forward,
+                        'max_consecutive_days': max_consecutive,
+                        'advance_notice_days': advance_notice
+                    }
+                )
+        
+        messages.success(request, 'Leave allocations updated successfully!')
+        return redirect('aps_leave:leave_policy_list')
+    
+    # Get existing allocations as a queryset instead of dict
+    allocations = LeaveAllocation.objects.filter(policy=policy)
+    
+    return render(request, 'components/leave_management/leave_allocation_form.html', {
+        'policy': policy,
+        'leave_types': leave_types,
+        'allocations': allocations
+    })
+@login_required
+@user_passes_test(is_hr)
+def bulk_leave_balance_create(request):
+    """View to create leave balances for all users based on their policy"""
+    from django import forms
+
+    class BulkLeaveAllocationForm(forms.Form):
+        policy = forms.ModelChoiceField(
+            queryset=LeavePolicy.objects.all(),
+            label="Leave Policy"
+        )
+        year = forms.IntegerField(
+            initial=timezone.now().year,
+            min_value=2020,
+            max_value=2050,
+            label="Year"
+        )
+        include_existing = forms.BooleanField(
+            required=False,
+            initial=False,
+            label="Update Existing Balances"
+        )
+
+    if request.method == 'POST':
+        form = BulkLeaveAllocationForm(request.POST)
+        if form.is_valid():
+            policy = form.cleaned_data['policy']
+            year = form.cleaned_data['year']
+            include_existing = form.cleaned_data['include_existing']
+            
+            # Get all users in the policy's group
+            users = User.objects.filter(groups=policy.group)
+            
+            # Get all allocations for this policy
+            allocations = LeaveAllocation.objects.filter(policy=policy)
+            
+            created_count = 0
+            updated_count = 0
+            
+            for user in users:
+                for allocation in allocations:
+                    leave_type = allocation.leave_type
+                    
+                    # Check if balance already exists
+                    balance = UserLeaveBalance.objects.filter(
+                        user=user,
+                        leave_type=leave_type,
+                        year=year
+                    ).first()
+                    
+                    if balance:
+                        if include_existing:
+                            # Update existing balance
+                            balance.allocated = allocation.annual_days
+                            balance.save()
+                            updated_count += 1
+                    else:
+                        # Create new balance
+                        UserLeaveBalance.objects.create(
+                            user=user,
+                            leave_type=leave_type,
+                            year=year,
+                            allocated=allocation.annual_days,
+                            used=0,
+                            carried_forward=0,
+                            additional=0
+                        )
+                        created_count += 1
+            
+            messages.success(
+                request, 
+                f'Successfully created {created_count} new balances and updated {updated_count} existing balances.'
+            )
+            return redirect('aps_leave:hr_leave_view')
+    else:
+        form = BulkLeaveAllocationForm()
+    
+    return render(request, 'components/leave_management/bulk_leave_balance_form.html', {
+        'form': form,
+        'action': 'Create Bulk Balances'
+    })
+
+# ============= 3. LEAVE REQUEST VIEWS (ALL USERS) =============
+
+@login_required
+@user_passes_test(lambda u: True)  # All authenticated users can access
+def leave_request_list(request):
+    """View to list leave requests based on user role"""
+    user = request.user
+
+    if is_hr(user) or is_admin(user):
+        # HR and Admin can see all leave requests
+        leave_requests = LeaveRequest.objects.all().select_related(
+            'user', 'leave_type', 'approver'
+        ).order_by('-created_at')
+
+    elif is_manager(user):
+        # Managers can see only their own leave requests
+        leave_requests = LeaveRequest.objects.filter(
+            user=user
+        ).select_related(
+            'user', 'leave_type', 'approver'
+        ).order_by('-created_at')
+
+    elif is_finance(user) or is_backoffice(user):
+        # Finance and Backoffice see approved leaves for reporting
+        leave_requests = LeaveRequest.objects.filter(
+            status='Approved'
+        ).select_related(
+            'user', 'leave_type', 'approver'
+        ).order_by('-start_date')
+
+    else:
+        # Regular users see only their own leave requests
+        leave_requests = LeaveRequest.objects.filter(
+            user=user
+        ).select_related(
+            'user', 'leave_type', 'approver'
+        ).order_by('-created_at')
+
+    # Add pagination
+    paginator = Paginator(leave_requests, 20)
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+
+    # Get leave balances for each user in the page
+    user_balances = {}
+    for leave_request in page_obj:
+        if leave_request.user_id not in user_balances:
+            balances = UserLeaveBalance.objects.filter(
+                user=leave_request.user,
+                year=timezone.now().year
+            ).select_related('leave_type')
+            
+            user_balances[leave_request.user_id] = {
+                b.leave_type_id: {
+                    'allocated': b.allocated,
+                    'used': b.used,
+                    'available': b.available
+                } for b in balances
+            }
+
+    context = {
+        'page_obj': page_obj,
+        'can_approve': can_approve_leave(user),
+        'is_hr': is_hr(user),
+        'is_admin': is_admin(user),
+        'is_manager': is_manager(user),
+        'is_finance': is_finance(user),
+        'is_backoffice': is_backoffice(user),
+        'user_balances': user_balances
+    }
+
+    return render(request, 'components/leave_management/leave_request_list.html', context)
+
+
+
+@user_passes_test(lambda u: True)  # All authenticated users can access
+def leave_request_create(request):
+    """View to create a new leave request"""
+    print("[DEBUG] Entering leave_request_create view")
+    user = User.objects.get(id=request.user.id)
+    print(f"[DEBUG] User: {user.username}")
+
+    # Get available leave types based on user's group
+    user_policy = None
+    user_groups = user.groups.all()
+    print(f"[DEBUG] User groups: {[g.name for g in user_groups]}")
+
+    if user_groups:
+        user_policy = LeavePolicy.objects.filter(
+            group__in=user_groups,
+            is_active=True
+        ).first()
+        print(f"[DEBUG] Found policy: {user_policy}")
+
+    if user_policy:
+        # Get leave types from user's policy allocations
+        allocations = LeaveAllocation.objects.filter(policy=user_policy)
+        leave_type_ids = allocations.values_list('leave_type_id', flat=True)
+        available_leave_types = LeaveType.objects.filter(id__in=leave_type_ids, is_active=True)
+        print(f"[DEBUG] Available leave types from policy: {[lt.name for lt in available_leave_types]}")
+    else:
+        # If no policy, show all active leave types
+        available_leave_types = LeaveType.objects.filter(is_active=True)
+        print("[DEBUG] No policy found - showing all active leave types")
+
+    if request.method == 'POST':
+        print("[DEBUG] Processing POST request")
+        form = LeaveRequestForm(request.POST, request.FILES, available_leave_types=available_leave_types)
+        if form.is_valid():
+            print("[DEBUG] Form is valid")
+            try:
+                leave_request = form.save(commit=False)
+                leave_request.user = request.user
+                leave_request.leave_days = leave_request.calculate_leave_days()
+                print(f"[DEBUG] Calculated leave days: {leave_request.leave_days}")
+                
+                leave_request.full_clean()  # Run model validation
+                
+                # Check for sufficient balance and try auto-convert if needed
+                if not leave_request.has_sufficient_balance():
+                    print("[DEBUG] Insufficient balance - attempting auto-convert")
+                    if not leave_request.auto_convert_leave_type():
+                        print("[DEBUG] Auto-convert failed")
+                        form.add_error(None, "Insufficient leave balance")
+                        raise ValidationError("Insufficient leave balance")
+                
+                leave_request.save()
+                print("[DEBUG] Leave request saved successfully")
+                messages.success(request, 'Leave request submitted successfully!')
+                return redirect('aps_leave:leave_request_list')
+            except ValidationError as e:
+                print(f"[DEBUG] Validation error: {e}")
+                if hasattr(e, 'message_dict'):
+                    for field, errors in e.message_dict.items():
+                        for error in errors:
+                            form.add_error(field, error)
+                else:
+                    # Handle non-field errors
+                    form.add_error(None, str(e))
+    else:
+        print("[DEBUG] GET request - displaying empty form")
+        form = LeaveRequestForm(available_leave_types=available_leave_types)
+
+    # Get all leave balances for display
+    balances = {}
+    leave_balances = UserLeaveBalance.objects.filter(
+        user=request.user,
+        year=timezone.now().year
+    ).select_related('leave_type')
+
+    for balance in leave_balances:
+        balances[balance.leave_type.name] = {
+            'allocated': balance.allocated,
+            'used': balance.used,
+            'available': balance.available
+        }
+
+    print(f"[DEBUG] Found leave balances: {balances}")
+
+    context = {
+        'form': form,
+        'action': 'Create',
+        'balances': balances
+    }
+    
+    return render(request, 'components/leave_management/leave_request_form.html', context)
+
+@login_required
+@user_passes_test(lambda u: True)  # All authenticated users can access
+def leave_request_update(request, pk):
+    """View to update a leave request (only if pending)"""
+    print(f"[DEBUG] Entering leave_request_update view for pk={pk}")
+    
+    try:
+        leave_request = get_object_or_404(LeaveRequest, pk=pk)
+        print(f"[DEBUG] Leave request found: {leave_request}")
+        
+        # Only allow updates if user is the owner and status is pending
+        if leave_request.user != request.user and not is_hr(request.user):
+            print("[DEBUG] Permission denied - not owner or HR")
+            messages.error(request, 'You do not have permission to edit this leave request.')
+            return redirect('aps_leave:leave_request_list')
+        
+        if leave_request.status != 'Pending' and not is_hr(request.user):
+            print("[DEBUG] Cannot edit - request already processed")
+            messages.error(request, 'You cannot edit a leave request that has already been processed.')
+            return redirect('aps_leave:leave_request_list')
+        
+        # Get available leave types based on user's policy
+        user_policy = None
+        user_groups = leave_request.user.groups.all()
+        print(f"[DEBUG] User groups: {[g.name for g in user_groups]}")
+        
+        if user_groups:
+            user_policy = LeavePolicy.objects.filter(
+                group__in=user_groups,
+                is_active=True
+            ).first()
+            print(f"[DEBUG] Found policy: {user_policy}")
+        
+        if user_policy:
+            allocations = LeaveAllocation.objects.filter(policy=user_policy)
+            leave_type_ids = allocations.values_list('leave_type_id', flat=True)
+            available_leave_types = LeaveType.objects.filter(id__in=leave_type_ids, is_active=True)
+            print(f"[DEBUG] Available leave types from policy: {[lt.name for lt in available_leave_types]}")
+        else:
+            available_leave_types = LeaveType.objects.filter(is_active=True)
+            print("[DEBUG] No policy found - showing all active leave types")
+        
+        if request.method == 'POST':
+            print("[DEBUG] Processing POST request")
+            form = LeaveRequestForm(
+                request.POST, 
+                request.FILES, 
+                instance=leave_request,
+                available_leave_types=available_leave_types
+            )
+            
+            if form.is_valid():
+                print("[DEBUG] Form is valid")
+                try:
+                    leave_request = form.save(commit=False)
+                    leave_request.leave_days = leave_request.calculate_leave_days()
+                    print(f"[DEBUG] Calculated leave days: {leave_request.leave_days}")
+                    
+                    leave_request.full_clean()  # Run model validation
+                    
+                    # Check for sufficient balance and try auto-convert if needed
+                    if not leave_request.has_sufficient_balance():
+                        print("[DEBUG] Insufficient balance - attempting auto-convert")
+                        if not leave_request.auto_convert_leave_type():
+                            print("[DEBUG] Auto-convert failed")
+                            form.add_error(None, "Insufficient leave balance")
+                            raise ValidationError("Insufficient leave balance")
+                    
+                    leave_request.save()
+                    print("[DEBUG] Leave request updated successfully")
+                    messages.success(request, 'Leave request updated successfully!')
+                    return redirect('aps_leave:leave_request_list')
+                except ValidationError as e:
+                    print(f"[DEBUG] Validation error: {e}")
+                    if hasattr(e, 'message_dict'):
+                        for field, errors in e.message_dict.items():
+                            for error in errors:
+                                form.add_error(field, error)
+                    else:
+                        # Handle non-field errors
+                        form.add_error(None, str(e))
+        else:
+            print("[DEBUG] GET request - displaying form with instance")
+            form = LeaveRequestForm(
+                instance=leave_request,
+                available_leave_types=available_leave_types
+            )
+
+        # Get all leave balances for display
+        balances = {}
+        leave_balances = UserLeaveBalance.objects.filter(
+            user=leave_request.user,
+            year=leave_request.start_date.year if leave_request.start_date else timezone.now().year
+        ).select_related('leave_type')
+
+        for balance in leave_balances:
+            balances[balance.leave_type.name] = {
+                'allocated': balance.allocated,
+                'used': balance.used,
+                'available': balance.available
+            }
+
+        print(f"[DEBUG] Found leave balances: {balances}")
+
+        context = {
+            'form': form,
+            'leave_request': leave_request,
+            'action': 'Update',
+            'balances': balances
+        }
+        
+        return render(request, 'components/leave_management/leave_request_form.html', context)
+    
+    except Exception as e:
+        print(f"[DEBUG] Unexpected error in leave_request_update: {str(e)}")
+        messages.error(request, f'An error occurred: {str(e)}')
+        return redirect('aps_leave:leave_request_list')
+
+@login_required
+@user_passes_test(lambda u: True)  # All authenticated users can access
+def leave_request_cancel(request, pk):
+    """View to cancel a leave request"""
+    print(f"[DEBUG] Entering leave_request_cancel view for pk={pk}")
+    
+    try:
+        leave_request = get_object_or_404(LeaveRequest, pk=pk)
+        print(f"[DEBUG] Leave request found: {leave_request}")
+        
+        # Only allow cancellation if user is the owner or is HR
+        if leave_request.user != request.user and not is_hr(request.user):
+            print("[DEBUG] Permission denied - not owner or HR")
+            messages.error(request, 'You do not have permission to cancel this leave request.')
+            return redirect('aps_leave:leave_request_list')
+        
+        # Prevent cancellation of already processed leaves (unless HR)
+        if leave_request.status not in ['Pending', 'Approved'] and not is_hr(request.user):
+            print("[DEBUG] Cannot cancel - request already processed")
+            messages.error(request, 'You cannot cancel a leave request that has already been processed.')
+            return redirect('aps_leave:leave_request_list')
+        
+        if request.method == 'POST':
+            print("[DEBUG] Processing POST request")
+            # Only update status to cancelled if not already rejected
+            if leave_request.status != 'Rejected':
+                old_status = leave_request.status
+                leave_request.status = 'Cancelled'
+                
+                # If was approved, revert the leave balance
+                if old_status == 'Approved':
+                    leave_request.revert_leave_balance()
+                    
+                leave_request.save()
+                print("[DEBUG] Leave request cancelled successfully")
+                messages.success(request, 'Leave request cancelled successfully!')
+            return redirect('aps_leave:leave_request_list')
+        
+        context = {
+            'leave_request': leave_request
+        }
+        
+        return render(request, 'components/leave_management/leave_request_confirm_cancel.html', context)
+    
+    except Exception as e:
+        print(f"[DEBUG] Unexpected error in leave_request_cancel: {str(e)}")
+        messages.error(request, f'An error occurred: {str(e)}')
+        return redirect('aps_leave:leave_request_list')
+
+@login_required
+@user_passes_test(lambda u: True)  # All authenticated users can access
+def leave_request_detail(request, pk):
+    """View to see details of a leave request"""
+    print(f"[DEBUG] Entering leave_request_detail view for pk={pk}")
+    
+    try:
+        leave_request = get_object_or_404(LeaveRequest, pk=pk)
+        print(f"[DEBUG] Leave request found: {leave_request}")
+        
+        # Check if user has permission to view
+        user = request.user
+        if (leave_request.user != user and 
+            not any([is_hr(user), is_admin(user), is_manager(user), is_management(user)])):
+            print("[DEBUG] Permission denied - unauthorized user")
+            messages.error(request, 'You do not have permission to view this leave request.')
+            return redirect('aps_leave:leave_request_list')
+        
+        # Get leave balance for this specific leave type
+        try:
+            balance = UserLeaveBalance.objects.get(
+                user=leave_request.user,
+                leave_type=leave_request.leave_type,
+                year=leave_request.start_date.year if leave_request.start_date else timezone.now().year
+            )
+            balance_data = {
+                'allocated': balance.allocated,
+                'used': balance.used,
+                'available': balance.available
+            }
+        except UserLeaveBalance.DoesNotExist:
+            balance_data = {
+                'allocated': 0,
+                'used': 0,
+                'available': 0
+            }
+        
+        context = {
+            'leave_request': leave_request,
+            'can_approve': can_approve_leave(user),
+            'balance': balance_data
+        }
+        
+        return render(request, 'components/leave_management/leave_request_detail.html', context)
+    
+    except Exception as e:
+        print(f"[DEBUG] Unexpected error in leave_request_detail: {str(e)}")
+        messages.error(request, f'An error occurred: {str(e)}')
+        return redirect('aps_leave:leave_request_list')
+
+# ============= 4. LEAVE APPROVAL VIEWS =============
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib import messages
+from django.core.paginator import Paginator
+from django.utils import timezone
+from django.db.models import Q
+import json
+
+from .models import LeaveRequest
+
+@login_required
+@user_passes_test(can_approve_leave)
+def leave_approval_list(request):
+    """View to list leave requests pending approval"""
+    user = request.user
+    print(f"[DEBUG] User: {user.username}, Role Check - HR: {is_hr(user)}, Admin: {is_admin(user)}, Manager: {is_manager(user)}")
+
+    if is_hr(user) or is_admin(user):
+        # HR, Admin, and Management can see all pending leave requests
+        pending_requests = LeaveRequest.objects.filter(status='Pending').order_by('start_date')
+    elif is_manager(user):
+        # Managers only see other users' pending leave requests
+        # Since there's no department, fallback to only showing other users
+        pending_requests = LeaveRequest.objects.filter(
+            status='Pending'
+        ).exclude(user=user).order_by('start_date')
+    else:
+        # Shouldn't reach here due to @user_passes_test
+        print("[DEBUG] Invalid access: user does not have approval permissions")
+        pending_requests = LeaveRequest.objects.none()
+
+    print(f"[DEBUG] Total pending requests fetched: {pending_requests.count()}")
+
+    paginator = Paginator(pending_requests, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'components/leave_management/leave_approval_list.html', {
+        'page_obj': page_obj
+    })
+
+@login_required
+@user_passes_test(can_approve_leave)
+def leave_request_approve(request, pk):
+    """View to approve a leave request"""
+    leave_request = get_object_or_404(LeaveRequest, pk=pk, status='Pending')
+    print(f"[DEBUG] Approving Leave ID: {pk} for User: {leave_request.user.username}")
+
+    if request.method == 'POST':
+        print("[DEBUG] POST request received for approval")
+
+        if not leave_request.has_sufficient_balance() and leave_request.leave_type.is_paid:
+            print("[DEBUG] Insufficient balance for paid leave")
+            if request.POST.get('auto_convert') == 'yes':
+                print("[DEBUG] Attempting auto-convert to Loss of Pay")
+                if leave_request.auto_convert_leave_type():
+                    messages.info(request, 'Leave request was automatically converted to Loss of Pay due to insufficient balance.')
+                else:
+                    messages.error(request, 'Unable to approve leave request due to insufficient balance.')
+                    return redirect('aps_leave:leave_approval_list')
+            else:
+                messages.error(request, 'Unable to approve leave request due to insufficient balance.')
+                return redirect('aps_leave:leave_approval_list')
+
+        leave_request.status = 'Approved'
+        leave_request.approver = request.user
+        leave_request.save()
+
+        print(f"[DEBUG] Leave request {pk} approved successfully")
+        messages.success(request, 'Leave request approved successfully!')
+        return redirect('aps_leave:leave_approval_list')
+
+    has_balance = leave_request.has_sufficient_balance()
+    print(f"[DEBUG] Leave balance sufficient: {has_balance}")
+
+    return render(request, 'components/leave_management/leave_request_approve.html', {
+        'leave_request': leave_request,
+        'has_balance': has_balance
+    })
+
+@login_required
+@user_passes_test(can_approve_leave)
+def leave_request_reject(request, pk):
+    """View to reject a leave request"""
+    leave_request = get_object_or_404(LeaveRequest, pk=pk, status='Pending')
+    print(f"[DEBUG] Rejecting Leave ID: {pk} for User: {leave_request.user.username}")
+
+    if request.method == 'POST':
+        rejection_reason = request.POST.get('rejection_reason', '')
+        suggested_dates = request.POST.get('suggested_dates', '')
+        print(f"[DEBUG] Rejection reason: {rejection_reason}")
+        print(f"[DEBUG] Suggested dates (raw): {suggested_dates}")
+
+        leave_request.status = 'Rejected'
+        leave_request.approver = request.user
+        leave_request.rejection_reason = rejection_reason
+
+        if suggested_dates:
+            try:
+                leave_request.suggested_dates = json.loads(suggested_dates)
+                print("[DEBUG] Suggested dates parsed as JSON")
+            except json.JSONDecodeError:
+                print("[DEBUG] Failed to parse suggested dates as JSON. Saving as plain text.")
+                leave_request.suggested_dates = {'text': suggested_dates}
+
+        leave_request.save()
+        print(f"[DEBUG] Leave request {pk} rejected")
+
+        messages.success(request, 'Leave request rejected.')
+        return redirect('aps_leave:leave_approval_list')
+
+    return render(request, 'components/leave_management/leave_request_reject.html', {
+        'leave_request': leave_request
+    })
+
+
+# ============= 5. COMP-OFF REQUEST VIEWS =============
+
+@login_required
+def comp_off_request_list(request):
+    """View to list comp-off requests"""
+    user = request.user
+    
+    if is_hr(user) or is_admin(user) or is_management(user):
+        # HR, Admin, and Management can see all comp-off requests
+        comp_off_requests = CompOffRequest.objects.all().order_by('-created_at')
+    elif is_manager(user):
+        # Managers can see comp-offs for their team members
+        comp_off_requests = CompOffRequest.objects.filter(
+            Q(user__profile__department=user.profile.department) | 
+            Q(user=user)
+        ).order_by('-created_at')
+    else:
+        # Regular employees see only their own comp-offs
+        comp_off_requests = CompOffRequest.objects.filter(user=user).order_by('-created_at')
+    
+    # Add pagination
+    paginator = Paginator(comp_off_requests, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    return render(request, 'components/leave_management/comp_off_request_list.html', {
+        'page_obj': page_obj,
+        'can_approve': can_approve_leave(user)
+    })
+
+@login_required
+def comp_off_request_create(request):
+    """View to create a new comp-off request"""
+    if request.method == 'POST':
+        form = CompOffRequestForm(request.POST)
+        if form.is_valid():
+            comp_off_request = form.save(commit=False)
+            comp_off_request.user = request.user
+            comp_off_request.save()
+            
+            messages.success(request, 'Comp-off request submitted successfully!')
+            return redirect('aps_leave:comp_off_request_list')
+    else:
+        form = CompOffRequestForm()
+    
+    return render(request, 'components/leave_management/comp_off_request_form.html', {
+        'form': form,
+        'action': 'Create'
+    })
+
+@login_required
+@user_passes_test(can_approve_leave)
+def comp_off_request_approve(request, pk):
+    """View to approve a comp-off request"""
+    comp_off_request = get_object_or_404(CompOffRequest, pk=pk, status='Pending')
+    
+    if request.method == 'POST':
+        comp_off_request.status = 'Approved'
+        comp_off_request.approver = request.user
+        comp_off_request.save()  # This will trigger the balance update in save method
+        
+        messages.success(request, 'Comp-off request approved!')
+        return redirect('aps_leave:comp_off_request_list')
+    
+    return render(request, 'components/leave_management/comp_off_request_approve.html', {
+        'comp_off_request': comp_off_request
+    })
+
+@login_required
+@user_passes_test(can_approve_leave)
+def comp_off_request_reject(request, pk):
+    """View to reject a comp-off request"""
+    comp_off_request = get_object_or_404(CompOffRequest, pk=pk, status='Pending')
+    
+    if request.method == 'POST':
+        comp_off_request.status = 'Rejected'
+        comp_off_request.approver = request.user
+        comp_off_request.save()
+        
+        messages.success(request, 'Comp-off request rejected!')
+        return redirect('aps_leave:comp_off_request_list')
+    
+    return render(request, 'components/leave_management/comp_off_request_reject.html', {
+        'comp_off_request': comp_off_request
+    })
+
+# ============= 6. LEAVE DASHBOARD & REPORTS =============
+# ============= 6. LEAVE DASHBOARD & REPORTS =============
+
+@login_required
+def leave_dashboard(request):
+    """Main dashboard view for leave management"""
+    user = request.user
+    current_year = timezone.now().year
+    
+    # Get leave balances for current user
+    user_balances = UserLeaveBalance.objects.filter(
+        user=user,
+        year=current_year
+    )
+    
+    # Get pending leave requests for current user
+    pending_leaves = LeaveRequest.objects.filter(
+        user=user,
+        status='Pending'
+    ).order_by('start_date')[:5]
+    
+    # Get upcoming approved leaves
+    upcoming_leaves = LeaveRequest.objects.filter(
+        user=user,
+        status='Approved',
+        start_date__gte=timezone.now().date()
+    ).order_by('start_date')[:5]
+    
+    # Additional data for managers, HR, and admins
+    team_leaves = None
+    pending_approvals = None
+    leave_stats = None
+    
+    if can_approve_leave(user):
+        # For managers - show team's upcoming leaves
+        if is_manager(user):
+            team_leaves = LeaveRequest.objects.filter(
+                status='Approved',
+                start_date__gte=timezone.now().date(),
+                user__profile__department=user.profile.department
+            ).exclude(user=user).order_by('start_date')[:10]
+            
+            pending_approvals = LeaveRequest.objects.filter(
+                status='Pending',
+                user__profile__department=user.profile.department
+            ).exclude(user=user).order_by('start_date')[:10]
+        
+        # For HR, Admin, Management - show organizational stats
+        if is_hr(user) or is_admin(user) or is_management(user):
+            # Count leaves by type for the current month
+            leave_stats = LeaveRequest.objects.filter(
+                status='Approved',
+                start_date__year=current_year,
+                start_date__month=timezone.now().month
+            ).values('leave_type__name').annotate(
+                count=Count('id'),
+                total_days=Sum('leave_days')
+            )
+            
+            # Show all pending approvals
+            pending_approvals = LeaveRequest.objects.filter(
+                status='Pending'
+            ).order_by('start_date')[:15]
+    
+    return render(request, 'components/leave_management/leave_dashboard.html', {
+        'user_balances': user_balances,
+        'pending_leaves': pending_leaves,
+        'upcoming_leaves': upcoming_leaves,
+        'team_leaves': team_leaves,
+        'pending_approvals': pending_approvals,
+        'leave_stats': leave_stats,
+        'can_approve': can_approve_leave(user),
+        'is_hr': is_hr(user),
+        'is_admin': is_admin(user),
+        'is_manager': is_manager(user)
+    })
+
+@login_required
+@user_passes_test(lambda u: is_hr(u) or is_admin(u) or is_management(u) or is_finance(u))
+def leave_balance_report(request):
+    """Report showing leave balances for all employees"""
+    year = int(request.GET.get('year', timezone.now().year))
+    department = request.GET.get('department', '')
+    export_format = request.GET.get('export', '')
+    
+    # Get all balances for the selected year
+    balances = UserLeaveBalance.objects.filter(
+        year=year
+    ).select_related('user', 'leave_type')
+    
+    # Apply department filter if specified
+    if department:
+        balances = balances.filter(user__profile__department=department)
+    
+    # Organize data by user
+    users_data = {}
+    leave_types = set()
+    
+    for balance in balances:
+        user_id = balance.user_id
+        leave_type = balance.leave_type.name
+        leave_types.add(leave_type)
+        
+        if user_id not in users_data:
+            user = balance.user
+            users_data[user_id] = {
+                'user': user,
+                'name': user.get_full_name() or user.username,
+                'department': getattr(user.profile, 'department', '') if hasattr(user, 'profile') else '',
+                'balances': {}
+            }
+        
+        users_data[user_id]['balances'][leave_type] = {
+            'allocated': balance.allocated,
+            'used': balance.used,
+            'carried_forward': balance.carried_forward,
+            'additional': balance.additional,
+            'available': balance.available
+        }
+    
+    # Handle export
+    if export_format == 'csv':
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="leave_balances_{year}.csv"'
+        
+        writer = csv.writer(response)
+        
+        # Create headers with leave types
+        headers = ['Employee', 'Department']
+        for lt in sorted(leave_types):
+            headers.extend([f'{lt} - Allocated', f'{lt} - Used', f'{lt} - Available'])
+        
+        writer.writerow(headers)
+        
+        # Write data rows
+        for user_data in users_data.values():
+            row = [user_data['name'], user_data['department']]
+            
+            for lt in sorted(leave_types):
+                if lt in user_data['balances']:
+                    b = user_data['balances'][lt]
+                    row.extend([b['allocated'], b['used'], b['available']])
+                else:
+                    row.extend(['0', '0', '0'])
+            
+            writer.writerow(row)
+        
+        return response
+    
+    # Get departments for filter
+    departments = set([
+        getattr(user.profile, 'department', '') 
+        for user in User.objects.filter(is_active=True)
+        if hasattr(user, 'profile') and getattr(user.profile, 'department', '')
+    ])
+    
+    return render(request, 'components/leave_management/leave_balance_report.html', {
+        'users_data': users_data.values(),
+        'leave_types': sorted(leave_types),
+        'years': range(timezone.now().year - 2, timezone.now().year + 2),
+        'departments': sorted(departments),
+        'selected_year': year,
+        'selected_department': department
+    })
+
+@login_required
+@user_passes_test(lambda u: is_hr(u) or is_admin(u) or is_management(u) or is_finance(u))
+def leave_report(request):
+    """Advanced leave report with filters and export options"""
+    year = int(request.GET.get('year', timezone.now().year))
+    month = request.GET.get('month', '')
+    leave_type = request.GET.get('leave_type', '')
+    department = request.GET.get('department', '')
+    status = request.GET.get('status', '')
+    export_format = request.GET.get('export', '')
+    
+    # Start with all leave requests
+    leave_requests = LeaveRequest.objects.filter(
+        start_date__year=year
+    ).select_related('user', 'leave_type')
+    
+    # Apply filters
+    if month:
+        leave_requests = leave_requests.filter(start_date__month=int(month))
+    
+    if leave_type:
+        leave_requests = leave_requests.filter(leave_type_id=leave_type)
+    
+    if department:
+        leave_requests = leave_requests.filter(user__profile__department=department)
+    
+    if status:
+        leave_requests = leave_requests.filter(status=status)
+    
+    # Order by date
+    leave_requests = leave_requests.order_by('start_date')
+    
+    # Handle export requests
+    if export_format == 'csv':
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="leave_report.csv"'
+        
+        writer = csv.writer(response)
+        writer.writerow([
+            'Employee', 'Department', 'Leave Type', 'Start Date', 
+            'End Date', 'Days', 'Status', 'Approver'
+        ])
+        
+        for leave in leave_requests:
+            writer.writerow([
+                leave.user.get_full_name() or leave.user.username,
+                getattr(leave.user.profile, 'department', '') if hasattr(leave.user, 'profile') else '',
+                leave.leave_type.name,
+                leave.start_date.strftime('%Y-%m-%d'),
+                leave.end_date.strftime('%Y-%m-%d'),
+                leave.leave_days,
+                leave.status,
+                leave.approver.get_full_name() if leave.approver else ''
+            ])
+        
+        return response
+    
+    # Get options for filters
+    leave_types = LeaveType.objects.all()
+    departments = set([
+        getattr(user.profile, 'department', '') 
+        for user in User.objects.filter(is_active=True)
+        if hasattr(user, 'profile') and getattr(user.profile, 'department', '')
+    ])
+    
+    return render(request, 'components/leave_management/leave_report.html', {
+        'leave_requests': leave_requests,
+        'leave_types': leave_types,
+        'departments': sorted(departments),
+        'years': range(timezone.now().year - 2, timezone.now().year + 2),
+        'months': range(1, 13),
+        'selected_year': year,
+        'selected_month': month,
+        'selected_leave_type': leave_type,
+        'selected_department': department,
+        'selected_status': status
+    })
+
+
+
+
+
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import Http404
-from .models import Leave
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from .models import Leave
 from django.contrib.auth.decorators import login_required, user_passes_test
 from datetime import datetime
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from .models import Leave
 from django.contrib.auth.decorators import login_required, user_passes_test
 from datetime import datetime
+
+
+
+
 
 @login_required
 @user_passes_test(lambda u: is_employee(u) or is_hr(u))  # Allow both employees and HR
@@ -5448,7 +6792,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.shortcuts import render
 from django.utils.timezone import now, localtime, make_aware
 from django.db.models import Avg
-from .models import Attendance, Leave
+from .models import Attendance
 from datetime import time, timedelta
 
 import calendar
@@ -5458,7 +6802,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.shortcuts import render
 from django.utils.timezone import now, localtime, make_aware
 from django.db.models import Avg
-from .models import Attendance, Leave
+from .models import Attendance
 
 @login_required
 def employee_attendance_view(request):
@@ -9029,3 +10373,594 @@ def finance_dashboard(request):
         }
     }
     return render(request, 'components/finance/dashboard.html', context)
+
+
+
+# List and Create Bank Payments
+@login_required
+@user_passes_test(is_finance)
+def bank_payment_list(request):
+    """View for listing bank payments with filters"""
+    # Get payments with filters
+    filters = {}
+    if request.GET.get('status'):
+        filters['status'] = request.GET.get('status')
+    if request.GET.get('bank_account'):
+        filters['bank_account'] = request.GET.get('bank_account')
+    if request.GET.get('date_from'):
+        filters['payment_date__gte'] = request.GET.get('date_from')
+    if request.GET.get('date_to'):
+        filters['payment_date__lte'] = request.GET.get('date_to')
+    if request.GET.get('payee_name'):
+        filters['party_name__icontains'] = request.GET.get('payee_name')
+
+    payments = BankPayment.objects.filter(**filters).order_by('-payment_date')
+    bank_accounts = BankAccount.objects.filter(is_active=True)
+
+    # Calculate payment statistics
+    stats = payments.aggregate(
+        total_amount=Sum('amount'),
+        pending_amount=Sum('amount', filter=Q(status='pending')),
+        approved_amount=Sum('amount', filter=Q(status='approved')),
+        executed_amount=Sum('amount', filter=Q(status='executed')),
+        count=Count('id')
+    )
+
+    context = {
+        'payments': payments,
+        'bank_accounts': bank_accounts,
+        'payment_statuses': dict(BankPayment.PAYMENT_STATUS),
+        'stats': stats,
+        'filters': request.GET
+    }
+    return render(request, 'components/finance/bank_payment_list.html', context)
+
+@login_required
+@user_passes_test(is_finance)
+@require_http_methods(["GET", "POST"])
+def bank_payment_create(request):
+    """Handle bank payment creation"""
+    if request.method == 'GET':
+        bank_accounts = BankAccount.objects.filter(is_active=True)
+        context = {
+            'bank_accounts': bank_accounts
+        }
+        return render(request, 'components/finance/bank_payment_form.html', context)
+
+    try:
+        # Create bank payment record
+        payment = BankPayment.objects.create(
+            payment_id=f"BP-{timezone.now().strftime('%Y%m%d%H%M%S')}",
+            bank_account_id=request.POST.get('bank_account'),
+            party_name=request.POST.get('payee_name'),
+            payment_reason=request.POST.get('purpose'), 
+            amount=request.POST.get('amount'),
+            reference_number=request.POST.get('reference_number'),
+            payment_date=request.POST.get('payment_date'),
+            status='pending',
+            created_by=request.user,
+        )
+        
+        # Handle file upload
+        if 'attachments' in request.FILES:
+            payment.attachments = request.FILES.get('attachments')
+            payment.save()
+
+        messages.success(request, 'Bank payment created successfully')
+        
+        # Return JSON for AJAX requests, redirect for form submissions
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'status': 'success', 'payment_id': payment.payment_id})
+        return redirect('aps_finance:bank_payment_detail', payment_id=payment.payment_id)
+    
+    except Exception as e:
+        messages.error(request, f'Error creating payment: {str(e)}')
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'status': 'error', 'message': str(e)})
+        return render(request, 'components/finance/bank_payment_form.html', {'error': str(e)})
+
+@login_required
+@user_passes_test(is_finance)
+def bank_payment_detail(request, payment_id):
+    """Display details of a specific bank payment"""
+    payment = get_object_or_404(BankPayment, payment_id=payment_id)
+    bank_accounts = BankAccount.objects.filter(is_active=True)
+    
+    context = {
+        'payment': payment,
+        'bank_accounts': bank_accounts,
+        'payment_statuses': dict(BankPayment.PAYMENT_STATUS)
+    }
+    return render(request, 'components/finance/bank_payment_detail.html', context)
+@login_required
+@user_passes_test(is_finance)
+@require_http_methods(["POST"])
+def bank_payment_update(request, payment_id):
+    """Handle bank payment update"""
+    try:
+        payment = get_object_or_404(BankPayment, payment_id=payment_id)
+        
+        # Check if payment can be updated (only pending payments)
+        if payment.status not in ['pending']:
+            messages.error(request, 'Only pending payments can be updated')
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'status': 'error', 'message': 'Only pending payments can be updated'})
+            return render(request, 'components/finance/bank_payment_detail.html', {'payment': payment})
+        
+        # Update payment details
+        payment.bank_account_id = request.POST.get('bank_account', payment.bank_account_id)
+        payment.party_name = request.POST.get('payee_name', payment.party_name)
+        payment.payment_reason = request.POST.get('purpose', payment.payment_reason)
+        payment.amount = request.POST.get('amount', payment.amount)
+        payment.reference_number = request.POST.get('reference_number', payment.reference_number)
+        payment.payment_date = request.POST.get('payment_date', payment.payment_date)
+        
+        if 'attachments' in request.FILES:
+            payment.attachments = request.FILES.get('attachments')
+            
+        payment.save()
+        
+        messages.success(request, 'Bank payment updated successfully')
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'status': 'success'})
+        return render(request, 'components/finance/bank_payment_detail.html', {'payment': payment})
+    
+    except BankPayment.DoesNotExist:
+        messages.error(request, 'Payment not found')
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'status': 'error', 'message': 'Payment not found'})
+        return render(request, 'components/finance/bank_payment_list.html')
+    
+    except Exception as e:
+        messages.error(request, f'Error updating payment: {str(e)}')
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'status': 'error', 'message': str(e)})
+        return render(request, 'components/finance/bank_payment_detail.html', {'payment': payment})
+
+@login_required
+@user_passes_test(is_finance)
+@require_http_methods(["POST"])
+def bank_payment_delete(request, payment_id):
+    """Handle bank payment deletion"""
+    try:
+        payment = get_object_or_404(BankPayment, payment_id=payment_id)
+        
+        # Check if payment can be deleted (only pending payments)
+        if payment.status not in ['pending']:
+            messages.error(request, 'Only pending payments can be deleted')
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'status': 'error', 'message': 'Only pending payments can be deleted'})
+            return redirect('aps_finance:bank_payment_detail', payment_id=payment_id)
+        
+        payment.delete()
+        
+        messages.success(request, 'Bank payment deleted successfully')
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'status': 'success'})
+        return redirect('aps_finance:bank_payment_list')
+    
+    except BankPayment.DoesNotExist:
+        messages.error(request, 'Payment not found')
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'status': 'error', 'message': 'Payment not found'})
+        return redirect('aps_finance:bank_payment_list')
+    
+    except Exception as e:
+        messages.error(request, f'Error deleting payment: {str(e)}')
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'status': 'error', 'message': str(e)})
+        return redirect('aps_finance:bank_payment_detail', payment_id=payment_id)
+
+# Payment Workflow Functions
+@login_required
+@user_passes_test(is_finance)
+@require_http_methods(["POST"])
+def bank_payment_verify(request, payment_id):
+    """Mark a payment as verified"""
+    try:
+        payment = get_object_or_404(BankPayment, payment_id=payment_id)
+        
+        # Check if payment can be verified
+        if payment.status != 'pending':
+            messages.error(request, 'Only pending payments can be verified')
+            return JsonResponse({'status': 'error', 'message': 'Only pending payments can be verified'}) \
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest' else redirect('bank_payment_detail', payment_id=payment_id)
+        
+        payment.status = 'verified'
+        payment.verified_by = request.user
+        payment.save()
+        
+        messages.success(request, 'Payment verified successfully')
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'status': 'success'})
+        return redirect('aps_finance:bank_payment_detail', payment_id=payment_id)
+    
+    except Exception as e:
+        messages.error(request, f'Error verifying payment: {str(e)}')
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'status': 'error', 'message': str(e)})
+        return redirect('aps_finance:bank_payment_detail', payment_id=payment_id)
+
+@login_required
+@user_passes_test(is_finance)
+@require_http_methods(["POST"])
+def bank_payment_approve(request, payment_id):
+    """Mark a payment as approved"""
+    try:
+        payment = get_object_or_404(BankPayment, payment_id=payment_id)
+        
+        # Check if payment can be approved
+        if payment.status != 'verified':
+            messages.error(request, 'Only verified payments can be approved')
+            return JsonResponse({'status': 'error', 'message': 'Only verified payments can be approved'}) \
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest' else redirect('bank_payment_detail', payment_id=payment_id)
+        
+        payment.status = 'approved'
+        payment.approved_by = request.user
+        payment.save()
+        
+        messages.success(request, 'Payment approved successfully')
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'status': 'success'})
+        return redirect('aps_finance:bank_payment_detail', payment_id=payment_id)
+    
+    except Exception as e:
+        messages.error(request, f'Error approving payment: {str(e)}')
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'status': 'error', 'message': str(e)})
+        return redirect('aps_finance:bank_payment_detail', payment_id=payment_id)
+
+@login_required
+@user_passes_test(is_finance)
+@require_http_methods(["POST"])
+def bank_payment_execute(request, payment_id):
+    """Mark a payment as executed and update bank balance"""
+    try:
+        payment = get_object_or_404(BankPayment, payment_id=payment_id)
+        
+        # Check if payment can be executed
+        if payment.status != 'approved':
+            messages.error(request, 'Only approved payments can be executed')
+            return JsonResponse({'status': 'error', 'message': 'Only approved payments can be executed'}) \
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest' else redirect('bank_payment_detail', payment_id=payment_id)
+        
+        # Update bank account balance
+        bank_account = payment.bank_account
+        if bank_account.current_balance < payment.amount:
+            messages.error(request, 'Insufficient balance in bank account')
+            return JsonResponse({'status': 'error', 'message': 'Insufficient balance in bank account'}) \
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest' else redirect('bank_payment_detail', payment_id=payment_id)
+        
+        bank_account.current_balance -= payment.amount
+        bank_account.save()
+        
+        payment.status = 'executed'
+        payment.save()
+        
+        messages.success(request, f'Payment executed successfully. Bank balance updated: {bank_account.current_balance}')
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'status': 'success', 'new_balance': bank_account.current_balance})
+        return redirect('aps_finance:bank_payment_detail', payment_id=payment_id)
+    
+    except Exception as e:
+        messages.error(request, f'Error executing payment: {str(e)}')
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'status': 'error', 'message': str(e)})
+        return redirect('aps_finance:bank_payment_detail', payment_id=payment_id)
+
+@login_required
+@user_passes_test(is_finance)
+@require_http_methods(["POST"])
+def bank_payment_mark_failed(request, payment_id):
+    """Mark a payment as failed"""
+    try:
+        payment = get_object_or_404(BankPayment, payment_id=payment_id)
+        
+        # Only approved payments can be marked as failed
+        if payment.status not in ['approved', 'pending', 'verified']:
+            messages.error(request, 'Only pending, verified or approved payments can be marked as failed')
+            return JsonResponse({'status': 'error', 'message': 'Invalid status for marking as failed'}) \
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest' else redirect('bank_payment_detail', payment_id=payment_id)
+        
+        payment.status = 'failed'
+        payment.save()
+        
+        messages.success(request, 'Payment marked as failed')
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'status': 'success'})
+        return redirect('aps_finance:bank_payment_detail', payment_id=payment_id)
+    
+    except Exception as e:
+        messages.error(request, f'Error marking payment as failed: {str(e)}')
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'status': 'error', 'message': str(e)})
+        return redirect('aps_finance:bank_payment_detail', payment_id=payment_id)
+
+# Bank Account Views
+@login_required
+@user_passes_test(is_finance)
+def bank_account_list(request):
+    """List all bank accounts"""
+    bank_accounts = BankAccount.objects.all().order_by('-is_active', 'bank_name')
+    
+    # Calculate account statistics
+    stats = bank_accounts.aggregate(
+        total_balance=Sum('current_balance', filter=Q(is_active=True)),
+        active_accounts=Count('id', filter=Q(is_active=True)),
+        total_accounts=Count('id')
+    )
+    
+    context = {
+        'bank_accounts': bank_accounts,
+        'stats': stats
+    }
+    return render(request, 'components/finance/bank_account_list.html', context)
+
+@login_required
+@user_passes_test(is_finance)
+@require_http_methods(["GET", "POST"])
+def bank_account_create(request):
+    """Create a new bank account"""
+    if request.method == 'POST':
+        try:
+            bank_account = BankAccount.objects.create(
+                name=request.POST.get('name'),
+                account_number=request.POST.get('account_number'),
+                bank_name=request.POST.get('bank_name'),
+                branch=request.POST.get('branch'),
+                ifsc_code=request.POST.get('ifsc_code'),
+                current_balance=request.POST.get('current_balance', 0),
+                is_active=bool(request.POST.get('is_active', True))
+            )
+            
+            messages.success(request, 'Bank account created successfully')
+            
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'status': 'success', 'account_id': bank_account.id})
+            return redirect('aps_finance:bank_account_list')
+        
+        except Exception as e:
+            messages.error(request, f'Error creating bank account: {str(e)}')
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'status': 'error', 'message': str(e)})
+            return redirect('aps_finance:bank_account_create')
+    
+    return render(request, 'components/finance/bank_account_form.html')
+
+@login_required
+@user_passes_test(is_finance)
+@require_http_methods(["GET", "POST"])
+def bank_account_update(request, account_id):
+    """Update a bank account"""
+    bank_account = get_object_or_404(BankAccount, id=account_id)
+    
+    if request.method == 'POST':
+        try:
+            bank_account.name = request.POST.get('name', bank_account.name)
+            bank_account.bank_name = request.POST.get('bank_name', bank_account.bank_name)
+            bank_account.branch = request.POST.get('branch', bank_account.branch)
+            bank_account.ifsc_code = request.POST.get('ifsc_code', bank_account.ifsc_code)
+            bank_account.current_balance = request.POST.get('current_balance', bank_account.current_balance)
+            bank_account.is_active = bool(request.POST.get('is_active', bank_account.is_active))
+            bank_account.save()
+            
+            messages.success(request, 'Bank account updated successfully')
+            
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'status': 'success'})
+            return redirect('aps_finance:bank_account_list')
+        
+        except Exception as e:
+            messages.error(request, f'Error updating bank account: {str(e)}')
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'status': 'error', 'message': str(e)})
+            return redirect('aps_finance:bank_account_update', account_id=account_id)
+    
+    context = {
+        'bank_account': bank_account
+    }
+    return render(request, 'components/finance/bank_account_form.html', context)
+
+# Dashboard and Reports
+@login_required
+@user_passes_test(is_finance)
+def bank_payment_dashboard(request):
+    """Display dashboard with bank payment statistics"""
+    # Get payment statistics
+    payments = BankPayment.objects.all()
+    
+    # Overall stats
+    overall_stats = payments.aggregate(
+        total_amount=Sum('amount'),
+        total_count=Count('id'),
+        pending_amount=Sum('amount', filter=Q(status='pending')),
+        verified_amount=Sum('amount', filter=Q(status='verified')),
+        approved_amount=Sum('amount', filter=Q(status='approved')),
+        executed_amount=Sum('amount', filter=Q(status='executed')),
+        failed_amount=Sum('amount', filter=Q(status='failed'))
+    )
+    
+    # Current month stats
+    current_month = timezone.now().replace(day=1)
+    monthly_stats = payments.filter(payment_date__gte=current_month).aggregate(
+        total_amount=Sum('amount'),
+        total_count=Count('id'),
+        executed_amount=Sum('amount', filter=Q(status='executed'))
+    )
+    
+    # Bank account stats
+    bank_accounts = BankAccount.objects.filter(is_active=True)
+    bank_stats = []
+    
+    for account in bank_accounts:
+        account_payments = payments.filter(bank_account=account)
+        bank_stats.append({
+            'account': account,
+            'total_payments': account_payments.count(),
+            'total_amount': account_payments.aggregate(Sum('amount'))['amount__sum'] or 0,
+            'executed_amount': account_payments.filter(status='executed').aggregate(Sum('amount'))['amount__sum'] or 0
+        })
+    
+    context = {
+        'overall_stats': overall_stats,
+        'monthly_stats': monthly_stats,
+        'bank_stats': bank_stats,
+        'recent_payments': payments.order_by('-created_at')[:10]
+    }
+    return render(request, 'components/finance/bank_payment_dashboard.html', context)
+
+@login_required
+@user_passes_test(is_finance)
+def bank_payment_report(request):
+    """Generate bank payment reports"""
+    report_type = request.GET.get('report_type', 'monthly')
+    
+    # Date filters
+    date_from = request.GET.get('date_from')
+    date_to = request.GET.get('date_to')
+    
+    filters = {}
+    if date_from:
+        filters['payment_date__gte'] = date_from
+    if date_to:
+        filters['payment_date__lte'] = date_to
+        
+    if request.GET.get('bank_account'):
+        filters['bank_account'] = request.GET.get('bank_account')
+    if request.GET.get('status'):
+        filters['status'] = request.GET.get('status')
+        
+    payments = BankPayment.objects.filter(**filters)
+    
+    # Generate report data based on report_type
+    report_data = None
+    
+    if report_type == 'monthly':
+        # Group payments by month
+        report_data = {}
+        for payment in payments:
+            month_key = payment.payment_date.strftime('%Y-%m')
+            if month_key not in report_data:
+                report_data[month_key] = {
+                    'month': payment.payment_date.strftime('%B %Y'),
+                    'total_amount': 0,
+                    'executed_amount': 0,
+                    'pending_amount': 0,
+                    'count': 0
+                }
+            
+            report_data[month_key]['total_amount'] += payment.amount
+            report_data[month_key]['count'] += 1
+            
+            if payment.status == 'executed':
+                report_data[month_key]['executed_amount'] += payment.amount
+            elif payment.status in ['pending', 'verified', 'approved']:
+                report_data[month_key]['pending_amount'] += payment.amount
+                
+        # Convert to list and sort
+        report_data = sorted(report_data.values(), key=lambda x: x['month'], reverse=True)
+        
+    elif report_type == 'bank_account':
+        # Group payments by bank account
+        report_data = {}
+        for payment in payments:
+            account_key = str(payment.bank_account.id)
+            if account_key not in report_data:
+                report_data[account_key] = {
+                    'account_name': str(payment.bank_account),
+                    'total_amount': 0,
+                    'executed_amount': 0,
+                    'pending_amount': 0,
+                    'count': 0
+                }
+            
+            report_data[account_key]['total_amount'] += payment.amount
+            report_data[account_key]['count'] += 1
+            
+            if payment.status == 'executed':
+                report_data[account_key]['executed_amount'] += payment.amount
+            elif payment.status in ['pending', 'verified', 'approved']:
+                report_data[account_key]['pending_amount'] += payment.amount
+                
+        # Convert to list
+        report_data = list(report_data.values())
+    
+    context = {
+        'report_type': report_type,
+        'report_data': report_data,
+        'payments': payments,
+        'filters': request.GET,
+        'bank_accounts': BankAccount.objects.filter(is_active=True),
+        'payment_statuses': dict(BankPayment.PAYMENT_STATUS)
+    }
+    return render(request, 'components/finance/bank_payment_report.html', context)
+
+
+
+@login_required
+@user_passes_test(is_finance)
+def subscription_payment_entry(request):
+    """Handle recurring subscription payments"""
+    if request.method == 'POST':
+        try:
+            # Create subscription record
+            subscription = Subscription.objects.create(
+                subscription_id=f"SUB-{timezone.now().strftime('%Y%m%d%H%M%S')}",
+                vendor_name=request.POST.get('vendor_name'),
+                subscription_type=request.POST.get('subscription_type'),
+                amount=request.POST.get('amount'),
+                frequency=request.POST.get('frequency'),
+                due_date=request.POST.get('due_date'),
+                auto_renew=request.POST.get('auto_renew') == 'on',
+                bank_account_id=request.POST.get('bank_account'),
+                status='active',
+                created_by=request.user
+            )
+
+            messages.success(request, 'Subscription created successfully')
+            return JsonResponse({'status': 'success', 'subscription_id': subscription.subscription_id})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+
+    # Get subscriptions with filters
+    filters = {}
+    if request.GET.get('status'):
+        filters['status'] = request.GET.get('status')
+    if request.GET.get('subscription_type'):
+        filters['subscription_type'] = request.GET.get('subscription_type')
+
+    subscriptions = Subscription.objects.filter(**filters).order_by('due_date')
+    bank_accounts = BankAccount.objects.filter(is_active=True)
+
+    # Get upcoming payments
+    today = timezone.now().date()
+    upcoming_payments = subscriptions.filter(
+        due_date__gte=today,
+        due_date__lte=today + timedelta(days=5),
+        status='active'
+    )
+
+    # Calculate subscription statistics
+    stats = {
+        'total_monthly': subscriptions.filter(frequency='monthly').aggregate(Sum('amount'))['amount__sum'] or 0,
+        'total_yearly': subscriptions.filter(frequency='yearly').aggregate(Sum('amount'))['amount__sum'] or 0,
+        'active_count': subscriptions.filter(status='active').count()
+    }
+
+    context = {
+        'subscriptions': subscriptions,
+        'bank_accounts': bank_accounts,
+        'subscription_types': dict(Subscription.SUBSCRIPTION_TYPES),
+        'frequencies': dict(Subscription.FREQUENCIES),
+        'statuses': dict(Subscription.STATUS_CHOICES),
+        'upcoming_payments': upcoming_payments,
+        'stats': stats,
+        'filters': request.GET
+    }
+    return render(request, 'components/finance/subscription_payment.html', context)

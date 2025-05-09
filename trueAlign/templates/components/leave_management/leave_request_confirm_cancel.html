@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-12">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-white shadow rounded-lg p-6">
+            <div class="text-center mb-8">
+                <h1 class="text-2xl font-bold text-gray-900">Cancel Leave Request</h1>
+                <p class="mt-2 text-gray-600">Are you sure you want to cancel this leave request?</p>
+            </div>
+
+            <div class="bg-gray-50 rounded-lg p-6 mb-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="text-sm text-gray-600">Leave Type</label>
+                        <p class="font-medium text-gray-900">{{ leave_request.leave_type.name }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm text-gray-600">Status</label>
+                        <p class="font-medium text-gray-900">{{ leave_request.status }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm text-gray-600">Start Date</label>
+                        <p class="font-medium text-gray-900">{{ leave_request.start_date|date:"M d, Y" }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm text-gray-600">End Date</label>
+                        <p class="font-medium text-gray-900">{{ leave_request.end_date|date:"M d, Y" }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-center space-x-4">
+                <form method="POST">
+                    {% csrf_token %}
+                    <button type="submit" 
+                            class="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                        Confirm Cancel
+                    </button>
+                </form>
+                <a href="{% url 'aps_leave:leave_request_list' %}" 
+                   class="px-6 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
+                    Back to List
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -270,31 +270,100 @@ class UserSession(models.Model):
             self.logout_time = timezone.make_aware(self.logout_time)
             
         super().save(*args, **kwargs)
+
+'''----------------------------------- LEAVE AREA -----------------------------------'''
+from django.core.exceptions import ValidationError
+from django.utils import timezone
+from datetime import timedelta
+from django.contrib.auth.models import User
+
+class LeavePolicy(models.Model):
+    """
+    Model to define leave policies based on user groups/roles
+    """
+    name = models.CharField(max_length=100)
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='leave_policies')
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"{self.name} for {self.group.name}"
+
+class LeaveType(models.Model):
+    """
+    Dynamic leave types that can be created by HR
+    """
+    name = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True, null=True)
+    is_paid = models.BooleanField(default=True)
+    requires_approval = models.BooleanField(default=True)
+    requires_documentation = models.BooleanField(default=False)
+    count_weekends = models.BooleanField(default=False)
+    can_be_half_day = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return self.name
+
+class LeaveAllocation(models.Model):
+    """
+    Allocation of different leave types for specific policies
+    """
+    policy = models.ForeignKey(LeavePolicy, on_delete=models.CASCADE, related_name='allocations')
+    leave_type = models.ForeignKey(LeaveType, on_delete=models.CASCADE)
+    annual_days = models.DecimalField(max_digits=5, decimal_places=1)
+    carry_forward_limit = models.DecimalField(max_digits=5, decimal_places=1, default=0)
+    max_consecutive_days = models.IntegerField(default=0)  # 0 means no limit
+    advance_notice_days = models.IntegerField(default=0)  # How many days in advance leave should be requested
+    
+    class Meta:
+        unique_together = ('policy', 'leave_type')
         
+    def __str__(self):
+        return f"{self.leave_type.name} allocation for {self.policy.name}"
 
-'''---------- ATTENDANCE AREA ----------'''
-
-class Leave(models.Model):
-    LEAVE_TYPES = [
-        ('Sick Leave', 'Sick Leave'),
-        ('Casual Leave', 'Casual Leave'), 
-        ('Loss of Pay', 'Loss of Pay'),
-        ('Emergency', 'Emergency')
-    ]
-
+class UserLeaveBalance(models.Model):
+    """
+    Tracks individual user's leave balances
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='leave_balances')
+    leave_type = models.ForeignKey(LeaveType, on_delete=models.CASCADE)
+    year = models.IntegerField()
+    allocated = models.DecimalField(max_digits=5, decimal_places=1)
+    used = models.DecimalField(max_digits=5, decimal_places=1, default=0)
+    carried_forward = models.DecimalField(max_digits=5, decimal_places=1, default=0)
+    additional = models.DecimalField(max_digits=5, decimal_places=1, default=0)  # For comp-offs or special additions
+    
+    class Meta:
+        unique_together = ('user', 'leave_type', 'year')
+        
+    @property
+    def available(self):
+        return self.allocated + self.carried_forward + self.additional - self.used
+    
+    def __str__(self):
+        return f"{self.user.username}'s {self.leave_type.name} balance for {self.year}"
+        
+class LeaveRequest(models.Model):
+    """
+    Enhanced leave request model with dynamic leave types
+    """
     STATUS_CHOICES = [
         ('Pending', 'Pending'),
         ('Approved', 'Approved'),
         ('Rejected', 'Rejected'), 
         ('Cancelled', 'Cancelled')
     ]
-
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    leave_type = models.CharField(max_length=50, choices=LEAVE_TYPES)
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='leave_requests')
+    leave_type = models.ForeignKey(LeaveType, on_delete=models.CASCADE)
     start_date = models.DateField()
     end_date = models.DateField()
     half_day = models.BooleanField(default=False)
-    leave_days = models.DecimalField(max_digits=4, decimal_places=1, default=0)  # Changed to have default=0
+    leave_days = models.DecimalField(max_digits=5, decimal_places=1, default=0)
     reason = models.TextField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
     approver = models.ForeignKey(User, related_name='leave_approvals', on_delete=models.SET_NULL, null=True, blank=True)
@@ -309,13 +378,47 @@ class Leave(models.Model):
         indexes = [
             models.Index(fields=['user', 'start_date', 'status']),
         ]
-
+    
     def clean(self):
+        if not self.user_id:
+            raise ValidationError("User is required")
+            
+        # Check if end date is after start date
         if self.start_date > self.end_date:
             raise ValidationError("End date must be after start date")
         
+        # Check if leave type allows half day
+        if self.half_day and not self.leave_type.can_be_half_day:
+            raise ValidationError(f"{self.leave_type.name} cannot be taken as half day")
+        
+        # Check for documentation if required
+        if self.leave_type.requires_documentation and not self.documentation:
+            raise ValidationError(f"{self.leave_type.name} requires supporting documentation")
+        
+        # Check for advance notice requirement
+        user_policy = self.get_user_policy()
+        if user_policy:
+            try:
+                allocation = LeaveAllocation.objects.get(policy=user_policy, leave_type=self.leave_type)
+                if allocation.advance_notice_days > 0 and not self.is_retroactive:
+                    min_request_date = timezone.now().date() + timedelta(days=allocation.advance_notice_days)
+                    if self.start_date < min_request_date:
+                        raise ValidationError(
+                            f"{self.leave_type.name} requires {allocation.advance_notice_days} days advance notice"
+                        )
+                
+                # Check consecutive days limit
+                if allocation.max_consecutive_days > 0:
+                    days_requested = (self.end_date - self.start_date).days + 1
+                    if days_requested > allocation.max_consecutive_days:
+                        raise ValidationError(
+                            f"You can only take {allocation.max_consecutive_days} consecutive days of {self.leave_type.name}"
+                        )
+            except LeaveAllocation.DoesNotExist:
+                pass
+        
         # Check for overlapping leaves
-        overlapping_leaves = Leave.objects.filter(
+        overlapping_leaves = LeaveRequest.objects.filter(
             status='Approved',
             start_date__lte=self.end_date,
             end_date__gte=self.start_date,
@@ -324,57 +427,167 @@ class Leave(models.Model):
         
         if overlapping_leaves.exists():
             raise ValidationError("You already have approved leave during this period")
-
-    def auto_convert_leave_type(self):
-        """Auto convert leave type based on balance"""
-        balance = self.get_leave_balance(self.user)
         
-        if self.leave_type == 'Sick Leave' and balance['total_leaves'] < self.leave_days:
-            self.leave_type = 'Loss of Pay'
-
+        # Check leave balance
+        if not self.has_sufficient_balance():
+            raise ValidationError(f"Insufficient {self.leave_type.name} balance")
+    
+    def get_user_policy(self):
+        """Get the applicable leave policy for this user"""
+        if not self.user_id:
+            return None
+            
+        user_groups = self.user.groups.all()
+        if not user_groups:
+            return None
+        
+        # Get the first active policy that matches any of user's groups
+        try:
+            return LeavePolicy.objects.filter(
+                group__in=user_groups,
+                is_active=True
+            ).first()
+        except LeavePolicy.DoesNotExist:
+            return None
+    
     def calculate_leave_days(self):
+        """Calculate actual leave days based on leave type configuration"""
         if not (self.start_date and self.end_date):
             return 0
             
         total_days = 0
         current_date = self.start_date
+        
         while current_date <= self.end_date:
-            # Skip only Sundays unless emergency leave
-            if current_date.weekday() != 6 or self.leave_type == 'Emergency':
-                # For half day leave requests, count each day as 0.5
+            # Skip weekends unless leave type counts weekends
+            is_weekend = current_date.weekday() >= 5  # Saturday or Sunday
+            
+            if not is_weekend or self.leave_type.count_weekends:
                 if self.half_day:
                     total_days += 0.5
                 else:
                     total_days += 1.0
+                    
             current_date += timedelta(days=1)
             
         return total_days
 
+    def has_sufficient_balance(self):
+        """Check if user has sufficient leave balance"""
+        if not self.user_id:
+            return False
+            
+        # Skip balance check for unpaid leave types
+        if not self.leave_type.is_paid:
+            return True
+            
+        year = self.start_date.year
+        try:
+            balance = UserLeaveBalance.objects.get(
+                user=self.user,
+                leave_type=self.leave_type,
+                year=year
+            )
+            days_needed = self.calculate_leave_days()
+            return balance.available >= days_needed
+        except UserLeaveBalance.DoesNotExist:
+            return False
+    
+    def auto_convert_leave_type(self):
+        """Try to convert to Loss of Pay if insufficient balance"""
+        # Find Loss of Pay leave type
+        try:
+            loss_of_pay = LeaveType.objects.get(name='Loss of Pay', is_paid=False)
+            self.leave_type = loss_of_pay
+            return True
+        except LeaveType.DoesNotExist:
+            return False
+    
+    def update_leave_balance(self):
+        """Update user's leave balance when leave is approved"""
+        if not self.user_id or not self.leave_type.is_paid:
+            return
+            
+        year = self.start_date.year
+        balance, created = UserLeaveBalance.objects.get_or_create(
+            user=self.user,
+            leave_type=self.leave_type,
+            year=year,
+            defaults={'allocated': 0}
+        )
+        
+        balance.used += self.leave_days
+        balance.save()
+    
+    def revert_leave_balance(self):
+        """Revert leave balance when leave is cancelled/rejected"""
+        if not self.user_id or not self.leave_type.is_paid or self.status != 'Approved':
+            return
+            
+        year = self.start_date.year
+        try:
+            balance = UserLeaveBalance.objects.get(
+                user=self.user,
+                leave_type=self.leave_type,
+                year=year
+            )
+            balance.used -= self.leave_days
+            balance.save()
+        except UserLeaveBalance.DoesNotExist:
+            pass
+    
     def save(self, *args, **kwargs):
+        if not self.user_id:
+            raise ValidationError("User is required")
+            
         # Convert half_day string to boolean if needed
         if isinstance(self.half_day, str):
             self.half_day = self.half_day.lower() == 'true'
             
-        # Recalculate leave days on every save to ensure accuracy
+        # Calculate leave days
         self.leave_days = self.calculate_leave_days()
-            
-        if not self.pk:  # New leave request
-            self.auto_convert_leave_type()
-            
-        super().save(*args, **kwargs)
         
-        if self.status == 'Approved':
-            self.update_attendance()
-
+        # Check if this is a status change
+        if self.pk:
+            old_instance = LeaveRequest.objects.get(pk=self.pk)
+            old_status = old_instance.status
+            
+            # Handle status change from Approved to another status
+            if old_status == 'Approved' and self.status != 'Approved':
+                self.revert_leave_balance()
+                
+            # Handle status change to Approved
+            elif old_status != 'Approved' and self.status == 'Approved':
+                self.update_leave_balance()
+                self.update_attendance()
+        else:
+            # New leave request - try to auto-convert if insufficient balance
+            if not self.has_sufficient_balance():
+                self.auto_convert_leave_type()
+            
+            # If newly approved, update balance and attendance
+            if self.status == 'Approved':
+                self.update_leave_balance()
+                self.update_attendance()
+        
+        super().save(*args, **kwargs)
+    
     def update_attendance(self):
         """Update attendance records for approved leave period"""
+        if not self.user_id:
+            return
+            
         current_date = self.start_date
         while current_date <= self.end_date:
-            if current_date.weekday() != 6:  # All days except Sunday
+            is_weekend = current_date.weekday() >= 5  # Saturday or Sunday
+            
+            # Skip weekends unless leave type counts weekends
+            if not is_weekend or self.leave_type.count_weekends:
                 defaults = {
                     'status': 'On Leave',
-                    'leave_type': self.leave_type,
-                    'is_half_day': self.half_day
+                    'leave_type': self.leave_type.name,
+                    'is_half_day': self.half_day,
+                    'remarks': f"Auto-marked by leave system: {self.leave_type.name}"
                 }
                     
                 Attendance.objects.update_or_create(
@@ -384,68 +597,244 @@ class Leave(models.Model):
                 )
             current_date += timedelta(days=1)
 
-    @classmethod
-    def get_leave_balance(cls, user):
-        """Calculate leave balance from total 18 leaves per year"""
-        year = timezone.now().year
-        month = timezone.now().month
+class CompOffRequest(models.Model):
+    """
+    Model to track comp-off requests and approvals
+    """
+    STATUS_CHOICES = [
+        ('Pending', 'Pending'),
+        ('Approved', 'Approved'),
+        ('Rejected', 'Rejected')
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comp_off_requests')
+    worked_date = models.DateField()
+    reason = models.TextField()
+    hours_worked = models.DecimalField(max_digits=4, decimal_places=1)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
+    approver = models.ForeignKey(User, related_name='comp_off_approvals', on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
         
-        # Total annual leave allocation is 18
-        TOTAL_ANNUAL_LEAVES = 18.0
-        
-        # Get used leaves - include all counted leave types
-        used_leaves = float(cls.objects.filter(
-            user=user,
-            status='Approved',
-            start_date__year=year,
-            leave_type__in=['Sick Leave', 'Casual Leave', 'Half Day', 'Emergency']
-        ).aggregate(
-            total=Sum('leave_days')
-        )['total'] or 0)
-        
-        # Calculate comp off balance
-        comp_off_balance = float(cls.get_comp_off_balance(user))
-        
-        # Calculate loss of pay leaves - maintain separate tracking
-        loss_of_pay = float(cls.objects.filter(
-            user=user,
-            status='Approved',
-            leave_type='Loss of Pay',
-            start_date__year=year
-        ).aggregate(
-            total=Sum('leave_days')
-        )['total'] or 0)
-        
-        # Calculate total available leaves
-        total_available = TOTAL_ANNUAL_LEAVES - used_leaves + comp_off_balance
-        
-        return {
-            'total_leaves': total_available,
-            'used_leaves': used_leaves,
-            'comp_off': comp_off_balance,
-            'loss_of_pay': loss_of_pay
-        }
+        # If approved, update the user's comp-off balance
+        if self.status == 'Approved':
+            self.update_comp_off_balance()
+    
+    def update_comp_off_balance(self):
+        """Update user's comp-off balance when request is approved"""
+        # Find comp-off leave type
+        try:
+            comp_off_type = LeaveType.objects.get(name='Comp Off')
+            year = self.worked_date.year
+            
+            # Calculate days - typical 8 hour workday
+            days_earned = self.hours_worked / 8.0
+            
+            balance, created = UserLeaveBalance.objects.get_or_create(
+                user=self.user,
+                leave_type=comp_off_type,
+                year=year,
+                defaults={'allocated': 0}
+            )
+            
+            balance.additional += days_earned
+            balance.save()
+            
+            # Update attendance record
+            Attendance.objects.update_or_create(
+                user=self.user,
+                date=self.worked_date,
+                defaults={
+                    'status': 'Comp Off',
+                    'is_weekend': True if self.worked_date.weekday() >= 5 else False,
+                    'total_hours': self.hours_worked,
+                    'overtime_hours': self.hours_worked,
+                    'is_overtime_approved': True,
+                    'remarks': f"Comp-off approved for {self.hours_worked} hours"
+                }
+            )
+        except LeaveType.DoesNotExist:
+            pass
 
-    @classmethod
-    def get_comp_off_balance(cls, user):
-        """Track comp-off earned and used"""
-        year = timezone.now().year
         
-        earned = float(Attendance.objects.filter(
-            user=user,
-            date__year=year,
-            is_weekend=True,
-            status='Present'
-        ).count())
+
+'''---------- ATTENDANCE AREA ----------'''
+
+# class Leave(models.Model):
+#     LEAVE_TYPES = [
+#         ('Sick Leave', 'Sick Leave'),
+#         ('Casual Leave', 'Casual Leave'), 
+#         ('Loss of Pay', 'Loss of Pay'),
+#         ('Emergency', 'Emergency')
+#     ]
+
+#     STATUS_CHOICES = [
+#         ('Pending', 'Pending'),
+#         ('Approved', 'Approved'),
+#         ('Rejected', 'Rejected'), 
+#         ('Cancelled', 'Cancelled')
+#     ]
+
+#     user = models.ForeignKey(User, on_delete=models.CASCADE)
+#     leave_type = models.CharField(max_length=50, choices=LEAVE_TYPES)
+#     start_date = models.DateField()
+#     end_date = models.DateField()
+#     half_day = models.BooleanField(default=False)
+#     leave_days = models.DecimalField(max_digits=4, decimal_places=1, default=0)  # Changed to have default=0
+#     reason = models.TextField()
+#     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
+#     approver = models.ForeignKey(User, related_name='leave_approvals', on_delete=models.SET_NULL, null=True, blank=True)
+#     rejection_reason = models.TextField(null=True, blank=True)
+#     suggested_dates = models.JSONField(null=True, blank=True)
+#     documentation = models.FileField(upload_to='leave_docs/', null=True, blank=True)
+#     is_retroactive = models.BooleanField(default=False)
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     updated_at = models.DateTimeField(auto_now=True)
+    
+#     class Meta:
+#         indexes = [
+#             models.Index(fields=['user', 'start_date', 'status']),
+#         ]
+
+#     def clean(self):
+#         if self.start_date > self.end_date:
+#             raise ValidationError("End date must be after start date")
         
-        used = float(cls.objects.filter(
-            user=user,
-            leave_type='Comp Off',
-            status='Approved',
-            start_date__year=year
-        ).aggregate(total=Sum('leave_days'))['total'] or 0)
+#         # Check for overlapping leaves
+#         overlapping_leaves = Leave.objects.filter(
+#             status='Approved',
+#             start_date__lte=self.end_date,
+#             end_date__gte=self.start_date,
+#             user=self.user
+#         ).exclude(id=self.id)
         
-        return earned - used
+#         if overlapping_leaves.exists():
+#             raise ValidationError("You already have approved leave during this period")
+
+#     def auto_convert_leave_type(self):
+#         """Auto convert leave type based on balance"""
+#         balance = self.get_leave_balance(self.user)
+        
+#         if self.leave_type == 'Sick Leave' and balance['total_leaves'] < self.leave_days:
+#             self.leave_type = 'Loss of Pay'
+
+#     def calculate_leave_days(self):
+#         if not (self.start_date and self.end_date):
+#             return 0
+            
+#         total_days = 0
+#         current_date = self.start_date
+#         while current_date <= self.end_date:
+#             # Skip only Sundays unless emergency leave
+#             if current_date.weekday() != 6 or self.leave_type == 'Emergency':
+#                 # For half day leave requests, count each day as 0.5
+#                 if self.half_day:
+#                     total_days += 0.5
+#                 else:
+#                     total_days += 1.0
+#             current_date += timedelta(days=1)
+            
+#         return total_days
+
+#     def save(self, *args, **kwargs):
+#         # Convert half_day string to boolean if needed
+#         if isinstance(self.half_day, str):
+#             self.half_day = self.half_day.lower() == 'true'
+            
+#         # Recalculate leave days on every save to ensure accuracy
+#         self.leave_days = self.calculate_leave_days()
+            
+#         if not self.pk:  # New leave request
+#             self.auto_convert_leave_type()
+            
+#         super().save(*args, **kwargs)
+        
+#         if self.status == 'Approved':
+#             self.update_attendance()
+
+#     def update_attendance(self):
+#         """Update attendance records for approved leave period"""
+#         current_date = self.start_date
+#         while current_date <= self.end_date:
+#             if current_date.weekday() != 6:  # All days except Sunday
+#                 defaults = {
+#                     'status': 'On Leave',
+#                     'leave_type': self.leave_type,
+#                     'is_half_day': self.half_day
+#                 }
+                    
+#                 Attendance.objects.update_or_create(
+#                     user=self.user,
+#                     date=current_date,
+#                     defaults=defaults
+#                 )
+#             current_date += timedelta(days=1)
+
+#     @classmethod
+#     def get_leave_balance(cls, user):
+#         """Calculate leave balance from total 18 leaves per year"""
+#         year = timezone.now().year
+#         month = timezone.now().month
+        
+#         # Total annual leave allocation is 18
+#         TOTAL_ANNUAL_LEAVES = 18.0
+        
+#         # Get used leaves - include all counted leave types
+#         used_leaves = float(cls.objects.filter(
+#             user=user,
+#             status='Approved',
+#             start_date__year=year,
+#             leave_type__in=['Sick Leave', 'Casual Leave', 'Half Day', 'Emergency']
+#         ).aggregate(
+#             total=Sum('leave_days')
+#         )['total'] or 0)
+        
+#         # Calculate comp off balance
+#         comp_off_balance = float(cls.get_comp_off_balance(user))
+        
+#         # Calculate loss of pay leaves - maintain separate tracking
+#         loss_of_pay = float(cls.objects.filter(
+#             user=user,
+#             status='Approved',
+#             leave_type='Loss of Pay',
+#             start_date__year=year
+#         ).aggregate(
+#             total=Sum('leave_days')
+#         )['total'] or 0)
+        
+#         # Calculate total available leaves
+#         total_available = TOTAL_ANNUAL_LEAVES - used_leaves + comp_off_balance
+        
+#         return {
+#             'total_leaves': total_available,
+#             'used_leaves': used_leaves,
+#             'comp_off': comp_off_balance,
+#             'loss_of_pay': loss_of_pay
+#         }
+
+#     @classmethod
+#     def get_comp_off_balance(cls, user):
+#         """Track comp-off earned and used"""
+#         year = timezone.now().year
+        
+#         earned = float(Attendance.objects.filter(
+#             user=user,
+#             date__year=year,
+#             is_weekend=True,
+#             status='Present'
+#         ).count())
+        
+#         used = float(cls.objects.filter(
+#             user=user,
+#             leave_type='Comp Off',
+#             status='Approved',
+#             start_date__year=year
+#         ).aggregate(total=Sum('leave_days'))['total'] or 0)
+        
+#         return earned - used
     
 # First, let's create a ShiftMaster model to define different shifts
 class ShiftMaster(models.Model):

@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-100 py-8">
+    <div class="max-w-4xl mx-auto px-4">
+        <!-- Header -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div class="flex justify-between items-center">
+                <h1 class="text-2xl font-bold text-gray-800">Leave Request Details</h1>
+                <div class="flex space-x-2">
+                    {% if leave_request.status == 'Pending' %}
+                        {% if can_approve %}
+                            <a href="{% url 'aps_leave:leave_request_approve' leave_request.id %}" 
+                               class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
+                                Approve
+                            </a>
+                            <a href="{% url 'aps_leave:leave_request_reject' leave_request.id %}"
+                               class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">
+                                Reject
+                            </a>
+                        {% endif %}
+                        {% if request.user == leave_request.user %}
+                            <a href="{% url 'aps_leave:leave_request_cancel' leave_request.id %}"
+                               class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">
+                                Cancel
+                            </a>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Leave Request Info -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div class="grid grid-cols-2 gap-6">
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-700 mb-4">Request Information</h2>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-sm text-gray-600">Employee</label>
+                            <p class="font-medium">{{ leave_request.user.get_full_name }}</p>
+                        </div>
+                        <div>
+                            <label class="text-sm text-gray-600">Leave Type</label>
+                            <p class="font-medium">{{ leave_request.leave_type.name }}</p>
+                        </div>
+                        <div>
+                            <label class="text-sm text-gray-600">Status</label>
+                            <span class="px-3 py-1 text-sm rounded-full 
+                                {% if leave_request.status == 'Approved' %}bg-green-100 text-green-800
+                                {% elif leave_request.status == 'Rejected' %}bg-red-100 text-red-800
+                                {% elif leave_request.status == 'Pending' %}bg-yellow-100 text-yellow-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ leave_request.status }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-700 mb-4">Leave Period</h2>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-sm text-gray-600">Start Date</label>
+                            <p class="font-medium">{{ leave_request.start_date|date:"M d, Y" }}</p>
+                        </div>
+                        <div>
+                            <label class="text-sm text-gray-600">End Date</label>
+                            <p class="font-medium">{{ leave_request.end_date|date:"M d, Y" }}</p>
+                        </div>
+                        <div>
+                            <label class="text-sm text-gray-600">Total Days</label>
+                            <p class="font-medium">{{ leave_request.leave_days }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% if leave_request.reason %}
+            <div class="mt-6">
+                <h2 class="text-lg font-semibold text-gray-700 mb-2">Reason</h2>
+                <p class="text-gray-600 bg-gray-50 p-4 rounded">{{ leave_request.reason }}</p>
+            </div>
+            {% endif %}
+
+            {% if leave_request.approver %}
+            <div class="mt-6 pt-6 border-t border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-700 mb-2">Approval Information</h2>
+                <div class="grid grid-cols-2 gap-6">
+                    <div>
+                        <label class="text-sm text-gray-600">Approved By</label>
+                        <p class="font-medium">{{ leave_request.approver.get_full_name }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm text-gray-600">Approval Date</label>
+                        <p class="font-medium">{{ leave_request.approval_date|date:"M d, Y H:i" }}</p>
+                    </div>
+                </div>
+                {% if leave_request.approval_notes %}
+                <div class="mt-4">
+                    <label class="text-sm text-gray-600">Approval Notes</label>
+                    <p class="text-gray-600 bg-gray-50 p-4 rounded mt-1">{{ leave_request.approval_notes }}</p>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Back Button -->
+        <div class="flex justify-start">
+            <a href="{% url 'aps_leave:leave_request_list' %}" 
+               class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">
+                Back to List
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

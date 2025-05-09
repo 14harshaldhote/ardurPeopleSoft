@@ -1,0 +1,217 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-100 py-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header Section -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Subscription Management</h1>
+            <p class="mt-2 text-sm text-gray-600">Manage recurring subscription payments and track expenses</p>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 gap-5 sm:grid-cols-3 mb-8">
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <dt class="text-sm font-medium text-gray-500">Monthly Subscriptions</dt>
+                    <dd class="mt-1 text-3xl font-semibold text-indigo-600">${{ stats.total_monthly|floatformat:2 }}</dd>
+                </div>
+            </div>
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <dt class="text-sm font-medium text-gray-500">Yearly Subscriptions</dt>
+                    <dd class="mt-1 text-3xl font-semibold text-green-600">${{ stats.total_yearly|floatformat:2 }}</dd>
+                </div>
+            </div>
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <dt class="text-sm font-medium text-gray-500">Active Subscriptions</dt>
+                    <dd class="mt-1 text-3xl font-semibold text-blue-600">{{ stats.active_count }}</dd>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add New Subscription Button -->
+        <div class="mb-6">
+            <button type="button" onclick="openSubscriptionModal()" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                Add New Subscription
+            </button>
+        </div>
+
+        <!-- Filters -->
+        <div class="bg-white shadow rounded-lg mb-8 p-4">
+            <form method="GET" class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Status</label>
+                    <select name="status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <option value="">All</option>
+                        {% for key, value in statuses.items %}
+                            <option value="{{ key }}" {% if filters.status == key %}selected{% endif %}>{{ value }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Type</label>
+                    <select name="subscription_type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <option value="">All</option>
+                        {% for key, value in subscription_types.items %}
+                            <option value="{{ key }}" {% if filters.subscription_type == key %}selected{% endif %}>{{ value }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button type="submit" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded shadow">
+                        Apply Filters
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Subscriptions List -->
+        <div class="bg-white shadow overflow-hidden sm:rounded-md">
+            <ul role="list" class="divide-y divide-gray-200">
+                {% for subscription in subscriptions %}
+                <li>
+                    <div class="px-4 py-4 sm:px-6">
+                        <div class="flex items-center justify-between">
+                            <div class="flex flex-col">
+                                <p class="text-sm font-medium text-indigo-600 truncate">{{ subscription.vendor_name }}</p>
+                                <p class="text-sm text-gray-500">{{ subscription.subscription_type }}</p>
+                            </div>
+                            <div class="flex flex-col items-end">
+                                <p class="text-sm font-semibold text-gray-900">${{ subscription.amount|floatformat:2 }}</p>
+                                <p class="text-sm text-gray-500">{{ subscription.frequency }}</p>
+                            </div>
+                        </div>
+                        <div class="mt-2 sm:flex sm:justify-between">
+                            <div class="sm:flex">
+                                <p class="flex items-center text-sm text-gray-500">
+                                    Due: {{ subscription.due_date|date:"M d, Y" }}
+                                </p>
+                            </div>
+                            <div class="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                    {% if subscription.status == 'active' %}bg-green-100 text-green-800
+                                    {% else %}bg-red-100 text-red-800{% endif %}">
+                                    {{ subscription.status|title }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+                {% empty %}
+                <li class="px-4 py-4 sm:px-6 text-center text-gray-500">
+                    No subscriptions found
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for adding new subscription -->
+<div id="subscriptionModal" class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <form id="subscriptionForm" method="POST" class="p-6">
+                {% csrf_token %}
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Add New Subscription</h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Vendor Name</label>
+                        <input type="text" name="vendor_name" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Subscription Type</label>
+                        <select name="subscription_type" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            {% for key, value in subscription_types.items %}
+                                <option value="{{ key }}">{{ value }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Amount</label>
+                        <input type="number" step="0.01" name="amount" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Frequency</label>
+                        <select name="frequency" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            {% for key, value in frequencies.items %}
+                                <option value="{{ key }}">{{ value }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Due Date</label>
+                        <input type="date" name="due_date" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Bank Account</label>
+                        <select name="bank_account" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            {% for account in bank_accounts %}
+                                <option value="{{ account.id }}">{{ account.bank_name }} - {{ account.account_number }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="flex items-center">
+                        <input type="checkbox" name="auto_renew" id="auto_renew" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                        <label for="auto_renew" class="ml-2 block text-sm text-gray-900">Auto Renew</label>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button type="button" onclick="closeSubscriptionModal()" class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Save
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function openSubscriptionModal() {
+    document.getElementById('subscriptionModal').classList.remove('hidden');
+}
+
+function closeSubscriptionModal() {
+    document.getElementById('subscriptionModal').classList.add('hidden');
+}
+
+document.getElementById('subscriptionForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    
+    fetch('{% url "subscription_payment_entry" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if(data.status === 'success') {
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while saving the subscription');
+    });
+});
+</script>
+{% endblock %}

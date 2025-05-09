@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-gray-900">Leave Requests</h1>
+        <a href="{% url 'aps_leave:leave_request_create' %}" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">
+            New Leave Request
+        </a>
+    </div>
+
+    <!-- Filters for HR/Admin -->
+    {% if is_hr or is_admin %}
+    <div class="bg-white rounded-lg shadow mb-6 p-4">
+        <h2 class="text-lg font-semibold mb-4">Filters</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <select class="form-select rounded-lg border-gray-300" id="department-filter">
+                <option value="">All Departments</option>
+                {% for dept in departments %}
+                    <option value="{{ dept.id }}">{{ dept.name }}</option>
+                {% endfor %}
+            </select>
+            <select class="form-select rounded-lg border-gray-300" id="status-filter">
+                <option value="">All Statuses</option>
+                <option value="Pending">Pending</option>
+                <option value="Approved">Approved</option>
+                <option value="Rejected">Rejected</option>
+            </select>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Leave Requests Table -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Leave Type</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dates</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Balance</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for leave_request in page_obj %}
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">{{ leave_request.user.get_full_name }}</div>
+                        <div class="text-sm text-gray-500">{{ leave_request.user.email }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="text-sm text-gray-900">{{ leave_request.leave_type.name }}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">
+                            {{ leave_request.start_date|date:"M d, Y" }} - {{ leave_request.end_date|date:"M d, Y" }}
+                        </div>
+                        <div class="text-sm text-gray-500">{{ leave_request.leave_days }} day(s)</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                            {% if leave_request.status == 'Approved' %}bg-green-100 text-green-800
+                            {% elif leave_request.status == 'Rejected' %}bg-red-100 text-red-800
+                            {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                            {{ leave_request.status }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        {% for user_id, leave_types in user_balances.items %}
+                            {% if user_id == leave_request.user.id %}
+                                {% for leave_type_id, balance in leave_types.items %}
+                                    {% if leave_type_id == leave_request.leave_type.id %}
+                                        <div class="text-sm text-gray-900">
+                                            Available: {{ balance.available|default:"N/A" }}
+                                        </div>
+                                        <div class="text-sm text-gray-500">
+                                            Used: {{ balance.used|default:"0" }}/{{ balance.allocated|default:"0" }}
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                        {% endfor %}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {% if can_approve and leave_request.status == 'Pending' %}
+                        <button class="text-green-600 hover:text-green-900 mr-3">Approve</button>
+                        <button class="text-red-600 hover:text-red-900">Reject</button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.paginator.num_pages > 1 %}
+    <div class="flex justify-center mt-6">
+        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Previous</a>
+            {% endif %}
+            
+            {% for i in page_obj.paginator.page_range %}
+            <a href="?page={{ i }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium {% if page_obj.number == i %}text-indigo-600 bg-indigo-50{% else %}text-gray-700 hover:bg-gray-50{% endif %}">{{ i }}</a>
+            {% endfor %}
+            
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Next</a>
+            {% endif %}
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+    <div class="px-4 py-6 sm:px-0">
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+            <div class="px-4 py-5 border-b border-gray-200 sm:px-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">
+                    Reject Comp-off Request
+                </h3>
+                <p class="mt-1 text-sm text-gray-500">
+                    Review and reject the comp-off request
+                </p>
+            </div>
+
+            <div class="px-4 py-5 sm:px-6">
+                <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Employee Name</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ comp_off_request.user.get_full_name }}</dd>
+                    </div>
+
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Department</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ comp_off_request.user.profile.department|default:'-' }}</dd>
+                    </div>
+
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Work Date</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ comp_off_request.work_date|date:"Y-m-d" }}</dd>
+                    </div>
+
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Hours Worked</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ comp_off_request.hours_worked }}</dd>
+                    </div>
+
+                    <div class="sm:col-span-2">
+                        <dt class="text-sm font-medium text-gray-500">Reason</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ comp_off_request.reason }}</dd>
+                    </div>
+                </dl>
+
+                <div class="mt-8">
+                    <form method="post" class="space-y-4">
+                        {% csrf_token %}
+                        <div class="flex justify-end space-x-4">
+                            <a href="{% url 'aps_leave:comp_off_request_list' %}" 
+                               class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                Cancel
+                            </a>
+                            <button type="submit"
+                                    class="px-4 py-2 border border-transparent rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                Reject Request
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

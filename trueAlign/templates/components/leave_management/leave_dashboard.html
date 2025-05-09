@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header Section -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-800">Leave Dashboard</h1>
+        <p class="text-gray-600">Manage your leave requests and view balances</p>
+    </div>
+
+    <!-- Leave Balance Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        {% for balance in user_balances %}
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h3 class="text-lg font-semibold text-gray-800">{{ balance.leave_type.name }}</h3>
+            <div class="mt-4 space-y-2">
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Available</span>
+                    <span class="font-medium">{{ balance.available }} days</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Used</span>
+                    <span class="font-medium">{{ balance.used }} days</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Total Allocated</span>
+                    <span class="font-medium">{{ balance.allocated }} days</span>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Pending Leaves Section -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4">Pending Leave Requests</h2>
+            {% if pending_leaves %}
+            <div class="space-y-4">
+                {% for leave in pending_leaves %}
+                <div class="border-l-4 border-yellow-400 bg-yellow-50 p-4 rounded">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="font-medium">{{ leave.leave_type.name }}</p>
+                            <p class="text-sm text-gray-600">{{ leave.start_date|date:"M d, Y" }} - {{ leave.end_date|date:"M d, Y" }}</p>
+                            <p class="text-sm text-gray-600">{{ leave.leave_days }} days</p>
+                        </div>
+                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-200 text-yellow-800">
+                            Pending
+                        </span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-gray-600">No pending leave requests</p>
+            {% endif %}
+        </div>
+
+        <!-- Upcoming Approved Leaves -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4">Upcoming Approved Leaves</h2>
+            {% if upcoming_leaves %}
+            <div class="space-y-4">
+                {% for leave in upcoming_leaves %}
+                <div class="border-l-4 border-green-400 bg-green-50 p-4 rounded">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="font-medium">{{ leave.leave_type.name }}</p>
+                            <p class="text-sm text-gray-600">{{ leave.start_date|date:"M d, Y" }} - {{ leave.end_date|date:"M d, Y" }}</p>
+                            <p class="text-sm text-gray-600">{{ leave.leave_days }} days</p>
+                        </div>
+                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-200 text-green-800">
+                            Approved
+                        </span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-gray-600">No upcoming approved leaves</p>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if can_approve %}
+    <!-- Manager/HR Section -->
+    <div class="mt-8">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">Team Management</h2>
+        
+        {% if pending_approvals %}
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h3 class="text-xl font-semibold mb-4">Pending Approvals</h3>
+            <div class="space-y-4">
+                {% for leave in pending_approvals %}
+                <div class="border-l-4 border-blue-400 bg-blue-50 p-4 rounded">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="font-medium">{{ leave.user.get_full_name }}</p>
+                            <p class="text-sm text-gray-600">{{ leave.leave_type.name }}</p>
+                            <p class="text-sm text-gray-600">{{ leave.start_date|date:"M d, Y" }} - {{ leave.end_date|date:"M d, Y" }}</p>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1 text-sm font-medium rounded bg-green-500 text-white hover:bg-green-600">
+                                Approve
+                            </button>
+                            <button class="px-3 py-1 text-sm font-medium rounded bg-red-500 text-white hover:bg-red-600">
+                                Reject
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if team_leaves %}
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h3 class="text-xl font-semibold mb-4">Team Calendar</h3>
+            <div class="space-y-4">
+                {% for leave in team_leaves %}
+                <div class="border-l-4 border-purple-400 bg-purple-50 p-4 rounded">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="font-medium">{{ leave.user.get_full_name }}</p>
+                            <p class="text-sm text-gray-600">{{ leave.leave_type.name }}</p>
+                            <p class="text-sm text-gray-600">{{ leave.start_date|date:"M d, Y" }} - {{ leave.end_date|date:"M d, Y" }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if is_hr or is_admin %}
+    <!-- HR Stats Section -->
+    <div class="mt-8">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">Leave Statistics</h2>
+        {% if leave_stats %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for stat in leave_stats %}
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold text-gray-800">{{ stat.leave_type__name }}</h3>
+                <div class="mt-4 space-y-2">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Total Requests</span>
+                        <span class="font-medium">{{ stat.count }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Total Days</span>
+                        <span class="font-medium">{{ stat.total_days }}</span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-gray-600">No statistics available for the current month</p>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

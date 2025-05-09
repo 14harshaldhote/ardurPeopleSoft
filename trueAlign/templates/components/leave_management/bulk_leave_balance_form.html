@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}Create Bulk Leave Balances{% endblock %}
+
+{% block content %}
+<div class="min-h-screen py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <h2 class="text-xl font-semibold text-gray-900">Create Bulk Leave Balances</h2>
+            </div>
+            
+            <div class="p-6">
+                <div class="mb-6 bg-blue-50 border-l-4 border-blue-500 p-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-blue-700">This tool will create leave balances for all users in the selected policy's group. Choose whether to update existing balances or only create new ones.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                        <div>
+                            <label for="{{ form.policy.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ form.policy.label }}</label>
+                            {% render_field form.policy class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" %}
+                            <p class="mt-2 text-sm text-gray-500">{{ form.policy.help_text }}</p>
+                        </div>
+                        
+                        <div>
+                            <label for="{{ form.year.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ form.year.label }}</label>
+                            {% render_field form.year class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" %}
+                            <p class="mt-2 text-sm text-gray-500">{{ form.year.help_text }}</p>
+                        </div>
+
+                        <div class="flex items-start pt-6">
+                            <div class="flex items-center h-5">
+                                {% render_field form.include_existing class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" %}
+                            </div>
+                            <div class="ml-3 text-sm">
+                                <label for="{{ form.include_existing.id_for_label }}" class="font-medium text-gray-700">Update existing balances</label>
+                                <p class="text-gray-500">{{ form.include_existing.help_text }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-6 bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-yellow-700"><strong>Note:</strong> This operation will apply the leave allocations from the policy to all users in its group.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end space-x-3">
+                        <a href="{% url 'aps_leave:hr_leave_view' %}" class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Cancel</a>
+                        <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Create Balances</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    $(document).ready(function() {
+        // Initialize select2 for dropdowns with Tailwind styling
+        $('.form-select').select2({
+            theme: 'tailwind',
+            width: '100%'
+        });
+    });
+</script>
+{% endblock %}

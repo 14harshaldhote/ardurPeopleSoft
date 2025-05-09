@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Back button -->
+        <div class="mb-6">
+            <a href="{% url 'aps_leave:leave_request_list' %}" class="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors duration-200">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Back to Leave Requests
+            </a>
+        </div>
+
+        <div class="bg-white shadow-lg rounded-xl overflow-hidden">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-8">
+                <h1 class="text-2xl font-bold text-white">{{ action }} Leave Request</h1>
+                <p class="mt-2 text-blue-100">Complete the form below to submit your leave request</p>
+                <p class="mt-1 text-blue-100">Logged in as: {{ request.user.username }}</p>
+                
+                {% if leave_request %}
+                    <div class="mt-4 bg-blue-700 bg-opacity-50 rounded-lg p-3">
+                        <p class="text-white text-sm">
+                            <span class="font-semibold">Request Status:</span> 
+                            <span class="px-2 py-1 rounded-full text-xs {% if leave_request.status == 'Pending' %}bg-yellow-400 text-yellow-800{% elif leave_request.status == 'Approved' %}bg-green-400 text-green-800{% elif leave_request.status == 'Rejected' %}bg-red-400 text-red-800{% else %}bg-gray-400 text-gray-800{% endif %}">
+                                {{ leave_request.status }}
+                            </span>
+                        </p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Leave Balances -->
+            {% if balances %}
+            <div class="px-6 py-4 bg-blue-50">
+                <h2 class="text-lg font-semibold text-blue-900 mb-4">Current Leave Balances</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {% for type, info in balances.items %}
+                    <div class="bg-white rounded-lg p-4 shadow-sm border border-blue-100 hover:border-blue-300 transition-colors duration-200">
+                        <h3 class="font-medium text-gray-900">{{ type }}</h3>
+                        <div class="mt-2 space-y-1">
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-gray-600">Available:</span>
+                                <span class="font-semibold text-blue-600">{{ info.available }}</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-gray-600">Used:</span>
+                                <span class="text-gray-700">{{ info.used }} / {{ info.allocated }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Form -->
+            <div class="p-6">
+                {% if form.non_field_errors %}
+                <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <div class="flex items-center text-red-700 mb-2">
+                        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                        </svg>
+                        <span class="font-semibold">There were errors with your submission:</span>
+                    </div>
+                    <ul class="list-disc pl-5 text-red-600">
+                        {% for error in form.non_field_errors %}
+                        <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                <form method="POST" enctype="multipart/form-data" class="space-y-6">
+                    {% csrf_token %}
+                    
+                    <!-- Hidden user field automatically set by view -->
+                    <input type="hidden" name="user" value="{{ request.user.id }}">
+                    
+                    {% for field in form %}
+                    {% if field.name != 'user' %}  <!-- Skip the user field in the form display -->
+                    <div class="space-y-2">
+                        <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            {{ field.label }}
+                            {% if field.field.required %}
+                            <span class="text-red-500">*</span>
+                            {% endif %}
+                        </label>
+                        <div class="mt-1">
+                            {{ field }}
+                        </div>
+                        {% if field.help_text %}
+                        <p class="text-sm text-gray-500 italic">{{ field.help_text }}</p>
+                        {% endif %}
+                        {% if field.errors %}
+                        <div class="text-red-600 text-sm mt-1">
+                            {% for error in field.errors %}
+                            <p class="flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                </svg>
+                                {{ error }}
+                            </p>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+
+                    <!-- Calculated Leave Days Display -->
+                    {% if leave_request and leave_request.leave_days %}
+                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-700 font-medium">Calculated Leave Days:</span>
+                            <span class="font-semibold text-blue-600">{{ leave_request.leave_days }}</span>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Action Buttons -->
+                    <div class="flex justify-end space-x-4 pt-6 border-t">
+                        <a href="{% url 'aps_leave:leave_request_list' %}" 
+                           class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+                            Cancel
+                        </a>
+                        
+                        {% if leave_request.status == 'Pending' or not leave_request %}
+                        <button type="submit"
+                                class="px-6 py-2 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+                            {{ action }} Request
+                        </button>
+                        {% else %}
+                        <button type="button" disabled
+                                class="px-6 py-2 border border-transparent rounded-lg shadow-sm text-white bg-gray-400 cursor-not-allowed">
+                            {{ action }} Request
+                        </button>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- System Messages Display -->
+        <div id="messages" class="mt-6">
+            {% if messages %}
+                {% for message in messages %}
+                <div class="p-4 mb-4 rounded-lg {% if message.tags == 'success' %}bg-green-100 text-green-800 border border-green-200{% elif message.tags == 'error' %}bg-red-100 text-red-800 border border-red-200{% elif message.tags == 'warning' %}bg-yellow-100 text-yellow-800 border border-yellow-200{% else %}bg-blue-100 text-blue-800 border border-blue-200{% endif %}">
+                    <div class="flex items-center">
+                        {% if message.tags == 'success' %}
+                        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                        {% elif message.tags == 'error' %}
+                        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                        </svg>
+                        {% elif message.tags == 'warning' %}
+                        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                        </svg>
+                        {% else %}
+                        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zm-1 7a1 1 0 001 1h1a1 1 0 100-2h-1a1 1 0 00-1 1z" clip-rule="evenodd"/>
+                        </svg>
+                        {% endif %}
+                        <p>{{ message }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

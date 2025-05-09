@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="min-h-screen py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Page Header -->
+        <div class="mb-8 flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Leave Management Dashboard</h1>
+                <p class="mt-2 text-gray-600">Manage leave types, policies and requests</p>
+            </div>
+            <div class="flex space-x-4">
+                <a href="{{ leave_request_urls.create }}" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                    </svg>
+                    Apply Leave
+                </a>
+                <a href="{{ leave_request_urls.list }}" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    View My Leaves
+                </a>
+                <a href="{{ leave_balance_urls.bulk_create }}" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                    <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                    </svg>
+                    Bulk Create Leave Balances
+                </a>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <!-- Leave Types Card -->
+            <div class="bg-white rounded-lg shadow-lg p-6 transform hover:scale-105 transition-transform duration-200">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-blue-100">
+                        <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <h2 class="text-lg font-semibold text-gray-900">Leave Types</h2>
+                        <p class="text-3xl font-bold text-blue-600">{{ total_leave_types }}</p>
+                    </div>
+                </div>
+                <div class="mt-4 flex justify-between items-center">
+                    <a href="{{ leave_type_urls.list }}" class="text-sm text-blue-600 hover:text-blue-800 font-medium">View all types</a>
+                    <a href="{{ leave_type_urls.create }}" class="text-sm bg-blue-50 text-blue-600 px-3 py-1 rounded-full hover:bg-blue-100">+ Add New</a>
+                </div>
+            </div>
+
+            <!-- Leave Policies Card -->
+            <div class="bg-white rounded-lg shadow-lg p-6 transform hover:scale-105 transition-transform duration-200">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-green-100">
+                        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <h2 class="text-lg font-semibold text-gray-900">Leave Policies</h2>
+                        <p class="text-3xl font-bold text-green-600">{{ total_leave_policies }}</p>
+                    </div>
+                </div>
+                <div class="mt-4 flex justify-between items-center">
+                    <a href="{{ leave_policy_urls.list }}" class="text-sm text-green-600 hover:text-green-800 font-medium">View all policies</a>
+                    <a href="{{ leave_policy_urls.create }}" class="text-sm bg-green-50 text-green-600 px-3 py-1 rounded-full hover:bg-green-100">+ Add New</a>
+                </div>
+            </div>
+
+            <!-- Pending Requests Card -->
+            <div class="bg-white rounded-lg shadow-lg p-6 transform hover:scale-105 transition-transform duration-200">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-yellow-100">
+                        <svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <h2 class="text-lg font-semibold text-gray-900">Pending Requests</h2>
+                        <p class="text-3xl font-bold text-yellow-600">{{ pending_leave_requests }}</p>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <a href="{% url 'aps_leave:leave_request_list' %}?status=pending" class="text-sm text-yellow-600 hover:text-yellow-800 font-medium">View pending requests →</a>
+                </div>
+            </div>
+
+            <!-- My Leave Balance Card -->
+            <div class="bg-white rounded-lg shadow-lg p-6 transform hover:scale-105 transition-transform duration-200">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-purple-100">
+                        <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <h2 class="text-lg font-semibold text-gray-900">My Leave Balance</h2>
+                        <div class="space-y-1 mt-2">
+                            {% for balance in user_balances %}
+                            <p class="text-sm text-gray-600">{{ balance.leave_type.name }}: <span class="font-semibold text-purple-600">{{ balance.balance }}</span></p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Leave Requests -->
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-xl font-semibold text-gray-900">Recent Leave Requests</h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Leave Type</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for request in recent_leave_requests %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-10 w-10">
+                                        {% if request.user.profile_picture %}
+                                            <img class="h-10 w-10 rounded-full" src="{{ request.user.profile_picture.url }}" alt="">
+                                        {% else %}
+                                            <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                                                <span class="text-gray-500 font-medium">{{ request.user.get_initials }}</span>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-gray-900">{{ request.user.get_full_name }}</div>
+                                        <div class="text-sm text-gray-500">{{ request.user.email }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">{{ request.leave_type.name }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">{{ request.start_date|date:"M d" }} - {{ request.end_date|date:"M d, Y" }}</div>
+                                <div class="text-xs text-gray-500">{{ request.get_duration }} days</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                    {% if request.status == 'Approved' %}bg-green-100 text-green-800
+                                    {% elif request.status == 'Pending' %}bg-yellow-100 text-yellow-800
+                                    {% else %}bg-red-100 text-red-800{% endif %}">
+                                    {{ request.status }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <div class="flex space-x-3">
+                                    <a href="{% url 'aps_leave:leave_request_detail' request.id %}" class="text-indigo-600 hover:text-indigo-900">View</a>
+                                    {% if request.status == 'Pending' %}
+                                    <a href="{% url 'aps_leave:leave_request_approve' request.id %}" class="text-green-600 hover:text-green-900">Approve</a>
+                                    <a href="{% url 'aps_leave:leave_request_reject' request.id %}" class="text-red-600 hover:text-red-900">Reject</a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                                No recent leave requests found
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if recent_leave_requests %}
+            <div class="bg-gray-50 px-6 py-4 border-t border-gray-200">
+                <a href="{% url 'aps_leave:leave_request_list' %}" class="text-sm text-indigo-600 hover:text-indigo-900 font-medium">View all leave requests →</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

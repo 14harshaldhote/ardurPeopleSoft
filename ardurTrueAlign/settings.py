@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'trueAlign',
     'rest_framework',
     'channels',
+    'widget_tweaks',
     
 ]
 

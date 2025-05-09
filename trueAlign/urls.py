@@ -176,6 +176,30 @@ finance_patterns = [
     # Voucher Management  
     path('vouchers/', views.voucher_entry, name='voucher_entry'),
     
+    # Bank Payment Management
+       # Bank Payment URLs
+        path('bank-payments/', views.bank_payment_list, name='bank_payment_list'),
+        path('bank-payments/create/', views.bank_payment_create, name='bank_payment_create'),
+        path('bank-payments/<str:payment_id>/', views.bank_payment_detail, name='bank_payment_detail'),
+        path('bank-payments/<str:payment_id>/update/', views.bank_payment_update, name='bank_payment_update'),
+        path('bank-payments/<str:payment_id>/delete/', views.bank_payment_delete, name='bank_payment_delete'),
+        path('bank-payments/<str:payment_id>/verify/', views.bank_payment_verify, name='bank_payment_verify'),
+        path('bank-payments/<str:payment_id>/approve/', views.bank_payment_approve, name='bank_payment_approve'),
+        path('bank-payments/<str:payment_id>/execute/', views.bank_payment_execute, name='bank_payment_execute'),
+        path('bank-payments/<str:payment_id>/mark-failed/', views.bank_payment_mark_failed, name='bank_payment_mark_failed'),
+        
+        # Bank Account URLs
+        path('bank-accounts/', views.bank_account_list, name='bank_account_list'),
+        path('bank-accounts/create/', views.bank_account_create, name='bank_account_create'),
+        path('bank-accounts/<int:account_id>/update/', views.bank_account_update, name='bank_account_update'),
+        
+        # Dashboard and Reports
+        path('bank-payment-dashboard/', views.bank_payment_dashboard, name='bank_payment_dashboard'),
+        path('bank-payment-reports/', views.bank_payment_report, name='bank_payment_report'),
+      
+    # Subscription Management
+    path('subscriptions/', views.subscription_payment_entry, name='subscription_payment_entry'),
+    
     # Invoice Management
     path('invoices/', views.invoice_generation, name='invoice_generation'),
     path('invoices/<int:invoice_id>/', views.invoice_detail, name='invoice_detail'),
@@ -193,33 +217,53 @@ finance_patterns = [
     path('parameters/history/<str:key>/', views.parameter_history, name='parameter_history'),
     path('parameters/<int:pk>/approve/', views.approve_parameter, name='approve_parameter'),
     
-    # # Transactions
-    # path('transactions/', views.transaction_list, name='transaction_list'),
-    # path('transactions/create/', views.transaction_create, name='transaction_create'),
-    # path('transactions/<int:transaction_id>/', views.transaction_detail, name='transaction_detail'),
-    
-    # # Invoices
-    # path('invoices/', views.invoice_list, name='invoice_list'),
-    # path('invoices/<int:invoice_id>/', views.invoice_detail, name='invoice_detail'),
-    # path('invoices/<int:invoice_id>/pdf/', views.generate_invoice_pdf, name='generate_invoice_pdf'),
-    
-    # # Payments
-    # path('payments/', views.payment_list, name='payment_list'),
-    
-    # # # Reports
-    # # path('reports/', views.report_dashboard, name='report_dashboard'),
-    # # path('reports/<str:report_type>/', views.generate_report, name='generate_report'),
-    # # path('reports/<str:report_type>/export/<str:format>/', views.export_report, name='export_report'),
-    
-    # # Parameters
-    # path('parameters/', views.parameter_list, name='parameter_list'),
-    # path('parameters/create/', views.parameter_create, name='parameter_create'),
-    # path('parameters/<int:parameter_id>/edit/', views.parameter_edit, name='parameter_edit'),
-    
-    # # Calculation Rules
-    # path('rules/', views.calculation_rule_list, name='calculation_rule_list'),
-    # path('rules/create/', views.calculation_rule_create, name='calculation_rule_create'),
-    # path('rules/<int:rule_id>/edit/', views.calculation_rule_edit, name='calculation_rule_edit'),
+   ]
+
+leave_patterns = [
+        # Dashboard
+    path('dashboard/', views.leave_dashboard, name='leave_dashboard'),
+
+    path('hr/', views.hr_leave_view, name='hr_leave_view'),
+    path('finance/', views.finance_leave_view, name='finance_leave_view'),
+    path('management/', views.management_leave_view, name='management_leave_view'),
+    path('employee/', views.employee_leave_view, name='employee_leave_view'),
+    path('manager/', views.manager_leave_view, name='manager_leave_view'),
+
+    # Leave Request
+    path('leave/create/', views.leave_request_create, name='leave_request_create'),
+    path('leave/list/', views.leave_request_list, name='leave_request_list'),
+    path('leave/<int:pk>/', views.leave_request_detail, name='leave_request_detail'),
+    path('leave/<int:pk>/update/', views.leave_request_update, name='leave_request_update'),
+    path('leave/<int:pk>/cancel/', views.leave_request_cancel, name='leave_request_cancel'),
+    path('leave/<int:pk>/approve/', views.leave_request_approve, name='leave_request_approve'),
+    path('leave/<int:pk>/reject/', views.leave_request_reject, name='leave_request_reject'),
+    path('leave/approvals/', views.leave_approval_list, name='leave_approval_list'),
+    path('leave/balance/bulk/', views.bulk_leave_balance_create, name='bulk_leave_balance_create'),
+
+
+    # Leave Types
+    path('leave-types/', views.leave_type_list, name='leave_type_list'),
+    path('leave-types/create/', views.leave_type_create, name='leave_type_create'),
+    path('leave-types/<int:pk>/update/', views.leave_type_update, name='leave_type_update'),
+    path('leave-types/<int:pk>/delete/', views.leave_type_delete, name='leave_type_delete'),
+
+    # Leave Policies
+    path('leave-policies/', views.leave_policy_list, name='leave_policy_list'),
+    path('leave-policies/create/', views.leave_policy_create, name='leave_policy_create'),
+    path('leave-policies/<int:pk>/update/', views.leave_policy_update, name='leave_policy_update'),
+    path('leave-policies/<int:pk>/delete/', views.leave_policy_delete, name='leave_policy_delete'),
+    path('leave-policies/<int:policy_id>/allocation/', views.leave_allocation_manage, name='leave_allocation_manage'),
+
+    # Comp-off Requests
+    path('compoff/create/', views.comp_off_request_create, name='comp_off_request_create'),
+    path('compoff/list/', views.comp_off_request_list, name='comp_off_request_list'),
+    path('compoff/<int:pk>/approve/', views.comp_off_request_approve, name='comp_off_request_approve'),
+    path('compoff/<int:pk>/reject/', views.comp_off_request_reject, name='comp_off_request_reject'),
+
+    # Reports
+    path('report/leaves/', views.leave_report, name='leave_report'),
+    path('report/balance/', views.leave_balance_report, name='leave_balance_report'),
+
 ]
 
 # Main URL configuration for the project
@@ -247,13 +291,16 @@ urlpatterns = [
     path('truealign/employee/', include((employee_patterns, 'aps'), namespace='aps_employee')),
     
     #finance related URLS
-path('finance/', include((finance_patterns, 'aps'), namespace='aps_finance')),
+    path('finance/', include((finance_patterns, 'aps'), namespace='aps_finance')),
 
     # HR-specific URLs under 'truealign/hr/'
     path('truealign/hr/', include((hr_patterns, 'aps'), namespace='aps_hr')),
 
     # Manager-specific URLs under 'truealign/manager/'
     path('truealign/manager/', include((manager_patterns, 'aps'), namespace='aps_manager')),
+
+    # Leave-specific URLs under 'truealign/leave/'
+    path('truealign/leave/', include((leave_patterns, 'aps'), namespace='aps_leave')),
 
     # Appraisal URLs
     path('appraisal/', include((appraisal_patterns, 'appraisal'))),
