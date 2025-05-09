@@ -373,6 +373,7 @@ class LeaveRequest(models.Model):
     is_retroactive = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    _balance_updated = False  # Flag to track if balance has been updated
     
     class Meta:
         indexes = [
@@ -503,9 +504,11 @@ class LeaveRequest(models.Model):
         except LeaveType.DoesNotExist:
             return False
     
+    
     def update_leave_balance(self):
         """Update user's leave balance when leave is approved"""
-        if not self.user_id or not self.leave_type.is_paid:
+        if not self.user_id or not self.leave_type.is_paid or self._balance_updated:
+            print("[DEBUG] Skipping balance update - unpaid leave, no user, or already updated")
             return
             
         year = self.start_date.year
@@ -516,9 +519,29 @@ class LeaveRequest(models.Model):
             defaults={'allocated': 0}
         )
         
-        balance.used += self.leave_days
+        print(f"[DEBUG] Before update - Used: {balance.used}, Leave days: {self.leave_days}")
+        
+        # IMPORTANT: Convert to Decimal objects to ensure proper arithmetic
+        from decimal import Decimal
+        current_used = Decimal(str(balance.used))
+        leave_days = Decimal(str(self.leave_days))
+        
+        balance.used = current_used + leave_days
         balance.save()
-    
+        
+        print(f"[DEBUG] After update - Used: {balance.used}")
+        
+        # Verify update was successful
+        refreshed_balance = UserLeaveBalance.objects.get(
+            user=self.user,
+            leave_type=self.leave_type,
+            year=year
+        )
+        print(f"[DEBUG] Verified balance after update - Used: {refreshed_balance.used}")
+        
+        # Mark that balance has been updated to prevent duplicate updates
+        self._balance_updated = True
+        
     def revert_leave_balance(self):
         """Revert leave balance when leave is cancelled/rejected"""
         if not self.user_id or not self.leave_type.is_paid or self.status != 'Approved':
@@ -536,41 +559,70 @@ class LeaveRequest(models.Model):
         except UserLeaveBalance.DoesNotExist:
             pass
     
+
     def save(self, *args, **kwargs):
+        is_new = self._state.adding
+        previous_status = None
+        old_leave_days = 0
+
         if not self.user_id:
             raise ValidationError("User is required")
-            
+
         # Convert half_day string to boolean if needed
         if isinstance(self.half_day, str):
             self.half_day = self.half_day.lower() == 'true'
-            
+
         # Calculate leave days
         self.leave_days = self.calculate_leave_days()
-        
-        # Check if this is a status change
-        if self.pk:
-            old_instance = LeaveRequest.objects.get(pk=self.pk)
-            old_status = old_instance.status
-            
-            # Handle status change from Approved to another status
-            if old_status == 'Approved' and self.status != 'Approved':
-                self.revert_leave_balance()
-                
-            # Handle status change to Approved
-            elif old_status != 'Approved' and self.status == 'Approved':
-                self.update_leave_balance()
-                self.update_attendance()
-        else:
-            # New leave request - try to auto-convert if insufficient balance
-            if not self.has_sufficient_balance():
-                self.auto_convert_leave_type()
-            
-            # If newly approved, update balance and attendance
+
+        if not is_new:
+            try:
+                previous = LeaveRequest.objects.get(id=self.id)
+                previous_status = previous.status
+                old_leave_days = previous.leave_days
+            except LeaveRequest.DoesNotExist:
+                pass
+
+        with transaction.atomic():
+            super().save(*args, **kwargs)
+
             if self.status == 'Approved':
-                self.update_leave_balance()
-                self.update_attendance()
-        
-        super().save(*args, **kwargs)
+                if is_new or previous_status != 'Approved':
+                    # Only update balance if it hasn't been updated yet
+                    if not self._balance_updated and self.leave_type.is_paid:
+                        # Get or create leave balance record
+                        balance, _ = UserLeaveBalance.objects.get_or_create(
+                            user=self.user,
+                            leave_type=self.leave_type,
+                            year=self.start_date.year,
+                            defaults={'allocated': 0.0, 'used': 0.0}
+                        )
+                        balance.used += self.leave_days
+                        balance.save()
+                        self._balance_updated = True
+
+                    self.update_attendance()
+                elif previous_status == 'Approved' and self.leave_days != old_leave_days:
+                    # Handle case where leave days changed for an already approved request
+                    try:
+                        balance = UserLeaveBalance.objects.get(
+                            user=self.user,
+                            leave_type=self.leave_type,
+                            year=self.start_date.year
+                        )
+                        # Adjust the difference
+                        balance.used = balance.used - old_leave_days + self.leave_days
+                        balance.save()
+                    except UserLeaveBalance.DoesNotExist:
+                        pass
+
+            elif previous_status == 'Approved' and self.status != 'Approved':
+                self.revert_leave_balance()
+
+            # New request with insufficient balance may auto-convert
+            if is_new and not self.has_sufficient_balance():
+                self.auto_convert_leave_type()
+    
     
     def update_attendance(self):
         """Update attendance records for approved leave period"""

@@ -389,3 +389,53 @@ class BulkLeaveAllocationForm(forms.Form):
         initial=False,
         help_text='Update existing balances (if unchecked, only creates new balances)'
     )
+
+
+class LeaveApprovalForm(forms.Form):
+    """Form for approving leave requests"""
+    comments = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 3}),
+        required=False,
+        help_text='Optional comments for the approval'
+    )
+
+
+
+class LeaveRejectionForm(forms.Form):
+    """Form for rejecting leave requests"""
+    rejection_reason = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 3}),
+        required=True,
+        help_text='Provide a reason for rejecting this leave request'
+    )
+    suggest_dates = forms.BooleanField(
+        required=False,
+        label='Suggest alternative dates'
+    )
+    suggested_start_date = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={'type': 'date'})
+    )
+    suggested_end_date = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={'type': 'date'})
+    )
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        suggest_dates = cleaned_data.get('suggest_dates')
+        
+        if suggest_dates:
+            start_date = cleaned_data.get('suggested_start_date')
+            end_date = cleaned_data.get('suggested_end_date')
+            
+            if not start_date:
+                self.add_error('suggested_start_date', 'Please provide a suggested start date')
+            
+            if not end_date:
+                self.add_error('suggested_end_date', 'Please provide a suggested end date')
+            
+            if start_date and end_date and start_date > end_date:
+                self.add_error('suggested_end_date', 'End date must be after start date')
+        
+        return cleaned_data

@@ -18,7 +18,7 @@
             <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-8">
                 <h1 class="text-2xl font-bold text-white">{{ action }} Leave Request</h1>
                 <p class="mt-2 text-blue-100">Complete the form below to submit your leave request</p>
-                <p class="mt-1 text-blue-100">Logged in as: {{ request.user.username }}</p>
+                <p class="mt-1 text-blue-100">Logged in as: {{ request.user.get_full_name|default:request.user.username }}</p>
                 
                 {% if leave_request %}
                     <div class="mt-4 bg-blue-700 bg-opacity-50 rounded-lg p-3">
@@ -74,7 +74,7 @@
                 </div>
                 {% endif %}
 
-                <form method="POST" enctype="multipart/form-data" class="space-y-6">
+                <form method="POST" enctype="multipart/form-data" class="space-y-6" id="leaveRequestForm">
                     {% csrf_token %}
                     
                     <!-- Hidden user field automatically set by view -->
@@ -122,23 +122,62 @@
                     {% endif %}
 
                     <!-- Action Buttons -->
-                    <div class="flex justify-end space-x-4 pt-6 border-t">
-                        <a href="{% url 'aps_leave:leave_request_list' %}" 
-                           class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
-                            Cancel
-                        </a>
+                    <div class="flex justify-between pt-6 border-t">
+                        <div>
+                            <a href="{% url 'aps_leave:leave_request_list' %}" 
+                               class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+                                Cancel
+                            </a>
+                        </div>
                         
-                        {% if leave_request.status == 'Pending' or not leave_request %}
-                        <button type="submit"
-                                class="px-6 py-2 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
-                            {{ action }} Request
-                        </button>
-                        {% else %}
-                        <button type="button" disabled
-                                class="px-6 py-2 border border-transparent rounded-lg shadow-sm text-white bg-gray-400 cursor-not-allowed">
-                            {{ action }} Request
-                        </button>
-                        {% endif %}
+                        <div class="space-x-3">
+                            {% if leave_request %}
+                                {% if leave_request.status == 'Pending' %}
+                                    <a href="{% url 'aps_leave:leave_request_cancel' leave_request.id %}" 
+                                       class="px-4 py-2 border border-red-300 rounded-lg text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200">
+                                        Cancel Request
+                                    </a>
+                                    <button type="submit"
+                                            class="px-6 py-2 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+                                        Update Request
+                                    </button>
+                                {% elif leave_request.status == 'Approved' %}
+                                    {% if is_hr or is_admin %}
+                                    <button type="submit"
+                                            class="px-6 py-2 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+                                        Update Request
+                                    </button>
+                                    {% else %}
+                                    <button type="button" disabled
+                                            class="px-6 py-2 border border-transparent rounded-lg shadow-sm text-white bg-gray-400 cursor-not-allowed">
+                                        Request Approved
+                                    </button>
+                                    {% endif %}
+                                {% elif leave_request.status == 'Rejected' %}
+                                    {% if is_hr or is_admin %}
+                                    <button type="submit"
+                                            class="px-6 py-2 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+                                        Update Request
+                                    </button>
+                                    {% else %}
+                                    <a href="{% url 'aps_leave:leave_request_create' %}" 
+                                       class="px-6 py-2 border border-transparent rounded-lg shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200">
+                                        Submit New Request
+                                    </a>
+                                    {% endif %}
+                                {% else %}
+                                    <button type="button" disabled
+                                            class="px-6 py-2 border border-transparent rounded-lg shadow-sm text-white bg-gray-400 cursor-not-allowed">
+                                        {{ leave_request.status }}
+                                    </button>
+                                {% endif %}
+                            {% else %}
+                                <button type="submit"
+                                        class="px-6 py-2 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+                                    Submit Request
+                                </button>
+                            {% endif %}
+                        </div>
                     </div>
                 </form>
             </div>
@@ -175,4 +214,19 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-redirect after successful form submission
+        const form = document.getElementById('leaveRequestForm');
+        form.addEventListener('submit', function() {
+            // Add a hidden field to indicate successful submission
+            const hiddenField = document.createElement('input');
+            hiddenField.type = 'hidden';
+            hiddenField.name = 'submitted';
+            hiddenField.value = 'true';
+            form.appendChild(hiddenField);
+        });
+    });
+</script>
 {% endblock %}

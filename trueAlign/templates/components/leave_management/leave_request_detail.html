@@ -10,20 +10,26 @@
                 <div class="flex space-x-2">
                     {% if leave_request.status == 'Pending' %}
                         {% if can_approve %}
-                            <a href="{% url 'aps_leave:leave_request_approve' leave_request.id %}" 
-                               class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
-                                Approve
-                            </a>
-                            <a href="{% url 'aps_leave:leave_request_reject' leave_request.id %}"
-                               class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">
-                                Reject
-                            </a>
+                            <form method="POST" action="{% url 'aps_leave:leave_request_approve' leave_request.id %}" class="inline">
+                                {% csrf_token %}
+                                <button type="submit" class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
+                                    Approve
+                                </button>
+                            </form>
+                            <form method="POST" action="{% url 'aps_leave:leave_request_reject' leave_request.id %}" class="inline">
+                                {% csrf_token %}
+                                <button type="submit" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">
+                                    Reject
+                                </button>
+                            </form>
                         {% endif %}
                         {% if request.user == leave_request.user %}
-                            <a href="{% url 'aps_leave:leave_request_cancel' leave_request.id %}"
-                               class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">
-                                Cancel
-                            </a>
+                            <form method="POST" action="{% url 'aps_leave:leave_request_cancel' leave_request.id %}" class="inline">
+                                {% csrf_token %}
+                                <button type="submit" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">
+                                    Cancel
+                                </button>
+                            </form>
                         {% endif %}
                     {% endif %}
                 </div>

@@ -3926,7 +3926,8 @@ from .models import (
 )
 from .forms import (
     LeavePolicyForm, LeaveTypeForm, LeaveAllocationForm,
-    LeaveRequestForm, CompOffRequestForm, BulkLeaveAllocationForm
+    LeaveRequestForm, CompOffRequestForm, BulkLeaveAllocationForm,
+    LeaveApprovalForm, LeaveRejectionForm
 )
 
 # Permission utilities
@@ -4333,6 +4334,7 @@ def leave_allocation_manage(request, policy_id):
         'leave_types': leave_types,
         'allocations': allocations
     })
+
 @login_required
 @user_passes_test(is_hr)
 def bulk_leave_balance_create(request):
@@ -4430,9 +4432,10 @@ def leave_request_list(request):
         ).order_by('-created_at')
 
     elif is_manager(user):
-        # Managers can see only their own leave requests
+        # Managers can see their team's leave requests and their own
+        managed_users = User.objects.filter(manager=user)
         leave_requests = LeaveRequest.objects.filter(
-            user=user
+            Q(user=user) | Q(user__in=managed_users)
         ).select_related(
             'user', 'leave_type', 'approver'
         ).order_by('-created_at')
@@ -4456,24 +4459,33 @@ def leave_request_list(request):
     # Add pagination
     paginator = Paginator(leave_requests, 20)
     page_number = request.GET.get('page', 1)
-    page_obj = paginator.get_page(page_number)
+    try:
+        page_obj = paginator.get_page(page_number)
+    except (ValueError, TypeError):
+        page_obj = paginator.get_page(1)
 
     # Get leave balances for each user in the page
     user_balances = {}
+    current_year = timezone.now().year
     for leave_request in page_obj:
         if leave_request.user_id not in user_balances:
-            balances = UserLeaveBalance.objects.filter(
-                user=leave_request.user,
-                year=timezone.now().year
-            ).select_related('leave_type')
-            
-            user_balances[leave_request.user_id] = {
-                b.leave_type_id: {
-                    'allocated': b.allocated,
-                    'used': b.used,
-                    'available': b.available
-                } for b in balances
-            }
+            try:
+                balances = UserLeaveBalance.objects.filter(
+                    user=leave_request.user,
+                    year=current_year
+                ).select_related('leave_type')
+                
+                user_balances[leave_request.user_id] = {
+                    b.leave_type_id: {
+                        'allocated': b.allocated,
+                        'used': b.used,
+                        'available': b.available
+                    } for b in balances
+                }
+            except Exception as e:
+                # Handle any unexpected errors when fetching balances
+                print(f"Error fetching balances for user {leave_request.user_id}: {str(e)}")
+                user_balances[leave_request.user_id] = {}
 
     context = {
         'page_obj': page_obj,
@@ -4490,6 +4502,7 @@ def leave_request_list(request):
 
 
 
+@login_required
 @user_passes_test(lambda u: True)  # All authenticated users can access
 def leave_request_create(request):
     """View to create a new leave request"""
@@ -4502,85 +4515,96 @@ def leave_request_create(request):
     user_groups = user.groups.all()
     print(f"[DEBUG] User groups: {[g.name for g in user_groups]}")
 
-    if user_groups:
-        user_policy = LeavePolicy.objects.filter(
-            group__in=user_groups,
-            is_active=True
-        ).first()
-        print(f"[DEBUG] Found policy: {user_policy}")
+    try:
+        if user_groups:
+            user_policy = LeavePolicy.objects.filter(
+                group__in=user_groups,
+                is_active=True
+            ).first()
+            print(f"[DEBUG] Found policy: {user_policy}")
 
-    if user_policy:
-        # Get leave types from user's policy allocations
-        allocations = LeaveAllocation.objects.filter(policy=user_policy)
-        leave_type_ids = allocations.values_list('leave_type_id', flat=True)
-        available_leave_types = LeaveType.objects.filter(id__in=leave_type_ids, is_active=True)
-        print(f"[DEBUG] Available leave types from policy: {[lt.name for lt in available_leave_types]}")
-    else:
-        # If no policy, show all active leave types
-        available_leave_types = LeaveType.objects.filter(is_active=True)
-        print("[DEBUG] No policy found - showing all active leave types")
+        if user_policy:
+            # Get leave types from user's policy allocations
+            allocations = LeaveAllocation.objects.filter(policy=user_policy)
+            leave_type_ids = allocations.values_list('leave_type_id', flat=True)
+            available_leave_types = LeaveType.objects.filter(id__in=leave_type_ids, is_active=True)
+            print(f"[DEBUG] Available leave types from policy: {[lt.name for lt in available_leave_types]}")
+        else:
+            # If no policy, show all active leave types
+            available_leave_types = LeaveType.objects.filter(is_active=True)
+            print("[DEBUG] No policy found - showing all active leave types")
 
-    if request.method == 'POST':
-        print("[DEBUG] Processing POST request")
-        form = LeaveRequestForm(request.POST, request.FILES, available_leave_types=available_leave_types)
-        if form.is_valid():
-            print("[DEBUG] Form is valid")
-            try:
-                leave_request = form.save(commit=False)
-                leave_request.user = request.user
-                leave_request.leave_days = leave_request.calculate_leave_days()
-                print(f"[DEBUG] Calculated leave days: {leave_request.leave_days}")
-                
-                leave_request.full_clean()  # Run model validation
-                
-                # Check for sufficient balance and try auto-convert if needed
-                if not leave_request.has_sufficient_balance():
-                    print("[DEBUG] Insufficient balance - attempting auto-convert")
-                    if not leave_request.auto_convert_leave_type():
-                        print("[DEBUG] Auto-convert failed")
-                        form.add_error(None, "Insufficient leave balance")
-                        raise ValidationError("Insufficient leave balance")
-                
-                leave_request.save()
-                print("[DEBUG] Leave request saved successfully")
-                messages.success(request, 'Leave request submitted successfully!')
-                return redirect('aps_leave:leave_request_list')
-            except ValidationError as e:
-                print(f"[DEBUG] Validation error: {e}")
-                if hasattr(e, 'message_dict'):
-                    for field, errors in e.message_dict.items():
-                        for error in errors:
-                            form.add_error(field, error)
-                else:
-                    # Handle non-field errors
-                    form.add_error(None, str(e))
-    else:
-        print("[DEBUG] GET request - displaying empty form")
-        form = LeaveRequestForm(available_leave_types=available_leave_types)
+        if request.method == 'POST':
+            print("[DEBUG] Processing POST request")
+            form = LeaveRequestForm(request.POST, request.FILES, available_leave_types=available_leave_types)
+            if form.is_valid():
+                print("[DEBUG] Form is valid")
+                try:
+                    with transaction.atomic():
+                        leave_request = form.save(commit=False)
+                        leave_request.user = request.user
+                        leave_request.leave_days = leave_request.calculate_leave_days()
+                        print(f"[DEBUG] Calculated leave days: {leave_request.leave_days}")
+                        
+                        leave_request.full_clean()  # Run model validation
+                        
+                        # Check for sufficient balance and try auto-convert if needed
+                        if not leave_request.has_sufficient_balance():
+                            print("[DEBUG] Insufficient balance - attempting auto-convert")
+                            if not leave_request.auto_convert_leave_type():
+                                print("[DEBUG] Auto-convert failed")
+                                form.add_error(None, "Insufficient leave balance")
+                                raise ValidationError("Insufficient leave balance")
+                        
+                        leave_request.save()
+                        print("[DEBUG] Leave request saved successfully")
+                        messages.success(request, 'Leave request submitted successfully!')
+                        return redirect('aps_leave:leave_request_list')
+                except ValidationError as e:
+                    print(f"[DEBUG] Validation error: {e}")
+                    if hasattr(e, 'message_dict'):
+                        for field, errors in e.message_dict.items():
+                            for error in errors:
+                                form.add_error(field, error)
+                    else:
+                        # Handle non-field errors
+                        form.add_error(None, str(e))
+                except Exception as e:
+                    print(f"[DEBUG] Unexpected error: {str(e)}")
+                    form.add_error(None, f"An unexpected error occurred: {str(e)}")
+        else:
+            print("[DEBUG] GET request - displaying empty form")
+            form = LeaveRequestForm(available_leave_types=available_leave_types)
 
-    # Get all leave balances for display
-    balances = {}
-    leave_balances = UserLeaveBalance.objects.filter(
-        user=request.user,
-        year=timezone.now().year
-    ).select_related('leave_type')
+        # Get all leave balances for display
+        balances = {}
+        current_year = timezone.now().year
+        leave_balances = UserLeaveBalance.objects.filter(
+            user=request.user,
+            year=current_year
+        ).select_related('leave_type')
 
-    for balance in leave_balances:
-        balances[balance.leave_type.name] = {
-            'allocated': balance.allocated,
-            'used': balance.used,
-            'available': balance.available
+        for balance in leave_balances:
+            balances[balance.leave_type.name] = {
+                'allocated': balance.allocated,
+                'used': balance.used,
+                'available': balance.available
+            }
+
+        print(f"[DEBUG] Found leave balances: {balances}")
+
+        context = {
+            'form': form,
+            'action': 'Create',
+            'balances': balances
         }
-
-    print(f"[DEBUG] Found leave balances: {balances}")
-
-    context = {
-        'form': form,
-        'action': 'Create',
-        'balances': balances
-    }
+        
+        return render(request, 'components/leave_management/leave_request_form.html', context)
     
-    return render(request, 'components/leave_management/leave_request_form.html', context)
+    except Exception as e:
+        print(f"[DEBUG] Critical error in leave_request_create: {str(e)}")
+        messages.error(request, f"An error occurred: {str(e)}")
+        return redirect('aps_leave:leave_request_list')
 
 @login_required
 @user_passes_test(lambda u: True)  # All authenticated users can access
@@ -4636,24 +4660,43 @@ def leave_request_update(request, pk):
             if form.is_valid():
                 print("[DEBUG] Form is valid")
                 try:
-                    leave_request = form.save(commit=False)
-                    leave_request.leave_days = leave_request.calculate_leave_days()
-                    print(f"[DEBUG] Calculated leave days: {leave_request.leave_days}")
-                    
-                    leave_request.full_clean()  # Run model validation
-                    
-                    # Check for sufficient balance and try auto-convert if needed
-                    if not leave_request.has_sufficient_balance():
-                        print("[DEBUG] Insufficient balance - attempting auto-convert")
-                        if not leave_request.auto_convert_leave_type():
-                            print("[DEBUG] Auto-convert failed")
-                            form.add_error(None, "Insufficient leave balance")
-                            raise ValidationError("Insufficient leave balance")
-                    
-                    leave_request.save()
-                    print("[DEBUG] Leave request updated successfully")
-                    messages.success(request, 'Leave request updated successfully!')
-                    return redirect('aps_leave:leave_request_list')
+                    with transaction.atomic():
+                        # Store original leave type for comparison
+                        original_leave_type = leave_request.leave_type
+                        original_leave_days = leave_request.leave_days
+                        
+                        leave_request = form.save(commit=False)
+                        leave_request.leave_days = leave_request.calculate_leave_days()
+                        print(f"[DEBUG] Calculated leave days: {leave_request.leave_days}")
+                        
+                        leave_request.full_clean()  # Run model validation
+                        
+                        # If leave type or days changed and already approved, revert old balance first
+                        if leave_request.status == 'Approved' and (
+                            original_leave_type != leave_request.leave_type or 
+                            original_leave_days != leave_request.leave_days
+                        ):
+                            # Create temporary object with original values to revert
+                            temp_request = LeaveRequest(
+                                user=leave_request.user,
+                                leave_type=original_leave_type,
+                                leave_days=original_leave_days,
+                                status='Approved'
+                            )
+                            temp_request.revert_leave_balance()
+                        
+                        # Check for sufficient balance and try auto-convert if needed
+                        if not leave_request.has_sufficient_balance():
+                            print("[DEBUG] Insufficient balance - attempting auto-convert")
+                            if not leave_request.auto_convert_leave_type():
+                                print("[DEBUG] Auto-convert failed")
+                                form.add_error(None, "Insufficient leave balance")
+                                raise ValidationError("Insufficient leave balance")
+                        
+                        leave_request.save()
+                        print("[DEBUG] Leave request updated successfully")
+                        messages.success(request, 'Leave request updated successfully!')
+                        return redirect('aps_leave:leave_request_list')
                 except ValidationError as e:
                     print(f"[DEBUG] Validation error: {e}")
                     if hasattr(e, 'message_dict'):
@@ -4663,6 +4706,9 @@ def leave_request_update(request, pk):
                     else:
                         # Handle non-field errors
                         form.add_error(None, str(e))
+                except Exception as e:
+                    print(f"[DEBUG] Unexpected error: {str(e)}")
+                    form.add_error(None, f"An unexpected error occurred: {str(e)}")
         else:
             print("[DEBUG] GET request - displaying form with instance")
             form = LeaveRequestForm(
@@ -4672,9 +4718,10 @@ def leave_request_update(request, pk):
 
         # Get all leave balances for display
         balances = {}
+        year = leave_request.start_date.year if leave_request.start_date else timezone.now().year
         leave_balances = UserLeaveBalance.objects.filter(
             user=leave_request.user,
-            year=leave_request.start_date.year if leave_request.start_date else timezone.now().year
+            year=year
         ).select_related('leave_type')
 
         for balance in leave_balances:
@@ -4724,18 +4771,19 @@ def leave_request_cancel(request, pk):
         
         if request.method == 'POST':
             print("[DEBUG] Processing POST request")
-            # Only update status to cancelled if not already rejected
-            if leave_request.status != 'Rejected':
-                old_status = leave_request.status
-                leave_request.status = 'Cancelled'
-                
-                # If was approved, revert the leave balance
-                if old_status == 'Approved':
-                    leave_request.revert_leave_balance()
+            with transaction.atomic():
+                # Only update status to cancelled if not already rejected
+                if leave_request.status != 'Rejected':
+                    old_status = leave_request.status
+                    leave_request.status = 'Cancelled'
                     
-                leave_request.save()
-                print("[DEBUG] Leave request cancelled successfully")
-                messages.success(request, 'Leave request cancelled successfully!')
+                    # If was approved, revert the leave balance
+                    if old_status == 'Approved':
+                        leave_request.revert_leave_balance()
+                        
+                    leave_request.save()
+                    print("[DEBUG] Leave request cancelled successfully")
+                    messages.success(request, 'Leave request cancelled successfully!')
             return redirect('aps_leave:leave_request_list')
         
         context = {
@@ -4769,10 +4817,11 @@ def leave_request_detail(request, pk):
         
         # Get leave balance for this specific leave type
         try:
+            year = leave_request.start_date.year if leave_request.start_date else timezone.now().year
             balance = UserLeaveBalance.objects.get(
                 user=leave_request.user,
                 leave_type=leave_request.leave_type,
-                year=leave_request.start_date.year if leave_request.start_date else timezone.now().year
+                year=year
             )
             balance_data = {
                 'allocated': balance.allocated,
@@ -4807,8 +4856,9 @@ from django.core.paginator import Paginator
 from django.utils import timezone
 from django.db.models import Q
 import json
+from django.db import transaction
 
-from .models import LeaveRequest
+from .models import LeaveRequest, UserLeaveBalance
 
 @login_required
 @user_passes_test(can_approve_leave)
@@ -4821,11 +4871,12 @@ def leave_approval_list(request):
         # HR, Admin, and Management can see all pending leave requests
         pending_requests = LeaveRequest.objects.filter(status='Pending').order_by('start_date')
     elif is_manager(user):
-        # Managers only see other users' pending leave requests
-        # Since there's no department, fallback to only showing other users
+        # Managers see pending leave requests from their team members
+        managed_users = User.objects.filter(manager=user)
         pending_requests = LeaveRequest.objects.filter(
-            status='Pending'
-        ).exclude(user=user).order_by('start_date')
+            status='Pending',
+            user__in=managed_users
+        ).order_by('start_date')
     else:
         # Shouldn't reach here due to @user_passes_test
         print("[DEBUG] Invalid access: user does not have approval permissions")
@@ -4835,85 +4886,297 @@ def leave_approval_list(request):
 
     paginator = Paginator(pending_requests, 20)
     page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    try:
+        page_obj = paginator.get_page(page_number)
+    except (ValueError, TypeError):
+        page_obj = paginator.get_page(1)
 
     return render(request, 'components/leave_management/leave_approval_list.html', {
         'page_obj': page_obj
     })
 
+
 @login_required
 @user_passes_test(can_approve_leave)
 def leave_request_approve(request, pk):
     """View to approve a leave request"""
-    leave_request = get_object_or_404(LeaveRequest, pk=pk, status='Pending')
-    print(f"[DEBUG] Approving Leave ID: {pk} for User: {leave_request.user.username}")
+    try:
+        leave_request = get_object_or_404(LeaveRequest, pk=pk, status='Pending')
+        print(f"[DEBUG] Approving Leave ID: {pk} for User: {leave_request.user.username}")
 
-    if request.method == 'POST':
-        print("[DEBUG] POST request received for approval")
+        if request.method == 'POST':
+            print("[DEBUG] POST request received for approval")
 
-        if not leave_request.has_sufficient_balance() and leave_request.leave_type.is_paid:
-            print("[DEBUG] Insufficient balance for paid leave")
-            if request.POST.get('auto_convert') == 'yes':
-                print("[DEBUG] Attempting auto-convert to Loss of Pay")
-                if leave_request.auto_convert_leave_type():
-                    messages.info(request, 'Leave request was automatically converted to Loss of Pay due to insufficient balance.')
+            if not leave_request.has_sufficient_balance() and leave_request.leave_type.is_paid:
+                print("[DEBUG] Insufficient balance for paid leave")
+                if request.POST.get('auto_convert') == 'yes':
+                    print("[DEBUG] Attempting auto-convert to Loss of Pay")
+                    if leave_request.auto_convert_leave_type():
+                        messages.info(request, 'Leave request was automatically converted to Loss of Pay due to insufficient balance.')
+                    else:
+                        messages.error(request, 'Unable to approve leave request due to insufficient balance.')
+                        return redirect('aps_leave:leave_approval_list')
                 else:
                     messages.error(request, 'Unable to approve leave request due to insufficient balance.')
                     return redirect('aps_leave:leave_approval_list')
-            else:
-                messages.error(request, 'Unable to approve leave request due to insufficient balance.')
+
+            with transaction.atomic():
+                # Manually update the leave balance first if it's a paid leave
+                if leave_request.leave_type.is_paid:
+                    print(f"[DEBUG] Manually updating leave balance for {leave_request.user.username}")
+                    year = leave_request.start_date.year
+                    
+                    try:
+                        balance = UserLeaveBalance.objects.select_for_update().get(
+                            user=leave_request.user,
+                            leave_type=leave_request.leave_type,
+                            year=year
+                        )
+                        
+                        # Convert to Decimal for proper arithmetic
+                        from decimal import Decimal
+                        leave_days = Decimal(str(leave_request.leave_days))
+                        
+                        # Update the used balance
+                        balance.used = balance.used + leave_days
+                        balance.save()
+                        
+                        print(f"[DEBUG] Balance updated - User: {leave_request.user.username}, Leave Type: {leave_request.leave_type.name}, Used: {balance.used}")
+                        
+                        # Set flag to prevent duplicate updates in the model's save method
+                        leave_request._balance_updated = True
+                    except UserLeaveBalance.DoesNotExist:
+                        print(f"[DEBUG] No balance record found for user {leave_request.user.username}, leave type {leave_request.leave_type.name}, year {year}")
+                        # Create a new balance record if it doesn't exist
+                        UserLeaveBalance.objects.create(
+                            user=leave_request.user,
+                            leave_type=leave_request.leave_type,
+                            year=year,
+                            allocated=0,
+                            used=leave_request.leave_days,
+                            carried_forward=0,
+                            additional=0
+                        )
+                        leave_request._balance_updated = True
+                
+                # Update leave request status
+                leave_request.status = 'Approved'
+                leave_request.approver = request.user
+                leave_request.save()
+
+                print(f"[DEBUG] Leave request {pk} approved successfully")
+                messages.success(request, 'Leave request approved successfully!')
+                
+                # Verify the balance was updated
+                if leave_request.leave_type.is_paid:
+                    try:
+                        updated_balance = UserLeaveBalance.objects.get(
+                            user=leave_request.user,
+                            leave_type=leave_request.leave_type,
+                            year=leave_request.start_date.year
+                        )
+                        print(f"[DEBUG] Verified balance after approval - Used: {updated_balance.used}, Available: {updated_balance.available}")
+                    except UserLeaveBalance.DoesNotExist:
+                        print("[DEBUG] Could not verify balance update - record not found")
+                
                 return redirect('aps_leave:leave_approval_list')
 
-        leave_request.status = 'Approved'
-        leave_request.approver = request.user
-        leave_request.save()
+        has_balance = leave_request.has_sufficient_balance()
+        print(f"[DEBUG] Leave balance sufficient: {has_balance}")
 
-        print(f"[DEBUG] Leave request {pk} approved successfully")
-        messages.success(request, 'Leave request approved successfully!')
+        return render(request, 'components/leave_management/leave_request_approve.html', {
+            'leave_request': leave_request,
+            'has_balance': has_balance
+        })
+    except Exception as e:
+        print(f"[DEBUG] Error in leave_request_approve: {str(e)}")
+        messages.error(request, f"An error occurred: {str(e)}")
         return redirect('aps_leave:leave_approval_list')
-
-    has_balance = leave_request.has_sufficient_balance()
-    print(f"[DEBUG] Leave balance sufficient: {has_balance}")
-
-    return render(request, 'components/leave_management/leave_request_approve.html', {
-        'leave_request': leave_request,
-        'has_balance': has_balance
-    })
 
 @login_required
 @user_passes_test(can_approve_leave)
 def leave_request_reject(request, pk):
     """View to reject a leave request"""
-    leave_request = get_object_or_404(LeaveRequest, pk=pk, status='Pending')
-    print(f"[DEBUG] Rejecting Leave ID: {pk} for User: {leave_request.user.username}")
+    try:
+        leave_request = get_object_or_404(LeaveRequest, pk=pk, status='Pending')
+        print(f"[DEBUG] Rejecting Leave ID: {pk} for User: {leave_request.user.username}")
 
-    if request.method == 'POST':
-        rejection_reason = request.POST.get('rejection_reason', '')
-        suggested_dates = request.POST.get('suggested_dates', '')
-        print(f"[DEBUG] Rejection reason: {rejection_reason}")
-        print(f"[DEBUG] Suggested dates (raw): {suggested_dates}")
+        if request.method == 'POST':
+            rejection_reason = request.POST.get('rejection_reason', '')
+            suggested_dates = request.POST.get('suggested_dates', '')
+            print(f"[DEBUG] Rejection reason: {rejection_reason}")
+            print(f"[DEBUG] Suggested dates (raw): {suggested_dates}")
 
-        leave_request.status = 'Rejected'
-        leave_request.approver = request.user
-        leave_request.rejection_reason = rejection_reason
+            with transaction.atomic():
+                leave_request.status = 'Rejected'
+                leave_request.approver = request.user
+                leave_request.rejection_reason = rejection_reason
 
-        if suggested_dates:
-            try:
-                leave_request.suggested_dates = json.loads(suggested_dates)
-                print("[DEBUG] Suggested dates parsed as JSON")
-            except json.JSONDecodeError:
-                print("[DEBUG] Failed to parse suggested dates as JSON. Saving as plain text.")
-                leave_request.suggested_dates = {'text': suggested_dates}
+                if suggested_dates:
+                    try:
+                        leave_request.suggested_dates = json.loads(suggested_dates)
+                        print("[DEBUG] Suggested dates parsed as JSON")
+                    except json.JSONDecodeError:
+                        print("[DEBUG] Failed to parse suggested dates as JSON. Saving as plain text.")
+                        leave_request.suggested_dates = {'text': suggested_dates}
 
-        leave_request.save()
-        print(f"[DEBUG] Leave request {pk} rejected")
+                leave_request.save()
+                print(f"[DEBUG] Leave request {pk} rejected")
 
-        messages.success(request, 'Leave request rejected.')
+            messages.success(request, 'Leave request rejected.')
+            return redirect('aps_leave:leave_approval_list')
+
+        return render(request, 'components/leave_management/leave_request_reject.html', {
+            'leave_request': leave_request
+        })
+    except Exception as e:
+        print(f"[DEBUG] Error in leave_request_reject: {str(e)}")
+        messages.error(request, f"An error occurred: {str(e)}")
         return redirect('aps_leave:leave_approval_list')
 
-    return render(request, 'components/leave_management/leave_request_reject.html', {
-        'leave_request': leave_request
-    })
+# @login_required
+# @user_passes_test(can_approve_leave)
+# def leave_approval_list(request):
+#     """View to list leave requests pending approval"""
+#     user = request.user
+#     print(f"[DEBUG] User: {user.username}, Role Check - HR: {is_hr(user)}, Admin: {is_admin(user)}, Manager: {is_manager(user)}")
+
+#     if is_hr(user) or is_admin(user):
+#         # HR, Admin, and Management can see all pending leave requests
+#         pending_requests = LeaveRequest.objects.filter(status='Pending').order_by('start_date')
+#     elif is_manager(user):
+#         # Managers only see other users' pending leave requests
+#         # Since there's no department, fallback to only showing other users
+#         pending_requests = LeaveRequest.objects.filter(
+#             status='Pending'
+#         ).exclude(user=user).order_by('start_date')
+#     else:
+#         # Shouldn't reach here due to @user_passes_test
+#         print("[DEBUG] Invalid access: user does not have approval permissions")
+#         pending_requests = LeaveRequest.objects.none()
+
+#     print(f"[DEBUG] Total pending requests fetched: {pending_requests.count()}")
+
+#     paginator = Paginator(pending_requests, 20)
+#     page_number = request.GET.get('page')
+#     page_obj = paginator.get_page(page_number)
+
+#     return render(request, 'components/leave_management/leave_approval_list.html', {
+#         'page_obj': page_obj
+#     })
+
+# from django.db import transaction
+
+# @login_required
+# @user_passes_test(can_approve_leave)
+# def leave_request_approve(request, pk):
+#     """View to approve a leave request and ensure balance updates"""
+#     leave_request = get_object_or_404(LeaveRequest, pk=pk, status='Pending')
+#     print(f"[DEBUG] Approving Leave ID: {pk} for User: {leave_request.user.username}")
+
+#     if request.method == 'POST':
+#         print("[DEBUG] POST request received for approval")
+
+#         if not leave_request.has_sufficient_balance() and leave_request.leave_type.is_paid:
+#             print("[DEBUG] Insufficient balance for paid leave")
+#             if request.POST.get('auto_convert') == 'yes':
+#                 print("[DEBUG] Attempting auto-convert to Loss of Pay")
+#                 if leave_request.auto_convert_leave_type():
+#                     messages.info(request, 'Leave request was automatically converted to Loss of Pay due to insufficient balance.')
+#                 else:
+#                     messages.error(request, 'Unable to approve leave request due to insufficient balance.')
+#                     return redirect('aps_leave:leave_approval_list')
+#             else:
+#                 messages.error(request, 'Unable to approve leave request due to insufficient balance.')
+#                 return redirect('aps_leave:leave_approval_list')
+
+#         try:
+#             with transaction.atomic():
+#                 old_status = leave_request.status
+#                 leave_request.status = 'Approved'
+#                 leave_request.approver = request.user
+                
+#                 # Save first to ensure leave request is approved
+#                 leave_request.save()
+                
+#                 # Explicitly update leave balance outside of the model's save method
+#                 if leave_request.leave_type.is_paid:
+#                     print(f"[DEBUG] Explicitly updating leave balance for {leave_request.user.username}, leave type: {leave_request.leave_type.name}, days: {leave_request.leave_days}")
+                    
+#                     year = leave_request.start_date.year
+#                     balance, created = UserLeaveBalance.objects.get_or_create(
+#                         user=leave_request.user,
+#                         leave_type=leave_request.leave_type,
+#                         year=year,
+#                         defaults={'allocated': 0}
+#                     )
+                    
+#                     print(f"[DEBUG] Before balance update - Used: {balance.used}, Leave days: {leave_request.leave_days}")
+#                     balance.used = float(balance.used) + float(leave_request.leave_days)
+#                     balance.save()
+#                     print(f"[DEBUG] After balance update - Used: {balance.used}")
+                
+#                 # Verify balance was updated correctly
+#                 try:
+#                     current_balance = UserLeaveBalance.objects.get(
+#                         user=leave_request.user,
+#                         leave_type=leave_request.leave_type,
+#                         year=leave_request.start_date.year
+#                     )
+#                     print(f"[DEBUG] Final balance verification - Used: {current_balance.used}, Available: {current_balance.available}")
+#                 except UserLeaveBalance.DoesNotExist:
+#                     print("[DEBUG] Warning: Could not find balance record to verify update")
+
+#             print(f"[DEBUG] Leave request {pk} approved successfully")
+#             messages.success(request, 'Leave request approved successfully!')
+#         except Exception as e:
+#             print(f"[ERROR] Failed to approve leave: {e}")
+#             messages.error(request, 'Something went wrong while approving the leave request.')
+
+#         return redirect('aps_leave:leave_approval_list')
+
+#     has_balance = leave_request.has_sufficient_balance()
+#     print(f"[DEBUG] Leave balance sufficient: {has_balance}")
+
+#     return render(request, 'components/leave_management/leave_request_approve.html', {
+#         'leave_request': leave_request,
+#         'has_balance': has_balance
+#     })
+
+# @login_required
+# @user_passes_test(can_approve_leave)
+# def leave_request_reject(request, pk):
+#     """View to reject a leave request"""
+#     leave_request = get_object_or_404(LeaveRequest, pk=pk, status='Pending')
+#     print(f"[DEBUG] Rejecting Leave ID: {pk} for User: {leave_request.user.username}")
+
+#     if request.method == 'POST':
+#         rejection_reason = request.POST.get('rejection_reason', '')
+#         suggested_dates = request.POST.get('suggested_dates', '')
+#         print(f"[DEBUG] Rejection reason: {rejection_reason}")
+#         print(f"[DEBUG] Suggested dates (raw): {suggested_dates}")
+
+#         leave_request.status = 'Rejected'
+#         leave_request.approver = request.user
+#         leave_request.rejection_reason = rejection_reason
+
+#         if suggested_dates:
+#             try:
+#                 leave_request.suggested_dates = json.loads(suggested_dates)
+#                 print("[DEBUG] Suggested dates parsed as JSON")
+#             except json.JSONDecodeError:
+#                 print("[DEBUG] Failed to parse suggested dates as JSON. Saving as plain text.")
+#                 leave_request.suggested_dates = {'text': suggested_dates}
+
+#         leave_request.save()
+#         print(f"[DEBUG] Leave request {pk} rejected")
+
+#         messages.success(request, 'Leave request rejected.')
+#         return redirect('aps_leave:leave_approval_list')
+
+#     return render(request, 'components/leave_management/leave_request_reject.html', {
+#         'leave_request': leave_request
+#     })
 
 
 # ============= 5. COMP-OFF REQUEST VIEWS =============
@@ -10472,6 +10735,8 @@ def bank_payment_detail(request, payment_id):
         'payment_statuses': dict(BankPayment.PAYMENT_STATUS)
     }
     return render(request, 'components/finance/bank_payment_detail.html', context)
+
+
 @login_required
 @user_passes_test(is_finance)
 @require_http_methods(["POST"])

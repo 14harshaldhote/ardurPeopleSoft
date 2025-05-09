@@ -14,20 +14,27 @@
     {% if is_hr or is_admin %}
     <div class="bg-white rounded-lg shadow mb-6 p-4">
         <h2 class="text-lg font-semibold mb-4">Filters</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <select class="form-select rounded-lg border-gray-300" id="department-filter">
-                <option value="">All Departments</option>
-                {% for dept in departments %}
-                    <option value="{{ dept.id }}">{{ dept.name }}</option>
-                {% endfor %}
-            </select>
-            <select class="form-select rounded-lg border-gray-300" id="status-filter">
-                <option value="">All Statuses</option>
-                <option value="Pending">Pending</option>
-                <option value="Approved">Approved</option>
-                <option value="Rejected">Rejected</option>
-            </select>
-        </div>
+        <form method="get" action="{% url 'aps_leave:leave_request_list' %}">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <select class="form-select rounded-lg border-gray-300" id="department-filter" name="department">
+                    <option value="">All Departments</option>
+                    {% for dept in departments %}
+                        <option value="{{ dept }}" {% if request.GET.department == dept %}selected{% endif %}>{{ dept }}</option>
+                    {% endfor %}
+                </select>
+                <select class="form-select rounded-lg border-gray-300" id="status-filter" name="status">
+                    <option value="">All Statuses</option>
+                    <option value="Pending" {% if request.GET.status == 'Pending' %}selected{% endif %}>Pending</option>
+                    <option value="Approved" {% if request.GET.status == 'Approved' %}selected{% endif %}>Approved</option>
+                    <option value="Rejected" {% if request.GET.status == 'Rejected' %}selected{% endif %}>Rejected</option>
+                    <option value="Cancelled" {% if request.GET.status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                </select>
+                <div class="flex">
+                    <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">Apply Filters</button>
+                    <a href="{% url 'aps_leave:leave_request_list' %}" class="ml-2 bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300">Clear</a>
+                </div>
+            </div>
+        </form>
     </div>
     {% endif %}
 
@@ -64,6 +71,7 @@
                         <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                             {% if leave_request.status == 'Approved' %}bg-green-100 text-green-800
                             {% elif leave_request.status == 'Rejected' %}bg-red-100 text-red-800
+                            {% elif leave_request.status == 'Cancelled' %}bg-gray-100 text-gray-800
                             {% else %}bg-yellow-100 text-yellow-800{% endif %}">
                             {{ leave_request.status }}
                         </span>
@@ -84,11 +92,38 @@
                             {% endif %}
                         {% endfor %}
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {% if can_approve and leave_request.status == 'Pending' %}
-                        <button class="text-green-600 hover:text-green-900 mr-3">Approve</button>
-                        <button class="text-red-600 hover:text-red-900">Reject</button>
-                        {% endif %}
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                        <div class="flex space-x-2">
+                            <a href="{% url 'aps_leave:leave_request_detail' leave_request.id %}" class="text-indigo-600 hover:text-indigo-900">View</a>
+                            
+                            {% if leave_request.status == 'Pending' %}
+                                {% if leave_request.user == request.user or is_hr %}
+                                    <a href="{% url 'aps_leave:leave_request_update' leave_request.id %}" class="text-blue-600 hover:text-blue-900">Edit</a>
+                                    <a href="{% url 'aps_leave:leave_request_cancel' leave_request.id %}" class="text-gray-600 hover:text-gray-900">Cancel</a>
+                                {% endif %}
+                                
+                                {% if can_approve %}
+                                    <form method="post" action="{% url 'aps_leave:leave_request_approve' leave_request.id %}" class="inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="text-green-600 hover:text-green-900">Approve</button>
+                                    </form>
+                                    <form method="post" action="{% url 'aps_leave:leave_request_reject' leave_request.id %}" class="inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="text-red-600 hover:text-red-900">Reject</button>
+                                    </form>
+                                {% endif %}
+                            {% endif %}
+                            
+                            {% if is_hr and leave_request.status != 'Pending' %}
+                                <a href="{% url 'aps_leave:leave_request_update' leave_request.id %}" class="text-blue-600 hover:text-blue-900">Edit</a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">
+                        No leave requests found.
                     </td>
                 </tr>
                 {% endfor %}
@@ -101,15 +136,15 @@
     <div class="flex justify-center mt-6">
         <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
             {% if page_obj.has_previous %}
-            <a href="?page={{ page_obj.previous_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Previous</a>
+            <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Previous</a>
             {% endif %}
             
             {% for i in page_obj.paginator.page_range %}
-            <a href="?page={{ i }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium {% if page_obj.number == i %}text-indigo-600 bg-indigo-50{% else %}text-gray-700 hover:bg-gray-50{% endif %}">{{ i }}</a>
+            <a href="?page={{ i }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium {% if page_obj.number == i %}text-indigo-600 bg-indigo-50{% else %}text-gray-700 hover:bg-gray-50{% endif %}">{{ i }}</a>
             {% endfor %}
             
             {% if page_obj.has_next %}
-            <a href="?page={{ page_obj.next_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Next</a>
+            <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Next</a>
             {% endif %}
         </nav>
     </div>
