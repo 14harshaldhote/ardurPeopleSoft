@@ -1,0 +1,303 @@
+{% load static %}
+{% csrf_token %}
+
+<!-- Calendar View -->
+<div class="mb-8">
+    <div class="bg-white shadow rounded-lg">
+        <div class="px-6 py-4 bg-indigo-600 rounded-t-lg">
+            <h3 class="text-lg font-semibold text-white flex items-center gap-2">
+                <i class="fas fa-calendar-alt"></i>
+                {{ month_name }} {{ current_year }} Calendar View
+            </h3>
+        </div>
+        <div class="p-6">
+            <div class="overflow-x-auto">
+                <table class="min-w-full border border-gray-200 rounded-lg">
+                    <thead>
+                        <tr class="bg-gray-100 text-gray-700">
+                            <th class="px-3 py-2">Mon</th>
+                            <th class="px-3 py-2">Tue</th>
+                            <th class="px-3 py-2">Wed</th>
+                            <th class="px-3 py-2">Thu</th>
+                            <th class="px-3 py-2">Fri</th>
+                            <th class="px-3 py-2">Sat</th>
+                            <th class="px-3 py-2">Sun</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for week in calendar %}
+                        <tr class="{% if forloop.counter|divisibleby:2 %}bg-gray-50{% endif %}">
+                            {% for day in week %}
+                            <td class="{% if day == 0 %}bg-gray-100{% else %}bg-white{% endif %} align-top border border-gray-200 p-2 min-w-[90px] h-24">
+                                {% if day != 0 %}
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="font-bold text-gray-800">{{ day }}</span>
+                                    <button type="button"
+                                            class="ml-2 inline-flex items-center px-2 py-1 text-xs font-medium border border-indigo-500 text-indigo-600 rounded hover:bg-indigo-50 transition mark-day-btn"
+                                            data-toggle="modal" data-target="#markDayModal" data-day="{{ day }}"
+                                            title="Mark Attendance">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                </div>
+                                <div>
+                                    {% with day_stats=daily_stats|get_item:day %}
+                                    {% if day_stats %}
+                                    <div class="flex flex-wrap gap-1 mb-1">
+                                        <span class="inline-block px-2 py-0.5 rounded bg-green-100 text-green-700 text-xs" title="Present">P: {{ day_stats.present }}</span>
+                                        <span class="inline-block px-2 py-0.5 rounded bg-red-100 text-red-700 text-xs" title="Absent">A: {{ day_stats.absent }}</span>
+                                    </div>
+                                    <div class="flex flex-wrap gap-1">
+                                        <span class="inline-block px-2 py-0.5 rounded bg-yellow-100 text-yellow-800 text-xs" title="Late">L: {{ day_stats.late }}</span>
+                                        <span class="inline-block px-2 py-0.5 rounded bg-blue-100 text-blue-700 text-xs" title="Leave">LV: {{ day_stats.leave }}</span>
+                                    </div>
+                                    {% endif %}
+                                    {% endwith %}
+                                </div>
+                                {% endif %}
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Employee Attendance List -->
+<div class="mb-8">
+    <div class="bg-white shadow rounded-lg">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between px-6 py-4 bg-indigo-600 rounded-t-lg">
+            <h3 class="text-lg font-semibold text-white flex items-center gap-2">
+                <i class="fas fa-list"></i>
+                Employee Attendance Records
+            </h3>
+            <div class="mt-3 md:mt-0">
+                <div class="flex rounded-md shadow-sm">
+                    <input type="text" id="employeeSearch" class="block w-full rounded-l-md border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 text-sm" placeholder="Search employee...">
+                    <button type="submit" class="inline-flex items-center px-3 py-2 border border-l-0 border-gray-300 bg-white text-gray-500 rounded-r-md hover:bg-gray-50">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="p-6">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="px-3 py-2">
+                                <input type="checkbox" id="select-all" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                            </th>
+                            <th class="px-3 py-2 text-left">Employee</th>
+                            <th class="px-3 py-2 text-left">Role</th>
+                            {% if departments %}
+                            <th class="px-3 py-2 text-left">Department</th>
+                            {% endif %}
+                            <th class="px-3 py-2 text-left">Today's Status</th>
+                            <th class="px-3 py-2 text-left">Present</th>
+                            <th class="px-3 py-2 text-left">Absent</th>
+                            <th class="px-3 py-2 text-left">Late</th>
+                            <th class="px-3 py-2 text-left">Leave</th>
+                            <th class="px-3 py-2 text-left">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-100">
+                        {% for user in users %}
+                        <tr>
+                            <td class="px-3 py-2">
+                                <input type="checkbox" class="user-select rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" name="select_user" value="{{ user.id }}">
+                            </td>
+                            <td class="px-3 py-2">
+                                <div class="flex items-center gap-3">
+                                    <img src="{% if user.profile_pic %}{{ user.profile_pic.url }}{% else %}{% static 'img/default-avatar.png' %}{% endif %}" 
+                                         class="rounded-full w-10 h-10 object-cover" alt="{{ user.username }}">
+                                    <div>
+                                        <div class="font-semibold text-gray-900">{{ user.get_full_name|default:user.username }}</div>
+                                        <div class="text-xs text-gray-500">{{ user.email }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-3 py-2">
+                                <span class="inline-block px-2 py-0.5 rounded bg-gray-200 text-gray-700 text-xs">{{ user.groups.first.name|default:"No Role" }}</span>
+                            </td>
+                            {% if departments %}
+                            <td class="px-3 py-2">
+                                <span class="inline-block px-2 py-0.5 rounded bg-blue-100 text-blue-700 text-xs">{{ user.department.name|default:"N/A" }}</span>
+                            </td>
+                            {% endif %}
+                            <td class="px-3 py-2">
+                                {% with today_record=attendance_by_date|get_item:current_date.day|filter_by_user:user.id %}
+                                {% if today_record %}
+                                <span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-{{ today_record.0.status|status_color }}-100 text-{{ today_record.0.status|status_color }}-700">
+                                    {{ today_record.0.status }}
+                                </span>
+                                {% else %}
+                                <span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-600">Not Marked</span>
+                                {% endif %}
+                                {% endwith %}
+                            </td>
+                            {% with stats=user_stats|get_item:user.id %}
+                            <td class="px-3 py-2">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="font-semibold text-gray-800">{{ stats.present }}</span>
+                                    <span class="text-xs text-gray-500">({{ stats.present_percentage }}%)</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded h-2">
+                                    <div class="bg-green-500 h-2 rounded" style="width: {{ stats.present_percentage }}%"></div>
+                                </div>
+                            </td>
+                            <td class="px-3 py-2">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="font-semibold text-gray-800">{{ stats.absent }}</span>
+                                    <span class="text-xs text-gray-500">({{ stats.absent_percentage }}%)</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded h-2">
+                                    <div class="bg-red-500 h-2 rounded" style="width: {{ stats.absent_percentage }}%"></div>
+                                </div>
+                            </td>
+                            <td class="px-3 py-2">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="font-semibold text-gray-800">{{ stats.late }}</span>
+                                    <span class="text-xs text-gray-500">({{ stats.late_percentage }}%)</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded h-2">
+                                    <div class="bg-yellow-400 h-2 rounded" style="width: {{ stats.late_percentage }}%"></div>
+                                </div>
+                            </td>
+                            <td class="px-3 py-2">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="font-semibold text-gray-800">{{ stats.leave }}</span>
+                                    <span class="text-xs text-gray-500">({{ stats.leave_percentage }}%)</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded h-2">
+                                    <div class="bg-blue-400 h-2 rounded" style="width: {{ stats.leave_percentage }}%"></div>
+                                </div>
+                            </td>
+                            {% endwith %}
+                            <td class="px-3 py-2">
+                                <div class="flex gap-2">
+                                    <button type="button" class="inline-flex items-center px-2 py-1 text-xs font-medium bg-indigo-600 text-white rounded hover:bg-indigo-700 mark-attendance-btn"
+                                            data-toggle="modal" data-target="#markAttendanceModal"
+                                            data-user-id="{{ user.id }}" 
+                                            data-user-name="{{ user.get_full_name|default:user.username }}"
+                                            title="Mark Attendance">
+                                        <i class="fas fa-calendar-check"></i>
+                                    </button>
+                                    <button type="button" class="inline-flex items-center px-2 py-1 text-xs font-medium bg-blue-500 text-white rounded hover:bg-blue-600 view-history-btn"
+                                            data-toggle="modal" data-target="#historyModal"
+                                            data-user-id="{{ user.id }}"
+                                            data-user-name="{{ user.get_full_name|default:user.username }}"
+                                            title="View History">
+                                        <i class="fas fa-history"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Daily Attendance Detail -->
+<div class="mt-8">
+    <div class="bg-white shadow rounded-lg">
+        <div class="flex items-center justify-between px-6 py-4 bg-indigo-600 rounded-t-lg">
+            <h3 class="text-lg font-semibold text-white flex items-center gap-2">
+                <i class="fas fa-calendar-day"></i>
+                Daily Attendance Details
+            </h3>
+            <button type="button" class="text-white hover:text-indigo-200 focus:outline-none" data-card-widget="collapse">
+                <i class="fas fa-plus"></i>
+            </button>
+        </div>
+        <div class="p-6 hidden">
+            <ul class="flex flex-wrap border-b border-gray-200 mb-4" id="dailyAttendanceTabs" role="tablist">
+                {% for day, records in attendance_by_date.items %}
+                <li class="mr-2">
+                    <a class="inline-block px-4 py-2 rounded-t-lg border-b-2 {% if forloop.first %}border-indigo-600 text-indigo-600 bg-indigo-50{% else %}border-transparent text-gray-500 hover:text-indigo-600 hover:bg-indigo-50{% endif %}"
+                       id="day-{{ day }}-tab" data-toggle="tab"
+                       href="#day-{{ day }}" role="tab"
+                       aria-controls="day-{{ day }}" aria-selected="{% if forloop.first %}true{% else %}false{% endif %}">
+                        <i class="fas fa-calendar-day mr-1"></i> Day {{ day }}
+                    </a>
+                </li>
+                {% empty %}
+                <li>
+                    <a class="inline-block px-4 py-2 rounded-t-lg border-b-2 border-indigo-600 text-indigo-600 bg-indigo-50" href="#">
+                        <i class="fas fa-exclamation-circle mr-1"></i> No attendance records
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+            <div class="tab-content" id="dailyAttendanceContent">
+                {% for day, records in attendance_by_date.items %}
+                <div class="tab-pane {% if forloop.first %}block{% else %}hidden{% endif %}" 
+                     id="day-{{ day }}" role="tabpanel" 
+                     aria-labelledby="day-{{ day }}-tab">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="px-3 py-2 text-left">Employee</th>
+                                    <th class="px-3 py-2 text-left">Status</th>
+                                    <th class="px-3 py-2 text-left">Check In</th>
+                                    <th class="px-3 py-2 text-left">Check Out</th>
+                                    <th class="px-3 py-2 text-left">Working Hours</th>
+                                    <th class="px-3 py-2 text-left">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-100">
+                                {% for record in records %}
+                                <tr>
+                                    <td class="px-3 py-2">
+                                        <div class="flex items-center gap-2">
+                                            <img src="{% if record.user.profile_pic %}{{ record.user.profile_pic.url }}{% else %}{% static 'img/default-avatar.png' %}{% endif %}" 
+                                                 class="rounded-full w-8 h-8 object-cover" alt="{{ record.user.username }}">
+                                            <span class="text-gray-900">{{ record.user.get_full_name|default:record.user.username }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-3 py-2">
+                                        <span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-{{ record.status|status_color }}-100 text-{{ record.status|status_color }}-700">
+                                            {{ record.status }}
+                                        </span>
+                                    </td>
+                                    <td class="px-3 py-2">{{ record.check_in|time|default:"--:--" }}</td>
+                                    <td class="px-3 py-2">{{ record.check_out|time|default:"--:--" }}</td>
+                                    <td class="px-3 py-2">{{ record.working_hours|default:"0.0" }} hrs</td>
+                                    <td class="px-3 py-2">
+                                        <div class="flex gap-2">
+                                            <button type="button" class="inline-flex items-center px-2 py-1 text-xs font-medium bg-indigo-600 text-white rounded hover:bg-indigo-700 edit-record-btn"
+                                                    data-toggle="modal" data-target="#editRecordModal"
+                                                    data-record-id="{{ record.id }}"
+                                                    title="Edit Record">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <a href="{% url 'aps_hr:delete_attendance' record.id %}" 
+                                               class="inline-flex items-center px-2 py-1 text-xs font-medium bg-red-600 text-white rounded hover:bg-red-700 delete-attendance"
+                                               title="Delete Record">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center px-3 py-2 text-gray-500">
+                                        <i class="fas fa-info-circle mr-1"></i> No attendance records for this day
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
