@@ -11,7 +11,7 @@ def track_login_time(sender, request, user, **kwargs):
     """
     try:
         # Import models here to avoid circular imports
-        from .models import UserSession, Attendance, ShiftAssignment, Holiday
+        from .models import UserSession, Attendance
         
         # Get current time with timezone awareness - Django stores in UTC internally
         utc_now = timezone.now()

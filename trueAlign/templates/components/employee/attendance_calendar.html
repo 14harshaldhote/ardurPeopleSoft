@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load finance_extras %}
+
+{% block title %}Attendance Calendar{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="bg-white rounded-lg shadow">
+        <!-- Calendar Header -->
+        <div class="flex items-center justify-between px-6 py-4 border-b">
+            <h2 class="text-xl font-semibold text-gray-800">{{ month_name }} {{ year }}</h2>
+            <div class="flex space-x-2">
+                <a href="?month={{ prev_month }}&year={{ prev_year }}" class="px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded">Previous</a>
+                <a href="?month={{ next_month }}&year={{ next_year }}" class="px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded">Next</a>
+            </div>
+        </div>
+
+        <!-- Calendar Grid -->
+        <div class="p-6">
+            <!-- Days of Week Header -->
+            <div class="grid grid-cols-7 gap-2 mb-4">
+                {% for day in "MTWTFSS" %}
+                <div class="text-center text-sm font-medium text-gray-600">{{ day }}</div>
+                {% endfor %}
+            </div>
+
+            <!-- Calendar Days -->
+            {% for week in calendar %}
+            <div class="grid grid-cols-7 gap-2">
+                {% for day in week %}
+                    {% if day != 0 %}
+                        <div class="h-24 border rounded-lg p-2 {% if day == current_date.day and month == current_date.month and year == current_date.year %}bg-blue-50{% endif %}">
+                            <div class="text-sm {% if day == current_date.day and month == current_date.month and year == current_date.year %}font-bold text-blue-600{% else %}text-gray-600{% endif %}">{{ day }}</div>
+                            
+                            {% with record=attendance_by_day|get_item:day %}
+                            {% if record %}
+                                <div class="mt-1">
+                                    <div class="text-xs font-medium 
+                                        {% if record.status == 'Present' %}text-green-600
+                                        {% elif record.status == 'Absent' %}text-red-600
+                                        {% elif record.status == 'Late' %}text-yellow-600
+                                        {% else %}text-gray-600{% endif %}">
+                                        {{ record.status }}
+                                    </div>
+                                    {% if record.check_in %}
+                                    <div class="text-xs text-gray-500">
+                                        <span class="inline-block">{{ record.check_in|time:"H:i" }}</span>
+                                    </div>
+                                    {% endif %}
+                                    {% if record.check_out %}
+                                    <div class="text-xs text-gray-500">
+                                        <span class="inline-block">{{ record.check_out|time:"H:i" }}</span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                            {% endwith %}
+                        </div>
+                    {% else %}
+                        <div class="h-24 bg-gray-50 border rounded-lg"></div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

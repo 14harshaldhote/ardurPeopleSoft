@@ -1,7 +1,6 @@
 # trueAlign/urls.py
 from django.urls import path, include
 from . import views
-
 # Appraisal URL patterns
 appraisal_patterns = [
     # Basic CRUD operations
@@ -33,7 +32,7 @@ admin_patterns = [
     path('projects/<int:project_id>/change-role/', views.change_role, name='change_role'),
     path('projects/<int:project_id>/update_hours/', views.update_hours, name='update_hours'),
     path('reports/breaks/', views.break_report_view, name='break_report_view'),
-    path('attendance/', views.admin_attendance_view, name='attendance'),
+    # path('attendance/', views.admin_attendance_view, name='attendance'),
     path('support/', views.admin_support, name='admin_support'),
     path('support/<uuid:ticket_id>/', views.admin_support, name='admin_support_with_ticket'),
     path('user/<int:user_id>/sessions/<str:date_str>/', views.user_session_detail_view, name='user_session_detail'),
@@ -51,7 +50,10 @@ admin_patterns = [
 # Employee-specific URLs under 'truealign/employee/'
 employee_patterns = [
     path('support/', views.employee_support, name='employee_support'),
-    path('attendance/', views.employee_attendance_view, name='attendance'),
+    path('attendance/', views.attendance_dashboard, name='attendance_dashboard'),
+    path('attendance/calendar/', views.attendance_calendar, name='attendance_calendar'),
+    path('attendance/check_in_out/', views.session_activity, name='session_activity'),
+    path('attendance/regularization/', views.attendance_regularization, name='attendance_regularization'),
     path('timesheet/', views.timesheet_view, name='timesheet'),
     path('leave/', views.leave_view, name='leave_view'),
     path('profile/', views.employee_profile, name='employee_profile'),
@@ -63,7 +65,7 @@ employee_patterns = [
 hr_patterns = [
     path('leave/requests/', views.view_leave_requests_hr, name='view_leave_requests_hr'),
     path('leave/<int:leave_id>/<str:action>/', views.manage_leave_request_hr, name='manage_leave_request_hr'),
-    path('attendance/', views.hr_attendance_view, name='attendance'),
+    # path('attendance/', views.hr_attendance_view, name='attendance'),
     path('dashboard/', views.hr_dashboard, name='hr_dashboard'),
     path('user/<int:user_id>/', views.hr_user_detail, name='hr_user_detail'),
     path('support/', views.hr_support, name='hr_support'),
@@ -73,7 +75,7 @@ hr_patterns = [
     path('edit-update/<int:update_id>/', views.hr_edit_update, name='hr_edit_update'),
     path('delete-update/<int:update_id>/', views.hr_delete_update, name='hr_delete_update'),
     path('employees/', views.employee_directory, name='employee_directory'),
-    path('mark_attendance/', views.manual_attendance, name='manual_attendance'),
+    # path('mark_attendance/', views.manual_attendance, name='manual_attendance'),
     path('user/add/', views.add_user, name='add_user'),
     path('user/import-errors/', views.import_errors, name='import_errors'),
     path('bulk-add-users/', views.bulk_add_users, name='bulk_add_users'),
@@ -115,8 +117,8 @@ manager_patterns = [
     # Reports and monitoring
     path('report/', views.manager_report_view, name='report'),
     path('reports/breaks/', views.break_report_view_manager, name='break_report_view_manager'),
-    path('reports/attendance/', views.attendance_report_view_manager, name='attendance_report_view_manager'),
-    path('attendance/', views.manager_attendance_view, name='attendance'),
+    # path('reports/attendance/', views.attendance_report_view_manager, name='attendance_report_view_manager'),
+    # path('attendance/', views.manager_attendance_view, name='attendance'),
     path('timesheets/', views.manager_view_timesheets, name='view_timesheets'),
     path('timesheets/bulk-update/', views.bulk_update_timesheet, name='bulk_update_timesheet'),
 

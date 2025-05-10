@@ -1,0 +1,79 @@
+<!-- Attendance Trends Section -->
+<div class="container mx-auto px-4 py-6 mb-8">
+    <h2 class="text-xl font-semibold text-gray-800 mb-4">Attendance Trends</h2>
+    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+        <div class="flex justify-end mb-4">
+            <select id="trendPeriod" class="rounded-md border border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                <option value="week">Last Week</option>
+                <option value="month" selected>Last Month</option>
+                <option value="quarter">Last Quarter</option>
+            </select>
+        </div>
+        <div  >
+            <canvas id="attendanceTrendChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const ctx = document.getElementById('attendanceTrendChart').getContext('2d');
+        const attendanceData = {
+            labels: ['Present', 'Late', 'Absent', 'Leave', 'Half Day', 'WFH'],
+            datasets: [{
+                data: [
+                    {{ present_days|default:0 }},
+                    {{ late_days|default:0 }},
+                    {{ absent_days|default:0 }},
+                    {{ leave_days|default:0 }},
+                    {{ half_days|default:0 }},
+                    {{ wfh_days|default:0 }}
+                ],
+                backgroundColor: [
+                    '#22c55e', // Green
+                    '#eab308', // Yellow 
+                    '#ef4444', // Red
+                    '#3b82f6', // Blue
+                    '#a855f7', // Purple
+                    '#14b8a6'  // Teal
+                ],
+                borderWidth: 1
+            }]
+        };
+
+        const chartConfig = {
+            type: 'doughnut',
+            data: attendanceData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            boxWidth: 10,
+                            padding: 8,
+                            font: {size: 11}
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const value = context.raw;
+                                const total = context.dataset.data.reduce((a,b) => a+b, 0);
+                                const pct = total ? ((value/total)*100).toFixed(1) : 0;
+                                return `${context.label}: ${value} (${pct}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
+        const chart = new Chart(ctx, chartConfig);
+
+        document.getElementById('trendPeriod').addEventListener('change', () => chart.update());
+    });
+</script>

@@ -1,0 +1,244 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Attendance Regularization{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 bg-gray-50">
+    <div class="mb-8">
+        <h2 class="text-3xl font-bold text-gray-900">Attendance Regularization</h2>
+        <p class="text-gray-600 mt-2">Submit and manage your attendance regularization requests</p>
+    </div>
+    
+    <!-- Alerts for messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="mb-4 p-4 rounded-lg shadow-sm transition duration-300 ease-in-out transform hover:scale-[1.02] {% if message.tags == 'success' %}bg-green-50 text-green-800 border border-green-200{% elif message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200{% else %}bg-blue-50 text-blue-800 border border-blue-200{% endif %}">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        {% if message.tags == 'success' %}
+                            <svg class="h-5 w-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                            </svg>
+                        {% elif message.tags == 'error' %}
+                            <svg class="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                            </svg>
+                        {% else %}
+                            <svg class="h-5 w-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9z" clip-rule="evenodd"/>
+                            </svg>
+                        {% endif %}
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium">{{ message }}</p>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% endif %}
+    
+    <!-- Regularization Request Form -->
+    <div class="bg-white shadow-lg rounded-xl overflow-hidden mb-8 transition duration-300 ease-in-out transform hover:shadow-xl">
+        <div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-5">
+            <h3 class="text-xl font-semibold text-white">Submit Regularization Request</h3>
+        </div>
+        <div class="p-8">
+            <form method="post" action="{% url 'aps_employee:attendance_regularization' %}" class="space-y-6">
+                {% csrf_token %}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="space-y-2">
+                        <label for="date" class="block text-sm font-medium text-gray-700">Date</label>
+                        <input type="date" id="date" name="date" max="{{ current_date|date:'Y-m-d' }}" required
+                               class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200">
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <label for="check_in_time" class="block text-sm font-medium text-gray-700">Check-in Time</label>
+                        <input type="time" id="check_in_time" name="check_in_time" 
+                               class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200">
+                        <p class="mt-1 text-sm text-gray-500">Optional</p>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <label for="check_out_time" class="block text-sm font-medium text-gray-700">Check-out Time</label>
+                        <input type="time" id="check_out_time" name="check_out_time"
+                               class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200">
+                        <p class="mt-1 text-sm text-gray-500">Optional</p>
+                    </div>
+                    
+                    <div class="md:col-span-2 space-y-2">
+                        <label for="reason" class="block text-sm font-medium text-gray-700">Reason for Regularization</label>
+                        <textarea id="reason" name="reason" rows="4" required
+                                  class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
+                                  placeholder="Please provide a detailed reason for this regularization request"></textarea>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end">
+                    <button type="submit" class="inline-flex items-center px-6 py-3 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-200">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                        Submit Request
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Records Needing Regularization -->
+    <div class="bg-white shadow-lg rounded-xl overflow-hidden mb-8 transition duration-300 ease-in-out transform hover:shadow-xl">
+        <div class="bg-gradient-to-r from-yellow-500 to-orange-500 px-6 py-5">
+            <h3 class="text-xl font-semibold text-white">Records That May Need Regularization</h3>
+        </div>
+        <div class="overflow-x-auto">
+            {% if records_needing_regularization %}
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Date</th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Check-in</th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Check-out</th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Issue</th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for record in records_needing_regularization %}
+                            <tr class="hover:bg-gray-50 transition duration-150">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ record.date|date:"d M Y" }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                        {% if record.status == 'Present' %}bg-green-100 text-green-800
+                                        {% elif record.status == 'Absent' %}bg-red-100 text-red-800
+                                        {% elif record.status == 'Late' %}bg-yellow-100 text-yellow-800
+                                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                        {{ record.status }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {% if record.check_in %}
+                                        {{ record.check_in|date:"H:i" }}
+                                    {% else %}
+                                        <span class="text-red-500 font-medium">Missing</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {% if record.check_out %}
+                                        {{ record.check_out|date:"H:i" }}
+                                    {% else %}
+                                        <span class="text-red-500 font-medium">Missing</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {% if record.status == 'Absent' %}
+                                        <span class="text-red-600">Marked as absent</span>
+                                    {% elif not record.check_in and not record.check_out %}
+                                        <span class="text-red-600">Missing check-in and check-out</span>
+                                    {% elif not record.check_in %}
+                                        <span class="text-orange-600">Missing check-in</span>
+                                    {% elif not record.check_out %}
+                                        <span class="text-orange-600">Missing check-out</span>
+                                    {% elif record.is_late %}
+                                        <span class="text-yellow-600">Late by {{ record.late_minutes }} minutes</span>
+                                    {% elif record.left_early %}
+                                        <span class="text-yellow-600">Left early by {{ record.early_departure_minutes }} minutes</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                    <button onclick="prefillForm('{{ record.date|date:'Y-m-d' }}')" 
+                                            class="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50 transition duration-150">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                                        </svg>
+                                        Regularize
+                                    </button>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="p-8 text-center text-gray-500">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <p class="mt-4 text-lg">No records found that need regularization.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Pending Regularization Requests -->
+    <div class="bg-white shadow-lg rounded-xl overflow-hidden transition duration-300 ease-in-out transform hover:shadow-xl">
+        <div class="bg-gradient-to-r from-blue-600 to-cyan-600 px-6 py-5">
+            <h3 class="text-xl font-semibold text-white">Pending Regularization Requests</h3>
+        </div>
+        <div class="overflow-x-auto">
+            {% if pending_requests %}
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Date</th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Requested Check-in</th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Requested Check-out</th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Reason</th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for request in pending_requests %}
+                            <tr class="hover:bg-gray-50 transition duration-150">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ request.date|date:"d M Y" }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {% if request.requested_check_in %}
+                                        {{ request.requested_check_in|date:"H:i" }}
+                                    {% else %}
+                                        <span class="text-gray-500">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {% if request.requested_check_out %}
+                                        {{ request.requested_check_out|date:"H:i" }}
+                                    {% else %}
+                                        <span class="text-gray-500">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-900">
+                                    <div class="max-w-xs truncate">{{ request.regularization_reason }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                        Pending
+                                    </span>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="p-8 text-center text-gray-500">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <p class="mt-4 text-lg">No pending regularization requests.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+    function prefillForm(date) {
+        document.getElementById('date').value = date;
+        document.getElementById('reason').focus();
+        // Smooth scroll to form with offset for header
+        document.querySelector('.bg-gradient-to-r').scrollIntoView({ 
+            behavior: 'smooth',
+            block: 'center'
+        });
+    }
+</script>
+{% endblock %}

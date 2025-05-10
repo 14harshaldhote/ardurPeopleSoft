@@ -51,7 +51,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="{% url 'aps_employee:attendance' %}"
+                    <a href="{% url 'aps_employee:attendance_dashboard' %}"
                         class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group">
                         <svg class="w-6 h-6 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                             xmlns="http://www.w3.org/2000/svg">
@@ -73,19 +73,7 @@
                         Time Sheet
                     </a>
                 </li>
-                <li class="relative">
-                    <a href="{% url 'aps_employee:leave_view' %}"
-                        class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group">
-                        <svg class="w-6 h-6 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            <circle cx="12" cy="12" r="3" stroke-linecap="round" stroke-linejoin="round"
-                                stroke-width="2" />
-                        </svg>
-                        Leave
-                    </a>
-                </li>
+           
                 <li>
                     <a href="{% url 'aps_leave:employee_leave_view' %}"
                         class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group">
@@ -174,7 +162,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="{% url 'aps_hr:attendance' %}"
+                    <a href=""
                         class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                             xmlns="http://www.w3.org/2000/svg">
@@ -206,7 +194,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="{% url 'aps_hr:manual_attendance' %}"
+                    <a href=""
                         class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -243,16 +231,7 @@
                         Approve Leaves
                     </a>
                 </li>
-                <li>
-                    <a href="{% url 'aps_manager:leave_dashboard' %}"
-                        class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group">
-                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 4v16m8-8H4" />
-                        </svg>
-                        Leave Management
-                    </a>
-                </li>
+              
                 
                     <li>
                     <a href="{% url 'aps_manager:shift_dashboard' %}"

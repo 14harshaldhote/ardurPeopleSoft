@@ -85,7 +85,7 @@
                                             d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9">
                                         </path>
                                     </svg>
-                                    <script>
+                                    <!-- <script>
                                         // Create WebSocket connection for notifications
                                         const userNotificationSocket = new WebSocket(
                                             'ws://' + window.location.host +
@@ -192,7 +192,7 @@
                                         .btn-secondary {
                                             position: relative;
                                         }
-                                    </style>
+                                    </style> -->
                                 </button>
                             </div>
                         </nav>
@@ -297,20 +297,12 @@
                                             <p class="text-sm text-green-600 mb-1">Active Projects</p>
                                             <p class="text-2xl font-bold text-green-700">{{ projects|length }}</p>
                                         </div>
-                                        <div class="bg-indigo-50 rounded-lg p-4">
-                                            <p class="text-sm text-indigo-600 mb-1">Hours Today</p>
-                                            <p class="text-2xl font-bold text-indigo-700">{{ hours_logged }}</p>
-                                        </div>
+                                     
                                         {% endif %}
                                         {% if is_manager %}
                                         <div class="bg-green-50 rounded-lg p-4">
                                             <p class="text-sm text-green-600 mb-1">Active Projects</p>
                                             <p class="text-2xl font-bold text-green-700">{{ projects|length }}</p>
-                                        </div>
-                                        <!-- Active Breaks Section -->
-                                        <div class="bg-blue-50 rounded-lg p-4 ">
-                                            <p class="text-sm text-blue-600 mb-1">Active Breaks</p>
-                                            <p class="text-2xl font-bold text-blue-700">{{ active_breaks }}</p>
                                         </div>
                                         <!-- Present Employees Section -->
                                         <div class="bg-yellow-50 rounded-lg p-4">
@@ -348,15 +340,12 @@
             {% if is_admin or is_manager %}
             {% include 'card/project_stats_card.html' %}
             {% include 'card/attendance_card.html' %}
-            {% include 'card/break_card.html' %}
             {% elif is_hr %}
-            {% include 'card/break_card.html' %}
             {% include 'card/attendance_card.html' %}
             {% include 'card/employee_directory.html' %}
             {% elif is_employee %}
             {% include 'card/tasks_card.html' %}
             {% include 'card/attendance_card.html' %}
-            {% include 'card/break_card.html' %}
             {% elif is_client %}
             {% include 'card/project_progress_card.html' %}
             {% include 'card/support_tickets_card.html' %}
