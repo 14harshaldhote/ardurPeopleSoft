@@ -286,8 +286,6 @@ attendance_patterns = [
     path('hr/reports/', views.hr_generate_report, name='hr_generate_report'),
     
     # Monthly report for specific user
-    path('hr/reports/user/<int:user_id>/', views.hr_monthly_user_report, name='hr_user_report'),
-    path('hr/reports/user/<int:user_id>/<int:year>/<int:month>/', views.hr_monthly_user_report, name='hr_user_monthly_report'),
     
     # Bulk update attendance
     path('hr/attendance/bulk-update/', views.bulk_update_attendance, name='hr_bulk_update_attendance'),

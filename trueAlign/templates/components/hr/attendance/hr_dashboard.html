@@ -161,7 +161,7 @@
             </table>
           </div>
           <div class="px-6 py-3 bg-gray-50 border-t border-gray-200 flex justify-center">
-            <button class="text-sm text-blue-600 hover:text-blue-800 font-medium">View All Records</button>
+            <a href="{% url 'aps_attendance:hr_attendance_list' %}" class="text-sm text-blue-600 hover:text-blue-800 font-medium">View All Records</a>
           </div>
         </div>
       </div>
@@ -223,7 +223,7 @@
               </div>
               <span class="font-medium text-gray-700">Add Attendance Record</span>
             </a>
-            <a href="#" class="flex items-center p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition duration-200">
+            <a href="{% url 'aps_attendance:hr_generate_report' %}" class="flex items-center p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition duration-200">
               <div class="p-2 bg-green-100 rounded-md mr-4">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />

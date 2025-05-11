@@ -51,7 +51,6 @@
                 {% for record in page_obj %}
                     <tr class="hover:bg-gray-50 transition duration-300 ease-in-out">
                         <td class="py-4 px-5">{{ record.user.get_full_name }} ({{ record.user.username }})</td>
-                        <td class="py-4 px-5">{{ record.user.department.name|default:"-" }}</td>
                         <td class="py-4 px-5">{{ record.status }}</td>
                         <td class="py-4 px-5">{{ record.date }}</td>
                         <td class="py-4 px-5">
@@ -70,31 +69,88 @@
         </table>
     </div>
 
-    <!-- Pagination -->
-    <div class="mt-8 flex justify-center">
-        <div class="join space-x-4">
-            {% if page_obj.has_previous %}
-                <a href="?{% if date_filter %}date={{ date_filter }}&{% endif %}
-                          {% if status_filter %}status={{ status_filter }}&{% endif %}
-                          {% if user_filter %}user={{ user_filter }}&{% endif %}
-                          {% if department_filter %}department={{ department_filter }}&{% endif %}
-                          page={{ page_obj.previous_page_number }}"
-                   class="btn bg-blue-500 text-white hover:bg-blue-600 rounded-lg py-2 px-4 transition duration-300 ease-in-out">Prev</a>
-            {% endif %}
+   
+<!-- Enhanced Pagination Controls -->
+<div class="mt-8">
+    <div class="flex items-center justify-between">
+        <!-- Page Size Selector -->
+        <div class="flex items-center space-x-2">
+            <span class="text-gray-600">Show:</span>
+            <select class="form-select rounded-md" onchange="window.location.href='?{{ query_string }}&page_size=' + this.value">
+                {% for size in page_sizes %}
+                    <option value="{{ size }}" {% if size == current_page_size %}selected{% endif %}>
+                        {{ size }}
+                    </option>
+                {% endfor %}
+            </select>
+            <span class="text-gray-600">entries</span>
+        </div>
 
-            <span class="btn bg-gray-200 text-gray-800 py-2 px-4 rounded-lg">
-                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-            </span>
-
-            {% if page_obj.has_next %}
-                <a href="?{% if date_filter %}date={{ date_filter }}&{% endif %}
-                          {% if status_filter %}status={{ status_filter }}&{% endif %}
-                          {% if user_filter %}user={{ user_filter }}&{% endif %}
-                          {% if department_filter %}department={{ department_filter }}&{% endif %}
-                          page={{ page_obj.next_page_number }}"
-                   class="btn bg-blue-500 text-white hover:bg-blue-600 rounded-lg py-2 px-4 transition duration-300 ease-in-out">Next</a>
-            {% endif %}
+        <!-- Pagination Info -->
+        <div class="text-gray-600">
+            Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} 
+            of {{ page_obj.paginator.count }} entries
         </div>
     </div>
+
+    <!-- Pagination Controls -->
+    <div class="mt-4 flex justify-center">
+        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+            <!-- First Page -->
+            {% if page_obj.has_previous %}
+                <a href="?{{ query_string }}&page=1" 
+                   class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                    <span class="sr-only">First</span>
+                    ««
+                </a>
+            {% endif %}
+
+            <!-- Previous Page -->
+            {% if page_obj.has_previous %}
+                <a href="?{{ query_string }}&page={{ page_obj.previous_page_number }}" 
+                   class="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                    <span class="sr-only">Previous</span>
+                    «
+                </a>
+            {% endif %}
+
+            <!-- Page Numbers -->
+            {% for page_number in page_range %}
+                {% if page_number == page_obj.number %}
+                    <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-blue-50 text-sm font-medium text-blue-600">
+                        {{ page_number }}
+                    </span>
+                {% elif page_number == "..." %}
+                    <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                        ...
+                    </span>
+                {% else %}
+                    <a href="?{{ query_string }}&page={{ page_number }}"
+                       class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        {{ page_number }}
+                    </a>
+                {% endif %}
+            {% endfor %}
+
+            <!-- Next Page -->
+            {% if page_obj.has_next %}
+                <a href="?{{ query_string }}&page={{ page_obj.next_page_number }}"
+                   class="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                    <span class="sr-only">Next</span>
+                    »
+                </a>
+            {% endif %}
+
+            <!-- Last Page -->
+            {% if page_obj.has_next %}
+                <a href="?{{ query_string }}&page={{ page_obj.paginator.num_pages }}"
+                   class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                    <span class="sr-only">Last</span>
+                    »»
+                </a>
+            {% endif %}
+        </nav>
+    </div>
+</div>
 </div>
 {% endblock %}
