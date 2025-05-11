@@ -6799,6 +6799,1151 @@ from django.shortcuts import render
 from django.utils.timezone import now, localtime, make_aware
 from django.db.models import Avg
 
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth import get_user_model
+from django.contrib import messages
+from django.http import HttpResponse, JsonResponse
+from django.db.models import Q, Sum, Count, Case, When, Value, IntegerField, F, Avg
+from django.utils import timezone
+from django.core.paginator import Paginator
+from django.views.decorators.http import require_POST
+from datetime import datetime, timedelta
+import csv
+import json
+from decimal import Decimal
+from calendar import monthrange
+
+from .models import Attendance, LeaveRequest, ShiftAssignment, Holiday
+
+User = get_user_model()
+
+# Helper function to check if user is HR
+def is_hr_check(user):
+    return user.groups.filter(name="HR").exists()
+
+# Helper function to check if user is HR or Admin
+def is_hr_or_admin_check(user):
+    return user.groups.filter(name__in=["HR", "Admin"]).exists()
+
+# Helper function to check if user is Manager
+def is_manager_check(user):
+    return user.groups.filter(name="Manager").exists()
+
+# Helper function to check if user is Management
+def is_management_check(user):
+    return user.groups.filter(name__in=["Management", "Admin", "HR"]).exists()
+
+# Helper function to format datetime for display
+def format_time(time_obj):
+    if time_obj:
+        return time_obj.strftime('%I:%M %p')
+    return None
+
+@login_required
+@user_passes_test(is_hr_check)
+def hr_attendance_dashboard(request):
+    """
+    Dashboard view for HR showing attendance statistics
+    """
+    today = timezone.localtime(timezone.now()).date()
+
+
+    
+    # Get counts for today
+    present_count = Attendance.objects.filter(
+        date=today, 
+        status__in=['Present', 'Present & Late', 'Work From Home']
+    ).count()
+    
+    absent_count = Attendance.objects.filter(
+        date=today, 
+        status='Absent'
+    ).count()
+    
+    leave_count = Attendance.objects.filter(
+        date=today, 
+        status__in=['On Leave', 'Half Day']
+    ).count()
+    
+    late_count = Attendance.objects.filter(
+        date=today, 
+        status='Present & Late'
+    ).count()
+    
+    # Get regularization requests pending approval
+    pending_requests = Attendance.objects.filter(
+        regularization_status='Pending'
+    ).order_by('-date')[:5]
+    
+    # Get recent attendance records
+    recent_attendance = Attendance.objects.filter(
+        date__lte=today
+    ).order_by('-date')[:10]
+    
+    # Get upcoming leave requests
+    upcoming_leaves = LeaveRequest.objects.filter(
+        status='Approved',
+        end_date__gte=today
+    ).order_by('start_date')[:5]
+
+    
+    
+    context = {
+        'today': today,
+        'present_count': present_count,
+        'absent_count': absent_count,
+        'leave_count': leave_count,
+        'late_count': late_count,
+        'pending_requests': pending_requests,
+        'recent_attendance': recent_attendance,
+        'upcoming_leaves': upcoming_leaves,
+
+    }
+    
+    return render(request, 'components/hr/attendance/hr_dashboard.html', context)
+
+@login_required
+@user_passes_test(is_hr_check)
+def hr_attendance_list(request):
+    """
+    View for HR to see attendance records of all users
+    """
+    # Get filter parameters
+    date_filter = request.GET.get('date', timezone.localtime(timezone.now()).date().strftime('%Y-%m-%d'))
+    status_filter = request.GET.get('status', '')
+    user_filter = request.GET.get('user', '')
+    department_filter = request.GET.get('department', '')
+    
+    try:
+        filter_date = datetime.strptime(date_filter, '%Y-%m-%d').date()
+    except ValueError:
+        filter_date = timezone.localtime(timezone.now()).date()
+    
+    # Build query
+    attendance_query = Attendance.objects.filter(date=filter_date)
+    
+    if status_filter:
+        attendance_query = attendance_query.filter(status=status_filter)
+    
+    if user_filter:
+        attendance_query = attendance_query.filter(
+            Q(user__username__icontains=user_filter) | 
+            Q(user__first_name__icontains=user_filter) | 
+            Q(user__last_name__icontains=user_filter)
+        )
+    
+    if department_filter and hasattr(User, 'department'):
+        attendance_query = attendance_query.filter(user__department__name=department_filter)
+    
+    # Get results with related user data
+    attendance_list = attendance_query.select_related('user').order_by('user__username')
+    
+    # Pagination
+    paginator = Paginator(attendance_list, 25)  # 25 items per page
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+    
+    # Get status choices for filter dropdown
+    status_choices = [choice[0] for choice in Attendance.STATUS_CHOICES]
+    
+    # Get departments if available
+    departments = []
+    if hasattr(User, 'department'):
+        from django.db.models import Count
+        departments = User.objects.values('department__name').annotate(
+            count=Count('id')
+        ).filter(count__gt=0).order_by('department__name')
+
+    # Get filter parameters
+    date_filter = request.GET.get('date', datetime.now().strftime('%Y-%m-%d'))
+    employee_filter = request.GET.get('employee', '')
+    status_filter = request.GET.get('status', '')
+    
+    # Parse date filter
+    try:
+        filter_date = datetime.strptime(date_filter, '%Y-%m-%d').date()
+    except ValueError:
+        filter_date = datetime.now().date()
+
+    
+    # Query attendance records
+    attendances = Attendance.objects.filter(date=filter_date)
+    
+    # Apply additional filters if provided
+    if employee_filter:
+        attendances = attendances.filter(user__username__icontains=employee_filter)
+    
+    if status_filter:
+        attendances = attendances.filter(status=status_filter)
+    
+    # Get all unique statuses for filter dropdown
+    all_statuses = Attendance.objects.values_list('status', flat=True).distinct()
+    
+    context = {
+        'attendances': attendances,
+        'page_obj': page_obj,
+        'date_filter': filter_date,
+        'status_filter': status_filter,
+        'user_filter': user_filter,
+        'department_filter': department_filter,
+        'status_choices': status_choices,
+        'departments': departments,
+    }
+    
+    return render(request, 'components/hr/attendance/hr_attendance_list.html', context)
+
+@login_required
+@user_passes_test(is_hr_check)
+def hr_edit_attendance(request, attendance_id):
+    """
+    View for HR to edit an attendance record
+    """
+    attendance = get_object_or_404(Attendance, id=attendance_id)
+    
+    if request.method == 'POST':
+        # Get form data
+        status = request.POST.get('status')
+        clock_in_time_str = request.POST.get('clock_in_time')
+        clock_out_time_str = request.POST.get('clock_out_time')
+        leave_type = request.POST.get('leave_type', '')
+        remarks = request.POST.get('remarks', '')
+        
+        # Process form data
+        attendance.status = status
+        attendance.regularization_reason = remarks
+        attendance.modified_by = request.user
+        
+        # Process leave type
+        if status in ['On Leave', 'Half Day']:
+            attendance.leave_type = leave_type
+            attendance.is_half_day = status == 'Half Day'
+        else:
+            attendance.leave_type = None
+            attendance.is_half_day = False
+        
+        # Process clock in/out times
+        date_only = attendance.date.strftime('%Y-%m-%d')
+        if clock_in_time_str:
+            try:
+                clock_in_datetime = datetime.strptime(f"{date_only} {clock_in_time_str}", '%Y-%m-%d %H:%M')
+                attendance.clock_in_time = timezone.make_aware(clock_in_datetime)
+            except ValueError:
+                messages.error(request, "Invalid clock-in time format.")
+        
+        if clock_out_time_str:
+            try:
+                clock_out_datetime = datetime.strptime(f"{date_only} {clock_out_time_str}", '%Y-%m-%d %H:%M')
+                attendance.clock_out_time = timezone.make_aware(clock_out_datetime)
+            except ValueError:
+                messages.error(request, "Invalid clock-out time format.")
+        
+        # Save changes
+        attendance.regularization_status = 'Approved'  # Auto-approve HR edits
+        attendance.save()
+        messages.success(request, f"Attendance record for {attendance.user.username} updated successfully.")
+        
+        # Redirect back to the attendance list
+        return redirect('aps_attendance:hr_attendance_list')
+    
+    # Format times for form display
+    clock_in_time = format_time(attendance.clock_in_time) if attendance.clock_in_time else ''
+    clock_out_time = format_time(attendance.clock_out_time) if attendance.clock_out_time else ''
+    
+    # Get leave types
+    leave_types = LeaveRequest.objects.values_list('leave_type__name', flat=True).distinct()
+    
+    context = {
+        'attendance': attendance,
+        'clock_in_time': clock_in_time,
+        'clock_out_time': clock_out_time,
+        'status_choices': Attendance.STATUS_CHOICES,
+        'leave_types': leave_types
+    }
+    
+    return render(request, 'components/hr/attendance/hr_edit_attendance.html', context)
+
+
+def notify_hr_about_regularization(attendance):
+    """
+    Send notification to HR about a new regularization request
+    
+    Features:
+    - Creates in-app notification
+    - Sends email notification if enabled
+    - Attaches relevant context data
+    """
+    try:
+        # Get HR users
+        hr_users = User.objects.filter(groups__name='HR')
+        
+        if not hr_users:
+            logger.warning("No HR users found for regularization notification")
+            return
+            
+        for hr_user in hr_users:
+            # Create notification record
+            Notification.objects.create(
+                user=hr_user,
+                title="New Regularization Request",
+                message=f"{attendance.user.get_full_name() or attendance.user.username} has submitted an attendance regularization request for {attendance.date.strftime('%d-%b-%Y')}",
+                url=reverse('aps_attendance:hr_attendance_regularization_requests'),
+                category="regularization",
+                related_object_id=attendance.id,
+                related_object_type="attendance"
+            )
+            
+            # Optional: Send email to HR if enabled
+            if hasattr(hr_user, 'profile') and getattr(hr_user.profile, 'email_notifications_enabled', False):
+                subject = f"New Regularization Request - {attendance.user.get_full_name() or attendance.user.username}"
+                message = f"""
+                Dear {hr_user.get_full_name() or hr_user.username},
+                
+                A new attendance regularization request requires your review:
+                
+                Employee: {attendance.user.get_full_name() or attendance.user.username}
+                Date: {attendance.date.strftime('%d-%b-%Y')}
+                Reason: {attendance.regularization_reason[:100]}{"..." if len(attendance.regularization_reason) > 100 else ""}
+                
+                Please review this request at your earliest convenience.
+                
+                Regards,
+                HR Notification System
+                """
+                
+                # Send email asynchronously
+                send_email_async(hr_user.email, subject, message)
+                
+    except Exception as e:
+        logger.error(f"Error notifying HR about regularization: {str(e)}")
+
+def notify_employee_about_regularization_status(attendance):
+    """
+    Notify employee about regularization request status update
+    
+    Features:
+    - Creates in-app notification
+    - Sends email notification if enabled
+    - Includes decision details and any remarks
+    """
+    try:
+        status = attendance.regularization_status
+        user = attendance.user
+        
+        # Define status-specific messages
+        status_messages = {
+            'Approved': 'has been approved',
+            'Rejected': 'has been rejected',
+            'Pending': 'is pending review',
+            'Cancelled': 'has been cancelled'
+        }
+        
+        message = f"Your attendance regularization request for {attendance.date.strftime('%d-%b-%Y')} {status_messages.get(status, 'has been updated')}"
+        
+        # Add remarks if present
+        if attendance.regularization_remarks:
+            message += f"\nRemarks: {attendance.regularization_remarks}"
+            
+        # Create in-app notification
+        Notification.objects.create(
+            user=user,
+            title=f"Regularization Request {status}",
+            message=message,
+            url=reverse('aps_attendance:my_regularization_requests'),
+            category="regularization",
+            related_object_id=attendance.id,
+            related_object_type="attendance"
+        )
+        
+        # Send email if enabled
+        if hasattr(user, 'profile') and getattr(user.profile, 'email_notifications_enabled', False):
+            subject = f"Attendance Regularization {status} - {attendance.date.strftime('%d-%b-%Y')}"
+            email_message = f"""
+            Dear {user.get_full_name() or user.username},
+            
+            Your attendance regularization request has been updated:
+            
+            Date: {attendance.date.strftime('%d-%b-%Y')}
+            Status: {status}
+            {"Remarks: " + attendance.regularization_remarks if attendance.regularization_remarks else ""}
+            
+            {"Please check your attendance record for the updated status." if status == 'Approved' else ""}
+            
+            Regards,
+            HR Team
+            """
+            
+            # Send email asynchronously
+            send_email_async(user.email, subject, email_message)
+            
+        logger.info(f"Regularization status notification sent to {user.username} for {attendance.date}")
+        
+    except Exception as e:
+        logger.error(f"Error sending regularization status notification: {str(e)}")
+
+
+def get_potential_regularization_dates(user, start_date=None, end_date=None):
+    """
+    Identify dates that may need regularization based on attendance patterns
+    
+    Features:
+    - Checks for missing attendance
+    - Identifies incomplete hours
+    - Flags late arrivals and early departures
+    - Considers holidays and leaves
+    """
+    try:
+        # Default to last 30 days if no date range provided
+        if not start_date:
+            start_date = timezone.now().date() - timedelta(days=30)
+        if not end_date:
+            end_date = timezone.now().date()
+            
+        potential_dates = []
+        current_date = start_date
+        
+        while current_date <= end_date:
+            attendance = Attendance.objects.filter(
+                user=user,
+                date=current_date
+            ).first()
+            
+            if attendance:
+                # Check for conditions that might need regularization
+                needs_regularization = False
+                reason = []
+                
+                # Incomplete hours
+                if attendance.total_hours and attendance.expected_hours:
+                    if attendance.total_hours < attendance.expected_hours:
+                        needs_regularization = True
+                        reason.append("Incomplete hours")
+                
+                # Late arrival
+                if attendance.late_minutes and attendance.late_minutes > 0:
+                    needs_regularization = True
+                    reason.append("Late arrival")
+                
+                # Early departure
+                if attendance.left_early:
+                    needs_regularization = True
+                    reason.append("Early departure")
+                
+                # Missing clock in/out
+                if not attendance.clock_in_time or not attendance.clock_out_time:
+                    needs_regularization = True
+                    reason.append("Missing clock in/out")
+                
+                if needs_regularization:
+                    potential_dates.append({
+                        'date': current_date,
+                        'reasons': reason,
+                        'attendance': attendance
+                    })
+            
+            current_date += timedelta(days=1)
+            
+        return potential_dates
+        
+    except Exception as e:
+        logger.error(f"Error identifying regularization dates: {str(e)}")
+        return []
+
+
+@login_required
+@user_passes_test(is_hr_check)
+def hr_attendance_regularization_requests(request):
+    """
+    Enhanced view for HR to see and process attendance regularization requests
+    
+    Features:
+    - Filtering by status, date range, and employee
+    - Sorting with pending requests first
+    - Pagination for better UX
+    """
+    # Get filter parameters
+    status_filter = request.GET.get('status', 'Pending')
+    date_from = request.GET.get('date_from', '')
+    date_to = request.GET.get('date_to', '')
+    user_filter = request.GET.get('user', '')
+    # department_filter = request.GET.get('department', '')
+    
+    # Build query for regularization requests
+    requests_query = Attendance.objects.filter(regularization_status__isnull=False)
+    
+    # Apply status filter
+    if status_filter and status_filter != 'All':
+        requests_query = requests_query.filter(regularization_status=status_filter)
+        
+    # Apply date filters
+    if date_from:
+        try:
+            date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
+            requests_query = requests_query.filter(date__gte=date_from_obj)
+        except ValueError:
+            pass
+            
+    if date_to:
+        try:
+            date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
+            requests_query = requests_query.filter(date__lte=date_to_obj)
+        except ValueError:
+            pass
+            
+    # Apply user filter (search by username, first name, or last name)
+    if user_filter:
+        requests_query = requests_query.filter(
+            Q(user__username__icontains=user_filter) |
+            Q(user__first_name__icontains=user_filter) |
+            Q(user__last_name__icontains=user_filter)
+        )
+        
+    # Apply department filter if specified
+    # if department_filter:
+    #     requests_query = requests_query.filter(
+    #         user__employee_profile__department__name=department_filter
+    #     )
+        
+    # Order requests by priority (pending first) and date
+    requests_list = requests_query.select_related('user').order_by(
+        Case(
+            When(regularization_status='Pending', then=Value(0)),
+            When(regularization_status='Approved', then=Value(1)),
+            When(regularization_status='Rejected', then=Value(2)),
+            default=Value(3),
+            output_field=IntegerField()
+        ),
+        '-date'
+    )
+    
+    # Pagination
+    paginator = Paginator(requests_list, 15)  # 15 items per page
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+    
+    # For department filter dropdown
+    # departments = Department.objects.all().order_by('name')
+    
+    # Get status choices for the form
+    status_choices = [('All', 'All')] + list(Attendance.objects.values_list(
+        'regularization_status', 'regularization_status'
+    ).distinct().order_by('regularization_status'))
+    
+    context = {
+        'page_obj': page_obj,
+        'status_filter': status_filter,
+        'date_from': date_from,
+        'date_to': date_to,
+        'user_filter': user_filter,
+        # 'department_filter': department_filter,
+        # 'departments': departments,
+        'status_choices': status_choices,
+        'attendance_status_choices': Attendance.STATUS_CHOICES,
+    }
+    
+    return render(request, 'components/hr/attendance/hr_regularization_requests.html', context)
+
+
+@require_POST
+@login_required
+@user_passes_test(is_hr_check)
+def hr_process_regularization(request, attendance_id):
+    """
+    Enhanced HR process to approve/reject regularization and update status if needed
+    
+    Features:
+    - Update attendance status if requested
+    - Recalculate attendance metrics on approval
+    - Add audit trail through remarks
+    - Notify employee about decision
+    """
+    attendance = get_object_or_404(Attendance, id=attendance_id)
+    action = request.POST.get('action')
+    remarks = request.POST.get('remarks', '')
+    new_status = request.POST.get('status')  # New attendance status
+    
+    # Check if there's a valid status to change to
+    if new_status and new_status in dict(Attendance.STATUS_CHOICES):
+        # Record the old status before changing
+        old_status = attendance.status
+        attendance.status = new_status
+        status_changed = True
+    else:
+        # Check if there's a requested status from employee to apply
+        if attendance.requested_status:
+            if action == 'approve':
+                old_status = attendance.status
+                attendance.status = attendance.requested_status
+                attendance.requested_status = None  # Clear the request
+                status_changed = True
+            else:
+                status_changed = False
+        else:
+            status_changed = False
+    
+    if action == 'approve':
+        attendance.regularization_status = 'Approved'
+        attendance.modified_by = request.user
+        attendance.is_hr_notified = True
+        
+        # Calculate updated attendance metrics if attendance is modified
+        if attendance.clock_in_time and attendance.clock_out_time:
+            # Recalculate total hours
+            total_seconds = (attendance.clock_out_time - attendance.clock_in_time).total_seconds()
+            attendance.total_hours = Decimal(total_seconds / 3600).quantize(Decimal('0.01'))
+            
+            # Update other metrics based on shift if available
+            if attendance.shift:
+                shift_start = combine_date_with_time(attendance.date, attendance.shift.start_time)
+                shift_end = combine_date_with_time(attendance.date, attendance.shift.end_time)
+                
+                # Calculate late minutes if clocked in after shift start
+                if attendance.clock_in_time > shift_start:
+                    attendance.late_minutes = int((attendance.clock_in_time - shift_start).total_seconds() / 60)
+                else:
+                    attendance.late_minutes = 0
+                    
+                # Calculate early departure minutes if clocked out before shift end
+                if attendance.clock_out_time < shift_end:
+                    attendance.early_departure_minutes = int((shift_end - attendance.clock_out_time).total_seconds() / 60)
+                    attendance.left_early = attendance.early_departure_minutes > 0
+                else:
+                    attendance.early_departure_minutes = 0
+                    attendance.left_early = False
+                    
+                # Set expected hours based on shift
+                start_time = attendance.shift.start_time
+                end_time = attendance.shift.end_time
+                
+                # Handle shifts that cross midnight
+                if end_time < start_time:
+                    # Add a day to end_time
+                    shift_hours = (24 - start_time.hour - start_time.minute / 60) + (end_time.hour + end_time.minute / 60)
+                else:
+                    shift_hours = (end_time.hour - start_time.hour) + (end_time.minute - start_time.minute) / 60
+                    
+                attendance.expected_hours = Decimal(shift_hours).quantize(Decimal('0.01'))
+        
+        # Add remarks and status change info
+        hr_name = request.user.get_full_name() or request.user.username
+        remarks_text = f"\n\nApproved by HR ({hr_name}): {remarks}" if remarks else f"\n\nApproved by HR ({hr_name})"
+        
+        if status_changed:
+            remarks_text += f"\nStatus changed from '{old_status}' to '{attendance.status}'"
+            
+        attendance.regularization_reason += remarks_text
+        messages.success(request, f"Regularization approved for {attendance.user.get_full_name() or attendance.user.username}.")
+        
+        # Notify employee about approval
+        notify_employee_about_regularization_status(attendance)
+        
+    elif action == 'reject':
+        attendance.regularization_status = 'Rejected'
+        attendance.modified_by = request.user
+        attendance.is_hr_notified = True
+        
+        # Add remarks
+        hr_name = request.user.get_full_name() or request.user.username
+        remarks_text = f"\n\nRejected by HR ({hr_name}): {remarks}" if remarks else f"\n\nRejected by HR ({hr_name})"
+        attendance.regularization_reason += remarks_text
+        
+        messages.warning(request, f"Regularization rejected for {attendance.user.get_full_name() or attendance.user.username}.")
+        
+        # Notify employee about rejection
+        notify_employee_about_regularization_status(attendance)
+    
+    attendance.save()
+    
+    redirect_url = request.POST.get('next', reverse('aps_attendance:hr_attendance_regularization_requests'))
+    return redirect(redirect_url)
+
+
+@login_required
+@user_passes_test(is_hr_check)
+def regularization_analytics_dashboard(request):
+    """
+    Dashboard for HR to see analytics about regularization patterns
+    
+    Features:
+    - Filter by date range and department
+    - Show regularization trends
+    - Display common reasons for regularization
+    - Identify patterns of regularization by employee
+    """
+    # Date range for analytics
+    date_from_str = request.GET.get('date_from', '')
+    date_to_str = request.GET.get('date_to', '')
+    department_filter = request.GET.get('department', '')
+    
+    today = localtime(now()).date()
+    
+    # Default to current month if not specified
+    if not date_from_str:
+        date_from = today.replace(day=1)  # First day of current month
+        date_from_str = date_from.strftime('%Y-%m-%d')
+    else:
+        try:
+            date_from = datetime.strptime(date_from_str, '%Y-%m-%d').date()
+        except ValueError:
+            date_from = today.replace(day=1)
+            date_from_str = date_from.strftime('%Y-%m-%d')
+    
+    if not date_to_str:
+        date_to = today
+        date_to_str = date_to.strftime('%Y-%m-%d')
+    else:
+        try:
+            date_to = datetime.strptime(date_to_str, '%Y-%m-%d').date()
+        except ValueError:
+            date_to = today
+            date_to_str = date_to.strftime('%Y-%m-%d')
+    
+    # Base query for regularization requests
+    base_query = Attendance.objects.filter(
+        regularization_status__isnull=False,
+        date__range=[date_from, date_to]
+    )
+    
+    # Filter by department if specified
+    if department_filter:
+        base_query = base_query.filter(
+            user__employee_profile__department__name=department_filter
+        )
+    
+    # Generate analytics data
+    total_requests = base_query.count()
+    approved_requests = base_query.filter(regularization_status='Approved').count()
+    rejected_requests = base_query.filter(regularization_status='Rejected').count()
+    pending_requests = base_query.filter(regularization_status='Pending').count()
+    
+    # Get reasons breakdown (top categories)
+    reason_categories = [
+        'Late arrival', 'Early departure', 'Forgot to clock in/out', 
+        'System issue', 'Work from home', 'Client meeting', 'Other'
+    ]
+    
+    reasons_breakdown = []
+    for category in reason_categories:
+        count = base_query.filter(regularization_reason__icontains=category).count()
+        if count > 0:
+            reasons_breakdown.append({
+                'category': category,
+                'count': count,
+                'percentage': round((count / total_requests * 100) if total_requests > 0 else 0, 1)
+            })
+    
+    # Sort by count descending
+    reasons_breakdown = sorted(reasons_breakdown, key=lambda x: x['count'], reverse=True)
+    
+    # Get top employees with regularization requests
+    top_employees = base_query.values('user__username', 'user__first_name', 'user__last_name') \
+                      .annotate(count=Count('id')) \
+                      .order_by('-count')[:10]
+    
+    # Get departments list for filtering
+    departments = Department.objects.all().order_by('name')
+    
+    # Data for regularization trend chart (by day)
+    date_range = [(date_from + timedelta(days=x)) for x in range((date_to - date_from).days + 1)]
+    
+    trend_data = []
+    for day in date_range:
+        day_requests = base_query.filter(date=day).count()
+        if day_requests > 0:
+            trend_data.append({
+                'date': day.strftime('%Y-%m-%d'),
+                'count': day_requests
+            })
+    
+    context = {
+        'date_from': date_from_str,
+        'date_to': date_to_str,
+        'department_filter': department_filter,
+        'departments': departments,
+        'total_requests': total_requests,
+        'approved_requests': approved_requests,
+        'rejected_requests': rejected_requests,
+        'pending_requests': pending_requests,
+        'approval_rate': round((approved_requests / total_requests * 100) if total_requests > 0 else 0, 1),
+        'rejection_rate': round((rejected_requests / total_requests * 100) if total_requests > 0 else 0, 1),
+        'pending_rate': round((pending_requests / total_requests * 100) if total_requests > 0 else 0, 1),
+        'reasons_breakdown': reasons_breakdown,
+        'top_employees': top_employees,
+        'trend_data': json.dumps(trend_data),
+    }
+    
+    return render(request, 'components/hr/attendance/regularization_analytics.html', context)
+
+@login_required
+@user_passes_test(is_hr_check)
+def hr_generate_report(request):
+    """
+    View for HR to generate attendance reports
+    """
+    # Get filter parameters
+    report_type = request.GET.get('report_type', 'all')
+    date_from = request.GET.get('date_from', '')
+    date_to = request.GET.get('date_to', '')
+    user_id = request.GET.get('user_id', '')
+    role_filter = request.GET.get('role', '')
+    department_filter = request.GET.get('department', '')
+    export_format = request.GET.get('format', '')
+    
+    # Initialize with empty results
+    report_data = []
+    summary_data = {}
+    
+    # Process if we have dates
+    if date_from and date_to:
+        try:
+            from_date = datetime.strptime(date_from, '%Y-%m-%d').date()
+            to_date = datetime.strptime(date_to, '%Y-%m-%d').date()
+            
+            # Build user query
+            user_query = User.objects.filter(is_active=True)
+            
+            if report_type == 'user' and user_id:
+                user_query = user_query.filter(id=user_id)
+            elif report_type == 'role' and role_filter:
+                user_query = user_query.filter(groups__name=role_filter)
+            elif report_type == 'department' and department_filter and hasattr(User, 'department'):
+                user_query = user_query.filter(department__name=department_filter)
+                
+            users = user_query.order_by('username')
+            
+            # Generate report data
+            for user in users:
+                # Get attendance data for date range
+                attendance_data = Attendance.objects.filter(
+                    user=user,
+                    date__gte=from_date,
+                    date__lte=to_date
+                )
+                
+                if not attendance_data.exists():
+                    continue
+                    
+                # Calculate statistics
+                total_days = (to_date - from_date).days + 1
+                present_count = attendance_data.filter(
+                    status__in=['Present', 'Present & Late', 'Work From Home']
+                ).count()
+                
+                absent_count = attendance_data.filter(status='Absent').count()
+                leave_count = attendance_data.filter(status__in=['On Leave', 'Half Day']).count()
+                late_count = attendance_data.filter(status='Present & Late').count()
+                
+                total_hours = attendance_data.aggregate(Sum('total_hours'))['total_hours__sum'] or Decimal('0')
+                overtime_hours = attendance_data.aggregate(Sum('overtime_hours'))['overtime_hours__sum'] or Decimal('0')
+                
+                # Calculate average working hours (only consider days with hours)
+                days_with_hours = attendance_data.exclude(total_hours__isnull=True).exclude(total_hours=0).count()
+                avg_hours = Decimal('0')
+                if days_with_hours > 0:
+                    avg_hours = total_hours / days_with_hours
+                
+                # Get groups/roles for this user
+                roles = user.groups.values_list('name', flat=True)
+                
+                # Get department if applicable
+                department = user.department.name if hasattr(user, 'department') and user.department else 'N/A'
+                
+                user_data = {
+                    'user_id': user.id,
+                    'username': user.username,
+                    'full_name': f"{user.first_name} {user.last_name}".strip(),
+                    'email': user.email,
+                    'roles': ', '.join(roles),
+                    'department': department,
+                    'total_days': total_days,
+                    'present_days': present_count,
+                    'absent_days': absent_count,
+                    'leave_days': leave_count,
+                    'late_days': late_count,
+                    'total_hours': total_hours,
+                    'avg_hours': avg_hours.quantize(Decimal('0.01')),
+                    'overtime_hours': overtime_hours,
+                    'attendance_percentage': (present_count / total_days * 100) if total_days > 0 else 0,
+                }
+                
+                report_data.append(user_data)
+            
+            # Calculate summary
+            if report_data:
+                # Average attendance percentage
+                avg_attendance = sum(d['attendance_percentage'] for d in report_data) / len(report_data)
+                
+                # Total hours worked
+                total_all_hours = sum(d['total_hours'] for d in report_data)
+                
+                # Total overtime hours
+                total_overtime = sum(d['overtime_hours'] for d in report_data)
+                
+                # Average hours per day
+                avg_daily_hours = Decimal('0')
+                total_present_days = sum(d['present_days'] for d in report_data)
+                if total_present_days > 0:
+                    avg_daily_hours = total_all_hours / total_present_days
+                
+                summary_data = {
+                    'user_count': len(report_data),
+                    'date_range': f"{from_date} to {to_date}",
+                    'avg_attendance': round(avg_attendance, 2),
+                    'total_hours': total_all_hours,
+                    'avg_daily_hours': avg_daily_hours.quantize(Decimal('0.01')),
+                    'total_overtime': total_overtime,
+                }
+            
+            # Handle export
+            if export_format == 'csv' and report_data:
+                response = HttpResponse(content_type='text/csv')
+                response['Content-Disposition'] = f'attachment; filename="attendance_report_{from_date}_to_{to_date}.csv"'
+                
+                writer = csv.writer(response)
+                writer.writerow([
+                    'Username', 'Full Name', 'Email', 'Roles', 'Department',
+                    'Total Days', 'Present Days', 'Absent Days', 'Leave Days', 'Late Days',
+                    'Total Hours', 'Average Hours/Day', 'Overtime Hours', 'Attendance %'
+                ])
+                
+                for data in report_data:
+                    writer.writerow([
+                        data['username'], data['full_name'], data['email'], data['roles'], data['department'],
+                        data['total_days'], data['present_days'], data['absent_days'], data['leave_days'], data['late_days'],
+                        data['total_hours'], data['avg_hours'], data['overtime_hours'], f"{data['attendance_percentage']:.2f}%"
+                    ])
+                
+                return response
+                
+        except ValueError:
+            messages.error(request, "Invalid date format. Please use YYYY-MM-DD.")
+    
+    # Get all available roles and departments for filters
+    roles = User.groups.through.objects.values_list('group__name', flat=True).distinct().order_by('group__name')
+    
+    departments = []
+    if hasattr(User, 'department'):
+        departments = User.objects.values_list('department__name', flat=True).distinct().order_by('department__name')
+    
+    context = {
+        'report_type': report_type,
+        'date_from': date_from,
+        'date_to': date_to,
+        'user_id': user_id,
+        'role_filter': role_filter,
+        'department_filter': department_filter,
+        'report_data': report_data,
+        'summary_data': summary_data,
+        'roles': roles,
+        'departments': departments,
+        'users': User.objects.filter(is_active=True).order_by('username'),
+    }
+    
+    return render(request, 'components/hr/attendance/hr_generate_report.html', context)
+
+@login_required
+@user_passes_test(is_hr_check)
+def hr_monthly_user_report(request, user_id, year=None, month=None):
+    """
+    View for HR to see monthly report for a specific user
+    """
+    user = get_object_or_404(User, id=user_id)
+    
+    # Default to current year and month if not specified
+    if not year or not month:
+        today = timezone.localtime(timezone.now()).date()
+        year = today.year
+        month = today.month
+    
+    # Generate the monthly report
+    report = Attendance.get_monthly_report(user, int(year), int(month))
+    
+    # Format the month name
+    month_name = datetime(int(year), int(month), 1).strftime('%B %Y')
+    
+    context = {
+        'user': user,
+        'report': report,
+        'year': year,
+        'month': month,
+        'month_name': month_name,
+    }
+    
+    return render(request, 'components/hr/attendance/hr_monthly_user_report.html', context)
+
+@login_required
+@user_passes_test(is_hr_or_admin_check)
+def bulk_update_attendance(request):
+    """
+    View for HR to bulk update attendance status
+    """
+    if request.method == 'POST':
+        date_str = request.POST.get('date')
+        status = request.POST.get('status')
+        selected_users = request.POST.getlist('users')
+        leave_type = request.POST.get('leave_type', '')
+        remarks = request.POST.get('remarks', '')
+        
+        try:
+            update_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            users = User.objects.filter(id__in=selected_users)
+            
+            updated_count = 0
+            
+            for user in users:
+                # Get or create attendance record
+                attendance, created = Attendance.objects.get_or_create(
+                    user=user,
+                    date=update_date,
+                    defaults={'status': 'Not Marked'}
+                )
+                
+                # Update status
+                attendance.status = status
+                attendance.modified_by = request.user
+                attendance.regularization_reason = remarks
+                attendance.regularization_status = 'Approved'  # Auto-approve HR updates
+                
+                # Update leave type if applicable
+                if status in ['On Leave', 'Half Day'] and leave_type:
+                    attendance.leave_type = leave_type
+                    attendance.is_half_day = status == 'Half Day'
+                
+                attendance.save()
+                updated_count += 1
+            
+            messages.success(request, f"Updated attendance for {updated_count} users.")
+            return redirect('hr_attendance_list')
+            
+        except ValueError:
+            messages.error(request, "Invalid date format.")
+    
+    # Get all active users
+    users = User.objects.filter(is_active=True).order_by('username')
+    
+    # Get leave types
+    leave_types = LeaveRequest.objects.values_list('leave_type__name', flat=True).distinct()
+    
+    context = {
+        'users': users,
+        'status_choices': Attendance.STATUS_CHOICES,
+        'leave_types': leave_types
+    }
+    
+    return render(request, 'components/hr/attendance/hr_bulk_update_attendance.html', context)
+
+@login_required
+@user_passes_test(is_hr_check)
+def attendance_statistics(request):
+    """
+    View for HR to see attendance statistics and trends
+    """
+    # Get filter parameters
+    date_from = request.GET.get('date_from', '')
+    date_to = request.GET.get('date_to', '')
+    
+    # Default to last 30 days if no dates specified
+    if not date_from or not date_to:
+        today = timezone.localtime(timezone.now()).date()
+        date_to = today.strftime('%Y-%m-%d')
+        date_from = (today - timedelta(days=30)).strftime('%Y-%m-%d')
+    
+    try:
+        from_date = datetime.strptime(date_from, '%Y-%m-%d').date()
+        to_date = datetime.strptime(date_to, '%Y-%m-%d').date()
+        
+        # Calculate attendance statistics
+        attendance_data = Attendance.objects.filter(
+            date__gte=from_date,
+            date__lte=to_date
+        )
+        
+        # Status distribution
+        status_distribution = attendance_data.values('status').annotate(
+            count=Count('id')
+        ).order_by('status')
+        
+        # Daily attendance counts
+        daily_stats = {}
+        current_date = from_date
+        while current_date <= to_date:
+            daily_data = attendance_data.filter(date=current_date)
+            
+            present_count = daily_data.filter(
+                status__in=['Present', 'Present & Late', 'Work From Home']
+            ).count()
+            
+            absent_count = daily_data.filter(status='Absent').count()
+            leave_count = daily_data.filter(status__in=['On Leave', 'Half Day']).count()
+            
+            daily_stats[current_date.strftime('%Y-%m-%d')] = {
+                'present': present_count,
+                'absent': absent_count,
+                'leave': leave_count,
+                'total': present_count + absent_count + leave_count
+            }
+            
+            current_date += timedelta(days=1)
+        
+        # Average time statistics
+        avg_hours = attendance_data.exclude(total_hours__isnull=True).aggregate(Avg('total_hours'))['total_hours__avg'] or 0
+        avg_late_mins = attendance_data.filter(late_minutes__gt=0).aggregate(Avg('late_minutes'))['late_minutes__avg'] or 0
+        
+        # Top 5 most absent users
+        most_absent = User.objects.annotate(
+            absent_count=Count(
+                Case(
+                    When(attendance__date__gte=from_date, attendance__date__lte=to_date, attendance__status='Absent', then=1),
+                    output_field=IntegerField()
+                )
+            )
+        ).filter(absent_count__gt=0).order_by('-absent_count')[:5]
+        
+        # Top 5 most late users
+        most_late = User.objects.annotate(
+            late_count=Count(
+                Case(
+                    When(attendance__date__gte=from_date, attendance__date__lte=to_date, attendance__status='Present & Late', then=1),
+                    output_field=IntegerField()
+                )
+            )
+        ).filter(late_count__gt=0).order_by('-late_count')[:5]
+        
+        # Prepare chart data
+        status_chart = {
+            'labels': [item['status'] for item in status_distribution],
+            'data': [item['count'] for item in status_distribution],
+        }
+        
+        daily_chart = {
+            'labels': list(daily_stats.keys()),
+            'present': [data['present'] for data in daily_stats.values()],
+            'absent': [data['absent'] for data in daily_stats.values()],
+            'leave': [data['leave'] for data in daily_stats.values()],
+        }
+        
+        context = {
+            'date_from': date_from,
+            'date_to': date_to,
+            'status_distribution': status_distribution,
+            'daily_stats': daily_stats,
+            'avg_hours': round(avg_hours, 2),
+            'avg_late_mins': round(avg_late_mins, 2),
+            'most_absent': most_absent,
+            'most_late': most_late,
+            'status_chart': json.dumps(status_chart),
+            'daily_chart': json.dumps(daily_chart),
+        }
+        
+    except ValueError:
+        messages.error(request, "Invalid date format. Please use YYYY-MM-DD.")
+        context = {
+            'date_from': date_from,
+            'date_to': date_to,
+        }
+    
+    return render(request, 'components/hr/attendance/hr_attendance_statistics.html', context)
+
 @login_required
 def attendance_dashboard(request):
     """
@@ -6849,6 +7994,8 @@ def attendance_dashboard(request):
     
     # Get today's attendance record if exists
     today_attendance = Attendance.objects.filter(user=request.user, date=current_date).first()
+
+    absent_count = Attendance.objects.filter(user=request.user, date=current_date, status='Absent').count()
     
     # Check if user is currently in an active session
     is_active_session = False
@@ -6884,6 +8031,11 @@ def attendance_dashboard(request):
             user_shift = shift_assignment
     except Exception as e:
         logger.error(f"Error getting shift for user {request.user.username}: {e}")
+
+    # Calculate the correct present days (including late present days)
+    total_present_days = month_report['summary']['present'] + month_report['summary']['present_late']
+
+
     
     context = {
         'attendance_records': paginated_records,
@@ -6893,8 +8045,9 @@ def attendance_dashboard(request):
         'current_date': current_date,
         'start_date': start_date,
         'end_date': end_date,
+        'absent_count': absent_count,
         'total_days': len(month_report['days']),
-        'present_days': month_report['summary']['present'],
+        'present_days': total_present_days,  # Changed to include both present and present_late
         'present_late_days': month_report['summary']['present_late'],
         'absent_days': month_report['summary']['absent'],
         'late_days': month_report['summary']['late'],
@@ -6910,7 +8063,6 @@ def attendance_dashboard(request):
     }
     
     return render(request, 'components/employee/attendance_dashboard.html', context)
-
 @login_required
 def attendance_calendar(request):
     """
@@ -7078,38 +8230,206 @@ def session_activity(request):
     
     return render(request, 'components/employee/session_activity.html', context)
 
+def get_user_shift_for_date(user, date):
+    """
+    Get a user's assigned shift for a specific date.
+    
+    This function checks for:
+    1. User-specific shift assignments for the given date
+    2. Department-level default shifts
+    3. User's default shift assignment
+    
+    Args:
+        user: The User object
+        date: datetime.date object for which to find the shift
+        
+    Returns:
+        Shift object or None if no shift is found
+    """
+    from django.db.models import Q
+    
+    # Import here to avoid circular imports
+    # These would be your actual model imports
+    from .models import ShiftAssignment
+    
+    # Check if it's a weekend or holiday
+    is_weekend = date.weekday() >= 5  # 5=Saturday, 6=Sunday
+    
+    # Try to find a date-specific shift assignment for this user
+    # Check for specific date assignment first (highest priority)
+    try:
+        # Look for user-specific shift assignment for this date
+        assignment = ShiftAssignment.objects.filter(
+            user=user,
+            date=date,
+            is_active=True
+        ).first()
+        
+        if assignment:
+            return assignment.shift
+            
+        # If no specific assignment, check if user has a day-of-week assignment
+        # E.g., "Every Monday" or "Every Weekend"
+        day_of_week = date.strftime('%A').lower()  # 'monday', 'tuesday', etc.
+        
+        assignment = ShiftAssignment.objects.filter(
+            Q(user=user) & 
+            Q(is_active=True) &
+            (
+                Q(day_of_week=day_of_week) |
+                (Q(is_weekend_shift=True) & Q(is_weekend=is_weekend))
+            )
+        ).first()
+        
+        if assignment:
+            return assignment.shift
+            
+        # Check if user has a default shift
+        assignment = ShiftAssignment.objects.filter(
+            user=user,
+            is_default=True,
+            is_active=True
+        ).first()
+        
+        if assignment:
+            return assignment.shift
+            
+        # If still no assignment, check if user's department has a default shift
+        if hasattr(user, 'employee_profile') and user.employee_profile.department:
+            department = user.employee_profile.department
+            
+            # Try department's day-specific shift
+            dept_assignment = ShiftAssignment.objects.filter(
+                department=department,
+                day_of_week=day_of_week,
+                is_active=True
+            ).first()
+            
+            if dept_assignment:
+                return dept_assignment.shift
+                
+            # Try department's default shift
+            dept_assignment = ShiftAssignment.objects.filter(
+                department=department,
+                is_default=True,
+                is_active=True
+            ).first()
+            
+            if dept_assignment:
+                return dept_assignment.shift
+                
+        # If we get here, try to return the organization's default shift
+        default_shift = Shift.objects.filter(is_default=True).first()
+        return default_shift
+        
+    except Exception as e:
+        # Log the error
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error retrieving shift for user {user.username} on {date}: {str(e)}")
+        return None
+
+
+def combine_date_with_time(date, time):
+    """
+    Helper function to combine a date object with a time object into a datetime
+    
+    Args:
+        date: datetime.date object
+        time: datetime.time object
+        
+    Returns:
+        datetime object with the date and time combined
+    """
+    from django.utils.timezone import make_aware
+    from datetime import datetime
+    
+    dt = datetime.combine(date, time)
+    return make_aware(dt)  # Make timezone-aware using default timezone
+
+
 @login_required
 def attendance_regularization(request):
     """
     Submit and manage attendance regularization requests.
+    
+    This view handles both:
+    1. GET: Display form for regularization and show regularization history
+    2. POST: Process the regularization submission
     """
     if request.method == 'POST':
         date_str = request.POST.get('date')
         clock_in_time = request.POST.get('clock_in_time')
         clock_out_time = request.POST.get('clock_out_time')
         reason = request.POST.get('reason')
+        requested_status = request.POST.get('requested_status')
+        location = request.POST.get('location', 'Office')
         
         try:
             # Parse the date and times
             regularization_date = datetime.strptime(date_str, '%Y-%m-%d').date()
             
+            # Check if the date is valid for regularization (within policy limits)
+            current_date = localtime(now()).date()
+            days_difference = (current_date - regularization_date).days
+            
+            # Example policy: Can't regularize attendance older than 30 days
+            if days_difference > 30:
+                messages.error(request, "Regularization requests can only be submitted for dates within the last 30 days.")
+                return redirect('aps_employee:attendance_regularization')
+                
+            # Check for future dates
+            if regularization_date > current_date:
+                messages.error(request, "Cannot regularize attendance for future dates.")
+                return redirect('aps_employee:attendance_regularization')
+                
             # Combine date and times
             clock_in_datetime = None
             clock_out_datetime = None
             
             if clock_in_time:
                 clock_in_datetime = make_aware(datetime.combine(regularization_date, 
-                                                               datetime.strptime(clock_in_time, '%H:%M').time()))
-            
+                                     datetime.strptime(clock_in_time, '%H:%M').time()))
+                                     
             if clock_out_time:
                 clock_out_datetime = make_aware(datetime.combine(regularization_date, 
-                                                                datetime.strptime(clock_out_time, '%H:%M').time()))
+                                     datetime.strptime(clock_out_time, '%H:%M').time()))
+                                     
+            # Time validation
+            if clock_in_datetime and clock_out_datetime and clock_in_datetime >= clock_out_datetime:
+                messages.error(request, "Clock-out time must be after clock-in time.")
+                return redirect('aps_employee:attendance_regularization')
+                
+            # Get user's shift for the date to validate against shift timings
+            user_shift = get_user_shift_for_date(request.user, regularization_date)
+            
+            if user_shift and clock_in_datetime and clock_out_datetime:
+                # Example validation against shift times
+                shift_start = combine_date_with_time(regularization_date, user_shift.start_time)
+                shift_end = combine_date_with_time(regularization_date, user_shift.end_time)
+                
+                # Optional: Check if clock times make sense for the shift
+                # This is a soft validation, just warning the user
+                time_diff_start = abs((clock_in_datetime - shift_start).total_seconds() / 3600)
+                time_diff_end = abs((clock_out_datetime - shift_end).total_seconds() / 3600)
+                
+                if time_diff_start > 2:  # More than 2 hours difference from shift start
+                    messages.warning(request, 
+                        f"Your clock-in time is significantly different from your shift start time ({user_shift.start_time.strftime('%H:%M')})")
+                
+                if time_diff_end > 2:  # More than 2 hours difference from shift end
+                    messages.warning(request, 
+                        f"Your clock-out time is significantly different from your shift end time ({user_shift.end_time.strftime('%H:%M')})")
             
             # Validate the request
             if not reason:
                 messages.error(request, "Please provide a reason for the regularization request.")
                 return redirect('aps_employee:attendance_regularization')
-            
+                
+            if len(reason) < 10:
+                messages.error(request, "Please provide a more detailed reason for the regularization request.")
+                return redirect('aps_employee:attendance_regularization')
+                
             # Get or create attendance record for the date
             attendance, created = Attendance.objects.get_or_create(
                 user=request.user,
@@ -7119,17 +8439,47 @@ def attendance_regularization(request):
                 }
             )
             
+            # Check if there's already a pending regularization
+            if attendance.regularization_status == 'Pending':
+                messages.warning(request, "You already have a pending regularization request for this date.")
+                return redirect('aps_employee:attendance_dashboard')
+                
+            # Store original values for audit purposes
+            attendance.original_clock_in_time = attendance.clock_in_time
+            attendance.original_clock_out_time = attendance.clock_out_time
+            attendance.original_status = attendance.status
+            
             # Update with regularization request
             attendance.regularization_status = 'Pending'
             attendance.regularization_reason = reason
+            attendance.regularization_attempts += 1
+            attendance.last_regularization_date = localtime(now())
+            attendance.is_employee_notified = True
+            attendance.is_hr_notified = False
             
+            # Store the requested status change if provided
+            if requested_status and requested_status in dict(Attendance.STATUS_CHOICES):
+                attendance.requested_status = requested_status
+                
+            # Update location if provided
+            if location and location in dict(Attendance.LOCATION_CHOICES):
+                attendance.location = location
+                
             if clock_in_datetime:
                 attendance.clock_in_time = clock_in_datetime
-            
+                
             if clock_out_datetime:
                 attendance.clock_out_time = clock_out_datetime
-            
+                
+            # Calculate and update total hours if both clock times are provided
+            if attendance.clock_in_time and attendance.clock_out_time:
+                total_seconds = (attendance.clock_out_time - attendance.clock_in_time).total_seconds()
+                attendance.total_hours = Decimal(total_seconds / 3600).quantize(Decimal('0.01'))
+                
             attendance.save()
+            
+            # Notify HR about the regularization request
+            notify_hr_about_regularization(attendance)
             
             messages.success(request, "Attendance regularization request submitted successfully.")
             return redirect('aps_employee:attendance_dashboard')
@@ -7140,39 +8490,10 @@ def attendance_regularization(request):
         except Exception as e:
             messages.error(request, f"Error submitting regularization request: {str(e)}")
             return redirect('aps_employee:attendance_regularization')
-    
+            
     # For GET requests, show regularization form
-    # Get recent attendance records that might need regularization
-    current_date = localtime(now()).date()
-    start_date = current_date - timedelta(days=30)  # Last 30 days
-    
-    # Get monthly report for regularization period
-    month_report = Attendance.get_monthly_report(request.user, current_date.year, current_date.month)
-    
-    # Filter records that might need regularization
-    records_needing_regularization = []
-    for day_record in month_report['days'].values():
-        needs_regularization = False
-        
-        # Missing clock-in or clock-out
-        if (day_record['status'] == 'Present' and 
-            (not day_record['clock_in_time'] or not day_record['clock_out_time'])):
-            needs_regularization = True
-        
-        # Marked as absent but user believes they were present
-        if day_record['status'] == 'Absent':
-            needs_regularization = True
-        
-        # Late arrival that might need justification
-        if day_record['late_minutes'] > 15:
-            needs_regularization = True
-        
-        # Early departure that might need justification
-        if day_record['early_departure_minutes'] > 15:
-            needs_regularization = True
-        
-        if needs_regularization:
-            records_needing_regularization.append(day_record)
+    # Get dates that might need regularization
+    regularization_data = get_potential_regularization_dates(request.user)
     
     # Get pending regularization requests
     pending_requests = Attendance.objects.filter(
@@ -7180,13 +8501,128 @@ def attendance_regularization(request):
         regularization_status='Pending'
     ).order_by('-date')
     
+    # Get recent regularization history
+    regularization_history = Attendance.objects.filter(
+        user=request.user,
+        regularization_status__in=['Approved', 'Rejected']
+    ).order_by('-last_regularization_date')[:10]  # Show last 10 regularizations
+    
     context = {
-        'records_needing_regularization': records_needing_regularization,
+        'records_needing_regularization': regularization_data['records_needing_regularization'],
         'pending_requests': pending_requests,
-        'current_date': current_date,
+        'regularization_history': regularization_history,
+        'current_date': regularization_data['current_date'],
+        'status_choices': Attendance.STATUS_CHOICES,
+        'location_choices': Attendance.LOCATION_CHOICES,
     }
     
     return render(request, 'components/employee/attendance_regularization.html', context)
+
+
+@login_required
+def view_regularization_history(request):
+    """
+    View for employees to see their regularization request history
+    """
+    # Get filter parameters
+    status_filter = request.GET.get('status', '')
+    date_from = request.GET.get('date_from', '')
+    date_to = request.GET.get('date_to', '')
+    
+    # Build query
+    history_query = Attendance.objects.filter(
+        user=request.user,
+        regularization_status__isnull=False
+    )
+    
+    # Apply filters
+    if status_filter:
+        history_query = history_query.filter(regularization_status=status_filter)
+        
+    if date_from:
+        try:
+            date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
+            history_query = history_query.filter(date__gte=date_from_obj)
+        except ValueError:
+            pass
+            
+    if date_to:
+        try:
+            date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
+            history_query = history_query.filter(date__lte=date_to_obj)
+        except ValueError:
+            pass
+            
+    # Order by date (newest first)
+    history_list = history_query.order_by('-date')
+    
+    # Pagination
+    paginator = Paginator(history_list, 10)  # 10 items per page
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'page_obj': page_obj,
+        'status_filter': status_filter,
+        'date_from': date_from,
+        'date_to': date_to,
+    }
+    
+    return render(request, 'components/employee/regularization_history.html', context)
+
+
+def get_potential_regularization_dates(user):
+    """
+    Utility function to identify dates that may need regularization
+    """
+    current_date = localtime(now()).date()
+    start_date = current_date - timedelta(days=30)  # Last 30 days
+    
+    # Get monthly report for regularization period
+    month_report = Attendance.get_monthly_report(user, current_date.year, current_date.month)
+    
+    # Prepare records that might need regularization
+    records_needing_regularization = []
+    
+    for day_record in month_report['days'].values():
+        needs_regularization = False
+        
+        # Prepare record with consistent field names for template
+        template_record = {
+            'date': day_record['date'],
+            'status': day_record['status'],
+            'check_in': day_record.get('clock_in_time'),
+            'check_out': day_record.get('clock_out_time'),
+            'is_late': day_record.get('late_minutes', 0) > 0,
+            'late_minutes': day_record.get('late_minutes', 0),
+            'left_early': day_record.get('early_departure_minutes', 0) > 0,
+            'early_departure_minutes': day_record.get('early_departure_minutes', 0)
+        }
+        
+        # Missing clock-in or clock-out
+        if (day_record['status'] == 'Present' and 
+            (not day_record.get('clock_in_time') or not day_record.get('clock_out_time'))):
+            needs_regularization = True
+            
+        # Marked as absent but user might have been present
+        if day_record['status'] == 'Absent':
+            needs_regularization = True
+            
+        # Late arrival that might need justification
+        if day_record.get('late_minutes', 0) > 15:
+            needs_regularization = True
+            
+        # Early departure that might need justification
+        if day_record.get('early_departure_minutes', 0) > 15:
+            needs_regularization = True
+            
+        if needs_regularization:
+            records_needing_regularization.append(template_record)
+            
+    return {
+        'records_needing_regularization': records_needing_regularization,
+        'current_date': current_date
+    }
 
 @login_required
 def employee_attendance_view(request):

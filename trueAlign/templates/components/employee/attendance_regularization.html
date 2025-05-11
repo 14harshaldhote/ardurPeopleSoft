@@ -66,6 +66,18 @@
                                class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200">
                         <p class="mt-1 text-sm text-gray-500">Optional</p>
                     </div>
+                    <div class="form-group">
+                        <label for="requested_status">Request Status Change:</label>
+                        <select class="form-control" id="requested_status" name="requested_status">
+                          <option value="">-- No Change --</option>
+                          {% for status_code, status_name in status_choices %}
+                          <option value="{{ status_code }}">{{ status_name }}</option>
+                          {% endfor %}
+                        </select>
+                        <small class="form-text text-muted">
+                          Request a change to your attendance status if needed.
+                        </small>
+                      </div>
                     
                     <div class="md:col-span-2 space-y-2">
                         <label for="reason" class="block text-sm font-medium text-gray-700">Reason for Regularization</label>

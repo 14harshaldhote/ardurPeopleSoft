@@ -1091,6 +1091,13 @@ class Attendance(models.Model):
         ('Approved', 'Approved'),
         ('Rejected', 'Rejected')
     ], null=True, blank=True)
+    requested_status = models.CharField(
+        max_length=20, 
+        choices=STATUS_CHOICES,
+        null=True, 
+        blank=True,
+        help_text="Status requested by employee during regularization"
+    )
     
     # Session tracking
     first_session = models.ForeignKey('UserSession', on_delete=models.SET_NULL, null=True, blank=True, related_name='first_session_attendance')
@@ -1100,7 +1107,14 @@ class Attendance(models.Model):
     
     overtime_hours = models.DecimalField(max_digits=5, decimal_places=2, default=0)
     is_overtime_approved = models.BooleanField(default=False)
-    
+    # Additional fields for the Attendance model:
+    original_clock_in_time = models.DateTimeField(null=True, blank=True)
+    original_clock_out_time = models.DateTimeField(null=True, blank=True)
+    original_status = models.CharField(max_length=20, null=True, blank=True)
+    is_employee_notified = models.BooleanField(default=False)
+    is_hr_notified = models.BooleanField(default=False)
+    regularization_attempts = models.IntegerField(default=0)
+    last_regularization_date = models.DateTimeField(null=True, blank=True)
     class Meta:
         unique_together = ('user', 'date')
         indexes = [
@@ -1245,6 +1259,20 @@ class Attendance(models.Model):
             logger.debug("Marking as present based on total hours")
             self.status = 'Present'
         
+         # Check if previously marked as half day due to early departure but now returned
+        if self.status == 'Half Day' and self.left_early and self.total_hours:
+            # If they've now completed at least half the shift duration, mark as present
+            if self.shift and self.total_hours >= (Decimal(str(self.shift.shift_duration)) / 2):
+                logger.debug(f"User returned after early departure and completed enough hours")
+                self.left_early = False
+                self.early_departure_minutes = 0
+                
+                # Set appropriate present status
+                if self.late_minutes > 0:
+                    self.status = 'Present & Late'
+                else:
+                    self.status = 'Present'
+        
         super().save(*args, **kwargs)
         logger.debug(f"save() completed for {self.user.username} - {self.date}")
     
@@ -1382,6 +1410,7 @@ class Attendance(models.Model):
                 logger.warning(f"No shift assigned for user {user.username}")
                 attendance.status = 'Present'
                 attendance.save()
+
         except Exception as e:
             logger.error(f"Error getting shift for user {user.username}: {e}")
             # If there was an error getting the shift, just mark as present
@@ -1389,6 +1418,8 @@ class Attendance(models.Model):
             attendance.save()
         
         return attendance
+
+    
 
     @classmethod
     def clock_out(cls, user, clock_out_time):
@@ -1590,11 +1621,25 @@ class Attendance(models.Model):
                 logger.debug(f"Subtracting idle time: {attendance.idle_time}")
                 idle_hours = attendance.idle_time.total_seconds() / 3600
                 attendance.total_hours = max(Decimal('0'), attendance.total_hours - Decimal(str(idle_hours)))
-        
-        # Save the record
+                
+        # Check if status was half day due to early departure
+        if attendance.status == 'Half Day' and attendance.left_early and attendance.total_hours:
+            # If they've now completed at least half the shift duration, mark as present
+            if attendance.shift and attendance.total_hours >= (Decimal(str(attendance.shift.shift_duration)) / 2):
+                logger.debug(f"User {user_session.user.username} returned after early departure and completed enough hours")
+                attendance.left_early = False
+                attendance.early_departure_minutes = 0
+                
+                # Set appropriate present status
+                if attendance.late_minutes > 0:
+                    attendance.status = 'Present & Late'
+                else:
+                    attendance.status = 'Present'
+                # Save the record
+
         attendance.save()
         logger.debug(f"record_session_activity() completed for {user_session.user.username}")
-        return attendance
+        return attendance        
 
     @classmethod
     def auto_mark_attendance(cls):
@@ -1778,7 +1823,6 @@ class Attendance(models.Model):
         
         print("auto_mark_attendance() completed")
         return True
-
     @classmethod
     def get_monthly_report(cls, user, year, month):
         """
@@ -1818,7 +1862,10 @@ class Attendance(models.Model):
                 'not_marked': 0,
                 'total_hours': Decimal('0'),
                 'overtime_hours': Decimal('0'),
-                'leave_days_used': Decimal('0')
+                'leave_days_used': Decimal('0'),
+                'total_present': 0,
+                'leave_request_count': 0,
+                'approved_leave_count': 0
             }
         }
         
@@ -1844,7 +1891,8 @@ class Attendance(models.Model):
                 'early_departure_minutes': 0,
                 'leave_type': None,
                 'is_half_day': False,
-                'remarks': None
+                'remarks': None,
+                'idle_time': None
             }
         
         # Fill in actual attendance records
@@ -1864,7 +1912,8 @@ class Attendance(models.Model):
                 'leave_type': record.leave_type,
                 'is_half_day': record.is_half_day,
                 'remarks': record.regularization_reason,
-                'location': record.location
+                'location': record.location,
+                'idle_time': record.idle_time
             })
             
             # Update summary counters
@@ -1881,6 +1930,16 @@ class Attendance(models.Model):
                 # Count half days as 0.5
                 leave_days = Decimal('0.5') if record.is_half_day else Decimal('1.0')
                 report['summary']['leave_days_used'] += leave_days
+
+            # Update total present count
+            if record.status in ['Present', 'Present & Late', 'Work From Home']:
+                report['summary']['total_present'] += 1
+
+            # Update leave request counts
+            if record.regularization_status == 'Pending':
+                report['summary']['leave_request_count'] += 1
+            elif record.regularization_status == 'Approved':
+                report['summary']['approved_leave_count'] += 1
         
         return report
 

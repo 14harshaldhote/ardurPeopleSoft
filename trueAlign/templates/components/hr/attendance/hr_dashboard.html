@@ -1,0 +1,321 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="min-h-screen">
+  <div class="container mx-auto px-4 py-8">
+    <!-- Header with improved styling and responsive design -->
+    <div class="mb-8 bg-white rounded-lg shadow-md p-6">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-800 mb-2">HR Attendance Dashboard</h1>
+          <p class="text-gray-600 text-lg">{{ today|date:"l, F j, Y" }}</p>
+        </div>
+        <div class="mt-4 md:mt-0">
+          <a href="{% url 'aps_attendance:hr_attendance_list' %}"
+            class="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-md transition duration-300 font-medium">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            Attendance List
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Today's Stats with improved card design -->
+    <h2 class="text-xl font-semibold text-gray-800 mb-4 pl-1">Today's Overview</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <!-- Present card -->
+      <div class="bg-white rounded-lg shadow-md overflow-hidden transition-transform duration-300 hover:shadow-lg hover:translate-y-[-2px]">
+        <div class="p-1 bg-green-500"></div>
+        <div class="p-6">
+          <div class="flex items-center">
+            <div class="p-3 rounded-full bg-green-100">
+              <svg class="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+            </div>
+            <div class="ml-4">
+              <p class="text-sm font-medium uppercase tracking-wider text-gray-500">Present Today</p>
+              <p class="text-2xl font-bold text-gray-800">{{ present_count }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Absent card -->
+      <div class="bg-white rounded-lg shadow-md overflow-hidden transition-transform duration-300 hover:shadow-lg hover:translate-y-[-2px]">
+        <div class="p-1 bg-red-500"></div>
+        <div class="p-6">
+          <div class="flex items-center">
+            <div class="p-3 rounded-full bg-red-100">
+              <svg class="h-8 w-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </div>
+            <div class="ml-4">
+              <p class="text-sm font-medium uppercase tracking-wider text-gray-500">Absent Today</p>
+              <p class="text-2xl font-bold text-gray-800">{{ absent_count }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- On Leave card -->
+      <div class="bg-white rounded-lg shadow-md overflow-hidden transition-transform duration-300 hover:shadow-lg hover:translate-y-[-2px]">
+        <div class="p-1 bg-blue-500"></div>
+        <div class="p-6">
+          <div class="flex items-center">
+            <div class="p-3 rounded-full bg-blue-100">
+              <svg class="h-8 w-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <div class="ml-4">
+              <p class="text-sm font-medium uppercase tracking-wider text-gray-500">On Leave</p>
+              <p class="text-2xl font-bold text-gray-800">{{ leave_count }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Late Today card -->
+      <div class="bg-white rounded-lg shadow-md overflow-hidden transition-transform duration-300 hover:shadow-lg hover:translate-y-[-2px]">
+        <div class="p-1 bg-yellow-500"></div>
+        <div class="p-6">
+          <div class="flex items-center">
+            <div class="p-3 rounded-full bg-yellow-100">
+              <svg class="h-8 w-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div class="ml-4">
+              <p class="text-sm font-medium uppercase tracking-wider text-gray-500">Late Today</p>
+              <p class="text-2xl font-bold text-gray-800">{{ late_count }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main content grid - Two columns on desktop -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Left column (takes 2/3 of space on lg screens) -->
+      <div class="lg:col-span-2 space-y-8">
+        
+        <!-- Recent Attendance with improved table -->
+        <div class="bg-white rounded-lg shadow-md">
+          <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+            <h2 class="text-xl font-semibold text-gray-800">Recent Attendance Records</h2>
+            <div class="flex space-x-2">
+              <button class="text-gray-500 hover:text-gray-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                </svg>
+              </button>
+              <button class="text-gray-500 hover:text-gray-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Check In</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Check Out</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                {% for record in recent_attendance %}
+                <tr class="hover:bg-gray-50 transition-colors duration-200">
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm font-medium text-gray-900">{{ record.user.get_full_name }}</div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-900">{{ record.date|date:"M d, Y" }}</div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                {% if record.status == 'Present' %}bg-green-100 text-green-800
+                                {% elif record.status == 'Absent' %}bg-red-100 text-red-800
+                                {% elif 'Late' in record.status %}bg-yellow-100 text-yellow-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                      {{ record.status }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {{ record.check_in|time:"g:i A"|default:"-" }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {{ record.check_out|time:"g:i A"|default:"-" }}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <div class="px-6 py-3 bg-gray-50 border-t border-gray-200 flex justify-center">
+            <button class="text-sm text-blue-600 hover:text-blue-800 font-medium">View All Records</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right column (takes 1/3 of space on lg screens) -->
+      <div class="space-y-8">
+        <!-- Upcoming Leaves with improved design -->
+        <div class="bg-white rounded-lg shadow-md">
+          <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+            <h2 class="text-xl font-semibold text-gray-800">Upcoming Leaves</h2>
+            <span class="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-full">Next 30 days</span>
+          </div>
+          <div class="p-6">
+            {% if upcoming_leaves %}
+            <div class="space-y-4">
+              {% for leave in upcoming_leaves %}
+              <div class="border-l-4 {% if forloop.counter0|divisibleby:3 %}border-blue-500{% elif forloop.counter0|divisibleby:2 %}border-green-500{% else %}border-purple-500{% endif %} pl-4 py-2">
+                <p class="font-medium text-gray-800">{{ leave.user.get_full_name }}</p>
+                <div class="flex items-center text-sm text-gray-600 mt-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  {{ leave.start_date|date:"M d" }} - {{ leave.end_date|date:"M d, Y" }}
+                </div>
+                <div class="flex items-center text-sm text-gray-500 mt-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                  </svg>
+                  {{ leave.leave_type }}
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <div class="flex flex-col items-center justify-center py-8 text-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <p class="text-gray-500">No upcoming leaves scheduled</p>
+            </div>
+            {% endif %}
+          </div>
+          <div class="px-6 py-3 bg-gray-50 border-t border-gray-200 text-center">
+            <a href="#" class="text-sm text-blue-600 hover:text-blue-800 font-medium">View All Leaves</a>
+          </div>
+        </div>
+
+        <!-- Quick Actions Card - New addition -->
+        <div class="bg-white rounded-lg shadow-md">
+          <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-xl font-semibold text-gray-800">Quick Actions</h2>
+          </div>
+          <div class="p-6 space-y-4">
+            <a href="#" class="flex items-center p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition duration-200">
+              <div class="p-2 bg-blue-100 rounded-md mr-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+              </div>
+              <span class="font-medium text-gray-700">Add Attendance Record</span>
+            </a>
+            <a href="#" class="flex items-center p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition duration-200">
+              <div class="p-2 bg-green-100 rounded-md mr-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+              </div>
+              <span class="font-medium text-gray-700">Generate Report</span>
+            </a>
+            
+            <a href="{% url 'aps_attendance:hr_attendance_regularization_requests' %}" class="flex items-center p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition duration-200">
+                <div class="p-2 bg-blue-100 rounded-md mr-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                  </svg>
+                </div>
+                <span class="font-medium text-gray-700">HR Regularization Requests</span>
+              </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Improved Modal for remarks with overlay animation -->
+<div id="remarkModal" 
+     class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50 transition-opacity duration-300 ease-out"
+     x-data="{ open: false }"
+     x-show="open"
+     x-transition:enter="transition ease-out duration-300"
+     x-transition:enter-start="opacity-0"
+     x-transition:enter-end="opacity-100"
+     x-transition:leave="transition ease-in duration-200"
+     x-transition:leave-start="opacity-100"
+     x-transition:leave-end="opacity-0">
+  <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-lg bg-white transition-all duration-300 ease-out transform" 
+       x-show="open"
+       x-transition:enter="transition ease-out duration-300"
+       x-transition:enter-start="opacity-0 scale-95"
+       x-transition:enter-end="opacity-100 scale-100"
+       x-transition:leave="transition ease-in duration-200"
+       x-transition:leave-start="opacity-100 scale-100"
+       x-transition:leave-end="opacity-0 scale-95">
+    <div class="text-center">
+      <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4" id="modalTitle">Add Remarks</h3>
+      <button class="absolute top-3 right-3 text-gray-400 hover:text-gray-500" onclick="closeRemarkModal()">
+        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+      <div class="mt-2">
+        <form id="remarkForm" method="POST">
+          {% csrf_token %}
+          <input type="hidden" id="actionType" name="action" value="">
+          <input type="hidden" id="attendanceId" name="attendance_id" value="">
+          <input type="hidden" name="next" value="{{ request.path }}">
+          <textarea name="remarks" id="remarks" rows="4"
+            class="w-full px-4 py-2 text-gray-700 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+            placeholder="Add your remarks here..."></textarea>
+          <div class="flex justify-end mt-6 space-x-3">
+            <button type="button" onclick="closeRemarkModal()"
+              class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md transition duration-200 font-medium">
+              Cancel
+            </button>
+            <button type="submit" 
+              class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition duration-200 font-medium">
+              Submit
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function showRemarkModal(action, id, name) {
+    document.getElementById('modalTitle').textContent = action.charAt(0).toUpperCase() + action.slice(1) + ' Request for ' + name;
+    document.getElementById('actionType').value = action;
+    document.getElementById('remarkForm').action = "{% url 'aps_attendance:hr_process_regularization' attendance_id=0 %}".replace('0', id);
+    document.getElementById('remarkModal').classList.remove('hidden');
+    // Add animation class
+    setTimeout(() => {
+      document.getElementById('remarkModal').classList.add('opacity-100');
+    }, 10);
+  }
+
+  function closeRemarkModal() {
+    // Animate out
+    document.getElementById('remarkModal').classList.add('opacity-0');
+    setTimeout(() => {
+      document.getElementById('remarkModal').classList.add('hidden');
+    }, 300);
+  }
+</script>
+{% endblock %}

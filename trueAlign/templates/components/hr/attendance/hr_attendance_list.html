@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mx-auto px-6 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-3xl font-semibold text-gray-800">Attendance Records ({{ date_filter }})</h2>
+        <a href="{% url 'aps_attendance:hr_attendance_dashboard' %}" class="bg-blue-500 text-white px-6 py-3 rounded-full hover:bg-blue-600 transition duration-300 ease-in-out">
+            ← Back
+        </a>
+    </div>
+
+    <!-- Filters -->
+    <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <input type="date" name="date" value="{{ date_filter }}" class="input input-bordered w-full p-3 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+
+        <input type="text" name="user" value="{{ user_filter }}" placeholder="Search user..." class="input input-bordered w-full p-3 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+
+        <select name="status" class="select select-bordered w-full p-3 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="">All Status</option>
+            {% for status in status_choices %}
+                <option value="{{ status }}" {% if status == status_filter %}selected{% endif %}>{{ status }}</option>
+            {% endfor %}
+        </select>
+
+        <select name="department" class="select select-bordered w-full p-3 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="">All Departments</option>
+            {% for dept in departments %}
+                <option value="{{ dept.department__name }}"
+                        {% if dept.department__name == department_filter %}selected{% endif %}>
+                    {{ dept.department__name }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <button type="submit" class="btn btn-primary col-span-1 md:col-span-4 w-full py-3 rounded-lg shadow-lg transition duration-300 ease-in-out hover:bg-blue-600">Filter</button>
+    </form>
+
+    <!-- Attendance Table -->
+    <div class="overflow-x-auto bg-white rounded-lg shadow-lg">
+        <table class="table w-full text-gray-700">
+            <thead class="bg-gray-200 text-left">
+                <tr>
+                    <th class="py-3 px-5">User</th>
+                    <th class="py-3 px-5">Department</th>
+                    <th class="py-3 px-5">Status</th>
+                    <th class="py-3 px-5">Date</th>
+                    <th class="py-3 px-5">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in page_obj %}
+                    <tr class="hover:bg-gray-50 transition duration-300 ease-in-out">
+                        <td class="py-4 px-5">{{ record.user.get_full_name }} ({{ record.user.username }})</td>
+                        <td class="py-4 px-5">{{ record.user.department.name|default:"-" }}</td>
+                        <td class="py-4 px-5">{{ record.status }}</td>
+                        <td class="py-4 px-5">{{ record.date }}</td>
+                        <td class="py-4 px-5">
+                            <a href="{% url 'aps_attendance:hr_edit_attendance' attendance_id=record.id %}" 
+                               class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition duration-300 ease-in-out">
+                                Edit
+                            </a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-4 text-gray-500">No attendance records found.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="mt-8 flex justify-center">
+        <div class="join space-x-4">
+            {% if page_obj.has_previous %}
+                <a href="?{% if date_filter %}date={{ date_filter }}&{% endif %}
+                          {% if status_filter %}status={{ status_filter }}&{% endif %}
+                          {% if user_filter %}user={{ user_filter }}&{% endif %}
+                          {% if department_filter %}department={{ department_filter }}&{% endif %}
+                          page={{ page_obj.previous_page_number }}"
+                   class="btn bg-blue-500 text-white hover:bg-blue-600 rounded-lg py-2 px-4 transition duration-300 ease-in-out">Prev</a>
+            {% endif %}
+
+            <span class="btn bg-gray-200 text-gray-800 py-2 px-4 rounded-lg">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            </span>
+
+            {% if page_obj.has_next %}
+                <a href="?{% if date_filter %}date={{ date_filter }}&{% endif %}
+                          {% if status_filter %}status={{ status_filter }}&{% endif %}
+                          {% if user_filter %}user={{ user_filter }}&{% endif %}
+                          {% if department_filter %}department={{ department_filter }}&{% endif %}
+                          page={{ page_obj.next_page_number }}"
+                   class="btn bg-blue-500 text-white hover:bg-blue-600 rounded-lg py-2 px-4 transition duration-300 ease-in-out">Next</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

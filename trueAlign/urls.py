@@ -268,6 +268,36 @@ leave_patterns = [
 
 ]
 
+attendance_patterns = [
+    # Dashboard view
+    path('hr/dashboard/', views.hr_attendance_dashboard, name='hr_attendance_dashboard'),
+    
+    # Attendance list view
+    path('hr/attendance/', views.hr_attendance_list, name='hr_attendance_list'),
+    
+    # Edit specific attendance record
+    path('hr/attendance/<int:attendance_id>/edit/', views.hr_edit_attendance, name='hr_edit_attendance'),
+    
+    # Regularization requests
+    path('hr/attendance/regularization/<int:attendance_id>/process/', views.hr_process_regularization, name='hr_process_regularization'),    
+    # Process specific regularization request
+    path('attendance/hr/requests/', views.hr_attendance_regularization_requests, name='hr_attendance_regularization_requests'),    
+    # Generate attendance reports
+    path('hr/reports/', views.hr_generate_report, name='hr_generate_report'),
+    
+    # Monthly report for specific user
+    path('hr/reports/user/<int:user_id>/', views.hr_monthly_user_report, name='hr_user_report'),
+    path('hr/reports/user/<int:user_id>/<int:year>/<int:month>/', views.hr_monthly_user_report, name='hr_user_monthly_report'),
+    
+    # Bulk update attendance
+    path('hr/attendance/bulk-update/', views.bulk_update_attendance, name='hr_bulk_update_attendance'),
+    
+    # Attendance statistics
+    path('hr/statistics/', views.attendance_statistics, name='hr_attendance_statistics'),
+
+    path('hr/attendance/regularization/requests/', views.regularization_analytics_dashboard, name='regularization_analytics_dashboard'),
+]
+
 # Main URL configuration for the project
 urlpatterns = [
     path('', views.home_view, name='home'),
@@ -303,6 +333,8 @@ urlpatterns = [
 
     # Leave-specific URLs under 'truealign/leave/'
     path('truealign/leave/', include((leave_patterns, 'aps'), namespace='aps_leave')),
+
+    path('truealign/attendance/', include((attendance_patterns, 'aps'), namespace='aps_attendance')),
 
     # Appraisal URLs
     path('appraisal/', include((appraisal_patterns, 'appraisal'))),

@@ -342,10 +342,12 @@
             {% include 'card/attendance_card.html' %}
             {% elif is_hr %}
             {% include 'card/attendance_card.html' %}
-            {% include 'card/employee_directory.html' %}
+            {% include 'card/performance.html' %}
+
             {% elif is_employee %}
             {% include 'card/tasks_card.html' %}
             {% include 'card/attendance_card.html' %}
+            {% include 'card/performance.html' %}
             {% elif is_client %}
             {% include 'card/project_progress_card.html' %}
             {% include 'card/support_tickets_card.html' %}

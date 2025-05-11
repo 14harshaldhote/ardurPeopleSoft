@@ -1,0 +1,478 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-gray-800 mb-6">Attendance Regularization Requests</h1>
+
+    <!-- Enhanced Filter Form -->
+    <div class="bg-white p-4 rounded-md shadow-lg mb-6">
+        <h2 class="text-xl font-semibold text-gray-700 mb-4">Filter Requests</h2>
+        <form method="get" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                <div>
+                    <label for="status" class="block text-gray-600">Status</label>
+                    <select name="status" id="status" class="w-full px-4 py-2 rounded border border-gray-300">
+                        {% for status_code, status_name in status_choices %}
+                            <option value="{{ status_code }}" {% if status_filter == status_code %}selected{% endif %}>
+                                {{ status_name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label for="department" class="block text-gray-600">Department</label>
+                    <select name="department" id="department" class="w-full px-4 py-2 rounded border border-gray-300">
+                        <option value="">All Departments</option>
+                        {% for dept in departments %}
+                            <option value="{{ dept.name }}" {% if department_filter == dept.name %}selected{% endif %}>
+                                {{ dept.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label for="date_from" class="block text-gray-600">Date From</label>
+                    <input type="date" name="date_from" id="date_from" 
+                           class="w-full px-4 py-2 rounded border border-gray-300" 
+                           value="{{ date_from }}">
+                </div>
+                <div>
+                    <label for="date_to" class="block text-gray-600">Date To</label>
+                    <input type="date" name="date_to" id="date_to" 
+                           class="w-full px-4 py-2 rounded border border-gray-300" 
+                           value="{{ date_to }}">
+                </div>
+                <div>
+                    <label for="user" class="block text-gray-600">Employee Search</label>
+                    <input type="text" name="user" id="user" 
+                           class="w-full px-4 py-2 rounded border border-gray-300" 
+                           placeholder="Name or username"
+                           value="{{ user_filter }}">
+                </div>
+            </div>
+            <div class="flex justify-end gap-2">
+                <a href="{% url 'aps_attendance:hr_attendance_regularization_requests' %}" 
+                   class="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400">
+                    Reset
+                </a>
+                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">
+                    Apply Filters
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Enhanced Requests Table -->
+    <div class="bg-white p-4 rounded-md shadow-lg overflow-x-auto">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-semibold text-gray-700">Requests List</h2>
+            <span class="text-sm text-gray-600">
+                Showing {{ page_obj.start_index }} - {{ page_obj.end_index }} of {{ page_obj.paginator.count }} requests
+            </span>
+        </div>
+        
+        <table class="min-w-full table-auto border-collapse">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="px-4 py-2 text-left">Employee</th>
+                    <th class="px-4 py-2 text-left">Department</th>
+                    <th class="px-4 py-2 text-left">Date</th>
+                    <th class="px-4 py-2 text-left">Current Status</th>
+                    <th class="px-4 py-2 text-left">Request Status</th>
+                    <th class="px-4 py-2 text-left">Clock In/Out</th>
+                    <th class="px-4 py-2 text-left">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for attendance in page_obj %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-2">
+                        <div class="flex flex-col">
+                            <span class="font-medium">{{ attendance.user.get_full_name }}</span>
+                            <span class="text-sm text-gray-600">{{ attendance.user.username }}</span>
+                        </div>
+                    </td>
+                    <td class="px-4 py-2">
+                        {{ attendance.user.employee_profile.department.name|default:"-" }}
+                    </td>
+                    <td class="px-4 py-2">{{ attendance.date|date:"M d, Y" }}</td>
+                    <td class="px-4 py-2">
+                        <span class="px-2 py-1 rounded-full text-xs font-medium
+                            {% if attendance.status == 'Present' %}bg-green-100 text-green-800
+                            {% elif attendance.status == 'Absent' %}bg-red-100 text-red-800
+                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ attendance.get_status_display }}
+                        </span>
+                    </td>
+                    <td class="px-4 py-2">
+                        <span class="px-2 py-1 rounded-full text-xs font-medium
+                            {% if attendance.regularization_status == 'Pending' %}bg-yellow-100 text-yellow-800
+                            {% elif attendance.regularization_status == 'Approved' %}bg-green-100 text-green-800
+                            {% elif attendance.regularization_status == 'Rejected' %}bg-red-100 text-red-800{% endif %}">
+                            {{ attendance.regularization_status }}
+                        </span>
+                    </td>
+                    <td class="px-4 py-2">
+                        <div class="flex flex-col text-sm">
+                            <span>In: {{ attendance.clock_in_time|time:"H:i"|default:"-" }}</span>
+                            <span>Out: {{ attendance.clock_out_time|time:"H:i"|default:"-" }}</span>
+                        </div>
+                    </td>
+                    <td class="px-4 py-2">
+                        <div class="flex gap-2">
+                            <button onclick="showDetailModal('{{ attendance.id }}', '{{ attendance.user.get_full_name|escapejs }}')" 
+                                    class="bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600 text-sm">
+                                Details
+                            </button>
+                            {% if attendance.regularization_status == 'Pending' %}
+                            <button onclick="showRemarkModal('approve', '{{ attendance.id }}', '{{ attendance.user.get_full_name|escapejs }}')" 
+                                    class="bg-green-500 text-white px-3 py-1 rounded-md hover:bg-green-600 text-sm">
+                                Approve
+                            </button>
+                            <button onclick="showRemarkModal('reject', '{{ attendance.id }}', '{{ attendance.user.get_full_name|escapejs }}')" 
+                                    class="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 text-sm">
+                                Reject
+                            </button>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+                        No regularization requests found
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Enhanced Pagination -->
+    {% if page_obj.paginator.num_pages > 1 %}
+    <div class="mt-6 flex justify-between items-center">
+        <p class="text-sm text-gray-700">
+            Showing page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+        </p>
+        <div class="flex gap-2">
+            {% if page_obj.has_previous %}
+            <a href="?page=1&status={{ status_filter }}&date_from={{ date_from }}&date_to={{ date_to }}&user={{ user_filter }}&department={{ department_filter }}" 
+               class="px-3 py-1 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300">
+                First
+            </a>
+            <a href="?page={{ page_obj.previous_page_number }}&status={{ status_filter }}&date_from={{ date_from }}&date_to={{ date_to }}&user={{ user_filter }}&department={{ department_filter }}" 
+               class="px-3 py-1 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300">
+                Previous
+            </a>
+            {% endif %}
+            
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}&status={{ status_filter }}&date_from={{ date_from }}&date_to={{ date_to }}&user={{ user_filter }}&department={{ department_filter }}" 
+               class="px-3 py-1 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300">
+                Next
+            </a>
+            <a href="?page={{ page_obj.paginator.num_pages }}&status={{ status_filter }}&date_from={{ date_from }}&date_to={{ date_to }}&user={{ user_filter }}&department={{ department_filter }}" 
+               class="px-3 py-1 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300">
+                Last
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Include your existing modals here -->
+ <!-- Add these modals right before your script tag, around line 210 -->
+
+<!-- Remark Modal for Approve/Reject -->
+<div id="remarkModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+        <div class="px-6 py-4 border-b">
+            <h3 id="modalTitle" class="text-lg font-semibold text-gray-800">Process Request</h3>
+        </div>
+        <form id="remarkForm" method="post" action="">
+            {% csrf_token %}
+            <div class="p-6 space-y-4">
+                <div>
+                    <p id="currentStatus" class="text-sm text-gray-600">Current Status: -</p>
+                    <p id="requestedStatus" class="text-sm text-gray-600 hidden">Requested Status: -</p>
+                </div>
+                
+                <div>
+                    <label for="statusSelect" class="block text-sm font-medium text-gray-700">Set Status To</label>
+                    <select id="statusSelect" name="status" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                        {% for status_code, status_name in status_choices %}
+                            <option value="{{ status_code }}">{{ status_name }}</option>
+                        {% endfor %}
+                    </select>
+                    <p id="statusHint" class="text-xs text-gray-500 mt-1"></p>
+                </div>
+                
+                <div>
+                    <label for="remarks" class="block text-sm font-medium text-gray-700">Remarks</label>
+                    <textarea id="remarks" name="remarks" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" placeholder="Add your remarks here..."></textarea>
+                </div>
+                <input type="hidden" id="actionType" name="action" value="">
+            </div>
+            <div class="px-6 py-4 bg-gray-50 flex justify-end space-x-2 rounded-b-lg">
+                <button type="button" onclick="closeRemarkModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
+                    Cancel
+                </button>
+                <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
+                    Submit
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Detail Modal -->
+<div id="detailModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+        <div class="px-6 py-4 border-b">
+            <h3 id="detailModalTitle" class="text-lg font-semibold text-gray-800">Attendance Details</h3>
+        </div>
+        <div class="p-6 space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <p class="text-sm text-gray-500">Current Status</p>
+                    <p id="detailCurrentStatus" class="font-medium">-</p>
+                </div>
+                <div id="detailRequestedStatusContainer" class="hidden">
+                    <p class="text-sm text-gray-500">Requested Status</p>
+                    <p id="detailRequestedStatus" class="font-medium">-</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Clock In</p>
+                    <p id="detailClockIn" class="font-medium">-</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Clock Out</p>
+                    <p id="detailClockOut" class="font-medium">-</p>
+                </div>
+            </div>
+            
+            <div>
+                <p class="text-sm text-gray-500">Reason for Regularization</p>
+                <p id="detailReason" class="mt-1 p-2 bg-gray-50 rounded-md text-sm">-</p>
+            </div>
+        </div>
+        <div class="px-6 py-4 bg-gray-50 flex justify-end space-x-2 rounded-b-lg">
+            {% if attendance.regularization_status == 'Pending' %}
+            <button type="button" onclick="approveFromDetail()" class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600">
+                Approve
+            </button>
+            <button type="button" onclick="rejectFromDetail()" class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600">
+                Reject
+            </button>
+            {% endif %}
+            <button type="button" onclick="closeDetailModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Global variable to store current attendance ID
+    let currentAttendanceId = null;
+    let currentUsername = null;
+    
+    // Data storage for attendance details
+    const attendanceData = {
+        {% for attendance in page_obj %}
+        "{{ attendance.id }}": {
+            id: "{{ attendance.id }}",
+            username: "{{ attendance.user.username }}",
+            status: "{{ attendance.get_status_display }}",
+            requestedStatus: "{{ attendance.requested_status|default:'' }}",
+            requestedStatusDisplay: "{{ attendance.get_requested_status_display|default:'' }}",
+            clockIn: "{{ attendance.clock_in_time|date:'H:i'|default:'-' }}",
+            clockOut: "{{ attendance.clock_out_time|date:'H:i'|default:'-' }}",
+            reason: "{{ attendance.regularization_reason|escapejs }}",
+            regularizationStatus: "{{ attendance.regularization_status }}"
+        },
+        {% endfor %}
+    };
+
+    function showRemarkModal(action, id, name) {
+        currentAttendanceId = id;
+        currentUsername = name;
+        
+        const attendance = attendanceData[id];
+        if (!attendance) {
+            console.error('Attendance data not found for ID:', id);
+            return;
+        }
+        
+        // Update title based on action
+        document.getElementById('modalTitle').textContent = `${action.charAt(0).toUpperCase() + action.slice(1)} Request for ${name}`;
+        document.getElementById('actionType').value = action;
+        document.getElementById('remarkForm').action = "{% url 'aps_attendance:hr_process_regularization' attendance_id=0 %}".replace('0', id);
+        document.getElementById('remarks').value = "";
+        
+        // Update status information
+        document.getElementById('currentStatus').textContent = `Current Status: ${attendance.status}`;
+        
+        // Handle requested status if present
+        const requestedStatusEl = document.getElementById('requestedStatus');
+        if (attendance.requestedStatus) {
+            requestedStatusEl.textContent = `Requested Status: ${attendance.requestedStatusDisplay}`;
+            requestedStatusEl.classList.remove('hidden');
+            
+            // Add visual cue for requested status in dropdown
+            const statusSelect = document.getElementById('statusSelect');
+            if (statusSelect) {
+                for (let i = 0; i < statusSelect.options.length; i++) {
+                    if (statusSelect.options[i].value === attendance.requestedStatus) {
+                        statusSelect.options[i].textContent += ' (Requested)';
+                        document.getElementById('statusHint').textContent = 'Employee requested a status change';
+                        break;
+                    }
+                }
+            }
+        } else {
+            requestedStatusEl.classList.add('hidden');
+        }
+        
+        const remarkModal = document.getElementById('remarkModal');
+        if (remarkModal) {
+            remarkModal.classList.remove('hidden');
+        } else {
+            console.error('Remark modal element not found');
+        }
+    }
+
+    function closeRemarkModal() {
+        const remarkModal = document.getElementById('remarkModal');
+        if (remarkModal) {
+            remarkModal.classList.add('hidden');
+            resetStatusDropdown();
+        } else {
+            console.error('Remark modal element not found');
+        }
+    }
+    
+    function resetStatusDropdown() {
+        // Reset status dropdown to original state
+        const statusSelect = document.getElementById('statusSelect');
+        if (!statusSelect) {
+            console.error('Status select element not found');
+            return;
+        }
+        
+        for (let i = 0; i < statusSelect.options.length; i++) {
+            if (statusSelect.options[i].textContent.includes('(Requested)')) {
+                statusSelect.options[i].textContent = statusSelect.options[i].textContent.replace(' (Requested)', '');
+            }
+        }
+        
+        const statusHint = document.getElementById('statusHint');
+        if (statusHint) {
+            statusHint.textContent = '';
+        }
+    }
+    
+    function showDetailModal(id, name) {
+        currentAttendanceId = id;
+        currentUsername = name;
+        
+        const attendance = attendanceData[id];
+        if (!attendance) {
+            console.error('Attendance data not found for ID:', id);
+            return;
+        }
+        
+        // Set modal title
+        const detailModalTitle = document.getElementById('detailModalTitle');
+        if (detailModalTitle) {
+            detailModalTitle.textContent = `Attendance Details for ${name}`;
+        }
+        
+        // Set status information
+        const detailCurrentStatus = document.getElementById('detailCurrentStatus');
+        if (detailCurrentStatus) {
+            detailCurrentStatus.textContent = attendance.status;
+        }
+        
+        // Handle requested status
+        const detailRequestedStatus = document.getElementById('detailRequestedStatus');
+        const detailRequestedStatusContainer = document.getElementById('detailRequestedStatusContainer');
+        
+        if (detailRequestedStatus && detailRequestedStatusContainer) {
+            if (attendance.requestedStatus) {
+                detailRequestedStatus.textContent = attendance.requestedStatusDisplay;
+                detailRequestedStatusContainer.classList.remove('hidden');
+            } else {
+                detailRequestedStatusContainer.classList.add('hidden');
+            }
+        }
+        
+        // Set time information
+        const detailClockIn = document.getElementById('detailClockIn');
+        if (detailClockIn) {
+            detailClockIn.textContent = attendance.clockIn;
+        }
+        
+        const detailClockOut = document.getElementById('detailClockOut');
+        if (detailClockOut) {
+            detailClockOut.textContent = attendance.clockOut;
+        }
+        
+        // Set reason
+        const detailReason = document.getElementById('detailReason');
+        if (detailReason) {
+            detailReason.textContent = attendance.reason;
+        }
+        
+        // Show or hide action buttons based on regularization status
+        const approveButton = document.querySelector('#detailModal button[onclick="approveFromDetail()"]');
+        const rejectButton = document.querySelector('#detailModal button[onclick="rejectFromDetail()"]');
+        
+        if (approveButton && rejectButton) {
+            if (attendance.regularizationStatus === 'Pending') {
+                approveButton.classList.remove('hidden');
+                rejectButton.classList.remove('hidden');
+            } else {
+                approveButton.classList.add('hidden');
+                rejectButton.classList.add('hidden');
+            }
+        }
+        
+        // Show modal
+        const detailModal = document.getElementById('detailModal');
+        if (detailModal) {
+            detailModal.classList.remove('hidden');
+        } else {
+            console.error('Detail modal element not found');
+        }
+    }
+    
+    function closeDetailModal() {
+        const detailModal = document.getElementById('detailModal');
+        if (detailModal) {
+            detailModal.classList.add('hidden');
+        } else {
+            console.error('Detail modal element not found');
+        }
+    }
+    
+    function approveFromDetail() {
+        closeDetailModal();
+        showRemarkModal('approve', currentAttendanceId, currentUsername);
+    }
+    
+    function rejectFromDetail() {
+        closeDetailModal();
+        showRemarkModal('reject', currentAttendanceId, currentUsername);
+    }
+    
+    // Add event listeners when the DOM is fully loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM fully loaded');
+        // Add debugging to verify modal elements exist
+        console.log('Remark modal exists:', !!document.getElementById('remarkModal'));
+        console.log('Detail modal exists:', !!document.getElementById('detailModal'));
+    });
+</script>
+{% endblock %}

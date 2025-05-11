@@ -1,0 +1,252 @@
+<!-- Regularization Analytics Dashboard Section -->
+<div class="regularization-analytics-section mb-6">
+    <!-- Section Header -->
+    <div class="bg-white shadow-sm rounded-lg p-4 mb-4">
+        <h2 class="text-xl font-semibold text-gray-800">Attendance Regularization Analytics</h2>
+        <p class="text-sm text-gray-600">View and analyze regularization patterns across departments</p>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white shadow-sm rounded-lg p-4 mb-4">
+        <form method="GET" action="{% url 'aps_attendance:regularization_analytics_dashboard' %}" class="flex flex-wrap gap-4">
+            <div class="flex flex-col">
+                <label for="date_from" class="text-sm font-medium text-gray-700 mb-1">From Date</label>
+                <input type="date" id="date_from" name="date_from" value="{{ date_from }}" class="border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500">
+            </div>
+            <div class="flex flex-col">
+                <label for="date_to" class="text-sm font-medium text-gray-700 mb-1">To Date</label>
+                <input type="date" id="date_to" name="date_to" value="{{ date_to }}" class="border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500">
+            </div>
+            <div class="flex flex-col">
+                <label for="department" class="text-sm font-medium text-gray-700 mb-1">Department</label>
+                <select id="department" name="department" class="border rounded-md p-2 focus:ring-blue-500 focus:border-blue-500">
+                    <option value="">All Departments</option>
+                    {% for dept in departments %}
+                        <option value="{{ dept.name }}" {% if department_filter == dept.name %}selected{% endif %}>{{ dept.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="flex items-end">
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md">Apply Filters</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+        <!-- Total Requests -->
+        <div class="bg-white shadow-sm rounded-lg p-4">
+            <p class="text-sm text-gray-600">Total Requests</p>
+            <div class="flex items-center">
+                <span class="text-2xl font-bold text-gray-800">{{ total_requests }}</span>
+            </div>
+        </div>
+        
+        <!-- Approved Requests -->
+        <div class="bg-white shadow-sm rounded-lg p-4">
+            <p class="text-sm text-gray-600">Approved</p>
+            <div class="flex items-center justify-between">
+                <span class="text-2xl font-bold text-green-600">{{ approved_requests }}</span>
+                <span class="text-sm bg-green-100 text-green-800 py-1 px-2 rounded-full">{{ approval_rate }}%</span>
+            </div>
+        </div>
+        
+        <!-- Rejected Requests -->
+        <div class="bg-white shadow-sm rounded-lg p-4">
+            <p class="text-sm text-gray-600">Rejected</p>
+            <div class="flex items-center justify-between">
+                <span class="text-2xl font-bold text-red-600">{{ rejected_requests }}</span>
+                <span class="text-sm bg-red-100 text-red-800 py-1 px-2 rounded-full">{{ rejection_rate }}%</span>
+            </div>
+        </div>
+        
+        <!-- Pending Requests -->
+        <div class="bg-white shadow-sm rounded-lg p-4">
+            <p class="text-sm text-gray-600">Pending</p>
+            <div class="flex items-center justify-between">
+                <span class="text-2xl font-bold text-yellow-600">{{ pending_requests }}</span>
+                <span class="text-sm bg-yellow-100 text-yellow-800 py-1 px-2 rounded-full">{{ pending_rate }}%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts & Tables -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+        <!-- Regularization Trend Chart -->
+        <div class="bg-white shadow-sm rounded-lg p-4">
+            <h3 class="text-lg font-medium text-gray-800 mb-3">Regularization Trends</h3>
+            <canvas id="regularizationTrendChart" height="300"></canvas>
+        </div>
+        
+        <!-- Reasons Breakdown -->
+        <div class="bg-white shadow-sm rounded-lg p-4">
+            <h3 class="text-lg font-medium text-gray-800 mb-3">Reasons Breakdown</h3>
+            <canvas id="reasonsBreakdownChart" height="300"></canvas>
+        </div>
+    </div>
+
+    <!-- Top Employees & Reasons Tables -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <!-- Top Employees -->
+        <div class="bg-white shadow-sm rounded-lg p-4">
+            <h3 class="text-lg font-medium text-gray-800 mb-3">Top Employees with Regularization Requests</h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Count</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for employee in top_employees %}
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">{{ employee.user__first_name }} {{ employee.user__last_name }}</div>
+                                <div class="text-sm text-gray-500">{{ employee.user__username }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                    {{ employee.count }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="2" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">No data available</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Detailed Reasons -->
+        <div class="bg-white shadow-sm rounded-lg p-4">
+            <h3 class="text-lg font-medium text-gray-800 mb-3">Regularization Reasons</h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Count</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Percentage</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for reason in reasons_breakdown %}
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ reason.category }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ reason.count }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                        <div class="bg-blue-600 h-2.5 rounded-full" style="width: {{ reason.percentage }}%"></div>
+                                    </div>
+                                    <span class="ml-2 text-sm text-gray-700">{{ reason.percentage }}%</span>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">No data available</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js Scripts -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Trend Chart
+    const trendCtx = document.getElementById('regularizationTrendChart').getContext('2d');
+    const trendData = {{ trend_data|safe }};
+    
+    new Chart(trendCtx, {
+        type: 'line',
+        data: {
+            labels: trendData.map(item => {
+                const date = new Date(item.date);
+                return date.toLocaleDateString();
+            }),
+            datasets: [{
+                label: 'Regularization Requests',
+                data: trendData.map(item => item.count),
+                borderColor: 'rgb(59, 130, 246)',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                tension: 0.3,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    }
+                }
+            }
+        }
+    });
+
+    // Reasons Breakdown Chart
+    const reasonsCtx = document.getElementById('reasonsBreakdownChart').getContext('2d');
+    const reasonsData = {{ reasons_breakdown|safe }};
+    
+    new Chart(reasonsCtx, {
+        type: 'doughnut',
+        data: {
+            labels: reasonsData.map(item => item.category),
+            datasets: [{
+                data: reasonsData.map(item => item.count),
+                backgroundColor: [
+                    'rgba(59, 130, 246, 0.8)',
+                    'rgba(16, 185, 129, 0.8)',
+                    'rgba(245, 158, 11, 0.8)',
+                    'rgba(239, 68, 68, 0.8)',
+                    'rgba(139, 92, 246, 0.8)',
+                    'rgba(236, 72, 153, 0.8)',
+                    'rgba(75, 85, 99, 0.8)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.raw || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = Math.round((value / total) * 100);
+                            return `${label}: ${value} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>

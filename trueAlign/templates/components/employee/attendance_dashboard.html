@@ -141,128 +141,127 @@
             </div>
         </div>
 
-        <!-- Stats Cards -->
-        <div class="mb-8">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-semibold text-gray-800">Attendance Summary</h2>
-                <!-- Date Filter Dropdown -->
-                <div class="relative">
-                    <button id="dateFilterBtn" class="flex items-center text-sm bg-white border border-gray-300 rounded-lg px-4 py-2 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <span>
-                            {% if date_filter == 'current_month' %}Current Month
-                            {% elif date_filter == 'previous_month' %}Previous Month
-                            {% elif date_filter == 'current_week' %}Current Week
-                            {% elif date_filter == 'previous_week' %}Previous Week
-                            {% elif date_filter == 'custom_range' %}Custom Range
-                            {% else %}Current Month{% endif %}
-                        </span>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                        </svg>
-                    </button>
-                    <div id="dateFilterDropdown" class="hidden absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg z-10">
-                        <form method="get" class="p-4">
-                            <div class="space-y-3">
-                                <label class="flex items-center">
-                                    <input type="radio" name="date_filter" value="current_month" {% if date_filter == 'current_month' %}checked{% endif %} class="h-4 w-4 text-blue-600">
-                                    <span class="ml-2 text-gray-700">Current Month</span>
-                                </label>
-                                <label class="flex items-center">
-                                    <input type="radio" name="date_filter" value="previous_month" {% if date_filter == 'previous_month' %}checked{% endif %} class="h-4 w-4 text-blue-600">
-                                    <span class="ml-2 text-gray-700">Previous Month</span>
-                                </label>
-                                <label class="flex items-center">
-                                    <input type="radio" name="date_filter" value="current_week" {% if date_filter == 'current_week' %}checked{% endif %} class="h-4 w-4 text-blue-600">
-                                    <span class="ml-2 text-gray-700">Current Week</span>
-                                </label>
-                                <label class="flex items-center">
-                                    <input type="radio" name="date_filter" value="previous_week" {% if date_filter == 'previous_week' %}checked{% endif %} class="h-4 w-4 text-blue-600">
-                                    <span class="ml-2 text-gray-700">Previous Week</span>
-                                </label>
-                                <label class="flex items-center">
-                                    <input type="radio" name="date_filter" value="custom_range" {% if date_filter == 'custom_range' %}checked{% endif %} class="h-4 w-4 text-blue-600">
-                                    <span class="ml-2 text-gray-700">Custom Range</span>
-                                </label>
-                                <div id="customRangeFields" class="{% if date_filter != 'custom_range' %}hidden{% endif %} pt-2 space-y-2">
-                                    <div>
-                                        <label class="block text-xs text-gray-500 mb-1">Start Date</label>
-                                        <input type="date" name="date_range_start" value="{{ date_range_start }}" class="w-full rounded-md border-gray-300 text-sm">
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs text-gray-500 mb-1">End Date</label>
-                                        <input type="date" name="date_range_end" value="{{ date_range_end }}" class="w-full rounded-md border-gray-300 text-sm">
-                                    </div>
-                                </div>
-                                <button type="submit" class="w-full bg-blue-600 text-white rounded-md px-4 py-2 text-sm hover:bg-blue-700 transition-colors">
-                                    Apply Filter
-                                </button>
+<!-- Stats Cards -->
+<div class="mb-8">
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-semibold text-gray-800">Attendance Summary</h2>
+        <!-- Date Filter Dropdown -->
+        <div class="relative">
+            <button id="dateFilterBtn" class="flex items-center text-sm bg-white border border-gray-300 rounded-lg px-4 py-2 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <span>
+                    {% if date_filter == 'current_month' %}Current Month
+                    {% elif date_filter == 'previous_month' %}Previous Month
+                    {% elif date_filter == 'current_week' %}Current Week
+                    {% elif date_filter == 'previous_week' %}Previous Week
+                    {% elif date_filter == 'custom_range' %}Custom Range
+                    {% else %}Current Month{% endif %}
+                </span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+            </button>
+            <div id="dateFilterDropdown" class="hidden absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg z-10">
+                <form method="get" class="p-4">
+                    <div class="space-y-3">
+                        <label class="flex items-center">
+                            <input type="radio" name="date_filter" value="current_month" {% if date_filter == 'current_month' %}checked{% endif %} class="h-4 w-4 text-blue-600">
+                            <span class="ml-2 text-gray-700">Current Month</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="date_filter" value="previous_month" {% if date_filter == 'previous_month' %}checked{% endif %} class="h-4 w-4 text-blue-600">
+                            <span class="ml-2 text-gray-700">Previous Month</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="date_filter" value="current_week" {% if date_filter == 'current_week' %}checked{% endif %} class="h-4 w-4 text-blue-600">
+                            <span class="ml-2 text-gray-700">Current Week</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="date_filter" value="previous_week" {% if date_filter == 'previous_week' %}checked{% endif %} class="h-4 w-4 text-blue-600">
+                            <span class="ml-2 text-gray-700">Previous Week</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="date_filter" value="custom_range" {% if date_filter == 'custom_range' %}checked{% endif %} class="h-4 w-4 text-blue-600">
+                            <span class="ml-2 text-gray-700">Custom Range</span>
+                        </label>
+                        <div id="customRangeFields" class="{% if date_filter != 'custom_range' %}hidden{% endif %} pt-2 space-y-2">
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">Start Date</label>
+                                <input type="date" name="date_range_start" value="{{ date_range_start }}" class="w-full rounded-md border-gray-300 text-sm">
                             </div>
-                        </form>
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">End Date</label>
+                                <input type="date" name="date_range_end" value="{{ date_range_end }}" class="w-full rounded-md border-gray-300 text-sm">
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full bg-blue-600 text-white rounded-md px-4 py-2 text-sm hover:bg-blue-700 transition-colors">
+                            Apply Filter
+                        </button>
                     </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="flex items-center">
+                <div class="rounded-full h-12 w-12 flex items-center justify-center bg-green-100 text-green-600 mr-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Present Days</p>
+                    <p class="text-2xl font-bold text-gray-800">{{ present_days }}</p>
                 </div>
             </div>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div class="bg-white rounded-xl shadow-sm p-6">
-                    <div class="flex items-center">
-                        <div class="rounded-full h-12 w-12 flex items-center justify-center bg-green-100 text-green-600 mr-4">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                            </svg>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-500">Present Days</p>
-                            <p class="text-2xl font-bold text-gray-800">{{ present_days }}</p>
-                        </div>
-                    </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="flex items-center">
+                <div class="rounded-full h-12 w-12 flex items-center justify-center bg-yellow-100 text-yellow-600 mr-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
                 </div>
-                <div class="bg-white rounded-xl shadow-sm p-6">
-                    <div class="flex items-center">
-                        <div class="rounded-full h-12 w-12 flex items-center justify-center bg-yellow-100 text-yellow-600 mr-4">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-500">Late Days</p>
-                            <p class="text-2xl font-bold text-gray-800">{{ late_days }}</p>
-                        </div>
-                    </div>
+                <div>
+                    <p class="text-sm text-gray-500">Absent Days</p>
+                    <p class="text-2xl font-bold text-gray-800">{{ absent_count }}</p>
                 </div>
-                <div class="bg-white rounded-xl shadow-sm p-6">
-                    <div class="flex items-center">
-                        <div class="rounded-full h-12 w-12 flex items-center justify-center bg-blue-100 text-blue-600 mr-4">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-500">Leave Days</p>
-                            <p class="text-2xl font-bold text-gray-800">{{ leave_days }}</p>
-                        </div>
-                    </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="flex items-center">
+                <div class="rounded-full h-12 w-12 flex items-center justify-center bg-blue-100 text-blue-600 mr-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
                 </div>
-                <div class="bg-white rounded-xl shadow-sm p-6">
-                    <div class="flex items-center">
-                        <div class="rounded-full h-12 w-12 flex items-center justify-center bg-purple-100 text-purple-600 mr-4">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-500">Total Hours</p>
-                            <p class="text-2xl font-bold text-gray-800">{{ total_hours }}</p>
-                        </div>
-                    </div>
+                <div>
+                    <p class="text-sm text-gray-500">Leave Days</p>
+                    <p class="text-2xl font-bold text-gray-800">{{ leave_days }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="flex items-center">
+                <div class="rounded-full h-12 w-12 flex items-center justify-center bg-purple-100 text-purple-600 mr-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Total Hours</p>
+                    <p class="text-2xl font-bold text-gray-800">{{ total_hours }}</p>
                 </div>
             </div>
         </div>
     </div>
-
+</div>
+</div>
     <!-- Quick Actions Section -->
     <div class="container mx-auto px-4 py-6">
         <h2 class="text-xl font-semibold text-gray-800 mb-4">Quick Actions</h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <a href="{% url 'aps_employee:session_activity' %}" class="bg-white rounded-xl shadow-sm p-6 flex items-center hover:shadow-md transition-shadow">
+            <!-- <a href="{% url 'aps_employee:session_activity' %}" class="bg-white rounded-xl shadow-sm p-6 flex items-center hover:shadow-md transition-shadow">
                 <div class="rounded-full h-12 w-12 flex items-center justify-center bg-blue-100 text-blue-600 mr-4">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -272,7 +271,7 @@
                     <h3 class="font-medium text-gray-900">Session Activity</h3>
                     <p class="text-sm text-gray-500">View your active sessions and breaks</p>
                 </div>
-            </a>
+            </a> -->
             <a href="{% url 'aps_employee:attendance_regularization' %}" class="bg-white rounded-xl shadow-sm p-6 flex items-center hover:shadow-md transition-shadow">
                 <div class="rounded-full h-12 w-12 flex items-center justify-center bg-indigo-100 text-indigo-600 mr-4">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">

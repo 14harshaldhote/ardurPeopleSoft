@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto p-6 bg-white shadow-md rounded-lg">
+    <h2 class="text-2xl font-semibold text-center text-gray-800 mb-6">Edit Attendance Record</h2>
+
+    
+    <form method="POST" class="space-y-6">
+        {% csrf_token %}
+        <div class="space-y-4">
+            <div>
+                <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
+                <select id="status" name="status" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="On Leave" {% if attendance.status == 'On Leave' %}selected{% endif %}>On Leave</option>
+                    <option value="Half Day" {% if attendance.status == 'Half Day' %}selected{% endif %}>Half Day</option>
+                    <option value="Present" {% if attendance.status == 'Present' %}selected{% endif %}>Present</option>
+                    <option value="Absent" {% if attendance.status == 'Absent' %}selected{% endif %}>Absent</option>
+                </select>
+            </div>
+
+            <div id="leave_type_div" class="hidden">
+                <label for="leave_type" class="block text-sm font-medium text-gray-700">Leave Type</label>
+                <select id="leave_type" name="leave_type" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                    {% for leave_type in leave_types %}
+                        <option value="{{ leave_type }}" {% if attendance.leave_type == leave_type %}selected{% endif %}>{{ leave_type }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="flex space-x-6">
+                <div class="flex-1">
+                    <label for="clock_in_time" class="block text-sm font-medium text-gray-700">Clock-In Time</label>
+                    <input type="text" id="clock_in_time" name="clock_in_time" value="{{ clock_in_time }}" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="HH:MM">
+                </div>
+
+                <div class="flex-1">
+                    <label for="clock_out_time" class="block text-sm font-medium text-gray-700">Clock-Out Time</label>
+                    <input type="text" id="clock_out_time" name="clock_out_time" value="{{ clock_out_time }}" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="HH:MM">
+                </div>
+            </div>
+
+            <div>
+                <label for="remarks" class="block text-sm font-medium text-gray-700">Remarks</label>
+                <textarea id="remarks" name="remarks" rows="4" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">{{ attendance.regularization_reason }}</textarea>
+            </div>
+        </div>
+
+        <div class="flex justify-between items-center">
+            <a href="{% url 'aps_attendance:hr_attendance_list' %}" class="text-sm text-gray-600 hover:text-gray-900">Back to Attendance List</a>
+            <button type="submit" class="inline-flex items-center px-6 py-3 bg-indigo-600 text-white font-semibold rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                Save Changes
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    // Show leave type dropdown if status is On Leave or Half Day
+    document.getElementById('status').addEventListener('change', function () {
+        const leaveTypeDiv = document.getElementById('leave_type_div');
+        if (this.value === 'On Leave' || this.value === 'Half Day') {
+            leaveTypeDiv.classList.remove('hidden');
+        } else {
+            leaveTypeDiv.classList.add('hidden');
+        }
+    });
+</script>
+
+{% endblock %}

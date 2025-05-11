@@ -1,0 +1,367 @@
+<style>
+   
+    .dashboard {
+      position: relative;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle at center, #2b033b, #210033);
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .release-badge {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(84, 207, 226, 0.1);
+      color: #54cfe2;
+      padding: 8px 16px;
+      border-radius: 9999px;
+      font-size: 10px;
+      font-weight: 100;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      box-shadow: 0 0 15px rgba(84, 207, 226, 0.5);
+      animation: glow 2s ease-in-out infinite;
+    }
+
+    @keyframes glow {
+      0%, 100% { box-shadow: 0 0 15px rgba(84, 207, 226, 0.5); }
+      50% { box-shadow: 0 0 25px rgba(84, 207, 226, 0.8); }
+    }
+    
+    .speedometer-container {
+      position: relative;
+      width: 300px;
+      height: 300px;
+      margin-top: 20px;
+    }
+    
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+    
+    .percentage-display {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -40%);
+      text-align: center;
+      z-index: 10;
+    }
+    
+    .percentage {
+      font-size: 48px;
+      font-weight: 700;
+      margin: 0;
+      background: linear-gradient(to right, #f97316, #5bddb2, #54cfe2);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: -5px;
+    }
+    
+    .label {
+      font-size: 14px;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+    
+    .stats {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      margin-top: 20px;
+    }
+    
+    .stat-card {
+      background: rgba(30, 41, 59, 0.6);
+      backdrop-filter: blur(5px);
+      border-radius: 12px;
+      padding: 15px;
+      width: calc(50% - 10px);
+      text-align: center;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+    }
+    
+    .stat-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .stat-label {
+      color: #94a3b8;
+      font-size: 12px;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .stat-value {
+      font-size: 22px;
+      font-weight: 600;
+      margin: 0;
+    }
+    
+    .projects {
+      color: #f97316;
+    }
+    
+    .goals {
+      color: #facc15;
+    }
+    
+    .kpi-container {
+      width: 100%;
+      margin-top: 20px;
+      background: rgba(30, 41, 59, 0.4);
+      backdrop-filter: blur(5px);
+      border-radius: 12px;
+      padding: 15px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .kpi-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    
+    .kpi-title {
+      font-size: 14px;
+      color: #e2e8f0;
+      margin: 0;
+    }
+    
+    .kpi-score {
+      font-size: 14px;
+      color: #64748b;
+      font-weight: 600;
+    }
+    
+    .progress-bar {
+      height: 6px;
+      width: 100%;
+      background: rgba(30, 41, 59, 0.6);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      border-radius: 3px;
+      background: linear-gradient(to right, #f97316, #5bddb2, #54cfe2);
+      transition: width 1s ease-in-out;
+    }
+  </style>
+  <div class="dashboard transform transition-all duration-300 hover:scale-105">
+    <span class="release-badge">Releasing Soon</span>
+    <div class="speedometer-container">
+      <canvas id="speedometer" width="300" height="300"></canvas>
+      <div class="percentage-display">
+        <p class="percentage" id="percentage">0%</p>
+        <p class="label">Performance</p>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat-card">
+        <p class="stat-label">Projects Completed</p>
+        <p class="stat-value projects">0</p>
+      </div>
+      <div class="stat-card">
+        <p class="stat-label">Goals Achieved</p>
+        <p class="stat-value goals">0</p>
+      </div>
+    </div>
+    <div class="kpi-container">
+      <div class="kpi-header">
+        <h4 class="kpi-title">Key Performance Indicators</h4>
+        <span class="kpi-score">0 points</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="kpi-progress"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Change this value to set the percentage (0-100)
+    const targetPercentage = 0;
+    
+    const canvas = document.getElementById('speedometer');
+    const ctx = canvas.getContext('2d');
+    const percentageDisplay = document.getElementById('percentage');
+    const kpiProgress = document.getElementById('kpi-progress');
+    
+    // Set KPI progress bar width
+    kpiProgress.style.width = `${targetPercentage}%`;
+    
+    let currentPercentage = 0;
+    let animationFrameId;
+    
+    // Convert percentage to radians for the gauge
+    const percentageToRadians = (percentage) => {
+      // Map percentage (0-100) to radians (0.75π to 2.25π)
+      return (percentage / 100) * 1.5 * Math.PI + 0.75 * Math.PI;
+    };
+    
+    // Calculate coordinates on a circle
+    const getCircleCoordinates = (centerX, centerY, radius, angleRadians) => {
+      return {
+        x: centerX + radius * Math.cos(angleRadians),
+        y: centerY + radius * Math.sin(angleRadians)
+      };
+    };
+    
+    // Get color based on percentage
+    const getColor = (percentage) => {
+      if (percentage <= 40) {
+        return '#5bddb2'; // Orange
+      } else if (percentage <= 75) {
+        return '#22c55e'; // Green
+      } else {
+        return '#54cfe2'; // Slate
+      }
+    };
+    
+    // Draw the speedometer
+    const drawSpeedometer = (percentage) => {
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const outerRadius = canvas.width / 2 - 10;
+      const innerRadius = outerRadius - 20;
+      
+      // Clear canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // Draw outer ring (track)
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, outerRadius, 0.75 * Math.PI, 2.25 * Math.PI);
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.2)';
+      ctx.lineWidth = 8;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+      
+      // Draw progress arc with dynamic color
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, outerRadius, 0.75 * Math.PI, percentageToRadians(percentage));
+      ctx.strokeStyle = getColor(percentage);
+      ctx.lineWidth = 8;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+      
+      // Draw inner ring (secondary track)
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, innerRadius, 0.75 * Math.PI, 2.25 * Math.PI);
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.1)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      
+      // Draw ticks
+      for (let i = 0; i <= 100; i += 10) {
+        const angle = percentageToRadians(i);
+        
+        // Major ticks (every 20%)
+        if (i % 20 === 0) {
+          const outerPoint = getCircleCoordinates(centerX, centerY, outerRadius + 5, angle);
+          const innerPoint = getCircleCoordinates(centerX, centerY, outerRadius - 12, angle);
+          
+          ctx.beginPath();
+          ctx.moveTo(innerPoint.x, innerPoint.y);
+          ctx.lineTo(outerPoint.x, outerPoint.y);
+          ctx.strokeStyle = i <= percentage ? getColor(i) : 'rgba(148, 163, 184, 0.6)';
+          ctx.lineWidth = 3;
+          ctx.lineCap = 'round';
+          ctx.stroke();
+        } 
+        // Minor ticks (every 10%)
+        else if (i % 10 === 0) {
+          const outerPoint = getCircleCoordinates(centerX, centerY, outerRadius, angle);
+          const innerPoint = getCircleCoordinates(centerX, centerY, outerRadius - 8, angle);
+          
+          ctx.beginPath();
+          ctx.moveTo(innerPoint.x, innerPoint.y);
+          ctx.lineTo(outerPoint.x, outerPoint.y);
+          ctx.strokeStyle = i <= percentage ? getColor(i) : 'rgba(148, 163, 184, 0.4)';
+          ctx.lineWidth = 2;
+          ctx.lineCap = 'round';
+          ctx.stroke();
+        }
+      }
+      
+      // Draw needle
+      const needleAngle = percentageToRadians(percentage);
+      const needleLength = outerRadius - 40;
+      const needlePoint = getCircleCoordinates(centerX, centerY, needleLength, needleAngle);
+      
+      // Draw needle shadow
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY);
+      ctx.lineTo(needlePoint.x, needlePoint.y);
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+      ctx.shadowBlur = 5;
+      ctx.shadowOffsetX = 2;
+      ctx.shadowOffsetY = 2;
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+      ctx.shadowColor = 'transparent';
+      
+      // Draw needle
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY);
+      ctx.lineTo(needlePoint.x, needlePoint.y);
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+      
+      // Draw center hub
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, 15, 0, 2 * Math.PI);
+      ctx.fillStyle = '#1e293b';
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      
+      // Add glow to center hub
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, 8, 0, 2 * Math.PI);
+      const hubGradient = ctx.createRadialGradient(
+        centerX, centerY, 0,
+        centerX, centerY, 8
+      );
+      hubGradient.addColorStop(0, getColor(percentage));
+      hubGradient.addColorStop(1, 'rgba(56, 189, 248, 0)');
+      ctx.fillStyle = hubGradient;
+      ctx.fill();
+    };
+    
+    // Animate the speedometer
+    const animateSpeedometer = () => {
+      if (currentPercentage < targetPercentage) {
+        currentPercentage += 1;
+        percentageDisplay.textContent = `${currentPercentage}%`;
+        drawSpeedometer(currentPercentage);
+        animationFrameId = requestAnimationFrame(animateSpeedometer);
+      } else {
+        percentageDisplay.textContent = `${targetPercentage}%`;
+        drawSpeedometer(targetPercentage);
+      }
+    };
+    
+    // Start animation after a short delay
+    setTimeout(() => {
+      animateSpeedometer();
+    }, 500);
+  </script>
