@@ -7832,6 +7832,8 @@ def hr_generate_report(request):
     paginator = Paginator(items, 10)  # Show 10 items per page
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+
+    calander_report=hr_attendance_view(request)
     
     context = {
         'report_type': report_type,
@@ -7855,6 +7857,7 @@ def hr_generate_report(request):
         'years': years,
         'months': range(1, 13),
         'weeks': range(1, 53),
+        'calander_report': calander_report,
     }
     
     return render(request, 'components/hr/attendance/hr_generate_report.html', context)
@@ -9201,32 +9204,41 @@ def manager_attendance_view(request):
     return render(request, 'components/manager/manager_attendance.html', {
         'team_attendance': team_records
     })
+
 @login_required
-@user_passes_test(is_hr)
+@user_passes_test(is_hr_check)
 def hr_attendance_view(request):
     # Get the month and year from request params, default to current month
     today = timezone.now().date()
-    month = int(request.GET.get('month', today.month))
+    month = int(request.GET.get('month', today.month)) 
     year = int(request.GET.get('year', today.year))
 
     # Get first and last day of selected month
     first_day = datetime(year, month, 1).date()
     last_day = datetime(year, month, calendar.monthrange(year, month)[1]).date()
 
-    # Get all users with their details - FIXED: changed userdetails to profile
+    # Get all users with their details
     users = User.objects.select_related('profile').all().order_by('username')
 
     # Get all attendance records for the month with related data
     attendance_records = Attendance.objects.filter(
         date__range=[first_day, last_day]
-    ).select_related('user', 'shift', 'user_session').prefetch_related('modified_by')
+    ).select_related('user', 'shift', 'modified_by')
 
     # Get leave records for the month
-    leave_records = Leave.objects.filter(
+    leave_records = LeaveRequest.objects.filter(
         start_date__lte=last_day,
         end_date__gte=first_day,
         status='Approved'
-    ).select_related('user', 'approver')
+    ).select_related('user', 'approver', 'leave_type')
+
+    # Get current shift assignments for all users
+    shift_assignments = ShiftAssignment.objects.filter(
+        is_current=True
+    ).select_related('user', 'shift')
+    
+    # Create a dictionary for quick access to shift assignments
+    user_shifts = {assignment.user.id: assignment.shift for assignment in shift_assignments}
 
     # Create attendance matrix
     attendance_matrix = []
@@ -9235,19 +9247,24 @@ def hr_attendance_view(request):
     for user in users:
         user_row = {
             'employee': user,
-            # FIXED: changed userdetails to profile
             'work_location': getattr(user.profile, 'work_location', 'Not set'),
-            'attendance': {}
+            'attendance': {},
+            'current_shift': user_shifts.get(user.id, None)
         }
 
+        # Get the user's shift
+        current_shift = user_shifts.get(user.id, None)
+        
         # Initialize all days
         for day in range(1, days_in_month + 1):
             current_date = datetime(year, month, day).date()
             day_name = current_date.strftime('%a')
-            is_weekend = current_date.weekday() >= 5  # Saturday or Sunday
+            
+            # Determine if this is a working day based on shift settings
+            is_weekend = is_weekend_for_user(current_date, current_shift)
             
             user_row['attendance'][current_date] = {
-                'status': 'Weekend' if is_weekend else 'Absent',
+                'status': 'Weekend' if is_weekend else 'Not Marked',
                 'working_hours': None,
                 'day_name': day_name,
                 'is_weekend': is_weekend,
@@ -9258,7 +9275,7 @@ def hr_attendance_view(request):
                 'location': None,
                 'regularization_status': None,
                 'regularization_reason': None,
-                'shift': None,
+                'shift': current_shift,
                 'modified_by': None,
                 'remarks': None
             }
@@ -9269,15 +9286,21 @@ def hr_attendance_view(request):
             day_name = record.date.strftime('%a')
             working_hours = f"{record.total_hours:.1f}h" if record.total_hours else "-"
 
+            # Determine if this is a working day based on the user's shift
+            # Use the record's shift if available, otherwise fall back to current shift
+            record_shift = record.shift if record.shift else current_shift
+            is_weekend = is_weekend_for_user(record.date, record_shift)
+            
             status = record.status
-            if record.is_weekend and status == 'Present':
+            # Only mark as Weekend Work if it's a weekend day AND they showed up as Present
+            if is_weekend and status == 'Present':
                 status = 'Weekend Work'
 
             user_row['attendance'][record.date] = {
                 'status': status,
                 'working_hours': working_hours,
                 'day_name': day_name,
-                'is_weekend': record.is_weekend,
+                'is_weekend': is_weekend,
                 'is_holiday': record.is_holiday,
                 'overtime_hours': record.overtime_hours,
                 'late_minutes': record.late_minutes,
@@ -9285,7 +9308,8 @@ def hr_attendance_view(request):
                 'location': record.location,
                 'regularization_status': record.regularization_status,
                 'regularization_reason': record.regularization_reason,
-                'shift': record.shift.name if record.shift else None,
+                'shift': record.shift.name if record.shift else 'No Shift',
+                'shift_timing': f"{record.shift.start_time.strftime('%H:%M')} - {record.shift.end_time.strftime('%H:%M')}" if record.shift else None,
                 'modified_by': record.modified_by.username if record.modified_by else None,
                 'remarks': record.remarks,
                 'clock_in': record.clock_in_time.strftime('%H:%M') if record.clock_in_time else None,
@@ -9295,14 +9319,22 @@ def hr_attendance_view(request):
         # Fill in leave records
         user_leaves = leave_records.filter(user=user)
         for leave in user_leaves:
-            leave_dates = [first_day + timedelta(days=x) for x in range((last_day-first_day).days + 1)]
-            leave_dates = [d for d in leave_dates if leave.start_date <= d <= leave.end_date]
+            leave_dates = []
+            current_date = max(leave.start_date, first_day)
+            while current_date <= min(leave.end_date, last_day):
+                leave_dates.append(current_date)
+                current_date += timedelta(days=1)
             
             for date in leave_dates:
                 if date in user_row['attendance']:
+                    # Mark the day as a leave day
+                    leave_status = 'On Leave'
+                    if leave.half_day:
+                        leave_status = 'Half Day'
+                    
                     user_row['attendance'][date].update({
-                        'status': 'On Leave',
-                        'leave_type': leave.leave_type,
+                        'status': leave_status,
+                        'leave_type': leave.leave_type.name,
                         'is_half_day': leave.half_day,
                         'leave_reason': leave.reason,
                         'leave_approver': leave.approver.username if leave.approver else None
@@ -9314,11 +9346,12 @@ def hr_attendance_view(request):
     summary = {
         'present_count': attendance_records.filter(status='Present').count(),
         'absent_count': attendance_records.filter(status='Absent').count(),
-        'late_count': attendance_records.filter(status='Late').count(),
+        'late_count': attendance_records.filter(status__in=['Late', 'Present & Late']).count(),
         'leave_count': attendance_records.filter(status='On Leave').count(),
         'wfh_count': attendance_records.filter(status='Work From Home').count(),
         'half_day_count': attendance_records.filter(is_half_day=True).count(),
         'weekend_work_count': attendance_records.filter(is_weekend=True, status='Present').count(),
+        'not_marked_count': days_in_month * users.count() - attendance_records.count() - leave_records.count(),
         'total_overtime_hours': attendance_records.aggregate(Sum('overtime_hours'))['overtime_hours__sum'] or 0,
         'avg_working_hours': attendance_records.filter(total_hours__isnull=False).aggregate(Avg('total_hours'))['total_hours__avg'] or 0
     }
@@ -9334,7 +9367,7 @@ def hr_attendance_view(request):
 
     # Handle download requests
     if 'format' in request.GET:
-        return handle_attendance_download(request)
+        return handle_attendance_download(request, attendance_matrix, month, year)
 
     context = {
         'attendance_matrix': attendance_matrix,
@@ -9351,7 +9384,41 @@ def hr_attendance_view(request):
 
     return render(request, 'components/hr/hr_admin_attendance.html', context)
 
-def handle_attendance_download(request):
+def is_weekend_for_user(date, shift):
+    """
+    Determine if a date is a weekend day for a specific user based on their assigned shift.
+    
+    Args:
+        date: The date to check
+        shift: The ShiftMaster object representing the user's shift
+        
+    Returns:
+        bool: True if it's a weekend day for this user, False otherwise
+    """
+    # Default behavior - Saturday and Sunday are weekend days
+    if not shift:
+        return date.weekday() >= 5  # Saturday (5) or Sunday (6)
+        
+    # Check based on shift's work_days setting
+    if shift.work_days == 'All Days':
+        return date.weekday() == 6  # Only Sunday is weekend
+    elif shift.work_days == 'Weekdays':
+        return date.weekday() >= 5  # Saturday and Sunday are weekend
+    elif shift.work_days == 'Custom':
+        # Get day names from custom_work_days
+        if not shift.custom_work_days:
+            return date.weekday() >= 5  # Default to weekend if no custom days
+            
+        custom_days = [day.strip() for day in shift.custom_work_days.split(',')]
+        day_name = date.strftime('%A')  # Full day name (Monday, Tuesday, etc.)
+        
+        # If the day name is not in custom work days, it's a weekend
+        return day_name not in custom_days
+        
+    # Default fallback
+    return date.weekday() >= 5
+
+def handle_attendance_download(request, attendance_matrix=None, month=None, year=None):
     """Handle attendance download requests for both direct and custom month downloads"""
     try:
         # Get format and date parameters
@@ -9367,27 +9434,111 @@ def handle_attendance_download(request):
             month = int(request.GET.get('month', datetime.now().month))
             year = int(request.GET.get('year', datetime.now().year))
 
-        # Get first and last day of selected month
-        first_day = datetime(year, month, 1).date()
-        last_day = datetime(year, month, calendar.monthrange(year, month)[1]).date()
+        # If attendance_matrix wasn't provided, recreate it
+        if not attendance_matrix:
+            # Recreate attendance data
+            first_day = datetime(year, month, 1).date()
+            last_day = datetime(year, month, calendar.monthrange(year, month)[1]).date()
+            
+            # Get all users except clients
+            employees = User.objects.select_related('profile').exclude(
+                groups__name='Client'
+            ).order_by('username')
 
-        # Get all users except clients
-        employees = User.objects.select_related('userdetails').exclude(
-            groups__name='Client'
-        ).order_by('username')
+            # Get all attendance records for the month
+            attendance_records = Attendance.objects.filter(
+                date__range=[first_day, last_day]
+            ).select_related('user', 'shift')
 
-        # Get attendance records for the month
-        attendance_records = Attendance.objects.filter(
-            date__range=[first_day, last_day]
-        ).select_related('user', 'user__userdetails')
+            # Get leave records for the month
+            leave_records = LeaveRequest.objects.filter(
+                start_date__lte=last_day,
+                end_date__gte=first_day,
+                status='Approved'
+            ).select_related('user', 'leave_type')
+
+            # Get current shift assignments
+            shift_assignments = ShiftAssignment.objects.filter(
+                is_current=True
+            ).select_related('user', 'shift')
+            
+            user_shifts = {assignment.user.id: assignment.shift for assignment in shift_assignments}
+            
+            # Create attendance matrix
+            attendance_matrix = []
+            days_in_month = calendar.monthrange(year, month)[1]
+
+            for employee in employees:
+                # Get the employee's shift
+                current_shift = user_shifts.get(employee.id, None)
+                
+                employee_row = {
+                    'employee': employee,
+                    'work_location': getattr(employee.profile, 'work_location', 'Not set'),
+                    'attendance': {},
+                    'current_shift': current_shift
+                }
+
+                # Initialize all days
+                for day in range(1, days_in_month + 1):
+                    current_date = datetime(year, month, day).date()
+                    day_name = current_date.strftime('%a')
+                    
+                    # Determine if this is a working day based on shift settings
+                    is_weekend = is_weekend_for_user(current_date, current_shift)
+                    
+                    employee_row['attendance'][current_date] = {
+                        'status': 'Weekend' if is_weekend else 'Not Marked',
+                        'working_hours': None,
+                        'day_name': day_name,
+                        'is_weekend': is_weekend,
+                        'shift': current_shift
+                    }
+
+                # Fill in actual attendance records
+                employee_records = attendance_records.filter(user=employee)
+                for record in employee_records:
+                    # Determine if this is a working day based on the employee's shift
+                    # Use the record's shift if available, otherwise fall back to current shift
+                    record_shift = record.shift if record.shift else current_shift
+                    is_weekend = is_weekend_for_user(record.date, record_shift)
+                    
+                    status = record.status
+                    if is_weekend and status == 'Present':
+                        status = 'Weekend Work'
+                    
+                    employee_row['attendance'][record.date]['status'] = status
+                    employee_row['attendance'][record.date]['working_hours'] = record.total_hours
+                    employee_row['attendance'][record.date]['shift'] = record.shift
+                    employee_row['attendance'][record.date]['is_weekend'] = is_weekend
+
+                # Fill in leave records
+                employee_leaves = leave_records.filter(user=employee)
+                for leave in employee_leaves:
+                    leave_dates = []
+                    current_date = max(leave.start_date, first_day)
+                    while current_date <= min(leave.end_date, last_day):
+                        leave_dates.append(current_date)
+                        current_date += timedelta(days=1)
+                    
+                    for date in leave_dates:
+                        if date in employee_row['attendance']:
+                            leave_status = 'On Leave'
+                            if leave.half_day:
+                                leave_status = 'Half Day'
+                            
+                            employee_row['attendance'][date]['status'] = leave_status
+                            employee_row['attendance'][date]['leave_type'] = leave.leave_type.name
+
+                attendance_matrix.append(employee_row)
 
         # Export based on format
         if export_format == 'excel':
-            return export_attendance_excel(employees, attendance_records, month, year)
+            return export_attendance_excel(attendance_matrix, month, year)
         elif export_format == 'csv':
-            return export_attendance_csv(employees, attendance_records, month, year)
+            return export_attendance_csv(attendance_matrix, month, year)
         elif export_format == 'pdf':
-            return export_attendance_pdf(employees, attendance_records, month, year)
+            return export_attendance_pdf(attendance_matrix, month, year)
         else:
             raise Http404("Invalid export format")
             
@@ -9399,64 +9550,153 @@ def handle_attendance_download(request):
             status=500
         )
 
-def export_attendance_excel(employees, attendance_records, month, year):
-    """Generate Excel version of attendance report"""
+def export_attendance_excel(attendance_matrix, month, year):
+    """Generate Excel version of attendance report with shift information"""
     from openpyxl import Workbook
-    from openpyxl.styles import PatternFill, Font, Alignment
+    from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
     import calendar
     from io import BytesIO
     
     wb = Workbook()
     ws = wb.active
+    ws.title = f"Attendance {calendar.month_name[month]} {year}"
     
     # Define styles
     header_fill = PatternFill(start_color='4B5563', end_color='4B5563', fill_type='solid')
     header_font = Font(bold=True, color='FFFFFF')
-    center_align = Alignment(horizontal='center', vertical='center')
+    weekend_fill = PatternFill(start_color='E5E7EB', end_color='E5E7EB', fill_type='solid')
+    present_fill = PatternFill(start_color='BBFFBB', end_color='BBFFBB', fill_type='solid')
+    absent_fill = PatternFill(start_color='FFBBBB', end_color='FFBBBB', fill_type='solid')
+    leave_fill = PatternFill(start_color='FFFFBB', end_color='FFFFBB', fill_type='solid')
+    wfh_fill = PatternFill(start_color='BBBBFF', end_color='BBBBFF', fill_type='solid')
+    late_fill = PatternFill(start_color='FFBBFF', end_color='FFBBFF', fill_type='solid')
+    weekend_work_fill = PatternFill(start_color='FFD580', end_color='FFD580', fill_type='solid')  # Orange color for weekend work
+    not_marked_fill = PatternFill(start_color='FFFFFF', end_color='FFFFFF', fill_type='solid')
     
-    # Get all dates in month (including weekends)
+    center_align = Alignment(horizontal='center', vertical='center', wrap_text=True)
+    border = Border(
+        left=Side(style='thin'), 
+        right=Side(style='thin'), 
+        top=Side(style='thin'), 
+        bottom=Side(style='thin')
+    )
+    
+    # Get days in month
     days_in_month = calendar.monthrange(year, month)[1]
     dates = [datetime(year, month, day).date() for day in range(1, days_in_month + 1)]
     
     # Write headers
-    headers = ['Employee', 'Username', 'Location', 'Role'] + [d.strftime('%d') for d in dates]
+    headers = ['Employee', 'Username', 'Work Location', 'Shift', 'Shift Timing']
+    # Add dates to headers
+    for date in dates:
+        headers.append(f"{date.day}\n{date.strftime('%a')}")
+    
     for col, header in enumerate(headers, 1):
         cell = ws.cell(row=1, column=col, value=header)
         cell.fill = header_fill
         cell.font = header_font
         cell.alignment = center_align
+        cell.border = border
     
     # Write data
     row = 2
-    for employee in employees:
-        ws.cell(row=row, column=1, value=f"{employee.first_name} {employee.last_name}").alignment = center_align
-        ws.cell(row=row, column=2, value=employee.username).alignment = center_align
-        ws.cell(row=row, column=3, value=employee.userdetails.work_location or 'Unknown').alignment = center_align
-        ws.cell(row=row, column=4, value=', '.join(group.name for group in employee.groups.all())).alignment = center_align
+    for employee_data in attendance_matrix:
+        employee = employee_data['employee']
+        current_shift = employee_data['current_shift']
         
-        col = 5
+        ws.cell(row=row, column=1, value=f"{employee.first_name} {employee.last_name}").alignment = center_align
+        ws.cell(row=row, column=1).border = border
+        
+        ws.cell(row=row, column=2, value=employee.username).alignment = center_align
+        ws.cell(row=row, column=2).border = border
+        
+        ws.cell(row=row, column=3, value=employee_data['work_location']).alignment = center_align
+        ws.cell(row=row, column=3).border = border
+        
+        # Shift info
+        shift_name = 'No Shift'
+        shift_timing = '-'
+        if current_shift:
+            shift_name = current_shift.name
+            shift_timing = f"{current_shift.start_time.strftime('%H:%M')} - {current_shift.end_time.strftime('%H:%M')}"
+        
+        ws.cell(row=row, column=4, value=shift_name).alignment = center_align
+        ws.cell(row=row, column=4).border = border
+        
+        ws.cell(row=row, column=5, value=shift_timing).alignment = center_align
+        ws.cell(row=row, column=5).border = border
+        
+        # Attendance data
+        col = 6
         for date in dates:
-            try:
-                record = attendance_records.get(user=employee, date=date)
-                status = record.status
-                if record.is_half_day:
-                    status = 'Half Day'
-                elif record.leave_type:
-                    status = f"{status} ({record.leave_type})"
-                elif record.is_weekend:
-                    status = 'Weekend'
-            except Attendance.DoesNotExist:
-                if date.weekday() == 6:  # Sunday
-                    status = 'Weekend'
-                else:
-                    status = '-'
-            ws.cell(row=row, column=col, value=status).alignment = center_align
+            attendance_data = employee_data['attendance'].get(date, {})
+            status = attendance_data.get('status', 'Not Marked')
+            
+            cell = ws.cell(row=row, column=col, value=status)
+            cell.alignment = center_align
+            cell.border = border
+            
+            # Apply status-based formatting
+            if status == 'Present':
+                cell.fill = present_fill
+            elif status == 'Absent':
+                cell.fill = absent_fill
+            elif status == 'On Leave':
+                leave_type = attendance_data.get('leave_type', '')
+                cell.value = f"{status}\n({leave_type})"
+                cell.fill = leave_fill
+            elif status == 'Half Day':
+                leave_type = attendance_data.get('leave_type', '')
+                if leave_type:
+                    cell.value = f"{status}\n({leave_type})"
+                cell.fill = leave_fill
+            elif status == 'Weekend':
+                cell.fill = weekend_fill
+            elif status == 'Weekend Work':
+                cell.fill = weekend_work_fill
+            elif status == 'Holiday':
+                cell.fill = weekend_fill
+            elif status == 'Work From Home':
+                cell.fill = wfh_fill
+            elif 'Late' in status:
+                cell.fill = late_fill
+            elif status == 'Not Marked':
+                cell.fill = not_marked_fill
+            
             col += 1
+        
         row += 1
     
+    # Add summary row
+    ws.cell(row=row + 1, column=1, value="SUMMARY").font = Font(bold=True)
+    
+    # Add a legend for status colors
+    legend_row = row + 3
+    ws.cell(row=legend_row, column=1, value="Legend:").font = Font(bold=True)
+    
+    legend_items = [
+        ("Present", present_fill),
+        ("Absent", absent_fill),
+        ("On Leave", leave_fill),
+        ("Work From Home", wfh_fill),
+        ("Late", late_fill),
+        ("Weekend", weekend_fill),
+        ("Weekend Work", weekend_work_fill),
+        ("Holiday", weekend_fill),
+        ("Not Marked", not_marked_fill)
+    ]
+    
+    for i, (label, fill) in enumerate(legend_items):
+        ws.cell(row=legend_row + i, column=2, value=label).alignment = center_align
+        ws.cell(row=legend_row + i, column=2).border = border
+        ws.cell(row=legend_row + i, column=2).fill = fill
+    
     # Adjust column widths
-    for col in range(1, len(headers) + 1):
-        ws.column_dimensions[ws.cell(row=1, column=col).column_letter].width = 15
+    for col in range(1, 6):  # Employee info columns
+        ws.column_dimensions[ws.cell(row=1, column=col).column_letter].width = 20
+    
+    for col in range(6, 6 + len(dates)):  # Date columns
+        ws.column_dimensions[ws.cell(row=1, column=col).column_letter].width = 12
     
     # Save to BytesIO
     output = BytesIO()
@@ -9467,61 +9707,182 @@ def export_attendance_excel(employees, attendance_records, month, year):
         output.read(),
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )
-    response['Content-Disposition'] = f'attachment; filename="attendance_{month}_{year}.xlsx"'
+    response['Content-Disposition'] = f'attachment; filename="attendance_{calendar.month_name[month]}_{year}.xlsx"'
     return response
 
-def export_attendance_csv(employees, attendance_records, month, year):
-    """Generate CSV version of attendance report"""
+def export_attendance_csv(attendance_matrix, month, year):
+    """Generate CSV version of attendance report with shift information"""
     import csv
     from io import StringIO
+    import calendar
     
     output = StringIO()
     writer = csv.writer(output)
     
-    # Get all dates in month (including weekends)
+    # Get days in month
     days_in_month = calendar.monthrange(year, month)[1]
     dates = [datetime(year, month, day).date() for day in range(1, days_in_month + 1)]
     
     # Write headers
-    headers = ['Employee', 'Username', 'Location', 'Role'] + [d.strftime('%d') for d in dates]
+    headers = ['Employee', 'Username', 'Work Location', 'Shift', 'Shift Timing']
+    for date in dates:
+        headers.append(f"{date.day} ({date.strftime('%a')})")
+    
     writer.writerow(headers)
     
     # Write data
-    for employee in employees:
-        row = [
+    for employee_data in attendance_matrix:
+        employee = employee_data['employee']
+        current_shift = employee_data['current_shift']
+        
+        # Employee info
+        employee_info = [
             f"{employee.first_name} {employee.last_name}",
             employee.username,
-            employee.userdetails.work_location or 'Unknown',
-            ', '.join(group.name for group in employee.groups.all())
+            employee_data['work_location']
         ]
         
+        # Shift info
+        shift_name = 'No Shift'
+        shift_timing = '-'
+        if current_shift:
+            shift_name = current_shift.name
+            shift_timing = f"{current_shift.start_time.strftime('%H:%M')} - {current_shift.end_time.strftime('%H:%M')}"
+        
+        employee_info.extend([shift_name, shift_timing])
+        
+        # Attendance data
         for date in dates:
-            try:
-                record = attendance_records.get(user=employee, date=date)
-                status = record.status
-                if record.is_half_day:
-                    status = 'Half Day'
-                elif record.leave_type:
-                    status = f"{status} ({record.leave_type})"
-                elif record.is_weekend:
-                    status = 'Weekend'
-            except Attendance.DoesNotExist:
-                if date.weekday() == 6:  # Sunday
-                    status = 'Weekend'
-                else:
-                    status = '-'
-            row.append(status)
+            attendance_data = employee_data['attendance'].get(date, {})
+            status = attendance_data.get('status', 'Not Marked')
             
-        writer.writerow(row)
+            if status == 'On Leave' or status == 'Half Day':
+                leave_type = attendance_data.get('leave_type', '')
+                if leave_type:
+                    status = f"{status} ({leave_type})"
+            
+            employee_info.append(status)
+        
+        writer.writerow(employee_info)
     
     output.seek(0)
     response = HttpResponse(output.getvalue(), content_type='text/csv')
-    response['Content-Disposition'] = f'attachment; filename="attendance_{month}_{year}.csv"'
+    response['Content-Disposition'] = f'attachment; filename="attendance_{calendar.month_name[month]}_{year}.csv"'
     return response
 
-def export_attendance_pdf(employees, attendance_records, month, year):
-    """Generate PDF version of attendance report"""
-    return HttpResponse("PDF export is currently unavailable. Please try Excel or CSV format instead.", status=501)
+    
+def export_attendance_pdf(attendance_matrix, month, year):
+    """Generate PDF version of attendance report with shift information"""
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import landscape, A3
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.lib.styles import getSampleStyleSheet
+    from io import BytesIO
+    import calendar
+    
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=landscape(A3))
+    styles = getSampleStyleSheet()
+    elements = []
+    
+    # Title
+    title = Paragraph(f"Attendance Report - {calendar.month_name[month]} {year}", styles['Title'])
+    elements.append(title)
+    elements.append(Spacer(1, 12))
+    
+    # Get days in month
+    days_in_month = calendar.monthrange(year, month)[1]
+    dates = [datetime(year, month, day).date() for day in range(1, days_in_month + 1)]
+    
+    # Table data
+    data = []
+    
+    # Headers
+    headers = ['Employee', 'Username', 'Work Location', 'Shift', 'Shift Timing']
+    for date in dates:
+        headers.append(f"{date.day}\n({date.strftime('%a')})")
+    
+    data.append(headers)
+    
+    # Employee data
+    for employee_data in attendance_matrix:
+        employee = employee_data['employee']
+        current_shift = employee_data['current_shift']
+        
+        row = [
+            f"{employee.first_name} {employee.last_name}",
+            employee.username,
+            employee_data['work_location']
+        ]
+        
+        # Shift info
+        shift_name = 'No Shift'
+        shift_timing = '-'
+        if current_shift:
+            shift_name = current_shift.name
+            shift_timing = f"{current_shift.start_time.strftime('%H:%M')} - {current_shift.end_time.strftime('%H:%M')}"
+        
+        row.extend([shift_name, shift_timing])
+        
+        # Attendance data
+        for date in dates:
+            attendance_data = employee_data['attendance'].get(date, {})
+            status = attendance_data.get('status', 'Not Marked')
+            
+            if status == 'On Leave' or status == 'Half Day':
+                leave_type = attendance_data.get('leave_type', '')
+                if leave_type:
+                    status = f"{status}\n({leave_type})"
+            
+            row.append(status)
+        
+        data.append(row)
+    
+    # Create table and style
+    table = Table(data)
+    
+    # Base style
+    style = TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.gray),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 10),
+        ('FONTSIZE', (0, 1), (-1, -1), 8),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+    ])
+    
+    # Add row colors for status
+    for i in range(1, len(data)):
+        for j in range(5, len(headers)):  # start from date columns
+            status = data[i][j].split('\n')[0] if '\n' in data[i][j] else data[i][j]
+            
+            if status == 'Present':
+                style.add('BACKGROUND', (j, i), (j, i), colors.lightgreen)
+            elif status == 'Absent':
+                style.add('BACKGROUND', (j, i), (j, i), colors.lightcoral)
+            elif status == 'On Leave':
+                style.add('BACKGROUND', (j, i), (j, i), colors.lightyellow)
+            elif status == 'Half Day':
+                style.add('BACKGROUND', (j, i), (j, i), colors.lightyellow)
+            elif status == 'Weekend' or status == 'Holiday':
+                style.add('BACKGROUND', (j, i), (j, i), colors.lightgrey)
+            elif status == 'Work From Home':
+                style.add('BACKGROUND', (j, i), (j, i), colors.lightblue)
+            elif 'Late' in status:
+                style.add('BACKGROUND', (j, i), (j, i), colors.plum)
+    
+    table.setStyle(style)
+    elements.append(table)
+    
+    # Build the PDF
+    doc.build(elements)
+    buffer.seek(0)
+    
+    response = HttpResponse(buffer.read(), content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="attendance_{calendar.month_name[month]}_{year}.pdf"'
+    return response
 
 '''------------------------------------------------ SUPPORT  AREA------------------------------------------------'''
 

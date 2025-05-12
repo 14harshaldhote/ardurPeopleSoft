@@ -284,6 +284,8 @@ attendance_patterns = [
     path('attendance/hr/requests/', views.hr_attendance_regularization_requests, name='hr_attendance_regularization_requests'),    
     # Generate attendance reports
     path('hr/reports/', views.hr_generate_report, name='hr_generate_report'),
+
+    path('hr/attendance/calander/', views.hr_attendance_view, name='hr_attendance_view'),
     
     # Monthly report for specific user
     

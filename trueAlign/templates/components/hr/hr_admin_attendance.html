@@ -32,257 +32,610 @@
                             </div>
                         </div>
                     </div>
+                    <a href="{% url 'aps_attendance:hr_generate_report' %}" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <i class="fas fa-calendar-alt mr-2"></i>
+                        Back
+                    </a>
                     
                 </div>
             </div>
         </div>
-        <!-- Stats Overview -->
-        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-            <!-- Present -->
-            <div class="bg-white overflow-hidden shadow-lg rounded-2xl">
-                <div class="p-6">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0 p-3 rounded-xl bg-green-100">
-                            <i class="fas fa-user-check text-2xl text-green-600"></i>
-                        </div>
-                        <div class="ml-5">
-                            <p class="text-sm font-medium text-gray-500">Present Today</p>
-                            <div class="flex items-baseline">
-                                <p class="text-2xl font-semibold text-gray-900">{{ present_count }}</p>
-                                <p class="ml-2 text-sm font-medium text-green-600">{{ present_percentage }}%</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Absent -->
-            <div class="bg-white overflow-hidden shadow-lg rounded-2xl">
-                <div class="p-6">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0 p-3 rounded-xl bg-red-100">
-                            <i class="fas fa-user-times text-2xl text-red-600"></i>
-                        </div>
-                        <div class="ml-5">
-                            <p class="text-sm font-medium text-gray-500">Absent Today</p>
-                            <div class="flex items-baseline">
-                                <p class="text-2xl font-semibold text-gray-900">{{ absent_count }}</p>
-                                <p class="ml-2 text-sm font-medium text-red-600">{{ absent_percentage }}%</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Late -->
-            <div class="bg-white overflow-hidden shadow-lg rounded-2xl">
-                <div class="p-6">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0 p-3 rounded-xl bg-yellow-100">
-                            <i class="fas fa-clock text-2xl text-yellow-600"></i>
-                        </div>
-                        <div class="ml-5">
-                            <p class="text-sm font-medium text-gray-500">Late Arrivals</p>
-                            <div class="flex items-baseline">
-                                <p class="text-2xl font-semibold text-gray-900">{{ late_count }}</p>
-                                <p class="ml-2 text-sm font-medium text-yellow-600">{{ late_percentage }}%</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- WFH -->
-            <div class="bg-white overflow-hidden shadow-lg rounded-2xl">
-                <div class="p-6">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0 p-3 rounded-xl bg-blue-100">
-                            <i class="fas fa-home text-2xl text-blue-600"></i>
-                        </div>
-                        <div class="ml-5">
-                            <p class="text-sm font-medium text-gray-500">Working Remote</p>
-                            <div class="flex items-baseline">
-                                <p class="text-2xl font-semibold text-gray-900">{{ wfh_count }}</p>
-                                <p class="ml-2 text-sm font-medium text-blue-600">{{ wfh_percentage }}%</p>
-                            </div>
-                        </div>
-                    </div>
+        <!-- Status Legend -->
+<!-- Status Legend --> 
+<div class="bg-white p-4 rounded-lg shadow mb-4">
+    <h3 class="text-lg font-semibold mb-3">Status Indicators</h3>
+    <div class="grid grid-cols-4 gap-4">
+        <!-- Present -->
+        <div class="flex items-center">
+            <span class="w-4 h-4 rounded-full bg-green-100 mr-2"></span>
+            <span class="text-sm text-gray-600">Present (P)</span>
+        </div>
+        
+        <!-- Absent -->
+        <div class="flex items-center">
+            <span class="w-4 h-4 rounded-full bg-red-100 mr-2"></span>
+            <span class="text-sm text-gray-600">Absent (A)</span>
+        </div>
+        
+        <!-- Late -->
+        <div class="flex items-center">
+            <span class="w-4 h-4 rounded-full bg-amber-100 mr-2"></span>
+            <span class="text-sm text-gray-600">Late (L)</span>
+        </div>
+        
+        <!-- On Leave -->
+        <div class="flex items-center">
+            <span class="w-4 h-4 rounded-full bg-purple-100 mr-2"></span>
+            <span class="text-sm text-gray-600">On Leave (LV)</span>
+        </div>
+        
+        <!-- Half Day -->
+        <div class="flex items-center">
+            <span class="w-4 h-4 rounded-full bg-indigo-100 mr-2"></span>
+            <span class="text-sm text-gray-600">Half Day (HD)</span>
+        </div>
+        
+        <!-- Work From Home -->
+        <div class="flex items-center">
+            <span class="w-4 h-4 rounded-full bg-blue-100 mr-2"></span>
+            <span class="text-sm text-gray-600">Work From Home (WH)</span>
+        </div>
+        
+        <!-- Weekend Work -->
+        <div class="flex items-center">
+            <span class="w-4 h-4 rounded-full bg-gray-200 mr-2"></span>
+            <span class="text-sm text-gray-600">Weekend Work (WW)</span>
+        </div>
+        
+        <!-- Weekend -->
+        <div class="flex items-center">
+            <span class="w-4 h-4 rounded-full bg-gray-100 mr-2"></span>
+            <span class="text-sm text-gray-600">Weekend (WE)</span>
+        </div>
+        
+        <!-- Holiday -->
+        <div class="flex items-center">
+            <span class="w-4 h-4 rounded-full bg-orange-100 mr-2"></span>
+            <span class="text-sm text-gray-600">Holiday (H)</span>
+        </div>
+        
+        <!-- Not Marked -->
+        <div class="flex items-center">
+            <span class="w-4 h-4 rounded-full bg-white border-2 border-gray-300 mr-2"></span>
+            <span class="text-sm text-gray-600">Not Marked (NM)</span>
+        </div>
+    </div>
+</div>
+<!-- Attendance Table -->
+<div class="bg-white shadow-lg rounded-2xl overflow-hidden">
+    <div class="p-4 flex items-center justify-between bg-gray-50 border-b">
+        <h2 class="text-lg font-semibold text-gray-700">Attendance Report: {{ month_name }} {{ year }}</h2>
+        <div class="flex space-x-4">
+            <a href="?month={{ prev_month }}&year={{ prev_year }}" class="px-3 py-1 bg-white border border-gray-300 rounded-md text-sm hover:bg-gray-50">
+                <i class="fas fa-chevron-left mr-1"></i> Previous Month
+            </a>
+            <a href="?month={{ next_month }}&year={{ next_year }}" class="px-3 py-1 bg-white border border-gray-300 rounded-md text-sm hover:bg-gray-50">
+                Next Month <i class="fas fa-chevron-right ml-1"></i>
+            </a>
+            <div class="dropdown relative">
+                <button class="px-3 py-1 bg-white border border-gray-300 rounded-md text-sm hover:bg-gray-50">
+                    Export <i class="fas fa-download ml-1"></i>
+                </button>
+                <div class="dropdown-menu hidden absolute right-0 mt-2 bg-white shadow-lg rounded-md p-2 z-50">
+                    <a href="?month={{ month }}&year={{ year }}&format=excel" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md">Excel</a>
+                    <a href="?month={{ month }}&year={{ year }}&format=pdf" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md">PDF</a>
+                    <a href="?month={{ month }}&year={{ year }}&format=csv" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md">CSV</a>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Advanced Search & Filters -->
-        <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
-            <form method="GET" class="space-y-6" id="searchForm">
-                <div class="grid grid-cols-1 gap-6 md:grid-cols-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Employee Search</label>
-                        <div class="mt-1 relative rounded-md shadow-sm">
-                            <input type="text" 
-                                   name="search" 
-                                   value="{{ request.GET.search|default:'' }}"
-                                   class="block w-full pr-10 pl-4 py-3 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
-                                   placeholder="Search by name or ID...">
-                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                <i class="fas fa-search text-gray-400"></i>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Department</label>
-                        <select class="mt-1 block w-full pl-3 pr-10 py-3 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-lg">
-                            <option>All Departments</option>
-                            <option>Engineering</option>
-                            <option>Marketing</option>
-                            <option>Sales</option>
-                            <option>HR</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Location</label>
-                        <select name="location" class="mt-1 block w-full pl-3 pr-10 py-3 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-lg">
-                            <option value="">All Locations</option>
-                            <option value="Pune" {% if request.GET.location == 'Pune' %}selected{% endif %}>Pune</option>
-                            <option value="Mumbai" {% if request.GET.location == 'Mumbai' %}selected{% endif %}>Mumbai</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Status</label>
-                        <select name="status" class="mt-1 block w-full pl-3 pr-10 py-3 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-lg">
-                            <option value="">All Status</option>
-                            <option value="Present" {% if request.GET.status == 'Present' %}selected{% endif %}>Present</option>
-                            <option value="Absent" {% if request.GET.status == 'Absent' %}selected{% endif %}>Absent</option>
-                            <option value="Late" {% if request.GET.status == 'Late' %}selected{% endif %}>Late</option>
-                            <option value="WFH" {% if request.GET.status == 'WFH' %}selected{% endif %}>Remote Work</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="flex items-center justify-between pt-4">
-                    <div class="flex space-x-3">
-                        <button type="submit" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">
-                            Apply Filters
-                        </button>
-                        <button type="reset" onclick="window.location.href='?month={{ month }}&year={{ year }}'" class="inline-flex items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50">
-                            Reset
-                        </button>
-                    </div>
-
-                    <div class="flex items-center space-x-3">
-                        <button type="button" onclick="quickFilter('late')" class="inline-flex items-center px-4 py-2 rounded-full bg-amber-100 text-amber-800 hover:bg-amber-200">
-                            <span class="text-sm font-medium">Late ({{ late_count }})</span>
-                        </button>
-                        <button type="button" onclick="quickFilter('absent')" class="inline-flex items-center px-4 py-2 rounded-full bg-red-100 text-red-800 hover:bg-red-200">
-                            <span class="text-sm font-medium">Absent ({{ absent_count }})</span>
-                        </button>
-                        <button type="button" onclick="quickFilter('wfh')" class="inline-flex items-center px-4 py-2 rounded-full bg-blue-100 text-blue-800 hover:bg-blue-200">
-                            <span class="text-sm font-medium">Remote ({{ wfh_count }})</span>
-                        </button>
-                    </div>
-                </div>
-            </form>
+    <!-- Summary Statistics -->
+    <!-- <div class="p-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 bg-gray-50 border-b">
+        <div class="bg-white p-3 rounded-lg shadow-sm">
+            <div class="text-xs text-gray-500">Present</div>
+            <div class="text-xl font-bold text-green-600">{{ present_count }}</div>
         </div>
+        <div class="bg-white p-3 rounded-lg shadow-sm">
+            <div class="text-xs text-gray-500">Absent</div>
+            <div class="text-xl font-bold text-red-600">{{ absent_count }}</div>
+        </div>
+        <div class="bg-white p-3 rounded-lg shadow-sm">
+            <div class="text-xs text-gray-500">Late</div>
+            <div class="text-xl font-bold text-amber-600">{{ late_count }}</div>
+        </div>
+        <div class="bg-white p-3 rounded-lg shadow-sm">
+            <div class="text-xs text-gray-500">On Leave</div>
+            <div class="text-xl font-bold text-purple-600">{{ leave_count }}</div>
+        </div>
+        <div class="bg-white p-3 rounded-lg shadow-sm">
+            <div class="text-xs text-gray-500">WFH</div>
+            <div class="text-xl font-bold text-blue-600">{{ wfh_count }}</div>
+        </div>
+        <div class="bg-white p-3 rounded-lg shadow-sm">
+            <div class="text-xs text-gray-500">Half Day</div>
+            <div class="text-xl font-bold text-indigo-600">{{ half_day_count }}</div>
+        </div>
+        <div class="bg-white p-3 rounded-lg shadow-sm">
+            <div class="text-xs text-gray-500">Weekend Work</div>
+            <div class="text-xl font-bold text-gray-600">{{ weekend_work_count }}</div>
+        </div>
+        <div class="bg-white p-3 rounded-lg shadow-sm">
+            <div class="text-xs text-gray-500">Not Marked</div>
+            <div class="text-xl font-bold text-gray-800">{{ not_marked_count }}</div>
+        </div>
+        <div class="bg-white p-3 rounded-lg shadow-sm">
+            <div class="text-xs text-gray-500">Total OT Hours</div>
+            <div class="text-xl font-bold text-orange-600">{{ total_overtime_hours }}</div>
+        </div>
+        <div class="bg-white p-3 rounded-lg shadow-sm">
+            <div class="text-xs text-gray-500">Avg Working Hours</div>
+            <div class="text-xl font-bold text-teal-600">{{ avg_working_hours|floatformat:1 }}</div>
+        </div>
+    </div> -->
 
-        <!-- Attendance Table -->
-        <div class="bg-white shadow-lg rounded-2xl ">
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50 sticky top-0 z-20">
-                        <tr>
-                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase sticky left-0 bg-gray-50 z-30 tracking-wider shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Employee</th>
-                            {% for day in days_range %}
-                            <th scope="col" class="px-4 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                {{ day|date:"d" }}<br>
-                                <span class="text-gray-400">{{ day|date:"D" }}</span>
-                            </th>
-                            {% endfor %}
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200 overflow-y-auto">
-                        {% for row in attendance_matrix %}
-                        <tr class="hover:bg-gray-50 transition-colors">
-                            <td class="px-6 py-4 whitespace-nowrap sticky left-0 bg-white z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
-                                <div class="flex items-center">
-                                
-                                    <div class="ml-4">
-                                        <div class="text-sm font-medium text-gray-900">{{ row.employee.username }}</div>
-                                        <div class="text-sm text-gray-500">{{ row.employee.first_name }} {{ row.employee.last_name }}</div>
-                                        <div class="text-sm text-gray-400">{{ row.work_location }}</div>
-                                    </div>
-                                </div>
-                            </td>
-                            {% for date, data in row.attendance.items %}
-                            <td class="px-2 py-4 text-center">
-                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full
-                                    {% if data.status == 'Present' %}bg-green-100 text-green-800
-                                    {% elif data.status == 'Absent' %}bg-red-100 text-red-800
-                                    {% elif data.status == 'Late' %}bg-amber-100 text-amber-800
-                                    {% elif data.status == 'On Leave' %}bg-purple-100 text-purple-800
-                                    {% elif data.status == 'Work From Home' %}bg-blue-100 text-blue-800
-                                    {% elif data.status == 'Weekend' %}bg-gray-100 text-gray-600
-                                    {% elif data.status == 'Holiday' %}bg-teal-100 text-teal-800
-                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
-                                    {{ data.status|slice:":1" }}
-                                </span>
-                                {% if data.working_hours %}
-                                <div class="text-xs text-gray-500 mt-1">{{ data.working_hours }}</div>
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50 sticky top-0 z-20">
+                <tr>
+                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase sticky left-0 bg-gray-50 z-30">
+                        Employee Details
+                    </th>
+                    {% for day in days_range %}
+                    <th class="px-4 py-4 text-center text-xs font-semibold text-gray-500 uppercase 
+                        {% if day.weekday >= 5 %}bg-gray-100{% endif %}">
+                        <div>{{ day|date:"d" }}</div>
+                        <div class="text-gray-400">{{ day|date:"D" }}</div>
+                    </th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for row in attendance_matrix %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap sticky left-0 bg-white z-10 hover:bg-gray-50">
+                        <div class="flex items-center space-x-3">
+                            <div>
+                                <div class="text-sm font-medium text-gray-900">{{ row.employee.get_full_name }}</div>
+                                <div class="text-xs text-gray-500">{{ row.employee.username }}</div>
+                                {% if row.current_shift %}
+                                <div class="text-xs text-gray-400">{{ row.current_shift.name }}</div>
                                 {% endif %}
-                            </td>
-                            {% endfor %}
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        <!-- Month Navigation and Pagination -->
-        <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6 rounded-b-2xl">
-            <div class="flex-1 flex justify-between sm:hidden">
-                <a href="?month={{ prev_month }}&year={{ prev_year }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                    <i class="fas fa-chevron-left mr-2"></i>
-                    {{ prev_month }}/{{ prev_year }}
-                </a>
-                <a href="?month={{ next_month }}&year={{ next_year }}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                    {{ next_month }}/{{ next_year }}
-                    <i class="fas fa-chevron-right ml-2"></i>
-                </a>
-            </div>
-            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                <div>
-                    <p class="text-sm text-gray-700">
-                        Viewing attendance for <span class="font-medium">{{ month_name }} {{ year }}</span>
-                    </p>
-                </div>
-                <div>
-                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Month Navigation">
-                        <a href="?month={{ prev_month }}&year={{ prev_year }}" class="relative inline-flex items-center px-4 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                            <i class="fas fa-chevron-left mr-2"></i>
-                            {{ prev_month }}/{{ prev_year }}
-                        </a>
-                        
-                        <!-- Current Month Selector -->
-                        <div class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
-                            <input type="month" 
-                                   class="form-input border-0 focus:ring-0" 
-                                   value="{{ year }}-{% if month < 10 %}0{% endif %}{{ month }}"
-                                   onchange="window.location.href='?month=' + this.value.split('-')[1] + '&year=' + this.value.split('-')[0]">
+                                <div class="text-xs text-gray-400">{{ row.work_location }}</div>
+                            </div>
                         </div>
-                        
-                        <a href="?month={{ next_month }}&year={{ next_year }}" class="relative inline-flex items-center px-4 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                            {{ next_month }}/{{ next_year }}
-                            <i class="fas fa-chevron-right ml-2"></i>
-                        </a>
-                    </nav>
+                    </td>
+                    {% for date, data in row.attendance.items %}
+                    <td class="px-2 py-4 {% if data.is_weekend %}bg-gray-50{% endif %}">
+                        <div class="relative group">
+                            <div class="flex flex-col items-center">
+                                <!-- Status Badge -->
+                                <span class="px-2 py-1 text-xs font-semibold rounded-full
+                                {% if data.status == 'Present' %}bg-green-100 text-green-800
+                                {% elif data.status == 'Absent' %}bg-red-100 text-red-800
+                                {% elif data.status == 'Late' or data.status == 'Present & Late' %}bg-amber-100 text-amber-800
+                                {% elif data.status == 'On Leave' %}bg-purple-100 text-purple-800
+                                {% elif data.status == 'Half Day' %}bg-indigo-100 text-indigo-800
+                                {% elif data.status == 'Work From Home' %}bg-blue-100 text-blue-800
+                                {% elif data.status == 'Weekend Work' %}bg-gray-200 text-gray-800
+                                {% elif data.status == 'Weekend' %}bg-gray-100 text-gray-600
+                                {% elif data.status == 'Holiday' %}bg-orange-100 text-orange-800
+                                {% else %}bg-white border border-gray-300 text-gray-800{% endif %}">
+                                {% if data.status == 'Present' %}P
+                                {% elif data.status == 'Absent' %}A
+                                {% elif data.status == 'Late' or data.status == 'Present & Late' %}L
+                                {% elif data.status == 'On Leave' %}LV
+                                {% elif data.status == 'Half Day' %}HD
+                                {% elif data.status == 'Work From Home' %}WH
+                                {% elif data.status == 'Weekend Work' %}WW
+                                {% elif data.status == 'Weekend' %}WE
+                                {% elif data.status == 'Holiday' %}H
+                                {% elif data.status == 'Not Marked' %}NM
+                                {% else %}{{ data.status|slice:":1" }}{% endif %}
+                                </span>
+
+                                <!-- Working Hours -->
+                                {% if data.working_hours %}
+                                <span class="text-xs text-gray-500 mt-1">{{ data.working_hours }}</span>
+                                {% endif %}
+
+                                <!-- Action Buttons -->
+                                <div class="hidden group-hover:flex space-x-1 mt-2">
+                                    <button title="Edit" 
+                                            onclick="editAttendance('{{ row.employee.id }}', '{{ date|date:'Y-m-d' }}')"
+                                            class="p-1 text-gray-400 hover:text-blue-500">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button title="View Details" 
+                                            onclick="viewDetails('{{ row.employee.id }}', '{{ date|date:'Y-m-d' }}')"
+                                            class="p-1 text-gray-400 hover:text-green-500">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Tooltip -->
+                                <div class="hidden group-hover:block absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-60 p-2 bg-gray-800 text-white text-xs rounded-lg z-50">
+                                    <p><strong>Status:</strong> {{ data.status }}</p>
+                                    {% if data.clock_in %}<p><strong>Clock In:</strong> {{ data.clock_in }}</p>{% endif %}
+                                    {% if data.clock_out %}<p><strong>Clock Out:</strong> {{ data.clock_out }}</p>{% endif %}
+                                    {% if data.working_hours %}<p><strong>Working Hours:</strong> {{ data.working_hours }}</p>{% endif %}
+                                    {% if data.late_minutes %}<p><strong>Late by:</strong> {{ data.late_minutes }} mins</p>{% endif %}
+                                    {% if data.overtime_hours %}<p><strong>Overtime:</strong> {{ data.overtime_hours|floatformat:1 }}h</p>{% endif %}
+                                    {% if data.shift_timing %}<p><strong>Shift:</strong> {{ data.shift_timing }}</p>{% endif %}
+                                    {% if data.leave_type %}<p><strong>Leave Type:</strong> {{ data.leave_type }}</p>{% endif %}
+                                    {% if data.location %}<p><strong>Location:</strong> {{ data.location }}</p>{% endif %}
+                                    {% if data.regularization_status %}<p><strong>Regularized:</strong> {{ data.regularization_status }}</p>{% endif %}
+                                    {% if data.remarks %}<p><strong>Remarks:</strong> {{ data.remarks }}</p>{% endif %}
+                                    {% if data.modified_by %}<p><strong>Modified by:</strong> {{ data.modified_by }}</p>{% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Edit Attendance Modal -->
+<div id="editAttendanceModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+    <div class="bg-white rounded-lg w-full max-w-md mx-4">
+        <div class="p-4 border-b flex justify-between items-center">
+            <h3 class="text-lg font-semibold">Edit Attendance</h3>
+            <button onclick="closeModal('editAttendanceModal')" class="text-gray-400 hover:text-gray-500">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="attendanceForm" class="p-4">
+            <input type="hidden" id="employee_id" name="employee_id">
+            <input type="hidden" id="attendance_date" name="attendance_date">
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700">Status</label>
+                <select id="status" name="status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                    <option value="Present">Present</option>
+                    <option value="Absent">Absent</option>
+                    <option value="Late">Late</option>
+                    <option value="On Leave">On Leave</option>
+                    <option value="Work From Home">Work From Home</option>
+                    <option value="Half Day">Half Day</option>
+                </select>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Clock In</label>
+                    <input type="time" id="clock_in_time" name="clock_in_time" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
                 </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Clock Out</label>
+                    <input type="time" id="clock_out_time" name="clock_out_time" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700">Shift</label>
+                <select id="shift" name="shift_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                    <!-- Will be populated dynamically -->
+                </select>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700">Location</label>
+                <input type="text" id="location" name="location" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700">Remarks</label>
+                <textarea id="remarks" name="remarks" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50"></textarea>
+            </div>
+            
+            <div class="flex justify-end space-x-3">
+                <button type="button" onclick="closeModal('editAttendanceModal')" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                    Cancel
+                </button>
+                <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- View Details Modal -->
+<div id="viewDetailsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+    <div class="bg-white rounded-lg w-full max-w-lg mx-4">
+        <div class="p-4 border-b flex justify-between items-center">
+            <h3 class="text-lg font-semibold">Attendance Details</h3>
+            <button onclick="closeModal('viewDetailsModal')" class="text-gray-400 hover:text-gray-500">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="p-4">
+            <div id="attendanceDetails" class="space-y-4">
+                <!-- Will be populated dynamically -->
+            </div>
+            
+            <div class="mt-6 flex justify-end">
+                <button type="button" onclick="closeModal('viewDetailsModal')" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                    Close
+                </button>
             </div>
         </div>
     </div>
 </div>
 
 <script>
+// Function to edit attendance
+function editAttendance(employeeId, date) {
+    // Fetch current data and populate the form
+    fetch(`/api/attendance/${employeeId}/${date}/`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('employee_id').value = employeeId;
+            document.getElementById('attendance_date').value = date;
+            document.getElementById('status').value = data.status || 'Not Marked';
+            document.getElementById('clock_in_time').value = data.clock_in || '';
+            document.getElementById('clock_out_time').value = data.clock_out || '';
+            document.getElementById('location').value = data.location || '';
+            document.getElementById('remarks').value = data.remarks || '';
+            
+            // Populate shifts dropdown
+            const shiftSelect = document.getElementById('shift');
+            shiftSelect.innerHTML = '';
+            data.available_shifts.forEach(shift => {
+                const option = document.createElement('option');
+                option.value = shift.id;
+                option.textContent = shift.name;
+                if (shift.id === data.shift_id) {
+                    option.selected = true;
+                }
+                shiftSelect.appendChild(option);
+            });
+            
+            // Show the modal
+            document.getElementById('editAttendanceModal').classList.remove('hidden');
+        })
+        .catch(error => console.error('Error fetching attendance data:', error));
+}
+
+// Function to view details
+function viewDetails(employeeId, date) {
+    // Fetch detailed data
+    fetch(`/api/attendance/${employeeId}/${date}/details/`)
+        .then(response => response.json())
+        .then(data => {
+            const detailsContainer = document.getElementById('attendanceDetails');
+            detailsContainer.innerHTML = '';
+            
+            // Employee info
+            const employeeInfo = document.createElement('div');
+            employeeInfo.className = 'border-b pb-3';
+            employeeInfo.innerHTML = `
+                <div class="text-lg font-medium">${data.employee_name}</div>
+                <div class="text-sm text-gray-500">${data.employee_username}</div>
+                <div class="text-sm text-gray-500">${date}</div>
+            `;
+            detailsContainer.appendChild(employeeInfo);
+            
+            // Status info
+            const statusInfo = document.createElement('div');
+            statusInfo.className = 'grid grid-cols-2 gap-4';
+            statusInfo.innerHTML = `
+                <div>
+                    <div class="text-sm text-gray-500">Status</div>
+                    <div class="font-medium">${data.status || 'Not Marked'}</div>
+                </div>
+                <div>
+                    <div class="text-sm text-gray-500">Working Hours</div>
+                    <div class="font-medium">${data.working_hours || '-'}</div>
+                </div>
+                <div>
+                    <div class="text-sm text-gray-500">Clock In</div>
+                    <div class="font-medium">${data.clock_in || '-'}</div>
+                </div>
+                <div>
+                    <div class="text-sm text-gray-500">Clock Out</div>
+                    <div class="font-medium">${data.clock_out || '-'}</div>
+                </div>
+                <div>
+                    <div class="text-sm text-gray-500">Late Minutes</div>
+                    <div class="font-medium">${data.late_minutes || '0'} mins</div>
+                </div>
+                <div>
+                    <div class="text-sm text-gray-500">Overtime</div>
+                    <div class="font-medium">${data.overtime_hours || '0'} hours</div>
+                </div>
+                <div>
+                    <div class="text-sm text-gray-500">Shift</div>
+                    <div class="font-medium">${data.shift || 'No Shift'}</div>
+                </div>
+                <div>
+                    <div class="text-sm text-gray-500">Location</div>
+                    <div class="font-medium">${data.location || '-'}</div>
+                </div>
+            `;
+            detailsContainer.appendChild(statusInfo);
+            
+            // Breaks info if available
+            if (data.breaks && data.breaks.length > 0) {
+                const breaksInfo = document.createElement('div');
+                breaksInfo.className = 'mt-4';
+                breaksInfo.innerHTML = `<div class="text-sm font-medium text-gray-700 mb-2">Breaks</div>`;
+                
+                const breaksList = document.createElement('div');
+                breaksList.className = 'space-y-2';
+                
+                data.breaks.forEach(breakItem => {
+                    const breakRow = document.createElement('div');
+                    breakRow.className = 'flex justify-between text-sm';
+                    breakRow.innerHTML = `
+                        <span>${breakItem.start} - ${breakItem.end}</span>
+                        <span>${breakItem.duration} mins</span>
+                    `;
+                    breaksList.appendChild(breakRow);
+                });
+                
+                breaksInfo.appendChild(breaksList);
+                detailsContainer.appendChild(breaksInfo);
+            }
+            
+            // Additional info
+            if (data.remarks || data.modified_by || data.regularization_status) {
+                const additionalInfo = document.createElement('div');
+                additionalInfo.className = 'mt-4 pt-3 border-t';
+                
+                let additionalHtml = '';
+                if (data.regularization_status) {
+                    additionalHtml += `
+                        <div class="mb-2">
+                            <div class="text-sm text-gray-500">Regularization Status</div>
+                            <div class="font-medium">${data.regularization_status}</div>
+                        </div>
+                    `;
+                }
+                
+                if (data.remarks) {
+                    additionalHtml += `
+                        <div class="mb-2">
+                            <div class="text-sm text-gray-500">Remarks</div>
+                            <div class="font-medium">${data.remarks}</div>
+                        </div>
+                    `;
+                }
+                
+                if (data.modified_by) {
+                    additionalHtml += `
+                        <div>
+                            <div class="text-sm text-gray-500">Last Modified By</div>
+                            <div class="font-medium">${data.modified_by} (${data.modified_on})</div>
+                        </div>
+                    `;
+                }
+                
+                additionalInfo.innerHTML = additionalHtml;
+                detailsContainer.appendChild(additionalInfo);
+            }
+            
+            // Show the modal
+            document.getElementById('viewDetailsModal').classList.remove('hidden');
+        })
+        .catch(error => console.error('Error fetching attendance details:', error));
+}
+
+// Function to close modal
+function closeModal(modalId) {
+    document.getElementById(modalId).classList.add('hidden');
+}
+
+// Form submission handler
+document.getElementById('attendanceForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const employeeId = formData.get('employee_id');
+    const date = formData.get('attendance_date');
+    
+    fetch(`/api/attendance/${employeeId}/${date}/update/`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            closeModal('editAttendanceModal');
+            // Refresh the page to show updated data
+            window.location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => console.error('Error updating attendance:', error));
+});
+
+// Dropdown toggle
+document.addEventListener('DOMContentLoaded', function() {
+    const dropdownButton = document.querySelector('.dropdown button');
+    const dropdownMenu = document.querySelector('.dropdown-menu');
+    
+    if (dropdownButton && dropdownMenu) {
+        dropdownButton.addEventListener('click', function() {
+            dropdownMenu.classList.toggle('hidden');
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.dropdown')) {
+                dropdownMenu.classList.add('hidden');
+            }
+        });
+    }
+});
+</script>
+
+
+    </div>
+</div>
+
+<script>
+    // Attendance management functions
+function editAttendance(employeeId, date) {
+    // Open modal or redirect to edit page
+    window.location.href = `/hr/attendance/edit/${employeeId}/${date}/`;
+}
+
+function viewDetails(employeeId, date) {
+    // Open modal with attendance details
+    window.location.href = `/hr/attendance/details/${employeeId}/${date}/`;
+}
+
+// Table interaction enhancements
+document.addEventListener('DOMContentLoaded', function() {
+    // Make table headers sticky on scroll
+    const header = document.querySelector('thead');
+    const firstColumn = document.querySelectorAll('.sticky');
+    
+    window.addEventListener('scroll', () => {
+        const scroll = window.scrollY;
+        if (scroll > header.offsetTop) {
+            header.classList.add('shadow-sm');
+            firstColumn.forEach(col => col.classList.add('shadow-sm'));
+        } else {
+            header.classList.remove('shadow-sm');
+            firstColumn.forEach(col => col.classList.remove('shadow-sm'));
+        }
+    });
+
+    // Enable horizontal scroll on mobile
+    const table = document.querySelector('.overflow-x-auto');
+    let isDown = false;
+    let startX;
+    let scrollLeft;
+
+    table.addEventListener('mousedown', (e) => {
+        isDown = true;
+        startX = e.pageX - table.offsetLeft;
+        scrollLeft = table.scrollLeft;
+    });
+
+    table.addEventListener('mouseleave', () => {
+        isDown = false;
+    });
+
+    table.addEventListener('mouseup', () => {
+        isDown = false;
+    });
+
+    table.addEventListener('mousemove', (e) => {
+        if (!isDown) return;
+        e.preventDefault();
+        const x = e.pageX - table.offsetLeft;
+        const walk = (x - startX) * 2;
+        table.scrollLeft = scrollLeft - walk;
+    });
+});
 document.addEventListener('DOMContentLoaded', function() {
     // Export dropdown toggle
     window.toggleExportDropdown = function() {

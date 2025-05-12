@@ -1115,6 +1115,7 @@ class Attendance(models.Model):
     is_hr_notified = models.BooleanField(default=False)
     regularization_attempts = models.IntegerField(default=0)
     last_regularization_date = models.DateTimeField(null=True, blank=True)
+    remarks = models.TextField(null=True, blank=True)
     class Meta:
         unique_together = ('user', 'date')
         indexes = [
