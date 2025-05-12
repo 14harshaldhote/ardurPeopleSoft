@@ -81,8 +81,8 @@
     }
     
     .stat-card {
-      background: rgba(30, 41, 59, 0.6);
-      backdrop-filter: blur(5px);
+      background: rgba(255, 255, 255, 0);
+      backdrop-filter: blur(1px);
       border-radius: 12px;
       padding: 15px;
       width: calc(50% - 10px);
@@ -97,7 +97,7 @@
     }
     
     .stat-label {
-      color: #94a3b8;
+      color: #3d506b;
       font-size: 12px;
       margin-bottom: 5px;
       text-transform: uppercase;
@@ -111,11 +111,11 @@
     }
     
     .projects {
-      color: #f97316;
+      color: #d15903;
     }
     
     .goals {
-      color: #facc15;
+      color: #907300;
     }
     
     .kpi-container {
@@ -177,7 +177,7 @@
         <p class="stat-value projects">0</p>
       </div>
       <div class="stat-card">
-        <p class="stat-label">Goals Achieved</p>
+        <p class="stat-label">Goals  <br> Achieved</p>
         <p class="stat-value goals">0</p>
       </div>
     </div>
@@ -194,7 +194,7 @@
 
   <script>
     // Change this value to set the percentage (0-100)
-    const targetPercentage = 0;
+    const targetPercentage = 89;
     
     const canvas = document.getElementById('speedometer');
     const ctx = canvas.getContext('2d');
