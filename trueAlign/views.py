@@ -7883,11 +7883,11 @@ def hr_generate_report(request):
                 avg_daily_hours = total_all_hours / total_present_days
             
             # Most punctual users (top 3)
-            most_punctual = sorted(report_data, key=lambda x: x['punctuality_percentage'], reverse=True)[:3]
+            most_punctual = sorted(report_data, key=lambda x: x['punctuality_percentage'], reverse=True)[:5]
             most_punctual = [{'name': d['full_name'], 'percentage': d['punctuality_percentage']} for d in most_punctual]
             
             # Users with most overtime (top 3)
-            most_overtime = sorted(report_data, key=lambda x: x['overtime_hours'], reverse=True)[:3]
+            most_overtime = sorted(report_data, key=lambda x: x['overtime_hours'], reverse=True)[:5]
             most_overtime = [{'name': d['full_name'], 'hours': d['overtime_hours']} for d in most_overtime]
             
             date_range_str = get_date_range_display(date_filter_type, from_date, to_date, month, year, week)
@@ -8268,6 +8268,837 @@ def generate_pdf_report(request, report_data, summary_data, from_date, to_date):
     # Write the PDF to the response
     response.write(pdf)
     return response
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib import messages
+from django.http import HttpResponse, JsonResponse
+from django.db import transaction
+from django.utils import timezone
+from django.views.decorators.http import require_POST
+from django.core.exceptions import ValidationError
+from django.forms import formset_factory, modelformset_factory
+from django.db.models import Q
+import json
+import csv
+import logging
+from datetime import datetime, timedelta
+from decimal import Decimal
+
+from .models import Attendance, User, ShiftAssignment
+from .forms import AttendanceForm, BulkAttendanceForm, AttendanceFilterForm
+
+logger = logging.getLogger(__name__)
+
+def is_hr_or_admin_check(user):
+    """Check if user has HR or admin privileges"""
+    return user.is_superuser or hasattr(user, 'is_hr') and user.is_hr
+
+from django.db.models import Q
+
+def can_manage_user(request_user, target_user):
+    """
+    Check if request_user can manage target_user based on group roles
+    
+    Args:
+        request_user: The user attempting to manage another user
+        target_user: The user being managed
+        
+    Returns:
+        bool: True if request_user can manage target_user, False otherwise
+    """
+    # Superuser can manage everyone
+    if request_user.is_superuser:
+        return True
+        
+    # Can't manage yourself
+    if request_user.id == target_user.id:
+        return False
+        
+    # Check if request_user is in HR group
+    if request_user.groups.filter(name='HR').exists():
+        # HR can manage users in Management or Backoffice groups
+        manageable_groups = target_user.groups.filter(
+            Q(name='Management') | 
+            Q(name='Backoffice')
+        ).exists()
+        
+        # HR cannot manage other HR
+        is_hr = target_user.groups.filter(name='HR').exists()
+        
+        return manageable_groups and not is_hr
+        
+    return False
+
+from .forms import ManualAttendanceForm
+@login_required
+@user_passes_test(is_hr_check)
+def add_attendance(request):
+    """
+    View for HR to manually add attendance records
+    """
+    context = {
+        'title': 'Add Attendance Records',
+        'today': timezone.localdate(),
+    }
+    
+    if request.method == 'POST':
+        form = ManualAttendanceForm(request.POST)
+        if form.is_valid():
+            try:
+                # Create attendance record
+                attendance = form.save(commit=False)
+                
+                # Set additional default values
+                attendance.modified_by = request.user
+                attendance.location = 'Office'  # Default to Office
+                
+                # Additional default settings
+                attendance.is_half_day = form.cleaned_data['status'] == 'Half Day'
+                attendance.total_hours = 0  # No work hours tracked for manual entry
+                
+                # Save the attendance record
+                attendance.save()
+                
+                messages.success(request, f'Attendance for {attendance.user.username} on {attendance.date} added successfully.')
+                return redirect('attendance_list')  # Redirect to attendance list or dashboard
+            
+            except Exception as e:
+                messages.error(request, f'Error adding attendance: {str(e)}')
+    else:
+        form = ManualAttendanceForm(initial={'date': timezone.localdate()})
+    
+    context['form'] = form
+    return render(request, 'components/hr/attendance/hr_add_attendance.html', context)
+
+# @login_required
+# @user_passes_test(is_hr_check)
+# def add_attendance(request):
+#     """
+#     View for HR to add/update attendance records (single or bulk)
+#     """
+#     context = {
+#         'title': 'Add Attendance Records',
+#         'today': timezone.localdate(),
+#     }
+    
+#     # Get list of users that can be managed by current user
+#     manageable_users = User.objects.filter(
+#         Q(groups__name='Management') | Q(groups__name='Backoffice')
+#     ).distinct().order_by('username')
+    
+#     # Prepare context for form fields
+#     context.update({
+#         'users': manageable_users,
+#         'status_choices': Attendance.STATUS_CHOICES,
+#         'location_choices': Attendance.LOCATION_CHOICES,
+#     })
+    
+#     if request.method == 'POST':
+#         try:
+#             # Single Attendance Submission
+#             if 'add_single' in request.POST:
+#                 # Validate single attendance submission manually
+#                 errors = validate_single_attendance(request.POST, manageable_users)
+#                 if errors:
+#                     for error in errors:
+#                         messages.error(request, error)
+#                 else:
+#                     with transaction.atomic():
+#                         attendance = process_single_attendance(request)
+#                         messages.success(request, f"Attendance record added for {attendance.user.username} on {attendance.date}")
+#                     return redirect('aps_attendance:add_attendance')
+            
+#             # Bulk Attendance Submission
+#             elif 'add_bulk' in request.POST:
+#                 # Process bulk attendance (you'll need to implement this method)
+#                 with transaction.atomic():
+#                     success_count = process_bulk_attendance(request, manageable_users)
+#                     messages.success(request, f"Successfully added {success_count} attendance records")
+#                     return redirect('aps_attendance:add_attendance')
+            
+#             # CSV Import
+#             elif 'import_csv' in request.POST and request.FILES.get('csv_file'):
+#                 with transaction.atomic():
+#                     success_count = process_csv_import(request)
+#                     messages.success(request, f"Successfully imported {success_count} attendance records")
+#                     return redirect('aps_attendance:add_attendance')
+        
+#         except Exception as e:
+#             logger.error(f"Error processing attendance: {e}")
+#             messages.error(request, f"Error processing attendance: {str(e)}")
+    
+#     return render(request, 'components/hr/attendance/hr_add_attendance.html', context)
+
+def validate_single_attendance(post_data, manageable_users):
+    """
+    Manually validate single attendance submission
+    Returns a list of error messages
+    """
+    errors = []
+    
+    # User validation
+    user_id = post_data.get('user')
+    if not user_id:
+        errors.append("User is required")
+    else:
+        try:
+            user = manageable_users.get(id=user_id)
+        except User.DoesNotExist:
+            errors.append("Invalid user selection")
+    
+    # Date validation
+    date_str = post_data.get('date')
+    try:
+        date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        if date > timezone.localdate():
+            errors.append("Date cannot be in the future")
+    except (ValueError, TypeError):
+        errors.append("Invalid date format")
+    
+    # Status validation
+    status = post_data.get('status')
+    if not status or status not in dict(Attendance.STATUS_CHOICES):
+        errors.append("Invalid attendance status")
+    
+    # Status-specific validations
+    if status == 'On Leave':
+        if not post_data.get('leave_type'):
+            errors.append("Leave type is required")
+    
+    elif status == 'Holiday':
+        if not post_data.get('holiday_name'):
+            errors.append("Holiday name is required")
+    
+    elif status in ['Present', 'Present & Late']:
+        clock_in_time_str = post_data.get('clock_in_time')
+        clock_out_time_str = post_data.get('clock_out_time')
+        
+        # Clock-in and clock-out time validation
+        clock_in_time = None
+        clock_out_time = None
+        
+        if clock_in_time_str:
+            try:
+                clock_in_time = datetime.strptime(clock_in_time_str, '%H:%M').time()
+            except ValueError:
+                errors.append("Invalid clock-in time format")
+        
+        if clock_out_time_str:
+            try:
+                clock_out_time = datetime.strptime(clock_out_time_str, '%H:%M').time()
+            except ValueError:
+                errors.append("Invalid clock-out time format")
+        
+        # Validate clock-in and clock-out times
+        if clock_in_time and clock_out_time:
+            if clock_in_time >= clock_out_time:
+                errors.append("Clock-out time must be after clock-in time")
+            
+            # Validate against current time for today's entry
+            if date == timezone.localdate():
+                current_time = timezone.localtime().time()
+                if clock_out_time > current_time:
+                    errors.append("Clock-out can't be in the future")
+        
+        # Require clock-in time or regularization reason
+        if not clock_in_time and not post_data.get('regularization_reason'):
+            errors.append("Clock-in time or regularization reason is required")
+    
+    # Breaks validation
+    breaks_str = post_data.get('breaks')
+    if breaks_str:
+        try:
+            breaks_list = json.loads(breaks_str)
+            if not isinstance(breaks_list, list):
+                errors.append("Breaks must be a list of break periods")
+            
+            for break_item in breaks_list:
+                if not isinstance(break_item, dict):
+                    errors.append("Each break must be a dictionary")
+                
+                start_str = break_item.get('start', '')
+                end_str = break_item.get('end', '')
+                
+                try:
+                    start = datetime.strptime(start_str, '%H:%M').time()
+                    end = datetime.strptime(end_str, '%H:%M').time()
+                    
+                    if start >= end:
+                        errors.append("Break end time must be after start time")
+                except ValueError:
+                    errors.append("Invalid break time format")
+        
+        except json.JSONDecodeError:
+            errors.append("Invalid break format. Use [{'start':'HH:MM', 'end':'HH:MM'}]")
+    
+    return errors
+
+def process_single_attendance(request):
+    """Process a single attendance record directly from request"""
+    post_data = request.POST
+    
+    # User selection
+    user = User.objects.get(id=post_data.get('user'))
+    
+    # Validate user management permission
+    if not can_manage_user(request.user, user):
+        raise ValidationError(f"You don't have permission to manage {user.username}'s attendance")
+    
+    # Date parsing
+    date = datetime.strptime(post_data.get('date'), '%Y-%m-%d').date()
+    status = post_data.get('status')
+    
+    print(f"[DEBUG] Processing attendance for user: {user.username}")
+    print(f"[DEBUG] Attendance Date: {date}, Status: {status}")
+
+    # Get existing record or create new one
+    try:
+        attendance = Attendance.objects.get(user=user, date=date)
+        print(f"[DEBUG] Existing attendance found for {user.username} on {date}")
+        # Store original values to track changes
+        attendance.original_status = attendance.status
+        attendance.original_clock_in_time = attendance.clock_in_time
+        attendance.original_clock_out_time = attendance.clock_out_time
+    except Attendance.DoesNotExist:
+        print(f"[DEBUG] No existing attendance. Creating new record.")
+        attendance = Attendance(user=user, date=date)
+    
+    # Update attendance record
+    attendance.status = status
+    attendance.is_half_day = post_data.get('is_half_day') == 'on'
+    attendance.location = post_data.get('location', 'Office')
+    attendance.modified_by = request.user
+    
+    # Validate regularization reason is provided when needed
+    if hasattr(attendance, 'original_status') and attendance.original_status != status:
+        if not post_data.get('regularization_reason'):
+            raise ValidationError("Regularization reason is required when changing attendance status")
+    
+    attendance.regularization_reason = post_data.get('regularization_reason', '')
+    attendance.regularization_status = 'Approved'
+    
+    print(f"[DEBUG] Set location: {attendance.location}, is_half_day: {attendance.is_half_day}")
+    
+    # Clock-in with validation
+    clock_in_time_str = post_data.get('clock_in_time')
+    if clock_in_time_str:
+        clock_in_time = datetime.combine(date, datetime.strptime(clock_in_time_str, '%H:%M').time())
+        attendance.clock_in_time = timezone.make_aware(clock_in_time)
+        print(f"[DEBUG] Clock-in time set to: {attendance.clock_in_time}")
+    
+    # Clock-out with validation
+    clock_out_time_str = post_data.get('clock_out_time')
+    if clock_out_time_str:
+        clock_out_time = datetime.combine(date, datetime.strptime(clock_out_time_str, '%H:%M').time())
+        attendance.clock_out_time = timezone.make_aware(clock_out_time)
+        print(f"[DEBUG] Clock-out time set to: {attendance.clock_out_time}")
+        
+        # Validate clock-out is after clock-in
+        if attendance.clock_in_time and attendance.clock_out_time <= attendance.clock_in_time:
+            raise ValidationError("Clock out time must be after clock in time")
+    
+    # Calculate total hours (with improved break handling)
+    if attendance.clock_in_time and attendance.clock_out_time:
+        duration = attendance.clock_out_time - attendance.clock_in_time
+        break_duration = timedelta(0)
+
+        breaks_str = post_data.get('breaks')
+        if breaks_str:
+            try:
+                breaks = json.loads(breaks_str) if isinstance(breaks_str, str) else breaks_str
+                for break_item in breaks:
+                    if break_item.get('start') and break_item.get('end'):
+                        break_start = datetime.fromisoformat(break_item['start'])
+                        break_end = datetime.fromisoformat(break_item['end'])
+                        
+                        # Validate break times
+                        if break_end <= break_start:
+                            raise ValidationError("Break end time must be after break start time")
+                            
+                        break_duration += break_end - break_start
+                print(f"[DEBUG] Breaks total duration: {break_duration}")
+            except json.JSONDecodeError:
+                logger.error(f"Invalid break format: {breaks_str}")
+                raise ValidationError("Invalid break format")
+            except Exception as e:
+                logger.error(f"Error calculating breaks: {e}")
+                raise ValidationError(f"Error processing breaks: {str(e)}")
+        
+        total_hours = (duration - break_duration).total_seconds() / 3600
+        attendance.total_hours = Decimal(str(round(total_hours, 2)))
+        print(f"[DEBUG] Total hours worked: {attendance.total_hours}")
+    
+    # Shift information with better error handling
+    is_late = False
+    has_left_early = False
+    
+    try:
+        current_shift = ShiftAssignment.get_user_current_shift(user, date)
+        if current_shift:
+            attendance.shift = current_shift
+            attendance.expected_hours = Decimal(str(current_shift.shift_duration))
+            print(f"[DEBUG] Shift assigned. Expected hours: {attendance.expected_hours}")
+
+            # Late arrival
+            if attendance.clock_in_time and current_shift.start_time:
+                shift_start = timezone.make_aware(datetime.combine(date, current_shift.start_time))
+                if attendance.clock_in_time > shift_start:
+                    late_minutes = int((attendance.clock_in_time - shift_start).total_seconds() / 60)
+                    attendance.late_minutes = late_minutes
+                    print(f"[DEBUG] Late by {late_minutes} minutes")
+                    if late_minutes > 0:
+                        is_late = True
+
+            # Early leave
+            if attendance.clock_out_time and current_shift.end_time:
+                shift_end = timezone.make_aware(datetime.combine(date, current_shift.end_time))
+                if attendance.clock_out_time < shift_end:
+                    early_minutes = int((shift_end - attendance.clock_out_time).total_seconds() / 60)
+                    attendance.early_departure_minutes = early_minutes
+                    print(f"[DEBUG] Left early by {early_minutes} minutes")
+                    if early_minutes > 15:
+                        attendance.left_early = True
+                        has_left_early = True
+                        print(f"[DEBUG] Marked as left early")
+        else:
+            logger.warning(f"No shift assignment found for user {user.username} on {date}")
+    except Exception as e:
+        logger.error(f"Error getting shift for user {user.username}: {e}")
+        raise ValidationError(f"Error processing shift information: {str(e)}")
+    
+    # Update status based on late arrival and early departure
+    if status == 'Present':
+        if is_late and has_left_early:
+            attendance.status = 'Present, Late & Early Exit'
+        elif is_late:
+            attendance.status = 'Present & Late'
+        elif has_left_early:
+            attendance.status = 'Present & Early Exit'
+    
+    # Special status
+    if status == 'On Leave':
+        leave_type = post_data.get('leave_type')
+        if not leave_type:
+            raise ValidationError("Leave type is required for 'On Leave' status")
+        attendance.leave_type = leave_type
+        print(f"[DEBUG] Leave type: {attendance.leave_type}")
+    elif status == 'Holiday':
+        attendance.is_holiday = True
+        holiday_name = post_data.get('holiday_name', '')
+        if not holiday_name:
+            raise ValidationError("Holiday name is required for 'Holiday' status")
+        attendance.holiday_name = holiday_name
+        print(f"[DEBUG] Holiday marked: {attendance.holiday_name}")
+    elif status == 'Weekend':
+        attendance.is_weekend = True
+        print(f"[DEBUG] Weekend marked")
+
+    # Verify time data consistency
+    if attendance.clock_in_time or attendance.clock_out_time:
+        # Double-check that times in form match what's being saved
+        if clock_in_time_str:
+            form_clock_in = timezone.make_aware(datetime.combine(date, datetime.strptime(clock_in_time_str, '%H:%M').time()))
+            if form_clock_in != attendance.clock_in_time:
+                logger.error(f"Time inconsistency: Form clock-in {form_clock_in} != record clock-in {attendance.clock_in_time}")
+                raise ValidationError("Clock-in time discrepancy detected")
+        
+        if clock_out_time_str:
+            form_clock_out = timezone.make_aware(datetime.combine(date, datetime.strptime(clock_out_time_str, '%H:%M').time()))
+            if form_clock_out != attendance.clock_out_time:
+                logger.error(f"Time inconsistency: Form clock-out {form_clock_out} != record clock-out {attendance.clock_out_time}")
+                raise ValidationError("Clock-out time discrepancy detected")
+
+    # Overtime calculation
+    if attendance.total_hours and attendance.expected_hours:
+        overtime = float(attendance.total_hours) - float(attendance.expected_hours)
+        if overtime > 0:
+            attendance.overtime_hours = Decimal(str(round(overtime, 2)))
+            print(f"[DEBUG] Overtime hours: {attendance.overtime_hours}")
+    
+    # Save with exception handling
+    try:
+        attendance.save()
+        print(f"[DEBUG] Attendance record saved for {user.username} on {date}")
+    except Exception as e:
+        logger.error(f"Error saving attendance record: {e}")
+        raise ValidationError(f"Failed to save attendance record: {str(e)}")
+    
+    logger.info(
+        f"Attendance record modified by {request.user.username} for {user.username} "
+        f"on {date}: status={attendance.status}, clock_in={attendance.clock_in_time}, "
+        f"clock_out={attendance.clock_out_time}"
+    )
+    
+    return attendance
+
+
+def process_bulk_attendance(request, formset):
+    """Process multiple attendance records from formset"""
+    success_count = 0
+    
+    for form in formset:
+        if form.is_valid() and not form.empty_permitted:
+            try:
+                attendance = process_single_attendance(request, form)
+                success_count += 1
+            except Exception as e:
+                logger.error(f"Error processing bulk attendance record: {e}")
+                raise
+    
+    return success_count
+
+def process_csv_import(request):
+    """Process attendance records from CSV upload"""
+    csv_file = request.FILES['csv_file']
+    if not csv_file.name.endswith('.csv'):
+        raise ValidationError("File must be a CSV")
+    
+    decoded_file = csv_file.read().decode('utf-8').splitlines()
+    reader = csv.DictReader(decoded_file)
+    
+    required_fields = ['username', 'date', 'status']
+    for field in required_fields:
+        if field not in reader.fieldnames:
+            raise ValidationError(f"CSV missing required field: {field}")
+    
+    success_count = 0
+    errors = []
+    
+    for row in reader:
+        try:
+            # Get user
+            try:
+                user = User.objects.get(username=row['username'])
+                if not can_manage_user(request.user, user):
+                    errors.append(f"No permission to manage {user.username}")
+                    continue
+            except User.DoesNotExist:
+                errors.append(f"User not found: {row['username']}")
+                continue
+            
+            # Parse date
+            try:
+                date = datetime.strptime(row['date'], '%Y-%m-%d').date()
+            except ValueError:
+                errors.append(f"Invalid date format for {user.username}: {row['date']}")
+                continue
+            
+            # Validate status
+            status = row['status']
+            valid_statuses = [s[0] for s in Attendance.STATUS_CHOICES]
+            if status not in valid_statuses:
+                errors.append(f"Invalid status for {user.username}: {status}")
+                continue
+            
+            # Get or create attendance record
+            try:
+                attendance = Attendance.objects.get(user=user, date=date)
+                attendance.original_status = attendance.status
+                attendance.original_clock_in_time = attendance.clock_in_time
+                attendance.original_clock_out_time = attendance.clock_out_time
+            except Attendance.DoesNotExist:
+                attendance = Attendance(user=user, date=date)
+            
+            # Update attendance record
+            attendance.status = status
+            attendance.modified_by = request.user
+            attendance.regularization_status = 'Approved'  # HR edits are pre-approved
+            
+            # Handle optional fields
+            if 'clock_in_time' in row and row['clock_in_time']:
+                try:
+                    clock_in_time = datetime.strptime(row['clock_in_time'], '%H:%M')
+                    attendance.clock_in_time = timezone.make_aware(datetime.combine(date, clock_in_time.time()))
+                except ValueError:
+                    errors.append(f"Invalid clock in time for {user.username}: {row['clock_in_time']}")
+            
+            if 'clock_out_time' in row and row['clock_out_time']:
+                try:
+                    clock_out_time = datetime.strptime(row['clock_out_time'], '%H:%M')
+                    attendance.clock_out_time = timezone.make_aware(datetime.combine(date, clock_out_time.time()))
+                except ValueError:
+                    errors.append(f"Invalid clock out time for {user.username}: {row['clock_out_time']}")
+            
+            if 'location' in row and row['location']:
+                valid_locations = [l[0] for l in Attendance.LOCATION_CHOICES]
+                if row['location'] in valid_locations:
+                    attendance.location = row['location']
+            
+            if 'is_half_day' in row:
+                attendance.is_half_day = row['is_half_day'].lower() in ['true', 'yes', '1']
+                
+            if 'leave_type' in row and row['leave_type'] and status == 'On Leave':
+                attendance.leave_type = row['leave_type']
+            
+            if 'remarks' in row and row['remarks']:
+                attendance.remarks = row['remarks']
+            
+            # Calculate total hours if both clock times exist
+            if attendance.clock_in_time and attendance.clock_out_time:
+                total_hours = (attendance.clock_out_time - attendance.clock_in_time).total_seconds() / 3600
+                attendance.total_hours = Decimal(str(round(total_hours, 2)))
+            
+            # Get shift information
+            try:
+                current_shift = ShiftAssignment.get_user_current_shift(user, date)
+                if current_shift:
+                    attendance.shift = current_shift
+                    attendance.expected_hours = Decimal(str(current_shift.shift_duration))
+                    
+                    # Calculate late minutes
+                    if attendance.clock_in_time:
+                        shift_start = timezone.make_aware(datetime.combine(date, current_shift.start_time))
+                        if attendance.clock_in_time > shift_start:
+                            late_minutes = int((attendance.clock_in_time - shift_start).total_seconds() / 60)
+                            attendance.late_minutes = late_minutes
+                            if late_minutes > 0 and status == 'Present':
+                                attendance.status = 'Present & Late'
+                    
+                    # Calculate early departure
+                    if attendance.clock_out_time:
+                        shift_end = timezone.make_aware(datetime.combine(date, current_shift.end_time))
+                        if attendance.clock_out_time < shift_end:
+                            early_minutes = int((shift_end - attendance.clock_out_time).total_seconds() / 60)
+                            attendance.early_departure_minutes = early_minutes
+                            if early_minutes > 15:  # Assuming 15 minutes grace period
+                                attendance.left_early = True
+            except Exception as e:
+                logger.error(f"Error getting shift for user {user.username}: {e}")
+            
+            attendance.save()
+            success_count += 1
+            
+        except Exception as e:
+            logger.error(f"Error processing CSV row: {e}")
+            errors.append(f"Error for {row.get('username', 'unknown')}: {str(e)}")
+    
+    if errors:
+        logger.warning(f"CSV import completed with {len(errors)} errors: {errors[:5]}")
+    
+    return success_count
+
+@login_required
+@user_passes_test(is_hr_or_admin_check)
+@require_POST
+def mark_attendance_ajax(request):
+    """AJAX endpoint for quickly marking attendance"""
+    try:
+        data = json.loads(request.body)
+        user_id = data.get('user_id')
+        date_str = data.get('date')
+        status = data.get('status')
+        
+        if not user_id or not date_str or not status:
+            return JsonResponse({'error': 'Missing required parameters'}, status=400)
+        
+        user = get_object_or_404(User, id=user_id)
+        
+        # Check permissions
+        if not can_manage_user(request.user, user):
+            return JsonResponse({'error': 'Permission denied'}, status=403)
+        
+        date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        
+        # Get or create attendance record
+        attendance, created = Attendance.objects.get_or_create(
+            user=user,
+            date=date,
+            defaults={'status': status, 'modified_by': request.user}
+        )
+        
+        if not created:
+            attendance.original_status = attendance.status
+            attendance.status = status
+            attendance.modified_by = request.user
+            attendance.regularization_status = 'Approved'
+            attendance.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': f"Attendance marked as {status} for {user.username} on {date}"
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in mark_attendance_ajax: {e}")
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+
+def process_csv_import(request):
+    """Process attendance records from CSV upload"""
+    csv_file = request.FILES['csv_file']
+    if not csv_file.name.endswith('.csv'):
+        raise ValidationError("File must be a CSV")
+    
+    decoded_file = csv_file.read().decode('utf-8').splitlines()
+    reader = csv.DictReader(decoded_file)
+    
+    required_fields = ['username', 'date', 'status']
+    for field in required_fields:
+        if field not in reader.fieldnames:
+            raise ValidationError(f"CSV missing required field: {field}")
+    
+    success_count = 0
+    errors = []
+    
+    for row in reader:
+        try:
+            # Get user
+            try:
+                user = User.objects.get(username=row['username'])
+                if not can_manage_user(request.user, user):
+                    errors.append(f"No permission to manage {user.username}")
+                    continue
+            except User.DoesNotExist:
+                errors.append(f"User not found: {row['username']}")
+                continue
+            
+            # Parse date
+            try:
+                date = datetime.strptime(row['date'], '%Y-%m-%d').date()
+            except ValueError:
+                errors.append(f"Invalid date format for {user.username}: {row['date']}")
+                continue
+            
+            # Validate status
+            status = row['status']
+            valid_statuses = [s[0] for s in Attendance.STATUS_CHOICES]
+            if status not in valid_statuses:
+                errors.append(f"Invalid status for {user.username}: {status}")
+                continue
+            
+            # Get or create attendance record
+            try:
+                attendance = Attendance.objects.get(user=user, date=date)
+                attendance.original_status = attendance.status
+                attendance.original_clock_in_time = attendance.clock_in_time
+                attendance.original_clock_out_time = attendance.clock_out_time
+            except Attendance.DoesNotExist:
+                attendance = Attendance(user=user, date=date)
+            
+            # Update attendance record
+            attendance.status = status
+            attendance.modified_by = request.user
+            attendance.regularization_status = 'Approved'  # HR edits are pre-approved
+            
+            # Handle optional fields
+            if 'clock_in_time' in row and row['clock_in_time']:
+                try:
+                    clock_in_time = datetime.strptime(row['clock_in_time'], '%H:%M')
+                    attendance.clock_in_time = timezone.make_aware(datetime.combine(date, clock_in_time.time()))
+                except ValueError:
+                    errors.append(f"Invalid clock in time for {user.username}: {row['clock_in_time']}")
+            
+            if 'clock_out_time' in row and row['clock_out_time']:
+                try:
+                    clock_out_time = datetime.strptime(row['clock_out_time'], '%H:%M')
+                    attendance.clock_out_time = timezone.make_aware(datetime.combine(date, clock_out_time.time()))
+                except ValueError:
+                    errors.append(f"Invalid clock out time for {user.username}: {row['clock_out_time']}")
+            
+            if 'location' in row and row['location']:
+                valid_locations = [l[0] for l in Attendance.LOCATION_CHOICES]
+                if row['location'] in valid_locations:
+                    attendance.location = row['location']
+            
+            if 'is_half_day' in row:
+                attendance.is_half_day = row['is_half_day'].lower() in ['true', 'yes', '1']
+                
+            if 'leave_type' in row and row['leave_type'] and status == 'On Leave':
+                attendance.leave_type = row['leave_type']
+            
+            if 'remarks' in row and row['remarks']:
+                attendance.remarks = row['remarks']
+            
+            # Calculate total hours if both clock times exist
+            if attendance.clock_in_time and attendance.clock_out_time:
+                total_hours = (attendance.clock_out_time - attendance.clock_in_time).total_seconds() / 3600
+                attendance.total_hours = Decimal(str(round(total_hours, 2)))
+            
+            # Get shift information
+            try:
+                current_shift = ShiftAssignment.get_user_current_shift(user, date)
+                if current_shift:
+                    attendance.shift = current_shift
+                    attendance.expected_hours = Decimal(str(current_shift.shift_duration))
+                    
+                    # Calculate late minutes
+                    if attendance.clock_in_time:
+                        shift_start = timezone.make_aware(datetime.combine(date, current_shift.start_time))
+                        if attendance.clock_in_time > shift_start:
+                            late_minutes = int((attendance.clock_in_time - shift_start).total_seconds() / 60)
+                            attendance.late_minutes = late_minutes
+                            if late_minutes > 0 and status == 'Present':
+                                attendance.status = 'Present & Late'
+                    
+                    # Calculate early departure
+                    if attendance.clock_out_time:
+                        shift_end = timezone.make_aware(datetime.combine(date, current_shift.end_time))
+                        if attendance.clock_out_time < shift_end:
+                            early_minutes = int((shift_end - attendance.clock_out_time).total_seconds() / 60)
+                            attendance.early_departure_minutes = early_minutes
+                            if early_minutes > 15:  # Assuming 15 minutes grace period
+                                attendance.left_early = True
+            except Exception as e:
+                logger.error(f"Error getting shift for user {user.username}: {e}")
+            
+            attendance.save()
+            success_count += 1
+            
+        except Exception as e:
+            logger.error(f"Error processing CSV row: {e}")
+            errors.append(f"Error for {row.get('username', 'unknown')}: {str(e)}")
+    
+    if errors:
+        logger.warning(f"CSV import completed with {len(errors)} errors: {errors[:5]}")
+    
+    return success_count
+
+@login_required
+@user_passes_test(is_hr_or_admin_check)
+@require_POST
+def mark_attendance_ajax(request):
+    """AJAX endpoint for quickly marking attendance"""
+    try:
+        data = json.loads(request.body)
+        user_id = data.get('user_id')
+        date_str = data.get('date')
+        status = data.get('status')
+        
+        if not user_id or not date_str or not status:
+            return JsonResponse({'error': 'Missing required parameters'}, status=400)
+        
+        user = get_object_or_404(User, id=user_id)
+        
+        # Check permissions
+        if not can_manage_user(request.user, user):
+            return JsonResponse({'error': 'Permission denied'}, status=403)
+        
+        date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        
+        # Get or create attendance record
+        attendance, created = Attendance.objects.get_or_create(
+            user=user,
+            date=date,
+            defaults={'status': status, 'modified_by': request.user}
+        )
+        
+        if not created:
+            attendance.original_status = attendance.status
+            attendance.status = status
+            attendance.modified_by = request.user
+            attendance.regularization_status = 'Approved'
+            attendance.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': f"Attendance marked as {status} for {user.username} on {date}"
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in mark_attendance_ajax: {e}")
+        return JsonResponse({'error': str(e)}, status=500)
 
 
 

@@ -5,19 +5,27 @@
 <div class="container mx-auto px-4 py-8 max-w-7xl">
     <!-- Header Section with Enhanced Visual -->
     <div class="mb-8 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-lg p-6 shadow-lg text-white">
-        <div>
-        <h1 class="text-3xl font-bold mb-2">Attendance Report Generator</h1>
-        <p class="text-blue-100">Generate detailed attendance reports with intuitive filters and multiple export options
-        </p>
-    </div>
-    <div>
-        <a href="{% url 'aps_attendance:hr_attendance_dashboard' %}" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 inline-flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            Back
-        </a>
-    </div>
+        <div class="flex justify-between items-center">
+            <div class="flex-1">
+                <h1 class="text-3xl font-bold mb-2">Attendance Report Generator</h1>
+                <p class="text-blue-100">Generate detailed attendance reports with intuitive filters and multiple export options</p>
+            </div>
+            
+            <a href="{% url 'aps_attendance:hr_attendance_dashboard' %}" 
+               class="inline-flex items-center px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-all duration-300 border border-white/20 backdrop-blur-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" 
+                     class="h-5 w-5 mr-2" 
+                     fill="none" 
+                     viewBox="0 0 24 24" 
+                     stroke="currentColor">
+                    <path stroke-linecap="round" 
+                          stroke-linejoin="round" 
+                          stroke-width="2" 
+                          d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back to Dashboard
+            </a>
+        </div>
     </div>
 
     <!-- Filters Card with Improved Layout -->
@@ -304,18 +312,96 @@
 
     {% if report_data %}
     <!-- Summary Section with Cards -->
-    <!-- Improved Summary Section with Better UI -->
-    <div class="mb-8 p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl">
-        <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center border-b pb-3 border-blue-200">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 mr-3 text-blue-600" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+    <div class="transition-all duration-300 ease-in-out p-4" id="summarySection">
+        <!-- Header/Toggle Button -->
+        <button id="summaryToggle" 
+                class="w-full p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl flex items-center justify-between hover:shadow-md transition-all">
+            <div class="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" 
+                     class="h-7 w-7 mr-3 text-blue-600" 
+                     fill="none" 
+                     viewBox="0 0 24 24" 
+                     stroke="currentColor">
+                    <path stroke-linecap="round" 
+                          stroke-linejoin="round" 
+                          stroke-width="2" 
+                          d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                <span class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
+                    Report Summary
+                </span>
+            </div>
+            <svg id="toggleIcon"
+                 xmlns="http://www.w3.org/2000/svg" 
+                 class="h-6 w-6 transform transition-transform duration-300"
+                 fill="none" 
+                 viewBox="0 0 24 24" 
+                 stroke="currentColor">
+                <path stroke-linecap="round" 
+                      stroke-linejoin="round" 
+                      stroke-width="2" 
+                      d="M19 9l-7 7-7-7" />
             </svg>
-            <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Report
-                Summary</span>
-        </h2>
+        </button>
+        <style>
+            @keyframes blink-attention {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
 
+.blink-animation {
+  animation: blink-attention 0.5s ease-in-out 3;
+}
+        </style>
+        <script>
+            function blinkButton() {
+    const button = document.getElementById('summaryToggle');
+    
+    // Add blink animation
+    function triggerBlink() {
+        button.classList.add('blink-animation');
+        
+        // Remove animation class after it completes
+        setTimeout(() => {
+            button.classList.remove('blink-animation');
+        }, 500); // 1.5s = 3 blinks * 0.5s each
+    }
+
+    // Initial blink
+    triggerBlink();
+
+    // Set up interval for blinking every minute
+    setInterval(triggerBlink, 60000); // 60000ms = 1 minute
+}
+
+// Start the blinking when document is loaded
+document.addEventListener('DOMContentLoaded', blinkButton);
+            document.addEventListener('DOMContentLoaded', function() {
+                const toggle = document.getElementById('summaryToggle');
+                const content = document.getElementById('summaryContent');
+                const icon = document.getElementById('toggleIcon');
+                let isOpen = false;
+            
+                toggle.addEventListener('click', function() {
+                    isOpen = !isOpen;
+                    
+                    // Toggle content visibility
+                    if (isOpen) {
+                        content.classList.remove('max-h-0', 'opacity-0');
+                        content.classList.add('max-h-[500px]', 'opacity-100');
+                        icon.classList.add('rotate-180');
+                    } else {
+                        content.classList.remove('max-h-[500px]', 'opacity-100');
+                        content.classList.add('max-h-0', 'opacity-0');
+                        icon.classList.remove('rotate-180');
+                    }
+                });
+            });
+            </script>
+
+    <div id="summaryContent" 
+    class="overflow-hidden transition-all duration-300 ease-in-out max-h-0 opacity-0">
+   <div class="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-b-xl border-t border-blue-100">
         <!-- Metrics Cards - Improved Layout and Design -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             <!-- Date Range Card -->
@@ -358,44 +444,60 @@
                 </div>
             </div>
 
-            <!-- Average Attendance Card -->
-            <div
-                class="bg-white rounded-xl shadow-lg overflow-hidden border-t-4 border-yellow-500 transition-all duration-300 hover:shadow-xl hover:translate-y-1">
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden border-t-4 border-yellow-500 transition-all duration-300 hover:shadow-xl hover:translate-y-1">
+                <!-- Card Header -->
                 <div class="px-6 py-4">
                     <div class="flex items-center mb-3">
                         <div class="p-2 rounded-full bg-yellow-100 mr-3">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-600" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
                         <h3 class="font-semibold text-gray-700">Average Attendance</h3>
                     </div>
-                    <div class="flex justify-center">
-                        <div class="relative w-24 h-24">
+            
+                    <!-- Circular Progress -->
+                    <div class="flex justify-center items-center">
+                        <div class="relative w-32 h-32">
                             <svg viewBox="0 0 36 36" class="w-full h-full">
-                                <!-- Background circle -->
-                                <path d="M18 2.0845
-                                  a 15.9155 15.9155 0 0 1 0 31.831
-                                  a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#f1f5f9" stroke-width="3" />
-                                <!-- Progress circle with gradient -->
+                                <!-- Background Circle -->
+                                <circle cx="18" cy="18" r="15.91549430918954" fill="none" 
+                                        stroke="#f1f5f9" stroke-width="3" />
+            
+                                <!-- Progress Circle -->
+                                <circle cx="18" cy="18" r="15.91549430918954" fill="none"
+                                        stroke="url(#attendanceGradient)"
+                                        stroke-width="3"
+                                        stroke-linecap="round"
+                                        transform="rotate(-90 18 18)"
+                                        stroke-dasharray="{{ summary_data.avg_attendance|default:0 }}, 100" />
+            
+                                <!-- Gradient Definition -->
                                 <defs>
-                                    <linearGradient id="attendanceGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <linearGradient id="attendanceGradient" x1="0%" y1="0%" x2="100%" y2="0%">
                                         <stop offset="0%" stop-color="#fbbf24" />
                                         <stop offset="100%" stop-color="#f59e0b" />
                                     </linearGradient>
                                 </defs>
-                                <path d="M18 2.0845
-                                  a 15.9155 15.9155 0 0 1 0 31.831
-                                  a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="url(#attendanceGradient)"
-                                    stroke-width="3" stroke-dasharray="{{ summary_data.avg_attendance }}, 100"
-                                    class="animate-pulse" />
-                                <!-- Percentage text -->
-                                <text x="18" y="20.5" class="text-3xl font-bold" text-anchor="middle" fill="#4b5563">
-                                    {{ summary_data.avg_attendance }}%
+            
+                                <!-- Percentage Text -->
+                                <text x="18" y="18" text-anchor="middle" dominant-baseline="central" 
+                                      class="font-bold" fill="#4b5563" font-size="8">
+                                    {{ summary_data.avg_attendance|default:0 }}%
                                 </text>
                             </svg>
+                        </div>
+                    </div>
+            
+                    <!-- Additional Stats -->
+                    <div class="mt-4 grid grid-cols-2 gap-4 text-center">
+                        <div class="bg-gray-50 rounded-lg p-2">
+                            <p class="text-xs text-gray-600">Total Days</p>
+                            <p class="text-sm font-semibold text-gray-800">{{ summary_data.total_days|default:0 }}</p>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-2">
+                            <p class="text-xs text-gray-600">Present Days</p>
+                            <p class="text-sm font-semibold text-gray-800">{{ summary_data.present_days|default:0 }}</p>
                         </div>
                     </div>
                 </div>
@@ -482,19 +584,19 @@
                         Most Punctual Employees
                     </h3>
                 </div>
-                <div class="p-6">
-                    <ul class="space-y-3">
+                <div class="p-4">
+                    <ul class="space-y-2">
                         {% for emp in summary_data.most_punctual %}
-                        <li
-                            class="bg-gray-50 rounded-lg p-4 flex justify-between items-center shadow-sm transition-all duration-300 hover:shadow-md hover:bg-green-50 border-l-4 border-green-400">
+                        <li class="bg-gray-50 rounded-lg p-2 flex justify-between items-center shadow-sm transition-all duration-300 hover:shadow-md hover:bg-green-50 border-l-4 border-green-400">
                             <div class="flex items-center">
-                                <div
-                                    class="flex-shrink-0 h-10 w-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 font-bold">
-                                    {{ emp.name|first }} </div>
-                                <span class="ml-3 font-medium text-gray-800">{{ emp.name }}</span>
+                                <div class="flex-shrink-0 h-8 w-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 font-bold text-sm">
+                                    {{ emp.name|first }}
+                                </div>
+                                <span class="ml-2 font-medium text-gray-800 text-sm">{{ emp.name }}</span>
                             </div>
-                            <span
-                                class="bg-gradient-to-r from-green-500 to-blue-500 text-white px-4 py-1 rounded-full text-sm font-semibold">{{ emp.percentage }}%</span>
+                            <span class="bg-gradient-to-r from-green-500 to-blue-500 text-white px-3 py-0.5 rounded-full text-xs font-semibold">
+                                {{ emp.percentage }}%
+                            </span>
                         </li>
                         {% endfor %}
                     </ul>
@@ -513,24 +615,26 @@
                         Most Overtime
                     </h3>
                 </div>
-                <div class="p-6">
-                    <ul class="space-y-3">
+                <div class="p-4">
+                    <ul class="space-y-2">
                         {% for emp in summary_data.most_overtime %}
-                        <li
-                            class="bg-gray-50 rounded-lg p-4 flex justify-between items-center shadow-sm transition-all duration-300 hover:shadow-md hover:bg-yellow-50 border-l-4 border-yellow-400">
+                        <li class="bg-gray-50 rounded-lg p-2 flex justify-between items-center shadow-sm transition-all duration-300 hover:shadow-md hover:bg-yellow-50 border-l-4 border-yellow-400">
                             <div class="flex items-center">
-                                <div
-                                    class="flex-shrink-0 h-10 w-10 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-600 font-bold">
-                                    {{ emp.name|first }} </div>
-                                <span class="ml-3 font-medium text-gray-800">{{ emp.name }}</span>
+                                <div class="flex-shrink-0 h-8 w-8 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-600 font-bold text-sm">
+                                    {{ emp.name|first }}
+                                </div>
+                                <span class="ml-2 font-medium text-gray-800 text-sm">{{ emp.name }}</span>
                             </div>
-                            <span
-                                class="bg-gradient-to-r from-yellow-500 to-red-500 text-white px-4 py-1 rounded-full text-sm font-semibold">{{emp.hours }} hours</span>
+                            <span class="bg-gradient-to-r from-yellow-500 to-red-500 text-white px-3 py-0.5 rounded-full text-xs font-semibold">
+                                {{emp.hours }} hours
+                            </span>
                         </li>
                         {% endfor %}
                     </ul>
                 </div>
             </div>
+        </div>
+        </div>
         </div>
     </div>
 

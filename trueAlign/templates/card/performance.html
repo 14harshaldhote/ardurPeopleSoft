@@ -4,10 +4,10 @@
       position: relative;
       width: 400px;
       height: 400px;
-      background: radial-gradient(circle at center, #2b033b, #210033);
+      background: radial-gradient(circle at center, #f4e9e9, #ffffff);
       border-radius: 20px;
       padding: 20px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 10px 30px rgba(166, 162, 162, 0.5);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -17,8 +17,8 @@
       position: absolute;
       top: 20px;
       right: 20px;
-      background: rgba(84, 207, 226, 0.1);
-      color: #54cfe2;
+      background: rgba(35, 116, 129, 0.1);
+      color: #073e46;
       padding: 8px 16px;
       border-radius: 9999px;
       font-size: 10px;
@@ -60,7 +60,7 @@
       font-size: 48px;
       font-weight: 700;
       margin: 0;
-      background: linear-gradient(to right, #f97316, #5bddb2, #54cfe2);
+      background: linear-gradient(to right, #f97316, #0d1a16, #54cfe2);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       margin-bottom: -5px;
@@ -68,7 +68,7 @@
     
     .label {
       font-size: 14px;
-      color: #94a3b8;
+      color: #4e627e;
       text-transform: uppercase;
       letter-spacing: 1.5px;
     }
@@ -306,7 +306,7 @@
       ctx.beginPath();
       ctx.moveTo(centerX, centerY);
       ctx.lineTo(needlePoint.x, needlePoint.y);
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+      ctx.shadowColor = 'rgba(224, 0, 23, 0.5)';
       ctx.shadowBlur = 5;
       ctx.shadowOffsetX = 2;
       ctx.shadowOffsetY = 2;
@@ -328,7 +328,7 @@
       // Draw center hub
       ctx.beginPath();
       ctx.arc(centerX, centerY, 15, 0, 2 * Math.PI);
-      ctx.fillStyle = '#1e293b';
+      ctx.fillStyle = '#1e4493b';
       ctx.fill();
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 2;

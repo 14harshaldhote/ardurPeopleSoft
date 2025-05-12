@@ -439,3 +439,283 @@ class LeaveRejectionForm(forms.Form):
                 self.add_error('suggested_end_date', 'End date must be after start date')
         
         return cleaned_data
+
+from django import forms
+from django.utils import timezone
+from django.core.exceptions import ValidationError
+import json
+from datetime import datetime, date, timedelta
+
+from .models import Attendance, User
+
+class BaseAttendanceForm(forms.Form):
+    """Base form with common validation logic"""
+    def validate_breaks_format(self, breaks_str):
+        """Validate breaks JSON format and time logic"""
+        if not breaks_str:
+            return True
+            
+        try:
+            breaks_list = json.loads(breaks_str)
+            if not isinstance(breaks_list, list):
+                raise ValidationError("Breaks must be a list of break periods")
+                
+            for break_item in breaks_list:
+                if not isinstance(break_item, dict):
+                    raise ValidationError("Each break must be a dictionary")
+                    
+                start = datetime.strptime(break_item.get('start', ''), '%H:%M').time()
+                end = datetime.strptime(break_item.get('end', ''), '%H:%M').time()
+                
+                if start >= end:
+                    raise ValidationError("Break end time must be after start time")
+                    
+            return True
+        except (json.JSONDecodeError, ValueError):
+            raise ValidationError("Invalid break format. Use [{'start':'HH:MM', 'end':'HH:MM'}]")
+
+class AttendanceForm(BaseAttendanceForm):
+    """Form for adding/editing a single attendance record"""
+    user = forms.ModelChoiceField(
+        queryset=User.objects.none(),
+        required=True,
+        widget=forms.Select(attrs={
+            'class': 'form-control select2',
+            'data-placeholder': 'Select User'
+        })
+    )
+    
+    date = forms.DateField(
+        required=True,
+        initial=timezone.localdate,
+        widget=forms.DateInput(attrs={
+            'class': 'form-control',
+            'type': 'date',
+            'max': timezone.localdate().strftime('%Y-%m-%d')
+        })
+    )
+    
+    status = forms.ChoiceField(
+        choices=Attendance.STATUS_CHOICES,
+        required=True,
+        widget=forms.Select(attrs={
+            'class': 'form-control',
+            'data-toggle': 'status-dependent-fields'
+        })
+    )
+    
+    location = forms.ChoiceField(
+        choices=Attendance.LOCATION_CHOICES,
+        required=True,
+        initial='Office',
+        widget=forms.Select(attrs={
+            'class': 'form-control'
+        })
+    )
+    
+    is_half_day = forms.BooleanField(
+        required=False,
+        widget=forms.CheckboxInput(attrs={
+            'class': 'form-check-input',
+            'data-toggle': 'half-day-fields'
+        })
+    )
+    
+    clock_in_time = forms.TimeField(
+        required=False,
+        widget=forms.TimeInput(attrs={
+            'class': 'form-control',
+            'type': 'time'
+        })
+    )
+    
+    clock_out_time = forms.TimeField(
+        required=False,
+        widget=forms.TimeInput(attrs={
+            'class': 'form-control',
+            'type': 'time'
+        })
+    )
+    
+    leave_type = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control leave-type-field hidden'
+        })
+    )
+    
+    holiday_name = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control holiday-field hidden'
+        })
+    )
+    
+    breaks = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 2,
+            'placeholder': '[{"start":"09:00", "end":"09:15"}]'
+        })
+    )
+    
+    regularization_reason = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 3,
+            'placeholder': 'Reason for attendance regularization...'
+        })
+    )
+    
+    remarks = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 2,
+            'placeholder': 'Additional remarks...'
+        })
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        status = cleaned_data.get('status')
+        date_value = cleaned_data.get('date')
+        
+        # Status-specific validations
+        if status == 'On Leave':
+            if not cleaned_data.get('leave_type'):
+                self.add_error('leave_type', 'Leave type is required')
+                
+        elif status == 'Holiday':
+            if not cleaned_data.get('holiday_name'):
+                self.add_error('holiday_name', 'Holiday name is required')
+                
+        elif status in ['Present', 'Present & Late']:
+            clock_in = cleaned_data.get('clock_in_time')
+            clock_out = cleaned_data.get('clock_out_time')
+            
+            if not clock_in and not cleaned_data.get('regularization_reason'):
+                self.add_error('clock_in_time', 'Clock-in time or regularization reason is required')
+                
+            if clock_in and clock_out:
+                if clock_in >= clock_out:
+                    self.add_error('clock_out_time', 'Clock-out must be after clock-in')
+                    
+                # Validate against current time for today's entry
+                if date_value == timezone.localdate():
+                    current_time = timezone.localtime().time()
+                    if clock_out > current_time:
+                        self.add_error('clock_out_time', "Clock-out can't be in the future")
+        
+        # Validate breaks if provided
+        breaks = cleaned_data.get('breaks')
+        if breaks:
+            try:
+                self.validate_breaks_format(breaks)
+            except ValidationError as e:
+                self.add_error('breaks', e.message)
+        
+        return cleaned_data
+
+class BulkAttendanceForm(BaseAttendanceForm):
+    """Form for bulk attendance entry"""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['user'].widget.attrs['disabled'] = True
+
+class AttendanceFilterForm(forms.Form):
+    """Enhanced form for filtering users in bulk attendance entry"""
+    department = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Filter by department...'
+        })
+    )
+    
+    start_date = forms.DateField(
+        required=True,
+        initial=timezone.localdate,
+        widget=forms.DateInput(attrs={
+            'class': 'form-control',
+            'type': 'date'
+        })
+    )
+    
+    end_date = forms.DateField(
+        required=True,
+        initial=timezone.localdate,
+        widget=forms.DateInput(attrs={
+            'class': 'form-control',
+            'type': 'date'
+        })
+    )
+    
+    users = forms.ModelMultipleChoiceField(
+        queryset=User.objects.none(),
+        required=False,
+        widget=forms.SelectMultiple(attrs={
+            'class': 'form-control select2-multiple',
+            'data-placeholder': 'Select users...',
+            'size': 8
+        })
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        start_date = cleaned_data.get('start_date')
+        end_date = cleaned_data.get('end_date')
+        
+        if start_date and end_date:
+            if start_date > end_date:
+                self.add_error('end_date', 'End date must be after start date')
+                
+            date_range = (end_date - start_date).days
+            if date_range > 31:  # Limit to one month
+                self.add_error('end_date', 'Date range cannot exceed 31 days')
+        
+        return cleaned_data
+
+
+# forms.py
+from django import forms
+from django.core.exceptions import ValidationError
+from .models import Attendance, User
+from django.db.models import Q
+
+class ManualAttendanceForm(forms.ModelForm):
+    """
+    Form for HR to manually add attendance records
+    """
+    user = forms.ModelChoiceField(
+        queryset=User.objects.filter(
+            Q(groups__name='Management') | Q(groups__name='Backoffice')
+        ).distinct().order_by('username'),
+        label='Employee',
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    
+    class Meta:
+        model = Attendance
+        fields = ['user', 'date', 'status']
+        widgets = {
+            'date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'status': forms.Select(attrs={'class': 'form-control'})
+        }
+    
+    def clean(self):
+        """
+        Validate that no additional fields are required for manual entry
+        """
+        cleaned_data = super().clean()
+        
+        # Ensure only basic fields are set
+        cleaned_data['clock_in_time'] = None
+        cleaned_data['clock_out_time'] = None
+        cleaned_data['leave_type'] = None
+        cleaned_data['regularization_status'] = None
+        cleaned_data['regularization_reason'] = None
+        
+        return cleaned_data
