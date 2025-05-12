@@ -803,6 +803,103 @@ def dashboard_view(request):
             status='Present'
         ).count()
     # Context for the dashboard view
+
+    """View to render the attendance dashboard card with current month's statistics"""
+    
+    # Get today's date and first day of current month
+    today = timezone.now().date()
+    first_day = today.replace(day=1)
+    
+    # Get today's attendance record
+    today_attendance = Attendance.objects.filter(
+        user=request.user,
+        date=today
+    ).first()
+    
+    # Get monthly statistics
+    monthly_stats = {
+        'present_count': Attendance.objects.filter(
+            user=request.user,
+            date__gte=first_day,
+            date__lte=today,
+            status='Present'
+        ).count(),
+        
+        'late_count': Attendance.objects.filter(
+            user=request.user,
+            date__gte=first_day,
+            date__lte=today,
+            status__in=['Late', 'Present & Late']
+        ).count(),
+        
+        'leave_count': Attendance.objects.filter(
+            user=request.user,
+            date__gte=first_day,
+            date__lte=today,
+            status__in=['On Leave', 'Half Day']
+        ).count(),
+    }
+        # Attendance card data
+    attendance_context = {
+        'today_attendance': Attendance.objects.filter(
+            user=request.user,
+            date=today
+        ).select_related('shift').first(),
+        
+        'monthly_stats': {
+            'present_count': Attendance.objects.filter(
+                user=request.user,
+                date__gte=first_day,
+                date__lte=today,
+                status='Present'
+            ).count(),
+            
+            'late_count': Attendance.objects.filter(
+                user=request.user,
+                date__gte=first_day,
+                date__lte=today,
+                status__in=['Late', 'Present & Late']
+            ).count(),
+            
+            'leave_count': Attendance.objects.filter(
+                user=request.user,
+                date__gte=first_day,
+                date__lte=today,
+                status__in=['On Leave', 'Half Day']
+            ).count(),
+        }
+    }# Attendance card data
+    attendance_context = {
+        'today_attendance': Attendance.objects.filter(
+            user=request.user,
+            date=today
+        ).select_related('shift').first(),
+        
+        'monthly_stats': {
+            'present_count': Attendance.objects.filter(
+                user=request.user,
+                date__gte=first_day,
+                date__lte=today,
+                status='Present'
+            ).count(),
+            
+            'late_count': Attendance.objects.filter(
+                user=request.user,
+                date__gte=first_day,
+                date__lte=today,
+                status__in=['Late', 'Present & Late']
+            ).count(),
+            
+            'leave_count': Attendance.objects.filter(
+                user=request.user,
+                date__gte=first_day,
+                date__lte=today,
+                status__in=['On Leave', 'Half Day']
+            ).count(),
+        }
+    
+    }
+
     context = {
         'active_breaks': active_breaks,
         'attendance': get_attendance_stats(request),  # Direct assignment
@@ -824,7 +921,12 @@ def dashboard_view(request):
         'break_durations': {k: int(v.total_seconds() / 60) for k, v in Break.BREAK_DURATIONS.items()},
         'user_status': user_status,
         'present_employees_count': present_employees_count,
-        'time': time
+        'time': time,
+        'today_attendance': today_attendance,
+        'monthly_stats': monthly_stats,
+        'current_month': today.strftime('%B %Y'),
+        'attendance_data': attendance_context,
+
     }
 
     return render(request, 'dashboard.html', context)
@@ -9770,7 +9872,7 @@ def export_attendance_csv(attendance_matrix, month, year):
     response['Content-Disposition'] = f'attachment; filename="attendance_{calendar.month_name[month]}_{year}.csv"'
     return response
 
-    
+
 def export_attendance_pdf(attendance_matrix, month, year):
     """Generate PDF version of attendance report with shift information"""
     from reportlab.lib import colors
