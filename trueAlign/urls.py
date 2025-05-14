@@ -319,7 +319,7 @@ urlpatterns = [
     path('chat/', include((chat_patterns, 'chat'))),
 
     # Admin-specific URLs under 'admin/'
-    path('admin/', include((admin_patterns, 'aps'), namespace='aps_admin')),
+    path('administration/', include((admin_patterns, 'aps'), namespace='aps_admin')),
 
     # Employee-specific URLs under 'employee/'
     path('employee/', include((employee_patterns, 'aps'), namespace='aps_employee')),

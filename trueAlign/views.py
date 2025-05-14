@@ -3143,6 +3143,28 @@ from django.core.paginator import Paginator
 import logging
 import json
 
+def is_admin(user):
+    """
+    Check if the user is an administrator based on group membership.
+    
+    Args:
+        user: A Django User object to check for admin privileges
+        
+    Returns:
+        bool: True if user is in the 'Admin' group, False otherwise
+    """
+    # Check if user is authenticated first (redundant with @login_required but good practice)
+    if not user.is_authenticated:
+        return False
+    
+    # Check if user is a superuser (optional, depending on your needs)
+    if user.is_superuser:
+        return True
+        
+    # Check if user belongs to the 'Admin' group
+    return user.groups.filter(name='Admin').exists()
+
+
 logger = logging.getLogger(__name__)
 @login_required
 @user_passes_test(is_admin)
