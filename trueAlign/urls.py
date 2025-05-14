@@ -292,6 +292,14 @@ support_patterns = [
     path('list/', views.ticket_list, name='ticket_list'),
 ]
 
+holiday_pattern=[
+    path('',views.holiday_dashboard,name='holiday_dashboard'),
+    path('create/',views.holidays_create,name='holiday_create'),
+    path('<int:pk>/update/',views.holidays_update,name='holiday_update'),
+    path('<int:pk>/delete/',views.holidays_delete,name='holiday_delete'),
+    path('list/',views.holiday_lists,name='holiday_lists'),
+]
+
 # Main URL configuration for the project
 urlpatterns = [
     path('', views.home_view, name='home'),
@@ -334,6 +342,7 @@ urlpatterns = [
     #support URLs
     path('support/', include((support_patterns, 'aps'), namespace='aps_support')),
 
+    path('holiday/',include((holiday_pattern, 'aps'), namespace='aps_holiday')),
     # Appraisal URLs
     path('appraisal/', include((appraisal_patterns, 'appraisal'))),
 

@@ -11257,6 +11257,223 @@ def support_dashboard(request):
     }
     return render(request, 'components/support/dashboard.html', context)
 
+'''---------------------------------------- HOLIDAY AREA ----------------------------------'''
+
+from .models import Holiday
+from .forms import HolidayForm
+
+# Permission check function
+
+# Helper function to check if user is HR
+def is_hr(user):
+    return user.groups.filter(name='HR').exists()
+
+@login_required
+def holiday_lists(request):
+    """List holidays - all users can view, HR can perform CRUD"""
+    holidays = Holiday.objects.all()
+    user_is_hr = is_hr(request.user)
+    today = timezone.now().date()
+
+    # Get upcoming holidays (next 30 days)
+    upcoming_holidays = []
+    for i in range(30):
+        check_date = today + timedelta(days=i)
+        if Holiday.is_holiday(check_date):
+            matches = list(Holiday.objects.filter(date=check_date)) + list(
+                Holiday.objects.filter(
+                    recurring_yearly=True,
+                    date__month=check_date.month,
+                    date__day=check_date.day
+                )
+            )
+            for holiday in matches:
+                upcoming_holidays.append({
+                    'name': holiday.name,
+                    'date': check_date,
+                    'days_away': i,
+                    'weekday': check_date.strftime('%A')
+                })
+
+    # Calendar for current month
+    year = today.year
+    month = today.month
+    month_name = today.strftime('%B')
+    _, days_in_month = monthrange(year, month)
+
+    weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+
+    calendar_days = []
+    for day in range(1, days_in_month + 1):
+        check_date = datetime(year, month, day).date()
+        calendar_days.append({
+            'date': check_date,
+            'is_holiday': Holiday.is_holiday(check_date),
+            'is_today': check_date == today,
+            'weekday': check_date.strftime('%a')
+        })
+
+    context = {
+        'holidays': holidays,
+        'upcoming_holidays': upcoming_holidays,
+        'month_name': month_name,
+        'year': year,
+        'calendar_days': calendar_days,
+        'is_hr': user_is_hr,
+        'weekdays': weekdays
+    }
+    return render(request, 'components/holidays/holiday_lists.html', context)
+
+@login_required
+def holiday_dashboard(request):
+    """Smart dashboard view for employees and managers to see holidays"""
+    today = timezone.now().date()
+    is_hr = User.groups.filter(name='HR').exists()
+
+    
+    # Next holiday
+    next_holiday = None
+    days_to_next = 0
+    
+    # Check next 60 days
+    for i in range(1, 60):
+        check_date = today + timedelta(days=i)
+        if Holiday.is_holiday(check_date):
+            # Find which holiday it is
+            exact_match = Holiday.objects.filter(date=check_date).first()
+            recurring_match = Holiday.objects.filter(
+                recurring_yearly=True,
+                date__month=check_date.month,
+                date__day=check_date.day
+            ).first()
+            
+            holiday = exact_match or recurring_match
+            if holiday:
+                next_holiday = {
+                    'name': holiday.name,
+                    'date': check_date,
+                    'days_away': i,
+                    'weekday': check_date.strftime('%A')
+                }
+                days_to_next = i
+                break
+    
+    # Get all holidays in the current year
+    current_year = today.year
+    start_of_year = datetime(current_year, 1, 1).date()
+    end_of_year = datetime(current_year, 12, 31).date()
+    
+    yearly_holidays = []
+    
+    # Add exact date holidays in this year
+    exact_holidays = Holiday.objects.filter(
+        date__gte=start_of_year,
+        date__lte=end_of_year
+    )
+    
+    for holiday in exact_holidays:
+        yearly_holidays.append({
+            'name': holiday.name,
+            'date': holiday.date,
+            'passed': holiday.date < today,
+            'weekday': holiday.date.strftime('%A')
+        })
+    
+    # Add recurring holidays for this year
+    recurring_holidays = Holiday.objects.filter(recurring_yearly=True)
+    
+    for holiday in recurring_holidays:
+        # Create date for this year
+        try:
+            holiday_date = datetime(current_year, holiday.date.month, holiday.date.day).date()
+            
+            # Check if this recurring holiday is already in the list from exact matches
+            if not any(h['date'] == holiday_date for h in yearly_holidays):
+                yearly_holidays.append({
+                    'name': holiday.name,
+                    'date': holiday_date,
+                    'passed': holiday_date < today,
+                    'weekday': holiday_date.strftime('%A')
+                })
+        except ValueError:
+            # Handle Feb 29 in non-leap years
+            continue
+    
+    # Sort holidays by date
+    yearly_holidays.sort(key=lambda x: x['date'])
+    
+    # Get holidays by month for easy viewing
+    holidays_by_month = {}
+    for i in range(1, 13):
+        month_name = datetime(2000, i, 1).strftime('%B')
+        month_holidays = [h for h in yearly_holidays if h['date'].month == i]
+        holidays_by_month[month_name] = month_holidays
+    
+    context = {
+        'next_holiday': next_holiday,
+        'days_to_next': days_to_next,
+        'yearly_holidays': yearly_holidays,
+        'holidays_by_month': holidays_by_month,
+        'year': current_year,
+        'now': today , # For timeline calculation
+        'is_hr':is_hr
+    }
+    
+    return render(request, 'components/holidays/holiday_dashboard.html', context)
+
+# ===============================
+# HR-ONLY VIEWS (CRUD)
+# ===============================
+
+@login_required
+@user_passes_test(is_hr)
+def holidays_create(request):
+    """HR: Create new holiday"""
+    if request.method == 'POST':
+        form = HolidayForm(request.POST)
+        if form.is_valid():
+            holiday = form.save()
+            messages.success(request, f"Holiday '{holiday.name}' created successfully!")
+            return redirect('aps_holiday:holiday_lists')
+    else:
+        form = HolidayForm()
+    return render(request, 'components/holidays/holiday_form.html', {'form': form})
+
+
+@login_required
+@user_passes_test(is_hr)
+def holidays_update(request, pk):
+    """HR: Update holiday"""
+    holiday = get_object_or_404(Holiday, pk=pk)
+    if request.method == 'POST':
+        form = HolidayForm(request.POST, instance=holiday)
+        if form.is_valid():
+            holiday = form.save()
+            messages.success(request, f"Holiday '{holiday.name}' updated successfully!")
+            return redirect('aps_holiday:holiday_lists')
+    else:
+        form = HolidayForm(instance=holiday)
+    return render(request, 'components/holidays/holiday_form.html', {'form': form})
+
+
+@login_required
+@user_passes_test(is_hr)
+def holidays_delete(request, pk):
+    """HR: Delete holiday"""
+    holiday = get_object_or_404(Holiday, pk=pk)
+    if request.method == 'POST':
+        name = holiday.name
+        holiday.delete()
+        messages.success(request, f"Holiday '{name}' deleted successfully!")
+        return redirect('aps_holiday:holiday_lists')
+    return render(request, 'components/holidays/holiday_confirm_delete.html', {'object': holiday})
+
+
+
+
+
+'''--------------------------------------------------------------------------------'''
+
 @login_required
 @user_passes_test(is_employee)
 def employee_support(request):

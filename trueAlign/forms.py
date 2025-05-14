@@ -811,3 +811,20 @@ class TicketFilterForm(forms.Form):
         required=False,
         widget=forms.DateInput(attrs={'type': 'date'})
     )
+
+
+'''----------------------------------------- HOLIDAY FORM -----------------------------------------------'''
+
+
+# Form for Holiday model
+from django import forms
+
+class HolidayForm(forms.ModelForm):
+    class Meta:
+        model = Holiday
+        fields = ['name', 'date', 'recurring_yearly']
+        widgets = {
+            'date': forms.DateInput(attrs={'type': 'date'}),
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'recurring_yearly': forms.CheckboxInput(attrs={'class': 'form-check-input'})
+        }
