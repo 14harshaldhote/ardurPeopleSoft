@@ -10818,7 +10818,444 @@ def export_attendance_pdf(attendance_matrix, month, year):
     return response
 
 '''------------------------------------------------ SUPPORT  AREA------------------------------------------------'''
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.http import HttpResponseForbidden
+from django.db.models import Q
+from django.utils import timezone
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.utils import timezone
+from django.http import HttpResponseForbidden
+from django.db.models import Q
+from django.core.paginator import Paginator
+from .models import Support, TicketComment, TicketAttachment
+from .forms import TicketForm, CommentForm, TicketAttachmentForm
 
+
+def get_user_roles(user):
+    """Helper function to get user roles"""
+    return {
+        'is_admin': user.groups.filter(name='Admin').exists() or user.is_superuser,
+        'is_hr': user.groups.filter(name='HR').exists(),
+        'is_manager': user.groups.filter(name='Manager').exists(),
+        'is_employee': user.groups.filter(name='Employee').exists()
+    }
+
+
+@login_required
+def ticket_list(request):
+    """View for listing tickets based on user role"""
+    user = request.user
+    user_roles = get_user_roles(user)
+    
+    # Determine which tickets to show based on user's role
+    if user_roles['is_admin']:
+        # Admins can see all tickets
+        tickets = Support.objects.all()
+    elif user_roles['is_hr']:
+        # HR can see all tickets assigned to HR group and tickets they created
+        tickets = Support.objects.filter(
+            Q(assigned_group='HR') | Q(user=user)
+        )
+    elif user_roles['is_manager']:
+        # Managers can see their own tickets and tickets from their team members
+        # Assuming there's a relationship between managers and their team members
+        managed_users = User.objects.filter(department__manager=user)
+        tickets = Support.objects.filter(
+            Q(user=user) | Q(user__in=managed_users)
+        )
+    else:
+        # Regular employees only see their own tickets
+        tickets = Support.objects.filter(user=user)
+    
+    # Filter options
+    status_filter = request.GET.get('status')
+    if status_filter:
+        tickets = tickets.filter(status=status_filter)
+        
+    priority_filter = request.GET.get('priority')
+    if priority_filter:
+        tickets = tickets.filter(priority=priority_filter)
+    
+    # Pagination
+    paginator = Paginator(tickets, 10)  # 10 tickets per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'page_obj': page_obj,
+        'status_choices': Support.Status.choices,
+        'priority_choices': Support.Priority.choices,
+        **user_roles,  # Unpack user roles directly into context
+    }
+    return render(request, 'components/support/ticket_list.html', context)
+
+
+@login_required
+def create_ticket(request):
+    """View for creating a new support ticket"""
+    user = request.user
+    user_roles = get_user_roles(user)
+    
+    if request.method == 'POST':
+        form = TicketForm(request.POST, request.FILES)
+        
+        # Customize form based on user role before validation
+        if user_roles['is_employee'] and not any([user_roles['is_admin'], user_roles['is_hr'], user_roles['is_manager']]):
+            # Employees can only create basic tickets
+            form.fields.pop('priority', None)  # Priority will be set automatically
+            form.fields.pop('assigned_group', None)  # Group will be determined by issue type
+            form.fields.pop('assigned_to_user', None)  # Cannot assign to specific users
+        
+        if form.is_valid():
+            ticket = form.save(commit=False)
+            ticket.user = request.user
+            
+            # Set default priority based on role if not specified
+            if not ticket.priority and user_roles['is_employee']:
+                ticket.priority = Support.Priority.MEDIUM
+                
+            # Auto-assign based on issue type for non-admin/HR users
+            if not (user_roles['is_admin'] or user_roles['is_hr']) and not ticket.assigned_group:
+                hr_issues = [Support.IssueType.HR, Support.IssueType.ACCESS]
+                ticket.assigned_group = Support.AssignedGroup.HR if ticket.issue_type in hr_issues else Support.AssignedGroup.ADMIN
+            
+            ticket.save(user=request.user)
+            
+            # Handle file attachments - get files from request.FILES.getlist
+            files = request.FILES.getlist('attachments')
+            for file in files:
+                TicketAttachment.objects.create(
+                    ticket=ticket,
+                    file=file,
+                    uploaded_by=request.user
+                )
+            
+            messages.success(request, f'Ticket {ticket.ticket_id} created successfully.')
+            return redirect('aps_support:ticket_detail', pk=ticket.pk)
+    else:
+        form = TicketForm()
+        
+        # Customize form based on user role
+        if user_roles['is_employee'] and not any([user_roles['is_admin'], user_roles['is_hr'], user_roles['is_manager']]):
+            form.fields.pop('priority', None)
+            form.fields.pop('assigned_group', None)
+            form.fields.pop('assigned_to_user', None)
+    
+    context = {
+        'form': form,
+        'title': 'Create New Support Ticket',
+        **user_roles,  # Unpack user roles directly into context
+    }
+    return render(request, 'components/support/ticket_form.html', context)
+
+
+@login_required
+def ticket_detail(request, pk):
+    """View for viewing a ticket's details"""
+    ticket = get_object_or_404(Support, pk=pk)
+    user = request.user
+    user_roles = get_user_roles(user)
+    
+    is_ticket_owner = ticket.user == user
+    
+    # Enhanced permission check logic
+    has_permission = user_roles['is_admin'] or is_ticket_owner or (user_roles['is_hr'] and ticket.assigned_group == 'HR')
+    
+    # Add manager permission to view team tickets
+    if user_roles['is_manager'] and not has_permission:
+        managed_users = User.objects.filter(department__manager=user)
+        if ticket.user in managed_users:
+            has_permission = True
+    
+    if not has_permission:
+        return HttpResponseForbidden("You don't have permission to view this ticket.")
+    
+    # Comment form processing
+    if request.method == 'POST':
+        comment_form = CommentForm(request.POST)
+        if comment_form.is_valid():
+            comment = comment_form.save(commit=False)
+            comment.ticket = ticket
+            comment.user = request.user
+            
+            # Only admins, HR and managers can make internal comments
+            if comment_form.cleaned_data.get('is_internal') and not (user_roles['is_admin'] or user_roles['is_hr'] or user_roles['is_manager']):
+                comment.is_internal = False
+                
+            comment.save()
+            
+            # Update ticket status if specified
+            new_status = request.POST.get('new_status')
+            
+            # Role-based status change permissions
+            allowed_to_change_status = user_roles['is_admin'] or user_roles['is_hr']
+            
+            # Managers can change some statuses
+            if user_roles['is_manager']:
+                allowed_to_change_status = True
+                
+            # Employees/ticket owners can only close or resolve their own tickets
+            if is_ticket_owner and new_status in ['Closed', 'Resolved']:
+                allowed_to_change_status = True
+            
+            if new_status and allowed_to_change_status:
+                old_status = ticket.status
+                ticket.status = new_status
+                if new_status in ['Resolved', 'Closed'] and not ticket.resolved_at:
+                    ticket.resolved_at = timezone.now()
+                    ticket.resolution_time = ticket.resolved_at - ticket.created_at
+                ticket.save(user=request.user)
+                messages.info(request, f'Ticket status updated from {old_status} to {new_status}')
+            
+            messages.success(request, 'Comment added successfully.')
+            return redirect('aps_support:ticket_detail', pk=pk)
+    else:
+        comment_form = CommentForm()
+    
+    # Get comments - filter internal comments for regular employees
+    comments = ticket.comments.all()
+    if not (user_roles['is_admin'] or user_roles['is_hr'] or user_roles['is_manager']):
+        comments = comments.filter(is_internal=False)
+        
+    context = {
+        'ticket': ticket,
+        'comments': comments,
+        'comment_form': comment_form,
+        'status_choices': Support.Status.choices,
+        **user_roles,  # Unpack user roles directly into context
+        'is_ticket_owner': is_ticket_owner,
+    }
+    return render(request, 'components/support/ticket_detail.html', context)
+
+
+@login_required
+def update_ticket(request, pk):
+    """View for updating a ticket"""
+    ticket = get_object_or_404(Support, pk=pk)
+    user = request.user
+    user_roles = get_user_roles(user)
+    
+    is_ticket_owner = ticket.user == user
+    
+    # Enhanced permission check logic
+    has_permission = user_roles['is_admin'] or is_ticket_owner or (user_roles['is_hr'] and ticket.assigned_group == 'HR')
+    
+    # Add manager permission to update team tickets
+    if user_roles['is_manager'] and not has_permission:
+        managed_users = User.objects.filter(department__manager=user)
+        if ticket.user in managed_users:
+            has_permission = True
+    
+    if not has_permission:
+        return HttpResponseForbidden("You don't have permission to update this ticket.")
+    
+    # Determine which fields can be edited based on role
+    if request.method == 'POST':
+        # Pass instance to form with request.FILES for file handling
+        form = TicketForm(request.POST, request.FILES, instance=ticket)
+        
+        # Role-based field limitations
+        if not user_roles['is_admin']:
+            if not user_roles['is_hr'] or ticket.assigned_group != 'HR':
+                form.fields.pop('assigned_group', None)
+                form.fields.pop('assigned_to_user', None)
+            
+            if not (user_roles['is_hr'] or user_roles['is_manager']):
+                form.fields.pop('priority', None)
+                
+            # Employees can only update description and title of their own tickets
+            if user_roles['is_employee'] and not is_ticket_owner:
+                return HttpResponseForbidden("You don't have permission to update this ticket.")
+            
+        if form.is_valid():
+            ticket = form.save(commit=False)
+            
+            # Auto-assign based on issue type if issue type changed
+            if 'issue_type' in form.changed_data and not (user_roles['is_admin'] or user_roles['is_hr']):
+                hr_issues = [Support.IssueType.HR, Support.IssueType.ACCESS]
+                ticket.assigned_group = Support.AssignedGroup.HR if ticket.issue_type in hr_issues else Support.AssignedGroup.ADMIN
+            
+            ticket.save(user=request.user)
+            
+            # Handle file attachments - use getlist to get multiple files
+            files = request.FILES.getlist('attachments')
+            for file in files:
+                TicketAttachment.objects.create(
+                    ticket=ticket,
+                    file=file,
+                    uploaded_by=request.user
+                )
+            
+            messages.success(request, f'Ticket {ticket.ticket_id} updated successfully.')
+            return redirect('aps_support:ticket_detail', pk=ticket.pk)
+    else:
+        form = TicketForm(instance=ticket)
+        
+        # Role-based field limitations for GET requests
+        if not user_roles['is_admin']:
+            if not user_roles['is_hr'] or ticket.assigned_group != 'HR':
+                form.fields.pop('assigned_group', None)
+                form.fields.pop('assigned_to_user', None)
+            
+            if not (user_roles['is_hr'] or user_roles['is_manager']):
+                form.fields.pop('priority', None)
+    
+    context = {
+        'form': form,
+        'ticket': ticket,
+        'title': f'Update Ticket {ticket.ticket_id}',
+        **user_roles,  # Unpack user roles directly into context
+    }
+    return render(request, 'components/support/ticket_form.html', context)
+
+
+
+@login_required
+def assign_ticket(request, pk):
+    """View for admins and HR to assign tickets"""
+    ticket = get_object_or_404(Support, pk=pk)
+    user = request.user
+    user_roles = get_user_roles(user)
+    
+    # Enhanced permission check logic
+    has_permission = user_roles['is_admin'] or (user_roles['is_hr'] and ticket.assigned_group == 'HR')
+    
+    # Add manager permission to assign team tickets
+    if user_roles['is_manager'] and not has_permission:
+        managed_users = User.objects.filter(department__manager=user)
+        if ticket.user in managed_users:
+            has_permission = True
+    
+    if not has_permission:
+        return HttpResponseForbidden("You don't have permission to assign this ticket.")
+    
+    if request.method == 'POST':
+        new_status = request.POST.get('status')
+        assigned_to_id = request.POST.get('assigned_to_user')
+        
+        if new_status:
+            ticket.status = new_status
+        
+        if assigned_to_id:
+            ticket.assigned_to_user_id = assigned_to_id
+        
+        # Update assigned group if admin is changing it
+        if user_roles['is_admin'] and request.POST.get('assigned_group'):
+            ticket.assigned_group = request.POST.get('assigned_group')
+        # HR can only reassign within HR group
+        elif user_roles['is_hr'] and ticket.assigned_group == 'HR' and request.POST.get('assigned_group') == 'HR':
+            ticket.assigned_group = request.POST.get('assigned_group')
+        
+        ticket.save(user=request.user)
+        messages.success(request, 'Ticket assignment updated successfully.')
+        return redirect('aps_support:ticket_detail', pk=pk)
+    
+    # Limit assignable users based on role
+    if user_roles['is_admin']:
+        assignable_users = User.objects.filter(is_active=True)
+    elif user_roles['is_hr'] and ticket.assigned_group == 'HR':
+        assignable_users = User.objects.filter(groups__name='HR', is_active=True)
+    elif user_roles['is_manager']:
+        assignable_users = User.objects.filter(
+            Q(department__manager=user) | Q(id=user.id),
+            is_active=True
+        )
+    else:
+        assignable_users = User.objects.none()
+    
+    context = {
+        'ticket': ticket,
+        'status_choices': Support.Status.choices,
+        'assignable_users': assignable_users,
+        **user_roles,  # Unpack user roles directly into context
+    }
+    return render(request, 'components/support/assign_ticket.html', context)
+
+
+@login_required
+def support_dashboard(request):
+    """Dashboard view showing ticket statistics"""
+    user = request.user
+    
+    # Role checks based on user object
+    is_admin = user.groups.filter(name='Admin').exists()  # Assuming admin is superuser
+    is_hr = user.groups.filter(name='HR').exists()
+    is_manager = user.groups.filter(name='Manager').exists()
+    is_employee = user.groups.filter(name='Employee').exists()
+    
+    # Base queryset depends on user role
+    if is_admin:
+        tickets = Support.objects.all()
+    elif is_hr:
+        tickets = Support.objects.filter(
+            Q(assigned_group='HR') | Q(user=user)
+        )
+    elif is_manager:
+        # Managers can see their own tickets and tickets from their team members
+        managed_users = User.objects.filter(department__manager=user)
+        tickets = Support.objects.filter(
+            Q(user=user) | Q(user__in=managed_users)
+        )
+    else:
+        tickets = Support.objects.filter(user=user)
+    
+    # Statistics
+    total_tickets = tickets.count()
+    open_tickets = tickets.filter(status__in=['New', 'Open', 'In Progress']).count()
+    resolved_tickets = tickets.filter(status='Resolved').count()
+    closed_tickets = tickets.filter(status='Closed').count()
+    
+    # Recent tickets
+    recent_tickets = tickets.order_by('-created_at')[:5]
+    
+    # Priority distribution
+    critical_tickets = tickets.filter(priority='Critical').count()
+    high_tickets = tickets.filter(priority='High').count()
+    medium_tickets = tickets.filter(priority='Medium').count()
+    low_tickets = tickets.filter(priority='Low').count()
+    
+    # Add role-specific statistics
+    if is_admin or is_hr or is_manager:
+        # Show average resolution time for tickets
+        resolved_with_time = tickets.filter(resolution_time__isnull=False)
+        avg_resolution_time = resolved_with_time.aggregate(avg_time=Avg('resolution_time'))
+        
+        # Show assigned vs unassigned tickets
+        unassigned_tickets = tickets.filter(assigned_to_user__isnull=True).count()
+        assigned_tickets = total_tickets - unassigned_tickets
+    else:
+        avg_resolution_time = None
+        unassigned_tickets = None
+        assigned_tickets = None
+    
+    context = {
+        'total_tickets': total_tickets,
+        'open_tickets': open_tickets,
+        'resolved_tickets': resolved_tickets,
+        'closed_tickets': closed_tickets,
+        'recent_tickets': recent_tickets,
+        'critical_tickets': critical_tickets,
+        'high_tickets': high_tickets,
+        'medium_tickets': medium_tickets,
+        'low_tickets': low_tickets,
+        'is_admin': is_admin,
+        'is_hr': is_hr,
+        'is_manager': is_manager,
+        'is_employee': is_employee,
+        'avg_resolution_time': avg_resolution_time,
+        'unassigned_tickets': unassigned_tickets,
+        'assigned_tickets': assigned_tickets,
+        'critical_percentage': (critical_tickets / total_tickets * 100) if total_tickets > 0 else 0,
+        'high_percentage': (high_tickets / total_tickets * 100) if total_tickets > 0 else 0,
+        'medium_percentage': (medium_tickets / total_tickets * 100) if total_tickets > 0 else 0,
+        'low_percentage': (low_tickets / total_tickets * 100) if total_tickets > 0 else 0,
+        
+    }
+    return render(request, 'components/support/dashboard.html', context)
 
 @login_required
 @user_passes_test(is_employee)

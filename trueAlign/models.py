@@ -2668,6 +2668,10 @@ from django.db import models
 from django.utils.timezone import now
 from django.contrib.auth import get_user_model
 
+from django.db import models
+from django.utils.timezone import now
+import uuid
+from django.contrib.auth.models import User
 
 class Support(models.Model):
     class Status(models.TextChoices):
@@ -2697,7 +2701,7 @@ class Support(models.Model):
         SECURITY = 'Security Incident', 'Security Incident'
         SERVICE = 'Service Request', 'Service Request'
 
-    class AssignedTo(models.TextChoices):
+    class AssignedGroup(models.TextChoices):
         HR = 'HR', 'HR'
         ADMIN = 'Admin', 'Admin'
 
@@ -2711,7 +2715,7 @@ class Support(models.Model):
     # Status and Assignment
     status = models.CharField(max_length=30, choices=Status.choices, default=Status.NEW)
     priority = models.CharField(max_length=20, choices=Priority.choices, default=Priority.MEDIUM)
-    assigned_to = models.CharField(max_length=50, choices=AssignedTo.choices, default=AssignedTo.HR)
+    assigned_group = models.CharField(max_length=50, choices=AssignedGroup.choices, null=True, blank=True)
     assigned_to_user = models.ForeignKey(
         User, 
         on_delete=models.SET_NULL, 
@@ -2768,17 +2772,76 @@ class Support(models.Model):
     @property
     def is_overdue(self):
         return bool(self.due_date and self.due_date < now())
+    
+    def save(self, *args, **kwargs):
+        # Extract user from kwargs (if present) before passing to super().save()
+        user = kwargs.pop('user', None)
+        
+        # Auto-assign tickets to HR or Admin based on issue type
+        if not self.assigned_group:
+            hr_issues = [self.IssueType.HR, self.IssueType.ACCESS]
+            self.assigned_group = self.AssignedGroup.HR if self.issue_type in hr_issues else self.AssignedGroup.ADMIN
+        
+        # Track status changes
+        if self.pk:
+            old_ticket = Support.objects.get(pk=self.pk)
+            if old_ticket.status != self.status:
+                # Create a status log entry after saving
+                self._status_changed = (old_ticket.status, self.status)
+            else:
+                self._status_changed = None
+        else:
+            self._status_changed = (None, self.status)
+            
+        super().save(*args, **kwargs)
+        
+        # Create status log if needed
+        if hasattr(self, '_status_changed') and self._status_changed:
+            old_status, new_status = self._status_changed
+            StatusLog.objects.create(
+                ticket=self,
+                old_status=old_status if old_status else '',
+                new_status=new_status,
+                changed_by=user
+            )
 
 
 class StatusLog(models.Model):
     ticket = models.ForeignKey(Support, on_delete=models.CASCADE, related_name='status_logs')
-    old_status = models.CharField(max_length=30, choices=Support.Status.choices)
+    old_status = models.CharField(max_length=30, blank=True)
     new_status = models.CharField(max_length=30, choices=Support.Status.choices)
     changed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     changed_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.ticket.ticket_id}: {self.old_status} -> {self.new_status}"
+
+
+class TicketComment(models.Model):
+    """Model for comments on support tickets"""
+    ticket = models.ForeignKey(Support, on_delete=models.CASCADE, related_name='comments')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_internal = models.BooleanField(default=False, help_text="Internal notes only visible to staff")
+    
+    class Meta:
+        ordering = ['created_at']
+    
+    def __str__(self):
+        return f"Comment on {self.ticket.ticket_id} by {self.user.username}"
+
+
+class TicketAttachment(models.Model):
+    """Model for file attachments on tickets"""
+    ticket = models.ForeignKey(Support, on_delete=models.CASCADE, related_name='attachments')
+    file = models.FileField(upload_to='ticket_attachments/')
+    uploaded_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    description = models.CharField(max_length=255, blank=True)
+    
+    def __str__(self):
+        return f"Attachment for {self.ticket.ticket_id}"
     
 ''' ------------------------------------------- REmove employee AREA ------------------------------------------- '''
 

@@ -719,3 +719,95 @@ class ManualAttendanceForm(forms.ModelForm):
         cleaned_data['regularization_reason'] = None
         
         return cleaned_data
+
+
+from django import forms
+from django.contrib.auth.models import User, Group
+from .models import Support, TicketComment, TicketAttachment
+
+class TicketForm(forms.ModelForm):
+    # Use regular FileField without the multiple attribute in the widget
+    # We'll handle multiple files in the view instead
+    attachments = forms.FileField(
+        required=False,
+        help_text="You can upload multiple files"
+    )
+    
+    class Meta:
+        model = Support
+        fields = [
+            'issue_type', 'subject', 'description', 'priority',
+            'department', 'location', 'asset_id', 'assigned_group', 
+            'assigned_to_user', 'due_date'
+        ]
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 5}),
+            'due_date': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # Make certain fields optional for normal users
+        self.fields['department'].required = False
+        self.fields['location'].required = False
+        self.fields['asset_id'].required = False
+        self.fields['due_date'].required = False
+        
+        # Set up user assignee choices - only HR and Admin users
+        hr_group = Group.objects.get(name='HR')
+        admin_group = Group.objects.get(name='Admin')
+        
+        hr_users = hr_group.user_set.all()
+        admin_users = admin_group.user_set.all()
+        
+        assignable_users = (hr_users | admin_users).distinct()
+        self.fields['assigned_to_user'].queryset = assignable_users
+        self.fields['assigned_to_user'].required = False
+        
+        # Optional assigned group field (will be auto-populated)
+        self.fields['assigned_group'].required = False
+        
+        # Set issue type choices that help with routing
+        self.fields['issue_type'].help_text = "HR issues and Access Management are routed to HR. All other issues are routed to Admin."
+
+class CommentForm(forms.ModelForm):
+    is_internal = forms.BooleanField(
+        required=False, 
+        label="Internal Note (only visible to staff)",
+        help_text="Check this box if this comment should only be visible to HR and Admin staff"
+    )
+    
+    class Meta:
+        model = TicketComment
+        fields = ['content', 'is_internal']
+        widgets = {
+            'content': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Add a comment or update...'}),
+        }
+
+class TicketAttachmentForm(forms.ModelForm):
+    class Meta:
+        model = TicketAttachment
+        fields = ['file', 'description']
+
+class TicketFilterForm(forms.Form):
+    """Form for filtering tickets in the list view"""
+    STATUS_CHOICES = [('', 'All Statuses')] + list(Support.Status.choices)
+    PRIORITY_CHOICES = [('', 'All Priorities')] + list(Support.Priority.choices)
+    ISSUE_TYPE_CHOICES = [('', 'All Types')] + list(Support.IssueType.choices)
+    
+    status = forms.ChoiceField(choices=STATUS_CHOICES, required=False)
+    priority = forms.ChoiceField(choices=PRIORITY_CHOICES, required=False)
+    issue_type = forms.ChoiceField(choices=ISSUE_TYPE_CHOICES, required=False)
+    assigned_group = forms.ChoiceField(
+        choices=[('', 'All Groups')] + list(Support.AssignedGroup.choices), 
+        required=False
+    )
+    date_from = forms.DateField(
+        required=False, 
+        widget=forms.DateInput(attrs={'type': 'date'})
+    )
+    date_to = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={'type': 'date'})
+    )
