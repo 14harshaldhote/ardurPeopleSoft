@@ -7050,8 +7050,6 @@ def hr_attendance_dashboard(request):
     """
     today = timezone.localtime(timezone.now()).date()
 
-
-    
     # Get counts for today
     present_count = Attendance.objects.filter(
         date=today, 
@@ -7073,6 +7071,21 @@ def hr_attendance_dashboard(request):
         status='Present & Late'
     ).count()
     
+    wfh_count = Attendance.objects.filter(
+        date=today,
+        status='Work From Home'
+    ).count()
+    
+    comp_off_count = Attendance.objects.filter(
+        date=today,
+        status='Comp Off'
+    ).count()
+    
+    not_marked_count = Attendance.objects.filter(
+        date=today,
+        status__in=['Not Marked', 'Yet to Clock In']
+    ).count()
+    
     # Get regularization requests pending approval
     pending_requests = Attendance.objects.filter(
         regularization_status='Pending'
@@ -7089,7 +7102,16 @@ def hr_attendance_dashboard(request):
         end_date__gte=today
     ).order_by('start_date')[:5]
 
+    # Get summary data
+    summary_data = get_attendance_summary_data(
+        date_from=today, 
+        date_to=today, 
+        office_location=None, 
+        user_query=None
+    )
     
+    if summary_data is None:
+        summary_data = {}
     
     context = {
         'today': today,
@@ -7097,13 +7119,289 @@ def hr_attendance_dashboard(request):
         'absent_count': absent_count,
         'leave_count': leave_count,
         'late_count': late_count,
+        'wfh_count': wfh_count,
+        'comp_off_count': comp_off_count,
+        'not_marked_count': not_marked_count,
         'pending_requests': pending_requests,
         'recent_attendance': recent_attendance,
         'upcoming_leaves': upcoming_leaves,
-
+        'summary_data': summary_data,
     }
     
     return render(request, 'components/hr/attendance/hr_dashboard.html', context)
+
+def get_attendance_summary_data(
+    date_from=None, 
+    date_to=None, 
+    office_location=None, 
+    user_query=None
+):
+    """
+    Generate summary data for attendance dashboard with daily, weekly, monthly, yearly summaries,
+    office location, and optimized filters and search.
+
+    Args:
+        date_from (date): Start date for filtering (optional)
+        date_to (date): End date for filtering (optional)
+        office_location (str): Office location filter (optional)
+        department (str): Department filter (optional)
+        user_query (str): Search query for user (optional)
+
+    Returns:
+        dict: Dictionary containing various attendance metrics and trends
+    """
+    from django.db.models import Prefetch, Index, F
+    from django.db.models.functions import TruncDate
+    from django.db.models import Prefetch, Index, F
+    from django.contrib.postgres.indexes import BrinIndex
+    from functools import lru_cache
+
+    today = timezone.localtime(timezone.now()).date()
+    start_of_week = today - timedelta(days=today.weekday())
+    start_of_month = today.replace(day=1)
+    start_of_year = today.replace(month=1, day=1)
+    _, last_day = monthrange(today.year, today.month)
+    end_of_month = today.replace(day=last_day)
+
+    # Base queryset optimization with select_related and only needed fields
+    attendance_qs = Attendance.objects.select_related(
+        'user'
+    ).only(
+        'date', 'status', 'total_hours', 'late_minutes', 'overtime_hours',
+        'user__username', 'user__first_name', 'user__last_name'
+    )
+
+    # Cache key generation for query results
+    cache_key = f"attendance_summary_{date_from}_{date_to}_{office_location}_{user_query}"
+
+    @lru_cache(maxsize=128)
+    def get_cached_queryset(key):
+        # Apply date range filter
+        qs = attendance_qs
+        if date_from and date_to:
+            qs = qs.filter(date__gte=date_from, date__lte=date_to)
+        else:
+            qs = qs.filter(date__gte=start_of_month, date__lte=today)
+
+        # Optimized user search with index
+        if user_query:
+            qs = qs.filter(
+                Q(user__username__icontains=user_query) |
+                Q(user__first_name__icontains=user_query) |
+                Q(user__last_name__icontains=user_query)
+            ).select_related('user')
+
+        # Filter by office location with index
+        if office_location:
+            user_ids = UserDetails.objects.filter(
+                work_location__icontains=office_location
+            ).values_list('user_id', flat=True)
+            qs = qs.filter(user_id__in=user_ids)
+
+        return qs
+
+    # Get cached queryset
+    filtered_qs = get_cached_queryset(cache_key)
+
+    # Optimize query performance with database hints
+    filtered_qs = filtered_qs.select_related('user')
+
+    # Add database indexes for common queries
+    class Meta:
+        indexes = [
+            Index(fields=['date', 'status']),
+            Index(fields=['user', 'date']),
+            BrinIndex(fields=['date']),  # For date range queries
+            Index(fields=['regularization_status'])
+        ]
+
+    # --- Daily Summary with materialized query ---
+    daily_stats = filtered_qs.filter(date=today).aggregate(
+        present=Count('id', filter=Q(status__in=['Present', 'Present & Late', 'Work From Home'])),
+        absent=Count('id', filter=Q(status='Absent')),
+        leave=Count('id', filter=Q(status__in=['On Leave', 'Half Day'])),
+        late=Count('id', filter=Q(status='Present & Late')),
+        wfh=Count('id', filter=Q(status='Work From Home')),
+        comp_off=Count('id', filter=Q(status='Comp Off')),
+        not_marked=Count('id', filter=Q(status__in=['Not Marked', 'Yet to Clock In']))
+    )
+
+    # --- Weekly Summary with materialized query ---
+    weekly_stats = filtered_qs.filter(
+        date__gte=start_of_week, 
+        date__lte=today
+    ).aggregate(
+        present=Count('id', filter=Q(status__in=['Present', 'Present & Late', 'Work From Home'])),
+        absent=Count('id', filter=Q(status='Absent')),
+        leave=Count('id', filter=Q(status__in=['On Leave', 'Half Day'])),
+        late=Count('id', filter=Q(status='Present & Late')),
+        wfh=Count('id', filter=Q(status='Work From Home')),
+        comp_off=Count('id', filter=Q(status='Comp Off')),
+        not_marked=Count('id', filter=Q(status__in=['Not Marked', 'Yet to Clock In']))
+    )
+
+    # --- Monthly Summary with optimized aggregation ---
+    monthly_stats = filtered_qs.filter(
+        date__gte=start_of_month, 
+        date__lte=today
+    ).aggregate(
+        present=Count('id', filter=Q(status__in=['Present', 'Present & Late', 'Work From Home'])),
+        absent=Count('id', filter=Q(status='Absent')),
+        leave=Count('id', filter=Q(status__in=['On Leave', 'Half Day'])),
+        late=Count('id', filter=Q(status='Present & Late')),
+        wfh=Count('id', filter=Q(status='Work From Home')),
+        comp_off=Count('id', filter=Q(status='Comp Off')),
+        not_marked=Count('id', filter=Q(status__in=['Not Marked', 'Yet to Clock In'])),
+        avg_hours=Avg('total_hours'),
+        avg_late_minutes=Avg(Case(
+            When(late_minutes__gt=0, then=F('late_minutes')),
+            default=Value(0),
+            output_field=IntegerField()
+        )),
+        total_overtime=Sum('overtime_hours')
+    )
+
+    # --- Yearly Summary with optimized aggregation ---
+    yearly_stats = filtered_qs.filter(
+        date__gte=start_of_year, 
+        date__lte=today
+    ).aggregate(
+        present=Count('id', filter=Q(status__in=['Present', 'Present & Late', 'Work From Home'])),
+        absent=Count('id', filter=Q(status='Absent')),
+        leave=Count('id', filter=Q(status__in=['On Leave', 'Half Day'])),
+        late=Count('id', filter=Q(status='Present & Late')),
+        wfh=Count('id', filter=Q(status='Work From Home')),
+        comp_off=Count('id', filter=Q(status='Comp Off')),
+        not_marked=Count('id', filter=Q(status__in=['Not Marked', 'Yet to Clock In'])),
+        avg_hours=Avg('total_hours'),
+        avg_late_minutes=Avg(Case(
+            When(late_minutes__gt=0, then=F('late_minutes')),
+            default=Value(0),
+            output_field=IntegerField()
+        )),
+        total_overtime=Sum('overtime_hours')
+    )
+
+    # --- Attendance trend with optimized date-based query ---
+    daily_attendance = []
+    trend_data = filtered_qs.filter(
+        date__gte=today - timedelta(days=30),
+        date__lte=today
+    ).annotate(
+        day=TruncDate('date')
+    ).values('day').annotate(
+        present=Count('id', filter=Q(status__in=['Present', 'Present & Late', 'Work From Home'])),
+        absent=Count('id', filter=Q(status='Absent')),
+        leave=Count('id', filter=Q(status__in=['On Leave', 'Half Day']))
+    ).order_by('day')
+
+    for data in trend_data:
+        if data['day'] is not None:
+            daily_attendance.append({
+                'date': data['day'].strftime('%d %b'),
+                'present': data['present'],
+                'absent': data['absent'],
+                'leave': data['leave']
+            })
+
+    # --- Location-wise statistics with materialized view ---
+    location_stats = UserDetails.objects.values('work_location').annotate(
+        total=Count('user_id')
+    ).filter(work_location__isnull=False)
+
+    office_location_stats = []
+    for loc in location_stats:
+        user_ids = UserDetails.objects.filter(
+            work_location=loc['work_location']
+        ).values_list('user_id', flat=True)
+        
+        stats = filtered_qs.filter(
+            date=today,
+            user_id__in=user_ids
+        ).aggregate(
+            present=Count('id', filter=Q(status__in=['Present', 'Present & Late', 'Work From Home'])),
+            absent=Count('id', filter=Q(status='Absent')),
+            leave=Count('id', filter=Q(status__in=['On Leave', 'Half Day']))
+        )
+        
+        office_location_stats.append({
+            'work_location': loc['work_location'],
+            'present': stats['present'],
+            'absent': stats['absent'], 
+            'leave': stats['leave'],
+            'total': loc['total']
+        })
+
+    # --- Top performers/issues with optimized query ---
+    top_absences = []
+    absent_users = filtered_qs.filter(
+        date__gte=start_of_month,
+        status='Absent'
+    ).values(
+        'user_id'
+    ).annotate(
+        absent_count=Count('id')
+    ).order_by('-absent_count')[:5]
+
+    for absent in absent_users:
+        user_details = UserDetails.objects.filter(user_id=absent['user_id']).first()
+        if user_details:
+            top_absences.append({
+                'user__username': user_details.user.username,
+                'user__first_name': user_details.user.first_name,
+                'user__last_name': user_details.user.last_name,
+                'user__userdetails__work_location': user_details.work_location,
+                'absent_count': absent['absent_count']
+            })
+
+    top_late = []
+    late_users = filtered_qs.filter(
+        date__gte=start_of_month,
+        status='Present & Late'
+    ).values(
+        'user_id'
+    ).annotate(
+        late_count=Count('id')
+    ).order_by('-late_count')[:5]
+
+    for late in late_users:
+        user_details = UserDetails.objects.filter(user_id=late['user_id']).first()
+        if user_details:
+            top_late.append({
+                'user__username': user_details.user.username,
+                'user__first_name': user_details.user.first_name,
+                'user__last_name': user_details.user.last_name,
+                'user__userdetails__work_location': user_details.work_location,
+                'late_count': late['late_count']
+            })
+
+    # --- Regularization statistics with optimized query ---
+    regularization_stats = filtered_qs.filter(
+        regularization_status__isnull=False,
+        date__gte=today - timedelta(days=30)
+    ).values(
+        'regularization_status'
+    ).annotate(
+        count=Count('id')
+    ).order_by('regularization_status')
+
+    reg_stats_dict = {'Pending': 0, 'Approved': 0, 'Rejected': 0}
+    for stat in regularization_stats:
+        reg_stats_dict[stat['regularization_status']] = stat['count']
+
+    return {
+        'daily_stats': daily_stats,
+        'weekly_stats': weekly_stats,
+        'monthly_stats': monthly_stats,
+        'yearly_stats': yearly_stats,
+        'daily_attendance': daily_attendance,
+        'top_absences': top_absences,
+        'top_late': top_late,
+        'office_location_stats': office_location_stats,
+        'regularization_stats': reg_stats_dict,
+        'month_name': today.strftime('%B'),
+        'year': today.year
+    }
 
 from django.core.paginator import Paginator, EmptyPage
 from django.db.models import Count, Q
@@ -7532,8 +7830,6 @@ def hr_attendance_regularization_requests(request):
         'date_from': date_from,
         'date_to': date_to,
         'user_filter': user_filter,
-        # 'department_filter': department_filter,
-        # 'departments': departments,
         'status_choices': status_choices,
         'attendance_status_choices': Attendance.STATUS_CHOICES,
     }
@@ -7770,7 +8066,6 @@ def regularization_analytics_dashboard(request):
     }
     
     return render(request, 'components/hr/attendance/regularization_analytics.html', context)
-
 @login_required
 @user_passes_test(is_hr_check)
 def hr_generate_report(request):
@@ -7930,8 +8225,8 @@ def hr_generate_report(request):
                         'date': current_date,
                         'day': current_date.strftime('%A'),
                         'status': day_record.status if day_record else 'Not Marked',
-                        'check_in': day_record.check_in.strftime('%H:%M') if day_record and day_record.check_in else '-',
-                        'check_out': day_record.check_out.strftime('%H:%M') if day_record and day_record.check_out else '-',
+                        'check_in': day_record.clock_in_time.strftime('%H:%M') if day_record and day_record.clock_in_time else '-',
+                        'check_out': day_record.clock_out_time.strftime('%H:%M') if day_record and day_record.clock_out_time else '-',
                         'total_hours': day_record.total_hours if day_record else Decimal('0'),
                         'overtime_hours': day_record.overtime_hours if day_record else Decimal('0'),
                     }
@@ -8063,7 +8358,6 @@ def hr_generate_report(request):
     }
     
     return render(request, 'components/hr/attendance/hr_generate_report.html', context)
-
 
 def get_work_days(start_date, end_date):
     """
