@@ -1,176 +1,16 @@
-Running auto_mark_attendance at IST: 2025-05-15 18:27:04.492148+05:30
-User adminHarshal yet to clock in - Shift still active
-Error auto-marking attendance for adminHarshal: 'Attendance' object has no attribute 'is_on_leave'
-User AT0102 yet to clock in - Shift still active
-Error auto-marking attendance for AT0102: 'Attendance' object has no attribute 'is_on_leave'
-User AT0018 yet to clock in - Shift still active
-Error auto-marking attendance for AT0018: 'Attendance' object has no attribute 'is_on_leave'
-User AT0019 yet to clock in - Shift still active
-Error auto-marking attendance for AT0019: 'Attendance' object has no attribute 'is_on_leave'
-User AT0020 yet to clock in - Shift still active
-Error auto-marking attendance for AT0020: 'Attendance' object has no attribute 'is_on_leave'
-User AT0021 yet to clock in - Shift still active
-Error auto-marking attendance for AT0021: 'Attendance' object has no attribute 'is_on_leave'
-User AT0022 yet to clock in - Shift still active
-Error auto-marking attendance for AT0022: 'Attendance' object has no attribute 'is_on_leave'
-User AT0023 yet to clock in - Shift still active
-Error auto-marking attendance for AT0023: 'Attendance' object has no attribute 'is_on_leave'
-User AT0024 yet to clock in - Shift still active
-Error auto-marking attendance for AT0024: 'Attendance' object has no attribute 'is_on_leave'
-User AT0025 yet to clock in - Shift still active
-Error auto-marking attendance for AT0025: 'Attendance' object has no attribute 'is_on_leave'
-User AT0026 yet to clock in - Shift still active
-Error auto-marking attendance for AT0026: 'Attendance' object has no attribute 'is_on_leave'
-User AT0027 yet to clock in - Shift still active
-Error auto-marking attendance for AT0027: 'Attendance' object has no attribute 'is_on_leave'
-User AT0028 yet to clock in - Shift still active
-Error auto-marking attendance for AT0028: 'Attendance' object has no attribute 'is_on_leave'
-User AT0029 yet to clock in - Shift still active
-Error auto-marking attendance for AT0029: 'Attendance' object has no attribute 'is_on_leave'
-User AT0030 yet to clock in - Shift still active
-Error auto-marking attendance for AT0030: 'Attendance' object has no attribute 'is_on_leave'
-User AT0031 yet to clock in - Shift still active
-Error auto-marking attendance for AT0031: 'Attendance' object has no attribute 'is_on_leave'
-User AT0033 yet to clock in - Shift still active
-Error auto-marking attendance for AT0033: 'Attendance' object has no attribute 'is_on_leave'
-User AT0034 yet to clock in - Shift still active
-Error auto-marking attendance for AT0034: 'Attendance' object has no attribute 'is_on_leave'
-User AT0035 yet to clock in - Shift still active
-Error auto-marking attendance for AT0035: 'Attendance' object has no attribute 'is_on_leave'
-User AT0036 yet to clock in - Shift still active
-Error auto-marking attendance for AT0036: 'Attendance' object has no attribute 'is_on_leave'
-User AT0037 yet to clock in - Shift still active
-Error auto-marking attendance for AT0037: 'Attendance' object has no attribute 'is_on_leave'
-User AT0038 yet to clock in - Shift still active
-Error auto-marking attendance for AT0038: 'Attendance' object has no attribute 'is_on_leave'
-User AT0039 yet to clock in - Shift still active
-Error auto-marking attendance for AT0039: 'Attendance' object has no attribute 'is_on_leave'
-User AT0040 yet to clock in - Shift still active
-Error auto-marking attendance for AT0040: 'Attendance' object has no attribute 'is_on_leave'
-User AT0041 yet to clock in - Shift still active
-Error auto-marking attendance for AT0041: 'Attendance' object has no attribute 'is_on_leave'
-User AT0042 yet to clock in - Shift still active
-Error auto-marking attendance for AT0042: 'Attendance' object has no attribute 'is_on_leave'
-User AT0043 yet to clock in - Shift still active
-Error auto-marking attendance for AT0043: 'Attendance' object has no attribute 'is_on_leave'
-User AT0044 yet to clock in - Shift still active
-Error auto-marking attendance for AT0044: 'Attendance' object has no attribute 'is_on_leave'
-User AT0045 yet to clock in - Shift still active
-Error auto-marking attendance for AT0045: 'Attendance' object has no attribute 'is_on_leave'
-User AT0046 yet to clock in - Shift still active
-Error auto-marking attendance for AT0046: 'Attendance' object has no attribute 'is_on_leave'
-User AT0047 yet to clock in - Shift still active
-Error auto-marking attendance for AT0047: 'Attendance' object has no attribute 'is_on_leave'
-User AT0048 yet to clock in - Shift still active
-Error auto-marking attendance for AT0048: 'Attendance' object has no attribute 'is_on_leave'
-User AT0049 yet to clock in - Shift still active
-Error auto-marking attendance for AT0049: 'Attendance' object has no attribute 'is_on_leave'
-User AT0050 yet to clock in - Shift still active
-Error auto-marking attendance for AT0050: 'Attendance' object has no attribute 'is_on_leave'
-User AT0051 yet to clock in - Shift still active
-Error auto-marking attendance for AT0051: 'Attendance' object has no attribute 'is_on_leave'
-User AT0052 yet to clock in - Shift still active
-Error auto-marking attendance for AT0052: 'Attendance' object has no attribute 'is_on_leave'
-User AT0053 yet to clock in - Shift still active
-Error auto-marking attendance for AT0053: 'Attendance' object has no attribute 'is_on_leave'
-User AT0054 yet to clock in - Shift still active
-Error auto-marking attendance for AT0054: 'Attendance' object has no attribute 'is_on_leave'
-User AT0055 yet to clock in - Shift still active
-Error auto-marking attendance for AT0055: 'Attendance' object has no attribute 'is_on_leave'
-User AT0056 yet to clock in - Shift still active
-Error auto-marking attendance for AT0056: 'Attendance' object has no attribute 'is_on_leave'
-User AT0057 yet to clock in - Shift still active
-Error auto-marking attendance for AT0057: 'Attendance' object has no attribute 'is_on_leave'
-User AT0058 yet to clock in - Shift still active
-Error auto-marking attendance for AT0058: 'Attendance' object has no attribute 'is_on_leave'
-User AT0059 yet to clock in - Shift still active
-Error auto-marking attendance for AT0059: 'Attendance' object has no attribute 'is_on_leave'
-User AT0060 yet to clock in - Shift still active
-Error auto-marking attendance for AT0060: 'Attendance' object has no attribute 'is_on_leave'
-User AT0061 yet to clock in - Shift still active
-Error auto-marking attendance for AT0061: 'Attendance' object has no attribute 'is_on_leave'
-User AT0062 yet to clock in - Shift still active
-Error auto-marking attendance for AT0062: 'Attendance' object has no attribute 'is_on_leave'
-User AT0063 yet to clock in - Shift still active
-Error auto-marking attendance for AT0063: 'Attendance' object has no attribute 'is_on_leave'
-User AT0064 yet to clock in - Shift still active
-Error auto-marking attendance for AT0064: 'Attendance' object has no attribute 'is_on_leave'
-User clinet1 yet to clock in - Shift still active
-Error auto-marking attendance for clinet1: 'Attendance' object has no attribute 'is_on_leave'
-User system yet to clock in - Shift still active
-Error auto-marking attendance for system: 'Attendance' object has no attribute 'is_on_leave'
-auto_mark_attendance() completed
-Successfully processed attendance
-Running auto_mark_attendance at IST: 2025-05-15 18:28:04.891659+05:30
-User adminHarshal yet to clock in - Shift still active
-User AT0102 yet to clock in - Shift still active
-User AT0018 yet to clock in - Shift still active
-User AT0019 yet to clock in - Shift still active
-User AT0020 yet to clock in - Shift still active
-User AT0021 yet to clock in - Shift still active
-User AT0022 yet to clock in - Shift still active
-User AT0023 yet to clock in - Shift still active
-User AT0024 yet to clock in - Shift still active
-User AT0025 yet to clock in - Shift still active
-User AT0026 yet to clock in - Shift still active
-User AT0027 yet to clock in - Shift still active
-User AT0028 yet to clock in - Shift still active
-User AT0029 yet to clock in - Shift still active
-User AT0030 yet to clock in - Shift still active
-User AT0031 yet to clock in - Shift still active
-User AT0033 yet to clock in - Shift still active
-User AT0034 yet to clock in - Shift still active
-User AT0035 yet to clock in - Shift still active
-User AT0036 yet to clock in - Shift still active
-User AT0037 yet to clock in - Shift still active
-User AT0038 yet to clock in - Shift still active
-User AT0039 yet to clock in - Shift still active
-User AT0040 yet to clock in - Shift still active
-User AT0041 yet to clock in - Shift still active
-User AT0042 yet to clock in - Shift still active
-User AT0043 yet to clock in - Shift still active
-User AT0044 yet to clock in - Shift still active
-User AT0045 yet to clock in - Shift still active
-User AT0046 yet to clock in - Shift still active
-User AT0047 yet to clock in - Shift still active
-User AT0048 yet to clock in - Shift still active
-User AT0049 yet to clock in - Shift still active
-User AT0050 yet to clock in - Shift still active
-User AT0051 yet to clock in - Shift still active
-User AT0052 yet to clock in - Shift still active
-User AT0053 yet to clock in - Shift still active
-User AT0054 yet to clock in - Shift still active
-User AT0055 yet to clock in - Shift still active
-User AT0056 yet to clock in - Shift still active
-User AT0057 yet to clock in - Shift still active
-User AT0058 yet to clock in - Shift still active
-User AT0059 yet to clock in - Shift still active
-User AT0060 yet to clock in - Shift still active
-User AT0061 yet to clock in - Shift still active
-User AT0062 yet to clock in - Shift still active
-User AT0063 yet to clock in - Shift still active
-User AT0064 yet to clock in - Shift still active
-User clinet1 yet to clock in - Shift still active
-User system yet to clock in - Shift still active
-auto_mark_attendance() completed
-Successfully processed attendance
-Running auto_mark_attendance at IST: 2025-05-15 18:29:04.164914+05:30
+Running auto_mark_attendance at IST: 2025-05-15 18:37:05.062894+05:30
 Existing attendance found for adminHarshal
 Updating Yet to Clock In attendance
 Existing attendance found for AT0102
-Updating Yet to Clock In attendance
 Existing attendance found for AT0018
-Updating Yet to Clock In attendance
 Existing attendance found for AT0019
 Updating Yet to Clock In attendance
 Existing attendance found for AT0020
-Updating Yet to Clock In attendance
 Existing attendance found for AT0021
 Updating Yet to Clock In attendance
 Existing attendance found for AT0022
 Updating Yet to Clock In attendance
 Existing attendance found for AT0023
-Updating Yet to Clock In attendance
 Existing attendance found for AT0024
 Updating Yet to Clock In attendance
 Existing attendance found for AT0025
@@ -178,27 +18,18 @@ Updating Yet to Clock In attendance
 Existing attendance found for AT0026
 Updating Yet to Clock In attendance
 Existing attendance found for AT0027
-Updating Yet to Clock In attendance
 Existing attendance found for AT0028
 Updating Yet to Clock In attendance
 Existing attendance found for AT0029
 Updating Yet to Clock In attendance
 Existing attendance found for AT0030
-Updating Yet to Clock In attendance
 Existing attendance found for AT0031
-Updating Yet to Clock In attendance
 Existing attendance found for AT0033
-Updating Yet to Clock In attendance
 Existing attendance found for AT0034
-Updating Yet to Clock In attendance
 Existing attendance found for AT0035
-Updating Yet to Clock In attendance
 Existing attendance found for AT0036
-Updating Yet to Clock In attendance
 Existing attendance found for AT0037
-Updating Yet to Clock In attendance
 Existing attendance found for AT0038
-Updating Yet to Clock In attendance
 Existing attendance found for AT0039
 Updating Yet to Clock In attendance
 Existing attendance found for AT0040
@@ -228,32 +59,94 @@ Updating Yet to Clock In attendance
 Existing attendance found for AT0052
 Updating Yet to Clock In attendance
 Existing attendance found for AT0053
-Updating Yet to Clock In attendance
 Existing attendance found for AT0054
-Updating Yet to Clock In attendance
 Existing attendance found for AT0055
-Updating Yet to Clock In attendance
 Existing attendance found for AT0056
-Updating Yet to Clock In attendance
 Existing attendance found for AT0057
-Updating Yet to Clock In attendance
 Existing attendance found for AT0058
-Updating Yet to Clock In attendance
 Existing attendance found for AT0059
-Updating Yet to Clock In attendance
 Existing attendance found for AT0060
-Updating Yet to Clock In attendance
 Existing attendance found for AT0061
-Updating Yet to Clock In attendance
 Existing attendance found for AT0062
-Updating Yet to Clock In attendance
 Existing attendance found for AT0063
-Updating Yet to Clock In attendance
 Existing attendance found for AT0064
-Updating Yet to Clock In attendance
 Existing attendance found for clinet1
-Updating Yet to Clock In attendance
 Existing attendance found for system
+auto_mark_attendance() completed
+Successfully processed attendance
+Running auto_mark_attendance at IST: 2025-05-15 18:38:04.830234+05:30
+Existing attendance found for adminHarshal
 Updating Yet to Clock In attendance
+Existing attendance found for AT0102
+Existing attendance found for AT0018
+Existing attendance found for AT0019
+Updating Yet to Clock In attendance
+Existing attendance found for AT0020
+Existing attendance found for AT0021
+Updating Yet to Clock In attendance
+Existing attendance found for AT0022
+Updating Yet to Clock In attendance
+Existing attendance found for AT0023
+Existing attendance found for AT0024
+Updating Yet to Clock In attendance
+Existing attendance found for AT0025
+Updating Yet to Clock In attendance
+Existing attendance found for AT0026
+Updating Yet to Clock In attendance
+Existing attendance found for AT0027
+Existing attendance found for AT0028
+Updating Yet to Clock In attendance
+Existing attendance found for AT0029
+Updating Yet to Clock In attendance
+Existing attendance found for AT0030
+Existing attendance found for AT0031
+Existing attendance found for AT0033
+Existing attendance found for AT0034
+Existing attendance found for AT0035
+Existing attendance found for AT0036
+Existing attendance found for AT0037
+Existing attendance found for AT0038
+Existing attendance found for AT0039
+Updating Yet to Clock In attendance
+Existing attendance found for AT0040
+Updating Yet to Clock In attendance
+Existing attendance found for AT0041
+Updating Yet to Clock In attendance
+Existing attendance found for AT0042
+Updating Yet to Clock In attendance
+Existing attendance found for AT0043
+Updating Yet to Clock In attendance
+Existing attendance found for AT0044
+Updating Yet to Clock In attendance
+Existing attendance found for AT0045
+Updating Yet to Clock In attendance
+Existing attendance found for AT0046
+Updating Yet to Clock In attendance
+Existing attendance found for AT0047
+Updating Yet to Clock In attendance
+Existing attendance found for AT0048
+Updating Yet to Clock In attendance
+Existing attendance found for AT0049
+Updating Yet to Clock In attendance
+Existing attendance found for AT0050
+Updating Yet to Clock In attendance
+Existing attendance found for AT0051
+Updating Yet to Clock In attendance
+Existing attendance found for AT0052
+Updating Yet to Clock In attendance
+Existing attendance found for AT0053
+Existing attendance found for AT0054
+Existing attendance found for AT0055
+Existing attendance found for AT0056
+Existing attendance found for AT0057
+Existing attendance found for AT0058
+Existing attendance found for AT0059
+Existing attendance found for AT0060
+Existing attendance found for AT0061
+Existing attendance found for AT0062
+Existing attendance found for AT0063
+Existing attendance found for AT0064
+Existing attendance found for clinet1
+Existing attendance found for system
 auto_mark_attendance() completed
 Successfully processed attendance
