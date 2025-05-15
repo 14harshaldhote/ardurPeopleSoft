@@ -1029,6 +1029,9 @@ import logging
 # Configure logger
 logger = logging.getLogger(__name__)
 
+# Configure logger
+logger = logging.getLogger(__name__)
+
 class Attendance(models.Model):
     """
     Attendance tracking model integrated with user sessions, leave and shift systems
@@ -1447,7 +1450,122 @@ class Attendance(models.Model):
         
         return attendance
 
-    
+    @classmethod
+    def record_clock_out(cls, user, clock_out_time, location='Office', ip_address=None, device_info=None):
+        """
+        Update an existing attendance record when a user logs out
+        """
+        logger.info(f"Recording clock out for {user.username} at {clock_out_time}")
+        
+        # Ensure we're using aware datetime
+        if timezone.is_naive(clock_out_time):
+            clock_out_time = timezone.make_aware(clock_out_time)
+        
+        # Get the date from the clock_out_time
+        attendance_date = clock_out_time.date()
+        
+        try:
+            # Get the attendance record for today
+            attendance = cls.objects.get(
+                user=user,
+                date=attendance_date
+            )
+            
+            # Update clock_out_time if it's not set or if the new time is later
+            if attendance.clock_out_time is None or clock_out_time > attendance.clock_out_time:
+                attendance.clock_out_time = clock_out_time
+                
+                # Update location and device info if provided
+                if location:
+                    attendance.location = location
+                if ip_address:
+                    attendance.ip_address = ip_address
+                if device_info:
+                    attendance.device_info = device_info
+                    
+                # Calculate total hours if clock-in time exists
+                if attendance.clock_in_time:
+                    duration = clock_out_time - attendance.clock_in_time
+                    hours = duration.total_seconds() / 3600
+                    attendance.total_hours = round(Decimal(str(hours)), 2)
+                    
+                    # Subtract idle time if present
+                    if attendance.idle_time:
+                        idle_hours = attendance.idle_time.total_seconds() / 3600
+                        attendance.total_hours = max(0, attendance.total_hours - round(Decimal(str(idle_hours)), 2))
+                        
+                # Save changes
+                attendance.save()
+                logger.info(f"Updated clock out time for {user.username} to {clock_out_time}")
+                return attendance
+            else:
+                logger.debug(f"New clock out time ({clock_out_time}) is earlier than existing one ({attendance.clock_out_time})")
+                return attendance
+                
+        except cls.DoesNotExist:
+            logger.warning(f"No attendance record found for {user.username} on {attendance_date}")
+            # Create a new attendance record if one doesn't exist
+            attendance = cls.create_attendance(
+                user=user, 
+                clock_in_time=clock_out_time - timedelta(minutes=1),  # Set clock in 1 minute before clock out
+                location=location,
+                ip_address=ip_address,
+                device_info=device_info
+            )
+            attendance.clock_out_time = clock_out_time
+            attendance.save()
+            return attendance
+        except Exception as e:
+            logger.error(f"Error recording clock out for {user.username}: {e}")
+            return None
+
+    @classmethod
+    def record_session_activity(cls, session):
+        """
+        Record session activity for attendance
+        """
+        user = session.user
+        
+        # Ensure we're using aware datetime for all times
+        login_time = session.login_time
+        if timezone.is_naive(login_time):
+            login_time = timezone.make_aware(login_time)
+            
+        attendance_date = login_time.date()
+        
+        # Record clock in if it's a new session
+        attendance = cls.create_attendance(
+            user=user,
+            clock_in_time=login_time,
+            location=getattr(session, 'location', 'Office'),
+            ip_address=getattr(session, 'ip_address', None),
+            device_info=getattr(session, 'device_info', None)
+        )
+        
+        # Update session information
+        attendance.first_session = session
+        attendance.last_session = session
+        attendance.total_sessions = UserSession.objects.filter(
+            user=user,
+            login_time__date=attendance_date
+        ).count()
+        
+        # If session has logout_time, record clock out as well
+        if session.logout_time:
+            logout_time = session.logout_time
+            if timezone.is_naive(logout_time):
+                logout_time = timezone.make_aware(logout_time)
+                
+            cls.record_clock_out(
+                user=user,
+                clock_out_time=logout_time,
+                location=getattr(session, 'location', 'Office'),
+                ip_address=getattr(session, 'ip_address', None),
+                device_info=getattr(session, 'device_info', None)
+            )
+        
+        attendance.save()
+        return attendance
 
     @classmethod
     def is_shift_ended(cls, current_time, shift_start_time, shift_end_time):
@@ -1503,7 +1621,7 @@ class Attendance(models.Model):
                 updated_count += 1
         
         print(f"update_yet_to_clock_in_statuses() completed - updated {updated_count} records")
-        return updated_count      
+        return updated_count       
 
     @classmethod
     def auto_mark_attendance(cls):
@@ -1683,13 +1801,19 @@ class Attendance(models.Model):
                         
                         # Set clock in/out times - ensure they're in IST
                         attendance.clock_in_time = first_session.login_time.astimezone(IST)
-                        
                         # Only update clock_out_time if user has actually logged out
                         if last_session.logout_time:
-                            attendance.clock_out_time = last_session.logout_time.astimezone(IST)
+                            cls.record_clock_out(
+                                user=user,
+                                clock_out_time=last_session.logout_time.astimezone(IST),
+                                location=attendance.location
+                            )
                         elif last_session.last_activity and not last_session.is_active:
-                            attendance.clock_out_time = last_session.last_activity.astimezone(IST)
-                        
+                            cls.record_clock_out(
+                                user=user,
+                                clock_out_time=last_session.last_activity.astimezone(IST),
+                                location=attendance.location
+                            )
                         # Calculate total hours only if session is complete
                         if attendance.clock_in_time and attendance.clock_out_time:
                             print("Calculating total hours")

@@ -66,7 +66,6 @@ def track_login_time(sender, request, user, **kwargs):
         print(f"DEBUG: Login tracking error: {str(e)}")
         print(f"DEBUG: Error traceback: {traceback.format_exc()}")
 
-
 @receiver(user_logged_out)
 def track_logout_time(sender, request, user, **kwargs):
     """
@@ -97,8 +96,12 @@ def track_logout_time(sender, request, user, **kwargs):
             print(f"DEBUG: Working hours: {active_session.get_total_working_hours_display()}")
             print(f"DEBUG: Session duration: {active_session.get_session_duration_display()}")
 
-        # Use the Attendance.clock_out class method to handle the clock out with IST time
-        attendance = Attendance.clock_out(user, ist_now)  # Pass IST time for consistency
+        # Use the Attendance.record_clock_out method to handle the clock out with IST time
+        attendance = Attendance.record_clock_out(
+            user=user,
+            clock_out_time=ist_now,
+            location=active_session.location if active_session else None
+        )
         if attendance:
             print(f"DEBUG: Attendance updated with clock out time: {attendance}")
             print(f"DEBUG: Attendance clock out time: {attendance.clock_out_time}")
