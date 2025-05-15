@@ -3241,8 +3241,6 @@ def is_admin(user):
         
     # Check if user belongs to the 'Admin' group
     return user.groups.filter(name='Admin').exists()
-
-
 logger = logging.getLogger(__name__)
 @login_required
 @user_passes_test(is_admin)
@@ -3306,7 +3304,7 @@ def user_sessions_view(request):
 
         # Location filtering
         if filters['location']:
-            filter_conditions &= Q(location=filters['location'])
+            filter_conditions &= Q(location__icontains=filters['location'])
 
         # Enhanced status filtering
         if filters['status']:
@@ -3315,7 +3313,7 @@ def user_sessions_view(request):
             elif filters['status'] == 'inactive':
                 filter_conditions &= Q(is_active=False)
             elif filters['status'] == 'idle':
-                idle_threshold = timedelta(minutes=UserSession.IDLE_THRESHOLD_MINUTES)
+                idle_threshold = timedelta(minutes=int(UserSession.IDLE_THRESHOLD_MINUTES))
                 filter_conditions &= Q(idle_time__gt=idle_threshold)
 
         # Working hours range filtering
@@ -3387,6 +3385,13 @@ def user_sessions_view(request):
         # Consolidate sessions by user and date
         daily_user_sessions = consolidate_daily_sessions(page_obj)
 
+        # Get all possible locations from the database
+        all_locations = list(UserSession.objects.values_list('location', flat=True).distinct())
+        # Filter out None values and add default options
+        location_choices = [loc for loc in all_locations if loc] + ['Home', 'Unknown']
+        # Remove duplicates
+        location_choices = list(set(location_choices))
+
         # Prepare context with enhanced options
         context = {
             'sessions': page_obj,
@@ -3401,7 +3406,7 @@ def user_sessions_view(request):
                 'peak_hours': peak_hours,
                 'productive_users': productive_users
             },
-            'location_choices': UserSession.OFFICE_IPS + ['Home', 'Unknown'],
+            'location_choices': location_choices,
             'status_choices': [
                 ('active', 'Active'), 
                 ('inactive', 'Inactive'),
@@ -3433,7 +3438,7 @@ def consolidate_daily_sessions(sessions):
         if not session.login_time:
             continue
             
-        session_date = session.get_login_time_local().date()
+        session_date = timezone.localtime(session.login_time).date()
         user_key = (session.user.id, session_date)
 
         if user_key not in daily_sessions:
@@ -3456,13 +3461,13 @@ def consolidate_daily_sessions(sessions):
         daily_sessions[user_key]['session_count'] += 1
         
         # Update first login time using local time
-        login_time_local = session.get_login_time_local()
+        login_time_local = timezone.localtime(session.login_time) if session.login_time else None
         if login_time_local and (daily_sessions[user_key]['first_login'] is None or 
                                 login_time_local < daily_sessions[user_key]['first_login']):
             daily_sessions[user_key]['first_login'] = login_time_local
         
         # Update last logout time using local time
-        logout_time_local = session.get_logout_time_local()
+        logout_time_local = timezone.localtime(session.logout_time) if session.logout_time else None
         if logout_time_local and (daily_sessions[user_key]['last_logout'] is None or 
                                  logout_time_local > daily_sessions[user_key]['last_logout']):
             daily_sessions[user_key]['last_logout'] = logout_time_local
@@ -3547,10 +3552,11 @@ def user_session_detail_view(request, user_id, date_str):
         logger.debug(f"All sessions for user {user.username}: {debug_sessions.count()}")
         if debug_sessions.exists():
             recent = debug_sessions.order_by('-login_time').first()
-            print(f"Most recent session: {recent.get_login_time_local()}")
-            print(f"Working hours: {recent.get_total_working_hours_display()}")
+            login_time_local = timezone.localtime(recent.login_time) if recent.login_time else None
+            print(f"Most recent session: {login_time_local}")
+            print(f"Working hours: {recent.working_hours}")
             print(f"Idle time: {recent.idle_time}")
-            logger.debug(f"Most recent session: {recent.get_login_time_local()} - Working: {recent.get_total_working_hours_display()}, Idle: {recent.idle_time}")
+            logger.debug(f"Most recent session: {login_time_local} - Working: {recent.working_hours}, Idle: {recent.idle_time}")
 
         # Get timezone-aware date range for the specific date
         tz = timezone.get_current_timezone()
@@ -3585,9 +3591,11 @@ def user_session_detail_view(request, user_id, date_str):
             idle_time = session.idle_time or timedelta()
 
             print(f"\nSession details:")
-            print(f"Login time: {session.get_login_time_local()}")
-            print(f"Logout time: {session.get_logout_time_local()}")
-            print(f"Working hours: {session.get_total_working_hours_display()}")
+            login_time_local = timezone.localtime(session.login_time) if session.login_time else None
+            logout_time_local = timezone.localtime(session.logout_time) if session.logout_time else None
+            print(f"Login time: {login_time_local}")
+            print(f"Logout time: {logout_time_local}")
+            print(f"Working hours: {working_hours}")
             print(f"Idle time: {idle_time}")
             print(f"Location: {session.location or 'Unknown'}")
             print(f"IP Address: {session.ip_address or 'Unknown'}")
@@ -3604,7 +3612,7 @@ def user_session_detail_view(request, user_id, date_str):
                 
                 # Add to idle time if exceeds threshold
                 current_idle = idle_time
-                if time_since_last > timedelta(minutes=session.IDLE_THRESHOLD_MINUTES):
+                if time_since_last > timedelta(minutes=int(session.IDLE_THRESHOLD_MINUTES)):
                     current_idle = idle_time + time_since_last
                     print(f"Additional idle time: {time_since_last}")
                 
@@ -3625,8 +3633,8 @@ def user_session_detail_view(request, user_id, date_str):
 
             # Create session object with all required fields
             processed_session = {
-                'login_time': session.get_login_time_local(),
-                'logout_time': session.get_logout_time_local() or timezone.localtime(current_time),  # Use current time for active sessions
+                'login_time': login_time_local,
+                'logout_time': logout_time_local or timezone.localtime(current_time),  # Use current time for active sessions
                 'working_hours': working_hours,
                 'idle_time': idle_time,
                 'location': session.location or 'Unknown',
@@ -3704,8 +3712,6 @@ def calculate_productivity_score(working_hours, idle_time):
         
     productivity = (working_hours.total_seconds() / total_duration.total_seconds()) * 100
     return min(round(productivity, 1), 100)
-
-
 
 
 
