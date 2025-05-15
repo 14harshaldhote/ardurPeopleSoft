@@ -37,12 +37,30 @@ from django.db.models import F, ExpressionWrapper, DurationField
 
 '''------------------------------ TRACKING ------------------------'''
 
+from django.utils import timezone
+import pytz
+
+IST = pytz.timezone('Asia/Kolkata')
+
+def get_current_time_ist():
+    """Return current time in Asia/Kolkata timezone (aware)."""
+    return timezone.now().astimezone(IST)
+
+def to_ist(dt):
+    """Convert a datetime to Asia/Kolkata timezone (aware)."""
+    if dt is None:
+        return None
+    if timezone.is_naive(dt):
+        return timezone.make_aware(dt, IST)
+    return dt.astimezone(IST)
+
 @login_required
 @csrf_exempt
 def update_last_activity(request):
     """
     View to handle activity updates from the client.
     Updates the user's last activity timestamp and tracks idle time.
+    All times are handled and stored in Asia/Kolkata (IST) timezone.
     """
     if request.method == 'POST':
         try:
@@ -66,7 +84,7 @@ def update_last_activity(request):
                     is_active=True
                 ).select_for_update().first()
 
-                current_time = UserSession.get_current_time_utc()
+                current_time = get_current_time_ist()
 
                 if not user_session:
                     # Use model method to create session
@@ -82,8 +100,11 @@ def update_last_activity(request):
                         'session_id': user_session.id
                     })
 
+                # Ensure last_activity is in IST
+                last_activity_ist = to_ist(user_session.last_activity)
+
                 # Check for session timeout (5 minutes)
-                if (current_time - user_session.last_activity) > timedelta(minutes=5):
+                if (current_time - last_activity_ist) > timedelta(minutes=5):
                     user_session.end_session(current_time, is_idle=True)
                     new_session = UserSession.get_or_create_session(
                         user=request.user,
@@ -113,11 +134,19 @@ def update_last_activity(request):
 
                 user_session.refresh_from_db()
 
+                # Always return times in IST
+                last_activity_ist = to_ist(user_session.last_activity)
+                working_hours = user_session.working_hours
+                if working_hours is not None:
+                    working_hours = str(working_hours)
+                else:
+                    working_hours = None
+
                 return JsonResponse({
                     'status': 'success',
-                    'last_activity': user_session.get_last_activity_local().isoformat(),
+                    'last_activity': last_activity_ist.isoformat() if last_activity_ist else None,
                     'idle_time': str(user_session.idle_time),
-                    'working_hours': str(user_session.working_hours) if user_session.working_hours else None,
+                    'working_hours': working_hours,
                     'location': user_session.location
                 })
 
@@ -140,8 +169,10 @@ def end_session(request):
     """
     View to handle session end/logout.
     Calculates final working hours and idle time.
+    All times are handled and stored in Asia/Kolkata (IST) timezone.
     """
     if request.method != 'POST':
+        from django.http import JsonResponse
         return JsonResponse({
             'status': 'error',
             'message': 'Invalid request method'
@@ -185,7 +216,7 @@ def end_session(request):
 
 @login_required
 def get_session_status(request):
-    """Get the current session status"""
+    """Get the current session status. All times are returned in Asia/Kolkata (IST) timezone."""
     try:
         from django.http import JsonResponse
         
@@ -200,20 +231,22 @@ def get_session_status(request):
                 'message': 'No active session found'
             }, status=404)
 
-        current_time = UserSession.get_current_time_utc()
-        total_duration = current_time - user_session.login_time
+        current_time = get_current_time_ist()
+        login_time_ist = to_ist(user_session.login_time)
+        last_activity_ist = to_ist(user_session.last_activity)
 
         return JsonResponse({
             'status': 'success',
             'session_id': user_session.id,
-            'login_time': user_session.get_login_time_local().isoformat(),
-            'last_activity': user_session.get_last_activity_local().isoformat(),
+            'login_time': login_time_ist.isoformat() if login_time_ist else None,
+            'last_activity': last_activity_ist.isoformat() if last_activity_ist else None,
             'idle_time': str(user_session.idle_time),
             'location': user_session.location,
             'session_duration': user_session.get_session_duration_display()
         })
 
     except Exception as e:
+        from django.http import JsonResponse
         return JsonResponse({
             'status': 'error',
             'message': str(e)

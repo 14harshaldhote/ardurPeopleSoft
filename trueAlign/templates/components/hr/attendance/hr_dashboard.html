@@ -95,59 +95,7 @@
       <!-- Left column (takes 2/3 of space on lg screens) -->
       <div class="lg:col-span-2 space-y-8">
         
-        <!-- Recent Attendance with improved table -->
-        <div class="bg-white rounded-lg shadow-md">
-          <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-            <h2 class="text-xl font-semibold text-gray-800">Recent Attendance Records</h2>
-            <div class="flex space-x-2">
-              
-            </div>
-          </div>
-          <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50">
-                <tr>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Check In</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Check Out</th>
-                </tr>
-              </thead>
-              <tbody class="bg-white divide-y divide-gray-200">
-                {% for record in recent_attendance %}
-                <tr class="hover:bg-gray-50 transition-colors duration-200">
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm font-medium text-gray-900">{{ record.user.get_full_name }}</div>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm text-gray-900">{{ record.date|date:"M d, Y" }}</div>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                {% if record.status == 'Present' %}bg-green-100 text-green-800
-                                {% elif record.status == 'Absent' %}bg-red-100 text-red-800
-                                {% elif 'Late' in record.status %}bg-yellow-100 text-yellow-800
-                                {% else %}bg-gray-100 text-gray-800{% endif %}">
-                      {{ record.status }}
-                    </span>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {{ record.check_in|time:"g:i A"|default:"-" }}
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {{ record.check_out|time:"g:i A"|default:"-" }}
-                  </td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-          <div class="px-6 py-3 bg-gray-50 border-t border-gray-200 flex justify-center">
-            <a href="{% url 'aps_attendance:hr_attendance_list' %}" class="text-sm text-blue-600 hover:text-blue-800 font-medium">View All Records</a>
-          </div>
-        </div>
-      </div>
+       
 
       <!-- Right column (takes 1/3 of space on lg screens) -->
       <div class="space-y-8">
