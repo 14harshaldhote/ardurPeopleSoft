@@ -1544,6 +1544,7 @@ def hr_dashboard(request):
     }
 
     return render(request, 'components/hr/hr_dashboard.html', context)
+
 @login_required
 @user_passes_test(is_hr)
 def hr_user_detail(request, user_id):
@@ -1572,165 +1573,198 @@ def hr_user_detail(request, user_id):
 
             # Extract and clean data
             data = request.POST.copy()
-
-            # Validate date of birth
-            dob = data.get('dob')
-            if dob:
-                dob_date = datetime.strptime(dob, '%Y-%m-%d').date()
-                today = date.today()
-                age = today.year - dob_date.year - ((today.month, today.day) < (dob_date.month, dob_date.day))
-                if age < 18:
-                    raise ValueError('Employee must be at least 18 years old.')
-
-            # Validate contact numbers
-            def validate_contact(number, field_name):
-                if not number:
-                    return None
-                    
-                # Remove any non-digit characters for validation
-                cleaned_number = ''.join(c for c in number if c.isdigit())
-                
-                # Check if the number is valid (allowing for international format)
-                if len(cleaned_number) < 10 or len(cleaned_number) > 15:
-                    raise ValueError(f'{field_name} must be between 10 and 15 digits.')
-                    
-                return number
-
-            # Primary contact validation
-            primary_number = data.get('contact_number_primary', '').strip()
-            primary_contact = validate_contact(primary_number, 'Primary contact number')
-
-            # Emergency contact validation  
-            emergency_number = data.get('emergency_contact_number', '').strip()
-            emergency_contact = validate_contact(emergency_number, 'Emergency contact number')
             
-            # Secondary emergency contact validation
-            secondary_emergency_number = data.get('secondary_emergency_contact_number', '').strip()
-            secondary_emergency_contact = validate_contact(secondary_emergency_number, 'Secondary emergency contact number')
+            # Check if we're only updating employment status
+            is_status_only_update = False
+            new_status = data.get('employment_status')
+            
+            # If we have a status change and it's not to 'active', we'll allow minimal validation
+            if new_status and new_status != 'active' and user_detail.employment_status != new_status:
+                is_status_only_update = True
+                logger.info(f"Status-only update detected for user {user_id}: changing to {new_status}")
+            
+            # Regular validation logic for complete updates or when status is set to 'active'
+            if not is_status_only_update:
+                # Validate date of birth
+                dob = data.get('dob')
+                if dob:
+                    dob_date = datetime.strptime(dob, '%Y-%m-%d').date()
+                    today = date.today()
+                    age = today.year - dob_date.year - ((today.month, today.day) < (dob_date.month, dob_date.day))
+                    if age < 18:
+                        raise ValueError('Employee must be at least 18 years old.')
 
-            # Validate PAN using model validator
-            pan = data.get('pan_number')
-            if pan:
-                validate_pan(pan)
+                # Validate contact numbers
+                def validate_contact(number, field_name):
+                    if not number:
+                        return None
+                        
+                    # Remove any non-digit characters for validation
+                    cleaned_number = ''.join(c for c in number if c.isdigit())
+                    
+                    # Check if the number is valid (allowing for international format)
+                    if len(cleaned_number) < 10 or len(cleaned_number) > 15:
+                        raise ValueError(f'{field_name} must be between 10 and 15 digits.')
+                        
+                    return number
 
-            # Validate Aadhar using model validator  
-            aadhar = data.get('aadhar_number', '').replace(' ', '')
-            if aadhar:
-                validate_aadhar(aadhar)
+                # Primary contact validation
+                primary_number = data.get('contact_number_primary', '').strip()
+                primary_contact = validate_contact(primary_number, 'Primary contact number')
 
-            # Validate email
-            email = data.get('personal_email')
-            if email and not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
-                raise ValueError('Invalid email format')
+                # Emergency contact validation  
+                emergency_number = data.get('emergency_contact_number', '').strip()
+                emergency_contact = validate_contact(emergency_number, 'Emergency contact number')
                 
-            company_email = data.get('company_email')
-            if company_email and not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', company_email):
-                raise ValueError('Invalid company email format')
+                # Secondary emergency contact validation
+                secondary_emergency_number = data.get('secondary_emergency_contact_number', '').strip()
+                secondary_emergency_contact = validate_contact(secondary_emergency_number, 'Secondary emergency contact number')
+
+                # Validate PAN using model validator
+                pan = data.get('pan_number')
+                if pan:
+                    validate_pan(pan)
+
+                # Validate Aadhar using model validator  
+                aadhar = data.get('aadhar_number', '').replace(' ', '')
+                if aadhar:
+                    validate_aadhar(aadhar)
+
+                # Validate email
+                email = data.get('personal_email')
+                if email and not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
+                    raise ValueError('Invalid email format')
+                    
+                company_email = data.get('company_email')
+                if company_email and not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', company_email):
+                    raise ValueError('Invalid company email format')
+                
+                # When setting status to 'active', require essential fields
+                if new_status == 'active':
+                    required_fields = {
+                        'contact_number_primary': 'Primary contact number',
+                        'emergency_contact_name': 'Emergency contact name',
+                        'emergency_contact_number': 'Emergency contact number',
+                        'employee_type': 'Employee type',
+                        'hire_date': 'Hire date'
+                    }
+                    
+                    for field, label in required_fields.items():
+                        if not data.get(field):
+                            raise ValueError(f"{label} is required when employee status is Active")
 
             # Dictionary of fields to update based on UserDetails model fields
             fields_to_update = {
-                # Personal Information
-                'dob': dob or None,
-                'blood_group': data.get('blood_group') or None,
-                'gender': data.get('gender') or None,
-                'marital_status': data.get('marital_status') or None,
+                # Only include these fields if we're not doing a status-only update
+                # or if status is being set to 'active'
+                'dob': None if is_status_only_update else (data.get('dob') or None),
+                'blood_group': None if is_status_only_update else (data.get('blood_group') or None),
+                'gender': None if is_status_only_update else (data.get('gender') or None),
+                'marital_status': None if is_status_only_update else (data.get('marital_status') or None),
                 
-                # Contact Information
-                'contact_number_primary': primary_contact,
-                'personal_email': email or None,
-                'company_email': company_email or None,
+                'contact_number_primary': None if is_status_only_update else primary_contact,
+                'personal_email': None if is_status_only_update else (email or None),
+                'company_email': None if is_status_only_update else (company_email or None),
                 
-                # Current Address
-                'current_address_line1': data.get('current_address_line1') or None,
-                'current_address_line2': data.get('current_address_line2') or None,
-                'current_city': data.get('current_city') or None,
-                'current_state': data.get('current_state') or None,
-                'current_postal_code': data.get('current_postal_code') or None,
-                'current_country': data.get('current_country') or None,
+                'current_address_line1': None if is_status_only_update else (data.get('current_address_line1') or None),
+                'current_address_line2': None if is_status_only_update else (data.get('current_address_line2') or None),
+                'current_city': None if is_status_only_update else (data.get('current_city') or None),
+                'current_state': None if is_status_only_update else (data.get('current_state') or None),
+                'current_postal_code': None if is_status_only_update else (data.get('current_postal_code') or None),
+                'current_country': None if is_status_only_update else (data.get('current_country') or None),
                 
-                # Permanent Address
-                'permanent_address_line1': data.get('permanent_address_line1') or None,
-                'permanent_address_line2': data.get('permanent_address_line2') or None,
-                'permanent_city': data.get('permanent_city') or None,
-                'permanent_state': data.get('permanent_state') or None,
-                'permanent_postal_code': data.get('permanent_postal_code') or None,
-                'permanent_country': data.get('permanent_country') or None,
-                'is_current_same_as_permanent': data.get('is_current_same_as_permanent') == 'on',
+                'permanent_address_line1': None if is_status_only_update else (data.get('permanent_address_line1') or None),
+                'permanent_address_line2': None if is_status_only_update else (data.get('permanent_address_line2') or None),
+                'permanent_city': None if is_status_only_update else (data.get('permanent_city') or None),
+                'permanent_state': None if is_status_only_update else (data.get('permanent_state') or None),
+                'permanent_postal_code': None if is_status_only_update else (data.get('permanent_postal_code') or None),
+                'permanent_country': None if is_status_only_update else (data.get('permanent_country') or None),
+                'is_current_same_as_permanent': None if is_status_only_update else (data.get('is_current_same_as_permanent') == 'on'),
                 
-                # Emergency Contact
-                'emergency_contact_name': data.get('emergency_contact_name') or None,
-                'emergency_contact_number': emergency_contact,
-                'emergency_contact_relationship': data.get('emergency_contact_relationship') or None,
+                'emergency_contact_name': None if is_status_only_update else (data.get('emergency_contact_name') or None),
+                'emergency_contact_number': None if is_status_only_update else emergency_contact,
+                'emergency_contact_relationship': None if is_status_only_update else (data.get('emergency_contact_relationship') or None),
                 
-                # Secondary Emergency Contact
-                'secondary_emergency_contact_name': data.get('secondary_emergency_contact_name') or None,
-                'secondary_emergency_contact_number': secondary_emergency_contact,
-                'secondary_emergency_contact_relationship': data.get('secondary_emergency_contact_relationship') or None,
+                'secondary_emergency_contact_name': None if is_status_only_update else (data.get('secondary_emergency_contact_name') or None),
+                'secondary_emergency_contact_number': None if is_status_only_update else secondary_emergency_contact,
+                'secondary_emergency_contact_relationship': None if is_status_only_update else (data.get('secondary_emergency_contact_relationship') or None),
                 
-                # Employment Information
-                'employee_type': data.get('employee_type') or None,
-                'reporting_manager_id': data.get('reporting_manager') or None,
-                'hire_date': data.get('hire_date') or None,
-                'start_date': data.get('start_date') or None,
-                'probation_end_date': data.get('probation_end_date') or None,
-                'notice_period_days': data.get('notice_period_days') or 30,
-                'job_description': data.get('job_description') or None,
-                'work_location': data.get('work_location') or None,
-                'employment_status': data.get('employment_status') or None,
-                'exit_date': data.get('exit_date') or None,
-                'exit_reason': data.get('exit_reason') or None,
-                'rehire_eligibility': data.get('rehire_eligibility') == 'on',
+                # Employment Status is always included, as this is what we're changing
+                'employment_status': new_status,
                 
-                # Compensation Details
-                'salary_currency': data.get('salary_currency') or 'INR',
-                'base_salary': data.get('base_salary') or None,
-                'salary_frequency': data.get('salary_frequency') or 'monthly',
+                # Only include these fields if we're not doing a status-only update
+                'employee_type': None if is_status_only_update else (data.get('employee_type') or None),
+                'reporting_manager_id': None if is_status_only_update else (data.get('reporting_manager') or None),
+                'hire_date': None if is_status_only_update else (data.get('hire_date') or None),
+                'start_date': None if is_status_only_update else (data.get('start_date') or None),
+                'probation_end_date': None if is_status_only_update else (data.get('probation_end_date') or None),
+                'notice_period_days': None if is_status_only_update else (data.get('notice_period_days') or 30),
+                'job_description': None if is_status_only_update else (data.get('job_description') or None),
+                'work_location': None if is_status_only_update else (data.get('work_location') or None),
                 
-                # Government IDs
-                'pan_number': pan or None,
-                'aadhar_number': aadhar or None,
-                'passport_number': data.get('passport_number') or None,
-                'passport_expiry': data.get('passport_expiry') or None,
+                # For non-active statuses, we might want to capture exit date and reason
+                'exit_date': None if new_status == 'active' else (data.get('exit_date') or (date.today() if new_status in ['terminated', 'resigned', 'absconding'] else None)),
+                'exit_reason': None if new_status == 'active' else (data.get('exit_reason') or None),
+                'rehire_eligibility': None if is_status_only_update else (data.get('rehire_eligibility') == 'on'),
                 
-                # Banking Details
-                'bank_name': data.get('bank_name') or None,
-                'bank_account_number': data.get('bank_account_number') or None,
-                'bank_ifsc': data.get('bank_ifsc') or None,
+                'salary_currency': None if is_status_only_update else (data.get('salary_currency') or 'INR'),
+                'base_salary': None if is_status_only_update else (data.get('base_salary') or None),
+                'salary_frequency': None if is_status_only_update else (data.get('salary_frequency') or 'monthly'),
                 
-                # Previous Employment
-                'previous_company': data.get('previous_company') or None,
-                'previous_position': data.get('previous_position') or None,
-                'previous_experience_years': data.get('previous_experience_years') or None,
+                'pan_number': None if is_status_only_update else (pan or None),
+                'aadhar_number': None if is_status_only_update else (aadhar or None),
+                'passport_number': None if is_status_only_update else (data.get('passport_number') or None),
+                'passport_expiry': None if is_status_only_update else (data.get('passport_expiry') or None),
                 
-                # Skills and Competencies
-                'skills': data.get('skills') or None,
+                'bank_name': None if is_status_only_update else (data.get('bank_name') or None),
+                'bank_account_number': None if is_status_only_update else (data.get('bank_account_number') or None),
+                'bank_ifsc': None if is_status_only_update else (data.get('bank_ifsc') or None),
                 
-                # Additional HR Notes
-                'confidential_notes': data.get('confidential_notes') if request.user.has_perm('view_confidential_notes') else user_detail.confidential_notes
+                'previous_company': None if is_status_only_update else (data.get('previous_company') or None),
+                'previous_position': None if is_status_only_update else (data.get('previous_position') or None),
+                'previous_experience_years': None if is_status_only_update else (data.get('previous_experience_years') or None),
+                
+                'skills': None if is_status_only_update else (data.get('skills') or None),
+                
+                # Only include confidential notes if user has permission and we're not doing a status-only update
+                'confidential_notes': None if is_status_only_update else (
+                    data.get('confidential_notes') if request.user.has_perm('view_confidential_notes') else user_detail.confidential_notes
+                )
             }
 
-            # Check if role/group is being updated
-            old_group = user.groups.first()
-            new_group_id = data.get('group')
-            if new_group_id:
-                new_group = Group.objects.get(id=new_group_id)
+            # If it's a status-only update, add a note about the status change
+            if is_status_only_update and request.user.has_perm('view_confidential_notes'):
+                status_note = f"Status changed to {dict(UserDetails.EMPLOYMENT_STATUS_CHOICES).get(new_status, new_status)} on {date.today()} by {request.user.get_full_name() or request.user.username}"
                 
-                if not old_group or old_group.id != new_group.id:
-                    user.groups.clear()
-                    user.groups.add(new_group)
+                existing_notes = user_detail.confidential_notes or ""
+                if existing_notes:
+                    fields_to_update['confidential_notes'] = f"{existing_notes}\n\n{status_note}"
+                else:
+                    fields_to_update['confidential_notes'] = status_note
+
+            # Check if role/group is being updated (only for non-status-only updates)
+            if not is_status_only_update:
+                old_group = user.groups.first()
+                new_group_id = data.get('group')
+                if new_group_id:
+                    new_group = Group.objects.get(id=new_group_id)
                     
-                    UserActionLog.objects.create(
-                        user=user,
-                        action_type='role_change',
-                        action_by=request.user,
-                        details=f"Role changed from {old_group.name if old_group else 'None'} to {new_group.name}"
-                    )
+                    if not old_group or old_group.id != new_group.id:
+                        user.groups.clear()
+                        user.groups.add(new_group)
+                        
+                        UserActionLog.objects.create(
+                            user=user,
+                            action_type='role_change',
+                            action_by=request.user,
+                            details=f"Role changed from {old_group.name if old_group else 'None'} to {new_group.name}"
+                        )
 
             # Handle employment status changes based on model choices
             old_status = user_detail.employment_status
-            new_status = data.get('employment_status')
             
             if old_status != new_status and new_status:
+                # Automatically deactivate user accounts for certain statuses
                 if new_status in ['inactive', 'terminated', 'resigned', 'suspended', 'absconding']:
                     if user.is_active:
                         user.is_active = False
@@ -1742,6 +1776,7 @@ def hr_user_detail(request, user_id):
                             action_by=request.user,
                             details=f"User account deactivated due to status change to {new_status}"
                         )
+                # Reactivate accounts when changing to active
                 elif new_status == 'active' and not user.is_active:
                     user.is_active = True
                     user.save()
@@ -1752,8 +1787,16 @@ def hr_user_detail(request, user_id):
                         action_by=request.user,
                         details="User account activated due to status change to active"
                     )
+                
+                # Log status change
+                UserActionLog.objects.create(
+                    user=user,
+                    action_type='status_change',
+                    action_by=request.user,
+                    details=f"Employment status changed from {dict(UserDetails.EMPLOYMENT_STATUS_CHOICES).get(old_status, old_status) if old_status else 'None'} to {dict(UserDetails.EMPLOYMENT_STATUS_CHOICES).get(new_status, new_status)}"
+                )
 
-            # Remove empty values
+            # Remove None values (for fields that shouldn't be updated)
             fields_to_update = {k: v for k, v in fields_to_update.items() if v is not None}
 
             # Validate against model choices
@@ -1765,23 +1808,24 @@ def hr_user_detail(request, user_id):
                     if value not in valid_choices:
                         raise ValueError(f'Invalid value for {field_name}')
 
-            # Update basic user details if provided
-            first_name = data.get('first_name')
-            last_name = data.get('last_name')
-            email = data.get('email')
-            
-            if first_name or last_name or email:
-                user.first_name = first_name or user.first_name
-                user.last_name = last_name or user.last_name
-                user.email = email or user.email
-                user.save()
+            # Update basic user details if provided and not doing a status-only update
+            if not is_status_only_update:
+                first_name = data.get('first_name')
+                last_name = data.get('last_name')
+                email = data.get('email')
                 
-                UserActionLog.objects.create(
-                    user=user,
-                    action_type='update',
-                    action_by=request.user,
-                    details="Basic user information updated"
-                )
+                if first_name or last_name or email:
+                    user.first_name = first_name or user.first_name
+                    user.last_name = last_name or user.last_name
+                    user.email = email or user.email
+                    user.save()
+                    
+                    UserActionLog.objects.create(
+                        user=user,
+                        action_type='update',
+                        action_by=request.user,
+                        details="Basic user information updated"
+                    )
 
             # Perform atomic update
             with transaction.atomic():
@@ -1789,12 +1833,13 @@ def hr_user_detail(request, user_id):
                     setattr(user_detail, field, value)
                 user_detail.save()
                 
-                UserActionLog.objects.create(
-                    user=user,
-                    action_type='update',
-                    action_by=request.user,
-                    details="User details updated"
-                )
+                if not is_status_only_update:
+                    UserActionLog.objects.create(
+                        user=user,
+                        action_type='update',
+                        action_by=request.user,
+                        details="User details updated"
+                    )
 
             messages.success(request, 'User details updated successfully.')
             return redirect('aps_hr:hr_user_detail', user_id=user.id)
@@ -15151,3 +15196,757 @@ def subscription_payment_entry(request):
         'filters': request.GET
     }
     return render(request, 'components/finance/subscription_payment.html', context)
+
+
+'''----------------------------------- Entertainment AREA -----------------------------------'''
+
+from django.shortcuts import render, get_object_or_404
+from django.http import HttpResponseForbidden, JsonResponse
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User, Group
+from django.db.models import Q, F, ExpressionWrapper, FloatField, Case, When, Value
+from .models import TicTacToeGame, PlayerStats, GameIcon, GameSpectator, Notification
+# Custom decorator for checking user groups
+def user_passes_test_groups(test_func):
+    def decorator(view_func):
+        @login_required
+        def wrapped_view(request, *args, **kwargs):
+            if test_func(request.user):
+                return view_func(request, *args, **kwargs)
+            return HttpResponseForbidden("You don't have permission to access this page.")
+        return wrapped_view
+    return decorator
+
+def is_manager_or_hr_or_employee(user):
+    """Check if user belongs to Manager, HR or Employee group"""
+    return user.groups.filter(name__in=["Manager", "HR", "Employee"]).exists()
+
+def is_hr(user):
+    """Check if user belongs to HR group"""
+    return user.groups.filter(name="HR").exists()
+
+def is_admin(user):
+    """Check if user belongs to Admin group"""
+    return user.groups.filter(name="Admin").exists()
+
+from django.contrib.admin.views.decorators import staff_member_required
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from .models import GameIcon, TicTacToeGame, PlayerStats
+
+
+@login_required
+@user_passes_test_groups(is_admin)
+def entertainment_control(request):
+    """Admin control panel for entertainment features"""
+    
+    # Get statistics
+    stats = {
+        'total_games': TicTacToeGame.objects.count(),
+        'active_games': TicTacToeGame.objects.filter(status='active').count(),
+        'total_players': PlayerStats.objects.count(),
+        'total_icons': GameIcon.objects.count()
+    }
+    
+    # Get recent games
+    recent_games = TicTacToeGame.objects.select_related('creator', 'opponent')\
+                                      .order_by('-created_at')[:10]
+    
+    # Get game icons
+    icons = GameIcon.objects.select_related('created_by')\
+                          .order_by('-created_at')
+    
+    # Get top players
+    top_players = PlayerStats.objects.select_related('player')\
+                                   .order_by('-games_won')[:10]
+    
+    context = {
+        'stats': stats,
+        'recent_games': recent_games,
+        'icons': icons,
+        'top_players': top_players,
+        'title': 'Entertainment Control Panel'
+    }
+    
+    return render(request, 'components/entertainment/control_panel.html', context)
+
+@login_required
+@user_passes_test_groups(is_manager_or_hr_or_employee)
+def entertainment_dashboard(request):
+    """
+    Main entertainment dashboard view that shows available games
+    and entertainment options.
+    
+    This function calls the games() function to get games content.
+    """
+    # Get games dashboard content by calling games()
+    games_response = games(request)
+    
+    # Additional entertainment options
+   
+    
+    context = {
+        'title': 'Entertainment Dashboard',
+        'games_dashboard': games_response,
+       
+    }
+    
+    return render(request, 'components/entertainment/dashboard.html', context)
+
+@login_required
+@user_passes_test_groups(is_manager_or_hr_or_employee)
+def games(request):
+    """
+    View that displays all available games with descriptions
+    and links to play them.
+    
+    This function calls tictactoe() function for tic-tac-toe game content.
+    """
+    # Get tic-tac-toe game content by calling tictactoe()
+    tictactoe_content = tictactoe(request)
+  
+    
+
+    
+    context = {
+        'title': 'Games Center',
+        'tictactoe_game': tictactoe_content,
+        # 'other_games': other_games
+    }
+    
+    return render(request, 'components/entertainment/games/games.html', context)
+
+# Views for Tic-Tac-Toe Game
+@login_required
+@user_passes_test_groups(is_manager_or_hr_or_employee)
+def tictactoe(request):
+    """
+    View for the Tic-Tac-Toe game.
+    - GET request: Returns the game board data
+    - POST request: Processes player moves and AI responses
+    This is called by the games() function to include the game data.
+    """
+    # Handle POST requests (making a move)
+    if request.method == 'POST':
+        game_id = request.POST.get('game_id')
+        position = request.POST.get('position')
+        
+        if game_id and position:
+            game = get_object_or_404(TicTacToeGame, id=game_id)
+            
+            # Check if user is a participant and it's their turn
+            if request.user != game.current_turn:
+                return JsonResponse({'success': False, 'message': "Not your turn or you're not a participant"})
+            
+            try:
+                position = int(position)
+                success, message = game.make_move(request.user, position)
+                
+                if success:
+                    # If game is now complete, update player stats
+                    if game.status == 'completed':
+                        PlayerStats.update_stats(game)
+                    
+                    return JsonResponse({
+                        'success': True,
+                        'board': game.board,
+                        'status': game.status,
+                        'winner': game.winner.username if game.winner else None,
+                        'current_turn': game.current_turn.username if game.current_turn else None
+                    })
+                else:
+                    return JsonResponse({'success': False, 'message': message})
+            except ValueError:
+                return JsonResponse({'success': False, 'message': "Invalid position"})
+                
+        # Handle forfeit action
+        if request.POST.get('action') == 'forfeit':
+            game_id = request.POST.get('game_id')
+            game = get_object_or_404(TicTacToeGame, id=game_id)
+            
+            # Check if user is a participant
+            if request.user != game.creator and request.user != game.opponent:
+                return JsonResponse({'success': False, 'message': "You're not a participant in this game"})
+            
+            success, message = game.forfeit_game(request.user)
+            
+            if success:
+                # Update player stats
+                PlayerStats.update_stats(game)
+                
+                return JsonResponse({
+                    'success': True,
+                    'status': game.status,
+                    'winner': game.winner.username
+                })
+            else:
+                return JsonResponse({'success': False, 'message': message})
+        
+        # Handle accept/decline invitation
+        if request.POST.get('action') == 'accept':
+            game_id = request.POST.get('game_id')
+            game = get_object_or_404(TicTacToeGame, id=game_id, opponent=request.user, status='pending')
+            success, message = game.accept_game()
+            
+            if success:
+                return JsonResponse({'success': True, 'message': "Game invitation accepted!"})
+            else:
+                return JsonResponse({'success': False, 'message': message})
+                
+        if request.POST.get('action') == 'decline':
+            game_id = request.POST.get('game_id')
+            game = get_object_or_404(TicTacToeGame, id=game_id, opponent=request.user, status='pending')
+            success, message = game.decline_game()
+            
+            if success:
+                return JsonResponse({'success': True, 'message': "Game invitation declined."})
+            else:
+                return JsonResponse({'success': False, 'message': message})
+        
+        # Handle create game
+        if request.POST.get('action') == 'create':
+            opponent_id = request.POST.get('opponent_id')
+            creator_icon_id = request.POST.get('creator_icon')
+            opponent_icon_id = request.POST.get('opponent_icon')
+            allow_spectators = request.POST.get('allow_spectators', False) == 'on'
+            
+            # Validate opponent exists
+            try:
+                opponent = User.objects.get(id=opponent_id)
+                
+                # Don't allow inviting yourself
+                if opponent == request.user:
+                    return JsonResponse({'success': False, 'message': "You cannot play against yourself."})
+                    
+                # Use default icons if not specified
+                default_icon = GameIcon.objects.filter(is_active=True).first()
+                creator_icon = GameIcon.objects.get(id=creator_icon_id) if creator_icon_id else default_icon
+                opponent_icon = GameIcon.objects.get(id=opponent_icon_id) if opponent_icon_id else default_icon
+                
+                # Create the game
+                game = TicTacToeGame.objects.create(
+                    creator=request.user,
+                    opponent=opponent,
+                    creator_icon=creator_icon,
+                    opponent_icon=opponent_icon,
+                    allow_spectators=allow_spectators
+                )
+                
+                # Create notification for the opponent
+                Notification.objects.create(
+                    recipient=opponent,
+                    message=f"{request.user.username} has invited you to play Tic-Tac-Toe",
+                    notification_type='game_invite',
+                    game=game
+                )
+                
+                return JsonResponse({
+                    'success': True,
+                    'message': f"Game invitation sent to {opponent.username}",
+                    'game_id': str(game.id)
+                })
+                
+            except User.DoesNotExist:
+                return JsonResponse({'success': False, 'message': "Invalid opponent selected."})
+    
+    # Handle GET requests (display game data)
+    else:
+        context = {}
+        
+        # Get active games where the user is a participant
+        context['active_games'] = TicTacToeGame.objects.filter(
+            (Q(creator=request.user) | Q(opponent=request.user)),
+            status__in=['active', 'pending']
+        ).order_by('-updated_at')
+        
+        # Get completed games where the user is a participant
+        context['completed_games'] = TicTacToeGame.objects.filter(
+            (Q(creator=request.user) | Q(opponent=request.user)),
+            status='completed'
+        ).order_by('-updated_at')[:10]  # Limit to recent 10 games
+        
+        # Games user can spectate (active games where user is not a participant)
+        context['spectatable_games'] = TicTacToeGame.objects.filter(
+            status='active',
+            allow_spectators=True
+        ).exclude(
+            Q(creator=request.user) | Q(opponent=request.user)
+        ).order_by('-updated_at')
+        
+        # Get pending invitations
+        context['invitations'] = TicTacToeGame.objects.filter(
+            opponent=request.user,
+            status='pending'
+        ).order_by('-created_at')
+        
+        # Get unread notifications
+        context['notifications'] = Notification.objects.filter(
+            recipient=request.user,
+            is_read=False
+        ).order_by('-created_at')[:5]
+        
+        # Get top players for leaderboard - WITH FIX FOR win_rate
+        
+        top_players = PlayerStats.objects.annotate(
+            win_rate=ExpressionWrapper(
+                Case(
+                    When(games_played__gt=0, 
+                        then=F('games_won') * 100.0 / F('games_played')),
+                    default=Value(0.0)
+                ),
+                output_field=FloatField()
+            )
+        ).order_by('-games_won', '-win_rate')[:10]
+        
+        context['top_players'] = top_players
+        
+        # Get available icons for the game
+        context['icons'] = GameIcon.objects.filter(is_active=True)
+        
+        # Get list of users who can be invited (in Manager, HR or Employee groups)
+        allowed_groups = Group.objects.filter(name__in=["Manager", "HR", "Employee"])
+        context['potential_opponents'] = User.objects.filter(groups__in=allowed_groups).exclude(id=request.user.id)
+
+        # Check for specific game_id parameter
+        game_id = request.GET.get('game_id')
+        if game_id:
+            game = get_object_or_404(TicTacToeGame, id=game_id)
+            
+            # Determine if user is allowed to view this game
+            is_participant = request.user == game.creator or request.user == game.opponent
+            is_spectator = game.spectators.filter(user=request.user).exists()
+            
+            if not (is_participant or (is_spectator and game.allow_spectators)):
+                # If not a participant or spectator, check if can become spectator
+                if game.status == 'active' and game.allow_spectators:
+                    # Add as spectator if allowed
+                    GameSpectator.objects.get_or_create(game=game, user=request.user)
+                    is_spectator = True
+                else:
+                    return HttpResponseForbidden("You don't have permission to view this game.")
+            
+            # Check for timeout
+            if game.status == 'active' and game.is_timeout():
+                game.status = 'timeout'
+                # The player whose turn it is loses due to timeout
+                game.winner = game.opponent if game.current_turn == game.creator else game.creator
+                game.save()
+                
+                # Create timeout notification
+                Notification.objects.create(
+                    recipient=game.current_turn,
+                    message=f"Your game has timed out due to inactivity. {game.winner.username} wins.",
+                    notification_type='game_timeout',
+                    game=game
+                )
+                
+                # Update player stats
+                PlayerStats.update_stats(game)
+            
+            # Mark notifications related to this game as read
+            if is_participant:
+                Notification.objects.filter(
+                    recipient=request.user,
+                    game=game,
+                    is_read=False
+                ).update(is_read=True)
+            
+            # Get spectators list
+            spectators = game.spectators.all()
+            
+            # Add game specific context
+            context['game'] = game
+            context['is_participant'] = is_participant
+            context['is_spectator'] = is_spectator
+            context['is_creator'] = request.user == game.creator
+            context['is_opponent'] = request.user == game.opponent
+            context['is_my_turn'] = game.current_turn == request.user if game.current_turn else False
+            context['spectators'] = spectators
+            context['creator_symbol'] = game.creator_icon.symbol if game.creator_icon else 'X'
+            context['opponent_symbol'] = game.opponent_icon.symbol if game.opponent_icon else 'O'
+            
+            # Render detailed game view
+            return render(request, 'components/entertainment/games/ttt/game_detail.html', context)
+        
+        # Render game list view by default
+        return render(request, 'components/entertainment/games/ttt/game_list.html', context)
+
+# @login_required
+# @user_passes_test_groups(is_manager_or_hr_or_employee)
+# def game_list(request):
+#     """Display list of active and past games for the user"""
+#     # Get active games where the user is a participant
+#     active_games = TicTacToeGame.objects.filter(
+#         (Q(creator=request.user) | Q(opponent=request.user)),
+#         status__in=['active', 'pending']
+#     ).order_by('-updated_at')
+    
+#     # Get completed games where the user is a participant
+#     completed_games = TicTacToeGame.objects.filter(
+#         (Q(creator=request.user) | Q(opponent=request.user)),
+#         status='completed'
+#     ).order_by('-updated_at')[:10]  # Limit to recent 10 games
+    
+#     # Games user can spectate (active games where user is not a participant)
+#     spectatable_games = TicTacToeGame.objects.filter(
+#         status='active',
+#         allow_spectators=True
+#     ).exclude(
+#         Q(creator=request.user) | Q(opponent=request.user)
+#     ).order_by('-updated_at')
+    
+#     # Get pending invitations
+#     invitations = TicTacToeGame.objects.filter(
+#         opponent=request.user,
+#         status='pending'
+#     ).order_by('-created_at')
+    
+#     # Get unread notifications
+#     notifications = Notification.objects.filter(
+#         recipient=request.user,
+#         is_read=False
+#     ).order_by('-created_at')[:5]
+    
+#     # Get top players for leaderboard
+#     top_players = PlayerStats.objects.all().order_by('-games_won', '-win_percentage')[:10]
+    
+#     # Get available icons for the game
+#     icons = GameIcon.objects.filter(is_active=True)
+    
+#     return render(request, 'games/game_list.html', {
+#         'active_games': active_games,
+#         'completed_games': completed_games,
+#         'spectatable_games': spectatable_games,
+#         'invitations': invitations,
+#         'notifications': notifications,
+#         'top_players': top_players,
+#         'icons': icons
+#     })
+
+# @login_required
+# @user_passes_test_groups(is_manager_or_hr_or_employee)
+# def create_game(request):
+#     """Create a new game invitation"""
+#     if request.method == 'POST':
+#         opponent_id = request.POST.get('opponent_id')
+#         creator_icon_id = request.POST.get('creator_icon', None)
+#         opponent_icon_id = request.POST.get('opponent_icon', None)
+#         allow_spectators = request.POST.get('allow_spectators', False) == 'on'
+        
+#         # Validate opponent exists
+#         try:
+#             from django.contrib.auth.models import User
+#             opponent = User.objects.get(id=opponent_id)
+            
+#             # Don't allow inviting yourself
+#             if opponent == request.user:
+#                 messages.error(request, "You cannot play against yourself.")
+#                 return redirect('game_list')
+                
+#             # Use default icons if not specified
+#             default_icon = GameIcon.objects.filter(is_active=True).first()
+#             creator_icon = GameIcon.objects.get(id=creator_icon_id) if creator_icon_id else default_icon
+#             opponent_icon = GameIcon.objects.get(id=opponent_icon_id) if opponent_icon_id else default_icon
+            
+#             # Create the game
+#             game = TicTacToeGame.objects.create(
+#                 creator=request.user,
+#                 opponent=opponent,
+#                 creator_icon=creator_icon,
+#                 opponent_icon=opponent_icon,
+#                 allow_spectators=allow_spectators
+#             )
+            
+#             # Create notification for the opponent
+#             Notification.objects.create(
+#                 recipient=opponent,
+#                 message=f"{request.user.username} has invited you to play Tic-Tac-Toe",
+#                 notification_type='game_invite',
+#                 game=game
+#             )
+            
+#             messages.success(request, f"Game invitation sent to {opponent.username}")
+#             return redirect('game_detail', game_id=game.id)
+            
+#         except User.DoesNotExist:
+#             messages.error(request, "Invalid opponent selected.")
+#             return redirect('game_list')
+    
+#     # GET request - show form to create game
+#     # Get list of users who can be invited (in Manager, HR or Employee groups)
+#     from django.contrib.auth.models import Group
+#     allowed_groups = Group.objects.filter(name__in=["Manager", "HR", "Employee"])
+#     potential_opponents = User.objects.filter(groups__in=allowed_groups).exclude(id=request.user.id)
+    
+#     # Get available icons
+#     icons = GameIcon.objects.filter(is_active=True)
+    
+#     return render(request, 'games/create_game.html', {
+#         'potential_opponents': potential_opponents,
+#         'icons': icons
+#     })
+
+
+
+# @login_required
+# @user_passes_test_groups(is_manager_or_hr_or_employee)
+# def game_detail(request, game_id):
+#     """Display game details and board for playing"""
+#     game = get_object_or_404(TicTacToeGame, id=game_id)
+    
+#     # Determine if user is allowed to view this game
+#     is_participant = request.user == game.creator or request.user == game.opponent
+#     is_spectator = game.spectators.filter(user=request.user).exists()
+    
+#     if not (is_participant or (is_spectator and game.allow_spectators)):
+#         # If not a participant or spectator, check if can become spectator
+#         if game.status == 'active' and game.allow_spectators:
+#             # Add as spectator if allowed
+#             GameSpectator.objects.get_or_create(game=game, user=request.user)
+#             is_spectator = True
+#         else:
+#             return HttpResponseForbidden("You don't have permission to view this game.")
+    
+#     # Check for timeout
+#     if game.status == 'active' and game.is_timeout():
+#         game.status = 'timeout'
+#         # The player whose turn it is loses due to timeout
+#         game.winner = game.opponent if game.current_turn == game.creator else game.creator
+#         game.save()
+        
+#         # Create timeout notification
+#         Notification.objects.create(
+#             recipient=game.current_turn,
+#             message=f"Your game has timed out due to inactivity. {game.winner.username} wins.",
+#             notification_type='game_timeout',
+#             game=game
+#         )
+        
+#         # Update player stats
+#         PlayerStats.update_stats(game)
+    
+#     # Mark notifications related to this game as read
+#     if is_participant:
+#         Notification.objects.filter(
+#             recipient=request.user,
+#             game=game,
+#             is_read=False
+#         ).update(is_read=True)
+    
+#     # Get spectators list
+#     spectators = game.spectators.all()
+    
+#     return render(request, 'games/game_detail.html', {
+#         'game': game,
+#         'is_participant': is_participant,
+#         'is_spectator': is_spectator,
+#         'is_creator': request.user == game.creator,
+#         'is_opponent': request.user == game.opponent,
+#         'is_my_turn': game.current_turn == request.user if game.current_turn else False,
+#         'spectators': spectators,
+#         'creator_symbol': game.creator_icon.symbol if game.creator_icon else 'X',
+#         'opponent_symbol': game.opponent_icon.symbol if game.opponent_icon else 'O',
+#     })
+
+# @login_required
+# @require_POST
+# def accept_game(request, game_id):
+#     """Accept a game invitation"""
+#     game = get_object_or_404(TicTacToeGame, id=game_id, opponent=request.user, status='pending')
+#     success, message = game.accept_game()
+    
+#     if success:
+#         messages.success(request, "Game invitation accepted!")
+#         return redirect('game_detail', game_id=game.id)
+#     else:
+#         messages.error(request, message)
+#         return redirect('game_list')
+
+# @login_required
+# @require_POST
+# def decline_game(request, game_id):
+#     """Decline a game invitation"""
+#     game = get_object_or_404(TicTacToeGame, id=game_id, opponent=request.user, status='pending')
+#     success, message = game.decline_game()
+    
+#     if success:
+#         messages.success(request, "Game invitation declined.")
+#         return redirect('game_list')
+#     else:
+#         messages.error(request, message)
+#         return redirect('game_list')
+
+# @login_required
+# @require_POST
+# def make_move(request, game_id):
+#     """Make a move in the game"""
+#     game = get_object_or_404(TicTacToeGame, id=game_id)
+    
+#     # Check if user is a participant and it's their turn
+#     if request.user != game.current_turn:
+#         return JsonResponse({'success': False, 'message': "Not your turn or you're not a participant"})
+    
+#     try:
+#         position = int(request.POST.get('position'))
+#         success, message = game.make_move(request.user, position)
+        
+#         if success:
+#             # If game is now complete, update player stats
+#             if game.status == 'completed':
+#                 PlayerStats.update_stats(game)
+            
+#             return JsonResponse({
+#                 'success': True,
+#                 'board': game.board,
+#                 'status': game.status,
+#                 'winner': game.winner.username if game.winner else None,
+#                 'current_turn': game.current_turn.username if game.current_turn else None
+#             })
+#         else:
+#             return JsonResponse({'success': False, 'message': message})
+#     except ValueError:
+#         return JsonResponse({'success': False, 'message': "Invalid position"})
+
+# @login_required
+# @require_POST
+# def forfeit_game(request, game_id):
+#     """Forfeit an active game"""
+#     game = get_object_or_404(TicTacToeGame, id=game_id)
+    
+#     # Check if user is a participant
+#     if request.user != game.creator and request.user != game.opponent:
+#         return JsonResponse({'success': False, 'message': "You're not a participant in this game"})
+    
+#     success, message = game.forfeit_game(request.user)
+    
+#     if success:
+#         # Update player stats
+#         PlayerStats.update_stats(game)
+        
+#         return JsonResponse({
+#             'success': True,
+#             'status': game.status,
+#             'winner': game.winner.username
+#         })
+#     else:
+#         return JsonResponse({'success': False, 'message': message})
+
+# @login_required
+# @require_GET
+# def check_game_status(request, game_id):
+#     """Check for updates in game status (for AJAX polling)"""
+#     game = get_object_or_404(TicTacToeGame, id=game_id)
+    
+#     # Check if game timed out
+#     if game.status == 'active' and game.is_timeout():
+#         game.status = 'timeout'
+#         game.winner = game.opponent if game.current_turn == game.creator else game.creator
+#         game.save()
+        
+#         # Create timeout notification
+#         Notification.objects.create(
+#             recipient=game.current_turn,
+#             message=f"Your game has timed out due to inactivity. {game.winner.username} wins.",
+#             notification_type='game_timeout',
+#             game=game
+#         )
+        
+#         # Update player stats
+#         PlayerStats.update_stats(game)
+    
+#     return JsonResponse({
+#         'id': str(game.id),
+#         'board': game.board,
+#         'status': game.status,
+#         'current_turn': game.current_turn.username if game.current_turn else None,
+#         'winner': game.winner.username if game.winner else None,
+#         'last_updated': game.updated_at.isoformat()
+#     })
+
+# @login_required
+# @require_GET
+# def get_notifications(request):
+#     """Get unread notifications for the current user"""
+#     notifications = Notification.objects.filter(
+#         recipient=request.user,
+#         is_read=False
+#     ).order_by('-created_at')[:5]
+    
+#     return JsonResponse({
+#         'notifications': [
+#             {
+#                 'id': notification.id,
+#                 'message': notification.message,
+#                 'type': notification.notification_type,
+#                 'created_at': notification.created_at.isoformat(),
+#                 'game_id': str(notification.game.id) if notification.game else None
+#             }
+#             for notification in notifications
+#         ]
+#     })
+
+# @login_required
+# @require_POST
+# def mark_notification_read(request, notification_id):
+#     """Mark a notification as read"""
+#     notification = get_object_or_404(Notification, id=notification_id, recipient=request.user)
+#     notification.is_read = True
+#     notification.save()
+    
+#     return JsonResponse({'success': True})
+
+# @login_required
+# @user_passes_test_groups(is_hr)
+# def manage_icons(request):
+#     """View for HR to manage game icons"""
+#     if request.method == 'POST':
+#         action = request.POST.get('action')
+        
+#         if action == 'create':
+#             name = request.POST.get('name')
+#             symbol = request.POST.get('symbol')
+            
+#             if name and symbol:
+#                 GameIcon.objects.create(
+#                     name=name,
+#                     symbol=symbol,
+#                     created_by=request.user,
+#                     is_active=True
+#                 )
+#                 messages.success(request, f"Created new game icon: {name} ({symbol})")
+#             else:
+#                 messages.error(request, "Name and symbol are required")
+                
+#         elif action == 'toggle':
+#             icon_id = request.POST.get('icon_id')
+#             icon = get_object_or_404(GameIcon, id=icon_id)
+#             icon.is_active = not icon.is_active
+#             icon.save()
+#             status = "activated" if icon.is_active else "deactivated"
+#             messages.success(request, f"Icon {icon.name} has been {status}")
+            
+#         elif action == 'delete':
+#             icon_id = request.POST.get('icon_id')
+#             icon = get_object_or_404(GameIcon, id=icon_id)
+#             name = icon.name
+#             icon.delete()
+#             messages.success(request, f"Icon {name} has been deleted")
+    
+#     # Get all icons
+#     icons = GameIcon.objects.all().order_by('-created_at')
+    
+#     return render(request, 'games/manage_icons.html', {
+#         'icons': icons
+#     })
+
+# @login_required
+# @user_passes_test_groups(is_manager_or_hr_or_employee)
+# def leaderboard(request):
+#     """View the leaderboard of top players"""
+#     top_players = PlayerStats.objects.all().order_by(
+#         '-games_won', '-win_percentage', '-games_played'
+#     )[:20]
+    
+#     return render(request, 'games/leaderboard.html', {
+#         'top_players': top_players
+#     })

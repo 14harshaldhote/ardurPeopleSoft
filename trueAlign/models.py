@@ -4595,3 +4595,290 @@ class AppraisalAttachment(models.Model):
 
     def __str__(self):
         return self.title
+
+
+'''----------------------------------- Entertainment -----------------------------------'''
+
+
+class GameIcon(models.Model):
+    """Custom icons for the Tic-Tac-Toe game"""
+    name = models.CharField(max_length=50)
+    symbol = models.CharField(max_length=10)  # Can store emoji or character
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_icons')
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.name} ({self.symbol})"
+
+class TicTacToeGame(models.Model):
+    """Model to track Tic-Tac-Toe games between users"""
+    STATUS_CHOICES = (
+        ('pending', 'Pending Acceptance'),
+        ('active', 'Game in Progress'),
+        ('completed', 'Game Completed'),
+        ('cancelled', 'Game Cancelled'),
+        ('timeout', 'Game Timeout'),
+    )
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_games')
+    opponent = models.ForeignKey(User, on_delete=models.CASCADE, related_name='invited_games')
+    
+    # Game board stored as a string representation of 9 characters
+    # Empty spaces are represented by spaces, other spaces by player symbols
+    board = models.CharField(max_length=9, default=' ' * 9)
+    
+    # Who's turn is it
+    current_turn = models.ForeignKey(User, on_delete=models.CASCADE, related_name='games_turn', null=True)
+    
+    # Game status
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    
+    # Winner of the game (null if draw or game not completed)
+    winner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='won_games', null=True, blank=True)
+    
+    # Custom icons for the game
+    creator_icon = models.ForeignKey(GameIcon, on_delete=models.SET_NULL, related_name='creator_games', null=True)
+    opponent_icon = models.ForeignKey(GameIcon, on_delete=models.SET_NULL, related_name='opponent_games', null=True)
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    last_move_at = models.DateTimeField(auto_now_add=True)
+    
+    # Spectator feature
+    allow_spectators = models.BooleanField(default=True)
+    
+    def __str__(self):
+        return f"Game {self.id}: {self.creator.username} vs {self.opponent.username} ({self.status})"
+    
+    def is_timeout(self):
+        """Check if the game has timed out (no move in 10 minutes)"""
+        return timezone.now() > self.last_move_at + timedelta(minutes=10)
+    
+    def check_winner(self):
+        """Check if there is a winner or if the game is a draw"""
+        winning_combinations = [
+            # Rows
+            [0, 1, 2], [3, 4, 5], [6, 7, 8],
+            # Columns
+            [0, 3, 6], [1, 4, 7], [2, 5, 8],
+            # Diagonals
+            [0, 4, 8], [2, 4, 6]
+        ]
+        
+        for combo in winning_combinations:
+            if (self.board[combo[0]] != ' ' and
+                self.board[combo[0]] == self.board[combo[1]] == self.board[combo[2]]):
+                # We have a winner
+                if self.board[combo[0]] == self.creator_icon.symbol:
+                    self.winner = self.creator
+                else:
+                    self.winner = self.opponent
+                self.status = 'completed'
+                return True
+        
+        # Check for a draw
+        if ' ' not in self.board:
+            self.status = 'completed'
+            return True
+            
+        return False
+    
+    def make_move(self, user, position):
+        """Make a move on the board"""
+        if self.status != 'active':
+            return False, "Game is not active"
+        
+        if user != self.current_turn:
+            return False, "Not your turn"
+        
+        if not (0 <= position < 9):
+            return False, "Invalid position"
+        
+        if self.board[position] != ' ':
+            return False, "Position already taken"
+        
+        # Update the board
+        board_list = list(self.board)
+        symbol = self.creator_icon.symbol if user == self.creator else self.opponent_icon.symbol
+        board_list[position] = symbol
+        self.board = ''.join(board_list)
+        
+        # Update last move timestamp
+        self.last_move_at = timezone.now()
+        
+        # Switch turns
+        self.current_turn = self.opponent if user == self.creator else self.creator
+        
+        # Check if the game is over
+        self.check_winner()
+        
+        # Save changes
+        self.save()
+        
+        # Create a notification for the other player
+        if self.status == 'active':
+            Notification.objects.create(
+                recipient=self.current_turn,
+                message=f"It's your turn in the game against {user.username}",
+                notification_type='game_turn',
+                game=self
+            )
+        elif self.status == 'completed' and self.winner:
+            # Notify the loser about the game result
+            loser = self.opponent if self.winner == self.creator else self.creator
+            Notification.objects.create(
+                recipient=loser,
+                message=f"Game over! {self.winner.username} has won the game.",
+                notification_type='game_over',
+                game=self
+            )
+        
+        return True, "Move successful"
+    
+    def accept_game(self):
+        """Accept a game invitation"""
+        if self.status != 'pending':
+            return False, "Game is not pending"
+        
+        self.status = 'active'
+        self.current_turn = self.creator  # Creator goes first
+        self.save()
+        
+        # Notify the creator that the game has been accepted
+        Notification.objects.create(
+            recipient=self.creator,
+            message=f"{self.opponent.username} has accepted your game invitation! It's your turn to play.",
+            notification_type='game_accepted',
+            game=self
+        )
+        
+        return True, "Game accepted"
+    
+    def decline_game(self):
+        """Decline a game invitation"""
+        if self.status != 'pending':
+            return False, "Game is not pending"
+        
+        self.status = 'cancelled'
+        self.save()
+        
+        # Notify the creator that the game has been declined
+        Notification.objects.create(
+            recipient=self.creator,
+            message=f"{self.opponent.username} has declined your game invitation.",
+            notification_type='game_declined',
+            game=self
+        )
+        
+        return True, "Game declined"
+    
+    def forfeit_game(self, user):
+        """Forfeit the game"""
+        if self.status != 'active':
+            return False, "Game is not active"
+        
+        self.status = 'completed'
+        self.winner = self.opponent if user == self.creator else self.creator
+        self.save()
+        
+        # Notify the winner
+        Notification.objects.create(
+            recipient=self.winner,
+            message=f"{user.username} has forfeited the game. You win!",
+            notification_type='game_forfeit',
+            game=self
+        )
+        
+        return True, "Game forfeited"
+
+
+class GameSpectator(models.Model):
+    """Model to track users spectating games"""
+    game = models.ForeignKey(TicTacToeGame, on_delete=models.CASCADE, related_name='spectators')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='spectating_games')
+    joined_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ('game', 'user')
+    
+    def __str__(self):
+        return f"{self.user.username} spectating game {self.game.id}"
+
+
+class PlayerStats(models.Model):
+    """Model to track player statistics for a leaderboard"""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='game_stats')
+    games_played = models.IntegerField(default=0)
+    games_won = models.IntegerField(default=0)
+    games_lost = models.IntegerField(default=0)
+    games_drawn = models.IntegerField(default=0)
+    
+    def __str__(self):
+        return f"Stats for {self.user.username}"
+    
+    @property
+    def win_percentage(self):
+        """Calculate win percentage"""
+        if self.games_played == 0:
+            return 0
+        return (self.games_won / self.games_played) * 100
+    
+    @classmethod
+    def update_stats(cls, game):
+        """Update player statistics after a game is completed"""
+        if game.status != 'completed':
+            return
+        
+        # Get or create stats for both players
+        creator_stats, _ = cls.objects.get_or_create(user=game.creator)
+        opponent_stats, _ = cls.objects.get_or_create(user=game.opponent)
+        
+        # Update games played count
+        creator_stats.games_played += 1
+        opponent_stats.games_played += 1
+        
+        # Update win/loss/draw counts
+        if game.winner:
+            if game.winner == game.creator:
+                creator_stats.games_won += 1
+                opponent_stats.games_lost += 1
+            else:
+                opponent_stats.games_won += 1
+                creator_stats.games_lost += 1
+        else:
+            # It's a draw
+            creator_stats.games_drawn += 1
+            opponent_stats.games_drawn += 1
+        
+        # Save the updated stats
+        creator_stats.save()
+        opponent_stats.save()
+
+
+class Notification(models.Model):
+    """Model for user notifications"""
+    NOTIFICATION_TYPES = (
+        ('game_invite', 'Game Invitation'),
+        ('game_turn', 'Your Turn'),
+        ('game_accepted', 'Game Accepted'),
+        ('game_declined', 'Game Declined'),
+        ('game_over', 'Game Over'),
+        ('game_forfeit', 'Game Forfeit'),
+        ('game_timeout', 'Game Timeout'),
+    )
+    
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
+    message = models.CharField(max_length=255)
+    notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES)
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    game = models.ForeignKey(TicTacToeGame, on_delete=models.CASCADE, related_name='notifications', null=True, blank=True)
+    
+    def __str__(self):
+        return f"Notification for {self.recipient.username}: {self.message[:30]}"
+    
+    class Meta:
+        ordering = ['-created_at']

@@ -1,0 +1,241 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold mb-6">Tic-Tac-Toe</h1>
+
+    <!-- Notifications section -->
+    {% if notifications %}
+    <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+        <h2 class="text-lg font-semibold mb-2">Notifications</h2>
+        <ul class="space-y-2">
+            {% for notification in notifications %}
+            <li class="flex items-start">
+                <span class="text-blue-500 mr-2">•</span>
+                <div>
+                    <p>{{ notification.message }}</p>
+                    <p class="text-xs text-gray-500">{{ notification.created_at|date:"M d, H:i" }}</p>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <!-- Game invitations section -->
+    {% if invitations %}
+    <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+        <h2 class="text-lg font-semibold mb-2">Game Invitations</h2>
+        <div class="space-y-4">
+            {% for invitation in invitations %}
+            <div class="border-b pb-4 last:border-b-0 last:pb-0">
+                <p><strong>{{ invitation.creator.username }}</strong> has invited you to play</p>
+                <div class="mt-2 flex space-x-2">
+                    <a href="{% url 'aps_entertainment:tic_tac_toe' %}?action=accept&game_id={{ invitation.id }}" 
+                       class="bg-green-500 hover:bg-green-600 text-white py-1 px-3 rounded text-sm inline-block">
+                        Accept
+                    </a>
+                    <a href="{% url 'aps_entertainment:tic_tac_toe' %}?action=decline&game_id={{ invitation.id }}"
+                       class="bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded text-sm inline-block">
+                        Decline
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Create new game form -->
+    <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+        <h2 class="text-lg font-semibold mb-4">Create New Game</h2>
+        <form id="create-game-form" action="{% url 'aps_entertainment:tic_tac_toe' %}" method="post" class="space-y-4">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create">
+            
+            <div>
+                <label for="opponent" class="block font-medium mb-1">Select Opponent</label>
+                <select id="opponent" name="opponent_id" class="w-full border border-gray-300 rounded p-2" required>
+                    <option value="">-- Select Opponent --</option>
+                    {% for opponent in potential_opponents %}
+                    <option value="{{ opponent.id }}">{{ opponent.username }} ({{ opponent.get_full_name }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="creator-icon" class="block font-medium mb-1">Your Icon</label>
+                    <select id="creator-icon" name="creator_icon" class="w-full border border-gray-300 rounded p-2">
+                        {% for icon in icons %}
+                        <option value="{{ icon.id }}" {% if forloop.first %}selected{% endif %}>
+                            {{ icon.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label for="opponent-icon" class="block font-medium mb-1">Opponent Icon</label>
+                    <select id="opponent-icon" name="opponent_icon" class="w-full border border-gray-300 rounded p-2">
+                        {% for icon in icons %}
+                        <option value="{{ icon.id }}" {% if forloop.first %}selected{% endif %}>
+                            {{ icon.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex items-center">
+                <input type="checkbox" id="allow-spectators" name="allow_spectators" class="rounded text-blue-500">
+                <label for="allow-spectators" class="ml-2">Allow spectators</label>
+            </div>
+
+            <button type="submit"
+                class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded w-full">
+                Create Game
+            </button>
+        </form>
+    </div>
+
+    <!-- Active games section -->
+    <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+        <h2 class="text-lg font-semibold mb-2">Active Games</h2>
+        {% if active_games %}
+        <div class="space-y-3">
+            {% for game in active_games %}
+            <div class="flex flex-wrap justify-between items-center border-b pb-3 last:border-b-0 last:pb-0">
+                <div>
+                    <p>
+                        Game vs
+                        <strong>
+                            {% if request.user == game.creator %}
+                            {{ game.opponent.username }}
+                            {% else %}
+                            {{ game.creator.username }}
+                            {% endif %}
+                        </strong>
+                    </p>
+                    <p class="text-sm text-gray-600">
+                        Status:
+                        <span
+                            class="{% if game.status == 'active' %}text-green-600{% else %}text-yellow-600{% endif %}">
+                            {{ game.status }}
+                        </span>
+                    </p>
+                    <p class="text-sm text-gray-500">Last Updated: {{ game.updated_at|date:"M d, H:i" }}</p>
+                </div>
+                <a href="{% url 'aps_entertainment:tic_tac_toe' %}?game_id={{ game.id }}"
+                    class="bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold py-1 px-4 rounded">
+                    View Game
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-gray-500">You don't have any active games.</p>
+        {% endif %}
+    </div>
+
+    <!-- Completed games section -->
+    <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+        <h2 class="text-lg font-semibold mb-2">Completed Games</h2>
+        {% if completed_games %}
+        <div class="space-y-3">
+            {% for game in completed_games %}
+            <div class="flex flex-wrap justify-between items-center border-b pb-3 last:border-b-0 last:pb-0">
+                <div>
+                    <p>
+                        Game vs
+                        <strong>
+                            {% if request.user == game.creator %}
+                            {{ game.opponent.username }}
+                            {% else %}
+                            {{ game.creator.username }}
+                            {% endif %}
+                        </strong>
+                    </p>
+                    <p class="text-sm">
+                        Result:
+                        {% if game.winner == request.user %}
+                        <span class="text-green-600 font-medium">You won</span>
+                        {% elif game.winner %}
+                        <span class="text-red-600 font-medium">You lost</span>
+                        {% else %}
+                        <span class="text-gray-600 font-medium">Draw</span>
+                        {% endif %}
+                    </p>
+                    <p class="text-sm text-gray-500">Completed: {{ game.updated_at|date:"M d, H:i" }}</p>
+                </div>
+                <a href="{% url 'aps_entertainment:tic_tac_toe' %}?game_id={{ game.id }}"
+                    class="bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm font-semibold py-1 px-4 rounded">
+                    View Game
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-gray-500">You don't have any completed games.</p>
+        {% endif %}
+    </div>
+
+    <!-- Spectatable games section -->
+    {% if spectatable_games %}
+    <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+        <h2 class="text-lg font-semibold mb-2">Games to Spectate</h2>
+        <div class="space-y-3">
+            {% for game in spectatable_games %}
+            <div class="flex flex-wrap justify-between items-center border-b pb-3 last:border-b-0 last:pb-0">
+                <div>
+                    <p>{{ game.creator.username }} vs {{ game.opponent.username }}</p>
+                    <p class="text-sm text-gray-600">
+                        Current turn:
+                        <span class="font-medium">
+                            {{ game.current_turn.username }}
+                        </span>
+                    </p>
+                    <p class="text-sm text-gray-500">Last move: {{ game.updated_at|date:"M d, H:i" }}</p>
+                </div>
+                <a href="{% url 'aps_entertainment:tic_tac_toe' %}?game_id={{ game.id }}"
+                    class="bg-green-500 hover:bg-green-600 text-white text-sm font-semibold py-1 px-4 rounded">
+                    Spectate
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Leaderboard section -->
+    <div class="bg-white rounded-lg shadow-md p-4">
+        <h2 class="text-lg font-semibold mb-2">Leaderboard</h2>
+        <div class="overflow-x-auto">
+            <table class="min-w-full">
+                <thead>
+                    <tr class="bg-gray-100">
+                        <th class="py-2 px-4 text-left">Rank</th>
+                        <th class="py-2 px-4 text-left">Player</th>
+                        <th class="py-2 px-4 text-left">Wins</th>
+                        <th class="py-2 px-4 text-left">Losses</th>
+                        <th class="py-2 px-4 text-left">Win %</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for player in top_players %}
+                <tr class="border-b">
+                    <td class="py-2 px-4">{{ forloop.counter }}</td>
+                    <td class="py-2 px-4 font-medium">{{ player.player.username }}</td>
+                    <td class="py-2 px-4">{{ player.games_won }}</td>
+                    <td class="py-2 px-4">{{ player.games_lost }}</td>
+                    <td class="py-2 px-4">{{ player.win_rate|floatformat:1 }}%</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Refresh the page periodically to check for new notifications -->
+<meta http-equiv="refresh" content="60">
+{% endblock %}

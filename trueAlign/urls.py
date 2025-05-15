@@ -300,6 +300,13 @@ holiday_pattern=[
     path('list/',views.holiday_lists,name='holiday_lists'),
 ]
 
+entertainment_patterns=[
+    path('',views.entertainment_dashboard,name='entertainment'),
+    path('games/',views.games,name='games'),
+    path('tic-tac-toe/',views.tictactoe,name='tic_tac_toe'),
+    path('control/',views.entertainment_control,name='entertainment_control'),
+]
+
 # Main URL configuration for the project
 urlpatterns = [
     path('', views.home_view, name='home'),
@@ -347,4 +354,7 @@ urlpatterns = [
     path('appraisal/', include((appraisal_patterns, 'appraisal'))),
 
     path('reset-password/', views.reset_password, name='reset_password'),
+
+    # Entertainment URLs
+    path('entertainment/', include((entertainment_patterns, 'aps'), namespace='aps_entertainment')),
 ]

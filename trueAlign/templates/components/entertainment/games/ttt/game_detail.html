@@ -1,0 +1,304 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Game Header Section -->
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold mb-2">Tic-Tac-Toe Game</h1>
+        <div class="bg-gray-100 p-4 rounded-lg shadow">
+            <div class="flex flex-wrap justify-between items-center">
+                <!-- Creator Info -->
+                <div class="flex items-center bg-white rounded-lg p-3 mb-2 md:mb-0 shadow">
+                    <div class="w-10 h-10 flex items-center justify-center bg-blue-100 rounded-full mr-3">
+                        <span class="text-xl font-bold text-blue-600">{{ creator_symbol }}</span>
+                    </div>
+                    <div>
+                        <p class="font-semibold">{{ game.creator.username }}</p>
+                        <p class="text-sm text-gray-600">Creator</p>
+                    </div>
+                </div>
+                
+                <!-- Game Status -->
+                <div class="flex flex-col items-center mb-2 md:mb-0">
+                    {% if game.status == 'active' %}
+                        <div class="bg-green-100 text-green-800 px-4 py-2 rounded-lg text-center">
+                            <p class="font-semibold">
+                                {% if is_my_turn %}
+                                    Your Turn
+                                {% else %}
+                                    {{ game.current_turn.username }}'s Turn
+                                {% endif %}
+                            </p>
+                        </div>
+                    {% elif game.status == 'pending' %}
+                        <div class="bg-yellow-100 text-yellow-800 px-4 py-2 rounded-lg text-center">
+                            <p class="font-semibold">Invitation Pending</p>
+                        </div>
+                    {% elif game.status == 'completed' %}
+                        <div class="bg-blue-100 text-blue-800 px-4 py-2 rounded-lg text-center">
+                            <p class="font-semibold">
+                                {% if game.winner %}
+                                    {% if game.winner == request.user %}
+                                        You Won!
+                                    {% else %}
+                                        {{ game.winner.username }} Won
+                                    {% endif %}
+                                {% else %}
+                                    Draw
+                                {% endif %}
+                            </p>
+                        </div>
+                    {% elif game.status == 'timeout' %}
+                        <div class="bg-red-100 text-red-800 px-4 py-2 rounded-lg text-center">
+                            <p class="font-semibold">Game Timeout</p>
+                            <p class="text-sm">{{ game.winner.username }} Won</p>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Opponent Info -->
+                <div class="flex items-center bg-white rounded-lg p-3 shadow">
+                    <div class="w-10 h-10 flex items-center justify-center bg-red-100 rounded-full mr-3">
+                        <span class="text-xl font-bold text-red-600">{{ opponent_symbol }}</span>
+                    </div>
+                    <div>
+                        <p class="font-semibold">{{ game.opponent.username }}</p>
+                        <p class="text-sm text-gray-600">Opponent</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Board Section -->
+    <div class="mb-6">
+        <div class="bg-white p-4 rounded-lg shadow-lg">
+            <!-- Game Board -->
+            <div class="grid grid-cols-3 gap-2 max-w-xs mx-auto">
+                {% for i in "012345678"|make_list %}
+                    <button 
+                        id="cell-{{ i }}" 
+                        data-position="{{ i }}"
+                        class="game-cell h-20 w-20 bg-gray-100 rounded flex items-center justify-center text-3xl font-bold cursor-pointer hover:bg-gray-200 transition-colors {% if game.status != 'active' or not is_my_turn %}pointer-events-none{% endif %}"
+                    >
+                        {% with pos=i|add:"0" %}
+                            {% if game.board|slice:pos|slice:"1" == 'X' %}
+                                <span class="text-blue-600">{{ creator_symbol }}</span>
+                            {% elif game.board|slice:pos|slice:"1" == 'O' %}
+                                <span class="text-red-600">{{ opponent_symbol }}</span>
+                            {% endif %}
+                        {% endwith %}
+                    </button>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Actions Section -->
+    <div class="mb-6">
+        <div class="bg-white p-4 rounded-lg shadow-lg">
+            <div class="flex flex-wrap justify-center gap-4">
+                {% if game.status == 'active' and is_participant %}
+                    <form id="forfeit-form" method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="forfeit">
+                        <input type="hidden" name="game_id" value="{{ game.id }}">
+                        <button type="submit" class="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg transition-colors">
+                            Forfeit Game
+                        </button>
+                    </form>
+                {% endif %}
+
+                {% if game.status == 'pending' and is_opponent %}
+                    <form id="accept-form" method="post" class="inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="accept">
+                        <input type="hidden" name="game_id" value="{{ game.id }}">
+                        <button type="submit" class="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg transition-colors">
+                            Accept Challenge
+                        </button>
+                    </form>
+
+                    <form id="decline-form" method="post" class="inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="decline">
+                        <input type="hidden" name="game_id" value="{{ game.id }}">
+                        <button type="submit" class="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-lg transition-colors">
+                            Decline Challenge
+                        </button>
+                    </form>
+                {% endif %}
+
+                <a href="{% url 'aps_entertainment:tic_tac_toe' %}" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg transition-colors">
+                    Back to Games
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Information Section -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Game Details -->
+        <div class="bg-white p-4 rounded-lg shadow-lg">
+            <h2 class="text-xl font-semibold mb-3">Game Details</h2>
+            <div class="space-y-2">
+                <p><span class="font-medium">Game ID:</span> {{ game.id }}</p>
+                <p><span class="font-medium">Created:</span> {{ game.created_at|date:"M d, Y H:i" }}</p>
+                <p><span class="font-medium">Last Move:</span> {{ game.updated_at|date:"M d, Y H:i" }}</p>
+                <p><span class="font-medium">Status:</span> 
+                    <span class="
+                        {% if game.status == 'active' %}text-green-600
+                        {% elif game.status == 'pending' %}text-yellow-600
+                        {% elif game.status == 'completed' %}text-blue-600
+                        {% elif game.status == 'timeout' %}text-red-600
+                        {% endif %}
+                    ">
+                        {{ game.status|title }}
+                    </span>
+                </p>
+                <p><span class="font-medium">Spectators Allowed:</span> {{ game.allow_spectators|yesno:"Yes,No" }}</p>
+            </div>
+        </div>
+
+        <!-- Spectators -->
+        <div class="bg-white p-4 rounded-lg shadow-lg">
+            <h2 class="text-xl font-semibold mb-3">Spectators ({{ spectators.count }})</h2>
+            {% if spectators %}
+                <ul class="divide-y divide-gray-200">
+                    {% for spectator in spectators %}
+                        <li class="py-2">{{ spectator.user.username }}</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-gray-600">No spectators watching this game.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Game Move Form - Hidden -->
+<form id="move-form" method="post" style="display: none;">
+    {% csrf_token %}
+    <input type="hidden" name="game_id" value="{{ game.id }}">
+    <input type="hidden" id="position-input" name="position" value="">
+</form>
+
+<!-- JavaScript for Game Interaction -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Only apply click handlers if game is active and it's the user's turn
+        {% if game.status == 'active' and is_my_turn %}
+            const gameCells = document.querySelectorAll('.game-cell');
+            const moveForm = document.getElementById('move-form');
+            const positionInput = document.getElementById('position-input');
+
+            gameCells.forEach(cell => {
+                // Only attach event listener if cell is empty
+                if (!cell.querySelector('span')) {
+                    cell.addEventListener('click', function() {
+                        const position = this.getAttribute('data-position');
+                        positionInput.value = position;
+                        moveForm.submit();
+                    });
+                }
+            });
+        {% endif %}
+
+        // Handle form submissions with AJAX
+        const forms = document.querySelectorAll('form');
+        forms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(this);
+                
+                fetch(window.location.href, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Different handling based on the form action
+                        if (formData.get('action') === 'forfeit' || 
+                            formData.get('action') === 'accept' || 
+                            formData.get('action') === 'decline') {
+                            // Reload the page to show updated status
+                            window.location.reload();
+                        } else {
+                            // Handle move response
+                            updateGameBoard(data);
+                        }
+                    } else {
+                        // Show error message
+                        alert(data.message || 'An error occurred');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred. Please try again.');
+                });
+            });
+        });
+
+        // Function to update game board after a move
+        function updateGameBoard(data) {
+            if (!data.board) return;
+            
+            const board = data.board;
+            const cells = document.querySelectorAll('.game-cell');
+            
+            // Update each cell with the new board state
+            for (let i = 0; i < board.length; i++) {
+                const cell = cells[i];
+                cell.innerHTML = '';
+                
+                if (board[i] === 'X') {
+                    cell.innerHTML = `<span class="text-blue-600">{{ creator_symbol }}</span>`;
+                } else if (board[i] === 'O') {
+                    cell.innerHTML = `<span class="text-red-600">{{ opponent_symbol }}</span>`;
+                }
+            }
+            
+            // Update game status
+            if (data.status === 'completed') {
+                // Disable all cells
+                cells.forEach(cell => {
+                    cell.classList.add('pointer-events-none');
+                });
+                
+                // Show game result and reload page
+                setTimeout(() => {
+                    alert(data.winner ? `${data.winner} has won the game!` : 'The game ended in a draw!');
+                    window.location.reload();
+                }, 500);
+            } else {
+                // Update turn indicator
+                const myTurn = data.current_turn === '{{ request.user.username }}';
+                
+                // Add/remove pointer-events-none to enable/disable cells
+                cells.forEach(cell => {
+                    if (myTurn && !cell.querySelector('span')) {
+                        cell.classList.remove('pointer-events-none');
+                    } else {
+                        cell.classList.add('pointer-events-none');
+                    }
+                });
+                
+                // Reload to update the turn indicator
+                window.location.reload();
+            }
+        }
+
+        // Auto refresh for spectators (every 10 seconds)
+        {% if is_spectator and game.status == 'active' %}
+            setTimeout(function() {
+                window.location.reload();
+            }, 10000);
+        {% endif %}
+    });
+</script>
+{% endblock %}
