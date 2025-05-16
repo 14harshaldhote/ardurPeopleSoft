@@ -7,26 +7,42 @@
     <div class="bg-white shadow-lg rounded-lg p-6 mb-8 border border-gray-100 hover:shadow-xl transition-shadow duration-300">
         <form method="get" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
             <div>
-                <label for="user_id" class="block text-xs font-semibold text-gray-700 mb-1">Employee</label>
-                <select name="user_id" id="user_id" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-colors duration-200">
-                    <option value="">All Employees</option>
-                    {% for user in users %}
-                        <option value="{{ user.id }}" {% if selected_user == user.id %}selected{% endif %}>
-                            {{ user.get_full_name|default:user.username }}
-                        </option>
-                    {% endfor %}
-                </select>
+                <label for="employee_search" class="block text-xs font-semibold text-gray-700 mb-1">Employee</label>
+                <div class="relative">
+                    <input 
+                        type="text" 
+                        id="employee_search" 
+                        placeholder="Search employees..." 
+                        class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-colors duration-200 pl-9 pr-3 py-2"
+                        autocomplete="off"
+                    >
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                    <input type="hidden" name="user_id" id="user_id" value="{{ selected_user }}">
+                    <div id="employee_results" class="absolute z-10 w-full mt-1 bg-white shadow-lg rounded-md border border-gray-200 max-h-60 overflow-y-auto hidden"></div>
+                </div>
             </div>
             <div>
-                <label for="shift_id" class="block text-xs font-semibold text-gray-700 mb-1">Shift</label>
-                <select name="shift_id" id="shift_id" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-colors duration-200">
-                    <option value="">All Shifts</option>
-                    {% for shift in shifts %}
-                        <option value="{{ shift.id }}" {% if selected_shift == shift.id %}selected{% endif %}>
-                            {{ shift.name }}
-                        </option>
-                    {% endfor %}
-                </select>
+                <label for="shift_search" class="block text-xs font-semibold text-gray-700 mb-1">Shift</label>
+                <div class="relative">
+                    <input 
+                        type="text" 
+                        id="shift_search" 
+                        placeholder="Search shifts..." 
+                        class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-colors duration-200 pl-9 pr-3 py-2"
+                        autocomplete="off"
+                    >
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                    <input type="hidden" name="shift_id" id="shift_id" value="{{ selected_shift }}">
+                    <div id="shift_results" class="absolute z-10 w-full mt-1 bg-white shadow-lg rounded-md border border-gray-200 max-h-60 overflow-y-auto hidden"></div>
+                </div>
             </div>
             <div class="flex items-center space-x-2">
                 <input type="checkbox" name="current_only" id="current_only" value="true" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 transform scale-110" {% if current_only %}checked{% endif %}>
@@ -59,6 +75,175 @@
             </div>
         </form>
     </div>
+
+<!-- JavaScript for search functionality -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Employee search functionality
+        const employeeSearch = document.getElementById('employee_search');
+        const employeeResults = document.getElementById('employee_results');
+        const employeeIdField = document.getElementById('user_id');
+        
+        // Shift search functionality
+        const shiftSearch = document.getElementById('shift_search');
+        const shiftResults = document.getElementById('shift_results');
+        const shiftIdField = document.getElementById('shift_id');
+        
+        // Load initial values if selected
+        if (employeeIdField.value) {
+            // Find the employee name from the existing data
+            const selectedEmployee = Array.from(document.querySelectorAll('#employee_results [data-id]'))
+                .find(el => el.dataset.id === employeeIdField.value);
+            if (selectedEmployee) {
+                employeeSearch.value = selectedEmployee.textContent.trim();
+            }
+        }
+        
+        if (shiftIdField.value) {
+            // Find the shift name from the existing data
+            const selectedShift = Array.from(document.querySelectorAll('#shift_results [data-id]'))
+                .find(el => el.dataset.id === shiftIdField.value);
+            if (selectedShift) {
+                shiftSearch.value = selectedShift.textContent.trim();
+            }
+        }
+        
+        // Employee search input handler
+        employeeSearch.addEventListener('input', debounce(function() {
+            const query = this.value.toLowerCase().trim();
+            if (query.length < 2) {
+                employeeResults.classList.add('hidden');
+                return;
+            }
+            
+            // Here we would typically do an AJAX call to fetch matching employees
+            // For now, we'll use the existing data that would be rendered on page load
+            const employees = [
+                {% for user in users %}
+                    {
+                        id: "{{ user.id }}",
+                        name: "{{ user.get_full_name|default:user.username }}"
+                    },
+                {% endfor %}
+            ];
+            
+            const filteredEmployees = employees.filter(emp => 
+                emp.name.toLowerCase().includes(query)
+            );
+            
+            renderEmployeeResults(filteredEmployees);
+        }, 300));
+        
+        // Shift search input handler
+        shiftSearch.addEventListener('input', debounce(function() {
+            const query = this.value.toLowerCase().trim();
+            if (query.length < 2) {
+                shiftResults.classList.add('hidden');
+                return;
+            }
+            
+            // Here we would typically do an AJAX call to fetch matching shifts
+            // For now, we'll use the existing data that would be rendered on page load
+            const shifts = [
+                {% for shift in shifts %}
+                    {
+                        id: "{{ shift.id }}",
+                        name: "{{ shift.name }}",
+                        start_time: "{{ shift.start_time|time:'H:i' }}",
+                        end_time: "{{ shift.end_time|time:'H:i' }}"
+                    },
+                {% endfor %}
+            ];
+            
+            const filteredShifts = shifts.filter(shift => 
+                shift.name.toLowerCase().includes(query)
+            );
+            
+            renderShiftResults(filteredShifts);
+        }, 300));
+        
+        // Render employee search results
+        function renderEmployeeResults(employees) {
+            if (employees.length === 0) {
+                employeeResults.innerHTML = '<div class="px-4 py-2 text-sm text-gray-500">No matching employees found</div>';
+            } else {
+                employeeResults.innerHTML = employees.map(emp => 
+                    `<div class="employee-option px-4 py-2 text-sm hover:bg-indigo-50 cursor-pointer" data-id="${emp.id}">${emp.name}</div>`
+                ).join('');
+                
+                // Add click event to employee options
+                document.querySelectorAll('.employee-option').forEach(option => {
+                    option.addEventListener('click', function() {
+                        employeeIdField.value = this.dataset.id;
+                        employeeSearch.value = this.textContent.trim();
+                        employeeResults.classList.add('hidden');
+                    });
+                });
+            }
+            employeeResults.classList.remove('hidden');
+        }
+        
+        // Render shift search results
+        function renderShiftResults(shifts) {
+            if (shifts.length === 0) {
+                shiftResults.innerHTML = '<div class="px-4 py-2 text-sm text-gray-500">No matching shifts found</div>';
+            } else {
+                shiftResults.innerHTML = shifts.map(shift => 
+                    `<div class="shift-option px-4 py-2 text-sm hover:bg-indigo-50 cursor-pointer" data-id="${shift.id}">
+                        <div class="font-medium">${shift.name}</div>
+                        <div class="text-xs text-gray-500">${shift.start_time} - ${shift.end_time}</div>
+                    </div>`
+                ).join('');
+                
+                // Add click event to shift options
+                document.querySelectorAll('.shift-option').forEach(option => {
+                    option.addEventListener('click', function() {
+                        shiftIdField.value = this.dataset.id;
+                        shiftSearch.value = this.querySelector('.font-medium').textContent.trim();
+                        shiftResults.classList.add('hidden');
+                    });
+                });
+            }
+            shiftResults.classList.remove('hidden');
+        }
+        
+        // Hide results when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!employeeSearch.contains(e.target) && !employeeResults.contains(e.target)) {
+                employeeResults.classList.add('hidden');
+            }
+            
+            if (!shiftSearch.contains(e.target) && !shiftResults.contains(e.target)) {
+                shiftResults.classList.add('hidden');
+            }
+        });
+        
+        // Debounce function to limit API calls
+        function debounce(func, wait) {
+            let timeout;
+            return function(...args) {
+                const context = this;
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(context, args), wait);
+            };
+        }
+        
+        // Show search fields on focus
+        employeeSearch.addEventListener('focus', function() {
+            if (this.value.trim().length >= 2) {
+                // Trigger the input event to show results
+                this.dispatchEvent(new Event('input'));
+            }
+        });
+        
+        shiftSearch.addEventListener('focus', function() {
+            if (this.value.trim().length >= 2) {
+                // Trigger the input event to show results
+                this.dispatchEvent(new Event('input'));
+            }
+        });
+    });
+    </script>
     <!-- Create Assignment Modal -->
     <div id="create-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm hidden">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg p-8 relative transform transition-all duration-300 scale-100">

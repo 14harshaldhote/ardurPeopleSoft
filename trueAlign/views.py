@@ -12952,30 +12952,104 @@ def holiday_delete(request, pk):
 @login_required
 @user_passes_test(is_manager_or_admin)
 def assignment_list(request):
+    # Base queryset with select_related for better performance
     assignments = ShiftAssignment.objects.all().select_related('user', 'shift')
-    current_only = request.GET.get('current_only') == 'true'
-    user_id = request.GET.get('user_id')
-    shift_id = request.GET.get('shift_id')
-    if current_only:
-        assignments = assignments.filter(is_current=True)
+    
+    # Get filter parameters from request
+    user_id = request.GET.get('user_id', '')
+    shift_id = request.GET.get('shift_id', '')
+    start_date = request.GET.get('start_date', '')
+    end_date = request.GET.get('end_date', '')
+    status = request.GET.get('status', '')
+    current_only = request.GET.get('current_only', False)
+    overdue = request.GET.get('overdue', False)
+    unassigned = request.GET.get('unassigned', False)
+    
+    # Apply filters
     if user_id and user_id.isdigit():
         assignments = assignments.filter(user_id=int(user_id))
+    
     if shift_id and shift_id.isdigit():
         assignments = assignments.filter(shift_id=int(shift_id))
+    
+
+    if start_date:
+        try:
+            start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
+            assignments = assignments.filter(effective_from__gte=start_date_obj)
+        except ValueError:
+            pass
+            
+    if end_date:
+        try:
+            end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
+            assignments = assignments.filter(effective_to__lte=end_date_obj)
+        except ValueError:
+            pass
+
+    if status:
+        today = datetime.now().date()
+        if status == 'active':
+            # Active: current date is between effective_from and effective_to, and has shift assigned
+            assignments = assignments.filter(
+                effective_from__lte=today,
+                effective_to__gte=today,
+                shift__isnull=False
+            )
+        elif status == 'pending':
+            # Pending: effective_from is in the future, or shift not yet assigned
+            assignments = assignments.filter(
+                Q(effective_from__gt=today) | Q(shift__isnull=True)
+            )
+        elif status == 'completed':
+            # Completed: effective_to date has passed
+            assignments = assignments.filter(
+                effective_to__lt=today,
+                shift__isnull=False
+            )
+
+    if current_only == 'true':
+        today = datetime.now().date()
+        assignments = assignments.filter(
+            Q(effective_from__lte=today) & (Q(effective_to__gte=today) | Q(effective_to__isnull=True))
+        )
+        
+    if overdue == 'true':
+        today = datetime.now().date()
+        assignments = assignments.filter(effective_to__lt=today, status__in=['active', 'pending'])
+        
+    if unassigned == 'true':
+        assignments = assignments.filter(user__isnull=True)
+    
+    # Order the results
     assignments = assignments.order_by('-created_at')
+    
+    # Pagination
     paginator = Paginator(assignments, 15)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-    users = User.objects.all().order_by('username')
-    shifts = ShiftMaster.objects.filter(is_active=True).order_by('name')
+    
+    # Context data for the template
     context = {
         'page_obj': page_obj,
-        'users': users,
-        'shifts': shifts,
-        'current_only': current_only,
+        'users': User.objects.filter(is_active=True).order_by('username'),
+        'shifts': ShiftMaster.objects.filter(is_active=True).order_by('name'),
+        
+        # Filter states for form repopulation
+        'current_only': current_only == 'true',
+        'overdue': overdue == 'true',
+        'unassigned': unassigned == 'true',
         'selected_user': int(user_id) if user_id and user_id.isdigit() else None,
         'selected_shift': int(shift_id) if shift_id and shift_id.isdigit() else None,
+        'start_date': datetime.strptime(start_date, '%Y-%m-%d').date() if start_date else None,
+        'end_date': datetime.strptime(end_date, '%Y-%m-%d').date() if end_date else None,
+        'selected_status': status,
+        
+        # Flag to indicate if any filter has been applied
+        'filter_applied': any([user_id, shift_id, start_date, end_date, 
+                              status, current_only, overdue, unassigned]),
     }
+    
     return render(request, 'components/manager/shifts/assignment_list.html', context)
 
 @login_required
