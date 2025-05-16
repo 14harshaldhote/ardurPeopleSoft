@@ -1,6 +1,22 @@
 # trueAlign/urls.py
 from django.urls import path, include
 from . import views
+from django.urls import path, register_converter
+from uuid import UUID
+from . import views
+
+# Create a UUID converter
+class UUIDConverter:
+    regex = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
+    
+    def to_python(self, value):
+        return UUID(value)
+        
+    def to_url(self, value):
+        return str(value)
+
+# Register the converter
+register_converter(UUIDConverter, 'uuid')
 
 # Appraisal URL patterns
 appraisal_patterns = [
@@ -302,9 +318,18 @@ holiday_pattern=[
 
 entertainment_patterns=[
     path('',views.entertainment_dashboard,name='entertainment'),
-    path('games/',views.games,name='games'),
-    path('tic-tac-toe/',views.tictactoe,name='tic_tac_toe'),
-    path('control/',views.entertainment_control,name='entertainment_control'),
+    path('games/', views.games, name='games_hub'),
+    
+    # Tic-Tac-Toe game routes
+    path('tictactoe/', views.TicTacToeGameView.as_view(), name='game_list'),
+    path('tictactoe/<uuid:game_id>/', views.TicTacToeGameView.as_view(), name='game_detail'), 
+    # Other game view routes
+    path('notifications/', views.NotificationView.as_view(), name='notifications'),
+    path('leaderboard/', views.LeaderboardView.as_view(), name='leaderboard'),
+    path('icons/', views.GameIconView.as_view(), name='game_icons'),
+    path('history/', views.GameHistoryView.as_view(), name='game_history'),
+    path('history/<int:user_id>/', views.GameHistoryView.as_view(), name='user_game_history'),
+
 ]
 
 # Main URL configuration for the project

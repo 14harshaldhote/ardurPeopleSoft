@@ -263,3 +263,57 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         except Exception as e:
             print(f"Get unread count error: {str(e)}")
             return 0
+
+
+# Websocket consumers for real-time updates
+# This would go in a consumers.py file
+from channels.generic.websocket import JsonWebsocketConsumer
+from asgiref.sync import async_to_sync
+
+class GameConsumer(JsonWebsocketConsumer):
+    """WebSocket consumer for real-time game updates"""
+    
+    def connect(self):
+        """Handle WebSocket connection"""
+        # Get the game ID from the URL route
+        self.game_id = self.scope['url_route']['kwargs']['game_id']
+        self.game_group_name = f'game_{self.game_id}'
+        
+        # Join the game group
+        async_to_sync(self.channel_layer.group_add)(
+            self.game_group_name,
+            self.channel_name
+        )
+        
+        # Accept the connection
+        self.accept()
+    
+    def disconnect(self, close_code):
+        """Handle WebSocket disconnection"""
+        # Leave the game group
+        async_to_sync(self.channel_layer.group_discard)(
+            self.game_group_name,
+            self.channel_name
+        )
+    
+    def receive_json(self, content):
+        """Handle received messages from WebSocket"""
+        # This method handles messages sent from the client
+        message_type = content.get('type')
+        
+        if message_type == 'ping':
+            # Client is checking if connection is alive
+            self.send_json({
+                'type': 'pong',
+                'timestamp': datetime.now().isoformat()
+            })
+    
+    def game_update(self, event):
+        """Handle game update messages from the channel layer"""
+        # Forward the game update to the WebSocket
+        self.send_json(event)
+    
+    def game_message(self, event):
+        """Handle game chat messages from the channel layer"""
+        # Forward the chat message to the WebSocket
+        self.send_json(event)

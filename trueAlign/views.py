@@ -15539,6 +15539,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group
 from django.db.models import Q, F, ExpressionWrapper, FloatField, Case, When, Value
 from .models import TicTacToeGame, PlayerStats, GameIcon, GameSpectator, Notification
+from django.views import View
+from django.utils.decorators import method_decorator
 # Custom decorator for checking user groups
 def user_passes_test_groups(test_func):
     def decorator(view_func):
@@ -15627,282 +15629,1676 @@ def entertainment_dashboard(request):
     return render(request, 'components/entertainment/dashboard.html', context)
 
 @login_required
-@user_passes_test_groups(is_manager_or_hr_or_employee)
+@user_passes_test(is_manager_or_hr_or_employee)
 def games(request):
     """
     View that displays all available games with descriptions
     and links to play them.
-    
-    This function calls tictactoe() function for tic-tac-toe game content.
     """
-    # Get tic-tac-toe game content by calling tictactoe()
-    tictactoe_content = tictactoe(request)
-  
+    # Get active games for this user
+    active_games = TicTacToeGame.objects.filter(
+        Q(creator=request.user) | Q(opponent=request.user),
+        status__in=['active', 'pending']
+    ).order_by('-updated_at')
     
-
+    # Get user stats if available
+    try:
+        user_stats = PlayerStats.objects.get(user=request.user)
+    except PlayerStats.DoesNotExist:
+        user_stats = None
+    
+    # List of available games with descriptions
+    available_games = [
+        {
+            'name': 'Tic-Tac-Toe',
+            'description': 'Classic game of X and O. Challenge colleagues to a match!',
+            'url': reverse('aps_entertainment:game_list'),
+            'icon': 'fa-gamepad',
+            'active_count': active_games.count()
+        }
+        # Add more games here as they become available
+    ]
     
     context = {
         'title': 'Games Center',
-        'tictactoe_game': tictactoe_content,
-        # 'other_games': other_games
+        'available_games': available_games,
+        'active_games': active_games[:5],  # Show 5 most recent active games
+        'user_stats': user_stats,
     }
     
     return render(request, 'components/entertainment/games/games.html', context)
 
 # Views for Tic-Tac-Toe Game
-@login_required
-@user_passes_test_groups(is_manager_or_hr_or_employee)
-def tictactoe(request):
+class TicTacToeGameView(View):
     """
-    View for the Tic-Tac-Toe game.
-    - GET request: Returns the game board data
-    - POST request: Processes player moves and AI responses
-    This is called by the games() function to include the game data.
+    Class-based view to handle all game-related actions:
+    - Display the game board
+    - Process player moves
+    - Handle game invitations
+    - Handle spectator functionality
     """
-    # Handle POST requests (making a move)
-    if request.method == 'POST':
-        game_id = request.POST.get('game_id')
-        position = request.POST.get('position')
-        
-        if game_id and position:
-            game = get_object_or_404(TicTacToeGame, id=game_id)
-            
-            # Check if user is a participant and it's their turn
-            if request.user != game.current_turn:
-                return JsonResponse({'success': False, 'message': "Not your turn or you're not a participant"})
-            
-            try:
-                position = int(position)
-                success, message = game.make_move(request.user, position)
-                
-                if success:
-                    # If game is now complete, update player stats
-                    if game.status == 'completed':
-                        PlayerStats.update_stats(game)
-                    
-                    return JsonResponse({
-                        'success': True,
-                        'board': game.board,
-                        'status': game.status,
-                        'winner': game.winner.username if game.winner else None,
-                        'current_turn': game.current_turn.username if game.current_turn else None
-                    })
-                else:
-                    return JsonResponse({'success': False, 'message': message})
-            except ValueError:
-                return JsonResponse({'success': False, 'message': "Invalid position"})
-                
-        # Handle forfeit action
-        if request.POST.get('action') == 'forfeit':
-            game_id = request.POST.get('game_id')
-            game = get_object_or_404(TicTacToeGame, id=game_id)
-            
-            # Check if user is a participant
-            if request.user != game.creator and request.user != game.opponent:
-                return JsonResponse({'success': False, 'message': "You're not a participant in this game"})
-            
-            success, message = game.forfeit_game(request.user)
-            
-            if success:
-                # Update player stats
-                PlayerStats.update_stats(game)
-                
-                return JsonResponse({
-                    'success': True,
-                    'status': game.status,
-                    'winner': game.winner.username
-                })
-            else:
-                return JsonResponse({'success': False, 'message': message})
-        
-        # Handle accept/decline invitation
-        if request.POST.get('action') == 'accept':
-            game_id = request.POST.get('game_id')
-            game = get_object_or_404(TicTacToeGame, id=game_id, opponent=request.user, status='pending')
-            success, message = game.accept_game()
-            
-            if success:
-                return JsonResponse({'success': True, 'message': "Game invitation accepted!"})
-            else:
-                return JsonResponse({'success': False, 'message': message})
-                
-        if request.POST.get('action') == 'decline':
-            game_id = request.POST.get('game_id')
-            game = get_object_or_404(TicTacToeGame, id=game_id, opponent=request.user, status='pending')
-            success, message = game.decline_game()
-            
-            if success:
-                return JsonResponse({'success': True, 'message': "Game invitation declined."})
-            else:
-                return JsonResponse({'success': False, 'message': message})
-        
-        # Handle create game
-        if request.POST.get('action') == 'create':
-            opponent_id = request.POST.get('opponent_id')
-            creator_icon_id = request.POST.get('creator_icon')
-            opponent_icon_id = request.POST.get('opponent_icon')
-            allow_spectators = request.POST.get('allow_spectators', False) == 'on'
-            
-            # Validate opponent exists
-            try:
-                opponent = User.objects.get(id=opponent_id)
-                
-                # Don't allow inviting yourself
-                if opponent == request.user:
-                    return JsonResponse({'success': False, 'message': "You cannot play against yourself."})
-                    
-                # Use default icons if not specified
-                default_icon = GameIcon.objects.filter(is_active=True).first()
-                creator_icon = GameIcon.objects.get(id=creator_icon_id) if creator_icon_id else default_icon
-                opponent_icon = GameIcon.objects.get(id=opponent_icon_id) if opponent_icon_id else default_icon
-                
-                # Create the game
-                game = TicTacToeGame.objects.create(
-                    creator=request.user,
-                    opponent=opponent,
-                    creator_icon=creator_icon,
-                    opponent_icon=opponent_icon,
-                    allow_spectators=allow_spectators
-                )
-                
-                # Create notification for the opponent
-                Notification.objects.create(
-                    recipient=opponent,
-                    message=f"{request.user.username} has invited you to play Tic-Tac-Toe",
-                    notification_type='game_invite',
-                    game=game
-                )
-                
-                return JsonResponse({
-                    'success': True,
-                    'message': f"Game invitation sent to {opponent.username}",
-                    'game_id': str(game.id)
-                })
-                
-            except User.DoesNotExist:
-                return JsonResponse({'success': False, 'message': "Invalid opponent selected."})
     
-    # Handle GET requests (display game data)
-    else:
-        context = {}
+    @method_decorator(login_required)
+    @method_decorator(user_passes_test(is_manager_or_hr_or_employee))
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+    
+    def get(self, request, game_id=None):
+        """Handle GET requests for either game listing or game detail"""
+        if game_id:
+            return self._game_detail(request, game_id)
+        else:
+            return self._game_list(request)
+    
+    def post(self, request, game_id=None):
+        """Handle POST requests for game actions"""
+        try:
+            action = request.POST.get('action', '')
+            
+            # Map actions to their handler methods
+            action_handlers = {
+                'move': self._handle_move,
+                'forfeit': self._handle_forfeit,
+                'accept': self._handle_accept_invitation,
+                'decline': self._handle_decline_invitation,
+                'create': self._handle_create_game,
+                'add_spectator': self._handle_add_spectator,
+                'remove_spectator': self._handle_remove_spectator,
+                'send_message': self._handle_game_message,
+            }
+            
+            # If no action is specified but position is, default to move action
+            if not action and request.POST.get('position') and game_id:
+                return self._handle_move(request, game_id)
+                
+            # Execute the appropriate handler or return error
+            if action in action_handlers:
+                if game_id and action not in ['create']:
+                    return action_handlers[action](request, game_id)
+                elif action == 'create':
+                    return action_handlers[action](request)
+                else:
+                    messages.error(request, "Invalid request")
+                    return redirect('aps_entertainment:game_list')
+            else:
+                messages.error(request, "Invalid action specified")
+                return redirect('aps_entertainment:game_list')
         
-        # Get active games where the user is a participant
-        context['active_games'] = TicTacToeGame.objects.filter(
-            (Q(creator=request.user) | Q(opponent=request.user)),
+        except Exception as e:
+            # Global exception handler
+            import logging
+            logging.error(f"Unexpected error in game view: {str(e)}")
+            messages.error(request, "An unexpected error occurred. Please try again later.")
+            return redirect('aps_entertainment:game_list')
+    
+    def _game_list(self, request):
+        """Display list of active and pending games"""
+        active_games = TicTacToeGame.objects.filter(
+            Q(creator=request.user) | Q(opponent=request.user),
             status__in=['active', 'pending']
         ).order_by('-updated_at')
         
-        # Get completed games where the user is a participant
-        context['completed_games'] = TicTacToeGame.objects.filter(
-            (Q(creator=request.user) | Q(opponent=request.user)),
+        completed_games = TicTacToeGame.objects.filter(
+            Q(creator=request.user) | Q(opponent=request.user),
             status='completed'
-        ).order_by('-updated_at')[:10]  # Limit to recent 10 games
+        ).order_by('-updated_at')[:10]
         
-        # Games user can spectate (active games where user is not a participant)
-        context['spectatable_games'] = TicTacToeGame.objects.filter(
+        # Check for timed out games and update their status
+        self._check_timeouts(request, active_games)
+        
+        # Get available game icons for creating new games
+        game_icons = GameIcon.objects.filter(is_active=True)
+        
+        # Get spectating games
+        spectating_games = TicTacToeGame.objects.filter(
+            spectators__user=request.user,
             status='active',
             allow_spectators=True
-        ).exclude(
-            Q(creator=request.user) | Q(opponent=request.user)
-        ).order_by('-updated_at')
-        
-        # Get pending invitations
-        context['invitations'] = TicTacToeGame.objects.filter(
-            opponent=request.user,
-            status='pending'
-        ).order_by('-created_at')
-        
-        # Get unread notifications
-        context['notifications'] = Notification.objects.filter(
-            recipient=request.user,
-            is_read=False
-        ).order_by('-created_at')[:5]
-        
-        # Get top players for leaderboard - WITH FIX FOR win_rate
-        
-        top_players = PlayerStats.objects.annotate(
-            win_rate=ExpressionWrapper(
-                Case(
-                    When(games_played__gt=0, 
-                        then=F('games_won') * 100.0 / F('games_played')),
-                    default=Value(0.0)
-                ),
-                output_field=FloatField()
-            )
-        ).order_by('-games_won', '-win_rate')[:10]
-        
-        context['top_players'] = top_players
-        
-        # Get available icons for the game
-        context['icons'] = GameIcon.objects.filter(is_active=True)
-        
-        # Get list of users who can be invited (in Manager, HR or Employee groups)
-        allowed_groups = Group.objects.filter(name__in=["Manager", "HR", "Employee"])
-        context['potential_opponents'] = User.objects.filter(groups__in=allowed_groups).exclude(id=request.user.id)
+        ).distinct()
 
-        # Check for specific game_id parameter
-        game_id = request.GET.get('game_id')
-        if game_id:
+        # ✅ Step 1: Get IDs of users with 'active' employment status
+        active_user_ids = UserDetails.objects.filter(
+            employment_status='active'
+        ).values_list('user_id', flat=True)
+
+        # ✅ Step 2: Get all users except current user and only those active
+        user_list = User.objects.exclude(id=request.user.id).filter(
+            id__in=active_user_ids
+        )
+        
+        context = {
+            'active_games': active_games,
+            'completed_games': completed_games,
+            'game_icons': game_icons,
+            'user_list': user_list,
+            'spectating_games': spectating_games,
+            'unread_notifications': Notification.objects.filter(
+                recipient=request.user, 
+                is_read=False
+            ).count()
+        }
+        
+        return render(request, 'components/entertainment/games/ttt/game_list.html', context)
+    
+    def _game_detail(self, request, game_id):
+        """Display a specific game and handle game actions"""
+        try:
             game = get_object_or_404(TicTacToeGame, id=game_id)
             
-            # Determine if user is allowed to view this game
-            is_participant = request.user == game.creator or request.user == game.opponent
-            is_spectator = game.spectators.filter(user=request.user).exists()
+            # Check if user is authorized to view this game
+            is_player = request.user == game.creator or request.user == game.opponent
+            is_spectator = game.allow_spectators and game.spectators.filter(user=request.user).exists()
             
-            if not (is_participant or (is_spectator and game.allow_spectators)):
-                # If not a participant or spectator, check if can become spectator
-                if game.status == 'active' and game.allow_spectators:
-                    # Add as spectator if allowed
+            if not (is_player or is_spectator):
+                # If game allows spectators, add user as spectator
+                if game.allow_spectators and game.status == 'active':
                     GameSpectator.objects.get_or_create(game=game, user=request.user)
                     is_spectator = True
                 else:
-                    return HttpResponseForbidden("You don't have permission to view this game.")
+                    return HttpResponseForbidden("You are not authorized to view this game.")
             
-            # Check for timeout
-            if game.status == 'active' and game.is_timeout():
-                game.status = 'timeout'
-                # The player whose turn it is loses due to timeout
-                game.winner = game.opponent if game.current_turn == game.creator else game.creator
-                game.save()
-                
-                # Create timeout notification
-                Notification.objects.create(
-                    recipient=game.current_turn,
-                    message=f"Your game has timed out due to inactivity. {game.winner.username} wins.",
-                    notification_type='game_timeout',
-                    game=game
-                )
-                
-                # Update player stats
-                PlayerStats.update_stats(game)
-            
-            # Mark notifications related to this game as read
-            if is_participant:
+            # Mark notifications as read
+            if is_player:
                 Notification.objects.filter(
                     recipient=request.user,
                     game=game,
                     is_read=False
                 ).update(is_read=True)
             
-            # Get spectators list
-            spectators = game.spectators.all()
+            # Check for timeout
+            if game.status == 'active' and game.is_timeout():
+                self._handle_timeout(game)
             
-            # Add game specific context
-            context['game'] = game
-            context['is_participant'] = is_participant
-            context['is_spectator'] = is_spectator
-            context['is_creator'] = request.user == game.creator
-            context['is_opponent'] = request.user == game.opponent
-            context['is_my_turn'] = game.current_turn == request.user if game.current_turn else False
-            context['spectators'] = spectators
-            context['creator_symbol'] = game.creator_icon.symbol if game.creator_icon else 'X'
-            context['opponent_symbol'] = game.opponent_icon.symbol if game.opponent_icon else 'O'
+            # Prepare game data for template
+            board_display = [game.board[i:i+3] for i in range(0, 9, 3)]
             
-            # Render detailed game view
+            context = {
+                'game': game,
+                'board_display': board_display,
+                'is_player': is_player,
+                'is_spectator': is_spectator,
+                'is_creator': request.user == game.creator,
+                'is_opponent': request.user == game.opponent,
+                'is_your_turn': game.current_turn == request.user,
+                'spectator_count': game.spectators.count(),
+                'can_move': game.status == 'active' and game.current_turn == request.user,
+            }
+            
             return render(request, 'components/entertainment/games/ttt/game_detail.html', context)
+            
+        except Exception as e:
+            messages.error(request, f"Error loading game: {str(e)}")
+            return redirect('aps_entertainment:game_list')
+    
+    def _handle_move(self, request, game_id):
+        """Handle a player making a move"""
+        game = get_object_or_404(TicTacToeGame, id=game_id)
         
-        # Render game list view by default
-        return render(request, 'components/entertainment/games/ttt/game_list.html', context)
+        # Ensure the user is a player in this game
+        if request.user != game.creator and request.user != game.opponent:
+            messages.error(request, "You are not a player in this game")
+            return redirect('aps_entertainment:game_list')
+        
+        try:
+            position = int(request.POST.get('position'))
+            success, message = game.make_move(request.user, position)
+            
+            if success:
+                # Send websocket notification to update other clients
+                self._notify_game_update(game)
+                
+                # Update stats if game is completed
+                if game.status == 'completed':
+                    PlayerStats.update_stats(game)
+                    
+                    # Create notification for the opponent
+                    other_player = game.opponent if request.user == game.creator else game.creator
+                    Notification.objects.create(
+                        recipient=other_player,
+                        message=f"Game finished! {game.winner.username} won." if game.winner else "Game ended in a draw.",
+                        notification_type='game_ended',
+                        game=game
+                    )
+            else:
+                messages.error(request, message)
+            
+            return redirect('aps_entertainment:game_detail', game_id=game_id)
+                
+        except (ValueError, TypeError):
+            messages.error(request, "Invalid position value")
+            return redirect('aps_entertainment:game_detail', game_id=game_id)
+    
+    def _handle_forfeit(self, request, game_id):
+        """Handle a player forfeiting the game"""
+        game = get_object_or_404(TicTacToeGame, id=game_id)
+        
+        # Ensure user is a player in this game
+        if request.user != game.creator and request.user != game.opponent:
+            messages.error(request, "You are not a player in this game")
+            return redirect('aps_entertainment:game_list')
+        
+        success, message = game.forfeit_game(request.user)
+        
+        if success:
+            # Update stats
+            PlayerStats.update_stats(game)
+            
+            # Create notification for the opponent
+            other_player = game.opponent if request.user == game.creator else game.creator
+            Notification.objects.create(
+                recipient=other_player,
+                message=f"{request.user.username} has forfeited the game. You win!",
+                notification_type='game_forfeit',
+                game=game
+            )
+            
+            # Send websocket notification to update other clients
+            self._notify_game_update(game)
+            
+            messages.success(request, "You have forfeited the game.")
+        else:
+            messages.error(request, message)
+        
+        return redirect('aps_entertainment:game_detail', game_id=game_id)
+    
+    def _handle_accept_invitation(self, request, game_id):
+        """Handle accepting a game invitation"""
+        game = get_object_or_404(TicTacToeGame, id=game_id, opponent=request.user, status='pending')
+        
+        success, message = game.accept_game()
+        
+        if success:
+            # Create notification for the creator
+            Notification.objects.create(
+                recipient=game.creator,
+                message=f"{request.user.username} has accepted your game invitation!",
+                notification_type='game_accepted',
+                game=game
+            )
+            
+            # Send websocket notification to update other clients
+            self._notify_game_update(game)
+            
+            messages.success(request, "Game accepted! It's your opponent's turn.")
+        else:
+            messages.error(request, message)
+        
+        return redirect('aps_entertainment:game_detail', game_id=game_id)
+    
+    def _handle_decline_invitation(self, request, game_id):
+        """Handle declining a game invitation"""
+        game = get_object_or_404(TicTacToeGame, id=game_id, opponent=request.user, status='pending')
+        
+        success, message = game.decline_game()
+        
+        if success:
+            # Create notification for the creator
+            Notification.objects.create(
+                recipient=game.creator,
+                message=f"{request.user.username} has declined your game invitation.",
+                notification_type='game_declined',
+                game=game
+            )
+            
+            messages.success(request, "Game invitation declined.")
+        else:
+            messages.error(request, message)
+        
+        return redirect('aps_entertainment:game_list')
+    
+    def _handle_create_game(self, request):
+        """Handle creating a new game"""
+        opponent_id = request.POST.get('opponent_id')
+        creator_icon_id = request.POST.get('creator_icon_id')
+        opponent_icon_id = request.POST.get('opponent_icon_id')
+        allow_spectators = request.POST.get('allow_spectators') == 'on'
+        
+        try:
+            # Validate inputs
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            
+            opponent = User.objects.get(id=opponent_id)
+            creator_icon = GameIcon.objects.get(id=creator_icon_id, is_active=True)
+            opponent_icon = GameIcon.objects.get(id=opponent_icon_id, is_active=True)
+            
+            # Make sure user is not playing against themselves
+            if opponent == request.user:
+                messages.error(request, "You cannot play against yourself!")
+                return redirect('aps_entertainment:game_list')
+            
+            # Create the game
+            game = TicTacToeGame.objects.create(
+                creator=request.user,
+                opponent=opponent,
+                creator_icon=creator_icon,
+                opponent_icon=opponent_icon,
+                allow_spectators=allow_spectators
+            )
+            
+            # Create notification for the opponent
+            Notification.objects.create(
+                recipient=opponent,
+                message=f"{request.user.username} has invited you to play Tic-Tac-Toe!",
+                notification_type='game_invite',
+                game=game
+            )
+            
+            messages.success(request, f"Game invitation sent to {opponent.username}!")
+            return redirect('aps_entertainment:game_detail', game_id=game.id)
+            
+        except (User.DoesNotExist, GameIcon.DoesNotExist) as e:
+            messages.error(request, f"Error creating game: {str(e)}")
+            return redirect('aps_entertainment:game_list')
+    
+    def _handle_add_spectator(self, request, game_id):
+        """Handle adding a spectator to the game"""
+        game = get_object_or_404(TicTacToeGame, id=game_id, allow_spectators=True, status='active')
+        
+        # Get the user to add as spectator
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        
+        try:
+            spectator_username = request.POST.get('spectator_username')
+            spectator = User.objects.get(username=spectator_username)
+            
+            # Don't add players as spectators
+            if spectator == game.creator or spectator == game.opponent:
+                messages.error(request, "Players cannot be added as spectators")
+                return redirect('aps_entertainment:game_detail', game_id=game_id)
+            
+            # Create the spectator entry
+            GameSpectator.objects.get_or_create(game=game, user=spectator)
+            
+            # Create notification for the spectator
+            Notification.objects.create(
+                recipient=spectator,
+                message=f"{request.user.username} has invited you to watch a Tic-Tac-Toe game!",
+                notification_type='spectator_invite',
+                game=game
+            )
+            
+            messages.success(request, f"{spectator.username} has been invited to watch the game")
+            return redirect('aps_entertainment:game_detail', game_id=game_id)
+            
+        except User.DoesNotExist:
+            messages.error(request, "User not found")
+            return redirect('aps_entertainment:game_detail', game_id=game_id)
+    
+    def _handle_remove_spectator(self, request, game_id):
+        """Handle removing a spectator from the game"""
+        game = get_object_or_404(TicTacToeGame, id=game_id)
+        
+        # Only creator or opponent can remove spectators
+        if request.user != game.creator and request.user != game.opponent:
+            messages.error(request, "Only players can remove spectators")
+            return redirect('aps_entertainment:game_detail', game_id=game_id)
+        
+        try:
+            spectator_id = request.POST.get('spectator_id')
+            spectator = GameSpectator.objects.get(id=spectator_id, game=game)
+            spectator.delete()
+            
+            messages.success(request, "Spectator removed")
+            return redirect('aps_entertainment:game_detail', game_id=game_id)
+            
+        except GameSpectator.DoesNotExist:
+            messages.error(request, "Spectator not found")
+            return redirect('aps_entertainment:game_detail', game_id=game_id)
+    
+    def _handle_game_message(self, request, game_id):
+        """Handle sending a message in the game chat"""
+        game = get_object_or_404(TicTacToeGame, id=game_id)
+        
+        # Check if user is authorized to send messages
+        is_player = request.user == game.creator or request.user == game.opponent
+        is_spectator = game.allow_spectators and game.spectators.filter(user=request.user).exists()
+        
+        if not (is_player or is_spectator):
+            messages.error(request, "You are not authorized to send messages in this game")
+            return redirect('aps_entertainment:game_list')
+        
+        message = request.POST.get('message', '').strip()
+        if message:
+            # Send message via websocket
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                f'game_{game_id}',
+                {
+                    'type': 'game_message',
+                    'message': message,
+                    'username': request.user.username,
+                    'timestamp': datetime.now().isoformat(),
+                }
+            )
+        
+        return redirect('aps_entertainment:game_detail', game_id=game_id)
+    
+    def _handle_timeout(self, game):
+        """Handle game timeout"""
+        game.status = 'timeout'
+        # Determine the winner (the player who didn't time out)
+        if game.current_turn:
+            game.winner = game.opponent if game.current_turn == game.creator else game.creator
+            game.save()
+            PlayerStats.update_stats(game)
+            
+            # Create notification for the player who timed out
+            Notification.objects.create(
+                recipient=game.current_turn,
+                message=f"Your game has timed out. {game.winner.username} wins.",
+                notification_type='game_timeout',
+                game=game
+            )
+            
+            # Send websocket notification to update other clients
+            self._notify_game_update(game)
+    
+    def _check_timeouts(self, request, active_games):
+        """Check for timed out games and update their status"""
+        for game in active_games:
+            if game.status == 'active' and game.is_timeout():
+                self._handle_timeout(game)
+    
+    def _notify_game_update(self, game):
+        """Send websocket notification for game updates"""
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f'game_{game.id}',
+            {
+                'type': 'game_update',
+                'game_id': game.id,
+                'status': game.status,
+                'board': game.board,
+                'current_turn': game.current_turn.username if game.current_turn else None,
+                'winner': game.winner.username if game.winner else None,
+                'updated_at': game.updated_at.isoformat(),
+                'spectator_count': game.spectators.count()
+            }
+        )
+
+
+class NotificationView(View):
+    """Class-based view to handle notifications"""
+    
+    @method_decorator(login_required)
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+    
+    def get(self, request):
+        """Display user notifications"""
+        notifications = Notification.objects.filter(recipient=request.user).order_by('-created_at')
+        
+        context = {
+            'notifications': notifications,
+            'unread_count': notifications.filter(is_read=False).count()
+        }
+        
+        return render(request, 'components/entertainment/games//notification_list.html', context)
+    
+    def post(self, request):
+        """Mark notifications as read"""
+        action = request.POST.get('action')
+        
+        if action == 'mark_read':
+            notification_ids = request.POST.getlist('notification_ids')
+            if notification_ids:
+                Notification.objects.filter(id__in=notification_ids, recipient=request.user).update(is_read=True)
+                messages.success(request, "Notifications marked as read.")
+            
+        elif action == 'mark_all_read':
+            Notification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
+            messages.success(request, "All notifications marked as read.")
+        
+        return redirect('aps_entertainment:notifications')
+
+
+class LeaderboardView(View):
+    """Class-based view to display the game leaderboard"""
+    
+    @method_decorator(login_required)
+    @method_decorator(require_GET)
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+    
+    def get(self, request):
+        """Display the game leaderboard"""
+        # Get top players by win percentage (minimum 5 games played)
+        top_players = PlayerStats.objects.filter(games_played__gte=5).order_by('-win_percentage')[:20]
+        
+        # Get most active players
+        most_active = PlayerStats.objects.order_by('-games_played')[:20]
+        
+        # Get user's rank if they have stats
+        user_rank = None
+        try:
+            user_stats = PlayerStats.objects.get(user=request.user)
+            if user_stats.games_played >= 5:
+                # Count how many players have better win percentage
+                user_rank = PlayerStats.objects.filter(
+                    games_played__gte=5,
+                    win_percentage__gt=user_stats.win_percentage
+                ).count() + 1
+        except PlayerStats.DoesNotExist:
+            user_stats = None
+        
+        context = {
+            'top_players': top_players,
+            'most_active': most_active,
+            'user_stats': user_stats,
+            'user_rank': user_rank
+        }
+        
+        return render(request, 'components/entertainment/games/tttleaderboard.html', context)
+
+
+class GameIconView(View):
+    """Class-based view to handle game icons"""
+    
+    @method_decorator(login_required)
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+    
+    def get(self, request):
+        """Display game icons"""
+        # Only show user's created icons and any active icons
+        user_icons = GameIcon.objects.filter(Q(created_by=request.user) | Q(is_active=True)).distinct()
+        
+        context = {
+            'icons': user_icons
+        }
+        
+        return render(request, 'components/entertainment/games/game_icons.html', context)
+    
+    def post(self, request):
+        """Create a new game icon"""
+        name = request.POST.get('name')
+        symbol = request.POST.get('symbol')
+        
+        if not name or not symbol:
+            messages.error(request, "Both name and symbol are required.")
+            return redirect('aps_entertainment:game_icons')
+        
+        # Validate symbol length
+        if len(symbol) > 10:
+            messages.error(request, "Symbol must be at most 10 characters.")
+            return redirect('aps_entertainment:game_icons')
+        
+        # Create the icon
+        GameIcon.objects.create(
+            name=name,
+            symbol=symbol,
+            created_by=request.user,
+            is_active=False  # Default to inactive until approved by admin
+        )
+        
+        messages.success(request, "Icon created successfully! It will be available after review.")
+        return redirect('aps_entertainment:game_icons')
+
+
+class GameHistoryView(View):
+    """Class-based view to display game history"""
+    
+    @method_decorator(login_required)
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+    
+    def get(self, request, user_id=None):
+        """Display game history for a user"""
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        
+        if user_id:
+            user = get_object_or_404(User, id=user_id)
+        else:
+            user = request.user
+        
+        # Get all completed games for the user
+        games = TicTacToeGame.objects.filter(
+            Q(creator=user) | Q(opponent=user),
+            status__in=['completed', 'timeout']
+        ).order_by('-updated_at')
+        
+        # Get user stats
+        try:
+            stats = PlayerStats.objects.get(user=user)
+        except PlayerStats.DoesNotExist:
+            stats = None
+        
+        context = {
+            'profile_user': user,
+            'games': games,
+            'stats': stats,
+            'is_own_profile': user == request.user
+        }
+        
+        return render(request, 'components/entertainment/games/tttgame_history.html', context)
+
+# def handle_move(request):
+#     """Handle a player making a move on the board"""
+#     try:
+#         game_id = request.POST.get('game_id')
+#         position = request.POST.get('position')
+        
+#         if not game_id or not position:
+#             return JsonResponse({
+#                 'success': False, 
+#                 'message': "Missing required parameters"
+#             }, status=400)
+            
+#         try:
+#             position = int(position)
+#         except ValueError:
+#             return JsonResponse({
+#                 'success': False, 
+#                 'message': "Position must be a number"
+#             }, status=400)
+            
+#         with transaction.atomic():
+#             game = get_object_or_404(TicTacToeGame, id=game_id)
+            
+#             # Check if game is active
+#             if game.status != 'active':
+#                 return JsonResponse({
+#                     'success': False, 
+#                     'message': f"Game is not active. Current status: {game.status}"
+#                 }, status=400)
+                
+#             # Check if user is a participant and it's their turn
+#             if request.user != game.current_turn:
+#                 return JsonResponse({
+#                     'success': False, 
+#                     'message': "Not your turn or you're not a participant"
+#                 }, status=403)
+            
+#             # Handle timeout check
+#             if game.is_timeout():
+#                 game.handle_timeout()
+#                 return JsonResponse({
+#                     'success': False, 
+#                     'message': "Game timed out due to inactivity",
+#                     'status': game.status,
+#                     'winner': game.winner.username if game.winner else None
+#                 }, status=400)
+            
+#             # Try to make the move    
+#             success, message = game.make_move(request.user, position)
+            
+#             if success:
+#                 response_data = {
+#                     'success': True,
+#                     'board': game.board,
+#                     'status': game.status,
+#                     'current_turn': game.current_turn.username if game.current_turn else None,
+#                     'last_move_time': game.last_move_time.isoformat() if game.last_move_time else None,
+#                     'move_history': game.move_history,
+#                 }
+                
+#                 # If game is now complete, update player stats
+#                 if game.status == 'completed':
+#                     PlayerStats.update_stats(game)
+#                     response_data['winner'] = game.winner.username if game.winner else None
+                    
+#                     # Create notification for the opponent
+#                     if game.winner:
+#                         Notification.objects.create(
+#                             recipient=game.opponent if game.winner == game.creator else game.creator,
+#                             message=f"Game over! {game.winner.username} has won the game.",
+#                             notification_type='game_completed',
+#                             game=game
+#                         )
+#                     else:
+#                         # It's a draw
+#                         for player in [game.creator, game.opponent]:
+#                             Notification.objects.create(
+#                                 recipient=player,
+#                                 message="Game over! The game ended in a draw.",
+#                                 notification_type='game_completed',
+#                                 game=game
+#                             )
+                
+#                 # Notify spectators of the move
+#                 for spectator in game.spectators.all():
+#                     Notification.objects.create(
+#                         recipient=spectator.user,
+#                         message=f"{request.user.username} made a move in a game you're watching",
+#                         notification_type='game_update',
+#                         game=game
+#                     )
+                    
+#                 return JsonResponse(response_data)
+#             else:
+#                 return JsonResponse({'success': False, 'message': message}, status=400)
+                
+#     except TicTacToeGame.DoesNotExist:
+#         return JsonResponse({'success': False, 'message': "Game not found"}, status=404)
+#     except Exception as e:
+#         return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+
+# def handle_forfeit(request):
+#     """Handle a player forfeiting the game"""
+#     try:
+#         game_id = request.POST.get('game_id')
+#         if not game_id:
+#             return JsonResponse({'success': False, 'message': "Game ID is required"}, status=400)
+            
+#         with transaction.atomic():
+#             game = get_object_or_404(TicTacToeGame, id=game_id)
+            
+#             # Check if user is a participant
+#             if request.user != game.creator and request.user != game.opponent:
+#                 return JsonResponse({
+#                     'success': False, 
+#                     'message': "You're not a participant in this game"
+#                 }, status=403)
+            
+#             # Check if game can be forfeited
+#             if game.status != 'active' and game.status != 'pending':
+#                 return JsonResponse({
+#                     'success': False, 
+#                     'message': f"Cannot forfeit a game with status: {game.status}"
+#                 }, status=400)
+            
+#             success, message = game.forfeit_game(request.user)
+            
+#             if success:
+#                 # Update player stats
+#                 PlayerStats.update_stats(game)
+                
+#                 # Create notification for the winner
+#                 Notification.objects.create(
+#                     recipient=game.winner,
+#                     message=f"{request.user.username} has forfeited the game. You win!",
+#                     notification_type='game_forfeit',
+#                     game=game
+#                 )
+                
+#                 # Notify spectators
+#                 for spectator in game.spectators.all():
+#                     Notification.objects.create(
+#                         recipient=spectator.user,
+#                         message=f"{request.user.username} has forfeited the game you're watching",
+#                         notification_type='game_update',
+#                         game=game
+#                     )
+                
+#                 return JsonResponse({
+#                     'success': True,
+#                     'status': game.status,
+#                     'winner': game.winner.username,
+#                     'message': message
+#                 })
+#             else:
+#                 return JsonResponse({'success': False, 'message': message}, status=400)
+                
+#     except TicTacToeGame.DoesNotExist:
+#         return JsonResponse({'success': False, 'message': "Game not found"}, status=404)
+#     except Exception as e:
+#         return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+
+# def handle_accept_invitation(request):
+#     """Handle accepting a game invitation"""
+#     try:
+#         game_id = request.POST.get('game_id')
+#         if not game_id:
+#             return JsonResponse({'success': False, 'message': "Game ID is required"}, status=400)
+            
+#         with transaction.atomic():
+#             game = get_object_or_404(TicTacToeGame, id=game_id, opponent=request.user, status='pending')
+#             success, message = game.accept_game()
+            
+#             if success:
+#                 # Create notification for the creator
+#                 Notification.objects.create(
+#                     recipient=game.creator,
+#                     message=f"{request.user.username} has accepted your game invitation",
+#                     notification_type='game_invitation_accepted',
+#                     game=game
+#                 )
+                
+#                 return JsonResponse({
+#                     'success': True, 
+#                     'message': "Game invitation accepted!",
+#                     'game_id': str(game.id),
+#                     'status': game.status
+#                 })
+#             else:
+#                 return JsonResponse({'success': False, 'message': message}, status=400)
+                
+#     except TicTacToeGame.DoesNotExist:
+#         return JsonResponse({
+#             'success': False, 
+#             'message': "Game invitation not found or already processed"
+#         }, status=404)
+#     except Exception as e:
+#         return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+
+# def handle_decline_invitation(request):
+#     """Handle declining a game invitation"""
+#     try:
+#         game_id = request.POST.get('game_id')
+#         if not game_id:
+#             return JsonResponse({'success': False, 'message': "Game ID is required"}, status=400)
+            
+#         with transaction.atomic():
+#             game = get_object_or_404(TicTacToeGame, id=game_id, opponent=request.user, status='pending')
+#             success, message = game.decline_game()
+            
+#             if success:
+#                 # Create notification for the creator
+#                 Notification.objects.create(
+#                     recipient=game.creator,
+#                     message=f"{request.user.username} has declined your game invitation",
+#                     notification_type='game_invitation_declined',
+#                     game=game
+#                 )
+                
+#                 return JsonResponse({'success': True, 'message': "Game invitation declined."})
+#             else:
+#                 return JsonResponse({'success': False, 'message': message}, status=400)
+                
+#     except TicTacToeGame.DoesNotExist:
+#         return JsonResponse({
+#             'success': False, 
+#             'message': "Game invitation not found or already processed"
+#         }, status=404)
+#     except Exception as e:
+#         return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+
+# def handle_create_game(request):
+#     """Handle creating a new game"""
+#     try:
+#         opponent_id = request.POST.get('opponent_id')
+#         creator_icon_id = request.POST.get('creator_icon')
+#         opponent_icon_id = request.POST.get('opponent_icon')
+#         allow_spectators = request.POST.get('allow_spectators', 'off') == 'on'
+#         time_limit = request.POST.get('time_limit', 86400)  # Default 24 hours in seconds
+        
+#         if not opponent_id:
+#             return JsonResponse({'success': False, 'message': "Opponent is required"}, status=400)
+            
+#         # Try to parse time limit
+#         try:
+#             time_limit = int(time_limit)
+#             if time_limit < 60 or time_limit > 604800:  # Between 1 minute and 7 days
+#                 return JsonResponse({
+#                     'success': False, 
+#                     'message': "Time limit must be between 1 minute and 7 days"
+#                 }, status=400)
+#         except ValueError:
+#             time_limit = 86400  # Default to 24 hours if invalid
+        
+#         # Validate opponent exists
+#         try:
+#             with transaction.atomic():
+#                 opponent = User.objects.get(id=opponent_id)
+                
+#                 # Don't allow inviting yourself
+#                 if opponent == request.user:
+#                     return JsonResponse({
+#                         'success': False, 
+#                         'message': "You cannot play against yourself."
+#                     }, status=400)
+                
+#                 # Check if there's already an active or pending game with this opponent
+#                 existing_game = TicTacToeGame.objects.filter(
+#                     (Q(creator=request.user) & Q(opponent=opponent)) | 
+#                     (Q(creator=opponent) & Q(opponent=request.user)),
+#                     status__in=['active', 'pending']
+#                 ).first()
+                
+#                 if existing_game:
+#                     return JsonResponse({
+#                         'success': False, 
+#                         'message': f"You already have an {existing_game.status} game with this opponent"
+#                     }, status=400)
+                
+#                 # Use default icons if not specified
+#                 try:
+#                     default_icon = GameIcon.objects.filter(is_active=True).first()
+#                     creator_icon = GameIcon.objects.get(id=creator_icon_id) if creator_icon_id else default_icon
+#                     opponent_icon = GameIcon.objects.get(id=opponent_icon_id) if opponent_icon_id else default_icon
+                    
+#                     # Make sure icons are different
+#                     if creator_icon == opponent_icon:
+#                         # Try to find a different icon
+#                         alternate_icon = GameIcon.objects.filter(
+#                             is_active=True
+#                         ).exclude(id=creator_icon.id).first()
+                        
+#                         if alternate_icon:
+#                             opponent_icon = alternate_icon
+                        
+#                 except (GameIcon.DoesNotExist, ValueError):
+#                     # Use defaults if specified icons don't exist
+#                     default_icons = GameIcon.objects.filter(is_active=True)[:2]
+#                     if len(default_icons) >= 2:
+#                         creator_icon = default_icons[0]
+#                         opponent_icon = default_icons[1]
+#                     else:
+#                         # Create basic icons if none exist
+#                         creator_icon = GameIcon.objects.create(
+#                             name="X", symbol="X", 
+#                             css_class="text-blue-500", 
+#                             is_active=True
+#                         )
+#                         opponent_icon = GameIcon.objects.create(
+#                             name="O", symbol="O", 
+#                             css_class="text-red-500", 
+#                             is_active=True
+#                         )
+                
+#                 # Create the game
+#                 game = TicTacToeGame.objects.create(
+#                     creator=request.user,
+#                     opponent=opponent,
+#                     creator_icon=creator_icon,
+#                     opponent_icon=opponent_icon,
+#                     allow_spectators=allow_spectators,
+#                     time_limit=time_limit
+#                 )
+                
+#                 # Create notification for the opponent
+#                 Notification.objects.create(
+#                     recipient=opponent,
+#                     message=f"{request.user.username} has invited you to play Tic-Tac-Toe",
+#                     notification_type='game_invite',
+#                     game=game
+#                 )
+                
+#                 return JsonResponse({
+#                     'success': True,
+#                     'message': f"Game invitation sent to {opponent.username}",
+#                     'game_id': str(game.id)
+#                 })
+                
+#         except User.DoesNotExist:
+#             return JsonResponse({'success': False, 'message': "Invalid opponent selected."}, status=400)
+#         except Exception as e:
+#             return JsonResponse({'success': False, 'message': str(e)}, status=500)
+            
+#     except Exception as e:
+#         return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+
+# def handle_replay_game(request):
+#     """Handle creating a rematch from an existing game"""
+#     try:
+#         original_game_id = request.POST.get('original_game_id')
+#         if not original_game_id:
+#             return JsonResponse({'success': False, 'message': "Original game ID is required"}, status=400)
+            
+#         with transaction.atomic():
+#             original_game = get_object_or_404(TicTacToeGame, id=original_game_id)
+            
+#             # Check if user is a participant
+#             if request.user != original_game.creator and request.user != original_game.opponent:
+#                 return JsonResponse({
+#                     'success': False, 
+#                     'message': "You're not a participant in this game"
+#                 }, status=403)
+            
+#             # Check if game is completed
+#             if original_game.status != 'completed':
+#                 return JsonResponse({
+#                     'success': False, 
+#                     'message': "Can only create a rematch for completed games"
+#                 }, status=400)
+            
+#             # Determine opponent (the other player)
+#             opponent = original_game.opponent if request.user == original_game.creator else original_game.creator
+            
+#             # Create a new game but swap creator and opponent if the rematch requester was the opponent
+#             if request.user == original_game.opponent:
+#                 new_creator = original_game.opponent
+#                 new_opponent = original_game.creator
+#                 new_creator_icon = original_game.opponent_icon
+#                 new_opponent_icon = original_game.creator_icon
+#             else:
+#                 new_creator = original_game.creator
+#                 new_opponent = original_game.opponent
+#                 new_creator_icon = original_game.creator_icon
+#                 new_opponent_icon = original_game.opponent_icon
+            
+#             # Create the rematch game
+#             new_game = TicTacToeGame.objects.create(
+#                 creator=new_creator,
+#                 opponent=new_opponent,
+#                 creator_icon=new_creator_icon,
+#                 opponent_icon=new_opponent_icon,
+#                 allow_spectators=original_game.allow_spectators,
+#                 time_limit=original_game.time_limit,
+#                 is_rematch=True,
+#                 original_game=original_game
+#             )
+            
+#             # Create notification for the opponent
+#             Notification.objects.create(
+#                 recipient=new_opponent,
+#                 message=f"{new_creator.username} has invited you to a rematch",
+#                 notification_type='game_invite',
+#                 game=new_game
+#             )
+            
+#             return JsonResponse({
+#                 'success': True,
+#                 'message': f"Rematch invitation sent to {new_opponent.username}",
+#                 'game_id': str(new_game.id)
+#             })
+            
+#     except TicTacToeGame.DoesNotExist:
+#         return JsonResponse({'success': False, 'message': "Original game not found"}, status=404)
+#     except Exception as e:
+#         return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+
+# def handle_add_spectator(request):
+#     """Handle adding a spectator to a game"""
+#     try:
+#         game_id = request.POST.get('game_id')
+#         if not game_id:
+#             return JsonResponse({'success': False, 'message': "Game ID is required"}, status=400)
+            
+#         with transaction.atomic():
+#             game = get_object_or_404(TicTacToeGame, id=game_id)
+            
+#             # Check if spectating is allowed
+#             if not game.allow_spectators:
+#                 return JsonResponse({
+#                     'success': False, 
+#                     'message': "This game does not allow spectators"
+#                 }, status=403)
+                
+#             # Check if game is active
+#             if game.status != 'active':
+#                 return JsonResponse({
+#                     'success': False, 
+#                     'message': f"Cannot spectate a game with status: {game.status}"
+#                 }, status=400)
+                
+#             # Check if user is already a participant
+#             if request.user == game.creator or request.user == game.opponent:
+#                 return JsonResponse({
+#                     'success': False, 
+#                     'message': "You are already a participant in this game"
+#                 }, status=400)
+                
+#             # Add user as spectator
+#             spectator, created = GameSpectator.objects.get_or_create(
+#                 game=game,
+#                 user=request.user
+#             )
+            
+#             # Notify game participants of new spectator
+#             if created:
+#                 for player in [game.creator, game.opponent]:
+#                     Notification.objects.create(
+#                         recipient=player,
+#                         message=f"{request.user.username} is now spectating your game",
+#                         notification_type='game_spectator_added',
+#                         game=game
+#                     )
+            
+#             return JsonResponse({
+#                 'success': True,
+#                 'message': "You are now spectating this game"
+#             })
+            
+#     except TicTacToeGame.DoesNotExist:
+#         return JsonResponse({'success': False, 'message': "Game not found"}, status=404)
+#     except Exception as e:
+#         return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+
+# def handle_remove_spectator(request):
+#     """Handle removing a spectator from a game"""
+#     try:
+#         game_id = request.POST.get('game_id')
+#         if not game_id:
+#             return JsonResponse({'success': False, 'message': "Game ID is required"}, status=400)
+            
+#         with transaction.atomic():
+#             game = get_object_or_404(TicTacToeGame, id=game_id)
+            
+#             # Remove spectator
+#             deleted, _ = GameSpectator.objects.filter(
+#                 game=game,
+#                 user=request.user
+#             ).delete()
+            
+#             if deleted:
+#                 return JsonResponse({
+#                     'success': True,
+#                     'message': "You are no longer spectating this game"
+#                 })
+#             else:
+#                 return JsonResponse({
+#                     'success': False,
+#                     'message': "You are not spectating this game"
+#                 }, status=400)
+                
+#     except TicTacToeGame.DoesNotExist:
+#         return JsonResponse({'success': False, 'message': "Game not found"}, status=404)
+#     except Exception as e:
+#         return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+
+# def handle_game_message(request):
+#     """Handle sending in-game messages"""
+#     try:
+#         game_id = request.POST.get('game_id')
+#         message = request.POST.get('message')
+        
+#         if not game_id or not message:
+#             return JsonResponse({
+#                 'success': False, 
+#                 'message': "Game ID and message are required"
+#             }, status=400)
+            
+#         with transaction.atomic():
+#             game = get_object_or_404(TicTacToeGame, id=game_id)
+            
+#             # Check if user is a participant or spectator
+#             is_participant = request.user == game.creator or request.user == game.opponent
+#             is_spectator = game.spectators.filter(user=request.user).exists()
+            
+#             if not (is_participant or is_spectator):
+#                 return JsonResponse({
+#                     'success': False, 
+#                     'message': "You must be a participant or spectator to send messages"
+#                 }, status=403)
+                
+#             # Add message to game chat
+#             from .models import GameMessage
+#             game_message = GameMessage.objects.create(
+#                 game=game,
+#                 sender=request.user,
+#                 message=message
+#             )
+            
+#             # Notify other participants
+#             recipients = []
+#             if is_participant:
+#                 # Notify the other player
+#                 other_player = game.opponent if request.user == game.creator else game.creator
+#                 recipients.append(other_player)
+                
+#                 # And all spectators
+#                 for spectator in game.spectators.all():
+#                     recipients.append(spectator.user)
+#             else:
+#                 # Notify both players
+#                 recipients.extend([game.creator, game.opponent])
+                
+#                 # And other spectators
+#                 for spectator in game.spectators.exclude(user=request.user):
+#                     recipients.append(spectator.user)
+            
+#             # Create notifications
+#             for recipient in recipients:
+#                 Notification.objects.create(
+#                     recipient=recipient,
+#                     message=f"New message from {request.user.username} in your game",
+#                     notification_type='game_message',
+#                     game=game
+#                 )
+            
+#             return JsonResponse({
+#                 'success': True,
+#                 'message': "Message sent",
+#                 'chat_message': {
+#                     'id': str(game_message.id),
+#                     'sender': game_message.sender.username,
+#                     'message': game_message.message,
+#                     'timestamp': game_message.created_at.isoformat()
+#                 }
+#             })
+            
+#     except TicTacToeGame.DoesNotExist:
+#         return JsonResponse({'success': False, 'message': "Game not found"}, status=404)
+#     except Exception as e:
+#         return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+
+# def handle_get_request(request):
+#     """Handle GET requests to display game data"""
+#     try:
+#         context = {}
+        
+#         # Get active games where the user is a participant
+#         context['active_games'] = TicTacToeGame.objects.filter(
+#             (Q(creator=request.user) | Q(opponent=request.user)),
+#             status__in=['active', 'pending']
+#         ).order_by('-updated_at')
+        
+#         # Get completed games where the user is a participant
+#         context['completed_games'] = TicTacToeGame.objects.filter(
+#             (Q(creator=request.user) | Q(opponent=request.user)),
+#             status='completed'
+#         ).order_by('-updated_at')[:10]  # Limit to recent 10 games
+        
+#         # Games user can spectate (active games where user is not a participant)
+#         context['spectatable_games'] = TicTacToeGame.objects.filter(
+#             status='active',
+#             allow_spectators=True
+#         ).exclude(
+#             Q(creator=request.user) | Q(opponent=request.user)
+#         ).order_by('-updated_at')
+        
+#         # Get pending invitations
+#         context['invitations'] = TicTacToeGame.objects.filter(
+#             opponent=request.user,
+#             status='pending'
+#         ).order_by('-created_at')
+        
+#         # Get unread notifications
+#         context['notifications'] = Notification.objects.filter(
+#             recipient=request.user,
+#             is_read=False
+#         ).order_by('-created_at')[:5]
+        
+#         # Get player stats
+#         user_stats, created = PlayerStats.objects.get_or_create(
+#             user=request.user,
+#             defaults={
+#                 'games_played': 0,
+#                 'games_won': 0,
+#                 'games_lost': 0,
+#                 'games_tied': 0
+#             }
+#         )
+#         context['user_stats'] = user_stats
+        
+#         # Get top players for leaderboard
+#         top_players = PlayerStats.objects.annotate(
+#             win_rate=ExpressionWrapper(
+#                 Case(
+#                     When(games_played__gt=0, 
+#                         then=F('games_won') * 100.0 / F('games_played')),
+#                     default=Value(0.0)
+#                 ),
+#                 output_field=FloatField()
+#             )
+#         ).order_by('-games_won', '-win_rate')[:10]
+        
+#         context['top_players'] = top_players
+        
+#         # Get available icons for the game
+#         context['icons'] = GameIcon.objects.filter(is_active=True)
+        
+#         # Get list of users who can be invited (in Manager, HR or Employee groups)
+#         allowed_groups = Group.objects.filter(name__in=["Manager", "HR", "Employee"])
+#         context['potential_opponents'] = User.objects.filter(
+#             groups__in=allowed_groups
+#         ).exclude(id=request.user.id)
+        
+#         # Get available time limits for games
+#         context['time_limits'] = [
+#             {'seconds': 3600, 'display': '1 hour'},
+#             {'seconds': 7200, 'display': '2 hours'},
+#             {'seconds': 14400, 'display': '4 hours'},
+#             {'seconds': 28800, 'display': '8 hours'},
+#             {'seconds': 86400, 'display': '24 hours'},
+#             {'seconds': 172800, 'display': '2 days'},
+#             {'seconds': 604800, 'display': '7 days'},
+#         ]
+
+#         # Check for specific game_id parameter
+#         game_id = request.GET.get('game_id')
+#         if game_id:
+#             return handle_game_detail(request, game_id, context)
+        
+#         # Render game list view by default
+#         return render(request, 'components/entertainment/games/ttt/game_list.html', context)
+        
+#     except Exception as e:
+#         import logging
+#         logging.error(f"Error in handle_get_request: {str(e)}")
+#         context = {'error_message': "An error occurred while loading game data. Please try again."}
+#         return render(request, 'components/entertainment/games/ttt/error.html', context)
+
+
+# def handle_game_detail(request, game_id, context):
+#     """Handle displaying detailed game view"""
+#     try:
+#         game = get_object_or_404(TicTacToeGame, id=game_id)
+        
+#         # Determine if user is allowed to view this game
+#         is_participant = request.user == game.creator or request.user == game.opponent
+#         is_spectator = game.spectators.filter(user=request.user).exists()
+        
+#         if not (is_participant or (is_spectator and game.allow_spectators)):
+#             # If not a participant or spectator, check if can become spectator
+#             if game.status == 'active' and game.allow_spectators:
+#                 # Add as spectator if allowed
+#                 GameSpectator.objects.get_or_create(game=game, user=request.user)
+#                 is_spectator = True
+#             else:
+#                 return HttpResponseForbidden("You don't have permission to view this game.")
+        
+#         # Check for timeout
+#         if game.status == 'active' and game.is_timeout():
+#             game.handle_timeout()
+        
+#         # Mark notifications related to this game as read
+#         if is_participant or is_spectator:
+#             Notification.objects.filter(
+#                 recipient=request.user,
+#                 game=game,
+#                 is_read=False
+#             ).update(is_read=True)
+        
+#         # Get spectators list
+#         spectators = game.spectators.all()
+        
+#         # Get game messages
+#         from .models import GameMessage
+#         messages = GameMessage.objects.filter(game=game).order_by('created_at')
+        
+#         # Get move history
+#         move_history = game.get_move_history()
+        
+#         # Get rematch history
+#         if game.is_rematch:
+#             rematch_chain = [game]
+#             current_game = game
+#             while current_game.original_game:
+#                 rematch_chain.append(current_game.original_game)
+#                 current_game = current_game.original_game
+#             rematch_chain.reverse()  # Show oldest game first
+#         else:
+#             rematch_chain = []
+            
+#         # Check if there are rematches of this game
+#         rematches = TicTacToeGame.objects.filter(original_game=game)
+        
+#         # Update context with game details
+#         context.update({
+#             'game': game,
+#             'is_participant': is_participant,
+#             'is_spectator': is_spectator,
+#             'spectators': spectators,
+#             'messages': messages,
+#             'move_history': move_history,
+#             'rematch_chain': rematch_chain,
+#             'rematches': rematches,
+#             'can_play': game.status == 'active' and request.user == game.current_turn,
+#             'can_forfeit': game.status == 'active' and is_participant,
+#             'can_request_rematch': game.status == 'completed' and is_participant,
+#             'can_add_spectator': is_participant and game.allow_spectators,
+#             'current_time': timezone.now(),
+#             'time_remaining': game.get_time_remaining() if game.time_limit else None,
+#         })
+        
+#         return render(request, 'components/entertainment/games/ttt/game_detail.html', context)
+        
+#     except Exception as e:
+#         import logging
+#         logging.error(f"Error in handle_game_detail: {str(e)}")
+#         context['error_message'] = "An error occurred while loading the game. Please try again."
+#         return render(request, 'components/entertainment/games/ttt/error.html', context)
+
+
+
+
+# @login_required
+# @user_passes_test_groups(is_manager_or_hr_or_employee)
+# def tictactoe(request):
+#     """
+#     View for the Tic-Tac-Toe game.
+#     - GET request: Returns the game board data
+#     - POST request: Processes player moves and AI responses
+#     This is called by the games() function to include the game data.
+#     """
+#     # Handle POST requests (making a move)
+#     if request.method == 'POST':
+#         game_id = request.POST.get('game_id')
+#         position = request.POST.get('position')
+        
+#         if game_id and position:
+#             game = get_object_or_404(TicTacToeGame, id=game_id)
+            
+#             # Check if user is a participant and it's their turn
+#             if request.user != game.current_turn:
+#                 return JsonResponse({'success': False, 'message': "Not your turn or you're not a participant"})
+            
+#             try:
+#                 position = int(position)
+#                 success, message = game.make_move(request.user, position)
+                
+#                 if success:
+#                     # If game is now complete, update player stats
+#                     if game.status == 'completed':
+#                         PlayerStats.update_stats(game)
+                    
+#                     return JsonResponse({
+#                         'success': True,
+#                         'board': game.board,
+#                         'status': game.status,
+#                         'winner': game.winner.username if game.winner else None,
+#                         'current_turn': game.current_turn.username if game.current_turn else None
+#                     })
+#                 else:
+#                     return JsonResponse({'success': False, 'message': message})
+#             except ValueError:
+#                 return JsonResponse({'success': False, 'message': "Invalid position"})
+                
+#         # Handle forfeit action
+#         if request.POST.get('action') == 'forfeit':
+#             game_id = request.POST.get('game_id')
+#             game = get_object_or_404(TicTacToeGame, id=game_id)
+            
+#             # Check if user is a participant
+#             if request.user != game.creator and request.user != game.opponent:
+#                 return JsonResponse({'success': False, 'message': "You're not a participant in this game"})
+            
+#             success, message = game.forfeit_game(request.user)
+            
+#             if success:
+#                 # Update player stats
+#                 PlayerStats.update_stats(game)
+                
+#                 return JsonResponse({
+#                     'success': True,
+#                     'status': game.status,
+#                     'winner': game.winner.username
+#                 })
+#             else:
+#                 return JsonResponse({'success': False, 'message': message})
+        
+#         # Handle accept/decline invitation
+#         if request.POST.get('action') == 'accept':
+#             game_id = request.POST.get('game_id')
+#             game = get_object_or_404(TicTacToeGame, id=game_id, opponent=request.user, status='pending')
+#             success, message = game.accept_game()
+            
+#             if success:
+#                 return JsonResponse({'success': True, 'message': "Game invitation accepted!"})
+#             else:
+#                 return JsonResponse({'success': False, 'message': message})
+                
+#         if request.POST.get('action') == 'decline':
+#             game_id = request.POST.get('game_id')
+#             game = get_object_or_404(TicTacToeGame, id=game_id, opponent=request.user, status='pending')
+#             success, message = game.decline_game()
+            
+#             if success:
+#                 return JsonResponse({'success': True, 'message': "Game invitation declined."})
+#             else:
+#                 return JsonResponse({'success': False, 'message': message})
+        
+#         # Handle create game
+#         if request.POST.get('action') == 'create':
+#             opponent_id = request.POST.get('opponent_id')
+#             creator_icon_id = request.POST.get('creator_icon')
+#             opponent_icon_id = request.POST.get('opponent_icon')
+#             allow_spectators = request.POST.get('allow_spectators', False) == 'on'
+            
+#             # Validate opponent exists
+#             try:
+#                 opponent = User.objects.get(id=opponent_id)
+                
+#                 # Don't allow inviting yourself
+#                 if opponent == request.user:
+#                     return JsonResponse({'success': False, 'message': "You cannot play against yourself."})
+                    
+#                 # Use default icons if not specified
+#                 default_icon = GameIcon.objects.filter(is_active=True).first()
+#                 creator_icon = GameIcon.objects.get(id=creator_icon_id) if creator_icon_id else default_icon
+#                 opponent_icon = GameIcon.objects.get(id=opponent_icon_id) if opponent_icon_id else default_icon
+                
+#                 # Create the game
+#                 game = TicTacToeGame.objects.create(
+#                     creator=request.user,
+#                     opponent=opponent,
+#                     creator_icon=creator_icon,
+#                     opponent_icon=opponent_icon,
+#                     allow_spectators=allow_spectators
+#                 )
+                
+#                 # Create notification for the opponent
+#                 Notification.objects.create(
+#                     recipient=opponent,
+#                     message=f"{request.user.username} has invited you to play Tic-Tac-Toe",
+#                     notification_type='game_invite',
+#                     game=game
+#                 )
+                
+#                 return JsonResponse({
+#                     'success': True,
+#                     'message': f"Game invitation sent to {opponent.username}",
+#                     'game_id': str(game.id)
+#                 })
+                
+#             except User.DoesNotExist:
+#                 return JsonResponse({'success': False, 'message': "Invalid opponent selected."})
+    
+#     # Handle GET requests (display game data)
+#     else:
+#         context = {}
+        
+#         # Get active games where the user is a participant
+#         context['active_games'] = TicTacToeGame.objects.filter(
+#             (Q(creator=request.user) | Q(opponent=request.user)),
+#             status__in=['active', 'pending']
+#         ).order_by('-updated_at')
+        
+#         # Get completed games where the user is a participant
+#         context['completed_games'] = TicTacToeGame.objects.filter(
+#             (Q(creator=request.user) | Q(opponent=request.user)),
+#             status='completed'
+#         ).order_by('-updated_at')[:10]  # Limit to recent 10 games
+        
+#         # Games user can spectate (active games where user is not a participant)
+#         context['spectatable_games'] = TicTacToeGame.objects.filter(
+#             status='active',
+#             allow_spectators=True
+#         ).exclude(
+#             Q(creator=request.user) | Q(opponent=request.user)
+#         ).order_by('-updated_at')
+        
+#         # Get pending invitations
+#         context['invitations'] = TicTacToeGame.objects.filter(
+#             opponent=request.user,
+#             status='pending'
+#         ).order_by('-created_at')
+        
+#         # Get unread notifications
+#         context['notifications'] = Notification.objects.filter(
+#             recipient=request.user,
+#             is_read=False
+#         ).order_by('-created_at')[:5]
+        
+#         # Get top players for leaderboard - WITH FIX FOR win_rate
+        
+#         top_players = PlayerStats.objects.annotate(
+#             win_rate=ExpressionWrapper(
+#                 Case(
+#                     When(games_played__gt=0, 
+#                         then=F('games_won') * 100.0 / F('games_played')),
+#                     default=Value(0.0)
+#                 ),
+#                 output_field=FloatField()
+#             )
+#         ).order_by('-games_won', '-win_rate')[:10]
+        
+#         context['top_players'] = top_players
+        
+#         # Get available icons for the game
+#         context['icons'] = GameIcon.objects.filter(is_active=True)
+        
+#         # Get list of users who can be invited (in Manager, HR or Employee groups)
+#         allowed_groups = Group.objects.filter(name__in=["Manager", "HR", "Employee"])
+#         context['potential_opponents'] = User.objects.filter(groups__in=allowed_groups).exclude(id=request.user.id)
+
+#         # Check for specific game_id parameter
+#         game_id = request.GET.get('game_id')
+#         if game_id:
+#             game = get_object_or_404(TicTacToeGame, id=game_id)
+            
+#             # Determine if user is allowed to view this game
+#             is_participant = request.user == game.creator or request.user == game.opponent
+#             is_spectator = game.spectators.filter(user=request.user).exists()
+            
+#             if not (is_participant or (is_spectator and game.allow_spectators)):
+#                 # If not a participant or spectator, check if can become spectator
+#                 if game.status == 'active' and game.allow_spectators:
+#                     # Add as spectator if allowed
+#                     GameSpectator.objects.get_or_create(game=game, user=request.user)
+#                     is_spectator = True
+#                 else:
+#                     return HttpResponseForbidden("You don't have permission to view this game.")
+            
+#             # Check for timeout
+#             if game.status == 'active' and game.is_timeout():
+#                 game.status = 'timeout'
+#                 # The player whose turn it is loses due to timeout
+#                 game.winner = game.opponent if game.current_turn == game.creator else game.creator
+#                 game.save()
+                
+#                 # Create timeout notification
+#                 Notification.objects.create(
+#                     recipient=game.current_turn,
+#                     message=f"Your game has timed out due to inactivity. {game.winner.username} wins.",
+#                     notification_type='game_timeout',
+#                     game=game
+#                 )
+                
+#                 # Update player stats
+#                 PlayerStats.update_stats(game)
+            
+#             # Mark notifications related to this game as read
+#             if is_participant:
+#                 Notification.objects.filter(
+#                     recipient=request.user,
+#                     game=game,
+#                     is_read=False
+#                 ).update(is_read=True)
+            
+#             # Get spectators list
+#             spectators = game.spectators.all()
+            
+#             # Add game specific context
+#             context['game'] = game
+#             context['is_participant'] = is_participant
+#             context['is_spectator'] = is_spectator
+#             context['is_creator'] = request.user == game.creator
+#             context['is_opponent'] = request.user == game.opponent
+#             context['is_my_turn'] = game.current_turn == request.user if game.current_turn else False
+#             context['spectators'] = spectators
+#             context['creator_symbol'] = game.creator_icon.symbol if game.creator_icon else 'X'
+#             context['opponent_symbol'] = game.opponent_icon.symbol if game.opponent_icon else 'O'
+            
+#             # Render detailed game view
+#             return render(request, 'components/entertainment/games/ttt/game_detail.html', context)
+        
+#         # Render game list view by default
+#         return render(request, 'components/entertainment/games/ttt/game_list.html', context)
 
 # @login_required
 # @user_passes_test_groups(is_manager_or_hr_or_employee)

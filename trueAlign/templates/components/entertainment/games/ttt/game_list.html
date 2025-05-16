@@ -1,241 +1,314 @@
+
+<!-- game_list.html -->
 {% extends 'base.html' %}
+
+{% block title %}Tic-Tac-Toe Games{% endblock %}
 
 {% block content %}
 <div class="container mx-auto px-4 py-8">
-    <h1 class="text-2xl font-bold mb-6">Tic-Tac-Toe</h1>
-
-    <!-- Notifications section -->
-    {% if notifications %}
-    <div class="bg-white rounded-lg shadow-md p-4 mb-6">
-        <h2 class="text-lg font-semibold mb-2">Notifications</h2>
-        <ul class="space-y-2">
-            {% for notification in notifications %}
-            <li class="flex items-start">
-                <span class="text-blue-500 mr-2">•</span>
-                <div>
-                    <p>{{ notification.message }}</p>
-                    <p class="text-xs text-gray-500">{{ notification.created_at|date:"M d, H:i" }}</p>
-                </div>
-            </li>
-            {% endfor %}
-        </ul>
-    </div>
-    {% endif %}
-
-    <!-- Game invitations section -->
-    {% if invitations %}
-    <div class="bg-white rounded-lg shadow-md p-4 mb-6">
-        <h2 class="text-lg font-semibold mb-2">Game Invitations</h2>
-        <div class="space-y-4">
-            {% for invitation in invitations %}
-            <div class="border-b pb-4 last:border-b-0 last:pb-0">
-                <p><strong>{{ invitation.creator.username }}</strong> has invited you to play</p>
-                <div class="mt-2 flex space-x-2">
-                    <a href="{% url 'aps_entertainment:tic_tac_toe' %}?action=accept&game_id={{ invitation.id }}" 
-                       class="bg-green-500 hover:bg-green-600 text-white py-1 px-3 rounded text-sm inline-block">
-                        Accept
-                    </a>
-                    <a href="{% url 'aps_entertainment:tic_tac_toe' %}?action=decline&game_id={{ invitation.id }}"
-                       class="bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded text-sm inline-block">
-                        Decline
-                    </a>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- Create new game form -->
-    <div class="bg-white rounded-lg shadow-md p-4 mb-6">
-        <h2 class="text-lg font-semibold mb-4">Create New Game</h2>
-        <form id="create-game-form" action="{% url 'aps_entertainment:tic_tac_toe' %}" method="post" class="space-y-4">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="create">
-            
-            <div>
-                <label for="opponent" class="block font-medium mb-1">Select Opponent</label>
-                <select id="opponent" name="opponent_id" class="w-full border border-gray-300 rounded p-2" required>
-                    <option value="">-- Select Opponent --</option>
-                    {% for opponent in potential_opponents %}
-                    <option value="{{ opponent.id }}">{{ opponent.username }} ({{ opponent.get_full_name }})</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label for="creator-icon" class="block font-medium mb-1">Your Icon</label>
-                    <select id="creator-icon" name="creator_icon" class="w-full border border-gray-300 rounded p-2">
-                        {% for icon in icons %}
-                        <option value="{{ icon.id }}" {% if forloop.first %}selected{% endif %}>
-                            {{ icon.name }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div>
-                    <label for="opponent-icon" class="block font-medium mb-1">Opponent Icon</label>
-                    <select id="opponent-icon" name="opponent_icon" class="w-full border border-gray-300 rounded p-2">
-                        {% for icon in icons %}
-                        <option value="{{ icon.id }}" {% if forloop.first %}selected{% endif %}>
-                            {{ icon.name }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-            </div>
-
-            <div class="flex items-center">
-                <input type="checkbox" id="allow-spectators" name="allow_spectators" class="rounded text-blue-500">
-                <label for="allow-spectators" class="ml-2">Allow spectators</label>
-            </div>
-
-            <button type="submit"
-                class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded w-full">
-                Create Game
+    <!-- Header Section -->
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-2xl font-bold text-gray-800">Tic-Tac-Toe</h1>
+        <div class="flex items-center space-x-2">
+            <span class="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+                {{ unread_notifications }} Unread
+            </span>
+            <button id="createGameBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition">
+                New Game
             </button>
-        </form>
+        </div>
     </div>
 
-    <!-- Active games section -->
-    <div class="bg-white rounded-lg shadow-md p-4 mb-6">
-        <h2 class="text-lg font-semibold mb-2">Active Games</h2>
-        {% if active_games %}
-        <div class="space-y-3">
-            {% for game in active_games %}
-            <div class="flex flex-wrap justify-between items-center border-b pb-3 last:border-b-0 last:pb-0">
-                <div>
-                    <p>
-                        Game vs
-                        <strong>
-                            {% if request.user == game.creator %}
-                            {{ game.opponent.username }}
-                            {% else %}
-                            {{ game.creator.username }}
-                            {% endif %}
-                        </strong>
-                    </p>
-                    <p class="text-sm text-gray-600">
-                        Status:
-                        <span
-                            class="{% if game.status == 'active' %}text-green-600{% else %}text-yellow-600{% endif %}">
-                            {{ game.status }}
-                        </span>
-                    </p>
-                    <p class="text-sm text-gray-500">Last Updated: {{ game.updated_at|date:"M d, H:i" }}</p>
-                </div>
-                <a href="{% url 'aps_entertainment:tic_tac_toe' %}?game_id={{ game.id }}"
-                    class="bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold py-1 px-4 rounded">
-                    View Game
-                </a>
-            </div>
-            {% endfor %}
+    <!-- Notification Messages -->
+    {% if messages %}
+    <div class="mb-6">
+        {% for message in messages %}
+        <div class="p-4 mb-2 rounded-lg 
+                    {% if message.tags == 'success' %}bg-green-100 text-green-700 border border-green-300
+                    {% elif message.tags == 'error' %}bg-red-100 text-red-700 border border-red-300
+                    {% else %}bg-blue-100 text-blue-700 border border-blue-300{% endif %}">
+            {{ message }}
         </div>
-        {% else %}
-        <p class="text-gray-500">You don't have any active games.</p>
-        {% endif %}
-    </div>
-
-    <!-- Completed games section -->
-    <div class="bg-white rounded-lg shadow-md p-4 mb-6">
-        <h2 class="text-lg font-semibold mb-2">Completed Games</h2>
-        {% if completed_games %}
-        <div class="space-y-3">
-            {% for game in completed_games %}
-            <div class="flex flex-wrap justify-between items-center border-b pb-3 last:border-b-0 last:pb-0">
-                <div>
-                    <p>
-                        Game vs
-                        <strong>
-                            {% if request.user == game.creator %}
-                            {{ game.opponent.username }}
-                            {% else %}
-                            {{ game.creator.username }}
-                            {% endif %}
-                        </strong>
-                    </p>
-                    <p class="text-sm">
-                        Result:
-                        {% if game.winner == request.user %}
-                        <span class="text-green-600 font-medium">You won</span>
-                        {% elif game.winner %}
-                        <span class="text-red-600 font-medium">You lost</span>
-                        {% else %}
-                        <span class="text-gray-600 font-medium">Draw</span>
-                        {% endif %}
-                    </p>
-                    <p class="text-sm text-gray-500">Completed: {{ game.updated_at|date:"M d, H:i" }}</p>
-                </div>
-                <a href="{% url 'aps_entertainment:tic_tac_toe' %}?game_id={{ game.id }}"
-                    class="bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm font-semibold py-1 px-4 rounded">
-                    View Game
-                </a>
-            </div>
-            {% endfor %}
-        </div>
-        {% else %}
-        <p class="text-gray-500">You don't have any completed games.</p>
-        {% endif %}
-    </div>
-
-    <!-- Spectatable games section -->
-    {% if spectatable_games %}
-    <div class="bg-white rounded-lg shadow-md p-4 mb-6">
-        <h2 class="text-lg font-semibold mb-2">Games to Spectate</h2>
-        <div class="space-y-3">
-            {% for game in spectatable_games %}
-            <div class="flex flex-wrap justify-between items-center border-b pb-3 last:border-b-0 last:pb-0">
-                <div>
-                    <p>{{ game.creator.username }} vs {{ game.opponent.username }}</p>
-                    <p class="text-sm text-gray-600">
-                        Current turn:
-                        <span class="font-medium">
-                            {{ game.current_turn.username }}
-                        </span>
-                    </p>
-                    <p class="text-sm text-gray-500">Last move: {{ game.updated_at|date:"M d, H:i" }}</p>
-                </div>
-                <a href="{% url 'aps_entertainment:tic_tac_toe' %}?game_id={{ game.id }}"
-                    class="bg-green-500 hover:bg-green-600 text-white text-sm font-semibold py-1 px-4 rounded">
-                    Spectate
-                </a>
-            </div>
-            {% endfor %}
-        </div>
+        {% endfor %}
     </div>
     {% endif %}
 
-    <!-- Leaderboard section -->
-    <div class="bg-white rounded-lg shadow-md p-4">
-        <h2 class="text-lg font-semibold mb-2">Leaderboard</h2>
-        <div class="overflow-x-auto">
-            <table class="min-w-full">
-                <thead>
-                    <tr class="bg-gray-100">
-                        <th class="py-2 px-4 text-left">Rank</th>
-                        <th class="py-2 px-4 text-left">Player</th>
-                        <th class="py-2 px-4 text-left">Wins</th>
-                        <th class="py-2 px-4 text-left">Losses</th>
-                        <th class="py-2 px-4 text-left">Win %</th>
-                    </tr>
-                </thead>
-                <tbody>
-                {% for player in top_players %}
-                <tr class="border-b">
-                    <td class="py-2 px-4">{{ forloop.counter }}</td>
-                    <td class="py-2 px-4 font-medium">{{ player.player.username }}</td>
-                    <td class="py-2 px-4">{{ player.games_won }}</td>
-                    <td class="py-2 px-4">{{ player.games_lost }}</td>
-                    <td class="py-2 px-4">{{ player.win_rate|floatformat:1 }}%</td>
-                </tr>
-                {% endfor %}
-                </tbody>
-            </table>
+    <!-- Game Sections -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Active Games -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4">Your Active Games</h2>
+                {% if active_games %}
+                <div class="space-y-4">
+                    {% for game in active_games %}
+                    <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center">
+                                <div class="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center mr-3">
+                                    <img src="{{ game.creator_icon.image.url }}" alt="Icon" class="w-10 h-10 rounded-full"
+                                        {% if game.creator == user %}title="Your icon"{% else %}title="{{ game.creator.username }}'s icon"{% endif %}>
+                                </div>
+                                <div class="text-lg font-medium">
+                                    {% if game.creator == user %}You{% else %}{{ game.creator.username }}{% endif %}
+                                    vs
+                                    {% if game.opponent == user %}You{% else %}{{ game.opponent.username }}{% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center">
+                                {% if game.status == 'pending' %}
+                                    {% if game.opponent == user %}
+                                    <div class="flex space-x-2">
+                                        <form method="post" action="{% url 'aps_entertainment:game_detail' game.id %}">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="action" value="accept">
+                                            <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md text-sm transition">
+                                                Accept
+                                            </button>
+                                        </form>
+                                        <form method="post" action="{% url 'aps_entertainment:game_detail' game.id %}">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="action" value="decline">
+                                            <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md text-sm transition">
+                                                Decline
+                                            </button>
+                                        </form>
+                                    </div>
+                                    
+                                    {% else %}
+                                    <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-md text-sm">
+                                        Invitation Pending
+                                    </span>
+                                    {% endif %}
+                                
+                                {% elif game.status == 'active' %}
+                                    {% if game.current_turn == user %}
+                                    <span class="bg-green-100 text-green-800 px-2 py-1 rounded-md text-sm">
+                                        Your Turn
+                                    </span>
+                                    {% else %}
+                                    <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-md text-sm">
+                                        Opponent's Turn
+                                    </span>
+                                    {% endif %}
+                                {% endif %}
+                                
+                                <a href="{% url 'aps_entertainment:game_detail' game.id %}" class="ml-3 bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-1 rounded-md text-sm transition">
+                                    View Game
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <!-- Game Info -->
+                        <div class="mt-2 flex justify-between text-sm text-gray-500">
+                            <div>
+                                <span>Status: <span class="font-medium">{{ game.status|title }}</span></span>
+                                {% if game.allow_spectators %}
+                                <span class="ml-3">Spectators: <span class="font-medium">{{ game.spectators.count }}</span></span>
+                                {% endif %}
+                            </div>
+                            <div>
+                                Updated: {{ game.updated_at|date:"M d, Y H:i" }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-gray-500 text-center py-8">
+                    You have no active games. Create a new game to get started!
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Spectating Games -->
+        <div>
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4">Games You're Watching</h2>
+                {% if spectating_games %}
+                <div class="space-y-3">
+                    {% for game in spectating_games %}
+                    <div class="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 transition">
+                        <div class="flex justify-between items-center">
+                            <div class="text-sm">
+                                {{ game.creator.username }} vs {{ game.opponent.username }}
+                            </div>
+                            <a href="{% url 'aps_entertainment:game_detail' game.id %}" class="bg-gray-100 hover:bg-gray-200 text-gray-800 px-2 py-1 rounded-md text-xs transition">
+                                Watch
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-gray-500 text-center py-4 text-sm">
+                    You are not spectating any games
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Recent Games -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4">Recently Completed</h2>
+                {% if completed_games %}
+                <div class="space-y-3">
+                    {% for game in completed_games %}
+                    <div class="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 transition">
+                        <div class="flex justify-between items-center">
+                            <div class="text-sm">
+                                {% if game.creator == user %}You{% else %}{{ game.creator.username }}{% endif %}
+                                vs
+                                {% if game.opponent == user %}You{% else %}{{ game.opponent.username }}{% endif %}
+                            </div>
+                            <div class="flex items-center">
+                                <span class="text-xs mr-2
+                                    {% if game.winner == user %}text-green-600 font-medium
+                                    {% elif game.winner %}text-red-600 font-medium
+                                    {% else %}text-gray-600{% endif %}">
+                                    {% if game.winner == user %}Won
+                                    {% elif game.winner %}Lost
+                                    {% else %}Draw{% endif %}
+                                </span>
+                                <a href="{% url 'aps_entertainment:game_detail' game.id %}" class="bg-gray-100 hover:bg-gray-200 text-gray-800 px-2 py-1 rounded-md text-xs transition">
+                                    View
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-gray-500 text-center py-4 text-sm">
+                    No completed games found
+                </div>
+                {% endif %}
+            </div>
         </div>
     </div>
 </div>
 
-<!-- Refresh the page periodically to check for new notifications -->
-<meta http-equiv="refresh" content="60">
+<!-- Create Game Modal -->
+<div id="createGameModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold text-gray-800">New Game</h3>
+            <button id="closeModalBtn" class="text-gray-500 hover:text-gray-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        
+        <form method="post" action="{% url 'aps_entertainment:game_list' %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create">
+            
+            <div class="mb-4">
+                <label for="opponent_id" class="block text-sm font-medium text-gray-700 mb-1">Opponent</label>
+                <select name="opponent_id" id="opponent_id" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    <option value="" disabled selected>Select an opponent</option>
+                    <!-- This would be dynamically populated with users -->
+                    {% for user in user_list %}
+                        <option value="{{ user.id }}">{{ user.username }} {{user.first_name}} {{user.last_name}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Your Icon</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        {% for icon in game_icons %}
+                        <div class="icon-option">
+                            <input type="radio" name="creator_icon_id" id="creator_icon_{{ icon.id }}" value="{{ icon.id }}" class="hidden" {% if forloop.first %}checked{% endif %}>
+                            <label for="creator_icon_{{ icon.id }}" class="block w-full cursor-pointer border-2 border-transparent rounded-lg p-1 hover:border-blue-500 transition">
+                                <img src="{{ icon.image.url }}" alt="Icon" class="w-full rounded">
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Opponent's Icon</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        {% for icon in game_icons %}
+                        <div class="icon-option">
+                            <input type="radio" name="opponent_icon_id" id="opponent_icon_{{ icon.id }}" value="{{ icon.id }}" class="hidden" {% if forloop.last %}checked{% endif %}>
+                            <label for="opponent_icon_{{ icon.id }}" class="block w-full cursor-pointer border-2 border-transparent rounded-lg p-1 hover:border-blue-500 transition">
+                                <img src="{{ icon.image.url }}" alt="Icon" class="w-full rounded">
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-6">
+                <label class="flex items-center">
+                    <input type="checkbox" name="allow_spectators" class="rounded text-blue-500 focus:ring-blue-500">
+                    <span class="ml-2 text-sm text-gray-700">Allow others to spectate this game</span>
+                </label>
+            </div>
+            
+            <div class="flex justify-end">
+                <button type="button" id="cancelBtn" class="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-lg mr-2 transition">
+                    Cancel
+                </button>
+                <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition">
+                    Send Invitation
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Modal controls
+    const createGameBtn = document.getElementById('createGameBtn');
+    const createGameModal = document.getElementById('createGameModal');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    
+    createGameBtn.addEventListener('click', () => {
+        createGameModal.classList.remove('hidden');
+        createGameModal.classList.add('flex');
+    });
+    
+    const closeModal = () => {
+        createGameModal.classList.add('hidden');
+        createGameModal.classList.remove('flex');
+    };
+    
+    closeModalBtn.addEventListener('click', closeModal);
+    cancelBtn.addEventListener('click', closeModal);
+    
+    // Close modal when clicking outside
+    createGameModal.addEventListener('click', (e) => {
+        if (e.target === createGameModal) {
+            closeModal();
+        }
+    });
+    
+    // Icon selection
+    document.querySelectorAll('.icon-option input').forEach(radio => {
+        radio.addEventListener('change', function() {
+            document.querySelectorAll('.icon-option label').forEach(label => {
+                label.classList.remove('border-blue-500');
+                label.classList.add('border-transparent');
+            });
+            
+            if (this.checked) {
+                this.parentElement.querySelector('label').classList.remove('border-transparent');
+                this.parentElement.querySelector('label').classList.add('border-blue-500');
+            }
+        });
+    });
+    
+    // Auto-select the first options
+    document.querySelector('input[name="creator_icon_id"]').dispatchEvent(new Event('change'));
+    document.querySelector('input[name="opponent_icon_id"]').dispatchEvent(new Event('change'));
+</script>
 {% endblock %}
