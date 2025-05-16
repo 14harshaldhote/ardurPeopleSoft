@@ -4,18 +4,46 @@
 <div class="min-h-screen bg-gray-100 py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
-        <div class="flex justify-between items-center mb-6">
-            <div>
-                <h1 class="text-2xl font-bold text-gray-900">Leave Requests</h1>
-                <p class="text-sm text-gray-600">Manage and track your leave applications</p>
-            </div>
-            <a href="{% url 'aps_leave:leave_request_create' %}" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                </svg>
-                New Leave Request
-            </a>
-        </div>
+        <!-- Header -->
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900">Leave Requests</h1>
+        <p class="text-sm text-gray-600">Manage and track your leave applications</p>
+    </div>
+    <div class="flex flex-wrap gap-2">
+        <a href="{% url 'aps_leave:leave_request_create' %}" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            New Leave Request
+        </a>
+        {% if is_manager %}
+        <a href="{% url 'aps_leave:manager_leave_view' %}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+              </svg>
+            Manager Dashboard
+        </a>
+        {% endif %}
+        {% if is_hr %}
+        <a href="{% url 'aps_leave:hr_leave_view' %}" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+              </svg>
+            HR Dashboard
+        </a>
+        {% endif %}
+        {% if is_employee %}
+        <a href="{% url 'aps_leave:employee_leave_view' %}" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+              </svg>
+            Employee Dashboard
+        </a>
+        {% endif %}
+    </div>
+</div>
+
 
         <!-- Leave Balance Cards (for regular users) -->
         {% if not can_approve %}
@@ -146,12 +174,13 @@
                                 
                                 {% if leave_request.status == 'Pending' %}
                                     {% if leave_request.user == request.user %}
-                                        <a href="{% url 'aps_leave:leave_request_update' leave_request.id %}" class="text-blue-600 hover:text-blue-900 flex items-center">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                            </svg>
-                                            Edit
-                                        </a>
+                                    <a href="{% url 'aps_leave:leave_request_update' leave_request.id %}" class="text-blue-600 hover:text-blue-900 flex items-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5h2m2 0h2m-6 0H7m-2 0H3m4 2h2m2 0h2m2 0h2M3 10h18M5 13h14M7 16h10M9 19h6" />
+                                        </svg>
+                                        Edit
+                                    </a>
+                                    
                                         <a href="{% url 'aps_leave:leave_request_cancel' leave_request.id %}" class="text-gray-600 hover:text-gray-900 flex items-center">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />

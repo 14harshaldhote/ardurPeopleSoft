@@ -2702,13 +2702,13 @@ def manager_report_view(request):
     
     # Navigation items for the manager dashboard
     nav_items = [
-        {
-            'id': 'team_breaks',
-            'name': 'Team Breaks',
-            'icon': 'fas fa-coffee',
-            'description': 'Monitor team break patterns and durations.',
-            'url': reverse('aps_manager:break_report_view_manager')
-        },
+        # {
+        #     'id': 'team_breaks',
+        #     'name': 'Team Breaks',
+        #     'icon': 'fas fa-coffee',
+        #     'description': 'Monitor team break patterns and durations.',
+        #     'url': reverse('aps_manager:break_report_view_manager')
+        # },
         {
             'id': 'team_attendance',
             'name': 'Team Attendance',
@@ -2717,15 +2717,15 @@ def manager_report_view(request):
             'url': reverse('aps_manager:attendance_report_view_manager')
         },
         {
-            'id': 'project_progress',
-            'name': 'Project Progress',
+            'id': 'project_progress ',
+            'name': 'Project Progress (Releasing Soon)',
             'icon': 'fas fa-tasks',
             'description': 'View progress of your team\'s projects.',
             # 'url': reverse('manager:project_progress_report')
         },
         {
             'id': 'leave_management',
-            'name': 'Leave Management',
+            'name': 'Leave Management (Releasing Soon)',
             'icon': 'fas fa-user-clock',
             'description': 'Manage team leave requests and schedules.',
             # 'url': reverse('manager:leave_management')
@@ -2734,16 +2734,16 @@ def manager_report_view(request):
     
     # Detailed sections for the manager dashboard
     sections = [
-        {
-            "title": "Team Break Analysis",
-            "description": "Monitor and analyze your team's break patterns",
-            "content": "View break statistics, patterns, and ensure policy compliance.",
-            # "link": reverse('manager:team_breaks_report'),
-            "metrics": [
-                {"label": "Active Breaks", "value": "get_active_breaks_count()"},
-                {"label": "Today's Total Breaks", "value": "get_today_breaks_count()"}
-            ]
-        },
+        # {
+        #     "title": "Team Break Analysis",
+        #     "description": "Monitor and analyze your team's break patterns",
+        #     "content": "View break statistics, patterns, and ensure policy compliance.",
+        #     # "link": reverse('manager:team_breaks_report'),
+        #     "metrics": [
+        #         {"label": "Active Breaks", "value": "get_active_breaks_count()"},
+        #         {"label": "Today's Total Breaks", "value": "get_today_breaks_count()"}
+        #     ]
+        # },
         {
             "title": "Team Attendance Overview",
             "description": "Track your team's attendance and working hours",
@@ -2755,7 +2755,7 @@ def manager_report_view(request):
             ]
         },
         {
-            "title": "Project Status",
+            "title": "Project Status (Releasing Soon)",
             "description": "Current status of all projects under your management",
             "content": "Track project progress, deadlines, and resource allocation.",
             # "link": reverse('manager:project_progress_report'),
@@ -2765,7 +2765,7 @@ def manager_report_view(request):
             ]
         },
         {
-            "title": "Leave Management",
+            "title": "Leave Management (Releasing Soon)",
             "description": "Manage team leave requests and schedules",
             "content": "Review and approve leave requests, plan team availability.",
             # "link": reverse('manager:leave_management'),
@@ -2883,60 +2883,135 @@ def break_report_view_manager(request):
     return render(request, 'components/manager/break_report.html', context)
 
 
-@login_required
-@user_passes_test(is_manager)
-def attendance_report_view_manager(request):
-    """View for managers to see attendance of users assigned to their projects."""
-    
+from django.db.models import Q, Count, Value, Sum, Avg
+from django.db.models.functions import Coalesce
+from django.core.paginator import Paginator
+from django.utils import timezone
+from typing import Dict, Any
+from django.db.models import Prefetch
 
-    # Get the manager's assigned projects
-    project_assignments = ProjectAssignment.objects.filter(
-        project__projectassignment__user=request.user,
-        project__projectassignment__role_in_project='Manager',
-        is_active=True
-    )
+def get_dynamic_report(
+    request,
+    model_class,
+    template_name: str,
+    filters: Dict[str, Any] = None,
+    per_page: int = 10
+) -> Dict[str, Any]:
+    """
+    Generic function to generate dynamic reports for any model with location awareness
+    """
+    # Initialize query with prefetch for employee instead of userdetails
+    base_query = model_class.objects.select_related('user__employee').all()
     
-    # Get the users assigned to the manager's projects
-    users_in_projects = project_assignments.values_list('user', flat=True)
+    # Get filter parameters
+    user_filter = request.GET.get('user', '')
+    date_filter = request.GET.get('date', '')
+    location_filter = request.GET.get('location', '')
+    status_filter = request.GET.get('status', '')
     
-    # Get filter parameters (optional, for filtering attendance records)
-    user_filter = request.GET.get('user', '')  # Optionally filter by specific user
-    date_filter = request.GET.get('date', '')  # Optionally filter by specific date
+    # Apply filters
+    if filters:
+        base_query = base_query.filter(**filters)
 
-    # Start with base query for attendance
-    attendance_query = Attendance.objects.filter(user__in=users_in_projects)
-
-    # Apply filtering based on user
     if user_filter:
-        attendance_query = attendance_query.filter(user__username=user_filter)
-
-    # Apply filtering based on date
+        base_query = base_query.filter(user__username=user_filter)
+        
     if date_filter:
         try:
             filter_date = timezone.datetime.strptime(date_filter, '%Y-%m-%d').date()
-            attendance_query = attendance_query.filter(date=filter_date)
+            base_query = base_query.filter(date=filter_date)
         except ValueError:
-            pass  # If date is invalid, no filtering will occur
+            pass
+            
+    if location_filter:
+        # Filter based on employee work_location instead of userdetails
+        base_query = base_query.filter(user__employee__work_location=location_filter)
+        
+    if status_filter:
+        base_query = base_query.filter(status=status_filter)
 
-    # Pagination for better performance
-    paginator = Paginator(attendance_query, 10)  # 10 records per page
+    # Add annotations for statistics by location
+    location_stats = UserDetails.objects.values('work_location').annotate(
+        present_count=Count(
+            'user__attendance',
+            filter=Q(user__attendance__status='Present')
+        ),
+        late_count=Count(
+            'user__attendance',
+            filter=Q(user__attendance__status='Late')
+        ),
+        absent_count=Count(
+            'user__attendance',
+            filter=Q(user__attendance__status='Absent')
+        ),
+        wfh_count=Count(
+            'user__attendance',
+            filter=Q(user__attendance__status='Work From Home')
+        )
+    )
+
+    # Get filter options
+    all_users = User.objects.select_related('employee').all()
+    # Get unique work locations from Employee model
+    all_locations = UserDetails.objects.values_list(
+        'work_location', flat=True
+    ).distinct().exclude(work_location__isnull=True)
+    all_statuses = [status[0] for status in Attendance.STATUS_CHOICES]
+
+    # Pagination
+    paginator = Paginator(base_query, per_page)
     page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
 
-    # Add pagination info
+    # Calculate pagination metadata
     page_obj.start = (page_obj.number - 1) * paginator.per_page + 1
     page_obj.end = min(page_obj.start + paginator.per_page - 1, paginator.count)
     page_obj.total = paginator.count
 
-    # Add context data
     context = {
-        'attendance': page_obj,
-        'project_assignments': project_assignments,
-        'users_in_projects': users_in_projects,
+        'records': page_obj,
+        'all_users': all_users,
+        'all_locations': all_locations,
+        'all_statuses': all_statuses,
+        'location_stats': location_stats,
         'selected_user': user_filter,
         'selected_date': date_filter,
+        'selected_location': location_filter,
+        'selected_status': status_filter,
+        'model_name': model_class._meta.verbose_name.title(),
+        'model_name_plural': model_class._meta.verbose_name_plural.title()
     }
 
+    return context
+
+@login_required
+@user_passes_test(is_manager)
+def attendance_report_view_manager(request):
+    """View for managers to see attendance of all users with location filtering."""
+    
+    context = get_dynamic_report(
+        request=request,
+        model_class=Attendance,
+        template_name='components/manager/attendance_report.html',
+        per_page=15
+    )
+    
+    # Add location-based attendance stats
+    location_attendance_stats = UserDetails.objects.values('work_location').annotate(
+        total_overtime=Coalesce(
+            Sum('user__attendance__overtime_hours'), 
+            Value(0)
+        ),
+        avg_late_minutes=Coalesce(
+            Avg('user__attendance__late_minutes'), 
+            Value(0)
+        )
+    )
+    
+    context.update({
+        'location_attendance_stats': location_attendance_stats
+    })
+    
     return render(request, 'components/manager/attendance_report.html', context)
 
 
@@ -4282,46 +4357,37 @@ def management_leave_view(request):
     
     return render(request, 'components/leave_management/management_leave_dashboard.html', context)
 
+
+
 @login_required
-@user_passes_test(is_manager) 
+@user_passes_test(is_manager)
 def manager_leave_view(request):
-    """View for Managers to handle team leave requests"""
+    """View for Managers to handle all leave requests"""
     
-    department = request.user.profile.department
-    
-    # Get team members' leave requests
-    team_requests = LeaveRequest.objects.filter(
-        user__profile__department=department
-    ).exclude(
-        user=request.user
-    ).select_related(
-        'user', 'leave_type', 'approver', 'user__profile'
+    # Get all recent leave requests
+    recent_requests = LeaveRequest.objects.all().select_related(
+        'user', 'leave_type', 'approver'
     ).order_by('-created_at')[:10]
     
-    # Get pending approvals
+    # Get all pending approvals
     pending_approvals = LeaveRequest.objects.filter(
-        status='Pending',
-        user__profile__department=department
-    ).exclude(
-        user=request.user
+        status='Pending'
     ).select_related(
-        'user', 'leave_type', 'user__profile'
-    )
+        'user', 'leave_type'
+    ).order_by('-created_at')
     
-    # Get team leave calendar
+    # Get all upcoming approved leaves
     upcoming_leaves = LeaveRequest.objects.filter(
         status='Approved',
-        user__profile__department=department,
         start_date__gte=timezone.now().date()
     ).select_related(
-        'user', 'leave_type', 'user__profile'
+        'user', 'leave_type'
     ).order_by('start_date')[:10]
     
     context = {
-        'team_requests': team_requests,
+        'recent_requests': recent_requests,
         'pending_approvals': pending_approvals,
         'upcoming_leaves': upcoming_leaves,
-        'department': department
     }
     
     return render(request, 'components/leave_management/manager_leave_dashboard.html', context)

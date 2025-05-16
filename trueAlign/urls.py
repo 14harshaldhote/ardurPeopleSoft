@@ -121,6 +121,7 @@ manager_patterns = [
     path('tasks/assign/', views.assign_tasks, name='assign_tasks'),
     # Reports and monitoring
     path('report/', views.manager_report_view, name='report'),
+    path('reports/attendance/', views.attendance_report_view_manager, name='attendance_report_view_manager'),
     path('reports/breaks/', views.break_report_view_manager, name='break_report_view_manager'),
     path('timesheets/', views.manager_view_timesheets, name='view_timesheets'),
     path('timesheets/bulk-update/', views.bulk_update_timesheet, name='bulk_update_timesheet'),
