@@ -298,6 +298,17 @@ attendance_patterns = [
     path('statistics/', views.attendance_statistics, name='hr_attendance_statistics'),
 
     path('regularization/analytics/', views.regularization_analytics_dashboard, name='regularization_analytics_dashboard'),
+
+    path('attendance-details/', views.get_attendance_details, name='get_attendance_details'),
+
+
+    #new attendance analytics
+    path('analytics/', views.attendance_analytics, name='attendance_analytics'),
+    path('analytics/export/', views.attendance_export, name='attendance_export'),
+    path('analytics/detail/', views.attendance_detail_analysis, name='attendance_detail_analysis'),
+    path('analytics/detail/<int:user_id>/', views.attendance_detail_analysis, name='attendance_detail_analysis_user'),
+    path('analytics/status-users/', views.get_status_users, name='get_status_users'),
+
 ]
 
 support_patterns = [

@@ -1041,7 +1041,6 @@ class Attendance(models.Model):
         ('Present & Late', 'Present & Late'), 
         ('Absent', 'Absent'),
         ('Late', 'Late'),
-        ('Half Day', 'Half Day'),
         ('On Leave', 'On Leave'),
         ('Work From Home', 'Work From Home'),
         ('Weekend', 'Weekend'),
@@ -1061,7 +1060,6 @@ class Attendance(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     date = models.DateField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Not Marked')
-    is_half_day = models.BooleanField(default=False)
     leave_type = models.CharField(max_length=50, null=True, blank=True)
     clock_in_time = models.DateTimeField(null=True, blank=True)
     clock_out_time = models.DateTimeField(null=True, blank=True)
@@ -1130,7 +1128,7 @@ class Attendance(models.Model):
             bool: True if the user is on leave, False otherwise
         """
         # Check if status is already set to a leave-related status
-        if self.status in ['On Leave', 'Half Day'] or (hasattr(self, 'leave_type') and self.leave_type):
+        if self.status == 'On Leave' or (hasattr(self, 'leave_type') and self.leave_type):
             return True
             
         # Check for approved leave requests that cover this date
@@ -1141,25 +1139,20 @@ class Attendance(models.Model):
                 start_date__lte=self.date,
                 end_date__gte=self.date
             ).exists()
-            
             return leave_request
         except Exception as e:
             logger.error(f"Error checking leave status for {self.user.username}: {e}")
             return False
 
-            
     def save(self, *args, **kwargs):
         logger.debug(f"save() called for {self.user.username} - {self.date}")
 
         # Auto-calculate total hours if clock-in and clock-out are provided
         if self.clock_in_time and self.clock_out_time and self.clock_out_time > self.clock_in_time:
             logger.debug(f"Calculating total hours for {self.user.username}")
-            # Calculate duration in hours with 2 decimal precision
             duration = self.clock_out_time - self.clock_in_time
             hours = duration.total_seconds() / 3600
             self.total_hours = round(Decimal(str(hours)), 2)
-            
-            # Subtract idle time if present
             if self.idle_time:
                 logger.debug(f"Subtracting idle time: {self.idle_time}")
                 idle_hours = self.idle_time.total_seconds() / 3600
@@ -1173,12 +1166,10 @@ class Attendance(models.Model):
         # Mark weekend based on date
         weekday = self.date.weekday()
         is_weekend = False
-        
         if self.shift:
             logger.debug(f"Checking shift weekend rules for {self.user.username}")
             day_names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
             current_day = day_names[weekday]
-            
             if self.shift.work_days == 'Weekdays':
                 is_weekend = weekday >= 5  # Saturday/Sunday
             elif self.shift.work_days == 'All Days':
@@ -1187,10 +1178,8 @@ class Attendance(models.Model):
                 custom_days = [day.strip() for day in self.shift.custom_work_days.split(',')]
                 is_weekend = current_day not in custom_days
         else:
-            # Default weekend check if no shift is assigned
             logger.debug("No shift assigned, using default weekend rules")
             is_weekend = weekday >= 5
-            
         self.is_weekend = is_weekend
         
         # Check for holidays
@@ -1201,12 +1190,11 @@ class Attendance(models.Model):
                 (Q(recurring_yearly=True) & 
                 Q(date__day=self.date.day, date__month=self.date.month))
             ).first()
-            
             if holiday:
                 logger.debug(f"Holiday found: {holiday.name}")
                 self.is_holiday = True
                 self.holiday_name = holiday.name
-                if not self.is_on_leave():  # Don't override leave status
+                if not self.is_on_leave():
                     self.status = 'Holiday'
         except Exception as e:
             logger.error(f"Error checking holidays: {e}")
@@ -1221,49 +1209,28 @@ class Attendance(models.Model):
         current_time_ist = timezone.localtime(timezone.now(), IST).time()
         today_ist = timezone.localtime(timezone.now(), IST).date()
         
-        # Don't modify "Yet to Clock In" status if no clock-in time is recorded
         if self.status == 'Yet to Clock In' and not self.clock_in_time:
-            # Check if shift has ended
             if self.shift and self.date == today_ist:
-                # Check if shift has ended in IST
                 if self.is_shift_ended(current_time_ist, self.shift.start_time, self.shift.end_time):
                     logger.debug(f"Shift has ended, updating 'Yet to Clock In' to 'Absent'")
                     self.status = 'Absent'
                     self.regularization_reason = "Auto-marked as absent (no activity, shift ended)"
-        # Set late status if clock-in time is after shift start time + grace period
         elif self.clock_in_time and self.shift and self.status not in ['On Leave', 'Holiday', 'Weekend', 'Absent']:
             logger.debug("Checking late status")
-            # Create datetime objects for comparison
             clock_in_time = self.clock_in_time.time()
             shift_start = self.shift.start_time
-            
-            # Default grace period of 10 minutes
             grace_minutes = 10
             if hasattr(self.shift, 'grace_period'):
                 grace_period = self.shift.grace_period
                 grace_minutes = grace_period.total_seconds() // 60
-            
-            # Calculate shift start time with grace period as minutes since midnight
             shift_start_minutes = shift_start.hour * 60 + shift_start.minute
             grace_end_minutes = shift_start_minutes + grace_minutes
-            
-            # Calculate clock-in time as minutes since midnight
             clock_in_minutes = clock_in_time.hour * 60 + clock_in_time.minute
-            
             if clock_in_minutes > grace_end_minutes:
                 logger.debug(f"Late by {clock_in_minutes - shift_start_minutes} minutes")
                 self.late_minutes = clock_in_minutes - shift_start_minutes
-                
-                # If very late (more than half the shift duration), mark as half day
-                shift_duration_minutes = self.shift.shift_duration * 60
-                if self.late_minutes > (shift_duration_minutes / 2) and not self.is_on_leave():
-                    logger.debug("Marking as half day due to late arrival")
-                    self.status = 'Half Day'
-                else:
-                    # Only mark as late if they're not already marked otherwise
-                    self.status = 'Present & Late'
+                self.status = 'Present & Late'
             elif not self.is_on_leave() and not self.is_holiday and not self.is_weekend:
-                # They clocked in on time, mark as present if not overridden by another status
                 logger.debug("On-time attendance, marking as present")
                 self.status = 'Present'
         
@@ -1272,42 +1239,19 @@ class Attendance(models.Model):
             logger.debug("Checking early departure")
             clock_out_time = self.clock_out_time.time()
             shift_end = self.shift.end_time
-            
-            # Calculate as minutes since midnight
             shift_end_minutes = shift_end.hour * 60 + shift_end.minute
             clock_out_minutes = clock_out_time.hour * 60 + clock_out_time.minute
-            
             if clock_out_minutes < shift_end_minutes:
                 logger.debug(f"Left early by {shift_end_minutes - clock_out_minutes} minutes")
                 self.left_early = True
                 self.early_departure_minutes = shift_end_minutes - clock_out_minutes
-                
-                # If left very early, mark as half day
-                shift_duration_minutes = self.shift.shift_duration * 60
-                if self.early_departure_minutes > (shift_duration_minutes / 2) and not self.is_on_leave():
-                    logger.debug("Marking as half day due to early departure")
-                    self.status = 'Half Day'
         
         # Set present status if total hours meet minimum threshold and not marked otherwise
         if (self.total_hours and self.total_hours >= Decimal('4.0') and 
-            self.status not in ['Present & Late', 'On Leave', 'Holiday', 'Weekend', 'Half Day', 'Comp Off', 'Absent'] and
+            self.status not in ['Present & Late', 'On Leave', 'Holiday', 'Weekend', 'Comp Off', 'Absent'] and
             not self.is_on_leave()):
             logger.debug("Marking as present based on total hours")
             self.status = 'Present'
-        
-        # Check if previously marked as half day due to early departure but now returned
-        if self.status == 'Half Day' and self.left_early and self.total_hours:
-            # If they've now completed at least half the shift duration, mark as present
-            if self.shift and self.total_hours >= (Decimal(str(self.shift.shift_duration)) / 2):
-                logger.debug(f"User returned after early departure and completed enough hours")
-                self.left_early = False
-                self.early_departure_minutes = 0
-                
-                # Set appropriate present status
-                if self.late_minutes > 0:
-                    self.status = 'Present & Late'
-                else:
-                    self.status = 'Present'
         
         super().save(*args, **kwargs)
         logger.debug(f"save() completed for {self.user.username} - {self.date}")
@@ -1318,15 +1262,9 @@ class Attendance(models.Model):
         Create a new attendance record when a user logs in
         """
         logger.info(f"Creating attendance for {user.username} at {clock_in_time}")
-        
-        # Ensure we're using local time
         if timezone.is_naive(clock_in_time):
             clock_in_time = timezone.make_aware(clock_in_time)
-        
-        # Get the date from the clock_in_time
         attendance_date = clock_in_time.date()
-        
-        # Check if an attendance record exists for today
         attendance, created = cls.objects.get_or_create(
             user=user,
             date=attendance_date,
@@ -1337,36 +1275,25 @@ class Attendance(models.Model):
                 'device_info': device_info,
             }
         )
-        
         if not created:
             logger.debug(f"Attendance record already exists for {user.username} on {attendance_date}")
-            # Only update clock_in_time if it's earlier than the existing one
             if attendance.clock_in_time is None or clock_in_time < attendance.clock_in_time:
                 attendance.clock_in_time = clock_in_time
                 attendance.save(update_fields=['clock_in_time'])
-        
-        # Try to get the user's shift
         try:
             current_shift = ShiftAssignment.get_user_current_shift(user, attendance_date)
             if current_shift:
                 attendance.shift = current_shift
                 attendance.expected_hours = Decimal(str(current_shift.shift_duration))
-                
-                # Determine if user is late based on shift start time
                 clock_in_time_obj = clock_in_time.time()
                 shift_start = current_shift.start_time
-                
-                # Default grace period of 10 minutes
                 grace_minutes = 10
                 if hasattr(current_shift, 'grace_period'):
                     grace_period = current_shift.grace_period
                     grace_minutes = grace_period.total_seconds() // 60
-                
-                # Calculate comparison values in minutes since midnight
                 shift_start_minutes = shift_start.hour * 60 + shift_start.minute
                 grace_end_minutes = shift_start_minutes + grace_minutes
                 clock_in_minutes = clock_in_time_obj.hour * 60 + clock_in_time_obj.minute
-                
                 if clock_in_minutes > grace_end_minutes:
                     logger.info(f"User {user.username} is late by {clock_in_minutes - shift_start_minutes} minutes")
                     attendance.late_minutes = clock_in_minutes - shift_start_minutes
@@ -1374,12 +1301,8 @@ class Attendance(models.Model):
                 else:
                     logger.info(f"User {user.username} is present on time")
                     attendance.status = 'Present'
-                
-                # Check for leave or holidays
                 is_leave = False
                 is_holiday = False
-                
-                # Check for approved leave
                 try:
                     leave_request = LeaveRequest.objects.filter(
                         user=user,
@@ -1387,17 +1310,13 @@ class Attendance(models.Model):
                         start_date__lte=attendance_date,
                         end_date__gte=attendance_date
                     ).first()
-                    
                     if leave_request:
                         logger.info(f"User {user.username} is on {leave_request.leave_type.name} leave")
                         attendance.leave_type = leave_request.leave_type.name
-                        attendance.is_half_day = leave_request.half_day
-                        attendance.status = 'Half Day' if leave_request.half_day else 'On Leave'
+                        attendance.status = 'On Leave'
                         is_leave = True
                 except Exception as e:
                     logger.error(f"Error checking leave status: {e}")
-                
-                # Check for holidays
                 if not is_leave:
                     try:
                         holiday = Holiday.objects.filter(
@@ -1405,7 +1324,6 @@ class Attendance(models.Model):
                             (Q(recurring_yearly=True) & 
                             Q(date__day=attendance_date.day, date__month=attendance_date.month))
                         ).first()
-                        
                         if holiday:
                             logger.info(f"Today is a holiday: {holiday.name}")
                             attendance.is_holiday = True
@@ -1414,12 +1332,9 @@ class Attendance(models.Model):
                             is_holiday = True
                     except Exception as e:
                         logger.error(f"Error checking holidays: {e}")
-                
-                # Check for weekend
                 if not is_leave and not is_holiday:
                     weekday = attendance_date.weekday()
                     is_weekend = False
-                    
                     if current_shift.work_days == 'Weekdays':
                         is_weekend = weekday >= 5  # Saturday/Sunday
                     elif current_shift.work_days == 'All Days':
@@ -1429,25 +1344,19 @@ class Attendance(models.Model):
                         current_day = day_names[weekday]
                         custom_days = [day.strip() for day in current_shift.custom_work_days.split(',')]
                         is_weekend = current_day not in custom_days
-                    
                     if is_weekend:
                         logger.info(f"Today is a weekend for user {user.username}")
                         attendance.is_weekend = True
                         attendance.status = 'Weekend'
-                
                 attendance.save()
             else:
-                # No shift assigned, just mark as present
                 logger.warning(f"No shift assigned for user {user.username}")
                 attendance.status = 'Present'
                 attendance.save()
-
         except Exception as e:
             logger.error(f"Error getting shift for user {user.username}: {e}")
-            # If there was an error getting the shift, just mark as present
             attendance.status = 'Present'
             attendance.save()
-        
         return attendance
 
     @classmethod
@@ -1456,58 +1365,40 @@ class Attendance(models.Model):
         Update an existing attendance record when a user logs out
         """
         logger.info(f"Recording clock out for {user.username} at {clock_out_time}")
-        
-        # Ensure we're using aware datetime
         if timezone.is_naive(clock_out_time):
             clock_out_time = timezone.make_aware(clock_out_time)
-        
-        # Get the date from the clock_out_time
         attendance_date = clock_out_time.date()
-        
         try:
-            # Get the attendance record for today
             attendance = cls.objects.get(
                 user=user,
                 date=attendance_date
             )
-            
-            # Update clock_out_time if it's not set or if the new time is later
             if attendance.clock_out_time is None or clock_out_time > attendance.clock_out_time:
                 attendance.clock_out_time = clock_out_time
-                
-                # Update location and device info if provided
                 if location:
                     attendance.location = location
                 if ip_address:
                     attendance.ip_address = ip_address
                 if device_info:
                     attendance.device_info = device_info
-                    
-                # Calculate total hours if clock-in time exists
                 if attendance.clock_in_time:
                     duration = clock_out_time - attendance.clock_in_time
                     hours = duration.total_seconds() / 3600
                     attendance.total_hours = round(Decimal(str(hours)), 2)
-                    
-                    # Subtract idle time if present
                     if attendance.idle_time:
                         idle_hours = attendance.idle_time.total_seconds() / 3600
                         attendance.total_hours = max(0, attendance.total_hours - round(Decimal(str(idle_hours)), 2))
-                        
-                # Save changes
                 attendance.save()
                 logger.info(f"Updated clock out time for {user.username} to {clock_out_time}")
                 return attendance
             else:
                 logger.debug(f"New clock out time ({clock_out_time}) is earlier than existing one ({attendance.clock_out_time})")
                 return attendance
-                
         except cls.DoesNotExist:
             logger.warning(f"No attendance record found for {user.username} on {attendance_date}")
-            # Create a new attendance record if one doesn't exist
             attendance = cls.create_attendance(
                 user=user, 
-                clock_in_time=clock_out_time - timedelta(minutes=1),  # Set clock in 1 minute before clock out
+                clock_in_time=clock_out_time - timedelta(minutes=1),
                 location=location,
                 ip_address=ip_address,
                 device_info=device_info
@@ -1525,15 +1416,10 @@ class Attendance(models.Model):
         Record session activity for attendance
         """
         user = session.user
-        
-        # Ensure we're using aware datetime for all times
         login_time = session.login_time
         if timezone.is_naive(login_time):
             login_time = timezone.make_aware(login_time)
-            
         attendance_date = login_time.date()
-        
-        # Record clock in if it's a new session
         attendance = cls.create_attendance(
             user=user,
             clock_in_time=login_time,
@@ -1541,21 +1427,16 @@ class Attendance(models.Model):
             ip_address=getattr(session, 'ip_address', None),
             device_info=getattr(session, 'device_info', None)
         )
-        
-        # Update session information
         attendance.first_session = session
         attendance.last_session = session
         attendance.total_sessions = UserSession.objects.filter(
             user=user,
             login_time__date=attendance_date
         ).count()
-        
-        # If session has logout_time, record clock out as well
         if session.logout_time:
             logout_time = session.logout_time
             if timezone.is_naive(logout_time):
                 logout_time = timezone.make_aware(logout_time)
-                
             cls.record_clock_out(
                 user=user,
                 clock_out_time=logout_time,
@@ -1563,7 +1444,6 @@ class Attendance(models.Model):
                 ip_address=getattr(session, 'ip_address', None),
                 device_info=getattr(session, 'device_info', None)
             )
-        
         attendance.save()
         return attendance
 
@@ -1571,26 +1451,14 @@ class Attendance(models.Model):
     def is_shift_ended(cls, current_time, shift_start_time, shift_end_time):
         """
         Utility function to check if a shift has ended, handling night shifts correctly
-        
-        Args:
-            current_time: Current time object
-            shift_start_time: Shift start time object
-            shift_end_time: Shift end time object
-            
-        Returns:
-            bool: True if shift has ended, False otherwise
         """
-        # Convert all times to minutes for easier comparison
         current_minutes = current_time.hour * 60 + current_time.minute
         start_minutes = shift_start_time.hour * 60 + shift_start_time.minute
         end_minutes = shift_end_time.hour * 60 + shift_end_time.minute
-        
-        # Handle shifts that cross midnight
-        if end_minutes < start_minutes:  # Night shift
-            end_minutes += 24 * 60  # Add 24 hours
-            if current_minutes < start_minutes:  # If current time is after midnight
+        if end_minutes < start_minutes:
+            end_minutes += 24 * 60
+            if current_minutes < start_minutes:
                 current_minutes += 24 * 60
-        
         return current_minutes > end_minutes
 
     @classmethod
@@ -1599,27 +1467,21 @@ class Attendance(models.Model):
         Update 'Yet to Clock In' attendance records to 'Absent' if shift has ended
         This method should be run periodically throughout the day
         """
-        # Use IST timezone
         IST = pytz.timezone('Asia/Kolkata')
         today = timezone.localtime(timezone.now(), IST).date()
         current_time = timezone.localtime(timezone.now(), IST).time()
-        
-        # Get all 'Yet to Clock In' attendance records for today
         pending_attendances = cls.objects.filter(
             date=today,
             status='Yet to Clock In'
         )
-        
         updated_count = 0
         for attendance in pending_attendances:
-            # Check if shift has ended
             if attendance.shift and cls.is_shift_ended(current_time, attendance.shift.start_time, attendance.shift.end_time):
                 print(f"Marking {attendance.user.username} as Absent - shift ended at {attendance.shift.end_time}")
                 attendance.status = 'Absent'
                 attendance.regularization_reason = "Auto-marked as absent (no activity, shift ended)"
                 attendance.save()
                 updated_count += 1
-        
         print(f"update_yet_to_clock_in_statuses() completed - updated {updated_count} records")
         return updated_count       
 
@@ -1628,43 +1490,30 @@ class Attendance(models.Model):
         """
         Automatically mark attendance for all users based on their sessions and leave
         """
-        # Get current time in IST using pytz
         IST = pytz.timezone('Asia/Kolkata')
         current_ist = timezone.now().astimezone(IST)
         today = current_ist.date()
         current_time = current_ist.time()
-        
         print(f"Running auto_mark_attendance at IST: {current_ist}")
-        
-        # Get all active users
         from django.contrib.auth import get_user_model
         User = get_user_model()
         users = User.objects.filter(is_active=True)
-        
         for user in users:
-            # Check if attendance already marked
             attendance = cls.objects.filter(user=user, date=today).first()
-            
-            # Get user's current shift for today
             current_shift = None
             try:
                 current_shift = ShiftAssignment.get_user_current_shift(user, today)
             except:
                 pass
-                
             if not attendance:
-                # Get user sessions for today - ensure we compare with IST date
                 sessions = UserSession.objects.filter(
                     user=user,
                     login_time__date=today
                 ).order_by('login_time')
-                
                 if sessions.exists():
-                    # Create attendance from sessions
                     first_session = sessions.first()
                     cls.record_session_activity(first_session)
                 else:
-                    # Check if user is on leave
                     try:
                         leave_request = LeaveRequest.objects.filter(
                             user=user,
@@ -1672,39 +1521,29 @@ class Attendance(models.Model):
                             start_date__lte=today,
                             end_date__gte=today
                         ).first()
-                        
                         if leave_request:
-                            # Create attendance record for leave
                             cls.objects.create(
                                 user=user,
                                 date=today,
-                                status='On Leave' if not leave_request.half_day else 'Half Day',
-                                is_half_day=leave_request.half_day,
+                                status='On Leave',
                                 leave_type=leave_request.leave_type.name,
                                 regularization_reason=f"Auto-marked by leave system: {leave_request.leave_type.name}"
                             )
                         else:
-                            # Check if today is a holiday or weekend
                             weekday = today.weekday()
                             is_weekend = False
-                            
-                            # Override weekend based on shift if available
                             if current_shift:
                                 day_names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
                                 current_day = day_names[weekday]
-                                
                                 if current_shift.work_days == 'Weekdays':
-                                    is_weekend = weekday >= 5  # Saturday/Sunday
+                                    is_weekend = weekday >= 5
                                 elif current_shift.work_days == 'All Days':
-                                    is_weekend = False  # All days are working
+                                    is_weekend = False
                                 elif current_shift.work_days == 'Custom' and current_shift.custom_work_days:
                                     custom_days = [day.strip() for day in current_shift.custom_work_days.split(',')]
                                     is_weekend = current_day not in custom_days
                             else:
-                                # Default weekend check if no shift is assigned
                                 is_weekend = weekday >= 5
-                            
-                            # Check for holiday
                             is_holiday = False
                             holiday_name = None
                             try:
@@ -1713,7 +1552,6 @@ class Attendance(models.Model):
                                     (Q(recurring_yearly=True) & 
                                     Q(date__day=today.day, date__month=today.month))
                                 ).first()
-                                
                                 if holiday:
                                     print(f"Holiday found: {holiday.name}")
                                     is_holiday = True
@@ -1721,10 +1559,8 @@ class Attendance(models.Model):
                             except:
                                 print("Error checking holiday")
                                 pass
-                            
                             if is_holiday:
                                 print("Creating holiday attendance")
-                                # Create holiday attendance
                                 cls.objects.create(
                                     user=user,
                                     date=today,
@@ -1736,7 +1572,6 @@ class Attendance(models.Model):
                                 )
                             elif is_weekend:
                                 print("Creating weekend attendance")
-                                # Create weekend attendance
                                 cls.objects.create(
                                     user=user,
                                     date=today,
@@ -1746,7 +1581,6 @@ class Attendance(models.Model):
                                     regularization_reason="Weekend"
                                 )
                             else:
-                                # Check if the shift has started or ended
                                 if current_shift:
                                     if not cls.is_shift_ended(current_time, current_shift.start_time, current_shift.end_time):
                                         print(f"User {user.username} yet to clock in - Shift still active")
@@ -1767,7 +1601,6 @@ class Attendance(models.Model):
                                             regularization_reason="Auto-marked as absent (no activity, shift ended)"
                                         )
                                 else:
-                                    # No shift assigned, mark as "Not Marked"
                                     print(f"User {user.username} has no shift, marking Not Marked")
                                     cls.objects.create(
                                         user=user,
@@ -1780,28 +1613,20 @@ class Attendance(models.Model):
                         print(f"Error auto-marking attendance for {user.username}: {str(e)}")
             else:
                 print(f"Existing attendance found for {user.username}")
-                # Update existing attendance if needed
                 if attendance.status == 'Not Marked' or attendance.status == 'Yet to Clock In':
                     print(f"Updating {attendance.status} attendance")
-                    # Get all sessions for the day - ensure we compare with IST date
                     sessions = UserSession.objects.filter(
                         user=user,
                         login_time__date=today
                     ).order_by('login_time')
-                    
                     if sessions.exists():
                         print(f"Found {sessions.count()} sessions")
-                        # Update attendance with session data
                         first_session = sessions.first()
                         last_session = sessions.order_by('-login_time').first()
-                        
                         attendance.first_session = first_session
                         attendance.last_session = last_session
                         attendance.total_sessions = sessions.count()
-                        
-                        # Set clock in/out times - ensure they're in IST
                         attendance.clock_in_time = first_session.login_time.astimezone(IST)
-                        # Only update clock_out_time if user has actually logged out
                         if last_session.logout_time:
                             cls.record_clock_out(
                                 user=user,
@@ -1814,43 +1639,32 @@ class Attendance(models.Model):
                                 clock_out_time=last_session.last_activity.astimezone(IST),
                                 location=attendance.location
                             )
-                        # Calculate total hours only if session is complete
                         if attendance.clock_in_time and attendance.clock_out_time:
                             print("Calculating total hours")
                             duration = attendance.clock_out_time - attendance.clock_in_time
                             hours = duration.total_seconds() / 3600
                             attendance.total_hours = round(Decimal(str(hours)), 2)
-                        
-                        # Calculate idle time if available
                         idle_time = timedelta(0)
                         for session in sessions:
                             if hasattr(session, 'idle_time') and session.idle_time:
                                 idle_time += session.idle_time
-                        
                         if idle_time:
                             print(f"Adding idle time: {idle_time}")
                             attendance.idle_time = idle_time
                             if attendance.total_hours:
                                 idle_hours = idle_time.total_seconds() / 3600
                                 attendance.total_hours = max(Decimal('0'), attendance.total_hours - Decimal(str(idle_hours)))
-                        
-                        # Update status based on attendance data
                         if attendance.status == 'Yet to Clock In':
-                            # If they've logged in, update status based on their login time
                             if current_shift:
                                 shift_start = current_shift.start_time
                                 clock_in_time = attendance.clock_in_time.time()
-                                
-                                # Default grace period of 10 minutes
                                 grace_minutes = 10
                                 if hasattr(current_shift, 'grace_period'):
                                     grace_period = current_shift.grace_period
                                     grace_minutes = grace_period.total_seconds() // 60
-                                
                                 shift_start_minutes = shift_start.hour * 60 + shift_start.minute
                                 grace_end_minutes = shift_start_minutes + grace_minutes
                                 clock_in_minutes = clock_in_time.hour * 60 + clock_in_time.minute
-                                
                                 if clock_in_minutes > grace_end_minutes:
                                     attendance.status = 'Present & Late'
                                     attendance.late_minutes = clock_in_minutes - shift_start_minutes
@@ -1860,17 +1674,13 @@ class Attendance(models.Model):
                                 attendance.status = 'Present'
                         else:
                             attendance.status = 'Present'
-                        
                         attendance.save()
                     elif current_shift:
-                        # No sessions found but there is a shift assigned
-                        # Check shift end time against current IST time
                         if cls.is_shift_ended(current_time, current_shift.start_time, current_shift.end_time):
                             print(f"Updating to Absent as shift has ended for {user.username} at {current_shift.end_time} IST")
                             attendance.status = 'Absent'
                             attendance.regularization_reason = "Auto-marked as absent (no activity, shift ended)"
                             attendance.save()
-        
         print("auto_mark_attendance() completed")
         return True
 
@@ -1880,20 +1690,14 @@ class Attendance(models.Model):
         Generate monthly attendance report for a user
         """
         from calendar import monthrange
-        
-        # Get days in month
         days_in_month = monthrange(year, month)[1]
         start_date = timezone.datetime(year, month, 1).date()
         end_date = timezone.datetime(year, month, days_in_month).date()
-        
-        # Fetch all attendance records for the month
         records = cls.objects.filter(
             user=user,
             date__gte=start_date,
             date__lte=end_date
         ).order_by('date')
-        
-        # Create a dict with all days in the month
         report = {
             'user': user,
             'year': year,
@@ -1904,7 +1708,6 @@ class Attendance(models.Model):
                 'present_late': 0,
                 'absent': 0,
                 'late': 0,
-                'half_day': 0,
                 'on_leave': 0,
                 'holiday': 0,
                 'weekend': 0,
@@ -1919,14 +1722,10 @@ class Attendance(models.Model):
                 'approved_leave_count': 0
             }
         }
-        
-        # Initialize days
         for day in range(1, days_in_month + 1):
             current_date = timezone.datetime(year, month, day).date()
             weekday = current_date.weekday()
-            is_weekend = weekday >= 5  # Saturday or Sunday
-            
-            # Default record for the day
+            is_weekend = weekday >= 5
             report['days'][day] = {
                 'date': current_date,
                 'weekday': current_date.strftime('%A'),
@@ -1941,12 +1740,10 @@ class Attendance(models.Model):
                 'late_minutes': 0,
                 'early_departure_minutes': 0,
                 'leave_type': None,
-                'is_half_day': False,
                 'remarks': None,
-                'idle_time': None
+                'idle_time': None,
+                'location': None
             }
-        
-        # Fill in actual attendance records
         for record in records:
             day = record.date.day
             report['days'][day].update({
@@ -1961,37 +1758,24 @@ class Attendance(models.Model):
                 'late_minutes': record.late_minutes,
                 'early_departure_minutes': record.early_departure_minutes,
                 'leave_type': record.leave_type,
-                'is_half_day': record.is_half_day,
                 'remarks': record.regularization_reason,
                 'location': record.location,
                 'idle_time': record.idle_time
             })
-            
-            # Update summary counters
             status_key = record.status.lower().replace(' & ', '_').replace(' ', '_')
             if status_key in report['summary']:
                 report['summary'][status_key] += 1
-            
             if record.total_hours:
                 report['summary']['total_hours'] += record.total_hours
-            
             report['summary']['overtime_hours'] += record.overtime_hours
-            
             if record.leave_type:
-                # Count half days as 0.5
-                leave_days = Decimal('0.5') if record.is_half_day else Decimal('1.0')
-                report['summary']['leave_days_used'] += leave_days
-
-            # Update total present count
+                report['summary']['leave_days_used'] += Decimal('1.0')
             if record.status in ['Present', 'Present & Late', 'Work From Home']:
                 report['summary']['total_present'] += 1
-
-            # Update leave request counts
             if record.regularization_status == 'Pending':
                 report['summary']['leave_request_count'] += 1
             elif record.regularization_status == 'Approved':
                 report['summary']['approved_leave_count'] += 1
-        
         return report
 
 # class Attendance(models.Model):
