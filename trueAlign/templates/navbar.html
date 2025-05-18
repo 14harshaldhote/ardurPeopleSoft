@@ -1,16 +1,16 @@
-<nav
-    class="fixed top-0 left-0 w-64 md:w-64 lg:w-64 xl:w-64 h-screen bg-white shadow-2xl border-r border-gray-100 py-8 px-4 overflow-y-auto transition-all duration-300 ease-in-out z-50">
+{% load static %}
+<nav class="fixed top-0 left-0 w-64 h-screen bg-white shadow-2xl border-r border-gray-100 py-8 px-4 overflow-y-auto transition-all duration-300 ease-in-out z-50">
     <div class="flex flex-col h-full">
-        {% load static %}
         <!-- Logo Section -->
-        <div class=" logo-container dashboard-logo">
-            <img src="{% static 'images/logo.png' %}" alt="Logo" class="h-12 w-auto p-1">
+        <div class="logo-container dashboard-logo flex justify-center mb-8">
+            <a href="{% url 'dashboard' %}">
+                <img src="{% static 'images/logo.png' %}" alt="Logo" class="h-14 w-auto p-1">
+            </a>
         </div>
-
         <!-- Navigation Menu -->
-        <div class="px-4 py-4">
+        <div class="px-2 py-2">
             <ul class="space-y-1.5">
-                <!-- Common Navigation for All Roles -->
+                <!-- Dashboard -->
                 <li>
                     <a href="{% url 'dashboard' %}"
                         class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-green-50 hover:text-green-700 group">
@@ -21,7 +21,6 @@
                         Dashboard
                     </a>
                 </li>
-
                 {% if not is_admin %}
                 <li>
                     <a href="{% url 'user_profile' request.user.id %}"
@@ -35,21 +34,10 @@
                 </li>
                 {% endif %}
 
-                <!-- Employee Specific -->
                 {% if is_employee %}
                 <li class="pt-4">
                     <p class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Employee</p>
                 </li>
-                <!-- <li>
-                    <a href="{% url 'aps_employee:employee_support' %}"
-                        class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group">
-                        <svg class="w-6 h-6 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
-                        </svg>
-                        Support
-                    </a>
-                </li> -->
                 <li>
                     <a href="{% url 'aps_support:support_dashboard' %}"
                         class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group">
@@ -83,7 +71,6 @@
                         Time Sheet
                     </a>
                 </li>
-           
                 <li>
                     <a href="{% url 'aps_leave:employee_leave_view' %}"
                         class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group">
@@ -94,11 +81,10 @@
                         Leave Management
                     </a>
                 </li>
-                <li class="relative">
+                <li>
                     <a href="{% url 'aps_employee:application_for_user' %}"
                         class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group">
-                        <svg class="w-6 h-6 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg">
+                        <svg class="w-6 h-6 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
@@ -108,8 +94,7 @@
                 <li>
                     <a href="{% url 'appraisal:appraisal_list' %}"
                         class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group">
-                        <svg class="w-6 h-6 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg">
+                        <svg class="w-6 h-6 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                         </svg>
@@ -119,8 +104,7 @@
                 <li>
                     <a href="{% url 'aps_entertainment:entertainment' %}"
                         class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group">
-                        <svg class="w-6 h-6 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg">
+                        <svg class="w-6 h-6 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -130,7 +114,6 @@
                     </a>
                 </li>
                 {% endif %}
-        
 
                 <!-- HR Specific -->
                 {% if is_hr %}
@@ -140,7 +123,7 @@
                 <li>
                     <a href="{% url 'aps_leave:hr_leave_view' %}"
                         class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group">
-                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-6 h-6 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
@@ -150,19 +133,17 @@
                 <li>
                     <a href="{% url 'aps_attendance:attendance_analytics' %}"
                         class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group">
-                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg">
+                        <svg class="w-6 h-6 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                                d="M9 12l2 2 4-4" />
                         </svg>
                         Attendance
                     </a>
                 </li>
-
                 <li>
                     <a href="{% url 'aps_hr:hr_dashboard' %}"
                         class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group">
-                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-6 h-6 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                         </svg>
@@ -179,11 +160,10 @@
                         Support
                     </a>
                 </li>
-              
                 <li>
                     <a href="{% url 'appraisal:appraisal_list' %}"
                         class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group">
-                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-6 h-6 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
@@ -198,24 +178,21 @@
                     <p class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Management</p>
                 </li>
                 <li>
-                    <a href="{% url 'aps_leave:manager_leave_view' %}"
-                        class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-700 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group">
-                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg">
+                    <a href="{% url 'aps_attendance:attendance_analytics' %}"
+                        class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group">
+                        <svg class="w-6 h-6 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                d="M9 12l2 2 4-4" />
                         </svg>
-                        Leave
+                        Attendance
                     </a>
                 </li>
-              
-                
-                    <li>
+                <li>
                     <a href="{% url 'aps_manager:shift_dashboard' %}"
                         class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group">
-                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-6 h-6 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                d="M12 8v4l3 3" />
                         </svg>
                         Shift Management
                     </a>
@@ -223,8 +200,7 @@
                 <li>
                     <a href="{% url 'aps_manager:report' %}"
                         class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group">
-                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg">
+                        <svg class="w-6 h-6 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
@@ -234,8 +210,7 @@
                 <li>
                     <a href="{% url 'aps_manager:project_list'%}"
                         class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group">
-                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg">
+                        <svg class="w-6 h-6 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
                         </svg>
@@ -245,10 +220,9 @@
                 <li>
                     <a href="{% url 'aps_manager:view_timesheets' %}"
                         class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group">
-                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg">
+                        <svg class="w-6 h-6 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                d="M12 8v4l3 3" />
                         </svg>
                         Employee Timesheets
                     </a>
@@ -256,8 +230,7 @@
                 <li>
                     <a href="{% url 'aps_manager:manager_employee_profile' %}"
                         class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group">
-                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg">
+                        <svg class="w-6 h-6 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
@@ -267,7 +240,7 @@
                 <li>
                     <a href="{% url 'appraisal:appraisal_list' %}"
                         class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group">
-                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-6 h-6 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                         </svg>
@@ -304,24 +277,20 @@
                 <li>
                     <a href="{% url 'aps_admin:report' %}"
                         class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mr-4" fill="none" stroke="currentColor"
-                            viewBox="0 0 24 24">
+                        <svg class="w-6 h-6 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M9 17v-6m4 6v-4m4 4v-2M5 5a2 2 0 012-2h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5z" />
                         </svg>
-
                         Report
                     </a>
                 </li>
                 <li>
                     <a href="{% url 'aps_admin:project_dashboard' %}"
                         class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group">
-                        <svg class="w-6 h-6 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg">
+                        <svg class="w-6 h-6 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
                         </svg>
-
                         Projects
                     </a>
                 </li>
@@ -418,18 +387,7 @@
                         Dynamic Parameters
                     </a>
                 </li>
-                <!-- <li>
-                    <a href="{% url 'aps_leave:leave_dashboard' %}"
-                        class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group">
-                        <svg class="w-6 h-6 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                        </svg>
-                        Leave Management
-                    </a>
-                </li> -->
                 {% endif %}
-
-
 
                 <!-- Common Navigation for All Roles -->
                 <li class="pt-4">
@@ -445,7 +403,6 @@
                         <span class="flex-1">Chat Room (Coming Soon)</span>
                     </span>
                 </li>
-
             </ul>
         </div>
     </div>

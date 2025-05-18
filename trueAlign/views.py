@@ -7135,7 +7135,8 @@ except ModuleNotFoundError:
 
 def is_hr_check(user):
     """Check if the logged-in user has HR permissions"""
-    return user.groups.filter(name='HR').exists() or user.is_superuser
+    return user.groups.filter(name__in=['HR', 'Manager']).exists() or user.is_superuser
+    
 def get_date_trunc_filter(date_range):
     """
     Returns the appropriate TruncXXX function based on the requested date range
@@ -11820,6 +11821,7 @@ def attendance_statistics(request):
         }
     
     return render(request, 'components/hr/attendance/hr_attendance_statistics.html', context)
+    
 @login_required
 def attendance_dashboard(request):
     """

@@ -1,18 +1,18 @@
-<div class="bg-white shadow-xl rounded-xl p-6 transition-all transform hover:scale-105 hover:shadow-2xl">
-    <div class="flex justify-between items-center mb-6">
-        <h3 class="text-2xl font-semibold text-gray-800">Project Updates</h3>
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.768-.231-1.478-.634-2.032M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.768.231-1.478.634-2.032M14 7a3 3 0 11-6 0 3 3 0 016 0zm-3 4a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6z"/>
+<div class="bg-white shadow-xl rounded-xl p-4 sm:p-6 transition-all transform hover:scale-105 hover:shadow-2xl">
+    <div class="flex justify-between items-center mb-4 sm:mb-6">
+        <h3 class="text-xl sm:text-2xl font-semibold text-gray-800">Project Updates</h3>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
         </svg>
     </div>
 
     {% if is_manager %}
     <!-- Manager Create Update Form -->
-    <form method="POST" action="{% url 'aps_manager:manager_create_project_update' %}" class="space-y-4">
+    <form method="POST" action="{% url 'aps_manager:manager_create_project_update' %}" class="space-y-3 sm:space-y-4 bg-blue-50 p-3 sm:p-4 rounded-lg mb-4">
         {% csrf_token %}
         <div>
-            <label for="project_id" class="block text-gray-700">Select Project</label>
-            <select name="project_id" id="project_id" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 transition duration-300" required>
+            <label for="project_id" class="block text-gray-700 text-sm font-medium mb-1">Select Project</label>
+            <select name="project_id" id="project_id" class="w-full p-2 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-300" required>
                 {% for project in projects %}
                     <option value="{{ project.id }}">{{ project.name }}</option>
                 {% endfor %}
@@ -20,31 +20,33 @@
         </div>
 
         <div>
-            <label for="title" class="block text-gray-700">Title</label>
-            <input type="text" name="title" id="title" placeholder="Enter update title" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 transition duration-300" required>
+            <label for="title" class="block text-gray-700 text-sm font-medium mb-1">Title</label>
+            <input type="text" name="title" id="title" placeholder="Enter update title" class="w-full p-2 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-300" required>
         </div>
 
         <div>
-            <label for="description" class="block text-gray-700">Description</label>
-            <textarea name="description" id="description" rows="4" placeholder="Enter update description" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 transition duration-300" required></textarea>
+            <label for="description" class="block text-gray-700 text-sm font-medium mb-1">Description</label>
+            <textarea name="description" id="description" rows="3" placeholder="Enter update description" class="w-full p-2 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-300" required></textarea>
         </div>
 
-        <div>
-            <label for="status" class="block text-gray-700">Status</label>
-            <select name="status" id="status" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 transition duration-300">
-                <option value="upcoming">Upcoming</option>
-                <option value="in_progress">In Progress</option>
-                <option value="completed">Completed</option>
-            </select>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            <div>
+                <label for="status" class="block text-gray-700 text-sm font-medium mb-1">Status</label>
+                <select name="status" id="status" class="w-full p-2 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-300">
+                    <option value="upcoming">Upcoming</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="completed">Completed</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="scheduled_date" class="block text-gray-700 text-sm font-medium mb-1">Scheduled Date</label>
+                <input type="datetime-local" name="scheduled_date" id="scheduled_date" class="w-full p-2 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-300">
+            </div>
         </div>
 
-        <div>
-            <label for="scheduled_date" class="block text-gray-700">Scheduled Date</label>
-            <input type="datetime-local" name="scheduled_date" id="scheduled_date" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 transition duration-300">
-        </div>
-
-        <div class="pt-4">
-            <button type="submit" class="w-full px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition duration-300">
+        <div class="pt-2 sm:pt-3">
+            <button type="submit" class="w-full px-4 sm:px-6 py-2 sm:py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-300 shadow-md">
                 Create Update
             </button>
         </div>
@@ -52,31 +54,35 @@
     {% endif %}
 
     <!-- Display Existing Project Updates -->
-    <div class="space-y-4 mt-1">
+    <div class="space-y-3 mt-1 max-h-[350px] sm:max-h-[400px] overflow-y-auto pr-1">
         {% for update in projectTeamUpdates %}
-        <div class="flex items-center justify-between bg-gray-50 p-4 rounded-lg border-l-4 
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-gray-50 p-3 sm:p-4 rounded-lg border-l-4 
             {% if update.status == 'upcoming' %}border-blue-500
             {% elif update.status == 'in_progress' %}border-yellow-500
             {% elif update.status == 'completed' %}border-green-500
             {% endif %} hover:shadow-lg transition-shadow">
-            <div class="flex items-center space-x-3">
+            <div class="flex items-center space-x-3 mb-2 sm:mb-0">
                 <div>
                     <p class="font-medium text-gray-800">{{ update.created_by.first_name }} {{ update.created_by.last_name }}</p>
                     <p class="text-xs text-gray-500">{{ update.title }}</p>
                 </div>
             </div>
-            <span class="text-xs text-green-600">{{ update.created_at|timesince }} ago</span>
+            <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0">
+                <span class="text-xs text-green-600">{{ update.created_at|timesince }} ago</span>
 
-            <!-- Edit and Delete Buttons -->
-            {% if is_manager %}
-            <div class="space-x-2">
-                <a href="{% url 'aps_manager:manager_edit_project_update' update.id %}" class="text-blue-600 hover:text-blue-800">Edit</a>
-                <a href="{% url 'aps_manager:manager_delete_project_update' update.id %}" class="text-red-600 hover:text-red-800">Delete</a>
+                <!-- Edit and Delete Buttons -->
+                {% if is_manager %}
+                <div class="space-x-2">
+                    <a href="{% url 'aps_manager:manager_edit_project_update' update.id %}" class="text-blue-600 hover:text-blue-800 text-sm">Edit</a>
+                    <a href="{% url 'aps_manager:manager_delete_project_update' update.id %}" class="text-red-600 hover:text-red-800 text-sm">Delete</a>
+                </div>
+                {% endif %}
             </div>
-            {% endif %}
         </div>
         {% empty %}
-        <p class="text-center text-gray-500 py-4">No updates available.</p>
+        <div class="bg-blue-50 rounded-lg p-4 text-center">
+            <p class="text-gray-600">No updates available.</p>
+        </div>
         {% endfor %}
     </div>
 </div>

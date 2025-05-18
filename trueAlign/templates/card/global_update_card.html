@@ -1,133 +1,139 @@
-<div class="bg-white shadow-xl rounded-xl p-6 transition-all transform hover:scale-105 hover:shadow-2xl">
+<div class="bg-white shadow-xl rounded-xl p-4 sm:p-6 transition-all transform hover:scale-105 hover:shadow-2xl">
     <!-- Global Updates Section -->
-    <div class="flex-1 min-w-[320px] lg:min-w-[450px]">
-        <div class="flex justify-between items-center mb-8">
-            <div class="flex items-center gap-3">
-                
-                <h3 class="text-2xl font-semibold text-gray-800">Bulletin Board</h3>
+    <div class="flex flex-col lg:flex-row gap-6 lg:gap-8">
+        <div class="flex-1 min-w-0 lg:min-w-[320px] xl:min-w-[450px]">
+            <div class="flex justify-between items-center mb-4 sm:mb-8">
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+                    </svg>
+                    <h3 class="text-xl sm:text-2xl font-semibold text-gray-800">Bulletin Board</h3>
+                </div>
+                <div class="tooltip" data-tip="View Help">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 sm:h-7 sm:w-7 text-blue-500 hover:text-blue-600 transition-colors cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
             </div>
-            <div class="tooltip" data-tip="View Help">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-blue-500 hover:text-blue-600 transition-colors cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-            </div>
-        </div>
-        <div class="space-y-5 w-full max-h-[450px] overflow-y-auto custom-scrollbar pr-4">
-            {% for update in updates %}
-                <div class="bg-white p-5 rounded-xl border-l-4 shadow-md
-                    {% if update.status == 'upcoming' %}border-blue-500 hover:bg-blue-50
-                    {% elif update.status == 'released' %}border-green-500 hover:bg-green-50
-                    {% elif update.status == 'scheduled' %}border-yellow-500 hover:bg-yellow-50
-                    {% endif %} transition-all duration-300">
-                    <div class="flex justify-between items-start gap-4">
-                        <div class="flex-grow">
-                            <h4 class="font-semibold text-lg text-gray-800 mb-2">{{ update.title }}</h4>
-                            <p class="text-gray-600 mb-3 line-clamp-2">{{ update.description }}</p>
-                            <div class="flex items-center gap-2">
-                                <div class="w-2 h-2 rounded-full 
-                                    {% if update.status == 'upcoming' %}bg-blue-500
-                                    {% elif update.status == 'released' %}bg-green-500
-                                    {% elif update.status == 'scheduled' %}bg-yellow-500
-                                    {% endif %}">
+            <div class="space-y-4 sm:space-y-5 w-full max-h-[350px] sm:max-h-[450px] overflow-y-auto custom-scrollbar pr-2 sm:pr-4">
+                {% for update in updates %}
+                    <div class="bg-white p-3 sm:p-5 rounded-xl border-l-4 shadow-md
+                        {% if update.status == 'upcoming' %}border-blue-500 hover:bg-blue-50
+                        {% elif update.status == 'released' %}border-green-500 hover:bg-green-50
+                        {% elif update.status == 'scheduled' %}border-yellow-500 hover:bg-yellow-50
+                        {% endif %} transition-all duration-300">
+                        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 sm:gap-4">
+                            <div class="flex-grow">
+                                <div class="flex justify-between items-start mb-2">
+                                    <h4 class="font-semibold text-base sm:text-lg text-gray-800">{{ update.title }}</h4>
+                                    <div class="flex items-center gap-2 ml-2">
+                                        <div class="w-2 h-2 rounded-full 
+                                            {% if update.status == 'upcoming' %}bg-blue-500
+                                            {% elif update.status == 'released' %}bg-green-500
+                                            {% elif update.status == 'scheduled' %}bg-yellow-500
+                                            {% endif %}">
+                                        </div>
+                                        {% if update.scheduled_date %}
+                                            <span class="text-xs sm:text-sm font-medium text-yellow-600 whitespace-nowrap">{{ update.scheduled_date|date:"F j, Y, g:i a" }}</span>
+                                        {% else %}
+                                            <span class="text-xs sm:text-sm font-medium {% if update.status == 'upcoming' %}text-blue-600{% elif update.status == 'released' %}text-green-600{% endif %}">
+                                                {{ update.get_status_display }}
+                                            </span>
+                                        {% endif %}
+                                    </div>
                                 </div>
-                                {% if update.scheduled_date %}
-                                    <span class="text-sm font-medium text-yellow-600">{{ update.scheduled_date|date:"F j, Y, g:i a" }}</span>
-                                {% else %}
-                                    <span class="text-sm font-medium {% if update.status == 'upcoming' %}text-blue-600{% elif update.status == 'released' %}text-green-600{% endif %}">
-                                        {{ update.get_status_display }}
-                                    </span>
-                                {% endif %}
+                                <p class="text-sm sm:text-base text-gray-600 mb-3 line-clamp-2">{{ update.description }}</p>
                             </div>
-                        </div>
-                        {% if is_hr %}
-                            <div class="flex gap-3">
-                                <a href="{% url 'dashboard' %}?update_id={{ update.id }}" 
-                                   class="p-2.5 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors shadow-md hover:shadow-lg">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                    </svg>
-                                </a>
-                                <form method="post" action="{% url 'aps_hr:hr_delete_update' update.id %}" class="inline">
-                                    {% csrf_token %}
-                                    <button type="submit"
-                                            class="p-2.5 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors shadow-md hover:shadow-lg">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            {% if is_hr %}
+                                <div class="flex gap-2 sm:gap-3 mt-2 sm:mt-0 self-end sm:self-start">
+                                    <a href="{% url 'dashboard' %}?update_id={{ update.id }}" 
+                                       class="p-2 sm:p-2.5 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors shadow-md hover:shadow-lg">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                         </svg>
-                                    </button>
-                                </form>
-                            </div>
-                        {% endif %}
+                                    </a>
+                                    <form method="post" action="{% url 'aps_hr:hr_delete_update' update.id %}" class="inline">
+                                        {% csrf_token %}
+                                        <button type="submit"
+                                                class="p-2 sm:p-2.5 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors shadow-md hover:shadow-lg">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                    </form>
+                                </div>
+                            {% endif %}
+                        </div>
                     </div>
-                </div>
-            {% empty %}
-                <div class="text-center py-10">
-                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-                    </svg>
-                    <p class="mt-4 text-lg font-medium text-gray-500">No global updates available</p>
-                </div>
-            {% endfor %}
-        </div>
-    </div>
-
-    <!-- Create / Edit Global Update Form Section -->
-    {% if is_hr %}
-        <div class="flex-1 min-w-[320px] sm:min-w-[400px] lg:min-w-[500px]">
-            <div class="flex items-center gap-3 mb-8">
-                <div class="bg-green-500 p-2 rounded-lg">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
-                </div>
-                <h2 class="text-2xl font-bold bg-green-600  bg-clip-text text-transparent">
-                    {% if update %}Edit{% else %}Create{% endif %} Update
-                </h2>
+                {% empty %}
+                    <div class="text-center py-8 sm:py-10">
+                        <svg class="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                        </svg>
+                        <p class="mt-3 sm:mt-4 text-base sm:text-lg font-medium text-gray-500">No global updates available</p>
+                    </div>
+                {% endfor %}
             </div>
-
-            <form method="post" action="{% if update %}{% url 'aps_hr:hr_edit_update' update.id %}{% else %}{% url 'aps_hr:hr_create_update' %}{% endif %}" class="space-y-6">
-                {% csrf_token %}
-                <div class="space-y-2">
-                    <label for="title" class="block text-sm font-medium text-gray-700">Title</label>
-                    <input type="text" id="title" name="title" placeholder="Enter a descriptive title"
-                           value="{{ update.title|default_if_none:'' }}"
-                           class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition duration-300" required>
-                </div>
-
-                <div class="space-y-2">
-                    <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
-                    <textarea id="description" name="description" rows="4" placeholder="Provide detailed information about the update"
-                              class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition duration-300"
-                              required>{{ update.description|default_if_none:'' }}</textarea>
-                </div>
-
-                <div class="space-y-2">
-                    <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
-                    <select id="status" name="status" class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition duration-300" required>
-                        <option value="upcoming" {% if update.status == 'upcoming' or not update %}selected{% endif %}>Upcoming</option>
-                        <option value="scheduled" {% if update.status == 'scheduled' %}selected{% endif %}>Scheduled</option>
-                        <option value="released" {% if update.status == 'released' %}selected{% endif %}>Released</option>
-                    </select>
-                </div>
-
-                <div class="space-y-2">
-                    <label for="scheduled_date" class="block text-sm font-medium text-gray-700">Scheduled Date (Optional)</label>
-                    <input type="datetime-local" id="scheduled_date" name="scheduled_date" 
-                           value="{{ update.scheduled_date|date:'Y-m-d\TH:i'|default_if_none:'' }}"
-                           class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition duration-300">
-                </div>
-
-                <button type="submit" class="w-full px-6 py-3.5 bg-green-500  text-white font-medium rounded-xl hover:bg-green-600 hover:text-green-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transform transition-all duration-300 hover:scale-[1.02] shadow-lg hover:shadow-xl">
-                    {% if update %}Update{% else %}Create{% endif %} Update
-                </button>
-            </form>
         </div>
-    {% endif %}
+
+        <!-- Create / Edit Global Update Form Section -->
+        {% if is_hr %}
+            <div class="flex-1 min-w-0 mt-6 lg:mt-0 lg:min-w-[320px] xl:min-w-[450px]">
+                <div class="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-8">
+                    <div class="bg-green-500 p-1.5 sm:p-2 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                    </div>
+                    <h2 class="text-xl sm:text-2xl font-bold bg-gradient-to-r from-green-600 to-green-500 bg-clip-text text-transparent">
+                        {% if update %}Edit{% else %}Create{% endif %} Update
+                    </h2>
+                </div>
+
+                <form method="post" action="{% if update %}{% url 'aps_hr:hr_edit_update' update.id %}{% else %}{% url 'aps_hr:hr_create_update' %}{% endif %}" class="space-y-4 sm:space-y-6">
+                    {% csrf_token %}
+                    <div class="space-y-1 sm:space-y-2">
+                        <label for="title" class="block text-sm font-medium text-gray-700">Title</label>
+                        <input type="text" id="title" name="title" placeholder="Enter a descriptive title"
+                               value="{{ update.title|default_if_none:'' }}"
+                               class="w-full p-2.5 sm:p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition duration-300" required>
+                    </div>
+
+                    <div class="space-y-1 sm:space-y-2">
+                        <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
+                        <textarea id="description" name="description" rows="3" placeholder="Provide detailed information about the update"
+                                  class="w-full p-2.5 sm:p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition duration-300"
+                                  required>{{ update.description|default_if_none:'' }}</textarea>
+                    </div>
+
+                    <div class="space-y-1 sm:space-y-2">
+                        <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
+                        <select id="status" name="status" class="w-full p-2.5 sm:p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition duration-300" required>
+                            <option value="upcoming" {% if update.status == 'upcoming' or not update %}selected{% endif %}>Upcoming</option>
+                            <option value="scheduled" {% if update.status == 'scheduled' %}selected{% endif %}>Scheduled</option>
+                            <option value="released" {% if update.status == 'released' %}selected{% endif %}>Released</option>
+                        </select>
+                    </div>
+
+                    <div class="space-y-1 sm:space-y-2">
+                        <label for="scheduled_date" class="block text-sm font-medium text-gray-700">Scheduled Date (Optional)</label>
+                        <input type="datetime-local" id="scheduled_date" name="scheduled_date" 
+                               value="{{ update.scheduled_date|date:'Y-m-d\TH:i'|default_if_none:'' }}"
+                               class="w-full p-2.5 sm:p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition duration-300">
+                    </div>
+
+                    <button type="submit" class="w-full px-4 sm:px-6 py-3 sm:py-3.5 bg-gradient-to-r from-green-600 to-green-500 text-white font-medium rounded-xl hover:from-green-700 hover:to-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transform transition-all duration-300 hover:scale-[1.02] shadow-lg hover:shadow-xl">
+                        {% if update %}Update{% else %}Create{% endif %} Update
+                    </button>
+                </form>
+            </div>
+        {% endif %}
+    </div>
 </div>
 
 <style>
 .custom-scrollbar::-webkit-scrollbar {
-    width: 8px;
+    width: 6px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
@@ -142,5 +148,11 @@
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: #666;
+}
+
+@media (max-width: 640px) {
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 4px;
+    }
 }
 </style>

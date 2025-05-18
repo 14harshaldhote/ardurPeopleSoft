@@ -4,48 +4,68 @@
 {% block title %}Attendance Dashboard{% endblock %}
 
 {% block content %}
-<div class="min-h-screen p-12 pt-1 rounded-md">
+<div class="min-h-screen p-2 sm:p-6 md:p-10">
     <!-- Hero Section with User Info -->
-    <div class="text-black">
-        <div class="container mx-auto px-4 py-10">
-            <div class="flex flex-col md:flex-row items-center justify-between">
-                <div>
-                    <h1 class="text-3xl font-bold mb-2">Attendance Dashboard</h1>
-                    <p class="text-blue-400">{{ current_date|date:"l, F d, Y" }}</p>
-                    {% if user_shift %}
-                    <div class="mt-2 bg-blue-500 bg-opacity-30 rounded-full px-3 py-1 text-sm inline-flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        {{ user_shift.name }} ({{ user_shift.start_time|time:"H:i" }} - {{ user_shift.end_time|time:"H:i" }})
-                    </div>
-                    {% endif %}
+    <div class="container mx-auto px-2 sm:px-4 py-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-bold mb-2 text-gray-900">Attendance Dashboard</h1>
+                {% if user_shift %}
+                <div class="mt-2 bg-blue-100 rounded-full px-4 py-2 text-sm flex flex-wrap items-center gap-2 shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>
+                        <span class="font-semibold">Shift:</span> {{ user_shift.name }}
+                    </span>
+                    <span class="hidden sm:inline">|</span>
+                    <span>{{ current_date|date:"d M Y" }}</span>
+                    <span class="hidden sm:inline">|</span>
+                    <span>{{ user_shift.start_time|time:"H:i" }} - {{ user_shift.end_time|time:"H:i" }}</span>
                 </div>
-                <div class="mt-6 md:mt-0">
-                    {% if is_active_session %}
-                    <div class="flex items-center bg-green-500 bg-opacity-20 rounded-lg px-4 py-2">
+                {% else %}
+                <div class="mt-2 bg-gray-100 rounded-full px-4 py-2 text-sm flex items-center gap-2 shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>No shift assigned for <span class="font-semibold">{{ current_date|date:"d M Y" }}</span></span>
+                </div>
+                {% endif %}
+            </div>
+            <div class="flex flex-col items-end w-full md:w-auto gap-2">
+                {% if is_active_session %}
+                    <div class="flex items-center bg-green-100 rounded-lg px-4 py-2">
                         <div class="h-3 w-3 bg-green-400 rounded-full mr-2 animate-pulse"></div>
-                        <span>Currently Active</span>
+                        <span class="text-green-700 font-medium">Currently Active</span>
                     </div>
-                    {% else %}
-                    <div class="flex items-center bg-gray-600 bg-opacity-20 rounded-lg px-4 py-2">
+                {% else %}
+                    <div class="flex items-center bg-gray-200 rounded-lg px-4 py-2">
                         <div class="h-3 w-3 bg-gray-400 rounded-full mr-2"></div>
-                        <span>Not Clocked In</span>
+                        <span class="text-gray-700 font-medium">Not Clocked In</span>
                     </div>
-                    {% endif %}
+                {% endif %}
+                {% if is_manager or is_hr %}
+                <div>
+                    <button onclick="window.history.back();" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold rounded-lg shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-300">
+                        <svg class="h-5 w-5 mr-1 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+                        </svg>
+                        <span class="hidden sm:inline">Back</span>
+                    </button>
                 </div>
+                {% endif %}
             </div>
         </div>
     </div>
 
-    <div class="container mx-auto px-4 py-8">
+    <div class="container mx-auto px-2 sm:px-4 py-4">
         <!-- Today's Status Card -->
         <div class="mb-8">
-            <h2 class="text-xl font-semibold text-gray-800 mb-4">Today's Status</h2>
+            <h2 class="text-lg sm:text-xl font-semibold text-gray-800 mb-4">Today's Status</h2>
             <div class="bg-white rounded-xl shadow-sm overflow-hidden">
                 {% if today_attendance %}
-                <div class="grid grid-cols-1 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-gray-100">
-                    <div class="p-6 flex flex-col items-center justify-center">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-gray-100">
+                    <div class="p-4 sm:p-6 flex flex-col items-center justify-center">
                         <div class="rounded-full h-12 w-12 flex items-center justify-center mb-3
                             {% if today_attendance.status == 'Present' %}bg-green-100 text-green-600
                             {% elif today_attendance.status == 'Absent' %}bg-red-100 text-red-600
@@ -78,51 +98,48 @@
                             </svg>
                             {% endif %}
                         </div>
-                        <span class="text-lg font-medium">{{ today_attendance.status }}</span>
-                        {% if today_attendance.late_minutes > 0 %}
-                        <!-- <span class="text-sm text-yellow-600 mt-1">{{ today_attendance.late_minutes }} min late</span> -->
-                        {% endif %}
+                        <span class="text-base sm:text-lg font-medium">{{ today_attendance.status }}</span>
                     </div>
-                    <div class="p-6 flex flex-col">
-                        <span class="text-sm text-gray-500 mb-1">Clock In</span>
+                    <div class="p-4 sm:p-6 flex flex-col items-center sm:items-start">
+                        <span class="text-xs sm:text-sm text-gray-500 mb-1">Clock In</span>
                         {% if today_attendance.clock_in_time %}
                         <div class="flex items-center">
                             <svg class="h-5 w-5 text-green-500 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M12 8V12L14 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                                 <circle cx="12" cy="12" r="7" stroke="currentColor" stroke-width="2"/>
                             </svg>
-                            <span class="text-lg font-medium">{{ today_attendance.clock_in_time|time:"h:i A" }}</span>
+                            <span class="text-base font-medium">{{ today_attendance.clock_in_time|time:"h:i A" }}</span>
                         </div>
                         {% else %}
-                        <span class="text-lg text-gray-400">Not recorded</span>
+                        <span class="text-base text-gray-400">Not recorded</span>
                         {% endif %}
                     </div>
-                    <div class="p-6 flex flex-col">
-                        <span class="text-sm text-gray-500 mb-1">Clock Out</span>
+                    <div class="p-4 sm:p-6 flex flex-col items-center sm:items-start">
+                        <span class="text-xs sm:text-sm text-gray-500 mb-1">Clock Out</span>
                         {% if today_attendance.clock_out_time %}
                         <div class="flex items-center">
                             <svg class="h-5 w-5 text-red-500 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M12 8V12L10 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                                 <circle cx="12" cy="12" r="7" stroke="currentColor" stroke-width="2"/>
                             </svg>
-                            <span class="text-lg font-medium">{{ today_attendance.clock_out_time|time:"h:i A" }}</span>
+                            <span class="text-base font-medium">{{ today_attendance.clock_out_time|time:"h:i A" }}</span>
                         </div>
                         {% else %}
-                        <span class="text-lg text-gray-400">Not recorded</span>
+                        <span class="text-base text-gray-400">Not recorded</span>
                         {% endif %}
                     </div>
-                    <div class="p-6 flex flex-col">
-                        <span class="text-sm text-gray-500 mb-1">Total Hours</span>
+                    <div class="p-4 sm:p-6 flex flex-col items-center sm:items-start">
+                        <span class="text-xs sm:text-sm text-gray-500 mb-1">Total Hours</span>
                         {% if today_attendance.total_hours %}
                         <div class="flex items-center">
                             <svg class="h-5 w-5 text-blue-500 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M12 6V12L16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                                 <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
                             </svg>
-                            <span class="text-lg font-medium">{{ today_attendance.total_hours }} hrs</span>
+                            <span class="text-base font-medium">{{ today_attendance.total_hours }} hrs</span>
                         </div>
                         {% else %}
-                        <span class="text-lg text-gray-400">0 hrs</span>
+                        <span class="text-base text-gray-400">0 hrs</span>
                         {% endif %}
                     </div>
                 </div>
@@ -141,224 +158,279 @@
             </div>
         </div>
 
-<!-- Stats Cards -->
-<div class="mb-8">
-    <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-semibold text-gray-800">Attendance Summary</h2>
-        <!-- Date Filter Dropdown -->
-        <div class="relative">
-            <button id="dateFilterBtn" class="flex items-center text-sm bg-white border border-gray-300 rounded-lg px-4 py-2 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <span>
-                    {% if date_filter == 'current_month' %}Current Month
-                    {% elif date_filter == 'previous_month' %}Previous Month
-                    {% elif date_filter == 'current_week' %}Current Week
-                    {% elif date_filter == 'previous_week' %}Previous Week
-                    {% elif date_filter == 'custom_range' %}Custom Range
-                    {% else %}Current Month{% endif %}
-                </span>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                </svg>
-            </button>
-            <div id="dateFilterDropdown" class="hidden absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg z-10">
-                <form method="get" class="p-4">
-                    <div class="space-y-3">
-                        <label class="flex items-center">
-                            <input type="radio" name="date_filter" value="current_month" {% if date_filter == 'current_month' %}checked{% endif %} class="h-4 w-4 text-blue-600">
-                            <span class="ml-2 text-gray-700">Current Month</span>
-                        </label>
-                        <label class="flex items-center">
-                            <input type="radio" name="date_filter" value="previous_month" {% if date_filter == 'previous_month' %}checked{% endif %} class="h-4 w-4 text-blue-600">
-                            <span class="ml-2 text-gray-700">Previous Month</span>
-                        </label>
-                        <label class="flex items-center">
-                            <input type="radio" name="date_filter" value="current_week" {% if date_filter == 'current_week' %}checked{% endif %} class="h-4 w-4 text-blue-600">
-                            <span class="ml-2 text-gray-700">Current Week</span>
-                        </label>
-                        <label class="flex items-center">
-                            <input type="radio" name="date_filter" value="previous_week" {% if date_filter == 'previous_week' %}checked{% endif %} class="h-4 w-4 text-blue-600">
-                            <span class="ml-2 text-gray-700">Previous Week</span>
-                        </label>
-                        <label class="flex items-center">
-                            <input type="radio" name="date_filter" value="custom_range" {% if date_filter == 'custom_range' %}checked{% endif %} class="h-4 w-4 text-blue-600">
-                            <span class="ml-2 text-gray-700">Custom Range</span>
-                        </label>
-                        <div id="customRangeFields" class="{% if date_filter != 'custom_range' %}hidden{% endif %} pt-2 space-y-2">
-                            <div>
-                                <label class="block text-xs text-gray-500 mb-1">Start Date</label>
-                                <input type="date" name="date_range_start" value="{{ date_range_start }}" class="w-full rounded-md border-gray-300 text-sm">
+        <!-- Stats Cards -->
+        <div class="mb-8">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-2">
+                <h2 class="text-lg sm:text-xl font-semibold text-gray-800">Attendance Summary</h2>
+                <!-- Date Filter Dropdown -->
+                <div class="relative w-full sm:w-auto">
+                    <button id="dateFilterBtn" class="flex items-center w-full sm:w-auto text-sm bg-white border border-gray-300 rounded-lg px-4 py-2 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <span>
+                            {% if date_filter == 'current_month' %}Current Month
+                            {% elif date_filter == 'previous_month' %}Previous Month
+                            {% elif date_filter == 'current_week' %}Current Week
+                            {% elif date_filter == 'previous_week' %}Previous Week
+                            {% elif date_filter == 'custom_range' %}Custom Range
+                            {% else %}Current Month{% endif %}
+                        </span>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                    <div id="dateFilterDropdown" class="hidden absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg z-10">
+                        <form method="get" class="p-4">
+                            <div class="space-y-3">
+                                <label class="flex items-center">
+                                    <input type="radio" name="date_filter" value="current_month" {% if date_filter == 'current_month' %}checked{% endif %} class="h-4 w-4 text-blue-600">
+                                    <span class="ml-2 text-gray-700">Current Month</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="radio" name="date_filter" value="previous_month" {% if date_filter == 'previous_month' %}checked{% endif %} class="h-4 w-4 text-blue-600">
+                                    <span class="ml-2 text-gray-700">Previous Month</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="radio" name="date_filter" value="current_week" {% if date_filter == 'current_week' %}checked{% endif %} class="h-4 w-4 text-blue-600">
+                                    <span class="ml-2 text-gray-700">Current Week</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="radio" name="date_filter" value="previous_week" {% if date_filter == 'previous_week' %}checked{% endif %} class="h-4 w-4 text-blue-600">
+                                    <span class="ml-2 text-gray-700">Previous Week</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="radio" name="date_filter" value="custom_range" {% if date_filter == 'custom_range' %}checked{% endif %} class="h-4 w-4 text-blue-600">
+                                    <span class="ml-2 text-gray-700">Custom Range</span>
+                                </label>
+                                <div id="customRangeFields" class="{% if date_filter != 'custom_range' %}hidden{% endif %} pt-2 space-y-2">
+                                    <div>
+                                        <label class="block text-xs text-gray-500 mb-1">Start Date</label>
+                                        <input type="date" name="date_range_start" value="{{ date_range_start }}" class="w-full rounded-md border-gray-300 text-sm">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs text-gray-500 mb-1">End Date</label>
+                                        <input type="date" name="date_range_end" value="{{ date_range_end }}" class="w-full rounded-md border-gray-300 text-sm">
+                                    </div>
+                                </div>
+                                <button type="submit" class="w-full bg-blue-600 text-white rounded-md px-4 py-2 text-sm hover:bg-blue-700 transition-colors">
+                                    Apply Filter
+                                </button>
                             </div>
-                            <div>
-                                <label class="block text-xs text-gray-500 mb-1">End Date</label>
-                                <input type="date" name="date_range_end" value="{{ date_range_end }}" class="w-full rounded-md border-gray-300 text-sm">
-                            </div>
-                        </div>
-                        <button type="submit" class="w-full bg-blue-600 text-white rounded-md px-4 py-2 text-sm hover:bg-blue-700 transition-colors">
-                            Apply Filter
-                        </button>
+                        </form>
                     </div>
-                </form>
-            </div>
-        </div>
-    </div>
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div class="bg-white rounded-xl shadow-sm p-6">
-            <div class="flex items-center">
-                <div class="rounded-full h-12 w-12 flex items-center justify-center bg-green-100 text-green-600 mr-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                </div>
-                <div>
-                    <p class="text-sm text-gray-500">Present Days</p>
-                    <p class="text-2xl font-bold text-gray-800">{{ present_days }}</p>
                 </div>
             </div>
-        </div>
-        <div class="bg-white rounded-xl shadow-sm p-6">
-            <div class="flex items-center">
-                <div class="rounded-full h-12 w-12 flex items-center justify-center bg-yellow-100 text-yellow-600 mr-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div class="bg-white rounded-xl shadow-sm p-4 sm:p-6 flex items-center gap-4">
+                    <div class="rounded-full h-12 w-12 flex items-center justify-center bg-green-100 text-green-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-xs sm:text-sm text-gray-500">Present Days</p>
+                        <p class="text-xl sm:text-2xl font-bold text-gray-800">{{ present_days }}</p>
+                    </div>
                 </div>
-                <div>
-                    <p class="text-sm text-gray-500">Absent Days</p>
-                    <p class="text-2xl font-bold text-gray-800">{{ absent_count }}</p>
+                <div class="bg-white rounded-xl shadow-sm p-4 sm:p-6 flex items-center gap-4">
+                    <div class="rounded-full h-12 w-12 flex items-center justify-center bg-yellow-100 text-yellow-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-xs sm:text-sm text-gray-500">Absent Days</p>
+                        <p class="text-xl sm:text-2xl font-bold text-gray-800">{{ absent_count }}</p>
+                    </div>
                 </div>
-            </div>
-        </div>
-        <div class="bg-white rounded-xl shadow-sm p-6">
-            <div class="flex items-center">
-                <div class="rounded-full h-12 w-12 flex items-center justify-center bg-blue-100 text-blue-600 mr-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
+                <div class="bg-white rounded-xl shadow-sm p-4 sm:p-6 flex items-center gap-4">
+                    <div class="rounded-full h-12 w-12 flex items-center justify-center bg-blue-100 text-blue-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-xs sm:text-sm text-gray-500">Leave Days</p>
+                        <p class="text-xl sm:text-2xl font-bold text-gray-800">{{ leave_days }}</p>
+                    </div>
                 </div>
-                <div>
-                    <p class="text-sm text-gray-500">Leave Days</p>
-                    <p class="text-2xl font-bold text-gray-800">{{ leave_days }}</p>
-                </div>
-            </div>
-        </div>
-        <div class="bg-white rounded-xl shadow-sm p-6">
-            <div class="flex items-center">
-                <div class="rounded-full h-12 w-12 flex items-center justify-center bg-purple-100 text-purple-600 mr-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                </div>
-                <div>
-                    <p class="text-sm text-gray-500">Total Hours</p>
-                    <p class="text-2xl font-bold text-gray-800">{{ total_hours }}</p>
+                <div class="bg-white rounded-xl shadow-sm p-4 sm:p-6 flex items-center gap-4">
+                    <div class="rounded-full h-12 w-12 flex items-center justify-center bg-purple-100 text-purple-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-xs sm:text-sm text-gray-500">Total Hours</p>
+                        <p class="text-xl sm:text-2xl font-bold text-gray-800">{{ total_hours }}</p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
-</div>
+
     <!-- Quick Actions Section -->
-    <div class="container mx-auto px-4 py-6">
-        <h2 class="text-xl font-semibold text-gray-800 mb-4">Quick Actions</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <!-- <a href="{% url 'aps_employee:session_activity' %}" class="bg-white rounded-xl shadow-sm p-6 flex items-center hover:shadow-md transition-shadow">
-                <div class="rounded-full h-12 w-12 flex items-center justify-center bg-blue-100 text-blue-600 mr-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                </div>
-                <div>
-                    <h3 class="font-medium text-gray-900">Session Activity</h3>
-                    <p class="text-sm text-gray-500">View your active sessions and breaks</p>
-                </div>
-            </a> -->
-            <a href="{% url 'aps_employee:attendance_regularization' %}" class="bg-white rounded-xl shadow-sm p-6 flex items-center hover:shadow-md transition-shadow">
-                <div class="rounded-full h-12 w-12 flex items-center justify-center bg-indigo-100 text-indigo-600 mr-4">
+    <div class="container mx-auto px-2 sm:px-4 py-4">
+        <h2 class="text-lg sm:text-xl font-semibold text-gray-800 mb-4">Quick Actions</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            <a href="{% url 'aps_employee:attendance_regularization' %}" class="bg-white rounded-xl shadow-sm p-4 sm:p-6 flex items-center gap-4 hover:shadow-md transition-shadow">
+                <div class="rounded-full h-12 w-12 flex items-center justify-center bg-indigo-100 text-indigo-600">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
                 </div>
                 <div>
                     <h3 class="font-medium text-gray-900">Regularize Attendance</h3>
-                    <p class="text-sm text-gray-500">Submit correction requests</p>
+                    <p class="text-xs sm:text-sm text-gray-500">Submit correction requests</p>
                 </div>
             </a>
-            <a href="{% url 'aps_employee:attendance_calendar' %}" class="bg-white rounded-xl shadow-sm p-6 flex items-center hover:shadow-md transition-shadow">
-                <div class="rounded-full h-12 w-12 flex items-center justify-center bg-green-100 text-green-600 mr-4">
+            <a href="{% url 'aps_employee:attendance_calendar' %}" class="bg-white rounded-xl shadow-sm p-4 sm:p-6 flex items-center gap-4 hover:shadow-md transition-shadow">
+                <div class="rounded-full h-12 w-12 flex items-center justify-center bg-green-100 text-green-600">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                 </div>
                 <div>
                     <h3 class="font-medium text-gray-900">Calendar View</h3>
-                    <p class="text-sm text-gray-500">See monthly attendance patterns</p>
+                    <p class="text-xs sm:text-sm text-gray-500">See monthly attendance patterns</p>
                 </div>
             </a>
-            <a href="{% url 'aps_holiday:holiday_lists' %}" class="bg-white rounded-xl shadow-sm p-6 flex items-center hover:shadow-md transition-shadow">
-                <div class="rounded-full h-12 w-12 flex items-center justify-center bg-yellow-100 text-yellow-600 mr-4">
+            <a href="{% url 'aps_holiday:holiday_lists' %}" class="bg-white rounded-xl shadow-sm p-4 sm:p-6 flex items-center gap-4 hover:shadow-md transition-shadow">
+                <div class="rounded-full h-12 w-12 flex items-center justify-center bg-yellow-100 text-yellow-600">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M4 3h1v2h2V3h10v2h2V3h1a2 2 0 012 2v4H2V5a2 2 0 012-2zm-2 8h20v9a2 2 0 01-2 2H4a2 2 0 01-2-2v-9zm12 3c1.1 0 2 .9 2 2s-.9 2-2 2h-.28a3.5 3.5 0 00-6.72 0H6a2 2 0 010-4h8z"/>
                         <path d="M18.36 6.64a3 3 0 00-4.24-4.24l-.94.94-.94-.94a3 3 0 00-4.24 4.24L9 7.58V10h2V7.58l.94-.94.94.94V10h2V7.58l.94-.94.94.94z"/>
                     </svg>
                 </div>
-                
                 <div>
                     <h3 class="font-medium text-gray-900">Holiday List</h3>
-                    <p class="text-sm text-gray-500">Get your yearly holidays from here</p>
+                    <p class="text-xs sm:text-sm text-gray-500">Get your yearly holidays from here</p>
                 </div>
             </a>
         </div>
     </div>
- 
 
-    {% include 'components/employee/attendance_stats.html' %}
+    <div class="container mx-auto px-2 sm:px-4 py-4 mb-8">
+        <div class="flex flex-col md:flex-row md:space-x-8 gap-8">
+            <!-- Attendance Stats (left) -->
+            <div class="md:w-1/2 w-full mb-8 md:mb-0">
+                <!-- Attendance Trends Section -->
+                <h2 class="text-lg sm:text-xl font-semibold text-gray-800 mb-4">Attendance Trends</h2>
+                <div class="bg-white rounded-xl shadow-sm p-4 sm:p-6 border border-gray-200">
+                   
+                    <div class="h-64 sm:h-80">
+                        <canvas id="attendanceTrendChart" class="w-full h-full"></canvas>
+                    </div>
+                </div>
+                <!-- Chart.js -->
+                <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+                <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    const ctx = document.getElementById('attendanceTrendChart').getContext('2d');
+                    const attendanceData = {
+                        labels: ['Present', 'Late', 'Absent', 'Leave', 'Half Day', 'WFH'],
+                        datasets: [{
+                            data: [
+                                {{ present_days|default:0 }},
+                                {{ late_days|default:0 }},
+                                {{ absent_days|default:0 }},
+                                {{ leave_days|default:0 }},
+                                {{ half_days|default:0 }},
+                                {{ wfh_days|default:0 }}
+                            ],
+                            backgroundColor: [
+                                '#22c55e', // Green
+                                '#eab308', // Yellow 
+                                '#ef4444', // Red
+                                '#3b82f6', // Blue
+                                '#a855f7', // Purple
+                                '#14b8a6'  // Teal
+                            ],
+                            borderWidth: 1
+                        }]
+                    };
 
-    <!-- Recent Activity Section -->
-    <div class="container mx-auto px-4 py-6 mb-8">
-        <h2 class="text-xl font-semibold text-gray-800 mb-4">Recent Activity</h2>
-        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-            <ul class="divide-y divide-gray-100">
-                {% if recent_activities %}
-                    {% for activity in recent_activities|slice:":5" %}
-                    <li class="p-4 hover:bg-gray-50">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0 mr-3">
-                                {% if activity.status == 'Present' %}
-                                <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-green-100">
-                                    <svg class="h-5 w-5 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                    </svg>
-                                </span>
-                                {% elif activity.status == 'Late' or activity.status == 'Present & Late' %}
-                                <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-yellow-100">
-                                    <svg class="h-5 w-5 text-yellow-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </span>
-                                {% else %}
-                                <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-gray-100">
-                                    <svg class="h-5 w-5 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </span>
-                                {% endif %}
-                            </div>
-                            <div>
-                                <p class="text-sm font-medium text-gray-900">{{ activity.date|date:"F d, Y" }} - {{ activity.status }}</p>
-                                <p class="text-xs text-gray-500">
-                                    {% if activity.clock_in_time %}Clock in: {{ activity.clock_in_time|date:"g:i A" }}{% endif %}
-                                    {% if activity.clock_out_time %} | Clock out: {{ activity.clock_out_time|date:"g:i A" }}{% endif %}
-                                    {% if activity.total_hours %} | Hours: {{ activity.total_hours }}{% endif %}
-                                </p>
-                            </div>
-                        </div>
-                    </li>
-                    {% endfor %}
-                {% else %}
-                <li class="p-4 text-center text-gray-500">No recent activity found</li>
-                {% endif %}
-            </ul>
+                    const chartConfig = {
+                        type: 'doughnut',
+                        data: attendanceData,
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'right',
+                                    labels: {
+                                        boxWidth: 10,
+                                        padding: 8,
+                                        font: {size: 11}
+                                    }
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            const value = context.raw;
+                                            const total = context.dataset.data.reduce((a,b) => a+b, 0);
+                                            const pct = total ? ((value/total)*100).toFixed(1) : 0;
+                                            return `${context.label}: ${value} (${pct}%)`;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    };
+
+                    const chart = new Chart(ctx, chartConfig);
+
+                    document.getElementById('trendPeriod').addEventListener('change', () => chart.update());
+                });
+                </script>
+            </div>
+            <!-- Recent Activity (right) -->
+            <div class="md:w-1/2 w-full">
+                <h2 class="text-lg sm:text-xl font-semibold text-gray-800 mb-4">Recent Activity</h2>
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <ul class="divide-y divide-gray-100">
+                        {% if recent_activities %}
+                            {% for activity in recent_activities|slice:":5" %}
+                            <li class="p-4 hover:bg-gray-50 transition">
+                                <div class="flex items-center gap-3">
+                                    <div class="flex-shrink-0">
+                                        {% if activity.status == 'Present' %}
+                                        <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-green-100">
+                                            <svg class="h-5 w-5 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        </span>
+                                        {% elif activity.status == 'Late' or activity.status == 'Present & Late' %}
+                                        <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-yellow-100">
+                                            <svg class="h-5 w-5 text-yellow-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        </span>
+                                        {% else %}
+                                        <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-gray-100">
+                                            <svg class="h-5 w-5 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900">{{ activity.date|date:"F d, Y" }} - {{ activity.status }}</p>
+                                        <p class="text-xs text-gray-500">
+                                            {% if activity.clock_in_time %}Clock in: {{ activity.clock_in_time|date:"g:i A" }}{% endif %}
+                                            {% if activity.clock_out_time %} | Clock out: {{ activity.clock_out_time|date:"g:i A" }}{% endif %}
+                                            {% if activity.total_hours %} | Hours: {{ activity.total_hours }}{% endif %}
+                                        </p>
+                                    </div>
+                                </div>
+                            </li>
+                            {% endfor %}
+                        {% else %}
+                        <li class="p-4 text-center text-gray-500">No recent activity found</li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
         </div>
     </div>
-
+</div>
 {% endblock %}

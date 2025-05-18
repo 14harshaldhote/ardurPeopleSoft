@@ -1,27 +1,34 @@
-<div class="bg-white shadow-xl rounded-xl p-6 transition-transform transform hover:scale-105 hover:shadow-2xl">
+<div class="bg-white shadow-xl rounded-xl p-4 sm:p-6 transition-transform transform hover:scale-105 hover:shadow-2xl">
     <!-- Header Section -->
-    <div class="flex justify-between items-center mb-6">
-        <h3 class="text-xl font-semibold text-gray-800">
-            Project Timeline
-        </h3>
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6M9 12v1.5M15 12v1.5M9 14v1.5M15 14v1.5M9 16v1.5M15 16v1.5M9 18v1.5M15 18v1.5" />
-        </svg>
+    <div class="flex justify-between items-center mb-4 sm:mb-6">
+        <div class="flex items-center gap-2 sm:gap-3">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6M9 12v1.5M15 12v1.5M9 14v1.5M15 14v1.5M9 16v1.5M15 16v1.5M9 18v1.5M15 18v1.5" />
+            </svg>
+            <h3 class="text-lg sm:text-xl font-semibold text-gray-800">
+                Project Timeline
+            </h3>
+        </div>
+        <div class="tooltip" data-tip="View Timeline Details">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6 text-blue-500 hover:text-blue-600 transition-colors cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        </div>
     </div>
 
     <!-- Timeline Section -->
-    <div class="space-y-6 w-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+    <div class="space-y-4 sm:space-y-6 w-full max-h-[350px] sm:max-h-[450px] overflow-y-auto custom-scrollbar pr-2 sm:pr-4">
         {% for timeline in project_timelines %}
-        <div class="bg-gray-50 p-6 rounded-lg border-l-4
+        <div class="bg-gray-50 p-3 sm:p-6 rounded-lg border-l-4
             {% if timeline.is_deadline_close %} border-red-500 {% else %} border-green-500 {% endif %}
             hover:shadow-lg hover:bg-gray-100 transition-shadow duration-300">
             
             <!-- Project Info -->
-            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-3 sm:space-y-0">
-                <h4 class="text-lg font-medium text-gray-700 truncate">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-2 sm:space-y-0">
+                <h4 class="text-base sm:text-lg font-medium text-gray-700 truncate">
                     {{ timeline.project.name }}
                 </h4>
-                <span class="text-xs font-semibold
+                <span class="text-xs sm:text-sm font-semibold whitespace-nowrap
                     {% if timeline.is_deadline_close %} text-red-600 {% else %} text-green-600 {% endif %}">
                     {% if timeline.is_deadline_close %}
                         ⏳ Deadline is Close
@@ -32,8 +39,8 @@
             </div>
 
             <!-- Timeline Details -->
-            <div class="mt-3 text-sm text-gray-600">
-                <p class="flex items-center">
+            <div class="mt-2 sm:mt-3 text-xs sm:text-sm text-gray-600">
+                <p class="flex items-center mb-1">
                     <span class="font-semibold mr-2">Start Date:</span> {{ timeline.start_date }}
                 </p>
                 <p class="flex items-center">
@@ -44,3 +51,29 @@
         {% endfor %}
     </div>
 </div>
+
+<style>
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #666;
+}
+
+@media (max-width: 640px) {
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 4px;
+    }
+}
+</style>
