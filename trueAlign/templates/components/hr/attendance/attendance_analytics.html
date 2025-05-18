@@ -107,9 +107,46 @@
                     </div>
                 </div>
             </aside>
-
             <!-- Main Content -->
             <main class="lg:col-span-3 space-y-6 sm:space-y-8">
+                <!-- Quick Actions -->
+                <div class="bg-white rounded-2xl shadow-md overflow-hidden">
+                    <div class="px-6 py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+                        <h2 class="text-xl font-semibold">Quick Actions</h2>
+                    </div>
+                    <div class="p-6 space-y-4">
+                        <!-- Add Attendance Record -->
+                        <a href="#" class="flex items-center p-3 bg-gray-50 hover:bg-blue-50 rounded-lg transition duration-200 group">
+                            <div class="p-2 bg-blue-100 rounded-md mr-4 group-hover:bg-blue-200 transition-colors duration-200">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                            </div>
+                            <span class="font-medium text-gray-700 group-hover:text-blue-700 transition-colors duration-200">Add Attendance Record</span>
+                        </a>
+
+                        <!-- Generate Report -->
+                        <a href="{% url 'aps_attendance:hr_generate_report' %}" class="flex items-center p-3 bg-gray-50 hover:bg-green-50 rounded-lg transition duration-200 group">
+                            <div class="p-2 bg-green-100 rounded-md mr-4 group-hover:bg-green-200 transition-colors duration-200">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                </svg>
+                            </div>
+                            <span class="font-medium text-gray-700 group-hover:text-green-700 transition-colors duration-200">Generate Report</span>
+                        </a>
+
+                        <!-- Regularization Requests -->
+                        <a href="{% url 'aps_attendance:hr_attendance_regularization_requests' %}" class="flex items-center p-3 bg-gray-50 hover:bg-purple-50 rounded-lg transition duration-200 group">
+                            <div class="p-2 bg-purple-100 rounded-md mr-4 group-hover:bg-purple-200 transition-colors duration-200">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                                </svg>
+                            </div>
+                            <span class="font-medium text-gray-700 group-hover:text-purple-700 transition-colors duration-200">Regularization Requests</span>
+                        </a>
+                    </div>
+                </div>
+
                 <!-- Stats Cards -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-2">
                     <div class="bg-gradient-to-br from-blue-100 to-blue-300 rounded-2xl shadow-md p-4 sm:p-6 text-blue-900 flex flex-col items-center hover:scale-105 transition">

@@ -7576,7 +7576,7 @@ def attendance_analytics(request):
     print(f"[DEBUG] Rendering attendance_analytics.html with context")
     return render(request, 'components/hr/attendance/attendance_analytics.html', context)
 
-    
+
 def calculate_location_stats(start_date, end_date, time_period, base_query, user_details_dict):
     """
     Helper function to calculate location-based attendance statistics
@@ -10219,7 +10219,6 @@ def regularization_analytics_dashboard(request):
     
     return render(request, 'components/hr/attendance/regularization_analytics.html', context)
 
-
 @login_required
 @user_passes_test(is_hr_check)
 def hr_generate_report(request):
@@ -10231,7 +10230,7 @@ def hr_generate_report(request):
     - Custom date range reports
     - Individual user reports
     - Role-based reports
-    
+
     With filtering capabilities and export options.
     """
     # Get filter parameters
@@ -10248,30 +10247,29 @@ def hr_generate_report(request):
     status_filter = request.GET.get('status', '')
     sort_by = request.GET.get('sort_by', 'username')
     export_format = request.GET.get('format', '')
-    
-    
+
     # Initialize with empty results
     report_data = []
     summary_data = {}
     from_date = None
     to_date = None
-    
+
     # Process date filters based on selected type
     try:
         today = datetime.now().date()
-        
+
         if date_filter_type == 'daily' and single_date:
             # Single day report
             from_date = datetime.strptime(single_date, '%Y-%m-%d').date()
             to_date = from_date
-            
+
         elif date_filter_type == 'weekly' and week and year:
             # Weekly report
             year_num = int(year)
             week_num = int(week)
             from_date = datetime.strptime(f'{year_num}-W{week_num}-1', '%Y-W%W-%w').date()
             to_date = from_date + timedelta(days=6)
-            
+
         elif date_filter_type == 'monthly' and month and year:
             # Monthly report
             year_num = int(year)
@@ -10282,12 +10280,12 @@ def hr_generate_report(request):
                 to_date = date(year_num + 1, 1, 1) - timedelta(days=1)
             else:
                 to_date = date(year_num, month_num + 1, 1) - timedelta(days=1)
-            
+
         elif date_filter_type == 'custom' and date_from and date_to:
             # Custom date range
             from_date = datetime.strptime(date_from, '%Y-%m-%d').date()
             to_date = datetime.strptime(date_to, '%Y-%m-%d').date()
-            
+
         else:
             # Default to current month if no valid filter is provided
             from_date = date(today.year, today.month, 1)
@@ -10295,15 +10293,15 @@ def hr_generate_report(request):
                 to_date = date(today.year + 1, 1, 1) - timedelta(days=1)
             else:
                 to_date = date(today.year, today.month + 1, 1) - timedelta(days=1)
-    
+
         # Build user query
         user_query = User.objects.filter(is_active=True)
-        
+
         if report_type == 'user' and user_id:
             user_query = user_query.filter(id=user_id)
         elif report_type == 'role' and role_filter:
             user_query = user_query.filter(groups__name=role_filter)
-            
+
         # Apply sorting
         if sort_by == 'name':
             user_query = user_query.order_by('first_name', 'last_name')
@@ -10312,9 +10310,9 @@ def hr_generate_report(request):
             user_query = user_query.order_by('username')
         else:
             user_query = user_query.order_by('username')
-            
+
         users = user_query.distinct()
-        
+
         # Generate report data
         for user in users:
             # Get attendance data for date range
@@ -10323,52 +10321,52 @@ def hr_generate_report(request):
                 date__gte=from_date,
                 date__lte=to_date
             )
-            
+
             # Apply status filter if provided
             if status_filter:
                 attendance_query = attendance_query.filter(status=status_filter)
-                
+
             attendance_data = attendance_query.order_by('date')
-            
+
             # Skip users with no attendance data unless specifically requested
             if not attendance_data.exists() and report_type != 'user':
                 continue
-                
+
             # Calculate statistics
             total_days = (to_date - from_date).days + 1
             work_days = get_work_days(from_date, to_date)  # Exclude weekends/holidays
-            
+
             present_count = attendance_data.filter(
                 status__in=['Present', 'Present & Late', 'Work From Home']
             ).count()
-            
+
             absent_count = attendance_data.filter(status='Absent').count()
-            leave_count = attendance_data.filter(status__in=['On Leave', 'Half Day', 'Comp Off']).count()
+            leave_count = attendance_data.filter(status__in=['On Leave', 'Comp Off']).count()
             late_count = attendance_data.filter(status__in=['Present & Late', 'Late']).count()
             wfh_count = attendance_data.filter(status='Work From Home').count()
-            
+
             total_hours = attendance_data.aggregate(Sum('total_hours'))['total_hours__sum'] or Decimal('0')
             overtime_hours = attendance_data.aggregate(Sum('overtime_hours'))['overtime_hours__sum'] or Decimal('0')
-            
+
             # Calculate average working hours (only consider days with hours)
             days_with_hours = attendance_data.exclude(total_hours__isnull=True).exclude(total_hours=0).count()
             avg_hours = Decimal('0')
             if days_with_hours > 0:
                 avg_hours = total_hours / days_with_hours
-            
+
             # Get groups/roles for this user
             roles = user.groups.values_list('name', flat=True)
-            
+
             # Calculate attendance percentage based on work days
             attendance_percentage = 0
             if work_days > 0:
                 attendance_percentage = (present_count / work_days) * 100
-            
+
             # Calculate punctuality percentage
             punctuality = 0
             if present_count > 0:
                 punctuality = ((present_count - late_count) / present_count) * 100
-                
+
             # Get daily attendance details
             daily_records = []
             if report_type == 'user':  # Only generate detailed daily records for single user reports
@@ -10386,7 +10384,7 @@ def hr_generate_report(request):
                     }
                     daily_records.append(daily_entry)
                     current_date += timedelta(days=1)
-            
+
             user_data = {
                 'user_id': user.id,
                 'username': user.username,
@@ -10399,7 +10397,7 @@ def hr_generate_report(request):
                 'absent_days': absent_count,
                 'leave_days': leave_count,
                 'late_days': late_count,
-                'wfh_days': wfh_count, 
+                'wfh_days': wfh_count,
                 'total_hours': total_hours,
                 'avg_hours': avg_hours.quantize(Decimal('0.01')),
                 'overtime_hours': overtime_hours,
@@ -10407,40 +10405,40 @@ def hr_generate_report(request):
                 'punctuality_percentage': round(punctuality, 2),
                 'daily_records': daily_records,
             }
-            
+
             report_data.append(user_data)
-        
+
         # Sort by attendance percentage if requested
         if sort_by == 'attendance' and report_data:
             report_data.sort(key=lambda x: x['attendance_percentage'], reverse=True)
-        
+
         # Calculate summary
         if report_data:
             # Average attendance percentage
             avg_attendance = sum(d['attendance_percentage'] for d in report_data) / len(report_data)
-            
+
             # Total hours worked
             total_all_hours = sum(d['total_hours'] for d in report_data)
-            
+
             # Total overtime hours
             total_overtime = sum(d['overtime_hours'] for d in report_data)
-            
+
             # Average hours per day
             avg_daily_hours = Decimal('0')
             total_present_days = sum(d['present_days'] for d in report_data)
             if total_present_days > 0:
                 avg_daily_hours = total_all_hours / total_present_days
-            
+
             # Most punctual users (top 3)
             most_punctual = sorted(report_data, key=lambda x: x['punctuality_percentage'], reverse=True)[:5]
             most_punctual = [{'name': d['full_name'], 'percentage': d['punctuality_percentage']} for d in most_punctual]
-            
+
             # Users with most overtime (top 3)
             most_overtime = sorted(report_data, key=lambda x: x['overtime_hours'], reverse=True)[:5]
             most_overtime = [{'name': d['full_name'], 'hours': d['overtime_hours']} for d in most_overtime]
-            
+
             date_range_str = get_date_range_display(date_filter_type, from_date, to_date, month, year, week)
-            
+
             summary_data = {
                 'user_count': len(report_data),
                 'date_range': date_range_str,
@@ -10452,7 +10450,7 @@ def hr_generate_report(request):
                 'most_punctual': most_punctual,
                 'most_overtime': most_overtime,
             }
-        
+
         # Handle export
         if export_format and report_data:
             if export_format == 'csv':
@@ -10463,20 +10461,20 @@ def hr_generate_report(request):
                 return response
             elif export_format == 'pdf':
                 return generate_pdf_report(request, report_data, summary_data, from_date, to_date)
-    
+
     except ValueError as e:
         messages.error(request, f"Error processing report: {str(e)}")
-    
+
     # Get all available roles for filters
     roles = User.groups.through.objects.values_list('group__name', flat=True).distinct().order_by('group__name')
-    
+
     # Get years and months for dropdowns
     current_year = datetime.now().year
     years = range(current_year - 3, current_year + 1)
-    
-    # Updated status choices to match the model definition
+
+    # Updated status choices to match the model definition (removed 'Half Day')
     status_choices = [
-        'Present', 'Present & Late', 'Absent', 'Late', 'Half Day', 'On Leave', 
+        'Present', 'Present & Late', 'Absent', 'Late', 'On Leave',
         'Work From Home', 'Weekend', 'Holiday', 'Comp Off', 'Not Marked'
     ]
     items = Attendance.objects.all()  # Your queryset
@@ -10484,8 +10482,8 @@ def hr_generate_report(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    calander_report=hr_attendance_view(request)
-    
+    calander_report = hr_attendance_view(request)
+
     context = {
         'report_type': report_type,
         'date_filter_type': date_filter_type,
@@ -10510,9 +10508,8 @@ def hr_generate_report(request):
         'weeks': range(1, 53),
         'calander_report': calander_report,
     }
-    
-    return render(request, 'components/hr/attendance/hr_generate_report.html', context)
 
+    return render(request, 'components/hr/attendance/hr_generate_report.html', context)
 def get_work_days(start_date, end_date):
     """
     Count the number of work days between two dates (excluding weekends)
@@ -10549,41 +10546,41 @@ def export_to_csv(report_data, from_date, to_date, report_type):
     response = HttpResponse(content_type='text/csv')
     filename = f"attendance_report_{from_date.strftime('%Y%m%d')}_to_{to_date.strftime('%Y%m%d')}.csv"
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
-    
+
     writer = csv.writer(response)
-    
+
     # Write headers
     headers = [
         'Username', 'Full Name', 'Email', 'Roles',
-        'Work Days', 'Present Days', 'Absent Days', 'Leave Days', 
-        'Late Days', 'Work From Home', 'Total Hours', 
+        'Work Days', 'Present Days', 'Absent Days', 'Leave Days',
+        'Late Days', 'Work From Home', 'Total Hours',
         'Average Hours/Day', 'Overtime Hours', 'Attendance %', 'Punctuality %'
     ]
     writer.writerow(headers)
-    
+
     # Write data
     for data in report_data:
         row = [
-            data['username'], 
-            data['full_name'], 
-            data['email'], 
+            data['username'],
+            data['full_name'],
+            data['email'],
             data['roles'],
-            data['work_days'], 
-            data['present_days'], 
-            data['absent_days'], 
+            data['work_days'],
+            data['present_days'],
+            data['absent_days'],
             data['leave_days'],
-            data['late_days'], 
+            data['late_days'],
             data['wfh_days'],
-            data['total_hours'], 
-            data['avg_hours'], 
-            data['overtime_hours'], 
+            data['total_hours'],
+            data['avg_hours'],
+            data['overtime_hours'],
             f"{data['attendance_percentage']:.2f}%",
             f"{data['punctuality_percentage']:.2f}%"
         ]
         writer.writerow(row)
-        
+
         # Add daily records for individual reports
-        if report_type == 'user' and data['daily_records']:
+        if report_type == 'user' and data.get('daily_records'):
             writer.writerow(['Date', 'Day', 'Status', 'Check In', 'Check Out', 'Hours', 'Overtime'])
             for record in data['daily_records']:
                 writer.writerow([
@@ -10596,7 +10593,7 @@ def export_to_csv(report_data, from_date, to_date, report_type):
                     record['overtime_hours']
                 ])
             writer.writerow([])  # Add blank row
-    
+
     return response
 
 
@@ -10605,18 +10602,18 @@ def export_to_excel(report_data, from_date, to_date, summary_data, report_type):
     Export report data to Excel format
     """
     import xlwt  # Import here since it's only needed for Excel export
-    
+
     workbook = xlwt.Workbook(encoding='utf-8')
-    
+
     # Summary sheet
     summary_sheet = workbook.add_sheet('Summary')
-    
+
     # Styles
     header_style = xlwt.easyxf('font: bold on; align: wrap on, vert centre, horiz center; pattern: pattern solid, fore_color gray25;')
     date_style = xlwt.easyxf('font: bold on; align: wrap on, vert centre, horiz left;')
     percent_style = xlwt.easyxf('font: bold off; align: wrap on, vert centre, horiz right;', num_format_str='0.00%')
     decimal_style = xlwt.easyxf('font: bold off; align: wrap on, vert centre, horiz right;', num_format_str='0.00')
-    
+
     # Write summary
     summary_sheet.write(0, 0, 'Attendance Report', header_style)
     summary_sheet.write(1, 0, summary_data['date_range'], date_style)
@@ -10630,34 +10627,34 @@ def export_to_excel(report_data, from_date, to_date, summary_data, report_type):
     summary_sheet.write(5, 1, float(summary_data['avg_daily_hours']), decimal_style)
     summary_sheet.write(6, 0, 'Total Overtime Hours:', date_style)
     summary_sheet.write(6, 1, float(summary_data['total_overtime']), decimal_style)
-    
+
     # Most punctual employees
     summary_sheet.write(8, 0, 'Most Punctual Employees', header_style)
     for i, emp in enumerate(summary_data['most_punctual']):
         summary_sheet.write(9 + i, 0, emp['name'])
         summary_sheet.write(9 + i, 1, emp['percentage'] / 100, percent_style)
-    
+
     # Most overtime employees
     summary_sheet.write(8, 3, 'Most Overtime Employees', header_style)
     for i, emp in enumerate(summary_data['most_overtime']):
         summary_sheet.write(9 + i, 3, emp['name'])
         summary_sheet.write(9 + i, 4, float(emp['hours']), decimal_style)
-    
+
     # Data sheet
     data_sheet = workbook.add_sheet('Attendance Data')
-    
+
     # Write headers
     headers = [
         'Username', 'Full Name', 'Email', 'Roles',
-        'Work Days', 'Present Days', 'Absent Days', 'Leave Days', 
-        'Late Days', 'Work From Home', 'Total Hours', 
+        'Work Days', 'Present Days', 'Absent Days', 'Leave Days',
+        'Late Days', 'Work From Home', 'Total Hours',
         'Average Hours/Day', 'Overtime Hours', 'Attendance %', 'Punctuality %'
     ]
-    
+
     for col_idx, header in enumerate(headers):
         data_sheet.write(0, col_idx, header, header_style)
         data_sheet.col(col_idx).width = 256 * 15  # Set column width
-    
+
     # Write data
     row_idx = 1
     for data in report_data:
@@ -10677,17 +10674,17 @@ def export_to_excel(report_data, from_date, to_date, summary_data, report_type):
         data_sheet.write(row_idx, 13, data['attendance_percentage'] / 100, percent_style)
         data_sheet.write(row_idx, 14, data['punctuality_percentage'] / 100, percent_style)
         row_idx += 1
-    
+
     # Daily details for individual user
-    if report_type == 'user' and len(report_data) == 1 and report_data[0]['daily_records']:
+    if report_type == 'user' and len(report_data) == 1 and report_data[0].get('daily_records'):
         details_sheet = workbook.add_sheet('Daily Details')
-        
+
         # Write headers
         detail_headers = ['Date', 'Day', 'Status', 'Check In', 'Check Out', 'Hours', 'Overtime']
         for col_idx, header in enumerate(detail_headers):
             details_sheet.write(0, col_idx, header, header_style)
             details_sheet.col(col_idx).width = 256 * 15
-        
+
         # Write data
         for i, record in enumerate(report_data[0]['daily_records']):
             details_sheet.write(i + 1, 0, record['date'].strftime('%Y-%m-%d'))
@@ -10697,7 +10694,7 @@ def export_to_excel(report_data, from_date, to_date, summary_data, report_type):
             details_sheet.write(i + 1, 4, record['check_out'])
             details_sheet.write(i + 1, 5, float(record['total_hours']), decimal_style)
             details_sheet.write(i + 1, 6, float(record['overtime_hours']), decimal_style)
-    
+
     # Save to response
     response = HttpResponse(content_type='application/ms-excel')
     filename = f"attendance_report_{from_date.strftime('%Y%m%d')}_to_{to_date.strftime('%Y%m%d')}.xls"
@@ -10717,27 +10714,27 @@ def generate_pdf_report(request, report_data, summary_data, from_date, to_date):
     from reportlab.lib.pagesizes import letter, landscape
     from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-    
+
     # Create a file-like buffer to receive PDF data
     buffer = BytesIO()
-    
+
     # Create the PDF object, using the BytesIO object as its "file"
     doc = SimpleDocTemplate(buffer, pagesize=landscape(letter))
-    
+
     # Create the stylesheet
     styles = getSampleStyleSheet()
     title_style = styles['Heading1']
     subtitle_style = styles['Heading2']
     normal_style = styles['Normal']
-    
+
     # Build the PDF content
     elements = []
-    
+
     # Title
     elements.append(Paragraph("Attendance Report", title_style))
     elements.append(Paragraph(summary_data['date_range'], subtitle_style))
     elements.append(Spacer(1, 12))
-    
+
     # Summary table
     summary_data_items = [
         ["Total Employees", str(summary_data['user_count'])],
@@ -10746,7 +10743,7 @@ def generate_pdf_report(request, report_data, summary_data, from_date, to_date):
         ["Average Daily Hours", str(summary_data['avg_daily_hours'])],
         ["Total Overtime", str(summary_data['total_overtime'])]
     ]
-    
+
     summary_table = Table(summary_data_items, colWidths=[200, 100])
     summary_table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (0, -1), colors.lightgrey),
@@ -10754,18 +10751,18 @@ def generate_pdf_report(request, report_data, summary_data, from_date, to_date):
         ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
     ]))
-    
+
     elements.append(summary_table)
     elements.append(Spacer(1, 24))
-    
+
     # Main data table
     if report_data:
         # Headers
         headers = [
-            'Name', 'Present', 'Absent', 'Leave', 'Late', 
+            'Name', 'Present', 'Absent', 'Leave', 'Late',
             'WFH', 'Hours', 'OT Hours', 'Attendance', 'Punctuality'
         ]
-        
+
         # Data rows
         data_rows = [headers]
         for data in report_data:
@@ -10782,7 +10779,7 @@ def generate_pdf_report(request, report_data, summary_data, from_date, to_date):
                 f"{data['punctuality_percentage']}%"
             ]
             data_rows.append(row)
-        
+
         # Create table
         table = Table(data_rows)
         table.setStyle(TableStyle([
@@ -10798,21 +10795,21 @@ def generate_pdf_report(request, report_data, summary_data, from_date, to_date):
             ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
             ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.lightgrey])
         ]))
-        
+
         elements.append(table)
-    
+
     # Build the PDF
     doc.build(elements)
-    
+
     # Get the value of the BytesIO buffer
     pdf = buffer.getvalue()
     buffer.close()
-    
+
     # Create the HttpResponse with PDF headers
     response = HttpResponse(content_type='application/pdf')
     filename = f"attendance_report_{from_date.strftime('%Y%m%d')}_to_{to_date.strftime('%Y%m%d')}.pdf"
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
-    
+
     # Write the PDF to the response
     response.write(pdf)
     return response
@@ -10879,6 +10876,7 @@ def can_manage_user(request_user, target_user):
     return False
 
 from .forms import ManualAttendanceForm
+
 @login_required
 @user_passes_test(is_hr_check)
 def add_attendance(request):
@@ -12682,7 +12680,6 @@ def manager_attendance_view(request):
     return render(request, 'components/manager/manager_attendance.html', {
         'team_attendance': team_records
     })
-
 @login_required
 @user_passes_test(is_hr_check)
 def hr_attendance_view(request):
@@ -12807,16 +12804,20 @@ def hr_attendance_view(request):
                 if date in user_row['attendance']:
                     # Mark the day as a leave day
                     leave_status = 'On Leave'
-                    if leave.half_day:
+                    if hasattr(leave, 'half_day') and leave.half_day:
                         leave_status = 'Half Day'
                     
-                    user_row['attendance'][date].update({
+                    # Remove 'is_half_day' from the update dict
+                    update_dict = {
                         'status': leave_status,
                         'leave_type': leave.leave_type.name,
-                        'is_half_day': leave.half_day,
                         'leave_reason': leave.reason,
                         'leave_approver': leave.approver.username if leave.approver else None
-                    })
+                    }
+                    # If you want to show half day in the UI, you can add a custom key, but not 'is_half_day'
+                    if hasattr(leave, 'half_day'):
+                        update_dict['half_day'] = leave.half_day
+                    user_row['attendance'][date].update(update_dict)
 
         attendance_matrix.append(user_row)
 
@@ -12827,7 +12828,8 @@ def hr_attendance_view(request):
         'late_count': attendance_records.filter(status__in=['Late', 'Present & Late']).count(),
         'leave_count': attendance_records.filter(status='On Leave').count(),
         'wfh_count': attendance_records.filter(status='Work From Home').count(),
-        'half_day_count': attendance_records.filter(is_half_day=True).count(),
+        # Removed 'half_day_count' as is_half_day is no longer in Attendance model
+        # 'half_day_count': attendance_records.filter(is_half_day=True).count(),
         'weekend_work_count': attendance_records.filter(is_weekend=True, status='Present').count(),
         'not_marked_count': days_in_month * users.count() - attendance_records.count() - leave_records.count(),
         'total_overtime_hours': attendance_records.aggregate(Sum('overtime_hours'))['overtime_hours__sum'] or 0,
