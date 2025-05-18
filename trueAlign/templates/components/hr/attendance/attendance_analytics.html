@@ -1,29 +1,29 @@
-{% extends 'base.html' %}
+ {% extends 'base.html' %}
 {% load static %}
 
 {% block title %}Attendance Analytics{% endblock %}
 
 {% block content %}
-<div class="container-fluid bg-gradient-to-br from-blue-50 via-white to-green-50 min-h-screen py-8">
-    <div class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
+<div class="container-fluid bg-gradient-to-br  min-h-screen py-4 sm:py-8">
+    <div class="max-w-7xl mx-auto px-2 sm:px-4 md:px-6 lg:px-8">
         <!-- Header Card -->
-        <div class="bg-white rounded-2xl shadow-lg mb-8 overflow-hidden transition-shadow hover:shadow-2xl">
-            <div class="bg-gradient-to-r from-blue-200 to-indigo-100 px-8 py-6">
+        <div class="bg-white rounded-2xl shadow-lg mb-6 sm:mb-8 overflow-hidden transition-shadow hover:shadow-2xl">
+            <div class="bg-gradient-to-r from-blue-200 to-indigo-100 px-4 sm:px-8 py-4 sm:py-6">
                 <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-                    <h1 class="text-blue-900 font-bold flex items-center text-2xl tracking-tight">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 mr-3 opacity-90 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                    <h1 class="text-blue-900 font-bold flex items-center text-xl sm:text-2xl tracking-tight">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 sm:h-7 sm:w-7 mr-2 sm:mr-3 opacity-90 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
                             <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zm6-4a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zm6-3a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
                         </svg>
                         Attendance Dashboard
                     </h1>
-                    <div class="flex flex-wrap gap-2 items-center">
-                        <select id="location-filter" class="rounded-lg text-sm bg-white border border-blue-100 shadow-sm focus:ring-2 focus:ring-blue-200 px-3 py-2 transition">
+                    <div class="flex flex-wrap gap-2 items-center w-full md:w-auto">
+                        <select id="location-filter" class="rounded-lg text-sm bg-white border border-blue-100 shadow-sm focus:ring-2 focus:ring-blue-200 px-3 py-2 transition w-full sm:w-auto">
                             <option value="">All Locations</option>
                             {% for location in location_stats %}
                             <option value="{{ location.location }}" {% if request.GET.location == location.location %}selected{% endif %}>{{ location.location }}</option>
                             {% endfor %}
                         </select>
-                        <select id="time-period" class="rounded-lg text-sm bg-white border border-blue-100 shadow-sm focus:ring-2 focus:ring-blue-200 px-3 py-2 transition">
+                        <select id="time-period" class="rounded-lg text-sm bg-white border border-blue-100 shadow-sm focus:ring-2 focus:ring-blue-200 px-3 py-2 transition w-full sm:w-auto">
                             <option value="today" {% if time_period == 'today' %}selected{% endif %}>Today</option>
                             <option value="yesterday" {% if time_period == 'yesterday' %}selected{% endif %}>Yesterday</option>
                             <option value="this_week" {% if time_period == 'this_week' %}selected{% endif %}>This Week</option>
@@ -31,7 +31,7 @@
                             <option value="this_month" {% if time_period == 'this_month' %}selected{% endif %}>This Month</option>
                             <option value="last_month" {% if time_period == 'last_month' %}selected{% endif %}>Last Month</option>
                         </select>
-                        <div class="relative w-48">
+                        <div class="relative w-full sm:w-48">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -44,12 +44,12 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 sm:gap-8">
             <!-- Left Sidebar -->
-            <aside class="lg:col-span-1 space-y-8">
+            <aside class="lg:col-span-1 space-y-6 sm:space-y-8">
                 <!-- Location Statistics Card -->
                 <div class="bg-white rounded-2xl shadow-md overflow-hidden transition hover:shadow-lg">
-                    <div class="bg-gradient-to-r from-green-100 to-green-200 px-5 py-4 text-green-900 font-semibold flex items-center text-lg">
+                    <div class="bg-gradient-to-r from-green-100 to-green-200 px-4 sm:px-5 py-3 sm:py-4 text-green-900 font-semibold flex items-center text-base sm:text-lg">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-green-400" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
                         </svg>
@@ -57,10 +57,10 @@
                     </div>
                     <div class="divide-y divide-blue-50">
                         {% for location in location_stats %}
-                        <div class="p-4">
-                            <div class="flex justify-between items-center mb-2">
+                        <div class="p-3 sm:p-4">
+                            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-2 gap-1">
                                 <span class="font-semibold text-blue-900">{{ location.location }}</span>
-                                <span class="bg-blue-50 text-blue-700 text-xs font-bold px-3 py-1 rounded-full">{{ location.total_users }} Users</span>
+                                <span class="bg-blue-50 text-blue-700 text-xs font-bold px-3 py-1 rounded-full mt-1 sm:mt-0">{{ location.total_users }} Users</span>
                             </div>
                             <div class="grid grid-cols-2 gap-2 mb-2">
                                 <a href="{% url 'aps_attendance:get_status_users' %}?status=Present&location={{ location.location }}&start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}" 
@@ -89,7 +89,7 @@
 
                 <!-- Status Distribution Card -->
                 <div class="bg-white rounded-2xl shadow-md overflow-hidden transition hover:shadow-lg">
-                    <div class="bg-gradient-to-r from-blue-100 to-blue-200 px-5 py-4 text-blue-900 font-semibold flex items-center text-lg">
+                    <div class="bg-gradient-to-r from-blue-100 to-blue-200 px-4 sm:px-5 py-3 sm:py-4 text-blue-900 font-semibold flex items-center text-base sm:text-lg">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
                             <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z" />
                             <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z" />
@@ -99,7 +99,7 @@
                     <div class="divide-y divide-blue-50">
                         {% for status in overall_stats.status_counts %}
                         <a href="{% url 'aps_attendance:get_status_users' %}?status={{ status.status }}&start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}" 
-                           class="status-detail-btn flex justify-between items-center px-4 py-3 hover:bg-blue-50 transition group">
+                           class="status-detail-btn flex justify-between items-center px-3 sm:px-4 py-2 sm:py-3 hover:bg-blue-50 transition group">
                             <span class="text-blue-900 font-medium group-hover:text-blue-700">{{ status.status }}</span>
                             <span class="bg-blue-50 text-blue-700 text-xs font-bold px-3 py-1 rounded-full">{{ status.count }}</span>
                         </a>
@@ -109,68 +109,68 @@
             </aside>
 
             <!-- Main Content -->
-            <main class="lg:col-span-3 space-y-8">
+            <main class="lg:col-span-3 space-y-6 sm:space-y-8">
                 <!-- Stats Cards -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-2">
-                    <div class="bg-gradient-to-br from-blue-100 to-blue-300 rounded-2xl shadow-md p-6 text-blue-900 flex flex-col items-center hover:scale-105 transition">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mb-2 opacity-90 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-2">
+                    <div class="bg-gradient-to-br from-blue-100 to-blue-300 rounded-2xl shadow-md p-4 sm:p-6 text-blue-900 flex flex-col items-center hover:scale-105 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 sm:h-10 sm:w-10 mb-2 opacity-90 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
                             <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
                         </svg>
-                        <span class="text-sm font-medium opacity-80">Total Employees</span>
-                        <span class="text-3xl font-bold mt-1">{{ overall_stats.total_records }}</span>
+                        <span class="text-xs sm:text-sm font-medium opacity-80">Total Employees</span>
+                        <span class="text-2xl sm:text-3xl font-bold mt-1">{{ overall_stats.total_records }}</span>
                     </div>
-                    <div class="bg-gradient-to-br from-green-100 to-green-300 rounded-2xl shadow-md p-6 text-green-900 flex flex-col items-center hover:scale-105 transition">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mb-2 opacity-90 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                    <div class="bg-gradient-to-br from-green-100 to-green-300 rounded-2xl shadow-md p-4 sm:p-6 text-green-900 flex flex-col items-center hover:scale-105 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 sm:h-10 sm:w-10 mb-2 opacity-90 text-green-400" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                         </svg>
-                        <span class="text-sm font-medium opacity-80">Present %</span>
-                        <span class="text-3xl font-bold mt-1">{{ overall_stats.present_percentage }}%</span>
+                        <span class="text-xs sm:text-sm font-medium opacity-80">Present %</span>
+                        <span class="text-2xl sm:text-3xl font-bold mt-1">{{ overall_stats.present_percentage }}%</span>
                     </div>
-                    <div class="bg-gradient-to-br from-red-100 to-red-300 rounded-2xl shadow-md p-6 text-red-700 flex flex-col items-center hover:scale-105 transition">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mb-2 opacity-90 text-red-300" viewBox="0 0 20 20" fill="currentColor">
+                    <div class="bg-gradient-to-br from-red-100 to-red-300 rounded-2xl shadow-md p-4 sm:p-6 text-red-700 flex flex-col items-center hover:scale-105 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 sm:h-10 sm:w-10 mb-2 opacity-90 text-red-300" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
                         </svg>
-                        <span class="text-sm font-medium opacity-80">Absent %</span>
-                        <span class="text-3xl font-bold mt-1">{{ overall_stats.absent_percentage }}%</span>
+                        <span class="text-xs sm:text-sm font-medium opacity-80">Absent %</span>
+                        <span class="text-2xl sm:text-3xl font-bold mt-1">{{ overall_stats.absent_percentage }}%</span>
                     </div>
-                    <div class="bg-gradient-to-br from-yellow-100 to-yellow-300 rounded-2xl shadow-md p-6 text-yellow-900 flex flex-col items-center hover:scale-105 transition">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mb-2 opacity-90 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                    <div class="bg-gradient-to-br from-yellow-100 to-yellow-300 rounded-2xl shadow-md p-4 sm:p-6 text-yellow-900 flex flex-col items-center hover:scale-105 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 sm:h-10 sm:w-10 mb-2 opacity-90 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
                         </svg>
-                        <span class="text-sm font-medium opacity-80">Avg Working Hours</span>
-                        <span class="text-3xl font-bold mt-1">{{ overall_stats.avg_working_hours|floatformat:2 }}</span>
+                        <span class="text-xs sm:text-sm font-medium opacity-80">Avg Working Hours</span>
+                        <span class="text-2xl sm:text-3xl font-bold mt-1">{{ overall_stats.avg_working_hours|floatformat:2 }}</span>
                     </div>
                 </div>
 
                 <!-- Top Users Cards -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="grid grid-cols-1 gap-6 sm:gap-8 lg:grid-cols-2">
                     <!-- Top Absent Users -->
                     <div class="bg-white rounded-2xl shadow-md overflow-hidden transition hover:shadow-lg">
-                        <div class="bg-gradient-to-r from-indigo-100 to-indigo-200 px-5 py-4 text-indigo-900 font-semibold flex items-center text-lg">
+                        <div class="bg-gradient-to-r from-indigo-100 to-indigo-200 px-4 sm:px-5 py-3 sm:py-4 text-indigo-900 font-semibold flex items-center text-base sm:text-lg">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-indigo-400" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
                             </svg>
                             Top Absent Users
                         </div>
                         <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-blue-50">
+                            <table class="min-w-full divide-y divide-blue-50 text-xs sm:text-sm">
                                 <thead class="bg-blue-50">
                                     <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Name</th>
-                                        <th class="px-6 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Location</th>
-                                        <th class="px-6 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Count</th>
+                                        <th class="px-3 sm:px-6 py-3 text-left font-bold text-blue-700 uppercase tracking-wider">Name</th>
+                                        <th class="px-3 sm:px-6 py-3 text-left font-bold text-blue-700 uppercase tracking-wider">Location</th>
+                                        <th class="px-3 sm:px-6 py-3 text-left font-bold text-blue-700 uppercase tracking-wider">Count</th>
                                     </tr>
                                 </thead>
                                 <tbody class="bg-white divide-y divide-blue-50">
                                     {% for user in top_absent_users %}
                                     <tr class="hover:bg-blue-50 transition">
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-blue-900">{{ user.user__first_name }} {{ user.user__last_name }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-700">{{ user.work_location|default:"Not specified" }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-700">{{ user.absent_count }}</td>
+                                        <td class="px-3 sm:px-6 py-4 whitespace-nowrap font-semibold text-blue-900">{{ user.user__first_name }} {{ user.user__last_name }}</td>
+                                        <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-blue-700">{{ user.work_location|default:"Not specified" }}</td>
+                                        <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-blue-700">{{ user.absent_count }}</td>
                                     </tr>
                                     {% empty %}
                                     <tr>
-                                        <td colspan="3" class="px-6 py-4 whitespace-nowrap text-sm text-blue-700 text-center">No data available</td>
+                                        <td colspan="3" class="px-3 sm:px-6 py-4 whitespace-nowrap text-blue-700 text-center">No data available</td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>
@@ -180,31 +180,31 @@
 
                     <!-- Top Late Users -->
                     <div class="bg-white rounded-2xl shadow-md overflow-hidden transition hover:shadow-lg">
-                        <div class="bg-gradient-to-r from-yellow-100 to-yellow-200 px-5 py-4 text-yellow-900 font-semibold flex items-center text-lg">
+                        <div class="bg-gradient-to-r from-yellow-100 to-yellow-200 px-4 sm:px-5 py-3 sm:py-4 text-yellow-900 font-semibold flex items-center text-base sm:text-lg">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
                             </svg>
                             Top Late Users
                         </div>
                         <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-yellow-50">
+                            <table class="min-w-full divide-y divide-yellow-50 text-xs sm:text-sm">
                                 <thead class="bg-yellow-50">
                                     <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-bold text-yellow-700 uppercase tracking-wider">Name</th>
-                                        <th class="px-6 py-3 text-left text-xs font-bold text-yellow-700 uppercase tracking-wider">Count</th>
-                                        <th class="px-6 py-3 text-left text-xs font-bold text-yellow-700 uppercase tracking-wider">Avg Late (min)</th>
+                                        <th class="px-3 sm:px-6 py-3 text-left font-bold text-yellow-700 uppercase tracking-wider">Name</th>
+                                        <th class="px-3 sm:px-6 py-3 text-left font-bold text-yellow-700 uppercase tracking-wider">Count</th>
+                                        <th class="px-3 sm:px-6 py-3 text-left font-bold text-yellow-700 uppercase tracking-wider">Avg Late (min)</th>
                                     </tr>
                                 </thead>
                                 <tbody class="bg-white divide-y divide-yellow-50">
                                     {% for user in top_late_users %}
                                     <tr class="hover:bg-yellow-50 transition">
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-yellow-900">{{ user.user__first_name }} {{ user.user__last_name }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-yellow-700">{{ user.late_count }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-yellow-700">{{ user.avg_late_minutes|floatformat:0 }}</td>
+                                        <td class="px-3 sm:px-6 py-4 whitespace-nowrap font-semibold text-yellow-900">{{ user.user__first_name }} {{ user.user__last_name }}</td>
+                                        <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-yellow-700">{{ user.late_count }}</td>
+                                        <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-yellow-700">{{ user.avg_late_minutes|floatformat:0 }}</td>
                                     </tr>
                                     {% empty %}
                                     <tr>
-                                        <td colspan="3" class="px-6 py-4 whitespace-nowrap text-sm text-yellow-700 text-center">No data available</td>
+                                        <td colspan="3" class="px-3 sm:px-6 py-4 whitespace-nowrap text-yellow-700 text-center">No data available</td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>
@@ -212,36 +212,35 @@
                         </div>
                     </div>
                 </div>
-
                 <!-- Yet to Clock In -->
-                <div class="bg-white rounded-2xl shadow-md overflow-hidden mb-6 transition hover:shadow-lg">
-                    <div class="bg-gradient-to-r from-red-100 to-red-200 px-5 py-4 text-red-700 font-semibold flex items-center text-lg">
+                <div class="bg-white rounded-2xl shadow-md overflow-hidden mb-4 sm:mb-6 transition hover:shadow-lg">
+                    <div class="bg-gradient-to-r from-red-100 to-red-200 px-4 sm:px-5 py-3 sm:py-4 text-red-700 font-semibold flex items-center text-base sm:text-lg">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-red-300" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
                         </svg>
                         Yet to Clock In
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-red-50">
-                            <thead class="bg-red-50">
+                    <div class="overflow-x-auto overflow-y-auto max-h-80">
+                        <table class="min-w-full divide-y divide-red-50 text-xs sm:text-sm">
+                            <thead class="bg-red-50 sticky top-0">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-bold text-red-700 uppercase tracking-wider">Name</th>
-                                    <th class="px-6 py-3 text-left text-xs font-bold text-red-700 uppercase tracking-wider">Location</th>
-                                    <th class="px-6 py-3 text-left text-xs font-bold text-red-700 uppercase tracking-wider">Shift</th>
-                                    <th class="px-6 py-3 text-left text-xs font-bold text-red-700 uppercase tracking-wider">Shift Timing</th>
+                                    <th class="px-3 sm:px-6 py-3 text-left font-bold text-red-700 uppercase tracking-wider">Name</th>
+                                    <th class="px-3 sm:px-6 py-3 text-left font-bold text-red-700 uppercase tracking-wider">Location</th>
+                                    <th class="px-3 sm:px-6 py-3 text-left font-bold text-red-700 uppercase tracking-wider">Shift</th>
+                                    <th class="px-3 sm:px-6 py-3 text-left font-bold text-red-700 uppercase tracking-wider">Shift Timing</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-red-50">
-                                {% for user in yet_to_clock_in_users %}
+                                {% for user in yet_to_clock_in_users|slice:":10" %}
                                 <tr class="hover:bg-red-50 transition">
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-red-700">{{ user.name }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-red-700">{{ user.work_location }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-red-700">{{ user.shift_name }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-red-700">{{ user.shift_start_time }} - {{ user.shift_end_time }}</td>
+                                    <td class="px-3 sm:px-6 py-4 whitespace-nowrap font-semibold text-red-700">{{ user.name }}</td>
+                                    <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-red-700">{{ user.location }}</td>
+                                    <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-red-700">{{ user.shift_name }}</td>
+                                    <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-red-700">{{ user.shift_start }} - {{ user.shift_end }}</td>
                                 </tr>
                                 {% empty %}
                                 <tr>
-                                    <td colspan="4" class="px-6 py-4 whitespace-nowrap text-sm text-red-700 text-center">No users pending clock-in</td>
+                                    <td colspan="4" class="px-3 sm:px-6 py-4 whitespace-nowrap text-red-700 text-center">No users pending clock-in</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -252,31 +251,31 @@
                 <!-- Leave Distribution -->
                 {% if leave_distribution %}
                 <div class="bg-white rounded-2xl shadow-md overflow-hidden transition hover:shadow-lg">
-                    <div class="bg-gradient-to-r from-blue-100 to-blue-200 px-5 py-4 text-blue-900 font-semibold flex items-center text-lg">
+                    <div class="bg-gradient-to-r from-blue-100 to-blue-200 px-4 sm:px-5 py-3 sm:py-4 text-blue-900 font-semibold flex items-center text-base sm:text-lg">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
                         </svg>
                         Leave Distribution
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-blue-50">
+                        <table class="min-w-full divide-y divide-blue-50 text-xs sm:text-sm">
                             <thead class="bg-blue-50">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Leave Type</th>
-                                    <th class="px-6 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Count</th>
-                                    <th class="px-6 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Users</th>
+                                    <th class="px-3 sm:px-6 py-3 text-left font-bold text-blue-700 uppercase tracking-wider">Leave Type</th>
+                                    <th class="px-3 sm:px-6 py-3 text-left font-bold text-blue-700 uppercase tracking-wider">Count</th>
+                                    <th class="px-3 sm:px-6 py-3 text-left font-bold text-blue-700 uppercase tracking-wider">Users</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-blue-50">
                                 {% for leave in leave_distribution %}
                                 <tr class="hover:bg-blue-50 transition">
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-blue-900">{{ leave.leave_type|default:"Not specified" }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-700">{{ leave.count }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-700">{{ leave.user_count }}</td>
+                                    <td class="px-3 sm:px-6 py-4 whitespace-nowrap font-semibold text-blue-900">{{ leave.leave_type|default:"Not specified" }}</td>
+                                    <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-blue-700">{{ leave.count }}</td>
+                                    <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-blue-700">{{ leave.user_count }}</td>
                                 </tr>
                                 {% empty %}
                                 <tr>
-                                    <td colspan="3" class="px-6 py-4 whitespace-nowrap text-sm text-blue-700 text-center">No leave data available</td>
+                                    <td colspan="3" class="px-3 sm:px-6 py-4 whitespace-nowrap text-blue-700 text-center">No leave data available</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -290,17 +289,17 @@
 </div>
 
 <!-- Tailwind Modal -->
-<div id="statusDetailsModal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-50 flex items-center justify-center">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
-        <div class="flex justify-between items-center px-6 py-4 bg-gradient-to-r from-blue-100 to-indigo-100">
-            <h5 id="modalTitle" class="font-semibold text-lg text-blue-900">Status Details</h5>
+<div id="statusDetailsModal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-50 flex items-center justify-center px-2 sm:px-0">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg sm:max-w-2xl md:max-w-3xl lg:max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+        <div class="flex justify-between items-center px-4 sm:px-6 py-3 sm:py-4 bg-gradient-to-r from-blue-100 to-indigo-100">
+            <h5 id="modalTitle" class="font-semibold text-base sm:text-lg text-blue-900">Status Details</h5>
             <button id="closeModal" class="text-blue-900 hover:text-blue-700 focus:outline-none">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </button>
         </div>
-        <div id="modalSearchContainer" class="px-6 py-3 bg-gray-50 hidden">
+        <div id="modalSearchContainer" class="px-4 sm:px-6 py-2 sm:py-3 bg-gray-50 hidden">
             <div class="relative">
                 <input type="text" id="modalSearchInput" class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300" placeholder="Search in results...">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute left-3 top-2.5 text-gray-400 pointer-events-none" viewBox="0 0 20 20" fill="currentColor">
@@ -308,12 +307,12 @@
                 </svg>
             </div>
         </div>
-        <div id="statusDetailsContent" class="flex-1 overflow-auto p-6">
+        <div id="statusDetailsContent" class="flex-1 overflow-auto p-4 sm:p-6">
             <div class="flex justify-center items-center p-4">
                 <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-300"></div>
             </div>
         </div>
-        <div class="flex justify-end gap-2 px-6 py-4 bg-gray-50">
+        <div class="flex flex-col sm:flex-row justify-end gap-2 px-4 sm:px-6 py-3 sm:py-4 bg-gray-50">
             <button id="closeModalFooter" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md transition">Close</button>
             <button id="exportDataBtn" class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition flex items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" viewBox="0 0 20 20" fill="currentColor">
@@ -441,7 +440,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                 </table>
                                 </div>
                             `;
-                        } else if (statusName.includes('Pending') || statusName.includes('Yet to Clock In') || statusName.includes('Not Clocked In')) {
+                    } else if (statusName.includes('Yet to Clock In') || statusName.includes('Yet to Clock In') || statusName.includes('Not Clocked In')) {
+                    } else if (statusName.includes('Yet to Clock In') || statusName.includes('Not Clocked In')) {
                             tableHtml = `
                                 <div class="overflow-x-auto">
                                 <table class="min-w-full divide-y divide-gray-200">
@@ -451,6 +451,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                             <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Location</th>
                                             <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Shift</th>
                                             <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Shift Timing</th>
+                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Late By (mins)</th>
                                         </tr>
                                     </thead>
                                     <tbody class="bg-white divide-y divide-gray-100">
@@ -460,6 +461,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                                 <td class="px-4 py-2">${user.work_location}</td>
                                                 <td class="px-4 py-2">${user.shift_name}</td>
                                                 <td class="px-4 py-2">${user.shift_start_time || '-'} - ${user.shift_end_time || '-'}</td>
+                                                <td class="px-4 py-2 ${user.late_by > 0 ? 'text-red-600 font-medium' : ''}">${user.late_by > 0 ? user.late_by : '-'}</td>
                                             </tr>
                                         `).join('')}
                                     </tbody>
