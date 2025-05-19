@@ -334,33 +334,54 @@
 </div>
 
 <!-- Tailwind Modal -->
-<div id="statusDetailsModal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-50 flex items-center justify-center px-2 sm:px-0">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg sm:max-w-2xl md:max-w-3xl lg:max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
-        <div class="flex justify-between items-center px-4 sm:px-6 py-3 sm:py-4 bg-gradient-to-r from-blue-100 to-indigo-100">
+<div id="statusDetailsModal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-[90%] sm:max-w-lg md:max-w-2xl lg:max-w-4xl min-h-[600px] max-h-[90vh] flex flex-col overflow-hidden">
+        <!-- Modal Header -->
+        <div class="flex justify-between items-center px-4 sm:px-6 py-3 sm:py-4 bg-gradient-to-r from-blue-100 to-indigo-100 flex-shrink-0">
             <h5 id="modalTitle" class="font-semibold text-base sm:text-lg text-blue-900">Status Details</h5>
             <button id="closeModal" class="text-blue-900 hover:text-blue-700 focus:outline-none">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </button>
         </div>
-        <div id="modalSearchContainer" class="px-4 sm:px-6 py-2 sm:py-3 bg-gray-50 hidden">
+
+        <!-- Search Section -->
+        <div id="modalSearchContainer" class="px-4 sm:px-6 py-2 sm:py-3 bg-gray-50 hidden flex-shrink-0">
             <div class="relative">
-                <input type="text" id="modalSearchInput" class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300" placeholder="Search in results...">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute left-3 top-2.5 text-gray-400 pointer-events-none" viewBox="0 0 20 20" fill="currentColor">
+                <input type="text" id="modalSearchInput" class="w-full pl-10 pr-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300" placeholder="Search in results...">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
                 </svg>
             </div>
         </div>
-        <div id="statusDetailsContent" class="flex-1 overflow-auto p-4 sm:p-6">
-            <div class="flex justify-center items-center p-4">
-                <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-300"></div>
+
+        <!-- Content Section - Scrollable with minimum height for 10 items -->
+        <div id="statusDetailsContent" class="flex-1 p-4 sm:p-6 min-h-[400px] overflow-y-auto">
+            <div class="grid grid-cols-1 gap-4 min-h-[400px]">
+                <!-- Loading spinner -->
+                <div class="flex justify-center items-center p-4">
+                    <div class="animate-spin rounded-full h-8 w-8 sm:h-10 sm:w-10 border-b-2 border-blue-300"></div>
+                </div>
+                
+                <!-- Placeholder for minimum 10 items -->
+                <div class="hidden">
+                    {% for i in "x"|rjust:"10" %}
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <div class="h-6 bg-gray-100 rounded"></div>
+                    </div>
+                    {% endfor %}
+                </div>
             </div>
         </div>
-        <div class="flex flex-col sm:flex-row justify-end gap-2 px-4 sm:px-6 py-3 sm:py-4 bg-gray-50">
-            <button id="closeModalFooter" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md transition">Close</button>
-            <button id="exportDataBtn" class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" viewBox="0 0 20 20" fill="currentColor">
+
+        <!-- Footer Section -->
+        <div class="flex flex-col sm:flex-row justify-end gap-2 px-4 sm:px-6 py-3 sm:py-4 bg-gray-50 flex-shrink-0 border-t">
+            <button id="closeModalFooter" class="px-4 py-2 text-sm sm:text-base bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md transition">
+                Close
+            </button>
+            <button id="exportDataBtn" class="px-4 py-2 text-sm sm:text-base bg-blue-500 hover:bg-blue-600 text-white rounded-md transition flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5 inline mr-1" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
                 </svg>
                 Export
@@ -429,9 +450,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         let tableHtml = '';
                         if (statusName.includes('Present') || statusName.includes('Work From Home')) {
                             tableHtml = `
-                                <div class="overflow-x-auto">
+                                <div class="overflow-x-auto" style="max-height:60vh;overflow-y:auto;">
                                 <table class="min-w-full divide-y divide-gray-200">
-                                    <thead class="bg-blue-50">
+                                    <thead class="bg-blue-50 sticky top-0">
                                         <tr>
                                             <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Name</th>
                                             <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Location</th>
@@ -458,9 +479,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             `;
                         } else if (statusName.includes('Leave')) {
                             tableHtml = `
-                                <div class="overflow-x-auto">
+                                <div class="overflow-x-auto" style="max-height:60vh;overflow-y:auto;">
                                 <table class="min-w-full divide-y divide-gray-200">
-                                    <thead class="bg-blue-50">
+                                    <thead class="bg-blue-50 sticky top-0">
                                         <tr>
                                             <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Name</th>
                                             <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Location</th>
@@ -485,12 +506,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                 </table>
                                 </div>
                             `;
-                    } else if (statusName.includes('Yet to Clock In') || statusName.includes('Yet to Clock In') || statusName.includes('Not Clocked In')) {
-                    } else if (statusName.includes('Yet to Clock In') || statusName.includes('Not Clocked In')) {
+                        } else if (statusName.includes('Yet to Clock In') || statusName.includes('Not Clocked In')) {
                             tableHtml = `
-                                <div class="overflow-x-auto">
+                                <div class="overflow-x-auto" style="max-height:60vh;overflow-y:auto;">
                                 <table class="min-w-full divide-y divide-gray-200">
-                                    <thead class="bg-blue-50">
+                                    <thead class="bg-blue-50 sticky top-0">
                                         <tr>
                                             <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Name</th>
                                             <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Location</th>
@@ -515,9 +535,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             `;
                         } else if (statusName.includes('Absent')) {
                             tableHtml = `
-                                <div class="overflow-x-auto">
+                                <div class="overflow-x-auto" style="max-height:60vh;overflow-y:auto;">
                                 <table class="min-w-full divide-y divide-gray-200">
-                                    <thead class="bg-blue-50">
+                                    <thead class="bg-blue-50 sticky top-0">
                                         <tr>
                                             <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Name</th>
                                             <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Location</th>
@@ -540,9 +560,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             `;
                         } else {
                             tableHtml = `
-                                <div class="overflow-x-auto">
+                                <div class="overflow-x-auto" style="max-height:60vh;overflow-y:auto;">
                                 <table class="min-w-full divide-y divide-gray-200">
-                                    <thead class="bg-blue-50">
+                                    <thead class="bg-blue-50 sticky top-0">
                                         <tr>
                                             <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Name</th>
                                             <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Location</th>
