@@ -2538,6 +2538,11 @@ class Support(models.Model):
     class AssignedGroup(models.TextChoices):
         HR = 'HR', 'HR'
         ADMIN = 'Admin', 'Admin'
+        
+    # SLA Status choices
+    class SLAStatus(models.TextChoices):
+        WITHIN_SLA = 'Within SLA', 'Within SLA'
+        BREACHED = 'Breached', 'Breached'
 
     # Core Fields
     ticket_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
@@ -2581,8 +2586,34 @@ class Support(models.Model):
 
     # SLA and Resolution
     sla_breach = models.BooleanField(default=False)
+    sla_target_date = models.DateTimeField(null=True, blank=True, help_text="Target date for SLA compliance")
+    sla_status = models.CharField(
+        max_length=20, 
+        choices=SLAStatus.choices, 
+        null=True, 
+        blank=True,
+        help_text="Status of SLA compliance"
+    )
     resolution_summary = models.TextField(blank=True)
     resolution_time = models.DurationField(null=True, blank=True)
+    
+    # Response time tracking
+    response_time = models.DurationField(
+        null=True, 
+        blank=True, 
+        help_text="Time taken for first response"
+    )
+    time_to_close = models.DurationField(
+        null=True, 
+        blank=True, 
+        help_text="Total time from creation to closure"
+    )
+    
+    # Escalation tracking
+    escalation_level = models.PositiveSmallIntegerField(
+        default=0,
+        help_text="Current escalation level of the ticket"
+    )
 
     # User Satisfaction
     satisfaction_rating = models.IntegerField(null=True, blank=True, choices=[(i, i) for i in range(1, 6)])
@@ -2596,6 +2627,8 @@ class Support(models.Model):
             models.Index(fields=['created_at']),
             models.Index(fields=['user']),
             models.Index(fields=['due_date']),
+            models.Index(fields=['resolved_at']),  # Added index for resolved_at
+            models.Index(fields=['priority']),     # Added index for priority
         ]
         verbose_name = "Support Ticket"
         verbose_name_plural = "Support Tickets"
@@ -2616,16 +2649,42 @@ class Support(models.Model):
             hr_issues = [self.IssueType.HR, self.IssueType.ACCESS]
             self.assigned_group = self.AssignedGroup.HR if self.issue_type in hr_issues else self.AssignedGroup.ADMIN
         
+        # Calculate SLA target date if not set
+        if not self.sla_target_date and self.created_at:
+            self.set_sla_target_date()
+            
         # Track status changes
         if self.pk:
             old_ticket = Support.objects.get(pk=self.pk)
+            
+            # Check for status changes
             if old_ticket.status != self.status:
-                # Create a status log entry after saving
                 self._status_changed = (old_ticket.status, self.status)
+                
+                # Track resolution time when moving to Resolved status
+                if self.status == self.Status.RESOLVED and not self.resolved_at:
+                    self.resolved_at = now()
+                    if self.created_at:
+                        self.resolution_time = self.resolved_at - self.created_at
+                
+                # Calculate time_to_close when status changes to Closed
+                if self.status == self.Status.CLOSED and not self.time_to_close:
+                    if self.created_at:
+                        self.time_to_close = now() - self.created_at
             else:
                 self._status_changed = None
         else:
+            # New ticket
             self._status_changed = (None, self.status)
+            
+        # Check SLA compliance based on target date
+        if self.sla_target_date:
+            if self.resolved_at and self.resolved_at > self.sla_target_date:
+                self.sla_breach = True
+                self.sla_status = self.SLAStatus.BREACHED
+            elif self.resolved_at and self.resolved_at <= self.sla_target_date:
+                self.sla_breach = False
+                self.sla_status = self.SLAStatus.WITHIN_SLA
             
         super().save(*args, **kwargs)
         
@@ -2638,6 +2697,25 @@ class Support(models.Model):
                 new_status=new_status,
                 changed_by=user
             )
+    
+    def set_sla_target_date(self):
+        """Calculate SLA target date based on priority"""
+        if not self.created_at:
+            return
+            
+        # Define SLA target times based on priority (in hours)
+        sla_targets = {
+            self.Priority.CRITICAL: 4,    # 4 hours
+            self.Priority.HIGH: 8,        # 8 hours
+            self.Priority.MEDIUM: 24,     # 24 hours
+            self.Priority.LOW: 48,        # 48 hours
+        }
+        
+        # Get target hours for this ticket's priority
+        target_hours = sla_targets.get(self.priority, 24)  # Default to 24 hours
+        
+        # Calculate target date (considering business hours could be added here)
+        self.sla_target_date = self.created_at + timezone.timedelta(hours=target_hours)
 
 
 class StatusLog(models.Model):
@@ -2676,7 +2754,32 @@ class TicketAttachment(models.Model):
     
     def __str__(self):
         return f"Attachment for {self.ticket.ticket_id}"
+
+
+class TicketActivity(models.Model):
+    """Model for tracking ticket activity, including reopening"""
+    class Action(models.TextChoices):
+        CREATED = 'CREATED', 'Created'
+        UPDATED = 'UPDATED', 'Updated'
+        ASSIGNED = 'ASSIGNED', 'Assigned'
+        COMMENTED = 'COMMENTED', 'Commented'
+        REOPENED = 'REOPENED', 'Reopened'
+        ESCALATED = 'ESCALATED', 'Escalated'
+        RESOLVED = 'RESOLVED', 'Resolved'
+        CLOSED = 'CLOSED', 'Closed'
     
+    ticket = models.ForeignKey(Support, on_delete=models.CASCADE, related_name='ticket_activity')
+    action = models.CharField(max_length=20, choices=Action.choices)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    details = models.TextField(blank=True)
+    
+    class Meta:
+        ordering = ['-timestamp']
+        verbose_name_plural = "Ticket Activities"
+    
+    def __str__(self):
+        return f"{self.action} on {self.ticket.ticket_id} by {self.user.username if self.user else 'System'}"
 ''' ------------------------------------------- REmove employee AREA ------------------------------------------- '''
 
 # Employee model to store employee-specific information
