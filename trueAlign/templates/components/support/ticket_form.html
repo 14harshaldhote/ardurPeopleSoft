@@ -3,43 +3,44 @@
 {% block title %}{{ title }}{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto py-8 px-4">
-  <div class="bg-white shadow-md rounded-lg overflow-hidden">
+<div class="max-w-4xl mx-auto py-4 sm:py-8 px-4">
+  <div class="bg-white shadow-lg rounded-xl overflow-hidden">
     <!-- Header with back button -->
-    <div class="bg-gray-50 px-6 py-4 border-b flex items-center justify-between">
+    <div class="bg-gray-50 px-4 sm:px-6 py-4 border-b flex flex-col sm:flex-row items-center justify-between gap-4">
       <div class="flex items-center space-x-3">
-        <a href="{% url 'aps_support:support_dashboard' %}" class="text-gray-600 hover:text-gray-900 transition flex items-center group">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1 group-hover:-translate-x-1 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <a href="{% url 'aps_support:support_dashboard' %}" 
+           class="text-gray-600 hover:text-gray-900 transition flex items-center group bg-white hover:bg-gray-100 px-3 py-2 rounded-lg">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 group-hover:-translate-x-1 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
           <span class="text-sm font-medium">Back to Dashboard</span>
         </a>
       </div>
-      <h1 class="text-xl font-bold text-gray-800">{{ title }}</h1>
-      <div class="w-32"></div> <!-- Spacer to center the title -->
+      <h1 class="text-xl sm:text-2xl font-bold text-gray-800 text-center">{{ title }}</h1>
+      <div class="hidden sm:block w-32"></div> <!-- Spacer to center the title -->
     </div>
     
-    <div class="p-6">
+    <div class="p-4 sm:p-6">
       <!-- Form status indicator -->
       {% if ticket %}
-        <div class="mb-6 flex items-center bg-blue-50 text-blue-700 p-3 rounded-md">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div class="mb-6 flex items-center bg-blue-50 text-blue-700 p-4 rounded-lg shadow-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <span>You are updating ticket #{{ ticket.id }}</span>
+          <span class="font-medium">You are updating ticket #{{ ticket.id }}</span>
         </div>
       {% else %}
-        <div class="mb-6 text-center">
-          <h2 class="text-lg font-medium text-gray-700">Submit a new support request</h2>
-          <p class="text-gray-500 text-sm mt-1">Complete the form below to create a new support ticket</p>
+        <div class="mb-8 text-center">
+          <h2 class="text-xl font-semibold text-gray-800">Submit a new support request</h2>
+          <p class="text-gray-600 mt-2">Complete the form below to create a new support ticket</p>
         </div>
       {% endif %}
       
-      <form method="post" enctype="multipart/form-data" class="space-y-6">
+      <form method="post" enctype="multipart/form-data" class="space-y-8">
         {% csrf_token %}
         
         {% if form.non_field_errors %}
-          <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 rounded">
+          <div class="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-lg shadow-sm">
             {{ form.non_field_errors }}
           </div>
         {% endif %}
@@ -47,23 +48,24 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <!-- Subject field -->
           <div class="md:col-span-2">
-            <label for="{{ form.subject.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            <label for="{{ form.subject.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
               Subject <span class="text-red-500">*</span>
             </label>
             {{ form.subject.errors }}
             <input type="text" name="{{ form.subject.name }}" id="{{ form.subject.id_for_label }}" 
                   value="{{ form.subject.value|default:'' }}" 
-                  class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                  class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition duration-200"
+                  placeholder="Enter a brief subject for your ticket">
           </div>
           
           <!-- Issue Type field -->
           <div>
-            <label for="{{ form.issue_type.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            <label for="{{ form.issue_type.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
               Issue Type <span class="text-red-500">*</span>
             </label>
             {{ form.issue_type.errors }}
             <select name="{{ form.issue_type.name }}" id="{{ form.issue_type.id_for_label }}" 
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition duration-200">
               {% for value, text in form.issue_type.field.choices %}
                 <option value="{{ value }}" {% if form.issue_type.value == value %}selected{% endif %}>{{ text }}</option>
               {% endfor %}
@@ -73,12 +75,12 @@
           {% if form.priority %}
           <!-- Priority field (only visible to admins and HR) -->
           <div>
-            <label for="{{ form.priority.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            <label for="{{ form.priority.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
               Priority
             </label>
             {{ form.priority.errors }}
             <select name="{{ form.priority.name }}" id="{{ form.priority.id_for_label }}" 
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition duration-200">
               {% for value, text in form.priority.field.choices %}
                 <option value="{{ value }}" {% if form.priority.value == value %}selected{% endif %}>{{ text }}</option>
               {% endfor %}
@@ -89,12 +91,12 @@
           {% if form.assigned_group %}
           <!-- Assigned Group field (only visible to admins and HR) -->
           <div class="{% if not form.priority %}md:col-span-2{% endif %}">
-            <label for="{{ form.assigned_group.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            <label for="{{ form.assigned_group.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
               Assigned Group
             </label>
             {{ form.assigned_group.errors }}
             <select name="{{ form.assigned_group.name }}" id="{{ form.assigned_group.id_for_label }}" 
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition duration-200">
               {% for value, text in form.assigned_group.field.choices %}
                 <option value="{{ value }}" {% if form.assigned_group.value == value %}selected{% endif %}>{{ text }}</option>
               {% endfor %}
@@ -105,13 +107,13 @@
           {% if form.assigned_to_user %}
           <!-- Assigned User field (only visible to admins and HR) -->
           <div class="md:col-span-2">
-            <label for="{{ form.assigned_to_user.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            <label for="{{ form.assigned_to_user.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
               Assigned To
             </label>
             {{ form.assigned_to_user.errors }}
             <select name="{{ form.assigned_to_user.name }}" id="{{ form.assigned_to_user.id_for_label }}" 
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
-              <option value="">---------</option>
+                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition duration-200">
+              <option value="">Select an assignee...</option>
               {% for value, text in form.assigned_to_user.field.choices %}
                 <option value="{{ value }}" {% if form.assigned_to_user.value == value %}selected{% endif %}>{{ text }}</option>
               {% endfor %}
@@ -122,40 +124,40 @@
           
         <!-- Description field -->
         <div>
-          <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+          <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
             Description <span class="text-red-500">*</span>
           </label>
           {{ form.description.errors }}
-          <textarea name="{{ form.description.name }}" id="{{ form.description.id_for_label }}" rows="6"
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50" 
-                    placeholder="Please provide as much detail as possible about your issue...">{{ form.description.value|default:'' }}</textarea>
+          <textarea name="{{ form.description.name }}" id="{{ form.description.id_for_label }}" rows="8"
+                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition duration-200" 
+                    placeholder="Please provide detailed information about your issue...">{{ form.description.value|default:'' }}</textarea>
         </div>
         
         <!-- File attachments -->
-        <div class="bg-gray-50 p-4 rounded-md">
-          <div class="flex items-center mb-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div class="bg-gray-50 p-6 rounded-xl shadow-sm">
+          <div class="flex items-center mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
             </svg>
-            <label for="id_attachments" class="block text-sm font-medium text-gray-700">
+            <label for="id_attachments" class="text-lg font-medium text-gray-700">
               Attachments
             </label>
           </div>
-          <div class="border-2 border-dashed border-gray-300 rounded-md px-6 pt-5 pb-6 flex justify-center">
-            <div class="space-y-1 text-center">
+          <div class="border-2 border-dashed border-gray-300 rounded-xl px-6 pt-5 pb-6 flex justify-center hover:border-blue-500 transition-colors duration-200">
+            <div class="space-y-2 text-center">
               <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
                 <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" 
                   stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
               </svg>
-              <div class="flex text-sm text-gray-600">
-                <label for="id_attachments" class="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500">
+              <div class="flex text-sm text-gray-600 justify-center">
+                <label for="id_attachments" class="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500 transition-colors duration-200">
                   <span>Upload files</span>
                   <input id="id_attachments" name="attachments" type="file" multiple class="sr-only">
                 </label>
                 <p class="pl-1">or drag and drop</p>
               </div>
               <p class="text-xs text-gray-500">
-                You can select multiple files
+                Supported file types: PDF, DOC, DOCX, JPG, PNG (max 10MB each)
               </p>
             </div>
           </div>
@@ -163,23 +165,24 @@
           
         <!-- Current attachments display (for update view) -->
         {% if ticket and ticket.attachments.all %}
-          <div class="border-t pt-4">
-            <h3 class="font-medium text-gray-700 mb-3 flex items-center">
+          <div class="border-t pt-6">
+            <h3 class="font-medium text-gray-800 mb-4 flex items-center text-lg">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
               Current Attachments
             </h3>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {% for attachment in ticket.attachments.all %}
-                <div class="flex items-center justify-between bg-gray-50 p-3 rounded">
+                <div class="flex items-center justify-between bg-gray-50 p-4 rounded-lg hover:bg-gray-100 transition duration-200">
                   <div class="flex items-center truncate">
-                    <svg class="h-5 w-5 text-gray-500 mr-2 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg class="h-5 w-5 text-gray-500 mr-3 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
                     </svg>
-                    <span class="text-sm truncate">{{ attachment.file.name|slice:"10:" }}</span>
+                    <span class="text-sm truncate font-medium">{{ attachment.file.name|slice:"10:" }}</span>
                   </div>
-                  <a href="{{ attachment.file.url }}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm flex items-center ml-2 flex-shrink-0">
+                  <a href="{{ attachment.file.url }}" target="_blank" 
+                     class="text-blue-600 hover:text-blue-800 text-sm flex items-center ml-3 flex-shrink-0 bg-white px-3 py-1 rounded-md shadow-sm hover:shadow transition duration-200">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                     </svg>
@@ -191,14 +194,16 @@
           </div>
         {% endif %}
         
-        <div class="flex justify-end space-x-3 pt-6 border-t">
-          <a href="{% url 'aps_support:ticket_list' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition">
+        <div class="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4 pt-6 border-t">
+          <a href="{% url 'aps_support:ticket_list' %}" 
+             class="inline-flex justify-center items-center px-6 py-2.5 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-200">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
             Cancel
           </a>
-          <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition">
+          <button type="submit" 
+                  class="inline-flex justify-center items-center px-6 py-2.5 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-200">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
             </svg>

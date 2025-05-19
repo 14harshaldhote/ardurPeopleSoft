@@ -3,11 +3,11 @@
 {% block title %}Support Dashboard{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
+<div class="container mx-auto px-4 py-8 max-w-7xl">
     <!-- Dashboard Header -->
     <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-800">Support Dashboard</h1>
-        <p class="text-gray-600">
+        <h1 class="text-4xl font-bold text-gray-800 mb-2">Support Dashboard</h1>
+        <p class="text-lg text-gray-600">
             {% if is_admin %}
             Viewing all support tickets
             {% elif is_hr %}
@@ -21,63 +21,63 @@
     </div>
 
     <!-- Stats Overview Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <!-- Total Tickets -->
-        <div class="bg-white rounded-lg shadow p-6">
+        <div class="bg-white rounded-xl shadow-lg p-6 transform hover:scale-105 transition-transform duration-200">
             <div class="flex items-center">
-                <div class="p-3 rounded-full bg-blue-100 text-blue-500">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                     </svg>
                 </div>
                 <div class="ml-4">
                     <p class="text-sm text-gray-500 font-medium">Total Tickets</p>
-                    <p class="text-2xl font-bold text-gray-800">{{ total_tickets }}</p>
+                    <p class="text-3xl font-bold text-gray-800">{{ total_tickets }}</p>
                 </div>
             </div>
         </div>
 
         <!-- Open Tickets -->
-        <div class="bg-white rounded-lg shadow p-6">
+        <div class="bg-white rounded-xl shadow-lg p-6 transform hover:scale-105 transition-transform duration-200">
             <div class="flex items-center">
-                <div class="p-3 rounded-full bg-yellow-100 text-yellow-500">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                 </div>
                 <div class="ml-4">
                     <p class="text-sm text-gray-500 font-medium">Open Tickets</p>
-                    <p class="text-2xl font-bold text-gray-800">{{ open_tickets }}</p>
+                    <p class="text-3xl font-bold text-gray-800">{{ open_tickets }}</p>
                 </div>
             </div>
         </div>
 
         <!-- Resolved Tickets -->
-        <div class="bg-white rounded-lg shadow p-6">
+        <div class="bg-white rounded-xl shadow-lg p-6 transform hover:scale-105 transition-transform duration-200">
             <div class="flex items-center">
-                <div class="p-3 rounded-full bg-green-100 text-green-500">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div class="p-3 rounded-full bg-green-100 text-green-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                 </div>
                 <div class="ml-4">
                     <p class="text-sm text-gray-500 font-medium">Resolved</p>
-                    <p class="text-2xl font-bold text-gray-800">{{ resolved_tickets }}</p>
+                    <p class="text-3xl font-bold text-gray-800">{{ resolved_tickets }}</p>
                 </div>
             </div>
         </div>
 
         <!-- Closed Tickets -->
-        <div class="bg-white rounded-lg shadow p-6">
+        <div class="bg-white rounded-xl shadow-lg p-6 transform hover:scale-105 transition-transform duration-200">
             <div class="flex items-center">
-                <div class="p-3 rounded-full bg-gray-100 text-gray-500">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div class="p-3 rounded-full bg-gray-100 text-gray-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                 </div>
                 <div class="ml-4">
                     <p class="text-sm text-gray-500 font-medium">Closed</p>
-                    <p class="text-2xl font-bold text-gray-800">{{ closed_tickets }}</p>
+                    <p class="text-3xl font-bold text-gray-800">{{ closed_tickets }}</p>
                 </div>
             </div>
         </div>
@@ -85,82 +85,83 @@
 
     <!-- Admin/Manager/HR Additional Stats -->
     {% if is_admin or is_manager or is_hr %}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-8">
         <!-- Average Resolution Time -->
-        <div class="bg-white rounded-lg shadow p-6">
-            <h3 class="text-lg font-semibold text-gray-700 mb-2">Avg Resolution Time</h3>
+        <div class="bg-white rounded-xl shadow-lg p-6 transform hover:scale-105 transition-transform duration-200">
+            <h3 class="text-xl font-semibold text-gray-700 mb-3">Avg Resolution Time</h3>
             {% if avg_resolution_time.avg_time %}
-                <p class="text-2xl font-bold text-gray-800">{{ avg_resolution_time.avg_time|floatformat:2 }} hours</p>
+                <p class="text-3xl font-bold text-gray-800">{{ avg_resolution_time.avg_time|floatformat:2 }} hours</p>
             {% else %}
-                <p class="text-gray-500">No data available</p>
+                <p class="text-xl text-gray-500">No data available</p>
             {% endif %}
         </div>
 
         <!-- Assigned Tickets -->
-        <div class="bg-white rounded-lg shadow p-6">
-            <h3 class="text-lg font-semibold text-gray-700 mb-2">Assigned Tickets</h3>
-            <p class="text-2xl font-bold text-gray-800">{{ assigned_tickets }}</p>
+        <div class="bg-white rounded-xl shadow-lg p-6 transform hover:scale-105 transition-transform duration-200">
+            <h3 class="text-xl font-semibold text-gray-700 mb-3">Assigned Tickets</h3>
+            <p class="text-3xl font-bold text-gray-800">{{ assigned_tickets }}</p>
         </div>
 
         <!-- Unassigned Tickets -->
-        <div class="bg-white rounded-lg shadow p-6">
-            <h3 class="text-lg font-semibold text-gray-700 mb-2">Unassigned Tickets</h3>
-            <p class="text-2xl font-bold text-gray-800">{{ unassigned_tickets }}</p>
+        <div class="bg-white rounded-xl shadow-lg p-6 transform hover:scale-105 transition-transform duration-200">
+            <h3 class="text-xl font-semibold text-gray-700 mb-3">Unassigned Tickets</h3>
+            <p class="text-3xl font-bold text-gray-800">{{ unassigned_tickets }}</p>
         </div>
     </div>
     {% endif %}
 
     <!-- Priority Distribution -->
-    <div class="bg-white rounded-lg shadow p-6 mb-8">
-        <h2 class="text-xl font-bold text-gray-800 mb-4">Priority Distribution</h2>
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">Priority Distribution</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
             <!-- Critical -->
-            <div class="bg-red-50 rounded p-4">
-                <div class="flex items-center justify-between">
-                    <h3 class="font-medium text-red-700">Critical</h3>
-                    <span class="text-red-700 font-bold">{{ critical_tickets }}</span>
+            <div class="bg-red-50 rounded-lg p-4 transform hover:scale-105 transition-transform duration-200">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-lg font-medium text-red-700">Critical</h3>
+                    <span class="text-lg text-red-700 font-bold">{{ critical_tickets }}</span>
                 </div>
-                <div class="mt-2 relative pt-1">
-                    <div class="overflow-hidden h-2 text-xs flex rounded bg-red-200">
-                        <div style="width: {{ critical_percentage }}%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-red-500"></div>                    </div>
+                <div class="relative pt-1">
+                    <div class="overflow-hidden h-3 text-xs flex rounded-full bg-red-200">
+                        <div style="width: {{ critical_percentage }}%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-red-500 rounded-full transition-all duration-500"></div>
+                    </div>
                 </div>
             </div>
             
             <!-- High -->
-            <div class="bg-orange-50 rounded p-4">
-                <div class="flex items-center justify-between">
-                    <h3 class="font-medium text-orange-700">High</h3>
-                    <span class="text-orange-700 font-bold">{{ high_tickets }}</span>
+            <div class="bg-orange-50 rounded-lg p-4 transform hover:scale-105 transition-transform duration-200">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-lg font-medium text-orange-700">High</h3>
+                    <span class="text-lg text-orange-700 font-bold">{{ high_tickets }}</span>
                 </div>
-                <div class="mt-2 relative pt-1">
-                    <div class="overflow-hidden h-2 text-xs flex rounded bg-orange-200">
-                        <div style="width: {{ high_percentage }}%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-orange-500"></div>
+                <div class="relative pt-1">
+                    <div class="overflow-hidden h-3 text-xs flex rounded-full bg-orange-200">
+                        <div style="width: {{ high_percentage }}%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-orange-500 rounded-full transition-all duration-500"></div>
                     </div>
                 </div>
             </div>
             
             <!-- Medium -->
-            <div class="bg-yellow-50 rounded p-4">
-                <div class="flex items-center justify-between">
-                    <h3 class="font-medium text-yellow-700">Medium</h3>
-                    <span class="text-yellow-700 font-bold">{{ medium_tickets }}</span>
+            <div class="bg-yellow-50 rounded-lg p-4 transform hover:scale-105 transition-transform duration-200">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-lg font-medium text-yellow-700">Medium</h3>
+                    <span class="text-lg text-yellow-700 font-bold">{{ medium_tickets }}</span>
                 </div>
-                <div class="mt-2 relative pt-1">
-                    <div class="overflow-hidden h-2 text-xs flex rounded bg-yellow-200">
-                        <div style="width: {{ medium_percentage }}%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-yellow-500"></div>
+                <div class="relative pt-1">
+                    <div class="overflow-hidden h-3 text-xs flex rounded-full bg-yellow-200">
+                        <div style="width: {{ medium_percentage }}%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-yellow-500 rounded-full transition-all duration-500"></div>
                     </div>
                 </div>
             </div>
             
             <!-- Low -->
-            <div class="bg-blue-50 rounded p-4">
-                <div class="flex items-center justify-between">
-                    <h3 class="font-medium text-blue-700">Low</h3>
-                    <span class="text-blue-700 font-bold">{{ low_tickets }}</span>
+            <div class="bg-blue-50 rounded-lg p-4 transform hover:scale-105 transition-transform duration-200">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-lg font-medium text-blue-700">Low</h3>
+                    <span class="text-lg text-blue-700 font-bold">{{ low_tickets }}</span>
                 </div>
-                <div class="mt-2 relative pt-1">
-                    <div class="overflow-hidden h-2 text-xs flex rounded bg-blue-200">
-                        <div style="width: {{ low_percentage }}%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-green-500"></div>
+                <div class="relative pt-1">
+                    <div class="overflow-hidden h-3 text-xs flex rounded-full bg-blue-200">
+                        <div style="width: {{ low_percentage }}%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500 rounded-full transition-all duration-500"></div>
                     </div>
                 </div>
             </div>
@@ -168,69 +169,70 @@
     </div>
 
     <!-- Recent Tickets -->
-    <div class="bg-white rounded-lg shadow overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-xl font-bold text-gray-800">Recent Tickets</h2>
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+            <h2 class="text-2xl font-bold text-gray-800">Recent Tickets</h2>
+            <a href="{% url 'aps_support:ticket_list' %}" class="text-indigo-600 hover:text-indigo-800 font-medium transition-colors duration-200">View all tickets →</a>
         </div>
         <div class="overflow-x-auto">
             <table class="min-w-full bg-white">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">ID</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Subject</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Priority</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Created</th>
                         {% if is_admin or is_hr or is_manager %}
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted By</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned To</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Submitted By</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Assigned To</th>
                         {% endif %}
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200">
                     {% for ticket in recent_tickets %}
-                    <tr>
+                    <tr class="hover:bg-gray-50 transition-colors duration-200">
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">#{{ ticket.id }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ ticket.subject }}</td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             {% if ticket.status == 'New' %}
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
                                 New
                             </span>
                             {% elif ticket.status == 'Open' %}
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
                                 Open
                             </span>
                             {% elif ticket.status == 'In Progress' %}
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
                                 In Progress
                             </span>
                             {% elif ticket.status == 'Resolved' %}
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                                 Resolved
                             </span>
                             {% else %}
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
                                 Closed
                             </span>
                             {% endif %}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             {% if ticket.priority == 'Critical' %}
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
                                 Critical
                             </span>
                             {% elif ticket.priority == 'High' %}
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800">
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800">
                                 High
                             </span>
                             {% elif ticket.priority == 'Medium' %}
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
                                 Medium
                             </span>
                             {% else %}
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
                                 Low
                             </span>
                             {% endif %}
@@ -247,21 +249,19 @@
                         </td>
                         {% endif %}
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <a href="{% url 'aps_support:ticket_detail' ticket.id %}" class="text-indigo-600 hover:text-indigo-900">View</a>
+                            <a href="{% url 'aps_support:ticket_detail' ticket.id %}" class="text-indigo-600 hover:text-indigo-900 transition-colors duration-200">View Details →</a>
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="{% if is_admin or is_hr or is_manager %}8{% else %}6{% endif %}" class="px-6 py-4 text-center text-sm text-gray-500">
-                            No tickets found
+                        <td colspan="{% if is_admin or is_hr or is_manager %}8{% else %}6{% endif %}" class="px-6 py-8 text-center text-gray-500">
+                            <p class="text-lg">No tickets found</p>
+                            <p class="text-sm mt-2">Create a new ticket to get started</p>
                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
-        </div>
-        <div class="px-6 py-4 border-t border-gray-200">
-            <a href="{% url 'aps_support:ticket_list' %}" class="text-indigo-600 hover:text-indigo-900 font-medium">View all tickets</a>
         </div>
     </div>
 </div>
