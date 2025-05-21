@@ -1,25 +1,33 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
+<div class="container mx-auto px-4 py-8 min-h-screen">
   <!-- Page Header -->
   <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
     <div class="flex items-center gap-3">
-      <h1 class="text-3xl font-extrabold text-gray-800 tracking-tight">Support Tickets</h1>
+      <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight flex items-center gap-2">
+        <!-- Ticket icon with professional solid colors (no gradient) -->
+       
+        Support Tickets
+      </h1>
       {% if page_obj %}
-        <span class="ml-2 px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold">{{ page_obj.paginator.count }}</span>
+        <span class="ml-2 px-3 h-auto w-auto py-3 rounded-full bg-blue-100 text-blue-700 text-md font-semibold shadow">{{ page_obj.paginator.count }}</span>
       {% endif %}
     </div>
     <div class="flex flex-col sm:flex-row items-center gap-3">
-      <a href="{% url 'aps_support:create_ticket' %}" class="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-semibold py-2.5 px-6 rounded-lg inline-flex items-center justify-center transition duration-150 ease-in-out shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+      <a href="{% url 'aps_support:create_ticket' %}" class="w-full sm:w-auto bg-blue-100 hover:bg-blue-200 text-gray-900 font-semibold py-2.5 px-6 rounded-lg inline-flex items-center justify-center transition duration-150 ease-in-out shadow hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-100 group">
+        <!-- Plus in circle, blue -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="10" fill="#2563eb" fill-opacity="0.15"/>
+          <path d="M12 8v8M8 12h8" stroke="#2563eb" stroke-width="2" stroke-linecap="round"/>
         </svg>
         New Ticket
       </a>
-      <a href="{% url 'aps_support:support_dashboard' %}" class="w-full sm:w-auto text-gray-600 hover:text-blue-700 transition flex items-center justify-center group border border-gray-300 rounded-lg py-2.5 px-6 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 group-hover:-translate-x-1 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+      <a href="{% url 'aps_support:support_dashboard' %}" class="w-full sm:w-auto text-yellow-700 hover:text-yellow-900 transition flex items-center justify-center group border border-yellow-100 rounded-lg py-2.5 px-6 hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-100 bg-white">
+        <!-- Left arrow in circle, yellow -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 group-hover:-translate-x-1 transition-transform duration-200" fill="none" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" fill="#fde68a"/>
+          <path d="M15 12H9M11 10l-2 2 2 2" stroke="#f59e42" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
         <span class="font-semibold">Back to Dashboard</span>
       </a>
@@ -28,47 +36,54 @@
 
   <!-- Role-specific banner -->
   {% if is_admin %}
-  <div class="bg-gradient-to-r from-purple-100 to-purple-50 border-l-4 border-purple-600 p-4 mb-6 rounded-lg shadow hover:shadow-md transition-shadow duration-200">
+  <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6 rounded-lg shadow hover:shadow-md transition-shadow duration-200">
     <div class="flex items-center">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-600 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+      <!-- Crown for admin, blue -->
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-500 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24">
+        <path d="M3 17l3-9 6 6 6-6 3 9" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="#bfdbfe"/>
+        <rect x="5" y="17" width="14" height="2" rx="1" fill="#60a5fa"/>
       </svg>
-      <p class="text-purple-700 font-semibold">Admin view: You can see and manage <span class="font-bold">all tickets</span> in the system.</p>
+      <p class="text-blue-800 font-semibold">Admin view: You can see and manage <span class="font-bold">all tickets</span> in the system.</p>
     </div>
   </div>
   {% elif is_hr %}
-  <div class="bg-gradient-to-r from-indigo-100 to-indigo-50 border-l-4 border-indigo-600 p-4 mb-6 rounded-lg shadow hover:shadow-md transition-shadow duration-200">
+  <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 rounded-lg shadow hover:shadow-md transition-shadow duration-200">
     <div class="flex items-center">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-600 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+      <!-- People for HR, yellow/green -->
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-400 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24">
+        <circle cx="8" cy="10" r="3" fill="#fde68a" stroke="#f59e42" stroke-width="2"/>
+        <circle cx="16" cy="10" r="3" fill="#bbf7d0" stroke="#22c55e" stroke-width="2"/>
+        <rect x="4" y="16" width="16" height="4" rx="2" fill="#fef9c3"/>
       </svg>
-      <p class="text-indigo-700 font-semibold">HR view: You can see <span class="font-bold">all HR-assigned tickets</span> and your own tickets.</p>
+      <p class="text-yellow-800 font-semibold">HR view: You can see <span class="font-bold">all HR-assigned tickets</span> and your own tickets.</p>
     </div>
   </div>
   {% elif is_manager %}
-  <div class="bg-gradient-to-r from-green-100 to-green-50 border-l-4 border-green-600 p-4 mb-6 rounded-lg shadow hover:shadow-md transition-shadow duration-200">
+  <div class="bg-green-50 border-l-4 border-green-400 p-4 mb-6 rounded-lg shadow hover:shadow-md transition-shadow duration-200">
     <div class="flex items-center">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+      <!-- Star for manager, green -->
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24">
+        <polygon points="12,4 14.09,9.26 20,9.27 15,13.14 16.18,19.02 12,15.77 7.82,19.02 9,13.14 4,9.27 9.91,9.26" fill="#bbf7d0" stroke="#22c55e" stroke-width="2"/>
       </svg>
-      <p class="text-green-700 font-semibold">Manager view: You can see your own tickets and <span class="font-bold">tickets from your team members</span>.</p>
+      <p class="text-green-800 font-semibold">Manager view: You can see your own tickets and <span class="font-bold">tickets from your team members</span>.</p>
     </div>
   </div>
   {% endif %}
 
   <!-- Filters -->
-  <div class="bg-white rounded-lg shadow-lg p-6 mb-8 hover:shadow-xl transition-shadow duration-200">
-    <h2 class="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
-      <svg class="h-6 w-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L12 15.414V19a1 1 0 01-1.447.894l-2-1A1 1 0 018 18v-2.586L3.293 6.707A1 1 0 013 6V4z"/>
+  <div class="bg-white/80 rounded-xl shadow-lg p-6 mb-8 hover:shadow-xl transition-shadow duration-200 border border-blue-100">
+    <h2 class="text-xl font-semibold text-blue-700 mb-6 flex items-center gap-2">
+      <!-- Filter funnel, blue -->
+      <svg class="h-6 w-6 text-blue-400" fill="none" viewBox="0 0 24 24">
+        <path d="M3 5h18M6 9h12M9 13h6M11 17h2" stroke="#2563eb" stroke-width="2" stroke-linecap="round"/>
       </svg>
       Filter Tickets
     </h2>
     <form method="get" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <!-- Status filter -->
       <div class="space-y-2">
-        <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
-        <select id="status" name="status" class="w-full border border-gray-300 rounded-lg py-2.5 px-4 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm bg-gray-50">
+        <label for="status" class="block text-sm font-medium text-blue-700">Status</label>
+        <select id="status" name="status" class="w-full border border-blue-200 rounded-lg py-2.5 px-4 text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 shadow-sm bg-blue-50">
           <option value="">All Statuses</option>
           {% for status_value, status_label in status_choices %}
           <option value="{{ status_value }}" {% if request.GET.status == status_value %}selected{% endif %}>{{ status_label }}</option>
@@ -77,8 +92,8 @@
       </div>
       <!-- Priority filter -->
       <div class="space-y-2">
-        <label for="priority" class="block text-sm font-medium text-gray-700">Priority</label>
-        <select id="priority" name="priority" class="w-full border border-gray-300 rounded-lg py-2.5 px-4 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm bg-gray-50">
+        <label for="priority" class="block text-sm font-medium text-yellow-700">Priority</label>
+        <select id="priority" name="priority" class="w-full border border-yellow-200 rounded-lg py-2.5 px-4 text-yellow-800 focus:outline-none focus:ring-2 focus:ring-yellow-200 focus:border-yellow-400 shadow-sm bg-yellow-50">
           <option value="">All Priorities</option>
           {% for priority_value, priority_label in priority_choices %}
           <option value="{{ priority_value }}" {% if request.GET.priority == priority_value %}selected{% endif %}>{{ priority_label }}</option>
@@ -87,21 +102,25 @@
       </div>
       <!-- Search filter -->
       <div class="space-y-2">
-        <label for="search" class="block text-sm font-medium text-gray-700">Search</label>
-        <input type="text" id="search" name="search" value="{{ request.GET.search|default_if_none:'' }}" placeholder="Search by title or ID..." class="w-full border border-gray-300 rounded-lg py-2.5 px-4 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm bg-gray-50" />
+        <label for="search" class="block text-sm font-medium text-green-700">Search</label>
+        <input type="text" id="search" name="search" value="{{ request.GET.search|default_if_none:'' }}" placeholder="Search by title or ID..." class="w-full border border-green-200 rounded-lg py-2.5 px-4 text-green-800 focus:outline-none focus:ring-2 focus:ring-green-200 focus:border-green-400 shadow-sm bg-green-50" />
       </div>
       <!-- Filter buttons -->
       <div class="flex items-end space-x-4">
-        <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-6 rounded-lg inline-flex items-center justify-center transition duration-150 ease-in-out shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-400">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd" />
+        <button type="submit" class="flex-1 bg-yellow-100 hover:bg-yellow-200 text-gray-900 font-semibold py-2.5 px-6 rounded-lg inline-flex items-center justify-center transition duration-150 ease-in-out shadow hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-100">
+          <!-- Checkmark in circle, blue -->
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" fill="#2563eb" fill-opacity="0.15"/>
+            <path d="M8 12l3 3 5-5" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
           Apply
         </button>
         {% if request.GET.status or request.GET.priority or request.GET.search %}
-        <a href="{% url 'aps_support:ticket_list' %}" class="flex-1 border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold py-2.5 px-6 rounded-lg inline-flex items-center justify-center transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-400">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        <a href="{% url 'aps_support:ticket_list' %}" class="flex-1 border border-yellow-200 text-yellow-700 hover:bg-yellow-50 font-semibold py-2.5 px-6 rounded-lg inline-flex items-center justify-center transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-yellow-100 bg-white">
+          <!-- X in circle, yellow -->
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" fill="#fde68a"/>
+            <path d="M15 9l-6 6M9 9l6 6" stroke="#f59e42" stroke-width="2" stroke-linecap="round"/>
           </svg>
           Clear
         </a>
@@ -112,89 +131,148 @@
 
   <!-- Tickets list -->
   {% if page_obj and page_obj.object_list %}
-  <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+  <div class="bg-white/90 rounded-xl shadow-lg overflow-hidden animate-fade-in border border-blue-100">
     <div class="overflow-x-auto">
-      <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
+      <table class="min-w-full divide-y divide-blue-100">
+        <thead class="bg-blue-50">
           <tr>
-            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">ID</th>
-            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Title</th>
+            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider">ID</th>
+            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider">Title</th>
             {% if is_admin or is_hr or is_manager %}
-            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Created By</th>
+            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-green-700 uppercase tracking-wider">Created By</th>
             {% endif %}
-            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Priority</th>
-            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Created</th>
-            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Assigned Group</th>
-            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-green-700 uppercase tracking-wider">Status</th>
+            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-yellow-700 uppercase tracking-wider">Priority</th>
+            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider">Created</th>
+            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider">Assigned Group</th>
+            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-red-700 uppercase tracking-wider">Actions</th>
           </tr>
         </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
+        <tbody class="bg-white divide-y divide-gray-100">
           {% for ticket in page_obj %}
-          <tr class="hover:bg-blue-50 transition duration-150 group">
+          <tr class="hover:bg-yellow-50 transition duration-150 group">
             <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-700 group-hover:underline">#{{ ticket.id }}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium max-w-xs truncate" title="{{ ticket.title }}">{{ ticket.title }}</td>
             {% if is_admin or is_hr or is_manager %}
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ ticket.user.get_full_name }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-green-700">{{ ticket.user.get_full_name }}</td>
             {% endif %}
             <td class="px-6 py-4 whitespace-nowrap">
               {% if ticket.status == 'open' %}
-              <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Open</span>
+              <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 shadow">Open</span>
               {% elif ticket.status == 'in_progress' %}
-              <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">In Progress</span>
+              <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 shadow">In Progress</span>
               {% elif ticket.status == 'pending' %}
-              <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Pending</span>
+              <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800 shadow">Pending</span>
               {% elif ticket.status == 'resolved' %}
-              <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">Resolved</span>
+              <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-50 text-green-800 shadow">Resolved</span>
               {% elif ticket.status == 'closed' %}
-              <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Closed</span>
+              <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800 shadow">Closed</span>
               {% else %}
-              <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-200 text-gray-700">Unknown</span>
+              <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-200 text-gray-700 shadow">Unknown</span>
               {% endif %}
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
               {% if ticket.priority == 'low' %}
-              <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">Low</span>
+              <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-50 text-green-800 shadow">Low</span>
               {% elif ticket.priority == 'medium' %}
-              <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">Medium</span>
+              <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-50 text-yellow-800 shadow">Medium</span>
               {% elif ticket.priority == 'high' %}
-              <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800">High</span>
+              <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 shadow">High</span>
               {% elif ticket.priority == 'critical' %}
-              <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Critical</span>
+              <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800 shadow">Critical</span>
               {% else %}
-              <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-200 text-gray-700">Unknown</span>
+              <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-200 text-gray-700 shadow">Unknown</span>
               {% endif %}
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ ticket.created_at|date:"M d, Y" }}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ ticket.assigned_group|default:"—" }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-700">{{ ticket.created_at|date:"M d, Y" }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-700">{{ ticket.assigned_group|default:"—" }}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
               <div class="flex space-x-2">
-                <a href="{% url 'aps_support:ticket_detail' ticket.id %}" class="text-blue-600 hover:text-blue-900 transition-colors duration-150" title="View Details">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                    <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+                <a href="{% url 'aps_support:ticket_detail' ticket.id %}" class="text-blue-600 hover:text-blue-900 transition-colors duration-150 group" title="View Details">
+                  <!-- Improved Eye icon with better details and smoother transitions -->
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24">
+                    <!-- Background highlight with improved gradient -->
+                    <ellipse cx="12" cy="12" rx="9" ry="6"
+                      fill="url(#eyeGradient)"
+                      class="transition-colors duration-200 ease-in-out group-hover:opacity-80"/>
+                    <!-- Outline with improved stroke -->
+                    <ellipse cx="12" cy="12" rx="9" ry="6"
+                      fill="none"
+                      stroke="#2563eb"
+                      stroke-width="1.5"
+                      class="transition-colors duration-200 ease-in-out group-hover:stroke-[#1e40af]"/>
+                    <!-- Pupil with shadow effect -->
+                    <circle cx="12" cy="12" r="3"
+                      fill="#2563eb"
+                      class="transition-colors duration-200 ease-in-out group-hover:fill-[#1e40af]"/>
+                    <!-- Highlight on pupil for realism -->
+                    <circle cx="11" cy="11" r="1"
+                      fill="#ffffff"
+                      fill-opacity="0.7"
+                      class="transition-opacity duration-200 ease-in-out group-hover:fill-opacity-0.9"/>
+                    <!-- Gradient definition -->
+                    <defs>
+                      <radialGradient id="eyeGradient" cx="12" cy="12" r="9" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.3"/>
+                        <stop offset="100%" stop-color="#2563eb" stop-opacity="0.1"/>
+                      </radialGradient>
+                    </defs>
                   </svg>
                 </a>
                 {% if is_admin or ticket.user == request.user %}
-                <a href="{% url 'aps_support:update_ticket' ticket.id %}" class="text-green-600 hover:text-green-900 transition-colors duration-150" title="Edit Ticket">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                <a href="{% url 'aps_support:update_ticket' ticket.id %}" class="text-green-600 hover:text-green-900 transition-colors duration-150 group" title="Edit Ticket">
+                  <!-- Improved Pencil icon with better shading and details -->
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24">
+                    <!-- Paper/document with subtle gradient -->
+                    <rect x="4" y="15" width="16" height="5" rx="1"
+                      fill="url(#paperGradient)"
+                      class="transition-colors duration-200 ease-in-out group-hover:opacity-80"/>
+                    <!-- Pencil body with gradient -->
+                    <path d="M15.232 5.232a2.5 2.5 0 013.536 3.536l-9.3 9.3-4.236.5.5-4.236 9.5-9.1z"
+                      fill="url(#pencilGradient)"
+                      stroke="#16a34a"
+                      stroke-width="1.5"
+                      stroke-linejoin="round"
+                      class="transition-all duration-200 ease-in-out group-hover:stroke-[#166534] group-hover:stroke-width-1.75"/>
+                    <!-- Pencil tip with shine effect -->
+                    <path d="M5.5 18l1.5-4 3 3-4 1.5z"
+                      fill="#4ade80"
+                      stroke="#22c55e"
+                      stroke-width="0.5"
+                      class="transition-colors duration-200 ease-in-out group-hover:fill-[#16a34a] group-hover:stroke-[#166534]"/>
+                    <!-- Pencil eraser -->
+                    <rect x="17" y="4" width="2.5" height="3" rx="0.5" transform="rotate(45, 17, 4)"
+                      fill="#f97316"
+                      stroke="#ea580c"
+                      stroke-width="0.5"
+                      class="transition-colors duration-200 ease-in-out group-hover:fill-[#c2410c] group-hover:stroke-[#9a3412]"/>
+                    <!-- Gradient definitions -->
+                    <defs>
+                      <linearGradient id="paperGradient" x1="4" y1="15" x2="20" y2="20" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
+                        <stop offset="100%" stop-color="#dcfce7" stop-opacity="0.9"/>
+                      </linearGradient>
+                      <linearGradient id="pencilGradient" x1="15" y1="5" x2="12" y2="15" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stop-color="#86efac" stop-opacity="0.9"/>
+                        <stop offset="100%" stop-color="#4ade80" stop-opacity="0.7"/>
+                      </linearGradient>
+                    </defs>
                   </svg>
                 </a>
                 {% endif %}
               </div>
             </td>
-          </tr>
-          {% endfor %}
-        </tbody>
+            </tr>
+            {% endfor %}
+            </tbody>
       </table>
     </div>
 
     <!-- Pagination -->
     {% if page_obj.paginator.num_pages > 1 %}
-    <div class="bg-white px-6 py-4 flex items-center justify-between border-t border-gray-200">
+    <div class="bg-white/80 px-6 py-4 flex items-center justify-between border-t border-yellow-100">
       <div class="flex-1 flex flex-col sm:flex-row justify-between items-center gap-4">
-        <p class="text-sm text-gray-700">
+        <p class="text-sm text-yellow-700">
           Showing
           <span class="font-bold">{{ page_obj.start_index }}</span>
           to
@@ -206,33 +284,37 @@
         <div>
           <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
             {% if page_obj.has_previous %}
-            <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.priority %}&priority={{ request.GET.priority }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="relative inline-flex items-center px-3 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400">
+            <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.priority %}&priority={{ request.GET.priority }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="relative inline-flex items-center px-3 py-2 rounded-l-md border border-blue-200 bg-white text-sm font-medium text-blue-600 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-100">
               <span class="sr-only">Previous</span>
-              <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+              <!-- Left chevron in circle, blue -->
+              <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" fill="#2563eb" fill-opacity="0.15"/>
+                <path d="M14 16l-4-4 4-4" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </a>
             {% endif %}
             {% for i in page_obj.paginator.page_range %}
               {% if i == page_obj.number %}
-              <span class="relative inline-flex items-center px-4 py-2 border border-blue-500 bg-blue-50 text-sm font-bold text-blue-600">
+              <span class="relative inline-flex items-center px-4 py-2 border border-yellow-400 bg-yellow-100 text-sm font-bold text-yellow-700 rounded-md shadow">
                 {{ i }}
               </span>
               {% elif i > page_obj.number|add:"-3" and i < page_obj.number|add:"3" %}
-              <a href="?page={{ i }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.priority %}&priority={{ request.GET.priority }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400">
+              <a href="?page={{ i }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.priority %}&priority={{ request.GET.priority }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="relative inline-flex items-center px-4 py-2 border border-yellow-200 bg-white text-sm font-medium text-yellow-700 hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-100 rounded-md">
                 {{ i }}
               </a>
               {% elif i == 1 or i == page_obj.paginator.num_pages %}
                 {% if i < page_obj.number|add:"-3" or i > page_obj.number|add:"3" %}
-                  <span class="px-2 py-2 text-gray-400">…</span>
+                  <span class="px-2 py-2 text-yellow-300">…</span>
                 {% endif %}
               {% endif %}
             {% endfor %}
             {% if page_obj.has_next %}
-            <a href="?page={{ page_obj.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.priority %}&priority={{ request.GET.priority }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="relative inline-flex items-center px-3 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400">
+            <a href="?page={{ page_obj.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.priority %}&priority={{ request.GET.priority }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="relative inline-flex items-center px-3 py-2 rounded-r-md border border-pink-200 bg-white text-sm font-medium text-pink-500 hover:bg-pink-50 focus:outline-none focus:ring-2 focus:ring-pink-100">
               <span class="sr-only">Next</span>
-              <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+              <!-- Right chevron in circle, pastel pink -->
+              <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" fill="#FBCFE8"/>
+                <path d="M10 8l4 4-4 4" stroke="#F472B6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </a>
             {% endif %}
@@ -243,18 +325,30 @@
     {% endif %}
   </div>
   {% else %}
-  <div class="bg-white rounded-lg shadow-lg p-8 text-center">
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-20 w-20 mx-auto text-gray-400 mb-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+  <div class="bg-white/90 rounded-xl shadow-lg p-8 text-center animate-fade-in border border-pink-100">
+    <!-- Document with plus, pastel blue/pink -->
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-20 w-20 mx-auto text-pink-200 mb-6" fill="none" viewBox="0 0 32 32">
+      <rect x="6" y="6" width="20" height="20" rx="4" fill="#FBCFE8"/>
+      <path d="M16 12v8M12 16h8" stroke="#F472B6" stroke-width="2" stroke-linecap="round"/>
     </svg>
-    <h3 class="text-xl font-semibold text-gray-900 mb-3">No tickets found</h3>
-    <p class="text-gray-600 mb-6">There are no tickets matching your current filters.</p>
+    <h3 class="text-xl font-semibold text-pink-900 mb-3">No tickets found</h3>
+    <p class="text-pink-600 mb-6">There are no tickets matching your current filters.</p>
     <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-      <a href="{% url 'aps_support:create_ticket' %}" class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-semibold rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+      <a href="{% url 'aps_support:create_ticket' %}" class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-semibold rounded-lg shadow-sm text-white bg-gradient-to-r from-pink-200 via-yellow-100 to-green-200 hover:from-pink-300 hover:to-green-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-100">
+        <!-- Plus in circle, pastel -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" fill="#FBCFE8" fill-opacity="0.5"/>
+          <path d="M12 8v8M8 12h8" stroke="#F472B6" stroke-width="2" stroke-linecap="round"/>
+        </svg>
         Create a new ticket
       </a>
       {% if request.GET %}
-      <a href="{% url 'aps_support:ticket_list' %}" class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border border-gray-300 shadow-sm text-base font-semibold rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+      <a href="{% url 'aps_support:ticket_list' %}" class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border border-yellow-200 shadow-sm text-base font-semibold rounded-lg text-yellow-700 bg-white hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-100">
+        <!-- X in circle, pastel yellow -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" fill="#FEF9C3"/>
+          <path d="M15 9l-6 6M9 9l6 6" stroke="#F59E42" stroke-width="2" stroke-linecap="round"/>
+        </svg>
         Clear filters
       </a>
       {% endif %}

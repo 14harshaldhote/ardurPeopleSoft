@@ -13629,6 +13629,27 @@ def get_regional_it_contact(region):
     except Exception:
         return User.objects.filter(groups__name='IT', is_active=True).order_by('id').first()
 
+def send_ticket_notification(ticket, *args, **kwargs):
+    """
+    Wrapper for send_ticket_notification that ignores unexpected keyword arguments.
+    This prevents TypeError when extra kwargs (like old_status) are passed.
+    """
+    from .utils import send_ticket_notification as utils_send_ticket_notification
+
+    # Only pass the arguments that utils_send_ticket_notification expects
+    # (ticket, action, performed_by, extra_message)
+    action = kwargs.get('action', None)
+    performed_by = kwargs.get('user', None) or kwargs.get('performed_by', None)
+    extra_message = kwargs.get('details', None) or kwargs.get('comment', None)
+
+    return utils_send_ticket_notification(
+        ticket,
+        action=action,
+        performed_by=performed_by,
+        extra_message=extra_message
+    )
+
+
 @login_required
 def ticket_detail(request, pk):
     """
@@ -13640,7 +13661,7 @@ def ticket_detail(request, pk):
     user_roles = get_user_roles(user)
     is_ticket_owner = ticket.user == user
 
-    # Enhanced permission check logic with support for cross-department visibility
+    # Enhanced permission check logic
     has_permission = (
         user_roles['is_admin'] or 
         is_ticket_owner or 
@@ -13649,12 +13670,13 @@ def ticket_detail(request, pk):
         (user in ticket.cc_users.all())
     )
 
-    # Add manager permission to view team tickets and departmental tickets
+    # Add manager permission to view team tickets
     managed_users = None
     if user_roles['is_manager'] and not has_permission:
-        managed_users = User.objects.filter(department__manager=user)
-        if ticket.user in managed_users or getattr(ticket, 'department', None) == getattr(user, 'department', None):
-            has_permission = True
+        # Remove department logic, just allow managers to view tickets of users they manage if such logic exists elsewhere
+        # If you have a way to get managed users, use it; otherwise, skip this
+        # For now, skip managed_users logic since department is not present
+        pass
 
     if not has_permission:
         logger.warning(f"User {user.username} (ID: {user.id}) attempted unauthorized access to ticket {ticket.ticket_id}")
@@ -13681,9 +13703,8 @@ def ticket_detail(request, pk):
         # Check if status update is requested
         new_status = request.POST.get('new_status')
         allowed_to_change_status = user_roles['is_admin'] or user_roles['is_hr']
-        if managed_users is None and user_roles['is_manager']:
-            managed_users = User.objects.filter(department__manager=user)
-        if user_roles['is_manager'] and (is_ticket_owner or (managed_users and ticket.user in managed_users)):
+        # Remove managed_users/department logic
+        if user_roles['is_manager'] and is_ticket_owner:
             allowed_to_change_status = True
         if ticket.assigned_to_user == user:
             allowed_to_change_status = True
@@ -13734,7 +13755,6 @@ def ticket_detail(request, pk):
                 ticket.save(user=request.user)
 
                 # Log status change activity
-                # FIX: Use string for action, not enum attribute
                 TicketActivity.objects.create(
                     ticket=ticket,
                     user=request.user,
@@ -13778,9 +13798,7 @@ def ticket_detail(request, pk):
             if not status_update_handled:
                 new_status = request.POST.get('new_status')
                 allowed_to_change_status = user_roles['is_admin'] or user_roles['is_hr']
-                if managed_users is None and user_roles['is_manager']:
-                    managed_users = User.objects.filter(department__manager=user)
-                if user_roles['is_manager'] and (is_ticket_owner or (managed_users and ticket.user in managed_users)):
+                if user_roles['is_manager'] and is_ticket_owner:
                     allowed_to_change_status = True
                 if ticket.assigned_to_user == user:
                     allowed_to_change_status = True
@@ -13831,7 +13849,6 @@ def ticket_detail(request, pk):
                         ticket.save(user=request.user)
 
                         # Log status change activity
-                        # FIX: Use string for action, not enum attribute
                         TicketActivity.objects.create(
                             ticket=ticket,
                             user=request.user,
@@ -13855,11 +13872,7 @@ def ticket_detail(request, pk):
                         if current_index < len(priority_order) - 1:
                             ticket.priority = priority_order[current_index + 1]
                             messages.warning(request, f'Ticket priority automatically increased from {old_priority} to {ticket.priority} due to multiple escalations.')
-                    if ticket.escalation_level >= 3:
-                        department = getattr(ticket.user, 'department', None)
-                        if department and getattr(department, 'manager', None) and department.manager != ticket.assigned_to_user:
-                            ticket.assigned_to_user = department.manager
-                            messages.info(request, f'Ticket has been escalated to department manager {department.manager.get_full_name()}.')
+                    # Remove department escalation logic
                     ticket.save(user=request.user)
                     TicketActivity.objects.create(
                         ticket=ticket,
@@ -13915,16 +13928,15 @@ def ticket_detail(request, pk):
             Q(description__icontains=ticket.subject[:30])
         ).exclude(id=ticket.id)[:5]
 
+    # Remove all logic that references user.department or ticket.user.department
     if user_roles['is_admin']:
         available_cc_users = User.objects.filter(is_active=True).exclude(id__in=ticket.cc_users.values_list('id', flat=True))
     elif user_roles['is_hr']:
         available_cc_users = User.objects.filter(
-            Q(groups__name__in=['HR', 'Manager']) | 
-            Q(department=ticket.user.department)
+            Q(groups__name__in=['HR', 'Manager'])
         ).filter(is_active=True).exclude(id__in=ticket.cc_users.values_list('id', flat=True)).distinct()
     elif user_roles['is_manager'] or is_ticket_owner:
         available_cc_users = User.objects.filter(
-            Q(department=user.department) |
             Q(id=ticket.assigned_to_user_id) if ticket.assigned_to_user_id else Q()
         ).filter(is_active=True).exclude(id__in=ticket.cc_users.values_list('id', flat=True)).distinct()
     else:
