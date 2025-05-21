@@ -1,51 +1,59 @@
 {% extends "components/manager/shifts/dashboard.html" %}
 {% block shift_content %}
-<div class=" p-6">
+<div class="p-0">
     <!-- Header and search/filter -->
-    <div class="flex flex-col md:flex-row justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold text-gray-800">Shift Management</h1>
-        <div class="mt-4 md:mt-0 flex flex-col sm:flex-row gap-2">
-            <form method="GET" class="flex flex-wrap gap-2">
+    <div class="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4">
+        <div class="flex items-center gap-3">
+            <span class="inline-block bg-blue-100 text-blue-600 rounded-full p-2">
+                <span class="material-symbols-rounded text-xl">category</span>
+            </span>
+            <h1 class="text-2xl font-bold text-slate-800">Shift Types</h1>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-2">
+            <form method="GET" class="flex flex-wrap gap-2 items-center">
                 <div class="relative">
                     <input type="text" name="search" placeholder="Search shifts..." value="{{ search_query }}"
-                        class="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <div class="absolute left-3 top-2.5">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                    </div>
+                        class="pl-10 pr-4 py-2 border border-slate-300 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-700 text-sm">
+                    <span class="absolute left-3 top-2.5">
+                        <span class="material-symbols-rounded text-slate-400 text-base">search</span>
+                    </span>
                 </div>
-                <select name="is_active" class="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <select name="is_active" class="px-4 py-2 border border-slate-300 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-700 text-sm">
                     <option value="">All Status</option>
                     <option value="true" {% if is_active == 'true' %}selected{% endif %}>Active</option>
                     <option value="false" {% if is_active == 'false' %}selected{% endif %}>Inactive</option>
                 </select>
-                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
                     Filter
                 </button>
             </form>
             <a href="{% url 'aps_manager:shift_list' %}?shift_create=true" 
-               class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-center">
+               class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-center text-sm font-medium flex items-center gap-1">
+                <span class="material-symbols-rounded text-base">add</span>
                 Add New Shift
             </a>
         </div>
     </div>
+
     <!-- Shift create form (initially hidden) -->
     {% if request.GET.shift_create %}
-    <div id="shiftCreateForm" class="mb-8 p-6 bg-white rounded-lg shadow-lg border border-gray-100">
-        <h2 class="text-2xl font-bold text-gray-800 mb-6">Create New Shift</h2>
+    <div id="shiftCreateForm" class="mb-8 p-8 bg-white rounded-2xl shadow-lg border border-slate-100">
+        <h2 class="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+            <span class="material-symbols-rounded text-blue-500">add_circle</span>
+            Create New Shift
+        </h2>
         <form method="POST" action="{% url 'aps_manager:shift_create' %}">
             {% csrf_token %}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-700">Shift Name</label>
+                    <label class="block text-sm font-semibold text-slate-700">Shift Name</label>
                     <input type="text" name="name" required
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200">
+                        class="w-full px-4 py-2 border border-slate-300 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-700 text-sm">
                 </div>
                 <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-700">Work Schedule</label>
+                    <label class="block text-sm font-semibold text-slate-700">Work Schedule</label>
                     <select name="work_days" id="workDaysSelect" onchange="toggleCustomDays()" required
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200">
+                        class="w-full px-4 py-2 border border-slate-300 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-700 text-sm">
                         <option value="">Select Schedule</option>
                         <option value="Weekdays">Weekdays (Mon-Fri)</option>
                         <option value="Weekends">Weekends (Sat-Sun)</option>
@@ -54,42 +62,44 @@
                     </select>
                 </div>
                 <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-700">Start Time</label>
+                    <label class="block text-sm font-semibold text-slate-700">Start Time</label>
                     <input type="time" name="start_time" required
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200">
+                        class="w-full px-4 py-2 border border-slate-300 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-700 text-sm">
                 </div>
                 <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-700">End Time</label>
+                    <label class="block text-sm font-semibold text-slate-700">End Time</label>
                     <input type="time" name="end_time" required
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200">
+                        class="w-full px-4 py-2 border border-slate-300 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-700 text-sm">
                 </div>
                 <div id="customDaysDiv" class="hidden col-span-1 md:col-span-2 space-y-3">
-                    <label class="block text-sm font-semibold text-gray-700">Select Days</label>
+                    <label class="block text-sm font-semibold text-slate-700">Select Days</label>
                     <div class="flex flex-wrap gap-4">
                         {% for day in weekdays %}
-                        <label class="inline-flex items-center hover:bg-gray-50 p-2 rounded-lg transition duration-200">
+                        <label class="inline-flex items-center hover:bg-slate-100 p-2 rounded-lg transition duration-200">
                             <input type="checkbox" name="custom_days" value="{{ day }}" 
                                    class="h-5 w-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                            <span class="ml-2 text-sm font-medium text-gray-700">{{ day }}</span>
+                            <span class="ml-2 text-sm font-medium text-slate-700">{{ day }}</span>
                         </label>
                         {% endfor %}
                     </div>
                 </div>
                 <div class="md:col-span-2">
-                    <label class="inline-flex items-center hover:bg-gray-50 p-2 rounded-lg transition duration-200">
+                    <label class="inline-flex items-center hover:bg-slate-100 p-2 rounded-lg transition duration-200">
                         <input type="checkbox" name="is_active" checked 
                                class="h-5 w-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                        <span class="ml-2 text-sm font-medium text-gray-700">Active</span>
+                        <span class="ml-2 text-sm font-medium text-slate-700">Active</span>
                     </label>
                 </div>
             </div>
             <div class="mt-6 flex gap-3">
                 <button type="submit" 
-                        class="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-200">
+                        class="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-200 flex items-center gap-1">
+                    <span class="material-symbols-rounded text-base">check</span>
                     Create Shift
                 </button>
                 <a href="{% url 'aps_manager:shift_list' %}" 
-                   class="px-6 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition duration-200">
+                   class="px-6 py-2.5 bg-slate-100 text-slate-700 font-medium rounded-lg hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 transition duration-200 flex items-center gap-1">
+                    <span class="material-symbols-rounded text-base">close</span>
                     Cancel
                 </a>
             </div>
@@ -99,20 +109,23 @@
 
     <!-- Shift edit form (initially hidden) -->
     {% if shift %}
-    <div id="shiftEditForm" class="mb-8 p-6 bg-white rounded-lg shadow-lg border border-gray-100">
-        <h2 class="text-2xl font-bold text-gray-800 mb-6">Edit Shift</h2>
+    <div id="shiftEditForm" class="mb-8 p-8 bg-white rounded-2xl shadow-lg border border-slate-100">
+        <h2 class="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+            <span class="material-symbols-rounded text-blue-500">edit</span>
+            Edit Shift
+        </h2>
         <form method="POST" action="{% url 'aps_manager:shift_update' shift.pk %}">
             {% csrf_token %}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-700">Shift Name</label>
+                    <label class="block text-sm font-semibold text-slate-700">Shift Name</label>
                     <input type="text" name="name" value="{{ shift.name }}" required
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200">
+                        class="w-full px-4 py-2 border border-slate-300 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-700 text-sm">
                 </div>
                 <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-700">Work Schedule</label>
+                    <label class="block text-sm font-semibold text-slate-700">Work Schedule</label>
                     <select name="work_days" id="editWorkDaysSelect" onchange="toggleEditCustomDays()" required
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200">
+                        class="w-full px-4 py-2 border border-slate-300 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-700 text-sm">
                         <option value="">Select Schedule</option>
                         <option value="Weekdays" {% if shift.work_days == 'Weekdays' %}selected{% endif %}>Weekdays (Mon-Fri)</option>
                         <option value="Weekends" {% if shift.work_days == 'Weekends' %}selected{% endif %}>Weekends (Sat-Sun)</option>
@@ -121,43 +134,45 @@
                     </select>
                 </div>
                 <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-700">Start Time</label>
+                    <label class="block text-sm font-semibold text-slate-700">Start Time</label>
                     <input type="time" name="start_time" value="{{ shift.start_time|time:'H:i' }}" required
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200">
+                        class="w-full px-4 py-2 border border-slate-300 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-700 text-sm">
                 </div>
                 <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-700">End Time</label>
+                    <label class="block text-sm font-semibold text-slate-700">End Time</label>
                     <input type="time" name="end_time" value="{{ shift.end_time|time:'H:i' }}" required
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200">
+                        class="w-full px-4 py-2 border border-slate-300 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-700 text-sm">
                 </div>
                 <div id="editCustomDaysDiv" class="{% if shift.work_days != 'Custom' %}hidden{% endif %} col-span-1 md:col-span-2 space-y-3">
-                    <label class="block text-sm font-semibold text-gray-700">Select Days</label>
+                    <label class="block text-sm font-semibold text-slate-700">Select Days</label>
                     <div class="flex flex-wrap gap-4">
                         {% for day in weekdays %}
-                        <label class="inline-flex items-center hover:bg-gray-50 p-2 rounded-lg transition duration-200">
+                        <label class="inline-flex items-center hover:bg-slate-100 p-2 rounded-lg transition duration-200">
                             <input type="checkbox" name="custom_days" value="{{ day }}"
                                    {% if day in selected_days %}checked{% endif %}
                                    class="h-5 w-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                            <span class="ml-2 text-sm font-medium text-gray-700">{{ day }}</span>
+                            <span class="ml-2 text-sm font-medium text-slate-700">{{ day }}</span>
                         </label>
                         {% endfor %}
                     </div>
                 </div>
                 <div class="md:col-span-2">
-                    <label class="inline-flex items-center hover:bg-gray-50 p-2 rounded-lg transition duration-200">
+                    <label class="inline-flex items-center hover:bg-slate-100 p-2 rounded-lg transition duration-200">
                         <input type="checkbox" name="is_active" {% if shift.is_active %}checked{% endif %}
                                class="h-5 w-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                        <span class="ml-2 text-sm font-medium text-gray-700">Active</span>
+                        <span class="ml-2 text-sm font-medium text-slate-700">Active</span>
                     </label>
                 </div>
             </div>
             <div class="mt-6 flex gap-3">
                 <button type="submit"
-                        class="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-200">
+                        class="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-200 flex items-center gap-1">
+                    <span class="material-symbols-rounded text-base">check</span>
                     Update Shift
                 </button>
                 <a href="{% url 'aps_manager:shift_list' %}"
-                   class="px-6 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition duration-200">
+                   class="px-6 py-2.5 bg-slate-100 text-slate-700 font-medium rounded-lg hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 transition duration-200 flex items-center gap-1">
+                    <span class="material-symbols-rounded text-base">close</span>
                     Cancel
                 </a>
             </div>
@@ -167,13 +182,19 @@
 
     <!-- Delete confirmation dialog (initially hidden) -->
     {% if request.GET.shift_delete %}
-    <div id="deleteConfirmation" class="mb-8 p-6 bg-white rounded-lg shadow-lg border border-red-200">
-        <h2 class="text-2xl font-bold text-red-600 mb-4">Confirm Delete</h2>
-        <p class="text-gray-700 mb-4">Are you sure you want to delete the shift <strong class="font-semibold">"{{ shift.name }}"</strong>?</p>
+    <div id="deleteConfirmation" class="mb-8 p-8 bg-white rounded-2xl shadow-lg border border-red-200">
+        <h2 class="text-xl font-bold text-red-600 mb-4 flex items-center gap-2">
+            <span class="material-symbols-rounded text-red-500">delete</span>
+            Confirm Delete
+        </h2>
+        <p class="text-slate-700 mb-4">Are you sure you want to delete the shift <strong class="font-semibold">"{{ shift.name }}"</strong>?</p>
         
         {% if has_any_assignments %}
         <div class="mb-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-r-lg">
-            <p class="font-semibold text-yellow-800">Warning!</p>
+            <p class="font-semibold text-yellow-800 flex items-center gap-1">
+                <span class="material-symbols-rounded text-yellow-700 text-base">warning</span>
+                Warning!
+            </p>
             <p class="text-yellow-700">This shift has {{ assignment_count }} assignment records.</p>
             {% if has_active_assignments %}
             <p class="font-bold text-yellow-800 mt-2">Some assignments are currently active!</p>
@@ -188,17 +209,19 @@
                 <label class="inline-flex items-center hover:bg-red-50 p-2 rounded-lg transition duration-200">
                     <input type="checkbox" name="force_delete" value="true"
                            class="h-5 w-5 text-red-600 rounded focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
-                    <span class="ml-2 text-sm font-medium text-gray-700">I understand this will delete active shift assignments</span>
+                    <span class="ml-2 text-sm font-medium text-slate-700">I understand this will delete active shift assignments</span>
                 </label>
             </div>
             {% endif %}
             <div class="flex gap-3">
                 <button type="submit"
-                        class="px-6 py-2.5 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition duration-200">
+                        class="px-6 py-2.5 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition duration-200 flex items-center gap-1">
+                    <span class="material-symbols-rounded text-base">delete</span>
                     Delete Shift
                 </button>
                 <a href="{% url 'aps_manager:shift_list' %}"
-                   class="px-6 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition duration-200">
+                   class="px-6 py-2.5 bg-slate-100 text-slate-700 font-medium rounded-lg hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 transition duration-200 flex items-center gap-1">
+                    <span class="material-symbols-rounded text-base">close</span>
                     Cancel
                 </a>
             </div>
@@ -207,36 +230,36 @@
     {% endif %}
 
     <!-- Shift listing -->
-    <div class="bg-white rounded-xl shadow-xl overflow-hidden border border-gray-100 hover:shadow-2xl transition-all duration-300">
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gradient-to-r from-indigo-50 to-indigo-100">
+    <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100 hover:shadow-2xl transition-all duration-300">
+        <table class="min-w-full divide-y divide-slate-200">
+            <thead class="bg-gradient-to-r from-blue-50 to-blue-100">
                 <tr>
-                    <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-indigo-700 uppercase tracking-wider">Shift Name</th>
-                    <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-indigo-700 uppercase tracking-wider">Schedule</th>
-                    <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-indigo-700 uppercase tracking-wider">Time</th>
-                    <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-indigo-700 uppercase tracking-wider">Status</th>
-                    <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-indigo-700 uppercase tracking-wider">Assigned</th>
-                    <th scope="col" class="px-6 py-4 text-right text-xs font-bold text-indigo-700 uppercase tracking-wider">Actions</th>
+                    <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Shift Name</th>
+                    <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Schedule</th>
+                    <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Time</th>
+                    <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Status</th>
+                    <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Assigned</th>
+                    <th scope="col" class="px-6 py-4 text-right text-xs font-bold text-blue-700 uppercase tracking-wider">Actions</th>
                 </tr>
             </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
+            <tbody class="bg-white divide-y divide-slate-200">
                 {% for shift in page_obj %}
-                <tr class="hover:bg-indigo-50/50 transition-all duration-200">
+                <tr class="hover:bg-blue-50/50 transition-all duration-200">
                     <td class="px-6 py-4 whitespace-nowrap">
                         <a href="{% url 'aps_manager:shift_list' %}?shift_detail={{ shift.pk }}" 
-                           class="font-medium text-indigo-600 hover:text-indigo-800 transition duration-150">
+                           class="font-medium text-blue-600 hover:text-blue-800 transition duration-150">
                             {{ shift.name }}
                         </a>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-700">
                         {% if shift.work_days == 'Custom' %}
                             <span class="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">Custom ({{ shift.custom_work_days }})</span>
                         {% else %}
                             <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">{{ shift.work_days }}</span>
                         {% endif %}
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        <span class="px-2 py-1 bg-gray-100 rounded-full text-xs font-medium">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-700">
+                        <span class="px-2 py-1 bg-slate-100 rounded-full text-xs font-medium">
                             {{ shift.start_time|time:"h:i A" }} - {{ shift.end_time|time:"h:i A" }}
                         </span>
                     </td>
@@ -248,83 +271,38 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         {% if shift.current_assignments %}
-                        <span class="text-sm font-medium text-gray-900">{{ shift.current_assignments|length }}</span>
+                        <span class="text-sm font-medium text-slate-900">{{ shift.current_assignments|length }}</span>
                         {% else %}
-                        <span class="text-sm text-gray-500">0</span>
+                        <span class="text-sm text-slate-400">0</span>
                         {% endif %}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-right">
-                        <div class="flex justify-end gap-3">
+                        <div class="flex justify-end gap-2">
                             <a href="{% url 'aps_manager:shift_list' %}?shift_edit={{ shift.pk }}" 
-                               class="text-indigo-600 hover:text-indigo-900 transition duration-150"
+                               class="text-blue-600 hover:text-blue-900 transition duration-150 p-2 rounded-full hover:bg-blue-50"
                                aria-label="Edit shift">
-                                <svg xmlns="http://www.w3.org/2000/svg" 
-                                     class="h-5 w-5" 
-                                     fill="none" 
-                                     viewBox="0 0 24 24" 
-                                     stroke="currentColor"
-                                     aria-hidden="true"
-                                     focusable="false">
-                                    <path stroke-linecap="round" 
-                                          stroke-linejoin="round" 
-                                          stroke-width="2" 
-                                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                </svg>
+                                <span class="material-symbols-rounded text-lg">edit</span>
                             </a>
                             <a href="{% url 'aps_manager:shift_list' %}?shift_delete={{ shift.pk }}" 
-                               class="text-red-600 hover:text-red-900 transition duration-150"
+                               class="text-red-600 hover:text-red-900 transition duration-150 p-2 rounded-full hover:bg-red-50"
                                aria-label="Delete shift">
-                                <svg xmlns="http://www.w3.org/2000/svg" 
-                                     class="h-5 w-5" 
-                                     fill="none" 
-                                     viewBox="0 0 24 24" 
-                                     stroke="currentColor"
-                                     aria-hidden="true"
-                                     focusable="false">
-                                    <path stroke-linecap="round" 
-                                          stroke-linejoin="round" 
-                                          stroke-width="2" 
-                                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
+                                <span class="material-symbols-rounded text-lg">delete</span>
                             </a>
                             <button onclick="toggleShiftActive({{ shift.pk }}, {{ shift.is_active|lower }})"
-                                    class="text-gray-600 hover:text-gray-900 transition duration-150"
+                                    class="text-slate-600 hover:text-slate-900 transition duration-150 p-2 rounded-full hover:bg-slate-100"
                                     aria-label="{% if shift.is_active %}Deactivate{% else %}Activate{% endif %} shift">
                                 {% if shift.is_active %}
-                                <svg xmlns="http://www.w3.org/2000/svg" 
-                                     class="h-5 w-5" 
-                                     fill="none" 
-                                     viewBox="0 0 24 24" 
-                                     stroke="currentColor"
-                                     aria-hidden="true"
-                                     focusable="false">
-                                    <path stroke-linecap="round" 
-                                          stroke-linejoin="round" 
-                                          stroke-width="2" 
-                                          d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
+                                <span class="material-symbols-rounded text-lg">toggle_off</span>
                                 {% else %}
-                                <svg xmlns="http://www.w3.org/2000/svg" 
-                                     class="h-5 w-5" 
-                                     fill="none" 
-                                     viewBox="0 0 24 24" 
-                                     stroke="currentColor"
-                                     aria-hidden="true"
-                                     focusable="false">
-                                    <path stroke-linecap="round" 
-                                          stroke-linejoin="round" 
-                                          stroke-width="2" 
-                                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
+                                <span class="material-symbols-rounded text-lg">toggle_on</span>
                                 {% endif %}
                             </button>
                         </div>
                     </td>
-                    </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="6" class="px-6 py-8 text-center text-gray-500 italic">
+                    <td colspan="6" class="px-6 py-8 text-center text-slate-400 italic">
                         No shifts found. Create a new shift to get started.
                     </td>
                 </tr>
@@ -339,12 +317,12 @@
         <nav class="inline-flex rounded-lg shadow-sm">
             {% if page_obj.has_previous %}
             <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if is_active %}&is_active={{ is_active }}{% endif %}" 
-               class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-l-lg hover:bg-gray-50 focus:z-10 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150">
+               class="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-l-lg hover:bg-slate-50 focus:z-10 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150">
                 Previous
             </a>
             {% endif %}
             
-            <span class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 
+            <span class="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 border border-slate-300 
                        {% if not page_obj.has_previous %}rounded-l-lg{% endif %}
                        {% if not page_obj.has_next %}rounded-r-lg{% endif %}">
                 Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
@@ -352,7 +330,7 @@
             
             {% if page_obj.has_next %}
             <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if is_active %}&is_active={{ is_active }}{% endif %}" 
-               class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-r-lg hover:bg-gray-50 focus:z-10 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150">
+               class="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-r-lg hover:bg-slate-50 focus:z-10 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150">
                 Next
             </a>
             {% endif %}
@@ -364,23 +342,24 @@
 <!-- Shift detail modal (initially hidden) -->
 {% if shift_detail %}
 <div id="shiftDetailModal" class="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center z-50">
-    <div class="relative bg-white rounded-xl shadow-2xl m-4 max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+    <div class="relative bg-white rounded-2xl shadow-2xl m-4 max-w-3xl w-full max-h-[90vh] overflow-y-auto">
         <!-- Modal header -->
         <div class="flex justify-between items-center p-6 border-b sticky top-0 bg-white z-10">
-            <h3 class="text-2xl font-bold text-gray-800">{{ shift_detail.name }} Details</h3>
+            <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                <span class="material-symbols-rounded text-blue-500">info</span>
+                {{ shift_detail.name }} Details
+            </h3>
             <a href="{% url 'aps_manager:shift_list' %}" 
-               class="text-gray-400 hover:text-gray-500 transition duration-150">
-                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
+               class="text-slate-400 hover:text-slate-500 transition duration-150 p-2 rounded-full hover:bg-slate-100">
+                <span class="material-symbols-rounded text-xl">close</span>
             </a>
         </div>
         <!-- Modal body -->
         <div class="p-6 overflow-y-auto" style="max-height: calc(90vh - 160px);">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <p class="text-sm font-semibold text-gray-600 mb-1">Schedule</p>
-                    <p class="text-base text-gray-900">
+                <div class="bg-slate-50 p-4 rounded-lg">
+                    <p class="text-sm font-semibold text-slate-600 mb-1">Schedule</p>
+                    <p class="text-base text-slate-900">
                         {% if shift_detail.work_days == 'Custom' %}
                             Custom ({{ shift_detail.custom_work_days }})
                         {% else %}
@@ -388,14 +367,14 @@
                         {% endif %}
                     </p>
                 </div>
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <p class="text-sm font-semibold text-gray-600 mb-1">Time</p>
-                    <p class="text-base text-gray-900">
+                <div class="bg-slate-50 p-4 rounded-lg">
+                    <p class="text-sm font-semibold text-slate-600 mb-1">Time</p>
+                    <p class="text-base text-slate-900">
                         {{ shift_detail.start_time|time:"h:i A" }} - {{ shift_detail.end_time|time:"h:i A" }}
                     </p>
                 </div>
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <p class="text-sm font-semibold text-gray-600 mb-1">Status</p>
+                <div class="bg-slate-50 p-4 rounded-lg">
+                    <p class="text-sm font-semibold text-slate-600 mb-1">Status</p>
                     <p class="text-base">
                         <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
                               {% if shift_detail.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
@@ -403,43 +382,46 @@
                         </span>
                     </p>
                 </div>
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <p class="text-sm font-semibold text-gray-600 mb-1">Created On</p>
-                    <p class="text-base text-gray-900">{{ shift_detail.created_at|date:"M d, Y" }}</p>
+                <div class="bg-slate-50 p-4 rounded-lg">
+                    <p class="text-sm font-semibold text-slate-600 mb-1">Created On</p>
+                    <p class="text-base text-slate-900">{{ shift_detail.created_at|date:"M d, Y" }}</p>
                 </div>
             </div>
             
-            <h4 class="text-xl font-bold text-gray-800 mb-4">Current Assignments ({{ total_assigned|default:"0" }})</h4>
+            <h4 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <span class="material-symbols-rounded text-blue-500">assignment_ind</span>
+                Current Assignments ({{ total_assigned|default:"0" }})
+            </h4>
             
             {% if assignments %}
             <div class="bg-white rounded-lg shadow">
                 <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
+                    <table class="min-w-full divide-y divide-slate-200">
+                        <thead class="bg-slate-50">
                             <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Employee</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Email</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Effective From</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Effective To</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Employee</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Email</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Effective From</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Effective To</th>
                             </tr>
                         </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
+                        <tbody class="bg-white divide-y divide-slate-200">
                             {% for assignment in assignments %}
-                            <tr class="hover:bg-gray-50 transition duration-150">
-                                <td class="px-6 py-4 text-sm font-medium text-gray-900">
+                            <tr class="hover:bg-slate-50 transition duration-150">
+                                <td class="px-6 py-4 text-sm font-medium text-slate-900">
                                     {{ assignment.user.get_full_name }}
                                 </td>
-                                <td class="px-6 py-4 text-sm text-gray-700">
+                                <td class="px-6 py-4 text-sm text-slate-700">
                                     {{ assignment.user.email }}
                                 </td>
-                                <td class="px-6 py-4 text-sm text-gray-700">
+                                <td class="px-6 py-4 text-sm text-slate-700">
                                     {{ assignment.effective_from|date:"M d, Y" }}
                                 </td>
-                                <td class="px-6 py-4 text-sm text-gray-700">
+                                <td class="px-6 py-4 text-sm text-slate-700">
                                     {% if assignment.effective_to %}
                                         {{ assignment.effective_to|date:"M d, Y" }}
                                     {% else %}
-                                        <span class="text-gray-400">-</span>
+                                        <span class="text-slate-400">-</span>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -449,19 +431,21 @@
                 </div>
             </div>
             {% else %}
-            <p class="text-gray-500 italic text-center py-4">No active assignments for this shift.</p>
+            <p class="text-slate-400 italic text-center py-4">No active assignments for this shift.</p>
             {% endif %}
         </div>
         
         <!-- Modal footer -->
-        <div class="flex items-center justify-end p-6 border-t bg-gray-50 sticky bottom-0">
+        <div class="flex items-center justify-end p-6 border-t bg-slate-50 sticky bottom-0">
             <div class="flex gap-3">
                 <a href="{% url 'aps_manager:shift_list' %}?shift_edit={{ shift_detail.pk }}" 
-                   class="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-200">
+                   class="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-200 flex items-center gap-1">
+                    <span class="material-symbols-rounded text-base">edit</span>
                     Edit Shift
                 </a>
                 <a href="{% url 'aps_manager:shift_list' %}"
-                   class="px-6 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition duration-200">
+                   class="px-6 py-2.5 bg-slate-100 text-slate-700 font-medium rounded-lg hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 transition duration-200 flex items-center gap-1">
+                    <span class="material-symbols-rounded text-base">close</span>
                     Close
                 </a>
             </div>
@@ -538,4 +522,5 @@
         }
     });
 </script>
+<!-- End block -->
 {% endblock shift_content %}
