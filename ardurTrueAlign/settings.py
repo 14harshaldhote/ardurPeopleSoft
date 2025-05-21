@@ -117,8 +117,8 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'ardurTrueAlign',
         'USER': 'root',
-        'PASSWORD': '12345678',
-        'HOST': 'localhost',
+        'PASSWORD': '12123344',
+        'HOST': '127.0.0.1',
         'PORT': '3306',
     }
 }
@@ -141,6 +141,9 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+ASGI_APPLICATION = 'ardurTrueAlign.asgi.application'
+
 
 
 # Internationalization

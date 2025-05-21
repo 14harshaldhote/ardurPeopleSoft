@@ -2506,7 +2506,6 @@ from django.db import models
 from django.utils.timezone import now
 import uuid
 from django.contrib.auth.models import User
-
 class Support(models.Model):
     class Status(models.TextChoices):
         NEW = 'New', 'New'
@@ -2561,6 +2560,14 @@ class Support(models.Model):
         null=True, 
         blank=True,
         related_name='assigned_tickets'
+    )
+
+    # CC Users (NEW FIELD)
+    cc_users = models.ManyToManyField(
+        User,
+        blank=True,
+        related_name='cc_tickets',
+        help_text="Users to be CC'd on this ticket"
     )
 
     # Timestamps

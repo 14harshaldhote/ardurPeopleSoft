@@ -1,472 +1,641 @@
-
 {% extends "base.html" %}
 
 {% block title %}Support Dashboard{% endblock %}
 
-
 {% block head_extras %}
-<!-- Chart.js for data visualization -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
-<!-- Date picker for custom date ranges -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
+    <!-- Date picker for custom date ranges -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
+    <!-- Animate.css for subtle animations -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <style>
+        .card-hover:hover {
+            box-shadow: 0 8px 32px 0 rgba(31, 41, 55, 0.15);
+            transform: translateY(-2px) scale(1.03);
+            transition: all 0.2s;
+        }
+        .dashboard-badge {
+            transition: background 0.2s, color 0.2s;
+        }
+        .dashboard-badge:hover {
+            filter: brightness(1.1);
+            box-shadow: 0 2px 8px 0 rgba(59, 130, 246, 0.08);
+        }
+        .table-row-anim {
+            transition: background 0.2s;
+        }
+        .table-row-anim:hover {
+            background: #f1f5f9;
+        }
+        .fade-in {
+            animation: fadeIn 0.7s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px);}
+            to { opacity: 1; transform: none;}
+        }
+        .role-badge {
+            font-size: 0.85em;
+            padding: 0.15em 0.6em;
+            border-radius: 0.5em;
+            background: #e0e7ef;
+            color: #2563eb;
+            margin-left: 0.5em;
+        }
+    </style>
 {% endblock %}
-{% load custom_filters %}
 
 {% block content %}
-<div class="container px-4 py-6 mx-auto">
-    <!-- Dashboard Header -->
-    <div class="flex flex-col md:flex-row justify-between items-start mb-6">
-        <div>
-            <h1 class="text-2xl font-bold text-gray-800">Support Dashboard</h1>
-            <p class="text-gray-600">Comprehensive support ticket analytics and insights</p>
+<div class="container mx-auto px-4 py-6 fade-in">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
+        <h1 class="text-3xl font-bold text-gray-800 flex items-center gap-2">
+            <span class="animate__animated animate__fadeInDown">Support Dashboard</span>
+            <span class="ml-2 text-blue-500 animate__animated animate__pulse animate__infinite" title="Live Data">
+                <svg class="w-4 h-4 inline" fill="currentColor" viewBox="0 0 20 20"><circle cx="10" cy="10" r="6"/></svg>
+            </span>
+            {% if is_admin %}
+                <span class="role-badge bg-blue-100 text-blue-700">Admin</span>
+            {% elif is_hr %}
+                <span class="role-badge bg-green-100 text-green-700">HR</span>
+            {% elif is_manager %}
+                <span class="role-badge bg-purple-100 text-purple-700">Manager</span>
+            {% else %}
+                <span class="role-badge bg-gray-100 text-gray-700">User</span>
+            {% endif %}
+        </h1>
+        <form method="get" class="flex flex-wrap items-center gap-2 bg-gray-50 rounded px-3 py-2 shadow-sm">
+            <select name="date_range" id="date_range" class="rounded border-gray-300 px-2 py-1 text-sm focus:ring-blue-500 focus:border-blue-500 transition">
+                <option value="last_7_days" {% if date_range == 'last_7_days' %}selected{% endif %}>Last 7 Days</option>
+                <option value="last_30_days" {% if date_range == 'last_30_days' %}selected{% endif %}>Last 30 Days</option>
+                <option value="last_90_days" {% if date_range == 'last_90_days' %}selected{% endif %}>Last 90 Days</option>
+                <option value="year_to_date" {% if date_range == 'year_to_date' %}selected{% endif %}>Year to Date</option>
+                <option value="custom" {% if date_range == 'custom' %}selected{% endif %}>Custom</option>
+            </select>
+            <input type="text" name="from_date" id="from_date" placeholder="From" value="{{ from_date|date:'Y-m-d' }}" class="rounded border-gray-300 px-2 py-1 text-sm focus:ring-blue-500 focus:border-blue-500 transition {% if date_range != 'custom' %}hidden{% endif %}">
+            <input type="text" name="to_date" id="to_date" placeholder="To" value="{{ to_date|date:'Y-m-d' }}" class="rounded border-gray-300 px-2 py-1 text-sm focus:ring-blue-500 focus:border-blue-500 transition {% if date_range != 'custom' %}hidden{% endif %}">
+            <button type="submit" class="ml-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded font-medium transition flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                Apply
+            </button>
+        </form>
+    </div>
+
+    <!-- Role-based action buttons -->
+    <div class="flex flex-wrap gap-3 mb-6">
+        <a href="{% url 'aps_support:create_ticket' %}" class="dashboard-badge bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow font-semibold transition flex items-center gap-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4"/></svg>
+            Create Ticket
+        </a>
+        {% if is_admin or is_hr or is_manager %}
+            <a href="{% url 'aps_support:ticket_list' %}" class="dashboard-badge bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded shadow font-semibold transition">All Tickets</a>
+            <a href="{% url 'aps_support:ticket_list' %}?status=Open" class="dashboard-badge bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded shadow font-semibold transition">Open Tickets</a>
+            <a href="{% url 'aps_support:ticket_list' %}?status=In+Progress" class="dashboard-badge bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded shadow font-semibold transition">In Progress</a>
+            <a href="{% url 'aps_support:ticket_list' %}?status=Resolved" class="dashboard-badge bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded shadow font-semibold transition">Resolved</a>
+            <a href="{% url 'aps_support:ticket_list' %}?status=Closed" class="dashboard-badge bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded shadow font-semibold transition">Closed</a>
+        {% else %}
+            <a href="{% url 'aps_support:ticket_list' %}" class="dashboard-badge bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded shadow font-semibold transition">My Tickets</a>
+        {% endif %}
+    </div>
+
+    <!-- Dashboard Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow p-5 flex flex-col items-center card-hover animate__animated animate__fadeInUp" style="animation-delay:0.05s;">
+            <div class="text-3xl font-bold text-blue-700 counter" data-count="{{ total_tickets }}">0</div>
+            <div class="text-gray-500 mt-1">Total Tickets</div>
         </div>
-        
-        <!-- Date Range Filter -->
-        <div class="mt-4 md:mt-0 bg-white p-4 rounded-lg shadow">
-            <form action="" method="get" class="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-4">
-                <div>
-                    <select name="date_range" id="date_range" class="rounded border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500">
-                        <option value="last_7_days" {% if date_range == 'last_7_days' %}selected{% endif %}>Last 7 Days</option>
-                        <option value="last_30_days" {% if date_range == 'last_30_days' %}selected{% endif %}>Last 30 Days</option>
-                        <option value="last_90_days" {% if date_range == 'last_90_days' %}selected{% endif %}>Last 90 Days</option>
-                        <option value="year_to_date" {% if date_range == 'year_to_date' %}selected{% endif %}>Year to Date</option>
-                        <option value="custom" {% if date_range == 'custom' %}selected{% endif %}>Custom Range</option>
-                    </select>
-                </div>
-                <div id="custom_date_container" class="{% if date_range != 'custom' %}hidden{% endif %} flex space-x-2">
-                    <input type="text" name="from_date" id="from_date" placeholder="From Date" class="datepicker rounded border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500" value="{% if from_date %}{{ from_date|date:'Y-m-d' }}{% else %}{% endif %}">
-                    <input type="text" name="to_date" id="to_date" placeholder="To Date" class="datepicker rounded border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500" value="{% if to_date %}{{ to_date|date:'Y-m-d' }}{% else %}{% endif %}">
-                 </div>
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium">Apply</button>
-            </form>
+        <div class="bg-white rounded-lg shadow p-5 flex flex-col items-center card-hover animate__animated animate__fadeInUp" style="animation-delay:0.1s;">
+            <div class="text-3xl font-bold text-yellow-600 counter" data-count="{{ open_tickets }}">0</div>
+            <div class="text-gray-500 mt-1">Open</div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-5 flex flex-col items-center card-hover animate__animated animate__fadeInUp" style="animation-delay:0.15s;">
+            <div class="text-3xl font-bold text-indigo-600 counter" data-count="{{ in_progress_tickets }}">0</div>
+            <div class="text-gray-500 mt-1">In Progress</div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-5 flex flex-col items-center card-hover animate__animated animate__fadeInUp" style="animation-delay:0.2s;">
+            <div class="text-3xl font-bold text-teal-600 counter" data-count="{{ resolved_tickets }}">0</div>
+            <div class="text-gray-500 mt-1">Resolved</div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-5 flex flex-col items-center card-hover animate__animated animate__fadeInUp" style="animation-delay:0.25s;">
+            <div class="text-3xl font-bold text-gray-700 counter" data-count="{{ closed_tickets }}">0</div>
+            <div class="text-gray-500 mt-1">Closed</div>
         </div>
     </div>
 
-    <!-- Stats Overview Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-        <!-- Total Tickets -->
-        <div class="bg-white rounded-lg shadow p-4">
-            <div class="flex items-center">
-                <div class="flex-shrink-0 rounded-full p-3 bg-blue-100">
-                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                    </svg>
+    <!-- Priority Distribution -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow p-6 card-hover animate__animated animate__fadeInLeft">
+            <h2 class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 8v4l3 3"/></svg>
+                Priority Distribution
+            </h2>
+            <div class="flex flex-wrap gap-4">
+                <div class="flex flex-col items-center">
+                    <div class="text-xl font-bold text-red-600 counter" data-count="{{ critical_tickets }}">0</div>
+                    <div class="text-xs text-gray-500">Critical</div>
+                    <div class="text-xs text-gray-400">{{ critical_percentage|floatformat:1 }}%</div>
                 </div>
-                <div class="ml-4">
-                    <h2 class="text-sm font-medium text-gray-600">Total Tickets</h2>
-                    <p class="text-xl font-bold text-gray-900">{{ total_tickets }}</p>
-                    {% if ticket_growth_rate != 0 %}
-                        <div class="flex items-center mt-1">
-                            {% if ticket_growth_rate > 0 %}
-                                <span class="text-xs px-1 bg-red-100 text-red-800 rounded">+{{ ticket_growth_rate|floatformat:1 }}%</span>
-                            {% else %}
-                                <span class="text-xs px-1 bg-green-100 text-green-800 rounded">{{ ticket_growth_rate|floatformat:1 }}%</span>
-                            {% endif %}
-                            <span class="text-xs text-gray-500 ml-1">vs previous period</span>
-                        </div>
-                    {% endif %}
+                <div class="flex flex-col items-center">
+                    <div class="text-xl font-bold text-orange-500 counter" data-count="{{ high_tickets }}">0</div>
+                    <div class="text-xs text-gray-500">High</div>
+                    <div class="text-xs text-gray-400">{{ high_percentage|floatformat:1 }}%</div>
+                </div>
+                <div class="flex flex-col items-center">
+                    <div class="text-xl font-bold text-yellow-500 counter" data-count="{{ medium_tickets }}">0</div>
+                    <div class="text-xs text-gray-500">Medium</div>
+                    <div class="text-xs text-gray-400">{{ medium_percentage|floatformat:1 }}%</div>
+                </div>
+                <div class="flex flex-col items-center">
+                    <div class="text-xl font-bold text-green-600 counter" data-count="{{ low_tickets }}">0</div>
+                    <div class="text-xs text-gray-500">Low</div>
+                    <div class="text-xs text-gray-400">{{ low_percentage|floatformat:1 }}%</div>
                 </div>
             </div>
+            <canvas id="priorityChart" class="mt-4"></canvas>
         </div>
-        
-        <!-- Open Tickets -->
-        <div class="bg-white rounded-lg shadow p-4">
-            <div class="flex items-center">
-                <div class="flex-shrink-0 rounded-full p-3 bg-yellow-100">
-                    <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                </div>
-                <div class="ml-4">
-                    <h2 class="text-sm font-medium text-gray-600">Open</h2>
-                    <p class="text-xl font-bold text-gray-900">{{ open_tickets }}</p>
-                    <p class="text-xs text-gray-500">{% widthratio open_tickets total_tickets 100 %}% of total</p>                </div>
+        <div class="bg-white rounded-lg shadow p-6 card-hover animate__animated animate__fadeInRight">
+            <h2 class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
+                Issue Type Distribution
+            </h2>
+            <canvas id="issueTypeChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Time Analytics -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow p-6 card-hover animate__animated animate__fadeInUp" style="animation-delay:0.1s;">
+            <div class="text-gray-500 text-sm flex items-center gap-1">
+                <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 8v4l3 3"/></svg>
+                Avg. Resolution Time
             </div>
+            <div class="text-2xl font-bold text-blue-700 mt-1">{{ time_analytics.avg_resolution_time_human|default:"—" }}</div>
         </div>
-        
-        <!-- In Progress Tickets -->
-        <div class="bg-white rounded-lg shadow p-4">
-            <div class="flex items-center">
-                <div class="flex-shrink-0 rounded-full p-3 bg-purple-100">
-                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-                    </svg>
-                </div>
-                <div class="ml-4">
-                    <h2 class="text-sm font-medium text-gray-600">In Progress</h2>
-                    <p class="text-xl font-bold text-gray-900">{{ in_progress_tickets }}</p>
-                    <p class="text-xs text-gray-500">{% widthratio in_progress_tickets total_tickets 100 as percentage %}{{ percentage|floatformat:1 }}% of total</p>                </div>
+        <div class="bg-white rounded-lg shadow p-6 card-hover animate__animated animate__fadeInUp" style="animation-delay:0.15s;">
+            <div class="text-gray-500 text-sm flex items-center gap-1">
+                <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 8v4l3 3"/></svg>
+                Avg. Response Time
             </div>
+            <div class="text-2xl font-bold text-blue-700 mt-1">{{ time_analytics.avg_response_time_human|default:"—" }}</div>
         </div>
-        
-        <!-- Resolved Tickets -->
-        <div class="bg-white rounded-lg shadow p-4">
-            <div class="flex items-center">
-                <div class="flex-shrink-0 rounded-full p-3 bg-green-100">
-                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                </div>
-                <div class="ml-4">
-                    <h2 class="text-sm font-medium text-gray-600">Resolved</h2>
-                    <p class="text-xl font-bold text-gray-900">{{ resolved_tickets }}</p>
-                    <p class="text-xs text-gray-500">{% widthratio resolved_tickets total_tickets 100 as percentage %}{{ percentage|floatformat:1 }}% of total</p>                </div>
+        <div class="bg-white rounded-lg shadow p-6 card-hover animate__animated animate__fadeInUp" style="animation-delay:0.2s;">
+            <div class="text-gray-500 text-sm flex items-center gap-1">
+                <svg class="w-4 h-4 text-yellow-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
+                SLA Compliance
             </div>
-        </div>
-        
-        <!-- Closed Tickets -->
-        <div class="bg-white rounded-lg shadow p-4">
-            <div class="flex items-center">
-                <div class="flex-shrink-0 rounded-full p-3 bg-gray-100">
-                    <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                </div>
-                <div class="ml-4">
-                    <h2 class="text-sm font-medium text-gray-600">Closed</h2>
-                    <p class="text-xl font-bold text-gray-900">{{ closed_tickets }}</p>
-                    <p class="text-xs text-gray-500">{% widthratio closed_tickets total_tickets 100 as percentage %}{{ percentage|floatformat:1 }}% of total</p>                </div>
+            <div class="text-2xl font-bold text-blue-700 mt-1">
+                {% if time_analytics.sla_compliance is not None %}
+                    {{ time_analytics.sla_compliance|floatformat:1 }}%
+                {% else %}
+                    —
+                {% endif %}
             </div>
         </div>
     </div>
-    
-    <!-- Charts Row -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <!-- Ticket Volume Trend Chart -->
-        <div class="bg-white rounded-lg shadow p-4">
-            <h2 class="text-lg font-medium text-gray-800 mb-4">Ticket Volume Trends</h2>
-            <div class="h-64">
-                <canvas id="ticketVolumeChart"></canvas>
-            </div>
-        </div>
-        
-        <!-- Priority Distribution Chart -->
-        <div class="bg-white rounded-lg shadow p-4">
-            <h2 class="text-lg font-medium text-gray-800 mb-4">Priority Distribution</h2>
-            <div class="grid grid-cols-2 gap-4">
-                <div class="h-64">
-                    <canvas id="priorityChart"></canvas>
-                </div>
-                <div class="flex flex-col justify-center">
-                    <!-- Priority Legend and Counts -->
-                    <div class="flex items-center mb-3">
-                        <span class="block w-4 h-4 bg-red-500 rounded mr-2"></span>
-                        <span class="text-sm">Critical: {{ critical_tickets }} ({{ critical_percentage|floatformat:1 }}%)</span>
-                    </div>
-                    <div class="flex items-center mb-3">
-                        <span class="block w-4 h-4 bg-orange-500 rounded mr-2"></span>
-                        <span class="text-sm">High: {{ high_tickets }} ({{ high_percentage|floatformat:1 }}%)</span>
-                    </div>
-                    <div class="flex items-center mb-3">
-                        <span class="block w-4 h-4 bg-yellow-500 rounded mr-2"></span>
-                        <span class="text-sm">Medium: {{ medium_tickets }} ({{ medium_percentage|floatformat:1 }}%)</span>
-                    </div>
-                    <div class="flex items-center">
-                        <span class="block w-4 h-4 bg-green-500 rounded mr-2"></span>
-                        <span class="text-sm">Low: {{ low_tickets }} ({{ low_percentage|floatformat:1 }}%)</span>
-                    </div>
-                </div>
-            </div>
-        </div>
+
+    <!-- Trends -->
+    <div class="bg-white rounded-lg shadow p-6 mb-8 card-hover animate__animated animate__fadeIn">
+        <h2 class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+            <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 17l6-6 4 4 6-6"/></svg>
+            Ticket Volume Trend
+        </h2>
+        <canvas id="trendChart"></canvas>
     </div>
-    
-    <!-- Performance & Time Metrics Row -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-        <!-- Time Metrics -->
-        <div class="bg-white rounded-lg shadow p-4">
-            <h2 class="text-lg font-medium text-gray-800 mb-4">Response Time Metrics</h2>
-            <div class="space-y-4">
-                <div>
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="text-sm font-medium text-gray-600">First Response Time</span>
-                        <span class="text-sm font-medium text-gray-900">
-                            {% if time_analytics.avg_response_time %}
-                                {{ time_analytics.avg_response_time|timedelta_humanize }}
-                            {% else %}
-                                N/A
-                            {% endif %}
-                        </span>
-                    </div>
-                    {% if time_analytics.avg_response_time %}
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            {% if time_analytics.avg_response_time.total_seconds < 14400 %}
-                            <div class="bg-green-500 h-2 rounded-full" style="width: {{ time_analytics.avg_response_time.total_seconds|percentage_of_day }}%"></div>
-                            {% elif time_analytics.avg_response_time.total_seconds < 43200 %}
-                                <div class="bg-yellow-500 h-2 rounded-full" style="width: {{ time_analytics.avg_response_time.total_seconds / 86400 * 100 }}%"></div>
-                            {% else %}
-                                <div class="bg-red-500 h-2 rounded-full" style="width: {{ time_analytics.avg_response_time.total_seconds / 86400 * 100 }}%"></div>
-                            {% endif %}
-                        </div>
-                    {% endif %}
-                </div>
-                
-                <div>
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="text-sm font-medium text-gray-600">Resolution Time</span>
-                        <span class="text-sm font-medium text-gray-900">
-                            {% if time_analytics.avg_resolution_time %}
-                                {{ time_analytics.avg_resolution_time|timedelta_humanize }}
-                            {% else %}
-                                N/A
-                            {% endif %}
-                        </span>
-                    </div>
-                    {% if time_analytics.avg_resolution_time %}
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            {% if time_analytics.avg_resolution_time.total_seconds < 86400 %}
-                                <div class="bg-green-500 h-2 rounded-full" style="width: {{ time_analytics.avg_resolution_time.total_seconds / 172800 * 100 }}%"></div>
-                            {% elif time_analytics.avg_resolution_time.total_seconds < 172800 %}
-                                <div class="bg-yellow-500 h-2 rounded-full" style="width: {{ time_analytics.avg_resolution_time.total_seconds / 172800 * 100 }}%"></div>
-                            {% else %}
-                                <div class="bg-red-500 h-2 rounded-full" style="width: {{ time_analytics.avg_resolution_time.total_seconds / 172800 * 100 }}%"></div>
-                            {% endif %}
-                        </div>
-                    {% endif %}
-                </div>
-                
-                <div>
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="text-sm font-medium text-gray-600">SLA Compliance</span>
-                        <span class="text-sm font-medium text-gray-900">
-                            {{ time_analytics.sla_compliance|floatformat:1 }}%
-                        </span>
-                    </div>
-                    <div class="w-full bg-gray-200 rounded-full h-2">
-                        {% if time_analytics.sla_compliance >= 90 %}
-                            <div class="bg-green-500 h-2 rounded-full" style="width: {{ time_analytics.sla_compliance }}%"></div>
-                        {% elif time_analytics.sla_compliance >= 75 %}
-                            <div class="bg-yellow-500 h-2 rounded-full" style="width: {{ time_analytics.sla_compliance }}%"></div>
-                        {% else %}
-                            <div class="bg-red-500 h-2 rounded-full" style="width: {{ time_analytics.sla_compliance }}%"></div>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Issue Type Distribution -->
-        <div class="bg-white rounded-lg shadow p-4">
-            <h2 class="text-lg font-medium text-gray-800 mb-4">Issue Types</h2>
-            <div class="h-64">
-                <canvas id="issueTypeChart"></canvas>
-            </div>
-        </div>
-        
-        <!-- Top Assignees Performance -->
-        {% if performance_by_assignee %}
-        <div class="bg-white rounded-lg shadow p-4">
-            <h2 class="text-lg font-medium text-gray-800 mb-4">Top Performer Metrics</h2>
-            <div class="space-y-3 max-h-64 overflow-y-auto">
-                {% for assignee in performance_by_assignee %}
-                <div>
-                    <div class="flex justify-between mb-1">
-                        <span class="text-sm font-medium text-gray-800">
-                            {{ assignee.assigned_to_user__first_name }} {{ assignee.assigned_to_user__last_name }}
-                        </span>
-                        <span class="text-xs text-gray-500">{{ assignee.resolved_count }} tickets</span>
-                    </div>
-                    <div class="flex items-center">
-                        <div class="w-full bg-gray-200 rounded-full h-2 mr-2">
-                            <div class="bg-blue-500 h-2 rounded-full" style="width: {{ assignee.sla_met / assignee.resolved_count * 100 }}%"></div>
-                        </div>
-                        <span class="text-xs font-medium text-gray-500">{{ assignee.avg_resolution_time|timedelta_humanize }}</span>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-        {% elif is_admin or is_hr or is_manager %}
-        <div class="bg-white rounded-lg shadow p-4">
-            <h2 class="text-lg font-medium text-gray-800 mb-4">Performance Metrics</h2>
-            <p class="text-gray-500 text-sm">No performance data available for this period.</p>
-        </div>
-        {% endif %}
-    </div>
-    
-    <!-- Recommendations and Recent Tickets Row -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Recommendations -->
-        {% if recommendations and recommendations|length > 0 %}
-        <div class="bg-white rounded-lg shadow p-4">
-            <h2 class="text-lg font-medium text-gray-800 mb-4">Recommendations</h2>
-            <div class="space-y-4">
-                {% for recommendation in recommendations %}
-                <div class="border-l-4 p-4 rounded
-                    {% if recommendation.severity == 'high' %}
-                        border-red-500 bg-red-50
-                    {% elif recommendation.severity == 'medium' %}
-                        border-yellow-500 bg-yellow-50
-                    {% else %}
-                        border-blue-500 bg-blue-50
-                    {% endif %}
-                ">
-                    <h3 class="font-medium text-gray-800">{{ recommendation.title }}</h3>
-                    <p class="text-gray-600 text-sm mt-1">{{ recommendation.description }}</p>
-                    {% if recommendation.action_items %}
-                    <div class="mt-2">
-                        <details class="text-sm">
-                            <summary class="cursor-pointer font-medium text-gray-700">Suggested Actions</summary>
-                            <ul class="mt-2 ml-5 list-disc text-gray-600">
-                                {% for item in recommendation.action_items %}
-                                <li>{{ item }}</li>
-                                {% endfor %}
-                            </ul>
-                        </details>
-                    </div>
-                    {% endif %}
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
-        
-        <!-- Recent Tickets -->
-        <div class="bg-white rounded-lg shadow p-4">
-            <h2 class="text-lg font-medium text-gray-800 mb-4">Recent Tickets</h2>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
+
+    <!-- Workload & Performance (Admin/HR/Manager only) -->
+    {% if is_admin or is_hr or is_manager %}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow p-6 card-hover animate__animated animate__fadeInLeft">
+            <h2 class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 17l4-4 4 4"/></svg>
+                Workload Distribution
+            </h2>
+            {% if workload_distribution %}
+                <div class="overflow-x-auto">
+                <table class="min-w-full text-sm">
                     <thead>
                         <tr>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            <th class="text-left py-1">Assignee</th>
+                            <th class="text-left py-1">Open</th>
+                            <th class="text-left py-1">Total</th>
+                            <th class="text-left py-1">Avg. Resolution</th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        {% for ticket in recent_tickets %}
-                        <tr>
-                            <td class="px-4 py-2 whitespace-nowrap text-sm text-blue-600">
-                                <a href="{% url 'support_ticket_detail' ticket.id %}">#{{ ticket.id }}</a>
+                    <tbody>
+                        {% for w in workload_distribution %}
+                        <tr class="border-t table-row-anim">
+                            <td class="py-1">
+                                {{ w.assigned_to_user__first_name }} {{ w.assigned_to_user__last_name }}
+                                <span class="text-xs text-gray-400">({{ w.assigned_to_user__username }})</span>
                             </td>
-                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-800">{{ ticket.subject }}</td>
-                            <td class="px-4 py-2 whitespace-nowrap">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                    {% if ticket.priority == 'Critical' %}
-                                        bg-red-100 text-red-800
-                                    {% elif ticket.priority == 'High' %}
-                                        bg-orange-100 text-orange-800
-                                    {% elif ticket.priority == 'Medium' %}
-                                        bg-yellow-100 text-yellow-800
-                                    {% else %}
-                                        bg-green-100 text-green-800
-                                    {% endif %}
-                                ">
-                                    {{ ticket.priority }}
-                                </span>
+                            <td class="py-1">{{ w.open_count }}</td>
+                            <td class="py-1">{{ w.total_count }}</td>
+                            <td class="py-1">
+                                {% if w.avg_resolution %}
+                                    {{ w.avg_resolution|floatformat:1 }}
+                                {% else %}
+                                    —
+                                {% endif %}
                             </td>
-                            <td class="px-4 py-2 whitespace-nowrap">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
-                                    {% if ticket.status == 'New' %}
-                                        bg-blue-100 text-blue-800
-                                    {% elif ticket.status == 'Open' %}
-                                        bg-purple-100 text-purple-800
-                                    {% elif ticket.status == 'In Progress' %}
-                                        bg-yellow-100 text-yellow-800
-                                    {% elif ticket.status == 'Resolved' %}
-                                        bg-green-100 text-green-800
-                                    {% else %}
-                                        bg-gray-100 text-gray-800
-                                    {% endif %}
-                                ">
-                                    {{ ticket.status }}
-                                </span>
-                            </td>
-                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{{ ticket.created_at|date:"M d, Y" }}</td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="5" class="px-4 py-4 text-sm text-gray-500 text-center">No tickets found</td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
-            </div>
-            <div class="mt-4 text-center">
-                <a href="{% url 'support_ticket_list' %}" class="text-sm text-blue-600 hover:text-blue-800">View All Tickets →</a>
-            </div>
+                </div>
+            {% else %}
+                <div class="text-gray-400">No workload data available.</div>
+            {% endif %}
+        </div>
+        <div class="bg-white rounded-lg shadow p-6 card-hover animate__animated animate__fadeInRight">
+            <h2 class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                <svg class="w-5 h-5 text-pink-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 8v4l3 3"/></svg>
+                Performance by Assignee
+            </h2>
+            {% if performance_by_assignee %}
+                <div class="overflow-x-auto">
+                <table class="min-w-full text-sm">
+                    <thead>
+                        <tr>
+                            <th class="text-left py-1">Assignee</th>
+                            <th class="text-left py-1">Resolved</th>
+                            <th class="text-left py-1">Avg. Resolution</th>
+                            <th class="text-left py-1">SLA Met</th>
+                            <th class="text-left py-1">SLA Breached</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in performance_by_assignee %}
+                        <tr class="border-t table-row-anim">
+                            <td class="py-1">
+                                {{ p.assigned_to_user__first_name }} {{ p.assigned_to_user__last_name }}
+                                <span class="text-xs text-gray-400">({{ p.assigned_to_user__username }})</span>
+                            </td>
+                            <td class="py-1">{{ p.resolved_count }}</td>
+                            <td class="py-1">
+                                {% if p.avg_resolution_time %}
+                                    {{ p.avg_resolution_time|floatformat:1 }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+                            <td class="py-1">{{ p.sla_met }}</td>
+                            <td class="py-1">{{ p.sla_breached }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+            {% else %}
+                <div class="text-gray-400">No performance data available.</div>
+            {% endif %}
         </div>
     </div>
-        <!-- Additional Metrics Row (For Admin and Managers) -->
-        {% if is_admin or is_hr or is_manager %}
-        <div class="mt-6">
-            <h2 class="text-lg font-medium text-gray-800 mb-4">Advanced Analytics</h2>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- First Response Breaches -->
-                {% if first_response_breaches %}
-                <div class="bg-white rounded-lg shadow p-4">
-                    <h3 class="text-md font-medium text-gray-800 mb-3">First Response SLA Compliance</h3>
-                    <div class="space-y-3">
-                        {% for priority, data in first_response_breaches.breaches_by_priority.items %}
-                        <div>
-                            <div class="flex justify-between mb-1">
-                                <span class="text-sm font-medium text-gray-600">{{ priority }} ({{ data.target_hours }}h target)</span>
-                                <span class="text-sm font-medium
-                                    {% if data.percentage > 20 %}text-red-600
-                                    {% elif data.percentage > 10 %}text-yellow-600
-                                    {% else %}text-green-600{% endif %}
-                                ">
-                                    {{ data.breached }}/{{ data.total }} breached ({{ data.percentage|floatformat:1 }}%)
-                                </span>
-                            </div>
-                            <div class="w-full bg-gray-200 rounded-full h-2">
-                                <div class="h-2 rounded-full
-                                    {% if data.percentage > 20 %}bg-red-500
-                                    {% elif data.percentage > 10 %}bg-yellow-500
-                                    {% else %}bg-green-500{% endif %}
-                                " style="width: {{ 100 - data.percentage }}%"></div>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-                {% endif %}
-                
-                <!-- Bottleneck Analysis -->
-                {% if bottleneck_analysis %}
-                <div class="bg-white rounded-lg shadow p-4">
-                    <h3 class="text-md font-medium text-gray-800 mb-3">Workflow Bottlenecks</h3>
-                    <div class="space-y-3">
-                        {% for item in bottleneck_analysis %}
-                        <div>
-                            <div class="flex justify-between mb-1">
-                                <span class="text-sm font-medium text-gray-600">{{ item.status }}</span>
-                                <span class="text-sm font-medium text-gray-900">{{ item.count }} tickets stuck</span>
-                            </div>
-                            <div class="w-full bg-gray-200 rounded-full h-2">
-                                <div class="bg-orange-500 h-2 rounded-full" style="width: {{ item.count / total_tickets * 100 }}%"></div>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-                {% endif %}
+    {% endif %}
+
+    <!-- Recent Tickets -->
+    <div class="bg-white rounded-lg shadow p-6 mb-8 card-hover animate__animated animate__fadeIn">
+        <h2 class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+            <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 17l6-6 4 4 6-6"/></svg>
+            Recent Tickets
+        </h2>
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+                <thead>
+                    <tr>
+                        <th class="text-left py-1">ID</th>
+                        <th class="text-left py-1">Title</th>
+                        <th class="text-left py-1">Status</th>
+                        <th class="text-left py-1">Priority</th>
+                        <th class="text-left py-1">Created</th>
+                        <th class="text-left py-1">Assignee</th>
+                        <th class="text-left py-1"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ticket in recent_tickets %}
+                    <tr class="border-t table-row-anim">
+                        <td class="py-1 font-mono text-xs">{{ ticket.ticket_id }}</td>
+                        <td class="py-1" title="{{ ticket.title }}">{{ ticket.subject|truncatechars:40 }}</td>
+                        <td class="py-1">
+                            <span class="inline-block px-2 py-0.5 rounded text-xs font-semibold
+                                {% if ticket.status == 'New' %}bg-blue-100 text-blue-700
+                                {% elif ticket.status == 'Open' %}bg-yellow-100 text-yellow-700
+                                {% elif ticket.status == 'In Progress' %}bg-indigo-100 text-indigo-700
+                                {% elif ticket.status == 'Resolved' %}bg-teal-100 text-teal-700
+                                {% elif ticket.status == 'Closed' %}bg-gray-200 text-gray-700
+                                {% else %}bg-gray-100 text-gray-700{% endif %}">
+                                {{ ticket.status }}
+                            </span>
+                        </td>
+                        <td class="py-1">
+                            <span class="inline-block px-2 py-0.5 rounded text-xs font-semibold
+                                {% if ticket.priority == 'Critical' %}bg-red-100 text-red-700
+                                {% elif ticket.priority == 'High' %}bg-orange-100 text-orange-700
+                                {% elif ticket.priority == 'Medium' %}bg-yellow-100 text-yellow-700
+                                {% elif ticket.priority == 'Low' %}bg-green-100 text-green-700
+                                {% else %}bg-gray-100 text-gray-700{% endif %}">
+                                {{ ticket.priority }}
+                            </span>
+                        </td>
+                        <td class="py-1">{{ ticket.created_at|date:"Y-m-d H:i" }}</td>
+                        <td class="py-1">
+                            {% if ticket.assigned_to_user %}
+                                {{ ticket.assigned_to_user.get_full_name|default:ticket.assigned_to_user.username }}
+                            {% else %}
+                                <span class="text-gray-400">Unassigned</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-1">
+                            <a href="{% url 'aps_support:ticket_detail' ticket.pk %}" class="text-blue-600 hover:underline transition">View</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="py-2 text-center text-gray-400">No recent tickets found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Recommendations (Admins, HR, Managers only) -->
+    {% if recommendations %}
+    <div class="bg-white rounded-lg shadow p-6 mb-8 card-hover animate__animated animate__fadeIn">
+        <h2 class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+            <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+            Recommendations
+        </h2>
+        <ul class="list-disc pl-6 text-gray-700 space-y-2">
+            {% for rec in recommendations %}
+                <li>
+                    <span class="font-bold text-{{ rec.severity|default:'medium'|yesno:'red,orange,gray' }}-600">{{ rec.title }}</span>
+                    <div class="text-sm text-gray-700">{{ rec.description }}</div>
+                    {% if rec.action_items %}
+                        <ul class="list-disc pl-5 text-xs text-gray-500 mt-1">
+                            {% for item in rec.action_items %}
+                                <li>{{ item }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <!-- User Satisfaction (Admin/HR only) -->
+    {% if user_satisfaction and is_admin or is_hr %}
+    <div class="bg-white rounded-lg shadow p-6 mb-8 card-hover animate__animated animate__fadeIn">
+        <h2 class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
+            User Satisfaction
+        </h2>
+        <div class="flex items-center gap-6">
+            <div>
+                <div class="text-2xl font-bold text-green-600">{{ user_satisfaction.avg_rating|floatformat:2 }}</div>
+                <div class="text-gray-500 text-xs">Avg. Rating</div>
             </div>
-            
-            <!-- Workload Distribution -->
-            {% if workload_distribution %}
-            <div class="mt-6 bg-white rounded-lg shadow p-4">
-                <h3 class="text-md font-medium text-gray-800 mb-3">Team Workload Distribution</h3>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead>
-                            <tr>
-                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Agent</th>
-                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Open Tickets</th>
-                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Tickets</th>
-                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg. Resolution</th>
-                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Workload</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            {% for agent in workload_distribution %}
-                            <tr>
-                                <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-800">
-                                    {{ agent.assigned_to_user__first_name }} {{ agent.assigned_to_user__last_name }}
-                                </td>
-                                <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-800">{{ agent.open_count }}</td>
-                                <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-800">{{ agent.total_count }}</td>
-{% endblock %}    
+            <div>
+                <div class="text-xl font-bold text-blue-700">{{ user_satisfaction.total_rated }}</div>
+                <div class="text-gray-500 text-xs">Rated Tickets</div>
+            </div>
+            <div>
+                <div class="text-xl font-bold text-gray-700">{{ user_satisfaction.pct_of_total|floatformat:1 }}%</div>
+                <div class="text-gray-500 text-xs">of All Tickets</div>
+            </div>
+        </div>
+        <div class="mt-4">
+            <h3 class="font-semibold text-gray-700 mb-1">Rating Breakdown</h3>
+            <ul class="flex gap-4">
+                {% for rating in user_satisfaction.rating_counts %}
+                    <li>
+                        <span class="font-bold">{{ rating.satisfaction_rating }}</span>
+                        <span class="text-gray-500 text-xs">({{ rating.count }})</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Escalation Data (Admin/HR/Manager only) -->
+    {% if escalation_data and is_admin or is_hr or is_manager %}
+    <div class="bg-white rounded-lg shadow p-6 mb-8 card-hover animate__animated animate__fadeIn">
+        <h2 class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+            <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 8v4l3 3"/></svg>
+            Escalations
+        </h2>
+        <div class="flex gap-8">
+            <div>
+                <div class="text-2xl font-bold text-red-600">{{ escalation_data.total_escalated }}</div>
+                <div class="text-gray-500 text-xs">Total Escalated</div>
+            </div>
+            <div>
+                <div class="text-xl font-bold text-blue-700">{{ escalation_data.pct_escalated|floatformat:1 }}%</div>
+                <div class="text-gray-500 text-xs">of All Tickets</div>
+            </div>
+            <div>
+                <div class="text-xl font-bold text-gray-700">{{ escalation_data.avg_escalation_level|floatformat:2 }}</div>
+                <div class="text-gray-500 text-xs">Avg. Level</div>
+            </div>
+        </div>
+        <div class="mt-4">
+            <h3 class="font-semibold text-gray-700 mb-1">By Priority</h3>
+            <ul class="flex gap-4">
+                {% for p in escalation_data.by_priority %}
+                    <li>
+                        <span class="font-bold">{{ p.priority }}</span>
+                        <span class="text-gray-500 text-xs">({{ p.count }})</span>
+                    </li>
+                {% endfor %}
+            </ul>
+            <h3 class="font-semibold text-gray-700 mt-2 mb-1">By Issue Type</h3>
+            <ul class="flex gap-4">
+                {% for i in escalation_data.by_issue_type %}
+                    <li>
+                        <span class="font-bold">{{ i.issue_type }}</span>
+                        <span class="text-gray-500 text-xs">({{ i.count }})</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+<script>
+    // Animate counters
+    function animateCounter(el, end) {
+        let start = 0;
+        end = parseInt(end, 10);
+        if (isNaN(end)) return;
+        let duration = 800;
+        let stepTime = Math.max(Math.floor(duration / end), 20);
+        let current = start;
+        let increment = Math.ceil(end / (duration / stepTime));
+        let timer = setInterval(function() {
+            current += increment;
+            if (current >= end) {
+                el.textContent = end;
+                clearInterval(timer);
+            } else {
+                el.textContent = current;
+            }
+        }, stepTime);
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.counter').forEach(function(el) {
+            animateCounter(el, el.getAttribute('data-count'));
+        });
+    });
+
+    // Priority Chart
+    const priorityData = {
+        labels: ['Critical', 'High', 'Medium', 'Low'],
+        datasets: [{
+            data: [
+                {{ critical_tickets|default:0 }},
+                {{ high_tickets|default:0 }},
+                {{ medium_tickets|default:0 }},
+                {{ low_tickets|default:0 }}
+            ],
+            backgroundColor: [
+                '#dc2626', // red-600
+                '#f59e42', // orange-500
+                '#facc15', // yellow-500
+                '#16a34a'  // green-600
+            ],
+        }]
+    };
+    const priorityConfig = {
+        type: 'doughnut',
+        data: priorityData,
+        options: {
+            plugins: { 
+                legend: { position: 'bottom' },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.label || '';
+                            let value = context.parsed || 0;
+                            let total = context.chart._metasets[0].total || 1;
+                            let pct = ((value / total) * 100).toFixed(1);
+                            return `${label}: ${value} (${pct}%)`;
+                        }
+                    }
+                }
+            },
+            animation: {
+                animateScale: true,
+                animateRotate: true
+            }
+        }
+    };
+    if (document.getElementById('priorityChart')) {
+        new Chart(document.getElementById('priorityChart'), priorityConfig);
+    }
+
+    // Issue Type Chart
+    const issueTypeLabels = [{% for i in issue_distribution %}'{{ i.issue_type }}'{% if not forloop.last %}, {% endif %}{% endfor %}];
+    const issueTypeCounts = [{% for i in issue_distribution %}{{ i.count }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+    const issueTypeColors = [
+        '#2563eb', '#f59e42', '#16a34a', '#dc2626', '#a21caf', '#0e7490', '#fbbf24', '#64748b'
+    ];
+    if (document.getElementById('issueTypeChart')) {
+        new Chart(document.getElementById('issueTypeChart'), {
+            type: 'pie',
+            data: {
+                labels: issueTypeLabels,
+                datasets: [{
+                    data: issueTypeCounts,
+                    backgroundColor: issueTypeColors,
+                }]
+            },
+            options: {
+                plugins: { 
+                    legend: { position: 'bottom' },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                let value = context.parsed || 0;
+                                let total = context.chart._metasets[0].total || 1;
+                                let pct = ((value / total) * 100).toFixed(1);
+                                return `${label}: ${value} (${pct}%)`;
+                            }
+                        }
+                    }
+                },
+                animation: {
+                    animateScale: true,
+                    animateRotate: true
+                }
+            }
+        });
+    }
+
+    // Trend Chart
+    const trendLabels = [{% for d in time_series_data %}'{{ d.date }}'{% if not forloop.last %}, {% endif %}{% endfor %}];
+    const trendCounts = [{% for d in time_series_data %}{{ d.count }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+    if (document.getElementById('trendChart')) {
+        new Chart(document.getElementById('trendChart'), {
+            type: 'line',
+            data: {
+                labels: trendLabels,
+                datasets: [{
+                    label: 'Tickets',
+                    data: trendCounts,
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37,99,235,0.1)',
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 4,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: '#2563eb'
+                }]
+            },
+            options: {
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                },
+                scales: {
+                    y: { beginAtZero: true }
+                },
+                animation: {
+                    duration: 900,
+                    easing: 'easeOutQuart'
+                }
+            }
+        });
+    }
+
+    // Flatpickr for custom date range
+    document.addEventListener('DOMContentLoaded', function() {
+        if (window.flatpickr) {
+            flatpickr("#from_date", { dateFormat: "Y-m-d" });
+            flatpickr("#to_date", { dateFormat: "Y-m-d" });
+        }
+        // Show/hide custom date fields
+        const dateRange = document.getElementById('date_range');
+        if (dateRange) {
+            dateRange.addEventListener('change', function() {
+                const isCustom = this.value === 'custom';
+                document.getElementById('from_date').classList.toggle('hidden', !isCustom);
+                document.getElementById('to_date').classList.toggle('hidden', !isCustom);
+                if (isCustom) {
+                    setTimeout(function() {
+                        document.getElementById('from_date').focus();
+                    }, 200);
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

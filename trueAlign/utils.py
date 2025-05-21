@@ -167,3 +167,66 @@ def send_notification(user_id, message, notification_type, chat_id, sender_name=
         logger = logging.getLogger(__name__)
         logger.error(f"Error sending notification to user {user_id}: {str(e)}")
         return False
+
+
+def send_ticket_notification(ticket, action, performed_by=None, extra_message=None):
+    """
+    Send a notification related to a support ticket action.
+
+    Args:
+        ticket (Support): The ticket instance.
+        action (str): The action performed (e.g., 'created', 'updated', 'assigned', 'commented', etc.).
+        performed_by (User, optional): The user who performed the action.
+        extra_message (str, optional): Any extra message to include.
+    Returns:
+        bool: True if notification sent, False otherwise.
+    """
+    try:
+        # Determine recipients based on action and ticket assignment
+        recipients = set()
+        if hasattr(ticket, "assigned_to_user") and ticket.assigned_to_user:
+            recipients.add(ticket.assigned_to_user)
+        if hasattr(ticket, "user") and ticket.user:
+            recipients.add(ticket.user)
+        # Optionally notify group members (e.g., HR/Admin group)
+        if hasattr(ticket, "assigned_group") and ticket.assigned_group:
+            from django.contrib.auth.models import Group
+            group_qs = Group.objects.filter(name=ticket.assigned_group)
+            if group_qs.exists():
+                group = group_qs.first()
+                for user in group.user_set.all():
+                    recipients.add(user)
+        # Remove the performer from recipients (don't notify self)
+        if performed_by in recipients:
+            recipients.remove(performed_by)
+        # Compose the notification message
+        action_map = {
+            "created": "A new support ticket has been created.",
+            "updated": "A support ticket has been updated.",
+            "assigned": "A support ticket has been assigned.",
+            "commented": "A new comment was added to your ticket.",
+            "closed": "A support ticket has been closed.",
+            "reopened": "A support ticket has been reopened.",
+            "resolved": "A support ticket has been resolved.",
+            "escalated": "A support ticket has been escalated.",
+        }
+        action_text = action_map.get(action, f"Ticket action: {action}")
+        performer_name = performed_by.username if performed_by else "System"
+        message = f"{action_text}\nTicket: {ticket.title}\nBy: {performer_name}"
+        if extra_message:
+            message += f"\n{extra_message}"
+        # Send notification to each recipient
+        for user in recipients:
+            send_notification(
+                user_id=user.id,
+                message=message,
+                notification_type="ticket_" + action,
+                chat_id=getattr(ticket, "id", None) or getattr(ticket, "pk", None),
+                sender_name=performer_name
+            )
+        return True
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error sending ticket notification: {str(e)}")
+        return False
