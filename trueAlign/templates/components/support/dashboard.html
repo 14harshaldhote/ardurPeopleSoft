@@ -16,12 +16,10 @@
     <!-- Header -->
     <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-10">
       <div class="flex items-center gap-4">
-        <div class="rounded-full bg-gradient-to-tr from-blue-200 via-pink-200 to-emerald-200 p-2 shadow-lg">
           <svg class="w-10 h-10 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="white"/>
             <path d="M12 8v4l3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-        </div>
         <div>
           <h1 class="text-3xl font-extrabold text-gray-800 tracking-tight" id="main-content">
             Support Dashboard
@@ -46,7 +44,7 @@
         </div>
       </div>
       <form method="get" class="flex flex-wrap items-center gap-3 bg-white/80 rounded-xl shadow p-4">
-        <label for="date_range" class="text-sm font-medium text-gray-600 mr-2">Date:</label>
+        <label for="date_range" class="text-sm font-medium text-gray-600 mr-2">Date : </label>
         <select name="date_range" id="date_range" class="rounded-lg border border-gray-200 py-1 px-3 text-sm focus:ring-2 focus:ring-blue-200 bg-blue-50">
           <option value="last_7_days" {% if date_range == 'last_7_days' %}selected{% endif %}>Last 7 Days</option>
           <option value="last_30_days" {% if date_range == 'last_30_days' %}selected{% endif %}>Last 30 Days</option>
@@ -87,15 +85,15 @@
         <div class="text-4xl font-extrabold text-pink-500 mb-1">{{ critical_tickets }}</div>
         <div class="text-xs text-gray-400">Critical Tickets</div>
       </div>
-      <div class="bg-white/80 rounded-2xl shadow-lg p-6 flex flex-col items-center border-t-4 border-emerald-200 hover:scale-105 transition">
+      <div class="bg-white/80 rounded-2xl shadow-lg p-6 flex flex-col items-center border-t-4 border-green-200 hover:scale-105 transition">
         <div class="flex items-center gap-2 mb-2">
           <svg class="w-7 h-7 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="#d1fae5"/>
             <path d="M12 8v4l3 3" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-          <span class="text-lg font-semibold text-emerald-700">My Open</span>
+          <span class="text-lg font-semibold text-green-700">My Open</span>
         </div>
-        <div class="text-4xl font-extrabold text-emerald-500 mb-1">{{ my_open_tickets|default:0 }}</div>
+        <div class="text-4xl font-extrabold text-green-500 mb-1">{{ my_open_tickets|default:0 }}</div>
         <div class="text-xs text-gray-400">My Open Tickets</div>
       </div>
       <div class="bg-white/80 rounded-2xl shadow-lg p-6 flex flex-col items-center border-t-4 border-yellow-200 hover:scale-105 transition">
@@ -113,7 +111,7 @@
 
     <!-- Insights / Tip -->
     <div class="mb-8">
-      <div class="rounded-xl bg-gradient-to-r from-blue-100 via-pink-100 to-emerald-100 p-4 flex items-center gap-4 shadow">
+      <div class="rounded-xl bg-gradient-to-r from-blue-100  to-green-50 p-4 flex items-center gap-4 shadow">
         <svg class="w-6 h-6 text-blue-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="#dbeafe"/>
           <path d="M12 8v4l3 3" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -137,6 +135,9 @@
         New Ticket
       </a>
       {% if is_admin or is_hr or is_manager %}
+    
+
+
         <a href="{% url 'aps_support:ticket_list' %}" class="inline-flex items-center bg-blue-100 hover:bg-blue-200 text-blue-700 px-4 py-2 rounded-xl font-semibold shadow">All Tickets</a>
         <a href="{% url 'aps_support:ticket_list' %}?status=Open" class="inline-flex items-center bg-yellow-100 hover:bg-yellow-200 text-yellow-700 px-4 py-2 rounded-xl font-semibold shadow">Open</a>
         <a href="{% url 'aps_support:ticket_list' %}?status=In+Progress" class="inline-flex items-center bg-pink-100 hover:bg-pink-200 text-pink-700 px-4 py-2 rounded-xl font-semibold shadow">In Progress</a>
@@ -187,14 +188,7 @@
           </h2>
           <canvas id="priorityChart" class="w-full h-40"></canvas>
         </div>
-        <!-- Issue Type Distribution -->
-        <div class="bg-white/80 rounded-2xl shadow-lg p-6 border border-emerald-100 md:col-span-2">
-          <h2 class="text-xl font-bold text-emerald-700 mb-4 flex items-center gap-2">
-            <svg class="w-5 h-5 text-emerald-400" fill="currentColor" viewBox="0 0 20 20"><circle cx="10" cy="10" r="10"/></svg>
-            Issue Types
-          </h2>
-          <canvas id="issueTypeChart" class="w-full h-32"></canvas>
-        </div>
+      
         <!-- Time Analytics -->
         <div class="bg-white/80 rounded-2xl shadow-lg p-6 border border-yellow-100 md:col-span-2">
           <h2 class="text-xl font-bold text-yellow-700 mb-4 flex items-center gap-2">
@@ -327,7 +321,7 @@
     {% endif %}
 
     <!-- Quick Filters -->
-    <section class="mb-6 flex flex-wrap items-center gap-2">
+    <!-- <section class="mb-6 flex flex-wrap items-center gap-2">
       <span class="font-semibold text-blue-700 mr-2">Quick Filters:</span>
       <span class="quick-filter-chip cursor-pointer px-3 py-1 rounded-full border bg-blue-50 text-blue-700 border-blue-200 font-semibold text-sm hover:shadow active:scale-95 transition" data-filter="all" tabindex="0">All</span>
       <span class="quick-filter-chip cursor-pointer px-3 py-1 rounded-full border bg-yellow-50 text-yellow-700 border-yellow-200 font-semibold text-sm hover:shadow active:scale-95 transition" data-filter="open" tabindex="0">Open</span>
@@ -337,7 +331,7 @@
       <span class="quick-filter-chip cursor-pointer px-3 py-1 rounded-full border bg-orange-50 text-orange-700 border-orange-200 font-semibold text-sm hover:shadow active:scale-95 transition" data-filter="high" tabindex="0">High</span>
       <span class="quick-filter-chip cursor-pointer px-3 py-1 rounded-full border bg-yellow-50 text-yellow-700 border-yellow-200 font-semibold text-sm hover:shadow active:scale-95 transition" data-filter="medium" tabindex="0">Medium</span>
       <span class="quick-filter-chip cursor-pointer px-3 py-1 rounded-full border bg-emerald-50 text-emerald-700 border-emerald-200 font-semibold text-sm hover:shadow active:scale-95 transition" data-filter="low" tabindex="0">Low</span>
-    </section>
+    </section> -->
 
     <!-- Recent Tickets Table -->
     <section class="bg-white/80 rounded-2xl shadow-lg p-6 mb-12 border border-blue-100">
@@ -346,84 +340,104 @@
         Recent Tickets
       </h2>
       <div class="overflow-x-auto">
-        <table class="min-w-full text-sm rounded-xl shadow border border-gray-100 bg-white/70" aria-label="Recent Tickets Table">
-          <thead>
-            <tr>
-              <th class="text-left py-2 px-2">ID</th>
-              <th class="text-left py-2 px-2">Title</th>
-              <th class="text-left py-2 px-2">Status</th>
-              <th class="text-left py-2 px-2">Priority</th>
-              <th class="text-left py-2 px-2">Created</th>
-              <th class="text-left py-2 px-2">Assignee</th>
-              <th class="text-left py-2 px-2"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for ticket in recent_tickets %}
-            <tr class="border-t ticket-row hover:bg-blue-50"
-                data-status="{{ ticket.status|lower|slugify }}"
-                data-priority="{{ ticket.priority|lower|slugify }}">
-              <td class="py-2 px-2 font-mono text-xs">{{ ticket.ticket_id }}</td>
-              <td class="py-2 px-2" title="{{ ticket.title }}">{{ ticket.subject|truncatechars:40 }}</td>
-              <td class="py-2 px-2">
-                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold
-                  {% if ticket.status == 'New' %}bg-blue-100 text-blue-700
-                  {% elif ticket.status == 'Open' %}bg-yellow-100 text-yellow-700
-                  {% elif ticket.status == 'In Progress' %}bg-pink-100 text-pink-700
-                  {% elif ticket.status == 'Resolved' %}bg-emerald-100 text-emerald-700
-                  {% elif ticket.status == 'Closed' %}bg-gray-200 text-gray-700
-                  {% else %}bg-gray-100 text-gray-700{% endif %}">
-                  <span class="inline-block w-2 h-2 rounded-full
-                    {% if ticket.status == 'New' %}bg-blue-500
-                    {% elif ticket.status == 'Open' %}bg-yellow-400
-                    {% elif ticket.status == 'In Progress' %}bg-pink-500
-                    {% elif ticket.status == 'Resolved' %}bg-emerald-500
-                    {% elif ticket.status == 'Closed' %}bg-gray-500
-                    {% else %}bg-gray-400{% endif %}"></span>
-                  {{ ticket.status }}
-                </span>
-              </td>
-              <td class="py-2 px-2">
-                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold
-                  {% if ticket.priority == 'Critical' %}bg-pink-100 text-pink-700
-                  {% elif ticket.priority == 'High' %}bg-orange-100 text-orange-700
-                  {% elif ticket.priority == 'Medium' %}bg-yellow-100 text-yellow-700
-                  {% elif ticket.priority == 'Low' %}bg-emerald-100 text-emerald-700
-                  {% else %}bg-gray-100 text-gray-700{% endif %}">
-                  <span class="inline-block w-2 h-2 rounded-full
-                    {% if ticket.priority == 'Critical' %}bg-pink-500
-                    {% elif ticket.priority == 'High' %}bg-orange-500
-                    {% elif ticket.priority == 'Medium' %}bg-yellow-400
-                    {% elif ticket.priority == 'Low' %}bg-emerald-500
-                    {% else %}bg-gray-400{% endif %}"></span>
-                  {{ ticket.priority }}
-                </span>
-              </td>
-              <td class="py-2 px-2">{{ ticket.created_at|date:"Y-m-d H:i" }}</td>
-              <td class="py-2 px-2">
-                {% if ticket.assigned_to_user %}
-                  {{ ticket.assigned_to_user.get_full_name|default:ticket.assigned_to_user.username }}
-                {% else %}
-                  <span class="text-gray-400">Unassigned</span>
-                {% endif %}
-              </td>
-              <td class="py-2 px-2 flex gap-2">
-                <a href="{% url 'aps_support:ticket_detail' ticket.pk %}" class="text-blue-600 hover:underline font-semibold" aria-label="View ticket {{ ticket.ticket_id }}">View</a>
-                {% if is_admin %}
-                  <button class="text-xs text-gray-500 hover:text-blue-700 quick-admin-action" data-ticket="{{ ticket.pk }}" title="Quick reassign" aria-label="Quick reassign ticket {{ ticket.ticket_id }}">
-                    <i data-feather="repeat" class="w-4 h-4 inline"></i>
-                  </button>
-                {% endif %}
-              </td>
-            </tr>
-            {% empty %}
-            <tr>
-              <td colspan="7" class="py-4 text-center text-gray-400">No recent tickets found.</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
+        <div class="overflow-x-auto rounded-2xl border border-blue-100 shadow-lg bg-gradient-to-br from-white via-blue-50 to-emerald-50">
+          <table class="min-w-full text-sm rounded-2xl" aria-label="Recent Tickets Table">
+            <thead>
+              <tr class="bg-gradient-to-r from-blue-100 via-emerald-50 to-pink-50">
+                <th class="text-left py-3 px-3 font-bold text-blue-700 tracking-wide rounded-tl-2xl">ID</th>
+                <th class="text-left py-3 px-3 font-bold text-blue-700 tracking-wide">Title</th>
+                <th class="text-left py-3 px-3 font-bold text-blue-700 tracking-wide">Status</th>
+                <th class="text-left py-3 px-3 font-bold text-blue-700 tracking-wide">Priority</th>
+                <th class="text-left py-3 px-3 font-bold text-blue-700 tracking-wide">Created</th>
+                <th class="text-left py-3 px-3 font-bold text-blue-700 tracking-wide">Assignee</th>
+                <th class="text-left py-3 px-3 rounded-tr-2xl"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for ticket in recent_tickets %}
+              <tr class="group border-b last:border-b-0 hover:bg-blue-50/70 transition-all duration-150 ticket-row"
+                  data-status="{{ ticket.status|lower|slugify }}"
+                  data-priority="{{ ticket.priority|lower|slugify }}">
+                <td class="py-3 px-3 font-mono text-xs text-blue-900 bg-white/60 group-hover:bg-blue-50/40 rounded-l-xl">
+                  <span class="inline-block bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-semibold shadow-sm">{{ ticket.ticket_id }}</span>
+                </td>
+                <td class="py-3 px-3 bg-white/60 group-hover:bg-blue-50/40" title="{{ ticket.title }}">
+                  <span class="font-semibold text-gray-800">{{ ticket.subject|truncatechars:40 }}</span>
+                  {% if ticket.title and ticket.title != ticket.subject %}
+                    <div class="text-xs text-gray-400 truncate">{{ ticket.title|truncatechars:60 }}</div>
+                  {% endif %}
+                </td>
+                <td class="py-3 px-3 bg-white/60 group-hover:bg-blue-50/40">
+                  <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold shadow-sm
+                    {% if ticket.status == 'New' %}bg-blue-100 text-blue-700
+                    {% elif ticket.status == 'Open' %}bg-yellow-100 text-yellow-700
+                    {% elif ticket.status == 'In Progress' %}bg-pink-100 text-pink-700
+                    {% elif ticket.status == 'Resolved' %}bg-emerald-100 text-emerald-700
+                    {% elif ticket.status == 'Closed' %}bg-gray-200 text-gray-700
+                    {% else %}bg-gray-100 text-gray-700{% endif %}">
+                    <span class="inline-block w-2 h-2 rounded-full
+                      {% if ticket.status == 'New' %}bg-blue-500
+                      {% elif ticket.status == 'Open' %}bg-yellow-400
+                      {% elif ticket.status == 'In Progress' %}bg-pink-500
+                      {% elif ticket.status == 'Resolved' %}bg-emerald-500
+                      {% elif ticket.status == 'Closed' %}bg-gray-500
+                      {% else %}bg-gray-400{% endif %}"></span>
+                    {{ ticket.status }}
+                  </span>
+                </td>
+                <td class="py-3 px-3 bg-white/60 group-hover:bg-blue-50/40">
+                  <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold shadow-sm
+                    {% if ticket.priority == 'Critical' %}bg-pink-100 text-pink-700
+                    {% elif ticket.priority == 'High' %}bg-orange-100 text-orange-700
+                    {% elif ticket.priority == 'Medium' %}bg-yellow-100 text-yellow-700
+                    {% elif ticket.priority == 'Low' %}bg-emerald-100 text-emerald-700
+                    {% else %}bg-gray-100 text-gray-700{% endif %}">
+                    <span class="inline-block w-2 h-2 rounded-full
+                      {% if ticket.priority == 'Critical' %}bg-pink-500
+                      {% elif ticket.priority == 'High' %}bg-orange-500
+                      {% elif ticket.priority == 'Medium' %}bg-yellow-400
+                      {% elif ticket.priority == 'Low' %}bg-emerald-500
+                      {% else %}bg-gray-400{% endif %}"></span>
+                    {{ ticket.priority }}
+                  </span>
+                </td>
+                <td class="py-3 px-3 bg-white/60 group-hover:bg-blue-50/40">
+                  <span class="font-mono text-xs text-gray-700">{{ ticket.created_at|date:"Y-m-d H:i" }}</span>
+                </td>
+                <td class="py-3 px-3 bg-white/60 group-hover:bg-blue-50/40">
+                  {% if ticket.assigned_to_user %}
+                    <span class="inline-flex items-center gap-1">
+                      <span class="inline-block w-6 h-6 rounded-full bg-gradient-to-br from-blue-200 to-emerald-100 text-blue-700 flex items-center justify-center font-bold text-xs shadow-sm">
+                        {{ ticket.assigned_to_user.first_name|default:ticket.assigned_to_user.username|slice:":1" }}{{ ticket.assigned_to_user.last_name|slice:":1" }}
+                      </span>
+                      <span class="font-semibold text-gray-800">{{ ticket.assigned_to_user.get_full_name|default:ticket.assigned_to_user.username }}</span>
+                    </span>
+                  {% else %}
+                    <span class="text-gray-400 italic">Unassigned</span>
+                  {% endif %}
+                </td>
+                <td class="py-3 px-3 bg-white/60 group-hover:bg-blue-50/40 rounded-r-xl">
+                  <div class="flex gap-2 items-center">
+                    <a href="{% url 'aps_support:ticket_detail' ticket.pk %}" class="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:underline font-semibold px-2 py-1 rounded transition" aria-label="View ticket {{ ticket.ticket_id }}">
+                      <i data-feather="eye" class="w-4 h-4"></i>
+                      <span class="hidden md:inline">View</span>
+                    </a>
+                    {% if is_admin %}
+                      <button class="text-xs text-gray-500 hover:text-blue-700 quick-admin-action px-2 py-1 rounded transition" data-ticket="{{ ticket.pk }}" title="Quick reassign" aria-label="Quick reassign ticket {{ ticket.ticket_id }}">
+                        <i data-feather="repeat" class="w-4 h-4 inline"></i>
+                      </button>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="7" class="py-6 text-center text-gray-400 bg-white/60 rounded-b-2xl">No recent tickets found.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
     </section>
 
     <!-- Recommendations -->
@@ -531,62 +545,82 @@
     {% endif %}
   </div>
 </div>
-
 <script>
-  if (window.feather) feather.replace();
-
-  // Priority Chart
-  const priorityData = {
-    labels: ['Critical', 'High', 'Medium', 'Low'],
-    datasets: [{
-      data: [
-        {{ critical_tickets|default:0 }},
-        {{ high_tickets|default:0 }},
-        {{ medium_tickets|default:0 }},
-        {{ low_tickets|default:0 }}
-      ],
-      backgroundColor: [
-        '#f472b6', // pink-400
-        '#fdba74', // orange-300
-        '#fde68a', // yellow-300
-        '#6ee7b7'  // emerald-300
-      ],
-    }]
-  };
-  const priorityConfig = {
-    type: 'doughnut',
-    data: priorityData,
-    options: {
-      plugins: {
-        legend: { position: 'bottom' },
-        tooltip: {
-          callbacks: {
-            label: function(context) {
-              let label = context.label || '';
-              let value = context.parsed || 0;
-              let total = context.chart._metasets[0].total || 1;
-              let pct = ((value / total) * 100).toFixed(1);
-              return `${label}: ${value} (${pct}%)`;
+    // Chart.js Doughnut Chart
+    const priorityData = {
+      labels: ['Critical', 'High', 'Medium', 'Low'],
+      datasets: [{
+        data: [
+          {{ critical_tickets|default:0 }},
+          {{ high_tickets|default:0 }},
+          {{ medium_tickets|default:0 }},
+          {{ low_tickets|default:0 }}
+        ],
+        backgroundColor: [
+          '#f472b6', // pink-400
+          '#fdba74', // orange-300
+          '#fde68a', // yellow-300
+          '#6ee7b7'  // emerald-300
+        ],
+        borderColor: '#fff',
+        borderWidth: 2
+      }]
+    };
+  
+    const priorityConfig = {
+      type: 'doughnut',
+      data: priorityData,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              color: '#333',
+              padding: 20,
+              font: {
+                size: 12
+              }
+            }
+          },
+          tooltip: {
+            enabled: true,
+            callbacks: {
+              label: function(context) {
+                const label = context.label || '';
+                const value = context.parsed || 0;
+                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                const pct = ((value / total) * 100).toFixed(1);
+                return `${label}: ${value} (${pct}%)`;
+              }
             }
           }
-        }
-      },
-      animation: {
-        animateScale: true,
-        animateRotate: true
-      },
-      onClick: function(evt, elements) {
-        if (elements.length > 0) {
-          const idx = elements[0].index;
-          const label = this.data.labels[idx];
-          window.location.href = "{% url 'aps_support:ticket_list' %}?priority=" + encodeURIComponent(label);
+        },
+        animation: {
+          animateScale: true,
+          animateRotate: true
+        },
+        onClick: function(evt, elements) {
+          if (elements.length > 0) {
+            const idx = elements[0].index;
+            const label = this.data.labels[idx];
+            const baseUrl = "{% url 'aps_support:ticket_list' %}";
+            window.location.href = baseUrl + "?priority=" + encodeURIComponent(label);
+          }
         }
       }
-    }
-  };
-  if (document.getElementById('priorityChart')) {
-    new Chart(document.getElementById('priorityChart'), priorityConfig);
-  }
+    };
+  
+    // Wait for DOM to be fully loaded
+    document.addEventListener('DOMContentLoaded', function() {
+      const ctx = document.getElementById('priorityChart');
+      if (ctx) {
+        new Chart(ctx, priorityConfig);
+      } else {
+        console.error('Priority chart canvas element not found');
+      }
+    });
 
   // Issue Type Chart
   const issueTypeLabels = [{% for i in issue_distribution %}'{{ i.issue_type }}'{% if not forloop.last %}, {% endif %}{% endfor %}];

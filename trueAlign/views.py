@@ -14130,7 +14130,7 @@ def update_ticket(request, pk):
     }
     return render(request, 'components/support/ticket_form.html', context)
 
-
+ 
 @login_required
 def assign_ticket(request, pk):
     ticket = get_object_or_404(Support, pk=pk)
@@ -14270,7 +14270,6 @@ def assign_ticket(request, pk):
     }
     return render(request, 'components/support/assign_ticket.html', context)
 
-
 @login_required
 def support_dashboard(request):
     from datetime import timedelta, datetime
@@ -14356,9 +14355,9 @@ def support_dashboard(request):
         tickets_in_period = tickets
 
     total_tickets = tickets_in_period.count()
-    open_tickets = tickets_in_period.filter(status__in=['New', 'Open']).count()
+    open_tickets = tickets_in_period.filter(status__in=['New', 'Open', 'In Progress']).count()
     in_progress_tickets = tickets_in_period.filter(status='In Progress').count()
-    resolved_tickets = tickets_in_period.filter(status='Resolved').count()
+    resolved_tickets = tickets_in_period.filter(status__in=['Resolved', 'Closed']).count()
     closed_tickets = tickets_in_period.filter(status='Closed').count()
 
     if from_date:
@@ -14400,7 +14399,7 @@ def support_dashboard(request):
     responded_tickets = tickets_in_period.filter(response_time__isnull=False)
     closed_with_time = tickets_in_period.filter(
         Q(time_to_close__isnull=False) | 
-        Q(resolution_time__isnull=False, status='Closed')
+        Q(resolution_time__isnull=False, status__in=['Resolved', 'Closed'])
     )
     try:
         if resolved_with_time.exists():
@@ -14924,6 +14923,8 @@ def humanize_timedelta(td):
         result += f"{seconds} second{'s' if seconds != 1 else ''}"
 
     return result.strip()
+
+    
 '''---------------------------------------- HOLIDAY AREA ----------------------------------'''
 
 from .models import Holiday
