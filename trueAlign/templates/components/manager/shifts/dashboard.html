@@ -1,18 +1,16 @@
-{% extends 'base.html' %}
+ {% extends 'base.html' %}
 
 {% block title %}Shift Management System{% endblock %}
 
 {% block content %}
 <!-- Horizontal Navigation Bar -->
-
-
-<nav class="bg-gradient-to-r from-indigo-600 to-purple-600 shadow-lg">
+<nav class="bg-blue-500 shadow-lg">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
             <div class="flex items-center space-x-8">
                 <a href="{% url 'aps_manager:shift_dashboard' %}"
-                    class="flex items-center px-3 py-2 rounded-md text-sm font-medium transition-all duration-300 {% if request.resolver_match.url_name == 'shift_dashboard' %}bg-white text-indigo-600{% else %}text-white hover:bg-white/20{% endif %}">
-                    <svg class="mr-2 h-5 w-5 {% if request.resolver_match.url_name == 'shift_dashboard' %}text-indigo-500{% else %}text-white{% endif %}"
+                    class="flex items-center px-3 py-2 rounded-md text-sm font-medium transition-all duration-300 {% if request.resolver_match.url_name == 'shift_dashboard' %}bg-white text-blue-600{% else %}text-white hover:bg-blue-400{% endif %}">
+                    <svg class="mr-2 h-5 w-5 {% if request.resolver_match.url_name == 'shift_dashboard' %}text-blue-500{% else %}text-white{% endif %}"
                         xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -20,8 +18,8 @@
                     Shift Home
                 </a>
                 <a href="{% url 'aps_manager:shift_calendar' %}"
-                    class="flex items-center px-3 py-2 rounded-md text-sm font-medium transition-all duration-300 {% if request.resolver_match.url_name == 'shift_calendar' %}bg-white text-indigo-600{% else %}text-white hover:bg-white/20{% endif %}">
-                    <svg class="mr-2 h-5 w-5 {% if request.resolver_match.url_name == 'shift_calendar' %}text-indigo-500{% else %}text-white{% endif %}"
+                    class="flex items-center px-3 py-2 rounded-md text-sm font-medium transition-all duration-300 {% if request.resolver_match.url_name == 'shift_calendar' %}bg-white text-blue-600{% else %}text-white hover:bg-blue-400{% endif %}">
+                    <svg class="mr-2 h-5 w-5 {% if request.resolver_match.url_name == 'shift_calendar' %}text-blue-500{% else %}text-white{% endif %}"
                         xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -29,8 +27,8 @@
                     Calendar View
                 </a>
                 <a href="{% url 'aps_manager:shift_list' %}"
-                    class="flex items-center px-3 py-2 rounded-md text-sm font-medium transition-all duration-300 {% if 'shift' in request.resolver_match.url_name and request.resolver_match.url_name != 'shift_dashboard' and request.resolver_match.url_name != 'shift_calendar' %}bg-white text-indigo-600{% else %}text-white hover:bg-white/20{% endif %}">
-                    <svg class="mr-2 h-5 w-5 {% if 'shift' in request.resolver_match.url_name and request.resolver_match.url_name != 'shift_dashboard' and request.resolver_match.url_name != 'shift_calendar' %}text-indigo-500{% else %}text-white{% endif %}"
+                    class="flex items-center px-3 py-2 rounded-md text-sm font-medium transition-all duration-300 {% if 'shift' in request.resolver_match.url_name and request.resolver_match.url_name != 'shift_dashboard' and request.resolver_match.url_name != 'shift_calendar' %}bg-white text-blue-600{% else %}text-white hover:bg-blue-400{% endif %}">
+                    <svg class="mr-2 h-5 w-5 {% if 'shift' in request.resolver_match.url_name and request.resolver_match.url_name != 'shift_dashboard' and request.resolver_match.url_name != 'shift_calendar' %}text-blue-500{% else %}text-white{% endif %}"
                         xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -38,8 +36,8 @@
                     Shift Types
                 </a>
                 <a href="{% url 'aps_manager:assignment_list' %}"
-                    class="flex items-center px-3 py-2 rounded-md text-sm font-medium transition-all duration-300 {% if 'assignment' in request.resolver_match.url_name %}bg-white text-indigo-600{% else %}text-white hover:bg-white/20{% endif %}">
-                    <svg class="mr-2 h-5 w-5 {% if 'assignment' in request.resolver_match.url_name %}text-indigo-500{% else %}text-white{% endif %}"
+                    class="flex items-center px-3 py-2 rounded-md text-sm font-medium transition-all duration-300 {% if 'assignment' in request.resolver_match.url_name %}bg-white text-blue-600{% else %}text-white hover:bg-blue-400{% endif %}">
+                    <svg class="mr-2 h-5 w-5 {% if 'assignment' in request.resolver_match.url_name %}text-blue-500{% else %}text-white{% endif %}"
                         xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -47,8 +45,8 @@
                     Employee Assignments
                 </a>
                 <a href="{% url 'aps_manager:holiday_list' %}"
-                    class="flex items-center px-3 py-2 rounded-md text-sm font-medium transition-all duration-300 {% if 'holiday' in request.resolver_match.url_name %}bg-white text-indigo-600{% else %}text-white hover:bg-white/20{% endif %}">
-                    <svg class="mr-2 h-5 w-5 {% if 'holiday' in request.resolver_match.url_name %}text-indigo-500{% else %}text-white{% endif %}"
+                    class="flex items-center px-3 py-2 rounded-md text-sm font-medium transition-all duration-300 {% if 'holiday' in request.resolver_match.url_name %}bg-white text-blue-600{% else %}text-white hover:bg-blue-400{% endif %}">
+                    <svg class="mr-2 h-5 w-5 {% if 'holiday' in request.resolver_match.url_name %}text-blue-500{% else %}text-white{% endif %}"
                         xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
@@ -56,33 +54,27 @@
                     Holidays
                 </a>
             </div>
-            
         </div>
     </div>
 </nav>
 
-
 {% if request.resolver_match.url_name == 'shift_dashboard' %}
 <!-- Main content -->
-<main
-    class="flex-1 relative overflow-y-auto focus:outline-none bg-gradient-to-br from-gray-50 to-indigo-50 min-h-screen">
+<main class="flex-1 relative overflow-y-auto focus:outline-none bg-gray-100 min-h-screen">
     <div class="py-6 px-4 sm:px-6 lg:px-8">
         <!-- Dashboard Summary Cards -->
         <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-                <div
-                    class="bg-white/80 backdrop-blur-sm shadow-lg rounded-xl p-5 flex items-center transform hover:scale-105 transition-all duration-300">
-                    <div class="flex-shrink-0 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full p-3">
+                <div class="bg-white shadow-lg rounded-xl p-5 flex items-center transform hover:scale-105 transition-all duration-300">
+                    <div class="flex-shrink-0 bg-blue-500 rounded-full p-3">
                         <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                     </div>
                     <div class="ml-4">
-                        <div class="text-sm text-gray-500">Total Shifts</div>
-                        <div
-                            class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
-                            {{ total_shifts }}</div>
+                        <div class="text-sm text-gray-600">Total Shifts</div>
+                        <div class="text-2xl font-bold text-blue-600">{{ total_shifts }}</div>
                     </div>
                 </div>
                 <div

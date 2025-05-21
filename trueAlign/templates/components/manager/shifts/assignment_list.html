@@ -633,7 +633,7 @@
                                 class="whitespace-nowrap px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors duration-200 flex items-center">
                                 <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                                         d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
                                 </svg>
                                 Select All
                             </button>
@@ -646,6 +646,85 @@
                                 Clear
                             </button>
                         </div>
+                        <!-- Add sorting controls -->
+                        <div class="flex gap-2">
+                              <button type="button" onclick="sortEmployees('name', 'asc')"
+                                class="whitespace-nowrap px-3 py-2 text-xs font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors duration-200 flex items-center">
+                                <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                                </svg>
+                                Sort by Name
+                            </button>
+                            <button type="button" onclick="sortEmployees('username', 'asc')"
+                                class="whitespace-nowrap px-3 py-2 text-xs font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors duration-200 flex items-center">
+                                <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                                </svg>
+                                Sort by Username
+                            </button>
+
+                            <script>
+                                let currentSort = {
+                                    field: null,
+                                    direction: 'asc'
+                                };
+
+                                function sortEmployees(field, direction) {
+                                    const grid = document.getElementById('employee_grid');
+                                    const cards = Array.from(grid.getElementsByClassName('employee-card'));
+                                    
+                                    // Toggle direction if clicking same field
+                                    if (currentSort.field === field) {
+                                        direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+                                    }
+                                    
+                                    currentSort = { field, direction };
+                                    
+                                    cards.sort((a, b) => {
+                                        const aValue = a.dataset[field].toLowerCase();
+                                        const bValue = b.dataset[field].toLowerCase();
+                                        
+                                        if (direction === 'asc') {
+                                            return aValue.localeCompare(bValue);
+                                        } else {
+                                            return bValue.localeCompare(aValue);
+                                        }
+                                    });
+                                    
+                                    // Clear the grid
+                                    grid.innerHTML = '';
+                                    
+                                    // Reappend sorted cards
+                                    cards.forEach(card => {
+                                        grid.appendChild(card);
+                                    });
+                                    
+                                    // Update button states and icons
+                                    const buttons = document.querySelectorAll('button[onclick^="sortEmployees"]');
+                                    buttons.forEach(button => {
+                                        const buttonField = button.onclick.toString().match(/'([^']+)'/)[1];
+                                        const svg = button.querySelector('svg');
+                                        
+                                        if (buttonField === field) {
+                                            svg.style.transform = direction === 'asc' ? 'rotate(0deg)' : 'rotate(180deg)';
+                                            button.onclick = () => sortEmployees(field, direction === 'asc' ? 'desc' : 'asc');
+                                        } else {
+                                            svg.style.transform = 'rotate(0deg)';
+                                            button.onclick = () => sortEmployees(buttonField, 'asc');
+                                        }
+                                    });
+
+                                    // Add animation to show sorting is happening
+                                    cards.forEach((card, index) => {
+                                        card.style.transition = 'transform 0.3s ease';
+                                        card.style.transform = `translateY(${index * 2}px)`;
+                                        setTimeout(() => {
+                                            card.style.transform = 'translateY(0)';
+                                        }, 50 * index);
+                                    });
+                                }
+                            </script>
+                        </div>
                     </div>
 
                     <!-- Hidden select element to store actual form data -->
@@ -656,7 +735,7 @@
                     </select>
 
                     <!-- Card-based employee grid -->
-                    <div
+                    <div id="employee_grid"
                         class="employee-grid grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-3 max-h-80 overflow-y-auto p-1">
                         {% for user in users %}
                         <div class="employee-card" data-id="{{ user.id }}"
@@ -670,10 +749,6 @@
                                     class="employee-checkbox-custom inline-block w-5 h-5 rounded border border-gray-300 bg-white mr-3 mt-1 flex-shrink-0 transition-all duration-200"></span>
                                 <div class="flex-grow min-w-0">
                                     <div class="flex items-center mb-1">
-                                        <!-- <div
-                                            class="employee-avatar w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center text-white font-medium text-sm mr-2 flex-shrink-0">
-                                            {{ user.get_full_name|default:user.username|slice:":1" }}
-                                        </div> -->
                                         <div class="truncate">
                                             <div class="font-medium text-sm truncate">{{ user.get_full_name|default:user.username }}</div>
                                             <div class="text-xs text-gray-500 truncate">{{ user.username }}</div>
