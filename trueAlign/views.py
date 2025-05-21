@@ -13945,7 +13945,7 @@ def ticket_detail(request, pk):
         'is_ticket_owner': is_ticket_owner,
         'is_assigned_to_user': ticket.assigned_to_user == user,
     }
-    return render(request, 'components/support/ticket_detail.html', context)
+    return render(request, 'components/support/ticket_detail.html', context )
 
 
 @login_required
