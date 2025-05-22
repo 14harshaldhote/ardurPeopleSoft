@@ -8019,11 +8019,12 @@ def calculate_leave_days(start_date, end_date):
     except Exception:
         return 1
 
+
 @login_required
 @user_passes_test(is_hr_check)
 def get_status_users(request):
     """
-    Fixed function with proper data handling and comprehensive exception handling
+    Updated function with comprehensive fixes for attendance status queries
     """
     from .models import Attendance, User, UserDetails, ShiftMaster, LeaveRequest
     from django.db.models import Q, Count, Avg, Max
@@ -8031,8 +8032,14 @@ def get_status_users(request):
     from django.utils import timezone
     from django.utils.dateparse import parse_date
     import pytz
+    from django.conf import settings
 
     logger = logging.getLogger(__name__)
+
+    # Constants for validation and thresholds
+    LATE_THRESHOLD_MINUTES = 30  # Grace period before marking as late
+    MAX_REALISTIC_LATE_MINUTES = 480  # 8 hours - flag unrealistic values
+    HISTORICAL_QUERY_DAYS_LIMIT = 7  # Days after which "Yet to Clock In" becomes "Absent"
 
     try:
         # Get and validate parameters
@@ -8056,35 +8063,62 @@ def get_status_users(request):
             logger.error(f"Invalid date format in get_status_users: {e}")
             return JsonResponse({'error': 'Invalid date format'}, status=400)
 
-        # Get all user details and shifts with error handling
+        # Get all user details and shifts with optimized queries
         try:
-            user_details_dict = {ud.user_id: ud for ud in UserDetails.objects.select_related('user').all()}
-            active_shifts = {s.id: s for s in ShiftMaster.objects.filter(is_active=True)}
+            # Use select_related and prefetch_related for better performance
+            user_details_dict = {
+                ud.user_id: ud 
+                for ud in UserDetails.objects.select_related('user', 'shift').all()
+            }
+            
+            # Cache active shifts
+            active_shifts = {
+                s.id: s 
+                for s in ShiftMaster.objects.filter(is_active=True).only(
+                    'id', 'name', 'start_time', 'end_time', 'is_active'
+                )
+            }
+            
             default_shift = next(iter(active_shifts.values()), None)
+            
         except Exception as e:
             logger.error(f"Error loading user details and shifts: {e}")
             user_details_dict = {}
             active_shifts = {}
             default_shift = None
 
-        # Handle "Yet to Clock In" status
+        # Handle "Yet to Clock In" status with improved logic
         if status in ['Yet to Clock In', 'Not Clocked In']:
             try:
                 IST = pytz.timezone('Asia/Kolkata')
                 current_date = timezone.localtime(timezone.now(), IST).date()
+                current_time = timezone.localtime(timezone.now(), IST).time()
                 
-                # Only process if checking today's data
-                if end_date != current_date:
-                    return JsonResponse({
-                        'status': 'success',
-                        'count': 0,
-                        'users': [],
-                        'total_users': 0  # Fixed field name
-                    })
+                # Allow historical "Yet to Clock In" queries but adjust logic based on date
+                is_historical_query = end_date < current_date
+                
+                # For historical dates, check if query is too old
+                if is_historical_query:
+                    days_diff = (current_date - end_date).days
+                    if days_diff > HISTORICAL_QUERY_DAYS_LIMIT:
+                        # Too old - likely absent, not "yet to clock in"
+                        return JsonResponse({
+                            'status': 'success',
+                            'data': {
+                                'users': [],
+                                'count': 0,
+                                'message': f'For dates older than {HISTORICAL_QUERY_DAYS_LIMIT} days, check "Absent" status instead',
+                                'suggestion': 'Use "Absent" status for historical attendance queries'
+                            }
+                        })
 
-                # Get base user queryset - only active users
+                # Get base user queryset - only active users with optimized query
                 try:
-                    user_qs = User.objects.filter(is_active=True).select_related('profile')
+                    user_qs = User.objects.filter(
+                        is_active=True
+                    ).select_related('profile').only(
+                        'id', 'username', 'first_name', 'last_name', 'is_active'
+                    )
                 except Exception as e:
                     logger.error(f"Error getting active users: {e}")
                     return JsonResponse({'error': 'Error loading users'}, status=500)
@@ -8116,24 +8150,20 @@ def get_status_users(request):
                     logger.error(f"Error applying global search filter: {e}")
                     # Continue without global search filter
 
-                # Get users who already have ANY attendance record for today
+                # Get users who haven't clocked in for the specified date range
                 try:
-                    users_with_attendance = Attendance.objects.filter(
-                        date=end_date
-                    ).values_list('user_id', flat=True)
+                    users_with_attendance = list(Attendance.objects.filter(
+                        date__range=[start_date, end_date]  # Check entire range, not just end_date
+                    ).values_list('user_id', flat=True).distinct())
 
-                    # Filter to users without any attendance record
+                    # Filter to users without any attendance record in the date range
                     yet_to_clock_in_qs = user_qs.exclude(id__in=users_with_attendance)
+                    
                 except Exception as e:
                     logger.error(f"Error filtering users with attendance: {e}")
                     return JsonResponse({'error': 'Error processing attendance data'}, status=500)
 
                 result = []
-                try:
-                    current_time = timezone.localtime(timezone.now(), IST).time()
-                except Exception as e:
-                    logger.error(f"Error getting current time: {e}")
-                    current_time = timezone.now().time()
 
                 # Process each user
                 for user in yet_to_clock_in_qs:
@@ -8165,16 +8195,30 @@ def get_status_users(request):
                         except Exception as e:
                             logger.error(f"Error getting shift info for user {user.id}: {e}")
 
-                        # Calculate late minutes with error handling
+                        # Calculate late minutes with improved validation
                         late_by = 0
+                        is_realistic_late = True
+
                         try:
-                            if shift_start:
+                            if shift_start and not is_historical_query:  # Only calculate for current day
                                 shift_minutes = shift_start.hour * 60 + shift_start.minute
                                 current_minutes = current_time.hour * 60 + current_time.minute
-                                if current_minutes > shift_minutes:
+                                
+                                # Only calculate late if beyond grace period
+                                if current_minutes > shift_minutes + LATE_THRESHOLD_MINUTES:
                                     late_by = current_minutes - shift_minutes
+                                    
+                                    # Validate realistic late minutes
+                                    if late_by > MAX_REALISTIC_LATE_MINUTES:
+                                        logger.warning(f"Unrealistic late minutes: {late_by} for user {user.id}")
+                                        late_by = min(late_by, MAX_REALISTIC_LATE_MINUTES)  # Cap at max
+                                        is_realistic_late = False
+                                else:
+                                    late_by = 0  # Within grace period
+                                    
                         except Exception as e:
                             logger.error(f"Error calculating late minutes for user {user.id}: {e}")
+                            late_by = 0
 
                         result.append({
                             'user_id': user.id,
@@ -8184,7 +8228,8 @@ def get_status_users(request):
                             'shift_name': shift_name,
                             'shift_start_time': shift_start.strftime('%H:%M') if shift_start else None,
                             'shift_end_time': shift_end.strftime('%H:%M') if shift_end else None,
-                            'late_by': late_by
+                            'late_by': late_by,
+                            'late_validation': 'realistic' if is_realistic_late else 'capped'
                         })
 
                     except Exception as e:
@@ -8193,9 +8238,22 @@ def get_status_users(request):
 
                 return JsonResponse({
                     'status': 'success',
-                    'count': len(result),
-                    'users': result,
-                    'total_users': len(result)  # Fixed field name
+                    'data': {
+                        'users': result,
+                        'count': len(result),
+                        'filters_applied': {
+                            'status': status,
+                            'date_range': f"{start_date} to {end_date}",
+                            'location': location,
+                            'search': global_search
+                        },
+                        'query_info': {
+                            'is_historical': is_historical_query,
+                            'total_active_users': user_qs.count(),
+                            'users_with_attendance': len(users_with_attendance),
+                            'grace_period_minutes': LATE_THRESHOLD_MINUTES
+                        }
+                    }
                 })
 
             except Exception as e:
@@ -8261,7 +8319,7 @@ def get_status_users(request):
                 except Exception as e:
                     logger.error(f"Error getting leave requests: {e}")
 
-            # Get attendance records with proper aggregation
+            # Get attendance records with proper aggregation and validation
             try:
                 attendance_records = query.values(
                     'user_id', 
@@ -8280,9 +8338,24 @@ def get_status_users(request):
                     avg_hours=Avg('total_hours'),
                     last_date=Max('date')
                 ).order_by('user__first_name')
+                
+                # Validate query results
+                if not attendance_records.exists():
+                    return JsonResponse({
+                        'status': 'success',
+                        'data': {
+                            'users': [],
+                            'count': 0,
+                            'message': f'No {status} records found for the specified criteria'
+                        }
+                    })
+                    
             except Exception as e:
-                logger.error(f"Error querying user attendance data: {e}")
-                return JsonResponse({'error': 'Error loading attendance data'}, status=500)
+                logger.error(f"Error querying attendance data for status {status}: {e}")
+                return JsonResponse({
+                    'error': f'Database error while fetching {status} data',
+                    'details': str(e) if settings.DEBUG else 'Contact administrator'
+                }, status=500)
 
             # Process user data
             result = []
@@ -8339,20 +8412,31 @@ def get_status_users(request):
                         'shift_end_time': shift_end_str,
                     }
 
-                    # Add status-specific information
+                    # Add status-specific information with validation
                     if status in ['Present', 'Present & Late', 'Work From Home']:
                         try:
                             # Format clock in/out times
                             clock_in_time = record['clock_in_time']
                             clock_out_time = record['clock_out_time']
                             
+                            # Validate late minutes
+                            late_minutes = record['late_minutes'] or 0
+                            avg_late_minutes = float(record['avg_late_minutes']) if record['avg_late_minutes'] else 0
+                            
+                            # Flag unrealistic late minutes
+                            late_validation = 'realistic'
+                            if avg_late_minutes > MAX_REALISTIC_LATE_MINUTES:
+                                late_validation = 'needs_review'
+                                logger.warning(f"User {user_id} has unrealistic average late minutes: {avg_late_minutes}")
+                            
                             user_data.update({
                                 'clock_in_time': clock_in_time.strftime('%H:%M') if clock_in_time else None,
                                 'clock_out_time': clock_out_time.strftime('%H:%M') if clock_out_time else None,
-                                'avg_late_minutes': float(record['avg_late_minutes']) if record['avg_late_minutes'] else 0,
+                                'avg_late_minutes': avg_late_minutes,
                                 'avg_hours': float(record['avg_hours']) if record['avg_hours'] else 0,
-                                'late_minutes': record['late_minutes'] or 0,
-                                'total_hours': float(record['total_hours']) if record['total_hours'] else 0
+                                'late_minutes': late_minutes,
+                                'total_hours': float(record['total_hours']) if record['total_hours'] else 0,
+                                'late_validation': late_validation
                             })
                         except Exception as e:
                             logger.error(f"Error formatting clock times for user {user_id}: {e}")
@@ -8362,8 +8446,10 @@ def get_status_users(request):
                                 'avg_late_minutes': 0,
                                 'avg_hours': 0,
                                 'late_minutes': 0,
-                                'total_hours': 0
+                                'total_hours': 0,
+                                'late_validation': 'error'
                             })
+                            
                     elif status == 'On Leave':
                         try:
                             leave_info = leave_requests.get(user_id, {})
@@ -8395,9 +8481,16 @@ def get_status_users(request):
 
             return JsonResponse({
                 'status': 'success',
-                'count': len(result),
-                'users': result,
-                'total_users': len(result)  # Fixed field name
+                'data': {
+                    'users': result,
+                    'count': len(result),
+                    'filters_applied': {
+                        'status': status,
+                        'date_range': f"{start_date} to {end_date}",
+                        'location': location,
+                        'search': global_search
+                    }
+                }
             })
 
         except Exception as e:
@@ -8407,6 +8500,7 @@ def get_status_users(request):
     except Exception as e:
         logger.error(f"Critical error in get_status_users: {e}")
         return JsonResponse({'error': 'Internal server error'}, status=500)
+
 
 
 '''---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------'''
