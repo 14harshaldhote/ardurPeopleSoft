@@ -8008,11 +8008,22 @@ def calculate_location_stats(start_date, end_date, time_period, base_query, user
         return []
 
 
+def calculate_leave_days(start_date, end_date):
+    """Helper function to calculate leave days"""
+    try:
+        from datetime import timedelta
+        if start_date and end_date:
+            delta = end_date - start_date
+            return delta.days + 1
+        return 1
+    except Exception:
+        return 1
+
 @login_required
 @user_passes_test(is_hr_check)
 def get_status_users(request):
     """
-    Updated function with proper Yet to Clock In handling and comprehensive exception handling
+    Fixed function with proper data handling and comprehensive exception handling
     """
     from .models import Attendance, User, UserDetails, ShiftMaster, LeaveRequest
     from django.db.models import Q, Count, Avg, Max
@@ -8047,7 +8058,7 @@ def get_status_users(request):
 
         # Get all user details and shifts with error handling
         try:
-            user_details_dict = {ud.user_id: ud for ud in UserDetails.objects.all()}
+            user_details_dict = {ud.user_id: ud for ud in UserDetails.objects.select_related('user').all()}
             active_shifts = {s.id: s for s in ShiftMaster.objects.filter(is_active=True)}
             default_shift = next(iter(active_shifts.values()), None)
         except Exception as e:
@@ -8067,12 +8078,13 @@ def get_status_users(request):
                     return JsonResponse({
                         'status': 'success',
                         'count': 0,
-                        'users': []
+                        'users': [],
+                        'total_users': 0  # Fixed field name
                     })
 
-                # Get base user queryset
+                # Get base user queryset - only active users
                 try:
-                    user_qs = User.objects.filter(is_active=True)
+                    user_qs = User.objects.filter(is_active=True).select_related('profile')
                 except Exception as e:
                     logger.error(f"Error getting active users: {e}")
                     return JsonResponse({'error': 'Error loading users'}, status=500)
@@ -8080,16 +8092,13 @@ def get_status_users(request):
                 # Apply location filter with error handling
                 try:
                     if location and location not in ['all', 'Unspecified']:
-                        user_ids_with_location = UserDetails.objects.filter(
-                            work_location=location
-                        ).values_list('user_id', flat=True)
-                        user_qs = user_qs.filter(id__in=user_ids_with_location)
+                        user_qs = user_qs.filter(profile__work_location=location)
                     elif location == 'Unspecified':
-                        # Filter for users with no location
-                        user_ids_no_location = UserDetails.objects.filter(
-                            Q(work_location__isnull=True) | Q(work_location__exact='')
-                        ).values_list('user_id', flat=True)
-                        user_qs = user_qs.filter(id__in=user_ids_no_location)
+                        user_qs = user_qs.filter(
+                            Q(profile__work_location__isnull=True) | 
+                            Q(profile__work_location__exact='') |
+                            Q(profile__isnull=True)
+                        )
                 except Exception as e:
                     logger.error(f"Error applying location filter: {e}")
                     # Continue without location filter
@@ -8097,15 +8106,11 @@ def get_status_users(request):
                 # Apply global search with error handling
                 try:
                     if global_search:
-                        user_ids_from_details = UserDetails.objects.filter(
-                            work_location__icontains=global_search
-                        ).values_list('user_id', flat=True)
-
                         user_qs = user_qs.filter(
                             Q(username__icontains=global_search) |
                             Q(first_name__icontains=global_search) |
                             Q(last_name__icontains=global_search) |
-                            Q(id__in=user_ids_from_details)
+                            Q(profile__work_location__icontains=global_search)
                         )
                 except Exception as e:
                     logger.error(f"Error applying global search filter: {e}")
@@ -8133,8 +8138,13 @@ def get_status_users(request):
                 # Process each user
                 for user in yet_to_clock_in_qs:
                     try:
-                        user_detail = user_details_dict.get(user.id)
-                        work_location = user_detail.work_location if user_detail else "Unspecified"
+                        # Get user profile safely
+                        try:
+                            user_profile = user.profile
+                            work_location = user_profile.work_location or "Unspecified"
+                        except UserDetails.DoesNotExist:
+                            work_location = "Unspecified"
+                            user_profile = None
 
                         # Get shift information with error handling
                         shift = None
@@ -8143,8 +8153,8 @@ def get_status_users(request):
                         shift_end = None
                         
                         try:
-                            if user_detail and user_detail.shift_id and user_detail.shift_id in active_shifts:
-                                shift = active_shifts[user_detail.shift_id]
+                            if user_profile and hasattr(user_profile, 'shift_id') and user_profile.shift_id and user_profile.shift_id in active_shifts:
+                                shift = active_shifts[user_profile.shift_id]
                             else:
                                 shift = default_shift
 
@@ -8169,7 +8179,7 @@ def get_status_users(request):
                         result.append({
                             'user_id': user.id,
                             'username': user.username,
-                            'name': f"{user.first_name} {user.last_name}".strip(),
+                            'name': f"{user.first_name or ''} {user.last_name or ''}".strip() or user.username,
                             'work_location': work_location,
                             'shift_name': shift_name,
                             'shift_start_time': shift_start.strftime('%H:%M') if shift_start else None,
@@ -8184,47 +8194,46 @@ def get_status_users(request):
                 return JsonResponse({
                     'status': 'success',
                     'count': len(result),
-                    'users': result
+                    'users': result,
+                    'total_users': len(result)  # Fixed field name
                 })
 
             except Exception as e:
                 logger.error(f"Critical error in Yet to Clock In processing: {e}")
                 return JsonResponse({'error': 'Error processing yet to clock in data'}, status=500)
 
-        # Handle other statuses with error handling
+        # Handle other statuses with proper joins and filtering
         try:
-            # Base query for other statuses
+            # Base query with proper joins
             query = Attendance.objects.filter(
                 status=status,
                 date__gte=start_date,
                 date__lte=end_date
-            ).select_related('user')
+            ).select_related('user', 'user__profile')
 
             # Apply location filter if provided
             if location and location != 'all':
                 try:
                     if location == 'Unspecified':
-                        user_ids = UserDetails.objects.filter(
-                            Q(work_location__isnull=True) | Q(work_location__exact='')
-                        ).values_list('user_id', flat=True)
+                        query = query.filter(
+                            Q(user__profile__work_location__isnull=True) | 
+                            Q(user__profile__work_location__exact='') |
+                            Q(user__profile__isnull=True)
+                        )
                     else:
-                        user_ids = UserDetails.objects.filter(work_location=location).values_list('user_id', flat=True)
-                    query = query.filter(user_id__in=user_ids)
+                        query = query.filter(user__profile__work_location=location)
                 except Exception as e:
                     logger.error(f"Error applying location filter for status {status}: {e}")
 
             # Global search filter
             if global_search:
                 try:
-                    user_ids_from_details = UserDetails.objects.filter(
-                        Q(work_location__icontains=global_search)
-                    ).values_list('user_id', flat=True)
                     query = query.filter(
                         Q(user__username__icontains=global_search) |
                         Q(user__first_name__icontains=global_search) |
                         Q(user__last_name__icontains=global_search) |
                         Q(user__id__icontains=global_search) |
-                        Q(user_id__in=user_ids_from_details)
+                        Q(user__profile__work_location__icontains=global_search)
                     )
                 except Exception as e:
                     logger.error(f"Error applying global search for status {status}: {e}")
@@ -8239,23 +8248,32 @@ def get_status_users(request):
                         status='Approved',
                         start_date__lte=end_date,
                         end_date__gte=start_date
-                    )
+                    ).select_related('leave_type')
+                    
                     for lr in leave_reqs:
                         if lr.user_id not in leave_requests or lr.end_date > leave_requests[lr.user_id]['end_date']:
                             leave_requests[lr.user_id] = {
                                 'start_date': lr.start_date,
                                 'end_date': lr.end_date,
-                                'leave_type': lr.leave_type,
-                                'days': calculate_leave_days(lr.start_date, lr.end_date)
+                                'leave_type': lr.leave_type.name if lr.leave_type else 'Unknown',
+                                'days': float(lr.leave_days) if lr.leave_days else 1
                             }
                 except Exception as e:
                     logger.error(f"Error getting leave requests: {e}")
 
-            # Get user details with attendance info
+            # Get attendance records with proper aggregation
             try:
-                users_data = query.values(
-                    'user_id', 'user__username', 'user__first_name', 'user__last_name',
-                    'clock_in_time', 'clock_out_time', 'leave_type', 'date'
+                attendance_records = query.values(
+                    'user_id', 
+                    'user__username', 
+                    'user__first_name', 
+                    'user__last_name',
+                    'clock_in_time', 
+                    'clock_out_time', 
+                    'leave_type', 
+                    'date',
+                    'total_hours',
+                    'late_minutes'
                 ).annotate(
                     count=Count('id'),
                     avg_late_minutes=Avg('late_minutes'),
@@ -8268,16 +8286,29 @@ def get_status_users(request):
 
             # Process user data
             result = []
-            for user in users_data:
+            processed_users = set()  # To handle duplicates
+            
+            for record in attendance_records:
                 try:
-                    user_id = user['user_id']
-                    user_detail = user_details_dict.get(user_id)
-                    work_location = user_detail.work_location if user_detail else "Unspecified"
+                    user_id = record['user_id']
+                    
+                    # Skip if already processed (for aggregated data)
+                    if user_id in processed_users:
+                        continue
+                    processed_users.add(user_id)
+                    
+                    # Get user profile safely
+                    try:
+                        user_detail = user_details_dict.get(user_id)
+                        work_location = user_detail.work_location if user_detail else "Unspecified"
+                    except Exception as e:
+                        logger.error(f"Error getting user detail for {user_id}: {e}")
+                        work_location = "Unspecified"
 
                     # Get user's shift information with error handling
                     try:
                         shift = None
-                        if user_detail and user_detail.shift_id and user_detail.shift_id in active_shifts:
+                        if user_detail and hasattr(user_detail, 'shift_id') and user_detail.shift_id and user_detail.shift_id in active_shifts:
                             shift = active_shifts[user_detail.shift_id]
                         else:
                             shift = default_shift
@@ -8298,11 +8329,11 @@ def get_status_users(request):
                     # Base user data
                     user_data = {
                         'user_id': user_id,
-                        'username': user['user__username'],
-                        'name': f"{user['user__first_name']} {user['user__last_name']}",
+                        'username': record['user__username'] or '',
+                        'name': f"{record['user__first_name'] or ''} {record['user__last_name'] or ''}".strip() or record['user__username'],
                         'work_location': work_location,
-                        'count': user['count'],
-                        'last_attendance_date': user['last_date'].strftime('%Y-%m-%d') if user['last_date'] else '',
+                        'count': record['count'],
+                        'last_attendance_date': record['last_date'].strftime('%Y-%m-%d') if record['last_date'] else '',
                         'shift_name': shift_name,
                         'shift_start_time': shift_start_str,
                         'shift_end_time': shift_end_str,
@@ -8312,14 +8343,16 @@ def get_status_users(request):
                     if status in ['Present', 'Present & Late', 'Work From Home']:
                         try:
                             # Format clock in/out times
-                            clock_in_time = user['clock_in_time']
-                            clock_out_time = user['clock_out_time']
+                            clock_in_time = record['clock_in_time']
+                            clock_out_time = record['clock_out_time']
                             
                             user_data.update({
                                 'clock_in_time': clock_in_time.strftime('%H:%M') if clock_in_time else None,
                                 'clock_out_time': clock_out_time.strftime('%H:%M') if clock_out_time else None,
-                                'avg_late_minutes': user['avg_late_minutes'] if user['avg_late_minutes'] else 0,
-                                'avg_hours': user['avg_hours'] if user['avg_hours'] else 0
+                                'avg_late_minutes': float(record['avg_late_minutes']) if record['avg_late_minutes'] else 0,
+                                'avg_hours': float(record['avg_hours']) if record['avg_hours'] else 0,
+                                'late_minutes': record['late_minutes'] or 0,
+                                'total_hours': float(record['total_hours']) if record['total_hours'] else 0
                             })
                         except Exception as e:
                             logger.error(f"Error formatting clock times for user {user_id}: {e}")
@@ -8327,41 +8360,44 @@ def get_status_users(request):
                                 'clock_in_time': None,
                                 'clock_out_time': None,
                                 'avg_late_minutes': 0,
-                                'avg_hours': 0
+                                'avg_hours': 0,
+                                'late_minutes': 0,
+                                'total_hours': 0
                             })
                     elif status == 'On Leave':
                         try:
                             leave_info = leave_requests.get(user_id, {})
-                            leave_start = leave_info.get('start_date', user['date'])
-                            leave_end = leave_info.get('end_date', user['date'])
-                            leave_type = leave_info.get('leave_type', user['leave_type'])
+                            leave_start = leave_info.get('start_date', record['date'])
+                            leave_end = leave_info.get('end_date', record['date'])
+                            leave_type = leave_info.get('leave_type', record['leave_type'] or 'Unknown')
                             leave_days = leave_info.get('days', 1)
 
                             user_data.update({
                                 'leave_type': leave_type,
-                                'leave_start_date': leave_start.strftime('%Y-%m-%d'),
-                                'leave_end_date': leave_end.strftime('%Y-%m-%d'),
+                                'leave_start_date': leave_start.strftime('%Y-%m-%d') if hasattr(leave_start, 'strftime') else str(leave_start),
+                                'leave_end_date': leave_end.strftime('%Y-%m-%d') if hasattr(leave_end, 'strftime') else str(leave_end),
                                 'leave_days': leave_days
                             })
                         except Exception as e:
                             logger.error(f"Error formatting leave data for user {user_id}: {e}")
                             user_data.update({
-                                'leave_type': user.get('leave_type', 'Unknown'),
-                                'leave_start_date': user.get('date', '').strftime('%Y-%m-%d') if user.get('date') else '',
-                                'leave_end_date': user.get('date', '').strftime('%Y-%m-%d') if user.get('date') else '',
+                                'leave_type': record.get('leave_type', 'Unknown'),
+                                'leave_start_date': record.get('date', '').strftime('%Y-%m-%d') if record.get('date') else '',
+                                'leave_end_date': record.get('date', '').strftime('%Y-%m-%d') if record.get('date') else '',
                                 'leave_days': 1
                             })
 
                     result.append(user_data)
 
                 except Exception as e:
-                    logger.error(f"Error processing user data for user {user.get('user_id', 'unknown')}: {e}")
+                    logger.error(f"Error processing user data for user {record.get('user_id', 'unknown')}: {e}")
                     continue
 
             return JsonResponse({
                 'status': 'success',
                 'count': len(result),
-                'users': result
+                'users': result,
+                'total_users': len(result)  # Fixed field name
             })
 
         except Exception as e:
@@ -8373,16 +8409,7 @@ def get_status_users(request):
         return JsonResponse({'error': 'Internal server error'}, status=500)
 
 
-def calculate_leave_days(start_date, end_date):
-    """Calculate number of leave days between start and end dates with error handling"""
-    try:
-        if not start_date or not end_date:
-            return 1
-        delta = (end_date - start_date).days + 1
-        return max(delta, 1)  # At least 1 day
-    except Exception as e:
-        logging.getLogger(__name__).error(f"Error calculating leave days: {e}")
-        return 1
+'''---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------'''
 
 
 @user_passes_test(is_hr_check)
