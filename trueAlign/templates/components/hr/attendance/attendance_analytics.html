@@ -244,7 +244,13 @@
                                 <tbody class="bg-white divide-y divide-yellow-50">
                                     {% for user in top_late_users %}
                                     <tr class="hover:bg-yellow-50 transition">
-                                        <td class="px-3 sm:px-6 py-4 whitespace-nowrap font-semibold text-yellow-900">{{ user.user__first_name }} {{ user.user__last_name }}</td>
+                                           <td class="px-3 sm:px-6 py-4 whitespace-nowrap font-semibold text-yellow-900">
+                                             {% if user.user__first_name or user.user__last_name %}
+                                                 {{ user.user__first_name|default_if_none:"" }} {{ user.user__last_name|default_if_none:"" }}
+                                             {% else %}
+                                                 {{ user.user__username|default_if_none:"" }}
+                                             {% endif %}
+                                         </td>
                                         <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-yellow-700">{{ user.late_count }}</td>
                                         <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-yellow-700">{{ user.avg_late_minutes|floatformat:0 }}</td>
                                     </tr>
