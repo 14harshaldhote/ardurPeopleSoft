@@ -398,296 +398,291 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Modal logic using Tailwind CSS and JS
-    const modal = document.getElementById('statusDetailsModal');
-    const modalTitle = document.getElementById('modalTitle');
-    const statusDetailsContent = document.getElementById('statusDetailsContent');
-    const modalSearchContainer = document.getElementById('modalSearchContainer');
-    const closeModalBtn = document.getElementById('closeModal');
-    const closeModalFooterBtn = document.getElementById('closeModalFooter');
-    const exportDataBtn = document.getElementById('exportDataBtn');
+// Status detail buttons
+document.querySelectorAll('.status-detail-btn').forEach(btn => {
+    console.log('status-detail-btn:', btn);
+    btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        console.log('status-detail-btn clicked:', this, e);
+        const url = this.getAttribute('href');
+        const statusText = this.textContent.trim();
+        const statusName = statusText.split(':')[0].trim();
+        console.log('url:', url);
+        console.log('statusText:', statusText);
+        console.log('statusName:', statusName);
+        modalTitle.textContent = `${statusName} Details`;
+        openModal();
+        statusDetailsContent.innerHTML = '<div class="flex justify-center items-center p-6"><div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div></div>';
+        modalSearchContainer.classList.add('hidden');
 
-    // Open modal
-    function openModal() {
-        modal.classList.remove('hidden');
-        document.body.classList.add('overflow-hidden');
-    }
-    
-    // Close modal
-    function closeModal() {
-        modal.classList.add('hidden');
-        document.body.classList.remove('overflow-hidden');
-        // Reset search
-        if (modalSearchContainer) {
-            modalSearchContainer.classList.add('hidden');
-            const input = document.getElementById('modalSearchInput');
-            if (input) input.value = '';
-        }
-    }
-    
-    closeModalBtn.addEventListener('click', closeModal);
-    closeModalFooterBtn.addEventListener('click', closeModal);
-    
-    // Close on background click
-    modal.addEventListener('click', function(e) {
-        if (e.target === modal) closeModal();
-    });
-    
-    // Close on ESC
-    document.addEventListener('keydown', function(e) {
-        if (!modal.classList.contains('hidden') && e.key === 'Escape') closeModal();
-    });
-
-    // Status detail buttons
-    document.querySelectorAll('.status-detail-btn').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            const url = this.getAttribute('href');
-            const statusText = this.textContent.trim();
-            const statusName = statusText.split(':')[0].trim();
-            modalTitle.textContent = `${statusName} Details`;
-            openModal();
-            statusDetailsContent.innerHTML = '<div class="flex justify-center items-center p-6"><div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div></div>';
-            modalSearchContainer.classList.add('hidden');
-
-            fetch(url)
-                .then(response => {
-                    if (!response.ok) throw new Error('Network response was not ok');
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.status === 'success') {
-                        let tableHtml = '';
-                        
-                        // Fixed: Better status name detection
-                        if (statusName.includes('Present') && !statusName.includes('Late')) {
-                            // Present only (not Present & Late)
-                            tableHtml = `
-                                <div class="overflow-x-auto" style="max-height:60vh;overflow-y:auto;">
-                                <table class="min-w-full divide-y divide-gray-200">
-                                    <thead class="bg-blue-50 sticky top-0">
-                                        <tr>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Name</th>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Location</th>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Clock In</th>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Clock Out</th>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Hours</th>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Shift</th>
+        fetch(url)
+            .then(response => {
+                console.log('fetch response:', response);
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.json();
+            })
+            .then(data => {
+                console.log('fetch data:', data);
+                if (data.status === 'success') {
+                    // FIX: Access users from the correct nested structure
+                    const users = data.data.users || data.data || data.users || [];
+                    console.log('Users array:', users);
+                    
+                    let tableHtml = '';
+                    
+                    // Fixed: Better status name detection
+                    if (statusName.includes('Present') && !statusName.includes('Late')) {
+                        // Present only (not Present & Late)
+                        console.log('Rendering Present table for users:', users);
+                        tableHtml = `
+                            <div class="overflow-x-auto" style="max-height:60vh;overflow-y:auto;">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-blue-50 sticky top-0">
+                                    <tr>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Name</th>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Location</th>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Clock In</th>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Clock Out</th>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Hours</th>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Shift</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-100">
+                                    ${users.map(user => {
+                                        console.log('Present user:', user);
+                                        return `
+                                        <tr class="hover:bg-blue-50 transition">
+                                            <td class="px-4 py-2">${user.name || 'N/A'}</td>
+                                            <td class="px-4 py-2">${user.work_location || 'N/A'}</td>
+                                            <td class="px-4 py-2">${user.clock_in_time || '-'}</td>
+                                            <td class="px-4 py-2">${user.clock_out_time || '-'}</td>
+                                            <td class="px-4 py-2">${user.avg_hours ? (typeof user.avg_hours === 'string' ? parseFloat(user.avg_hours).toFixed(2) : user.avg_hours.toFixed(2)) : '-'}</td>
+                                            <td class="px-4 py-2">${user.shift_name || 'N/A'} (${user.shift_start_time || '-'} - ${user.shift_end_time || '-'})</td>
                                         </tr>
-                                    </thead>
-                                    <tbody class="bg-white divide-y divide-gray-100">
-                                        ${data.users.map(user => `
-                                            <tr class="hover:bg-blue-50 transition">
-                                                <td class="px-4 py-2">${user.name || 'N/A'}</td>
-                                                <td class="px-4 py-2">${user.work_location || 'N/A'}</td>
-                                                <td class="px-4 py-2">${user.clock_in_time || '-'}</td>
-                                                <td class="px-4 py-2">${user.clock_out_time || '-'}</td>
-                                                <td class="px-4 py-2">${user.avg_hours ? (typeof user.avg_hours === 'string' ? parseFloat(user.avg_hours).toFixed(2) : user.avg_hours.toFixed(2)) : '-'}</td>
-                                                <td class="px-4 py-2">${user.shift_name || 'N/A'} (${user.shift_start_time || '-'} - ${user.shift_end_time || '-'})</td>
-                                            </tr>
-                                        `).join('')}
-                                    </tbody>
-                                </table>
-                                </div>
-                            `;
-                        } else if (statusName.includes('Late') || statusName === 'Present & Late') {
-                            // Present & Late
-                            tableHtml = `
-                                <div class="overflow-x-auto" style="max-height:60vh;overflow-y:auto;">
+                                    `}).join('')}
+                                </tbody>
+                            </table>
+                            </div>
+                        `;
+                    } else if (statusName.includes('Late') || statusName === 'Present & Late') {
+                        // Present & Late
+                        console.log('Rendering Late table for users:', users);
+                        tableHtml = `
+                            <div class="overflow-x-auto" style="max-height:60vh;overflow-y:auto;">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-blue-50 sticky top-0">
+                                    <tr>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Name</th>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Location</th>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Clock In</th>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Clock Out</th>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Late By (mins)</th>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Hours</th>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Shift</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-100">
+                                    ${users.map(user => {
+                                        console.log('Late user:', user);
+                                        return `
+                                        <tr class="hover:bg-blue-50 transition">
+                                            <td class="px-4 py-2">${user.name || 'N/A'}</td>
+                                            <td class="px-4 py-2">${user.work_location || 'N/A'}</td>
+                                            <td class="px-4 py-2">${user.clock_in_time || '-'}</td>
+                                            <td class="px-4 py-2">${user.clock_out_time || '-'}</td>
+                                            <td class="px-4 py-2 text-red-600 font-medium">${user.late_by || user.late_minutes || '-'}</td>
+                                            <td class="px-4 py-2">${user.avg_hours ? (typeof user.avg_hours === 'string' ? parseFloat(user.avg_hours).toFixed(2) : user.avg_hours.toFixed(2)) : '-'}</td>
+                                            <td class="px-4 py-2">${user.shift_name || 'N/A'} (${user.shift_start_time || '-'} - ${user.shift_end_time || '-'})</td>
+                                        </tr>
+                                    `}).join('')}
+                                </tbody>
+                            </table>
+                            </div>
+                        `;
+                    } else if (statusName.includes('Leave')) {
+                        console.log('Rendering Leave table for users:', users);
+                        tableHtml = `
+                            <div class="overflow-x-auto" style="max-height:60vh;overflow-y:auto;">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-blue-50 sticky top-0">
+                                    <tr>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Name</th>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Location</th>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Leave Type</th>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Start Date</th>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">End Date</th>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Days</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-100">
+                                    ${users.map(user => {
+                                        console.log('Leave user:', user);
+                                        return `
+                                        <tr class="hover:bg-blue-50 transition">
+                                            <td class="px-4 py-2">${user.name || 'N/A'}</td>
+                                            <td class="px-4 py-2">${user.work_location || 'N/A'}</td>
+                                            <td class="px-4 py-2">${user.leave_type || '-'}</td>
+                                            <td class="px-4 py-2">${user.leave_start_date || '-'}</td>
+                                            <td class="px-4 py-2">${user.leave_end_date || '-'}</td>
+                                            <td class="px-4 py-2">${user.leave_days || '1'}</td>
+                                        </tr>
+                                    `}).join('')}
+                                </tbody>
+                            </table>
+                            </div>
+                        `;
+                    } else if (statusName.includes('Yet to Clock In') || statusName.includes('Not Clocked In')) {
+                        console.log('Rendering Yet to Clock In table for users:', users);
+                        tableHtml = `
+                            <div class="overflow-x-auto" style="max-height:60vh;overflow-y:auto;">
                                 <table class="min-w-full divide-y divide-gray-200">
                                     <thead class="bg-blue-50 sticky top-0">
                                         <tr>
                                             <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Name</th>
                                             <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Location</th>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Clock In</th>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Clock Out</th>
+                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Shift</th>
+                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Shift Timing</th>
                                             <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Late By (mins)</th>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Hours</th>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Shift</th>
                                         </tr>
                                     </thead>
                                     <tbody class="bg-white divide-y divide-gray-100">
-                                        ${data.users.map(user => `
-                                            <tr class="hover:bg-blue-50 transition">
-                                                <td class="px-4 py-2">${user.name || 'N/A'}</td>
-                                                <td class="px-4 py-2">${user.work_location || 'N/A'}</td>
-                                                <td class="px-4 py-2">${user.clock_in_time || '-'}</td>
-                                                <td class="px-4 py-2">${user.clock_out_time || '-'}</td>
-                                                <td class="px-4 py-2 text-red-600 font-medium">${user.late_by || user.late_minutes || '-'}</td>
-                                                <td class="px-4 py-2">${user.avg_hours ? (typeof user.avg_hours === 'string' ? parseFloat(user.avg_hours).toFixed(2) : user.avg_hours.toFixed(2)) : '-'}</td>
-                                                <td class="px-4 py-2">${user.shift_name || 'N/A'} (${user.shift_start_time || '-'} - ${user.shift_end_time || '-'})</td>
-                                            </tr>
-                                        `).join('')}
+                                        ${
+                                            users && users.length > 0
+                                            ? users.map(user => {
+                                                console.log('Yet to Clock In user:', user);
+                                                return `
+                                                <tr class="hover:bg-blue-50 transition">
+                                                    <td class="px-4 py-2">${user.name || 'N/A'}</td>
+                                                    <td class="px-4 py-2">${user.work_location || 'N/A'}</td>
+                                                    <td class="px-4 py-2">${user.shift_name || 'N/A'}</td>
+                                                    <td class="px-4 py-2">${(user.shift_start_time || '-') + ' - ' + (user.shift_end_time || '-')}</td>
+                                                    <td class="px-4 py-2${user.late_by && user.late_by > 0 ? ' text-red-600 font-medium' : ''}">${user.late_by && user.late_by > 0 ? user.late_by : '-'}</td>
+                                                </tr>
+                                            `}).join('')
+                                            : `<tr><td colspan="5" class="px-4 py-2 text-center text-gray-400">No users pending clock-in</td></tr>`
+                                        }
                                     </tbody>
                                 </table>
-                                </div>
-                            `;
-                        } else if (statusName.includes('Leave')) {
-                            tableHtml = `
-                                <div class="overflow-x-auto" style="max-height:60vh;overflow-y:auto;">
-                                <table class="min-w-full divide-y divide-gray-200">
-                                    <thead class="bg-blue-50 sticky top-0">
-                                        <tr>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Name</th>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Location</th>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Leave Type</th>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Start Date</th>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">End Date</th>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Days</th>
+                            </div>
+                        `;
+                    } else if (statusName.includes('Absent')) {
+                        console.log('Rendering Absent table for users:', users);
+                        tableHtml = `
+                            <div class="overflow-x-auto" style="max-height:60vh;overflow-y:auto;">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-blue-50 sticky top-0">
+                                    <tr>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Name</th>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Location</th>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Shift</th>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-100">
+                                    ${users.map(user => {
+                                        console.log('Absent user:', user);
+                                        return `
+                                        <tr class="hover:bg-blue-50 transition">
+                                            <td class="px-4 py-2">${user.name || 'N/A'}</td>
+                                            <td class="px-4 py-2">${user.work_location || 'N/A'}</td>
+                                            <td class="px-4 py-2">${user.shift_name || 'N/A'} (${user.shift_start_time || '-'} - ${user.shift_end_time || '-'})</td>
+                                            <td class="px-4 py-2">${user.last_attendance_date || '-'}</td>
                                         </tr>
-                                    </thead>
-                                    <tbody class="bg-white divide-y divide-gray-100">
-                                        ${data.users.map(user => `
-                                            <tr class="hover:bg-blue-50 transition">
-                                                <td class="px-4 py-2">${user.name || 'N/A'}</td>
-                                                <td class="px-4 py-2">${user.work_location || 'N/A'}</td>
-                                                <td class="px-4 py-2">${user.leave_type || '-'}</td>
-                                                <td class="px-4 py-2">${user.leave_start_date || '-'}</td>
-                                                <td class="px-4 py-2">${user.leave_end_date || '-'}</td>
-                                                <td class="px-4 py-2">${user.leave_days || '1'}</td>
-                                            </tr>
-                                        `).join('')}
-                                    </tbody>
-                                </table>
-                                </div>
-                            `;
-                        } else if (statusName.includes('Yet to Clock In') || statusName.includes('Not Clocked In')) {
-                            tableHtml = `
-                                <div class="overflow-x-auto" style="max-height:60vh;overflow-y:auto;">
-                                    <table class="min-w-full divide-y divide-gray-200">
-                                        <thead class="bg-blue-50 sticky top-0">
-                                            <tr>
-                                                <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Name</th>
-                                                <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Location</th>
-                                                <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Shift</th>
-                                                <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Shift Timing</th>
-                                                <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Late By (mins)</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="bg-white divide-y divide-gray-100">
-                                            ${
-                                                data.users && data.users.length > 0
-                                                ? data.users.map(user => `
-                                                    <tr class="hover:bg-blue-50 transition">
-                                                        <td class="px-4 py-2">${user.name || 'N/A'}</td>
-                                                        <td class="px-4 py-2">${user.work_location || 'N/A'}</td>
-                                                        <td class="px-4 py-2">${user.shift_name || 'N/A'}</td>
-                                                        <td class="px-4 py-2">${(user.shift_start_time || '-') + ' - ' + (user.shift_end_time || '-')}</td>
-                                                        <td class="px-4 py-2${user.late_by && user.late_by > 0 ? ' text-red-600 font-medium' : ''}">${user.late_by && user.late_by > 0 ? user.late_by : '-'}</td>
-                                                    </tr>
-                                                `).join('')
-                                                : `<tr><td colspan="5" class="px-4 py-2 text-center text-gray-400">No users pending clock-in</td></tr>`
-                                            }
-                                        </tbody>
-                                    </table>
-                                </div>
-                            `;
-                        } else if (statusName.includes('Absent')) {
-                            tableHtml = `
-                                <div class="overflow-x-auto" style="max-height:60vh;overflow-y:auto;">
-                                <table class="min-w-full divide-y divide-gray-200">
-                                    <thead class="bg-blue-50 sticky top-0">
-                                        <tr>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Name</th>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Location</th>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Shift</th>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Date</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="bg-white divide-y divide-gray-100">
-                                        ${data.users.map(user => `
-                                            <tr class="hover:bg-blue-50 transition">
-                                                <td class="px-4 py-2">${user.name || 'N/A'}</td>
-                                                <td class="px-4 py-2">${user.work_location || 'N/A'}</td>
-                                                <td class="px-4 py-2">${user.shift_name || 'N/A'} (${user.shift_start_time || '-'} - ${user.shift_end_time || '-'})</td>
-                                                <td class="px-4 py-2">${user.last_attendance_date || '-'}</td>
-                                            </tr>
-                                        `).join('')}
-                                    </tbody>
-                                </table>
-                                </div>
-                            `;
-                        } else {
-                            // Default table for other statuses
-                            tableHtml = `
-                                <div class="overflow-x-auto" style="max-height:60vh;overflow-y:auto;">
-                                <table class="min-w-full divide-y divide-gray-200">
-                                    <thead class="bg-blue-50 sticky top-0">
-                                        <tr>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Name</th>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Location</th>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Status</th>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Shift</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="bg-white divide-y divide-gray-100">
-                                        ${data.users.map(user => `
-                                            <tr class="hover:bg-blue-50 transition">
-                                                <td class="px-4 py-2">${user.name || 'N/A'}</td>
-                                                <td class="px-4 py-2">${user.work_location || 'N/A'}</td>
-                                                <td class="px-4 py-2">${user.status || statusName}</td>
-                                                <td class="px-4 py-2">${user.shift_name || 'N/A'} (${user.shift_start_time || '-'} - ${user.shift_end_time || '-'})</td>
-                                            </tr>
-                                        `).join('')}
-                                    </tbody>
-                                </table>
-                                </div>
-                            `;
-                        }
-                        
-                        if (data.users.length === 0) {
-                            tableHtml = `
-                                <div class="flex justify-center items-center p-6 text-gray-500">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mr-2 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-                                    </svg>
-                                    No records found for this status
-                                </div>
-                            `;
-                        }
-                        
-                        statusDetailsContent.innerHTML = tableHtml;
-                        
-                        if (data.users.length > 0) {
-                            const countIndicator = document.createElement('div');
-                            countIndicator.className = 'px-4 py-2 bg-blue-50 text-blue-800 text-sm font-medium';
-                            countIndicator.textContent = `${data.count || data.users.length} ${(data.count || data.users.length) === 1 ? 'record' : 'records'} found`;
-                            statusDetailsContent.insertAdjacentElement('afterbegin', countIndicator);
-                            modalSearchContainer.classList.remove('hidden');
-                        }
+                                    `}).join('')}
+                                </tbody>
+                            </table>
+                            </div>
+                        `;
                     } else {
-                        statusDetailsContent.innerHTML = `
-                            <div class="flex justify-center items-center p-6 text-red-500">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mr-2 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                                </svg>
-                                ${data.error || 'An error occurred'}
+                        // Default table for other statuses
+                        console.log('Rendering Default table for users:', users);
+                        tableHtml = `
+                            <div class="overflow-x-auto" style="max-height:60vh;overflow-y:auto;">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-blue-50 sticky top-0">
+                                    <tr>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Name</th>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Location</th>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Status</th>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Shift</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-100">
+                                    ${users.map(user => {
+                                        console.log('Default status user:', user);
+                                        return `
+                                        <tr class="hover:bg-blue-50 transition">
+                                            <td class="px-4 py-2">${user.name || 'N/A'}</td>
+                                            <td class="px-4 py-2">${user.work_location || 'N/A'}</td>
+                                            <td class="px-4 py-2">${user.status || statusName}</td>
+                                            <td class="px-4 py-2">${user.shift_name || 'N/A'} (${user.shift_start_time || '-'} - ${user.shift_end_time || '-'})</td>
+                                        </tr>
+                                    `}).join('')}
+                                </tbody>
+                            </table>
                             </div>
                         `;
                     }
-                })
-                .catch(error => {
-                    console.error('Error fetching status details:', error);
+                    
+                    if (users.length === 0) {
+                        console.log('No users found for this status');
+                        tableHtml = `
+                            <div class="flex justify-center items-center p-6 text-gray-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mr-2 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                                </svg>
+                                No records found for this status
+                            </div>
+                        `;
+                    }
+                    
+                    statusDetailsContent.innerHTML = tableHtml;
+                    console.log('statusDetailsContent.innerHTML set:', tableHtml);
+                    
+                    if (users.length > 0) {
+                        const countIndicator = document.createElement('div');
+                        countIndicator.className = 'px-4 py-2 bg-blue-50 text-blue-800 text-sm font-medium';
+                        countIndicator.textContent = `${data.data.count || users.length} ${(data.data.count || users.length) === 1 ? 'record' : 'records'} found`;
+                        statusDetailsContent.insertAdjacentElement('afterbegin', countIndicator);
+                        modalSearchContainer.classList.remove('hidden');
+                        console.log('Count indicator added:', countIndicator);
+                    }
+                } else {
+                    console.log('Error in data:', data);
                     statusDetailsContent.innerHTML = `
                         <div class="flex justify-center items-center p-6 text-red-500">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mr-2 text-red-400" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
                             </svg>
-                            Failed to load data. Please try again.
+                            ${data.error || 'An error occurred'}
                         </div>
                     `;
-                });
-        });
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching status details:', error);
+                statusDetailsContent.innerHTML = `
+                    <div class="flex justify-center items-center p-6 text-red-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mr-2 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                        Failed to load data. Please try again.
+                    </div>
+                `;
+            });
     });
+});
 
     // Rest of the JavaScript code (search, export, filters) remains the same...
     // Modal search
     if (modalSearchContainer) {
         modalSearchContainer.addEventListener('input', function(e) {
+            console.log('modalSearchContainer input event:', e);
             if (e.target.id !== 'modalSearchInput') return;
             const searchValue = e.target.value.toLowerCase();
+            console.log('modalSearchInput value:', searchValue);
             const rows = document.querySelectorAll('#statusDetailsContent table tbody tr');
+            console.log('Rows to search:', rows);
             let visible = 0;
             rows.forEach(row => {
                 const text = row.textContent.toLowerCase();
@@ -702,6 +697,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const countIndicator = document.querySelector('#statusDetailsContent div.bg-blue-50');
             if (countIndicator) {
                 countIndicator.textContent = `${visible} of ${rows.length} ${rows.length === 1 ? 'record' : 'records'} shown`;
+                console.log('Updated countIndicator:', countIndicator.textContent);
             }
         });
     }
@@ -709,19 +705,28 @@ document.addEventListener('DOMContentLoaded', function() {
     // Export functionality
     if (exportDataBtn) {
         exportDataBtn.addEventListener('click', function() {
+            console.log('Export button clicked');
             const table = document.querySelector('#statusDetailsContent table');
+            console.log('Table to export:', table);
             if (!table) {
                 alert('No data available to export');
                 return;
             }
             const rows = Array.from(table.querySelectorAll('tr'));
+            console.log('Rows in table:', rows);
             const modalTitleText = modalTitle.textContent;
+            console.log('modalTitleText:', modalTitleText);
             const headers = Array.from(rows[0].querySelectorAll('th')).map(th => th.textContent.trim());
+            console.log('Export headers:', headers);
             const dataRows = rows.slice(1).map(row => {
-                return Array.from(row.querySelectorAll('td')).map(td => td.textContent.trim());
+                const tds = Array.from(row.querySelectorAll('td'));
+                console.log('Export row tds:', tds);
+                return tds.map(td => td.textContent.trim());
             });
+            console.log('Export dataRows:', dataRows);
             let csvContent = headers.join(',') + '\n';
             csvContent += dataRows.map(row => row.join(',')).join('\n');
+            console.log('CSV content:', csvContent);
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
@@ -740,21 +745,33 @@ document.addEventListener('DOMContentLoaded', function() {
     const locationFilter = document.getElementById('location-filter');
     const timePeriodFilter = document.getElementById('time-period');
     const globalSearch = document.getElementById('global-search');
+    console.log('locationFilter:', locationFilter);
+    console.log('timePeriodFilter:', timePeriodFilter);
+    console.log('globalSearch:', globalSearch);
     
     function applyFilters() {
         const location = locationFilter.value;
         const timePeriod = timePeriodFilter.value;
         const search = globalSearch.value.trim();
+        console.log('applyFilters called with:', {location, timePeriod, search});
         let url = `{% url 'aps_attendance:attendance_analytics' %}?time_period=${timePeriod}`;
         if (location) url += `&location=${encodeURIComponent(location)}`;
         if (search) url += `&search=${encodeURIComponent(search)}`;
+        console.log('Redirecting to url:', url);
         window.location.href = url;
     }
     
-    if (locationFilter) locationFilter.addEventListener('change', applyFilters);
-    if (timePeriodFilter) timePeriodFilter.addEventListener('change', applyFilters);
+    if (locationFilter) locationFilter.addEventListener('change', function(e) {
+        console.log('locationFilter changed:', e.target.value);
+        applyFilters();
+    });
+    if (timePeriodFilter) timePeriodFilter.addEventListener('change', function(e) {
+        console.log('timePeriodFilter changed:', e.target.value);
+        applyFilters();
+    });
     if (globalSearch) {
         globalSearch.addEventListener('keyup', function(e) {
+            console.log('globalSearch keyup:', e.key, e.target.value);
             if (e.key === 'Enter') applyFilters();
         });
     }
