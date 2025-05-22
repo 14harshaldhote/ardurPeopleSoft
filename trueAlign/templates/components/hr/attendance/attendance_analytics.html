@@ -68,7 +68,8 @@
                         <div class="p-3 sm:p-4">
                             <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-2 gap-1">
                                 <span class="font-semibold text-blue-900">{{ location.location }}</span>
-                                <span class="bg-blue-50 text-blue-700 text-xs font-bold px-3 py-1 rounded-full mt-1 sm:mt-0">{{ location.total_users }} Users</span>
+                                <!-- Fixed: Use total_employees instead of total_users -->
+                                <span class="bg-blue-50 text-blue-700 text-xs font-bold px-3 py-1 rounded-full mt-1 sm:mt-0">{{ location.total_employees }} Users</span>
                             </div>
                             <div class="grid grid-cols-2 gap-2 mb-2">
                                 <a href="{% url 'aps_attendance:get_status_users' %}?status=Present&location={{ location.location }}&start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}" 
@@ -406,6 +407,7 @@ document.addEventListener('DOMContentLoaded', function() {
         modal.classList.remove('hidden');
         document.body.classList.add('overflow-hidden');
     }
+    
     // Close modal
     function closeModal() {
         modal.classList.add('hidden');
@@ -417,12 +419,15 @@ document.addEventListener('DOMContentLoaded', function() {
             if (input) input.value = '';
         }
     }
+    
     closeModalBtn.addEventListener('click', closeModal);
     closeModalFooterBtn.addEventListener('click', closeModal);
+    
     // Close on background click
     modal.addEventListener('click', function(e) {
         if (e.target === modal) closeModal();
     });
+    
     // Close on ESC
     document.addEventListener('keydown', function(e) {
         if (!modal.classList.contains('hidden') && e.key === 'Escape') closeModal();
@@ -448,7 +453,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(data => {
                     if (data.status === 'success') {
                         let tableHtml = '';
-                        if (statusName.includes('Present') || statusName.includes('Work From Home')) {
+                        
+                        // Fixed: Better status name detection
+                        if (statusName.includes('Present') && !statusName.includes('Late')) {
+                            // Present only (not Present & Late)
                             tableHtml = `
                                 <div class="overflow-x-auto" style="max-height:60vh;overflow-y:auto;">
                                 <table class="min-w-full divide-y divide-gray-200">
@@ -465,12 +473,44 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <tbody class="bg-white divide-y divide-gray-100">
                                         ${data.users.map(user => `
                                             <tr class="hover:bg-blue-50 transition">
-                                                <td class="px-4 py-2">${user.name}</td>
-                                                <td class="px-4 py-2">${user.work_location}</td>
+                                                <td class="px-4 py-2">${user.name || 'N/A'}</td>
+                                                <td class="px-4 py-2">${user.work_location || 'N/A'}</td>
                                                 <td class="px-4 py-2">${user.clock_in_time || '-'}</td>
                                                 <td class="px-4 py-2">${user.clock_out_time || '-'}</td>
                                                 <td class="px-4 py-2">${user.avg_hours ? (typeof user.avg_hours === 'string' ? parseFloat(user.avg_hours).toFixed(2) : user.avg_hours.toFixed(2)) : '-'}</td>
-                                                <td class="px-4 py-2">${user.shift_name} (${user.shift_start_time || '-'} - ${user.shift_end_time || '-'})</td>
+                                                <td class="px-4 py-2">${user.shift_name || 'N/A'} (${user.shift_start_time || '-'} - ${user.shift_end_time || '-'})</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                                </div>
+                            `;
+                        } else if (statusName.includes('Late') || statusName === 'Present & Late') {
+                            // Present & Late
+                            tableHtml = `
+                                <div class="overflow-x-auto" style="max-height:60vh;overflow-y:auto;">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-blue-50 sticky top-0">
+                                        <tr>
+                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Name</th>
+                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Location</th>
+                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Clock In</th>
+                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Clock Out</th>
+                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Late By (mins)</th>
+                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Hours</th>
+                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Shift</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-100">
+                                        ${data.users.map(user => `
+                                            <tr class="hover:bg-blue-50 transition">
+                                                <td class="px-4 py-2">${user.name || 'N/A'}</td>
+                                                <td class="px-4 py-2">${user.work_location || 'N/A'}</td>
+                                                <td class="px-4 py-2">${user.clock_in_time || '-'}</td>
+                                                <td class="px-4 py-2">${user.clock_out_time || '-'}</td>
+                                                <td class="px-4 py-2 text-red-600 font-medium">${user.late_by || user.late_minutes || '-'}</td>
+                                                <td class="px-4 py-2">${user.avg_hours ? (typeof user.avg_hours === 'string' ? parseFloat(user.avg_hours).toFixed(2) : user.avg_hours.toFixed(2)) : '-'}</td>
+                                                <td class="px-4 py-2">${user.shift_name || 'N/A'} (${user.shift_start_time || '-'} - ${user.shift_end_time || '-'})</td>
                                             </tr>
                                         `).join('')}
                                     </tbody>
@@ -494,8 +534,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <tbody class="bg-white divide-y divide-gray-100">
                                         ${data.users.map(user => `
                                             <tr class="hover:bg-blue-50 transition">
-                                                <td class="px-4 py-2">${user.name}</td>
-                                                <td class="px-4 py-2">${user.work_location}</td>
+                                                <td class="px-4 py-2">${user.name || 'N/A'}</td>
+                                                <td class="px-4 py-2">${user.work_location || 'N/A'}</td>
                                                 <td class="px-4 py-2">${user.leave_type || '-'}</td>
                                                 <td class="px-4 py-2">${user.leave_start_date || '-'}</td>
                                                 <td class="px-4 py-2">${user.leave_end_date || '-'}</td>
@@ -509,28 +549,32 @@ document.addEventListener('DOMContentLoaded', function() {
                         } else if (statusName.includes('Yet to Clock In') || statusName.includes('Not Clocked In')) {
                             tableHtml = `
                                 <div class="overflow-x-auto" style="max-height:60vh;overflow-y:auto;">
-                                <table class="min-w-full divide-y divide-gray-200">
-                                    <thead class="bg-blue-50 sticky top-0">
-                                        <tr>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Name</th>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Location</th>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Shift</th>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Shift Timing</th>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Late By (mins)</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="bg-white divide-y divide-gray-100">
-                                        ${data.users.map(user => `
-                                            <tr class="hover:bg-blue-50 transition">
-                                                <td class="px-4 py-2">${user.name}</td>
-                                                <td class="px-4 py-2">${user.work_location}</td>
-                                                <td class="px-4 py-2">${user.shift_name}</td>
-                                                <td class="px-4 py-2">${user.shift_start_time || '-'} - ${user.shift_end_time || '-'}</td>
-                                                <td class="px-4 py-2 ${user.late_by > 0 ? 'text-red-600 font-medium' : ''}">${user.late_by > 0 ? user.late_by : '-'}</td>
+                                    <table class="min-w-full divide-y divide-gray-200">
+                                        <thead class="bg-blue-50 sticky top-0">
+                                            <tr>
+                                                <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Name</th>
+                                                <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Location</th>
+                                                <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Shift</th>
+                                                <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Shift Timing</th>
+                                                <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Late By (mins)</th>
                                             </tr>
-                                        `).join('')}
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody class="bg-white divide-y divide-gray-100">
+                                            ${
+                                                data.users && data.users.length > 0
+                                                ? data.users.map(user => `
+                                                    <tr class="hover:bg-blue-50 transition">
+                                                        <td class="px-4 py-2">${user.name || 'N/A'}</td>
+                                                        <td class="px-4 py-2">${user.work_location || 'N/A'}</td>
+                                                        <td class="px-4 py-2">${user.shift_name || 'N/A'}</td>
+                                                        <td class="px-4 py-2">${(user.shift_start_time || '-') + ' - ' + (user.shift_end_time || '-')}</td>
+                                                        <td class="px-4 py-2${user.late_by && user.late_by > 0 ? ' text-red-600 font-medium' : ''}">${user.late_by && user.late_by > 0 ? user.late_by : '-'}</td>
+                                                    </tr>
+                                                `).join('')
+                                                : `<tr><td colspan="5" class="px-4 py-2 text-center text-gray-400">No users pending clock-in</td></tr>`
+                                            }
+                                        </tbody>
+                                    </table>
                                 </div>
                             `;
                         } else if (statusName.includes('Absent')) {
@@ -548,9 +592,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <tbody class="bg-white divide-y divide-gray-100">
                                         ${data.users.map(user => `
                                             <tr class="hover:bg-blue-50 transition">
-                                                <td class="px-4 py-2">${user.name}</td>
-                                                <td class="px-4 py-2">${user.work_location}</td>
-                                                <td class="px-4 py-2">${user.shift_name} (${user.shift_start_time || '-'} - ${user.shift_end_time || '-'})</td>
+                                                <td class="px-4 py-2">${user.name || 'N/A'}</td>
+                                                <td class="px-4 py-2">${user.work_location || 'N/A'}</td>
+                                                <td class="px-4 py-2">${user.shift_name || 'N/A'} (${user.shift_start_time || '-'} - ${user.shift_end_time || '-'})</td>
                                                 <td class="px-4 py-2">${user.last_attendance_date || '-'}</td>
                                             </tr>
                                         `).join('')}
@@ -559,6 +603,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 </div>
                             `;
                         } else {
+                            // Default table for other statuses
                             tableHtml = `
                                 <div class="overflow-x-auto" style="max-height:60vh;overflow-y:auto;">
                                 <table class="min-w-full divide-y divide-gray-200">
@@ -566,17 +611,17 @@ document.addEventListener('DOMContentLoaded', function() {
                                         <tr>
                                             <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Name</th>
                                             <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Location</th>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Count</th>
+                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Status</th>
                                             <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Shift</th>
                                         </tr>
                                     </thead>
                                     <tbody class="bg-white divide-y divide-gray-100">
                                         ${data.users.map(user => `
                                             <tr class="hover:bg-blue-50 transition">
-                                                <td class="px-4 py-2">${user.name}</td>
-                                                <td class="px-4 py-2">${user.work_location}</td>
-                                                <td class="px-4 py-2">${user.count || '-'}</td>
-                                                <td class="px-4 py-2">${user.shift_name} (${user.shift_start_time || '-'} - ${user.shift_end_time || '-'})</td>
+                                                <td class="px-4 py-2">${user.name || 'N/A'}</td>
+                                                <td class="px-4 py-2">${user.work_location || 'N/A'}</td>
+                                                <td class="px-4 py-2">${user.status || statusName}</td>
+                                                <td class="px-4 py-2">${user.shift_name || 'N/A'} (${user.shift_start_time || '-'} - ${user.shift_end_time || '-'})</td>
                                             </tr>
                                         `).join('')}
                                     </tbody>
@@ -584,6 +629,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 </div>
                             `;
                         }
+                        
                         if (data.users.length === 0) {
                             tableHtml = `
                                 <div class="flex justify-center items-center p-6 text-gray-500">
@@ -594,11 +640,13 @@ document.addEventListener('DOMContentLoaded', function() {
                                 </div>
                             `;
                         }
+                        
                         statusDetailsContent.innerHTML = tableHtml;
+                        
                         if (data.users.length > 0) {
                             const countIndicator = document.createElement('div');
                             countIndicator.className = 'px-4 py-2 bg-blue-50 text-blue-800 text-sm font-medium';
-                            countIndicator.textContent = `${data.count} ${data.count === 1 ? 'record' : 'records'} found`;
+                            countIndicator.textContent = `${data.count || data.users.length} ${(data.count || data.users.length) === 1 ? 'record' : 'records'} found`;
                             statusDetailsContent.insertAdjacentElement('afterbegin', countIndicator);
                             modalSearchContainer.classList.remove('hidden');
                         }
@@ -614,6 +662,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 })
                 .catch(error => {
+                    console.error('Error fetching status details:', error);
                     statusDetailsContent.innerHTML = `
                         <div class="flex justify-center items-center p-6 text-red-500">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mr-2 text-red-400" viewBox="0 0 20 20" fill="currentColor">
@@ -626,6 +675,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // Rest of the JavaScript code (search, export, filters) remains the same...
     // Modal search
     if (modalSearchContainer) {
         modalSearchContainer.addEventListener('input', function(e) {
@@ -680,10 +730,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Filters
+    // Filters (same as before)
     const locationFilter = document.getElementById('location-filter');
     const timePeriodFilter = document.getElementById('time-period');
     const globalSearch = document.getElementById('global-search');
+    
     function applyFilters() {
         const location = locationFilter.value;
         const timePeriod = timePeriodFilter.value;
@@ -693,6 +744,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (search) url += `&search=${encodeURIComponent(search)}`;
         window.location.href = url;
     }
+    
     if (locationFilter) locationFilter.addEventListener('change', applyFilters);
     if (timePeriodFilter) timePeriodFilter.addEventListener('change', applyFilters);
     if (globalSearch) {
