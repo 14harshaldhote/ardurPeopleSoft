@@ -7485,9 +7485,12 @@ def attendance_analytics(request):
         for user in unmarked_users:
             user_detail = user_details_dict.get(user.id)
             shift = None
-            if user_detail and user_detail.shift_id and user_detail.shift_id in active_shifts:
-                shift = active_shifts[user_detail.shift_id]
-            elif default_shift:
+
+            # Use ShiftAssignment to get the user's current shift for the date
+            from trueAlign.models import ShiftAssignment  # Import here to avoid circular import issues
+            shift = ShiftAssignment.get_user_current_shift(user, date=end_date)
+
+            if not shift and default_shift:
                 shift = default_shift
                 
             # Calculate late minutes
@@ -13383,7 +13386,7 @@ from django.core.paginator import Paginator
 from .models import Support, TicketComment, TicketAttachment, TicketActivity
 from .forms import TicketForm, CommentForm, TicketAttachmentForm
 from django.db.models.functions import Trunc
-from django.db.models.functions import TruncDay, TruncMonth, TruncWeek
+from django.db.models.functions import TruncDay, TruncMonth, TruncWeek, TruncHour
 from trueAlign.utils import send_ticket_notification
 
 
