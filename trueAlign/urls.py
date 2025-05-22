@@ -303,11 +303,17 @@ attendance_patterns = [
 
 
     #new attendance analytics
-    path('analytics/', views.attendance_analytics, name='attendance_analytics'),
-    path('analytics/export/', views.attendance_export, name='attendance_export'),
-    path('analytics/detail/', views.attendance_detail_analysis, name='attendance_detail_analysis'),
-    path('analytics/detail/<int:user_id>/', views.attendance_detail_analysis, name='attendance_detail_analysis_user'),
-    path('analytics/status-users/', views.get_status_users, name='get_status_users'),
+
+    path('analytics/', analytics_views.attendance_analytics, name='analytics'),
+    
+    # AJAX endpoints for dynamic data loading
+    path('analytics/data/', analytics_views.get_analytics_data, name='analytics_data'),
+    
+    # Status-specific user views
+    path('status/users/', status_views.get_status_users, name='status_users'),
+    
+    # Export functionality
+    path('export/status-users/', status_views.export_status_users, name='export_status_users'),
 
 ]
 

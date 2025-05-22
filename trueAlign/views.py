@@ -7136,1372 +7136,391 @@ except ModuleNotFoundError:
 def is_hr_check(user):
     """Check if the logged-in user has HR permissions"""
     return user.groups.filter(name__in=['HR', 'Manager']).exists() or user.is_superuser
-    
-def get_date_trunc_filter(date_range):
-    """
-    Returns the appropriate TruncXXX function based on the requested date range
-    """
-    trunc_filters = {
-        'daily': TruncDay,
-        'weekly': TruncWeek,
-        'monthly': TruncMonth,
-        'quarterly': TruncQuarter,
-        'yearly': TruncYear,
-    }
-    return trunc_filters.get(date_range, TruncDay)
 
-def get_time_filters(time_period):
-    """
-    Returns date filters based on the requested time period
-    Uses the project time zone from settings.py (Asia/Kolkata)
-    """
-    # Use the project time zone as defined in settings.py
-    IST = pytz.timezone('Asia/Kolkata')
-    today = timezone.localtime(timezone.now(), IST).date()
 
-    filters = {
-        'today': {
-            'start_date': today,
-            'end_date': today
-        },
-        'yesterday': {
-            'start_date': today - timedelta(days=1),
-            'end_date': today - timedelta(days=1)
-        },
-        'this_week': {
-            'start_date': today - timedelta(days=today.weekday()),
-            'end_date': today
-        },
-        'last_week': {
-            'start_date': today - timedelta(days=today.weekday() + 7),
-            'end_date': today - timedelta(days=today.weekday() + 1)
-        },
-        'this_month': {
-            'start_date': today.replace(day=1),
-            'end_date': today
-        },
-        'last_month': {
-            'start_date': (today.replace(day=1) - timedelta(days=1)).replace(day=1),
-            'end_date': today.replace(day=1) - timedelta(days=1)
-        },
-        'this_quarter': {
-            'start_date': today.replace(month=((today.month-1)//3)*3+1, day=1),
-            'end_date': today
-        },
-        'last_quarter': {
-            'start_date': (today.replace(month=((today.month-1)//3)*3+1, day=1) - timedelta(days=1)).replace(month=((today.month-1)//3-1)*3+1, day=1),
-            'end_date': today.replace(month=((today.month-1)//3)*3+1, day=1) - timedelta(days=1)
-        },
-        'this_year': {
-            'start_date': today.replace(month=1, day=1),
-            'end_date': today
-        },
-        'last_year': {
-            'start_date': today.replace(year=today.year-1, month=1, day=1),
-            'end_date': today.replace(year=today.year-1, month=12, day=31)
+def is_hr_check(user):
+    """Check if user has HR permissions"""
+    return user.groups.filter(name='HR').exists() or user.is_superuser
+
+@login_required
+@user_passes_test(is_hr_check)
+def get_status_users(request):
+    """
+    Optimized function to get users by status - returns HTML response
+    """
+    try:
+        # Get and validate parameters
+        status = request.GET.get('status')
+        start_date = request.GET.get('start_date')
+        end_date = request.GET.get('end_date')
+        
+        if not all([status, start_date, end_date]):
+            return render(request, 'components/hr/attendance/attendance_analytics.html', {
+                'error': 'Missing required parameters',
+                'users': [],
+                'status': status,
+                'show_users_section': True
+            })
+        
+        # Parse dates
+        try:
+            start_date = parse_date(start_date)
+            end_date = parse_date(end_date)
+        except (ValueError, TypeError):
+            return render(request, 'components/hr/attendance/attendance_analytics.html', {
+                'error': 'Invalid date format',
+                'users': [],
+                'status': status,
+                'show_users_section': True
+            })
+        
+        # Build filters
+        filters = {
+            'location': request.GET.get('location'),
+            'search': request.GET.get('search', '').strip()
         }
-    }
+        
+        # Remove empty filters
+        filters = {k: v for k, v in filters.items() if v and v != 'all'}
+        
+        # Initialize service and get users
+        user_service = UserService()
+        users = user_service.get_users_by_status(status, start_date, end_date, filters)
+        
+        # Pagination
+        page = int(request.GET.get('page', 1))
+        per_page = 50
+        start_idx = (page - 1) * per_page
+        end_idx = start_idx + per_page
+        paginated_users = users[start_idx:end_idx]
+        
+        # Calculate pagination info
+        total_users = len(users)
+        total_pages = (total_users + per_page - 1) // per_page
+        has_next = page < total_pages
+        has_prev = page > 1
+        
+        context = {
+            'users': paginated_users,
+            'status': status,
+            'total_users': total_users,
+            'current_page': page,
+            'total_pages': total_pages,
+            'has_next': has_next,
+            'has_prev': has_prev,
+            'start_date': start_date.strftime('%Y-%m-%d'),
+            'end_date': end_date.strftime('%Y-%m-%d'),
+            'filters': filters,
+            'show_users_section': True
+        }
+        
+        return render(request, 'components/hr/attendance/attendance_analytics.html', context)
+        
+    except Exception as e:
+        logger.error(f"Error in get_status_users: {e}")
+        return render(request, 'components/hr/attendance/attendance_analytics.html', {
+            'error': 'An error occurred while loading user data.',
+            'users': [],
+            'status': status,
+            'show_users_section': True
+        })
 
-    return filters.get(time_period, {'start_date': today, 'end_date': today})
 
+@login_required
+@user_passes_test(is_hr_check)
+def export_status_users(request):
+    """Export users by status to CSV"""
+    import csv
+    from django.http import HttpResponse
+    
+    try:
+        # Get parameters (same as get_status_users)
+        status = request.GET.get('status')
+        start_date = parse_date(request.GET.get('start_date'))
+        end_date = parse_date(request.GET.get('end_date'))
+        
+        filters = {
+            'location': request.GET.get('location'),
+            'search': request.GET.get('search', '').strip()
+        }
+        filters = {k: v for k, v in filters.items() if v and v != 'all'}
+        
+        # Get users
+        user_service = UserService()
+        users = user_service.get_users_by_status(status, start_date, end_date, filters)
+        
+        # Create CSV response
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="{status}_users_{start_date}_{end_date}.csv"'
+        
+        writer = csv.writer(response)
+        
+        # Write header
+        if status == 'Yet to Clock In':
+            writer.writerow(['Username', 'Name', 'Location', 'Shift', 'Start Time', 'Late By (minutes)'])
+            for user in users:
+                writer.writerow([
+                    user['username'],
+                    user['name'],
+                    user['work_location'],
+                    user['shift_name'],
+                    user['shift_start_time'],
+                    user['late_by']
+                ])
+        elif status in ['Present', 'Present & Late', 'Work From Home']:
+            writer.writerow(['Username', 'Name', 'Location', 'Clock In', 'Clock Out', 'Total Hours', 'Late Minutes', 'Attendance Days'])
+            for user in users:
+                writer.writerow([
+                    user['username'],
+                    user['name'],
+                    user['work_location'],
+                    user.get('clock_in_time', ''),
+                    user.get('clock_out_time', ''),
+                    user.get('total_hours', 0),
+                    user.get('late_minutes', 0),
+                    user['attendance_count']
+                ])
+        elif status == 'On Leave':
+            writer.writerow(['Username', 'Name', 'Location', 'Leave Type', 'Days on Leave'])
+            for user in users:
+                writer.writerow([
+                    user['username'],
+                    user['name'],
+                    user['work_location'],
+                    user.get('leave_type', 'Unknown'),
+                    user['attendance_count']
+                ])
+        else:
+            writer.writerow(['Username', 'Name', 'Location', 'Status', 'Count'])
+            for user in users:
+                writer.writerow([
+                    user['username'],
+                    user['name'],
+                    user['work_location'],
+                    user['status'],
+                    user['attendance_count']
+                ])
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error in export_status_users: {e}")
+        return HttpResponse("Error exporting data", status=500)
 
 
 @login_required
 @user_passes_test(is_hr_check)
 def attendance_analytics(request):
     """
-    Enhanced attendance analytics function for HR with interactive dashboard
-    Provides summary statistics with dynamic filtering and drill-down capabilities
-    Now includes:
-      - "Yet to Clock In" logic (users who have not clocked in for the day)
-      - Global search filter (search by username, name, employee id, location, etc)
-      - Enhanced location-based statistics with yet to clock in counts
-      - Shift information for all user statuses
+    Optimized attendance analytics dashboard
+    Removed reporting manager logic and optimized queries
     """
-    from .models import Attendance, User, UserDetails, LeaveRequest, UserSession, ShiftMaster
-    from django.db.models import CharField, Case, When, Value, Count, Avg, Max, F, Q, DecimalField, ExpressionWrapper
-    from django.db.models.functions import Cast
-    import logging
-
-    logger = logging.getLogger(__name__)
-
-    # Get query parameters with defaults
-    time_period = request.GET.get('time_period', 'today')
-    view_type = request.GET.get('view_type', 'daily')
-    custom_start = request.GET.get('start_date')
-    custom_end = request.GET.get('end_date')
-    location = request.GET.get('location')
-    user_id = request.GET.get('user_id')
-    drill_down = request.GET.get('drill_down')
-    status_filter = request.GET.get('status')
-    global_search = request.GET.get('search', '').strip()
-    print(f"[DEBUG] Query Params: time_period={time_period}, view_type={view_type}, custom_start={custom_start}, custom_end={custom_end}, location={location}, user_id={user_id}, drill_down={drill_down}, status_filter={status_filter}, global_search={global_search}")
-
-    # Get appropriate date filters
-    date_filters = get_time_filters(time_period)
-    start_date = date_filters['start_date']
-    end_date = date_filters['end_date']
-    print(f"[DEBUG] Date filters: start_date={start_date}, end_date={end_date}")
-
-    # Override with custom dates if provided
-    if custom_start:
-        try:
-            start_date = parse_date(custom_start)
-            print(f"[DEBUG] Overriding start_date with custom_start: {start_date}")
-        except ValueError as e:
-            logger.warning(f"Invalid start date format: {e}")
-            print(f"[DEBUG] Invalid custom_start: {custom_start}, error: {e}")
-
-    if custom_end:
-        try:
-            end_date = parse_date(custom_end)
-            print(f"[DEBUG] Overriding end_date with custom_end: {end_date}")
-        except ValueError as e:
-            logger.warning(f"Invalid end date format: {e}")
-            print(f"[DEBUG] Invalid custom_end: {custom_end}, error: {e}")
-
-    # Base query for attendance records
-    base_query = Attendance.objects.filter(
-        date__gte=start_date,
-        date__lte=end_date
-    ).select_related('user')
-    print(f"[DEBUG] Base attendance query count: {base_query.count()}")
-
-    # Get all users with their details to avoid repeated queries
-    user_details_dict = {ud.user_id: ud for ud in UserDetails.objects.all()}
-    print(f"[DEBUG] Loaded user_details_dict with {len(user_details_dict)} users")
-
-    # Get all active shifts
-    active_shifts = {s.id: s for s in ShiftMaster.objects.filter(is_active=True)}
-    print(f"[DEBUG] Loaded active_shifts: {list(active_shifts.keys())}")
-    default_shift = next(iter(active_shifts.values()), None)
-    print(f"[DEBUG] Default shift: {default_shift}")
-
-    # Apply filters if provided
-    if location:
-        user_ids = list(UserDetails.objects.filter(work_location=location).values_list('user_id', flat=True))
-        print(f"[DEBUG] Filtered user_ids for location '{location}': {user_ids}")
-        base_query = base_query.filter(user_id__in=user_ids)
-        print(f"[DEBUG] Base query count after location filter: {base_query.count()}")
-
-    if user_id:
-        base_query = base_query.filter(user_id=user_id)
-        print(f"[DEBUG] Base query count after user_id filter ({user_id}): {base_query.count()}")
-
-    if status_filter:
-        base_query = base_query.filter(status=status_filter)
-        print(f"[DEBUG] Base query count after status_filter ({status_filter}): {base_query.count()}")
-
-    # Global search filter (searches username, first_name, last_name, employee id, location)
-    if global_search:
-        user_ids_from_details = list(UserDetails.objects.filter(
-            Q(work_location__icontains=global_search)
-        ).values_list('user_id', flat=True))
-        print(f"[DEBUG] user_ids_from_details for global_search '{global_search}': {user_ids_from_details}")
-        base_query = base_query.filter(
-            Q(user__username__icontains=global_search) |
-            Q(user__first_name__icontains=global_search) |
-            Q(user__last_name__icontains=global_search) |
-            Q(user__id__icontains=global_search) |
-            Q(user_id__in=user_ids_from_details)
-        )
-        print(f"[DEBUG] Base query count after global_search filter: {base_query.count()}")
-
-    # Handle drill-down requests to get specific user lists for a status
-    if drill_down:
-        print(f"[DEBUG] Drill down requested for status: {drill_down}")
-        users_data = handle_drill_down(drill_down, base_query, user_details_dict)
-        print(f"[DEBUG] Drill down users_data: {users_data}")
-        return JsonResponse({
-            'status': 'success',
-            'drill_down_title': f"Users with status '{drill_down}'",
-            'users': users_data
-        })
-
-    # Get the appropriate date truncation function
-    trunc_function = get_date_trunc_filter(view_type)
-    print(f"[DEBUG] Using trunc_function for view_type '{view_type}': {trunc_function}")
-
-    # Calculate attendance statistics with date grouping
-    attendance_stats = base_query.annotate(
-        period=trunc_function('date')
-    ).values('period').annotate(
-        total=Count('id'),
-        present_count=Count(Case(When(status='Present', then=1))),
-        present_late_count=Count(Case(When(status='Present & Late', then=1))),
-        absent_count=Count(Case(When(status='Absent', then=1))),
-        leave_count=Count(Case(When(status='On Leave', then=1))),
-        wfh_count=Count(Case(When(status='Work From Home', then=1))),
-        weekend_count=Count(Case(When(status='Weekend', then=1))),
-        holiday_count=Count(Case(When(status='Holiday', then=1))),
-        comp_off_count=Count(Case(When(status='Comp Off', then=1))),
-        not_marked_count=Count(Case(When(status='Not Marked', then=1))),
-        avg_hours=Avg('total_hours'),
-        avg_late_minutes=Avg(Case(When(late_minutes__gt=0, then=F('late_minutes'))))
-    ).order_by('period')
-    print(f"[DEBUG] attendance_stats: {list(attendance_stats)}")
-
-    # Calculate overall statistics with clickable counts
-    status_counts = base_query.values('status').annotate(count=Count('id')).order_by('-count')
-    print(f"[DEBUG] status_counts: {list(status_counts)}")
-
-    # Calculate present percentage excluding weekends and holidays for a more accurate measurement
-    working_days_count = base_query.exclude(status__in=['Weekend', 'Holiday']).count()
-    print(f"[DEBUG] working_days_count (excluding weekends/holidays): {working_days_count}")
-    present_count = base_query.filter(status__in=['Present', 'Present & Late', 'Work From Home']).count()
-    print(f"[DEBUG] present_count: {present_count}")
-
-    overall_stats = {
-        'total_records': base_query.count(),
-        'present_percentage': round(present_count / max(working_days_count, 1) * 100, 2),
-        'absent_percentage': round(base_query.filter(status='Absent').count() / max(working_days_count, 1) * 100, 2),
-        'leave_percentage': round(base_query.filter(status='On Leave').count() / max(working_days_count, 1) * 100, 2),
-        'avg_working_hours': base_query.filter(total_hours__isnull=False).aggregate(avg=Avg('total_hours'))['avg'] or 0,
-        'total_late_instances': base_query.filter(status='Present & Late').count(),
-        'avg_late_minutes': base_query.filter(late_minutes__gt=0).aggregate(avg=Avg('late_minutes'))['avg'] or 0,
-        'status_counts': list(status_counts)
-    }
-    print(f"[DEBUG] overall_stats: {overall_stats}")
-
-    # Calculate active sessions data with user details
-    active_sessions = UserSession.objects.filter(
-        is_active=True, 
-        login_time__date__gte=start_date,
-        login_time__date__lte=end_date
-    ).select_related('user').values(
-        'user_id', 'user__username', 'user__first_name', 'user__last_name',
-        'login_time', 'last_activity', 'location'
-    )
-    print(f"[DEBUG] active_sessions: {list(active_sessions)}")
-
-    # Get top 5 users with most absences
-    top_absent_users = base_query.filter(status='Absent').values(
-        'user_id', 'user__username', 'user__first_name', 'user__last_name'
-    ).annotate(
-        absent_count=Count('id')
-    ).order_by('-absent_count')[:5]
-    print(f"[DEBUG] top_absent_users: {list(top_absent_users)}")
-
-    # Get top 5 users with most late arrivals
-    top_late_users = base_query.filter(status='Present & Late').values(
-        'user_id', 'user__username', 'user__first_name', 'user__last_name'
-    ).annotate(
-        late_count=Count('id'),
-        avg_late_minutes=Avg('late_minutes')
-    ).order_by('-late_count')[:5]
-    print(f"[DEBUG] top_late_users: {list(top_late_users)}")
-
-    # Get leave distribution by type with user counts
-    leave_distribution = base_query.filter(status='On Leave').values(
-        'leave_type'
-    ).annotate(
-        count=Count('id'),
-        user_count=Count('user_id', distinct=True)
-    ).order_by('-count')
-    print(f"[DEBUG] leave_distribution: {list(leave_distribution)}")
-
-    # Calculate location-based statistics with yet to clock in counts
-    location_stats = calculate_location_stats(start_date, end_date, time_period, base_query, user_details_dict)
-    print(f"[DEBUG] location_stats: {location_stats}")
-
-    # Get attendance trends - weekly comparison
-    # Use IST for all date calculations
-    IST = pytz.timezone('Asia/Kolkata')
-    today = timezone.localtime(timezone.now(), IST).date()
-    week_start = today - timedelta(days=today.weekday())
-    prev_week_start = week_start - timedelta(days=7)
-    print(f"[DEBUG] today: {today}, week_start: {week_start}, prev_week_start: {prev_week_start}")
-
-    this_week_data = Attendance.objects.filter(
-        date__gte=week_start,
-        date__lte=today
-    ).values('status').annotate(count=Count('id'))
-    print(f"[DEBUG] this_week_data: {list(this_week_data)}")
-
-    prev_week_data = Attendance.objects.filter(
-        date__gte=prev_week_start,
-        date__lt=week_start
-    ).values('status').annotate(count=Count('id'))
-    print(f"[DEBUG] prev_week_data: {list(prev_week_data)}")
-
-    # Calculate yet to clock in users with shift information
-    yet_to_clock_in_users = []
-    if time_period == 'today' or start_date == end_date:
-        print(f"[DEBUG] Calculating yet to clock in users for end_date={end_date}, location={location}, global_search={global_search}")
-        
-        # Get current time in IST
-        current_time = timezone.localtime(timezone.now(), IST)
-        current_date = current_time.date()
-        print(f"[DEBUG] Current date: {current_date}, Current time: {current_time}")
-        
-        # Get all active users
-        user_qs = User.objects.filter(is_active=True)
-        if location:
-            location_user_ids = UserDetails.objects.filter(work_location=location).values_list('user_id', flat=True)
-            user_qs = user_qs.filter(id__in=location_user_ids)
-        
-        if global_search:
-            user_qs = user_qs.filter(
-                Q(username__icontains=global_search) |
-                Q(first_name__icontains=global_search) |
-                Q(last_name__icontains=global_search) |
-                Q(id__icontains=global_search)
-            )
-        
-        print(f"[DEBUG] Initial user_qs count: {user_qs.count()}")
-        
-        # Get users who have already clocked in today
-        clocked_in_users = Attendance.objects.filter(
-            date=end_date,
-            status__in=['Present', 'Present & Late', 'Work From Home'],
-            clock_in_time__isnull=False
-        ).values_list('user_id', flat=True)
-        print(f"[DEBUG] Clocked in users for {end_date}: {list(clocked_in_users)}")
-        
-        # Get users who are on leave, holiday, weekend, or marked as absent
-        excluded_users = Attendance.objects.filter(
-            date=end_date,
-            status__in=['On Leave', 'Holiday', 'Weekend', 'Absent', 'Comp Off']
-        ).values_list('user_id', flat=True)
-        print(f"[DEBUG] Excluded users (leave/holiday/weekend/absent) for {end_date}: {list(excluded_users)}")
-        
-        # Get all users who have any attendance record for today
-        all_marked_users = Attendance.objects.filter(
-            date=end_date
-        ).values_list('user_id', flat=True)
-        print(f"[DEBUG] All marked users for {end_date}: {list(all_marked_users)}")
-        
-        # Find users who have no attendance record for today
-        unmarked_users = user_qs.exclude(id__in=all_marked_users)
-        print(f"[DEBUG] Unmarked users count: {unmarked_users.count()}")
-        
-        # Combine unmarked users with those marked as "Yet to Clock In"
-        yet_to_clock_in_records = Attendance.objects.filter(
-            date=end_date,
-            status='Yet to Clock In'
-        ).select_related('user', 'shift')
-        
-        # Create the final list of yet to clock in users
-        for user in unmarked_users:
-            user_detail = user_details_dict.get(user.id)
-            shift = None
-
-            # Use ShiftAssignment to get the user's current shift for the date
-            from trueAlign.models import ShiftAssignment  # Import here to avoid circular import issues
-            shift = ShiftAssignment.get_user_current_shift(user, date=end_date)
-
-            if not shift and default_shift:
-                shift = default_shift
-                
-            # Calculate late minutes
-            late_by = 0
-            if shift and shift.start_time:
-                shift_start = shift.start_time
-                current_hour = current_time.hour
-                current_minute = current_time.minute
-                shift_hour = shift_start.hour
-                shift_minute = shift_start.minute
-                
-                # Calculate minutes since shift start
-                if current_hour > shift_hour or (current_hour == shift_hour and current_minute > shift_minute):
-                    late_by = (current_hour - shift_hour) * 60 + (current_minute - shift_minute)
-                
-            yet_to_clock_in_users.append({
-                'user_id': user.id,
-                'username': user.username,
-                'name': f"{user.first_name} {user.last_name}".strip(),
-                'location': user_detail.work_location if user_detail else 'Unknown',
-                'shift_name': shift.name if shift else 'Default',
-                'shift_start': shift.start_time.strftime('%H:%M') if shift and shift.start_time else 'N/A',
-                'shift_end': shift.end_time.strftime('%H:%M') if shift and shift.end_time else 'N/A',
-                'late_by': late_by
-            })
-            
-        # Add users who are already marked as "Yet to Clock In"
-        for record in yet_to_clock_in_records:
-            user = record.user
-            shift = record.shift or default_shift
-            
-            # Skip if already in the list
-            if any(item['user_id'] == user.id for item in yet_to_clock_in_users):
-                continue
-                
-            user_detail = user_details_dict.get(user.id)
-            
-            # Calculate late minutes
-            late_by = 0
-            if shift and shift.start_time:
-                shift_start = shift.start_time
-                current_hour = current_time.hour
-                current_minute = current_time.minute
-                shift_hour = shift_start.hour
-                shift_minute = shift_start.minute
-                
-                # Calculate minutes since shift start
-                if current_hour > shift_hour or (current_hour == shift_hour and current_minute > shift_minute):
-                    late_by = (current_hour - shift_hour) * 60 + (current_minute - shift_minute)
-                
-            yet_to_clock_in_users.append({
-                'user_id': user.id,
-                'username': user.username,
-                'name': f"{user.first_name} {user.last_name}".strip(),
-                'location': user_detail.work_location if user_detail else 'Unknown',
-                'shift_name': shift.name if shift else 'Default',
-                'shift_start': shift.start_time.strftime('%H:%M') if shift and shift.start_time else 'N/A',
-                'shift_end': shift.end_time.strftime('%H:%M') if shift and shift.end_time else 'N/A',
-                'late_by': late_by
-            })
-        
-        print(f"[DEBUG] Total yet_to_clock_in_users: {len(yet_to_clock_in_users)}")
-
-    context = {
-        'time_period': time_period,
-        'view_type': view_type,
-        'start_date': start_date,
-        'end_date': end_date,
-        'overall_stats': overall_stats,
-        'attendance_stats': list(attendance_stats),
-        'active_sessions': list(active_sessions),
-        'top_absent_users': list(top_absent_users),
-        'top_late_users': list(top_late_users),
-        'leave_distribution': list(leave_distribution),
-        'location_stats': location_stats,
-        'this_week_data': list(this_week_data),
-        'prev_week_data': list(prev_week_data),
-        'yet_to_clock_in_users': yet_to_clock_in_users,
-        'global_search': global_search,
-    }
-    print(f"[DEBUG] Final context: {context}")
-
-    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        print(f"[DEBUG] Returning JsonResponse for AJAX request")
-        return JsonResponse(context)
-
-    print(f"[DEBUG] Rendering attendance_analytics.html with context")
-    return render(request, 'components/hr/attendance/attendance_analytics.html', context)
-
-
-def get_yet_to_clock_in_users(end_date, location, global_search, user_details_dict, active_shifts, default_shift):
-    """
-    Helper function to get users who have not clocked in yet for the day
-    Includes shift information for each user
-    Improved to consider shift timing before marking users as "Yet to Clock In"
-    Uses the project time zone (Asia/Kolkata)
-    """
-    from .models import User, Attendance, UserDetails, ShiftAssignment
-    from django.db.models import Q
-    from datetime import datetime, date, timedelta
-    import logging
-    from django.utils import timezone
-    import pytz
-
-    IST = pytz.timezone('Asia/Kolkata')
-    yet_to_clock_in_users = []
-    
     try:
-        # Only check for "Yet to Clock In" if the end_date is today
-        current_date = timezone.localtime(timezone.now(), IST).date()
-        current_time = timezone.localtime(timezone.now(), IST).time()
-        print(f"[DEBUG] get_yet_to_clock_in_users called with end_date={end_date}, location={location}, global_search={global_search}")
-        print(f"[DEBUG] Current date: {current_date}, Current time: {current_time}")
+        # Initialize services
+        attendance_service = AttendanceService()
+        date_service = DateService()
         
-        # If we're not checking today's attendance, return empty list
-        if end_date != current_date:
-            print("[DEBUG] end_date is not today, returning empty list")
-            return []
-            
-        # Get all active users
-        user_qs = User.objects.filter(is_active=True)
-        print(f"[DEBUG] Initial user_qs count: {user_qs.count()}")
+        # Get parameters
+        time_period = request.GET.get('time_period', 'today')
+        view_type = request.GET.get('view_type', 'daily')
+        custom_start = request.GET.get('start_date')
+        custom_end = request.GET.get('end_date')
         
-        # Filter by location if specified
-        if location:
-            user_qs = user_qs.filter(userdetails__work_location=location)
-            print(f"[DEBUG] Filtered by location '{location}', user_qs count: {user_qs.count()}")
-            
-        # Apply global search if specified
-        if global_search:
-            user_qs = user_qs.filter(
-                Q(username__icontains=global_search) |
-                Q(first_name__icontains=global_search) |
-                Q(last_name__icontains=global_search) |
-                Q(userdetails__work_location__icontains=global_search)
-            )
-            print(f"[DEBUG] Filtered by global_search '{global_search}', user_qs count: {user_qs.count()}")
-
-        # Get users who already have clocked in today (Present, Present & Late, WFH)
-        clocked_in_users = Attendance.objects.filter(
-            date=end_date,
-            status__in=['Present', 'Present & Late', 'Work From Home']
-        ).values_list('user_id', flat=True)
-        print(f"[DEBUG] Clocked in users for {end_date}: {list(clocked_in_users)}")
-        
-        # Get users who are on leave, holiday, weekend, or absent
-        excluded_users = Attendance.objects.filter(
-            date=end_date,
-            status__in=['On Leave', 'Holiday', 'Weekend', 'Absent']
-        ).values_list('user_id', flat=True)
-        print(f"[DEBUG] Excluded users (leave/holiday/weekend/absent) for {end_date}: {list(excluded_users)}")
-
-        # Get all users who have any attendance record today
-        all_marked_users = Attendance.objects.filter(
-            date=end_date
-        ).values_list('user_id', flat=True)
-        print(f"[DEBUG] All marked users for {end_date}: {list(all_marked_users)}")
-
-        # Get users without any attendance records
-        unmarked_users = user_qs.exclude(id__in=all_marked_users)
-        print(f"[DEBUG] Unmarked users count: {unmarked_users.count()}")
-
-        # Process each user who hasn't clocked in yet
-        for user in unmarked_users:
-            user_id = user.id
-            user_detail = user_details_dict.get(user_id)
-            work_location = user_detail.work_location if user_detail else "Not specified"
-            
-            # Get user's shift information
-            shift = None
-            if user_detail and user_detail.shift_id and user_detail.shift_id in active_shifts:
-                shift = active_shifts[user_detail.shift_id]
-            else:
-                # Try to get from ShiftAssignment
-                try:
-                    shift_assignment = ShiftAssignment.objects.filter(
-                        user_id=user_id,
-                        is_current=True,
-                        effective_from__lte=current_date
-                    ).order_by('-effective_from').first()
-                    
-                    if shift_assignment:
-                        shift = shift_assignment.shift
-                    else:
-                        shift = default_shift
-                except Exception as e:
-                    print(f"[DEBUG] Error getting shift assignment for user {user_id}: {e}")
-                    shift = default_shift
-            
-            shift_name = shift.name if shift else "Regular"
-            shift_start = shift.start_time if shift else None
-            shift_end = shift.end_time if shift else None
-            
-            # Only consider user as "Yet to Clock In" if:
-            # 1. Current time is after shift start time (plus grace period if applicable)
-            # 2. Current time is before shift end time
-            
-            should_be_clocked_in = False
-            grace_period_minutes = getattr(shift, 'grace_period', 0).total_seconds() // 60 if shift and hasattr(shift, 'grace_period') else 0
-            
-            if shift_start:
-                # Add grace period to shift start time
-                grace_period = timedelta(minutes=grace_period_minutes)
-                shift_start_with_grace = datetime.combine(current_date, shift_start) + grace_period
-                shift_start_with_grace_time = shift_start_with_grace.time()
-                
-                # Check if current time is after shift start (with grace period)
-                if current_time > shift_start_with_grace_time:
-                    # Only mark as "Yet to Clock In" if we're still within the shift
-                    if not shift_end or current_time < shift_end:
-                        should_be_clocked_in = True
-                print(f"[DEBUG] User {user.username} (ID: {user_id}) shift_start: {shift_start}, shift_end: {shift_end}, grace_period: {grace_period_minutes}, shift_start_with_grace: {shift_start_with_grace_time}, should_be_clocked_in: {should_be_clocked_in}")
-            else:
-                # If no shift start time is defined, assume they should be clocked in during business hours
-                business_start = datetime.strptime('09:00', '%H:%M').time()
-                if current_time > business_start:
-                    should_be_clocked_in = True
-                print(f"[DEBUG] User {user.username} (ID: {user_id}) has no shift_start, using default business hours. should_be_clocked_in: {should_be_clocked_in}")
-
-            if should_be_clocked_in:
-                print(f"[DEBUG] User {user.username} (ID: {user_id}) added to yet_to_clock_in_users")
-                yet_to_clock_in_users.append({
-                    'user_id': user_id,
-                    'username': user.username,
-                    'name': f"{user.first_name} {user.last_name}",
-                    'work_location': work_location,
-                    'shift_name': shift_name,
-                    'shift_start_time': shift_start.strftime('%H:%M') if shift_start else None,
-                    'shift_end_time': shift_end.strftime('%H:%M') if shift_end else None
-                })
-            else:
-                print(f"[DEBUG] User {user.username} (ID: {user_id}) not added to yet_to_clock_in_users")
-        
-        # Also check users who have a "Not Marked" status
-        not_marked_users = Attendance.objects.filter(
-            date=end_date,
-            status='Not Marked'
-        ).values_list('user_id', flat=True)
-        
-        for user_id in not_marked_users:
-            # Skip if already added
-            if any(u['user_id'] == user_id for u in yet_to_clock_in_users):
-                continue
-                
+        # Parse custom dates if provided
+        if custom_start:
             try:
-                user = User.objects.get(id=user_id)
-                user_detail = user_details_dict.get(user_id)
-                work_location = user_detail.work_location if user_detail else "Not specified"
+                custom_start = parse_date(custom_start)
+            except (ValueError, TypeError):
+                custom_start = None
                 
-                # Get shift info
-                shift = None
-                if user_detail and user_detail.shift_id and user_detail.shift_id in active_shifts:
-                    shift = active_shifts[user_detail.shift_id]
-                else:
-                    shift = default_shift
-                
-                shift_name = shift.name if shift else "Regular"
-                shift_start = shift.start_time if shift else None
-                shift_end = shift.end_time if shift else None
-                
-                yet_to_clock_in_users.append({
-                    'user_id': user_id,
-                    'username': user.username,
-                    'name': f"{user.first_name} {user.last_name}",
-                    'work_location': work_location,
-                    'shift_name': shift_name,
-                    'shift_start_time': shift_start.strftime('%H:%M') if shift_start else None,
-                    'shift_end_time': shift_end.strftime('%H:%M') if shift_end else None
-                })
-                print(f"[DEBUG] Not Marked user {user.username} (ID: {user_id}) added to yet_to_clock_in_users")
-            except User.DoesNotExist:
-                print(f"[DEBUG] User with ID {user_id} not found")
+        if custom_end:
+            try:
+                custom_end = parse_date(custom_end)
+            except (ValueError, TypeError):
+                custom_end = None
         
-        print(f"[DEBUG] Total yet_to_clock_in_users: {len(yet_to_clock_in_users)}")
-        return yet_to_clock_in_users
-    except Exception as e:
-        print(f"[DEBUG][ERROR] Error getting yet to clock in users: {e}")
-        logging.error(f"Error getting yet to clock in users: {e}")
-        return []
-
-
-def handle_drill_down(drill_down, base_query, user_details_dict):
-    """
-    Helper function to handle drill-down requests for specific user lists by status
-    Includes additional user information based on status type
-    """
-    from .models import ShiftMaster
-    
-    try:
-        users_data_qs = base_query.filter(status=drill_down).values(
-            'user_id', 'user__username', 'user__first_name', 'user__last_name',
-            'clock_in_time', 'clock_out_time', 'date', 'leave_type', 'leave_start_date', 'leave_end_date'
+        # Get date range
+        date_range = date_service.get_date_range(time_period, custom_start, custom_end)
+        start_date = date_range['start_date']
+        end_date = date_range['end_date']
+        
+        # Build filters
+        filters = {
+            'location': request.GET.get('location'),
+            'user_id': request.GET.get('user_id'),
+            'status': request.GET.get('status'),
+            'search': request.GET.get('search', '').strip()
+        }
+        
+        # Remove empty filters
+        filters = {k: v for k, v in filters.items() if v and v != 'all'}
+        
+        # Get base attendance query
+        base_query = attendance_service.get_base_attendance_query(start_date, end_date, filters)
+        
+        # Get all statistics
+        attendance_stats = attendance_service.get_attendance_statistics(base_query, view_type)
+        overall_stats = attendance_service.get_overall_statistics(base_query)
+        location_stats = attendance_service.get_location_statistics(start_date, end_date, base_query)
+        
+        # Get additional analytics data
+        top_absent_users = base_query.filter(status='Absent').values(
+            'user_id', 'user__username', 'user__first_name', 'user__last_name'
         ).annotate(
-            count=Count('id'),
-            avg_hours=Avg('total_hours'),
-            avg_late_mins=Avg('late_minutes'),
-            last_attendance_date=Max('date')
-        ).order_by('user__first_name')
+            absent_count=Count('id')
+        ).order_by('-absent_count')[:5]
         
-        users_data = []
-        for user_data in users_data_qs:
-            user_id = user_data['user_id']
-            user_detail = user_details_dict.get(user_id)
-            work_location = user_detail.work_location if user_detail else 'Not specified'
-            
-            # Get user's shift information
-            try:
-                shift = ShiftMaster.objects.filter(
-                    id=user_detail.shift_id if user_detail else None, 
-                    is_active=True
-                ).first() or ShiftMaster.objects.filter(is_active=True).first()
-                
-                shift_name = shift.name if shift else "Regular"
-                shift_start = shift.start_time.strftime('%H:%M') if shift and shift.start_time else None
-                shift_end = shift.end_time.strftime('%H:%M') if shift and shift.end_time else None
-            except Exception:
-                shift_name = "Regular"
-                shift_start = None
-                shift_end = None
-                
-            # Add additional info based on status
-            enhanced_data = {
-                'user_id': user_id,
-                'username': user_data['user__username'],
-                'name': f"{user_data['user__first_name']} {user_data['user__last_name']}",
-                'work_location': work_location,
-                'count': user_data['count'],
-                'last_attendance_date': user_data['last_attendance_date'].strftime('%Y-%m-%d') if user_data['last_attendance_date'] else '',
-                'avg_hours': user_data['avg_hours'] if user_data['avg_hours'] else 0,
-                'avg_late_mins': user_data['avg_late_mins'] if user_data['avg_late_mins'] else 0,
-                'shift_name': shift_name,
-                'shift_start_time': shift_start,
-                'shift_end_time': shift_end
-            }
-            
-            # Add status-specific information
-            if drill_down in ['Present', 'Present & Late', 'Work From Home']:
-                enhanced_data.update({
-                    'clock_in_time': user_data['clock_in_time'].strftime('%H:%M') if user_data['clock_in_time'] else None,
-                    'clock_out_time': user_data['clock_out_time'].strftime('%H:%M') if user_data['clock_out_time'] else None,
-                })
-            elif drill_down == 'On Leave':
-                enhanced_data.update({
-                    'leave_type': user_data['leave_type'],
-                    'leave_start_date': user_data['leave_start_date'].strftime('%Y-%m-%d') if user_data['leave_start_date'] else user_data['date'].strftime('%Y-%m-%d'),
-                    'leave_end_date': user_data['leave_end_date'].strftime('%Y-%m-%d') if user_data['leave_end_date'] else user_data['date'].strftime('%Y-%m-%d'),
-                    'leave_days': calculate_leave_days(user_data['leave_start_date'] or user_data['date'], 
-                                                       user_data['leave_end_date'] or user_data['date'])
-                })
-                
-            users_data.append(enhanced_data)
+        top_late_users = base_query.filter(status='Present & Late').values(
+            'user_id', 'user__username', 'user__first_name', 'user__last_name'
+        ).annotate(
+            late_count=Count('id'),
+            avg_late_minutes=Avg('late_minutes')
+        ).order_by('-late_count')[:5]
         
-        return users_data
+        # Get available locations for filter dropdown
+        available_locations = UserDetails.objects.filter(
+            user__is_active=True
+        ).exclude(
+            work_location__isnull=True
+        ).exclude(
+            work_location__exact=''
+        ).values_list('work_location', flat=True).distinct().order_by('work_location')
+        
+        # Get current date for "Yet to Clock In" functionality
+        current_date = date_service.get_current_date()
+        show_yet_to_clock_in = (end_date == current_date)
+        
+        context = {
+            'time_period': time_period,
+            'view_type': view_type,
+            'start_date': start_date,
+            'end_date': end_date,
+            'overall_stats': overall_stats,
+            'attendance_stats': list(attendance_stats),
+            'location_stats': location_stats,
+            'top_absent_users': list(top_absent_users),
+            'top_late_users': list(top_late_users),
+            'available_locations': list(available_locations),
+            'filters': filters,
+            'show_yet_to_clock_in': show_yet_to_clock_in,
+            'current_date': current_date,
+        }
+        
+        # Return JSON for AJAX requests, HTML for regular requests
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            # Format data for JSON response
+            context_json = context.copy()
+            context_json['start_date'] = start_date.strftime('%Y-%m-%d')
+            context_json['end_date'] = end_date.strftime('%Y-%m-%d')
+            context_json['current_date'] = current_date.strftime('%Y-%m-%d')
+            return JsonResponse(context_json, safe=False)
+        
+        return render(request, 'components/hr/attendance/attendance_analytics.html', context)
+        
     except Exception as e:
-        logging.error(f"Error handling drill-down for status {drill_down}: {e}")
-        return []
-
-def calculate_leave_days(start_date, end_date):
-    """Calculate number of leave days between start and end dates"""
-    try:
-        if not start_date or not end_date:
-            return 1
-        delta = (end_date - start_date).days + 1
-        return max(delta, 1)  # At least 1 day
-    except Exception:
-        return 1
-def get_ist_timezone():
-    # Use the TIME_ZONE from settings, fallback to Asia/Kolkata if not set
-    from django.conf import settings
-    import pytz
-    return pytz.timezone(getattr(settings, "TIME_ZONE", "Asia/Kolkata"))
-
-def localize_to_ist(dt):
-    if not dt:
-        return None
-    tz = get_ist_timezone()
-    if dt.tzinfo is None:
-        return tz.localize(dt)
-    return dt.astimezone(tz)
-
-def calculate_location_stats(start_date, end_date, time_period, base_query, user_details_dict):
-    """
-    Fixed helper function to calculate location-based attendance statistics with proper exception handling
-    """
-    from .models import User, Attendance, UserDetails
-    from django.db.models import Q
-    import logging
-    from django.utils import timezone
-    import pytz
-
-    logger = logging.getLogger(__name__)
-    
-    try:
-        # Get all unique locations from UserDetails, excluding None/empty values
-        locations = UserDetails.objects.exclude(
-            Q(work_location__isnull=True) | Q(work_location__exact='')
-        ).values('work_location').distinct()
+        logger.error(f"Error in attendance_analytics: {e}")
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'error': 'An error occurred while loading analytics'}, status=500)
         
-        # Add 'Unspecified' for users with no location
-        unspecified_exists = UserDetails.objects.filter(
-            Q(work_location__isnull=True) | Q(work_location__exact='')
-        ).exists()
-        
-        location_names = [loc['work_location'] for loc in locations]
-        if unspecified_exists:
-            location_names.append('Unspecified')
-            
-        print(f"[DEBUG] Processing locations: {location_names}")
-        location_stats = []
-
-        # Get current date and time in IST for yet_to_clock_in calculation
-        try:
-            IST = pytz.timezone('Asia/Kolkata')
-            current_date = timezone.localtime(timezone.now(), IST).date()
-        except Exception as e:
-            logger.error(f"Error getting current date in IST: {e}")
-            print(f"[DEBUG] Error getting current date: {e}")
-            current_date = timezone.now().date()
-
-        for work_location in location_names:
-            try:
-                if work_location == 'Unspecified':
-                    # Get users with no location specified
-                    location_users = list(UserDetails.objects.filter(
-                        Q(work_location__isnull=True) | Q(work_location__exact='')
-                    ).values_list('user_id', flat=True))
-                else:
-                    # Get users for specific location
-                    location_users = list(UserDetails.objects.filter(
-                        work_location=work_location
-                    ).values_list('user_id', flat=True))
-                
-                print(f"[DEBUG] Location '{work_location}': user_ids={location_users}")
-
-                # Skip if no users in this location
-                if not location_users:
-                    print(f"[DEBUG] Skipping location '{work_location}' - no users found")
-                    continue
-
-                # Get attendance stats for this location within the date range
-                try:
-                    location_attendance = base_query.filter(user_id__in=location_users)
-                    print(f"[DEBUG] Location '{work_location}': attendance count={location_attendance.count()}")
-                    
-                    total_users = len(location_users)
-                    present_users = location_attendance.filter(status__in=['Present', 'Present & Late', 'Work From Home']).values('user_id').distinct().count()
-                    absent_users = location_attendance.filter(status='Absent').values('user_id').distinct().count()
-                    leave_users = location_attendance.filter(status='On Leave').values('user_id').distinct().count()
-                    wfh_users = location_attendance.filter(status='Work From Home').values('user_id').distinct().count()
-                    print(f"[DEBUG] Location '{work_location}': present={present_users}, absent={absent_users}, leave={leave_users}, wfh={wfh_users}")
-                except Exception as e:
-                    logger.error(f"Error calculating attendance stats for location '{work_location}': {e}")
-                    print(f"[DEBUG] Error calculating attendance stats: {e}")
-                    continue
-
-                # Calculate yet to clock in for today only
-                yet_to_clock_in = 0
-                try:
-                    if (time_period == 'today' or start_date == end_date) and end_date == current_date:
-                        # Get active users for this location
-                        location_active_users = User.objects.filter(
-                            id__in=location_users,
-                            is_active=True
-                        ).values_list('id', flat=True)
-                        
-                        # Get users who have ANY attendance record for today
-                        users_with_attendance_today = list(Attendance.objects.filter(
-                            date=end_date,
-                            user_id__in=location_active_users
-                        ).values_list('user_id', flat=True))
-                        
-                        # Users yet to clock in = active users - users with any attendance record
-                        yet_to_clock_in = len(location_active_users) - len(users_with_attendance_today)
-                        yet_to_clock_in = max(0, yet_to_clock_in)
-                        
-                        print(f"[DEBUG] Location '{work_location}': active_users={len(location_active_users)}, users_with_attendance={len(users_with_attendance_today)}, yet_to_clock_in={yet_to_clock_in}")
-                except Exception as e:
-                    logger.error(f"Error calculating yet_to_clock_in for location '{work_location}': {e}")
-                    print(f"[DEBUG] Error calculating yet_to_clock_in: {e}")
-                    yet_to_clock_in = 0
-
-                # Calculate present percentage based on working users (exclude weekends/holidays)
-                try:
-                    working_users = location_attendance.exclude(status__in=['Weekend', 'Holiday']).values('user_id').distinct().count()
-                    present_percentage = round((present_users / max(working_users, 1)) * 100, 2) if working_users > 0 else 0.0
-                    print(f"[DEBUG] Location '{work_location}': working_users={working_users}, present_percentage={present_percentage}")
-                except Exception as e:
-                    logger.error(f"Error calculating present percentage for location '{work_location}': {e}")
-                    print(f"[DEBUG] Error calculating present percentage: {e}")
-                    present_percentage = 0.0
-
-                location_stats.append({
-                    'location': work_location,
-                    'total_employees': total_users,
-                    'present_count': present_users,
-                    'absent_count': absent_users,
-                    'leave_count': leave_users,
-                    'wfh_count': wfh_users,
-                    'present_percentage': present_percentage,
-                    'yet_to_clock_in_count': yet_to_clock_in
-                })
-
-            except Exception as e:
-                logger.error(f"Error processing location '{work_location}': {e}")
-                print(f"[DEBUG] Error processing location '{work_location}': {e}")
-                continue
-
-        location_stats.sort(key=lambda x: x['total_employees'], reverse=True)
-        print(f"[DEBUG] Final location_stats: {location_stats}")
-        return location_stats
-
-    except Exception as e:
-        logger.error(f"Critical error in calculate_location_stats: {e}")
-        print(f"[DEBUG] Critical exception in calculate_location_stats: {e}")
-        return []
-
-
-def calculate_leave_days(start_date, end_date):
-    """Helper function to calculate leave days"""
-    try:
-        from datetime import timedelta
-        if start_date and end_date:
-            delta = end_date - start_date
-            return delta.days + 1
-        return 1
-    except Exception:
-        return 1
+        return render(request, 'components/hr/attendance/attendance_analytics.html', {
+            'error': 'An error occurred while loading analytics data.'
+        })
 
 
 @login_required
 @user_passes_test(is_hr_check)
-def get_status_users(request):
+def get_analytics_data(request):
     """
-    Updated function with comprehensive fixes for attendance status queries
+    API endpoint to get analytics data in JSON format for AJAX updates
     """
-    from .models import Attendance, User, UserDetails, ShiftMaster, LeaveRequest
-    from django.db.models import Q, Count, Avg, Max
-    import logging
-    from django.utils import timezone
-    from django.utils.dateparse import parse_date
-    import pytz
-    from django.conf import settings
-
-    logger = logging.getLogger(__name__)
-
-    # Constants for validation and thresholds
-    LATE_THRESHOLD_MINUTES = 30  # Grace period before marking as late
-    MAX_REALISTIC_LATE_MINUTES = 480  # 8 hours - flag unrealistic values
-    HISTORICAL_QUERY_DAYS_LIMIT = 7  # Days after which "Yet to Clock In" becomes "Absent"
-
     try:
-        # Get and validate parameters
-        status = request.GET.get('status')
-        start_date = request.GET.get('start_date')
-        end_date = request.GET.get('end_date')
-        location = request.GET.get('location')
-        global_search = request.GET.get('search', '').strip()
-
-        if not status or not start_date or not end_date:
-            logger.warning("Missing required parameters in get_status_users")
-            return JsonResponse({'error': 'Missing required parameters'}, status=400)
-
-        # Parse dates with error handling
-        try:
-            start_date = parse_date(start_date)
-            end_date = parse_date(end_date)
-            if not start_date or not end_date:
-                raise ValueError("Invalid date format")
-        except (ValueError, TypeError) as e:
-            logger.error(f"Invalid date format in get_status_users: {e}")
-            return JsonResponse({'error': 'Invalid date format'}, status=400)
-
-        # Get all user details and shifts with optimized queries
-        try:
-            # Use select_related and prefetch_related for better performance
-            user_details_dict = {
-                ud.user_id: ud 
-                for ud in UserDetails.objects.select_related('user', 'shift').all()
-            }
-            
-            # Cache active shifts
-            active_shifts = {
-                s.id: s 
-                for s in ShiftMaster.objects.filter(is_active=True).only(
-                    'id', 'name', 'start_time', 'end_time', 'is_active'
-                )
-            }
-            
-            default_shift = next(iter(active_shifts.values()), None)
-            
-        except Exception as e:
-            logger.error(f"Error loading user details and shifts: {e}")
-            user_details_dict = {}
-            active_shifts = {}
-            default_shift = None
-
-        # Handle "Yet to Clock In" status with improved logic
-        if status in ['Yet to Clock In', 'Not Clocked In']:
+        # Initialize services
+        attendance_service = AttendanceService()
+        date_service = DateService()
+        
+        # Get parameters
+        time_period = request.GET.get('time_period', 'today')
+        view_type = request.GET.get('view_type', 'daily')
+        custom_start = request.GET.get('start_date')
+        custom_end = request.GET.get('end_date')
+        
+        # Parse custom dates if provided
+        if custom_start:
             try:
-                IST = pytz.timezone('Asia/Kolkata')
-                current_date = timezone.localtime(timezone.now(), IST).date()
-                current_time = timezone.localtime(timezone.now(), IST).time()
+                custom_start = parse_date(custom_start)
+            except (ValueError, TypeError):
+                custom_start = None
                 
-                # Allow historical "Yet to Clock In" queries but adjust logic based on date
-                is_historical_query = end_date < current_date
-                
-                # For historical dates, check if query is too old
-                if is_historical_query:
-                    days_diff = (current_date - end_date).days
-                    if days_diff > HISTORICAL_QUERY_DAYS_LIMIT:
-                        # Too old - likely absent, not "yet to clock in"
-                        return JsonResponse({
-                            'status': 'success',
-                            'data': {
-                                'users': [],
-                                'count': 0,
-                                'message': f'For dates older than {HISTORICAL_QUERY_DAYS_LIMIT} days, check "Absent" status instead',
-                                'suggestion': 'Use "Absent" status for historical attendance queries'
-                            }
-                        })
-
-                # Get base user queryset - only active users with optimized query
-                try:
-                    user_qs = User.objects.filter(
-                        is_active=True
-                    ).select_related('profile').only(
-                        'id', 'username', 'first_name', 'last_name', 'is_active'
-                    )
-                except Exception as e:
-                    logger.error(f"Error getting active users: {e}")
-                    return JsonResponse({'error': 'Error loading users'}, status=500)
-
-                # Apply location filter with error handling
-                try:
-                    if location and location not in ['all', 'Unspecified']:
-                        user_qs = user_qs.filter(profile__work_location=location)
-                    elif location == 'Unspecified':
-                        user_qs = user_qs.filter(
-                            Q(profile__work_location__isnull=True) | 
-                            Q(profile__work_location__exact='') |
-                            Q(profile__isnull=True)
-                        )
-                except Exception as e:
-                    logger.error(f"Error applying location filter: {e}")
-                    # Continue without location filter
-
-                # Apply global search with error handling
-                try:
-                    if global_search:
-                        user_qs = user_qs.filter(
-                            Q(username__icontains=global_search) |
-                            Q(first_name__icontains=global_search) |
-                            Q(last_name__icontains=global_search) |
-                            Q(profile__work_location__icontains=global_search)
-                        )
-                except Exception as e:
-                    logger.error(f"Error applying global search filter: {e}")
-                    # Continue without global search filter
-
-                # Get users who haven't clocked in for the specified date range
-                try:
-                    users_with_attendance = list(Attendance.objects.filter(
-                        date__range=[start_date, end_date]  # Check entire range, not just end_date
-                    ).values_list('user_id', flat=True).distinct())
-
-                    # Filter to users without any attendance record in the date range
-                    yet_to_clock_in_qs = user_qs.exclude(id__in=users_with_attendance)
-                    
-                except Exception as e:
-                    logger.error(f"Error filtering users with attendance: {e}")
-                    return JsonResponse({'error': 'Error processing attendance data'}, status=500)
-
-                result = []
-
-                # Process each user
-                for user in yet_to_clock_in_qs:
-                    try:
-                        # Get user profile safely
-                        try:
-                            user_profile = user.profile
-                            work_location = user_profile.work_location or "Unspecified"
-                        except UserDetails.DoesNotExist:
-                            work_location = "Unspecified"
-                            user_profile = None
-
-                        # Get shift information with error handling
-                        shift = None
-                        shift_name = "Regular"
-                        shift_start = None
-                        shift_end = None
-                        
-                        try:
-                            if user_profile and hasattr(user_profile, 'shift_id') and user_profile.shift_id and user_profile.shift_id in active_shifts:
-                                shift = active_shifts[user_profile.shift_id]
-                            else:
-                                shift = default_shift
-
-                            if shift:
-                                shift_name = shift.name
-                                shift_start = shift.start_time
-                                shift_end = shift.end_time
-                        except Exception as e:
-                            logger.error(f"Error getting shift info for user {user.id}: {e}")
-
-                        # Calculate late minutes with improved validation
-                        late_by = 0
-                        is_realistic_late = True
-
-                        try:
-                            if shift_start and not is_historical_query:  # Only calculate for current day
-                                shift_minutes = shift_start.hour * 60 + shift_start.minute
-                                current_minutes = current_time.hour * 60 + current_time.minute
-                                
-                                # Only calculate late if beyond grace period
-                                if current_minutes > shift_minutes + LATE_THRESHOLD_MINUTES:
-                                    late_by = current_minutes - shift_minutes
-                                    
-                                    # Validate realistic late minutes
-                                    if late_by > MAX_REALISTIC_LATE_MINUTES:
-                                        logger.warning(f"Unrealistic late minutes: {late_by} for user {user.id}")
-                                        late_by = min(late_by, MAX_REALISTIC_LATE_MINUTES)  # Cap at max
-                                        is_realistic_late = False
-                                else:
-                                    late_by = 0  # Within grace period
-                                    
-                        except Exception as e:
-                            logger.error(f"Error calculating late minutes for user {user.id}: {e}")
-                            late_by = 0
-
-                        result.append({
-                            'user_id': user.id,
-                            'username': user.username,
-                            'name': f"{user.first_name or ''} {user.last_name or ''}".strip() or user.username,
-                            'work_location': work_location,
-                            'shift_name': shift_name,
-                            'shift_start_time': shift_start.strftime('%H:%M') if shift_start else None,
-                            'shift_end_time': shift_end.strftime('%H:%M') if shift_end else None,
-                            'late_by': late_by,
-                            'late_validation': 'realistic' if is_realistic_late else 'capped'
-                        })
-
-                    except Exception as e:
-                        logger.error(f"Error processing user {user.id}: {e}")
-                        continue
-
-                return JsonResponse({
-                    'status': 'success',
-                    'data': {
-                        'users': result,
-                        'count': len(result),
-                        'filters_applied': {
-                            'status': status,
-                            'date_range': f"{start_date} to {end_date}",
-                            'location': location,
-                            'search': global_search
-                        },
-                        'query_info': {
-                            'is_historical': is_historical_query,
-                            'total_active_users': user_qs.count(),
-                            'users_with_attendance': len(users_with_attendance),
-                            'grace_period_minutes': LATE_THRESHOLD_MINUTES
-                        }
-                    }
-                })
-
-            except Exception as e:
-                logger.error(f"Critical error in Yet to Clock In processing: {e}")
-                return JsonResponse({'error': 'Error processing yet to clock in data'}, status=500)
-
-        # Handle other statuses with proper joins and filtering
-        try:
-            # Base query with proper joins
-            query = Attendance.objects.filter(
-                status=status,
-                date__gte=start_date,
-                date__lte=end_date
-            ).select_related('user', 'user__profile')
-
-            # Apply location filter if provided
-            if location and location != 'all':
-                try:
-                    if location == 'Unspecified':
-                        query = query.filter(
-                            Q(user__profile__work_location__isnull=True) | 
-                            Q(user__profile__work_location__exact='') |
-                            Q(user__profile__isnull=True)
-                        )
-                    else:
-                        query = query.filter(user__profile__work_location=location)
-                except Exception as e:
-                    logger.error(f"Error applying location filter for status {status}: {e}")
-
-            # Global search filter
-            if global_search:
-                try:
-                    query = query.filter(
-                        Q(user__username__icontains=global_search) |
-                        Q(user__first_name__icontains=global_search) |
-                        Q(user__last_name__icontains=global_search) |
-                        Q(user__id__icontains=global_search) |
-                        Q(user__profile__work_location__icontains=global_search)
-                    )
-                except Exception as e:
-                    logger.error(f"Error applying global search for status {status}: {e}")
-
-            # Get leave requests for leave status
-            leave_requests = {}
-            if status == 'On Leave':
-                try:
-                    user_ids = list(set(query.values_list('user_id', flat=True)))
-                    leave_reqs = LeaveRequest.objects.filter(
-                        user_id__in=user_ids,
-                        status='Approved',
-                        start_date__lte=end_date,
-                        end_date__gte=start_date
-                    ).select_related('leave_type')
-                    
-                    for lr in leave_reqs:
-                        if lr.user_id not in leave_requests or lr.end_date > leave_requests[lr.user_id]['end_date']:
-                            leave_requests[lr.user_id] = {
-                                'start_date': lr.start_date,
-                                'end_date': lr.end_date,
-                                'leave_type': lr.leave_type.name if lr.leave_type else 'Unknown',
-                                'days': float(lr.leave_days) if lr.leave_days else 1
-                            }
-                except Exception as e:
-                    logger.error(f"Error getting leave requests: {e}")
-
-            # Get attendance records with proper aggregation and validation
+        if custom_end:
             try:
-                attendance_records = query.values(
-                    'user_id', 
-                    'user__username', 
-                    'user__first_name', 
-                    'user__last_name',
-                    'clock_in_time', 
-                    'clock_out_time', 
-                    'leave_type', 
-                    'date',
-                    'total_hours',
-                    'late_minutes'
-                ).annotate(
-                    count=Count('id'),
-                    avg_late_minutes=Avg('late_minutes'),
-                    avg_hours=Avg('total_hours'),
-                    last_date=Max('date')
-                ).order_by('user__first_name')
-                
-                # Validate query results
-                if not attendance_records.exists():
-                    return JsonResponse({
-                        'status': 'success',
-                        'data': {
-                            'users': [],
-                            'count': 0,
-                            'message': f'No {status} records found for the specified criteria'
-                        }
-                    })
-                    
-            except Exception as e:
-                logger.error(f"Error querying attendance data for status {status}: {e}")
-                return JsonResponse({
-                    'error': f'Database error while fetching {status} data',
-                    'details': str(e) if settings.DEBUG else 'Contact administrator'
-                }, status=500)
-
-            # Process user data
-            result = []
-            processed_users = set()  # To handle duplicates
-            
-            for record in attendance_records:
-                try:
-                    user_id = record['user_id']
-                    
-                    # Skip if already processed (for aggregated data)
-                    if user_id in processed_users:
-                        continue
-                    processed_users.add(user_id)
-                    
-                    # Get user profile safely
-                    try:
-                        user_detail = user_details_dict.get(user_id)
-                        work_location = user_detail.work_location if user_detail else "Unspecified"
-                    except Exception as e:
-                        logger.error(f"Error getting user detail for {user_id}: {e}")
-                        work_location = "Unspecified"
-
-                    # Get user's shift information with error handling
-                    try:
-                        shift = None
-                        if user_detail and hasattr(user_detail, 'shift_id') and user_detail.shift_id and user_detail.shift_id in active_shifts:
-                            shift = active_shifts[user_detail.shift_id]
-                        else:
-                            shift = default_shift
-
-                        shift_name = shift.name if shift else "Regular"
-                        shift_start = shift.start_time if shift else None
-                        shift_end = shift.end_time if shift else None
-                    except Exception as e:
-                        logger.error(f"Error getting shift info for user {user_id}: {e}")
-                        shift_name = "Regular"
-                        shift_start = None
-                        shift_end = None
-
-                    # Format shift times
-                    shift_start_str = shift_start.strftime('%H:%M') if shift_start else None
-                    shift_end_str = shift_end.strftime('%H:%M') if shift_end else None
-
-                    # Base user data
-                    user_data = {
-                        'user_id': user_id,
-                        'username': record['user__username'] or '',
-                        'name': f"{record['user__first_name'] or ''} {record['user__last_name'] or ''}".strip() or record['user__username'],
-                        'work_location': work_location,
-                        'count': record['count'],
-                        'last_attendance_date': record['last_date'].strftime('%Y-%m-%d') if record['last_date'] else '',
-                        'shift_name': shift_name,
-                        'shift_start_time': shift_start_str,
-                        'shift_end_time': shift_end_str,
-                    }
-
-                    # Add status-specific information with validation
-                    if status in ['Present', 'Present & Late', 'Work From Home']:
-                        try:
-                            # Format clock in/out times
-                            clock_in_time = record['clock_in_time']
-                            clock_out_time = record['clock_out_time']
-                            
-                            # Validate late minutes
-                            late_minutes = record['late_minutes'] or 0
-                            avg_late_minutes = float(record['avg_late_minutes']) if record['avg_late_minutes'] else 0
-                            
-                            # Flag unrealistic late minutes
-                            late_validation = 'realistic'
-                            if avg_late_minutes > MAX_REALISTIC_LATE_MINUTES:
-                                late_validation = 'needs_review'
-                                logger.warning(f"User {user_id} has unrealistic average late minutes: {avg_late_minutes}")
-                            
-                            user_data.update({
-                                'clock_in_time': clock_in_time.strftime('%H:%M') if clock_in_time else None,
-                                'clock_out_time': clock_out_time.strftime('%H:%M') if clock_out_time else None,
-                                'avg_late_minutes': avg_late_minutes,
-                                'avg_hours': float(record['avg_hours']) if record['avg_hours'] else 0,
-                                'late_minutes': late_minutes,
-                                'total_hours': float(record['total_hours']) if record['total_hours'] else 0,
-                                'late_validation': late_validation
-                            })
-                        except Exception as e:
-                            logger.error(f"Error formatting clock times for user {user_id}: {e}")
-                            user_data.update({
-                                'clock_in_time': None,
-                                'clock_out_time': None,
-                                'avg_late_minutes': 0,
-                                'avg_hours': 0,
-                                'late_minutes': 0,
-                                'total_hours': 0,
-                                'late_validation': 'error'
-                            })
-                            
-                    elif status == 'On Leave':
-                        try:
-                            leave_info = leave_requests.get(user_id, {})
-                            leave_start = leave_info.get('start_date', record['date'])
-                            leave_end = leave_info.get('end_date', record['date'])
-                            leave_type = leave_info.get('leave_type', record['leave_type'] or 'Unknown')
-                            leave_days = leave_info.get('days', 1)
-
-                            user_data.update({
-                                'leave_type': leave_type,
-                                'leave_start_date': leave_start.strftime('%Y-%m-%d') if hasattr(leave_start, 'strftime') else str(leave_start),
-                                'leave_end_date': leave_end.strftime('%Y-%m-%d') if hasattr(leave_end, 'strftime') else str(leave_end),
-                                'leave_days': leave_days
-                            })
-                        except Exception as e:
-                            logger.error(f"Error formatting leave data for user {user_id}: {e}")
-                            user_data.update({
-                                'leave_type': record.get('leave_type', 'Unknown'),
-                                'leave_start_date': record.get('date', '').strftime('%Y-%m-%d') if record.get('date') else '',
-                                'leave_end_date': record.get('date', '').strftime('%Y-%m-%d') if record.get('date') else '',
-                                'leave_days': 1
-                            })
-
-                    result.append(user_data)
-
-                except Exception as e:
-                    logger.error(f"Error processing user data for user {record.get('user_id', 'unknown')}: {e}")
-                    continue
-
+                custom_end = parse_date(custom_end)
+            except (ValueError, TypeError):
+                custom_end = None
+        
+        # Get date range
+        date_range = date_service.get_date_range(time_period, custom_start, custom_end)
+        start_date = date_range['start_date']
+        end_date = date_range['end_date']
+        
+        # Build filters
+        filters = {
+            'location': request.GET.get('location'),
+            'user_id': request.GET.get('user_id'),
+            'status': request.GET.get('status'),
+            'search': request.GET.get('search', '').strip()
+        }
+        
+        # Remove empty filters
+        filters = {k: v for k, v in filters.items() if v and v != 'all'}
+        
+        # Get base attendance query
+        base_query = attendance_service.get_base_attendance_query(start_date, end_date, filters)
+        
+        # Get statistics based on request type
+        data_type = request.GET.get('data_type', 'overview')
+        
+        if data_type == 'overview':
+            overall_stats = attendance_service.get_overall_statistics(base_query)
             return JsonResponse({
-                'status': 'success',
-                'data': {
-                    'users': result,
-                    'count': len(result),
-                    'filters_applied': {
-                        'status': status,
-                        'date_range': f"{start_date} to {end_date}",
-                        'location': location,
-                        'search': global_search
-                    }
-                }
+                'success': True,
+                'data': overall_stats,
+                'start_date': start_date.strftime('%Y-%m-%d'),
+                'end_date': end_date.strftime('%Y-%m-%d')
             })
-
-        except Exception as e:
-            logger.error(f"Critical error processing status {status}: {e}")
-            return JsonResponse({'error': f'Error processing {status} data'}, status=500)
-
+        
+        elif data_type == 'trends':
+            attendance_stats = attendance_service.get_attendance_statistics(base_query, view_type)
+            return JsonResponse({
+                'success': True,
+                'data': list(attendance_stats),
+                'view_type': view_type
+            })
+        
+        elif data_type == 'locations':
+            location_stats = attendance_service.get_location_statistics(start_date, end_date, base_query)
+            return JsonResponse({
+                'success': True,
+                'data': location_stats
+            })
+        
+        else:
+            return JsonResponse({
+                'success': False,
+                'error': 'Invalid data type requested'
+            }, status=400)
+        
     except Exception as e:
-        logger.error(f"Critical error in get_status_users: {e}")
-        return JsonResponse({'error': 'Internal server error'}, status=500)
+        logger.error(f"Error in get_analytics_data: {e}")
+        return JsonResponse({
+            'success': False,
+            'error': 'An error occurred while loading data'
+        }, status=500)
 
 
+
+
+
+  
 
 '''---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------'''
 
