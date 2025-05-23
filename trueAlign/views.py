@@ -616,7 +616,7 @@ def get_attendance_stats(request):
 
     except Exception as e:
         # Log the error
-        print(f"Error generating attendance stats: {str(e)}")
+        # print(f"Error generating attendance stats: {str(e)}")
 
         # Return empty data on error
         return {
@@ -8158,7 +8158,7 @@ def get_attendance_details(request):
     user_filter = Q()
     
     if location:
-        user_filter &= Q(userdetails__work_location=location)
+        user_filter &= Q(profile__work_location=location)
     
     if user_query:
         user_filter &= (

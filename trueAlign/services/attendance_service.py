@@ -41,12 +41,12 @@ class AttendanceService:
                 print(f"[DEBUG] Filtering by location: {filters['location']}")
                 if filters['location'] == 'Unspecified':
                     query = query.filter(
-                        Q(user__userdetails__work_location__isnull=True) |
-                        Q(user__userdetails__work_location__exact='')
+                        Q(user__profile__work_location__isnull=True) |
+                        Q(user__profile__work_location__exact='')
                     )
                     print("[DEBUG] Applied filter for Unspecified location")
                 else:
-                    query = query.filter(user__userdetails__work_location=filters['location'])
+                    query = query.filter(user__profile__work_location=filters['location'])
                     print(f"[DEBUG] Applied filter for location: {filters['location']}")
             
             if filters.get('user_id'):
@@ -63,7 +63,7 @@ class AttendanceService:
                     Q(user__username__icontains=search) |
                     Q(user__first_name__icontains=search) |
                     Q(user__last_name__icontains=search) |
-                    Q(user__userdetails__work_location__icontains=search)
+                    Q(user__profile__work_location__icontains=search)
                 )
                 print(f"[DEBUG] Applied search filter: {search}")
         
@@ -148,7 +148,6 @@ class AttendanceService:
         print(f"[DEBUG] location_stats: {list(location_stats)}")
         
         # Get attendance counts by location in single query
-        # FIXED: Changed from user__userdetails__work_location to user__profile__work_location
         attendance_by_location = base_query.filter(
             user__profile__work_location__isnull=False
         ).values('user__profile__work_location', 'status').annotate(
@@ -173,7 +172,6 @@ class AttendanceService:
         
         # Aggregate attendance data by location
         for att in attendance_by_location:
-            # FIXED: Changed the key name to match the new field reference
             location = att['user__profile__work_location']
             status = att['status']
             count = att['count']

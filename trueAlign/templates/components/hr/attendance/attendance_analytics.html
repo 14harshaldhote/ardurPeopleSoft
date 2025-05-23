@@ -91,9 +91,11 @@
                                 </a>
                             </div>
                         </div>
+                        {% empty %}
+                        <div class="p-4 text-center text-gray-500">No location data available</div>
                         {% endfor %}
                     </div>
-                </div>
+                 </div>
 
                 <!-- Status Distribution Card -->
                 <div class="bg-white rounded-2xl shadow-md overflow-hidden transition hover:shadow-lg">
@@ -111,6 +113,8 @@
                             <span class="text-blue-900 font-medium group-hover:text-blue-700">{{ status.status }}</span>
                             <span class="bg-blue-50 text-blue-700 text-xs font-bold px-3 py-1 rounded-full">{{ status.count }}</span>
                         </a>
+                        {% empty %}
+                        <div class="p-4 text-center text-gray-500">No status data available</div>
                         {% endfor %}
                     </div>
                 </div>
@@ -162,7 +166,7 @@
                             <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
                         </svg>
                         <span class="text-xs sm:text-sm font-medium opacity-80">Total Employees</span>
-                        <span class="text-2xl sm:text-3xl font-bold mt-1">{{ overall_stats.total_employees }}</span>
+                        <span class="text-2xl sm:text-3xl font-bold mt-1">{{ overall_stats.total_records }}</span>
                     </div>
                     <div class="bg-gradient-to-br from-green-100 to-green-300 rounded-2xl shadow-md p-4 sm:p-6 text-green-900 flex flex-col items-center hover:scale-105 transition">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 sm:h-10 sm:w-10 mb-2 opacity-90 text-green-400" viewBox="0 0 20 20" fill="currentColor">
@@ -250,11 +254,7 @@
                                     {% for user in top_late_users %}
                                     <tr class="hover:bg-yellow-50 transition">
                                         <td class="px-3 sm:px-6 py-4 whitespace-nowrap font-semibold text-yellow-900">
-                                            {% if user.first_name or user.last_name %}
-                                                {{ user.first_name|default_if_none:"" }} {{ user.last_name|default_if_none:"" }}
-                                            {% else %}
-                                                {{ user.username|default_if_none:"" }}
-                                            {% endif %}
+                                            {{user.username}}
                                         </td>
                                         <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-yellow-700">{{ user.late_count }}</td>
                                         <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-yellow-700">{{ user.avg_late_minutes|floatformat:0 }}</td>
@@ -513,7 +513,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 </table>
                                 </div>
                             `;
-                        } else if (statusName.includes('Leave')) {
+                        } else if (statusName.includes('On Leave')) {
                             tableHtml = `
                                 <div class="overflow-x-auto" style="max-height:60vh;overflow-y:auto;">
                                 <table class="min-w-full divide-y divide-gray-200">

@@ -26,7 +26,7 @@ class UserService:
             date__lte=end_date
         ).select_related(
             'user', 
-            'user__userdetails',
+            'user__profile',
             'shift'
         ).prefetch_related(
             'user__leaverequest_set'
@@ -39,11 +39,11 @@ class UserService:
                 print(f"[DEBUG] Filtering by location: {filters['location']}")
                 if filters['location'] == 'Unspecified':
                     query = query.filter(
-                        Q(user__userdetails__work_location__isnull=True) |
-                        Q(user__userdetails__work_location__exact='')
+                        Q(user__profile__work_location__isnull=True) |
+                        Q(user__profile__work_location__exact='')
                     )
                 else:
-                    query = query.filter(user__userdetails__work_location=filters['location'])
+                    query = query.filter(user__profile__work_location=filters['location'])
             
             if filters.get('search'):
                 search = filters['search']
@@ -52,7 +52,7 @@ class UserService:
                     Q(user__username__icontains=search) |
                     Q(user__first_name__icontains=search) |
                     Q(user__last_name__icontains=search) |
-                    Q(user__userdetails__work_location__icontains=search)
+                    Q(user__profile__work_location__icontains=search)
                 )
         
         # Aggregate user data
@@ -62,7 +62,7 @@ class UserService:
             'user__username',
             'user__first_name', 
             'user__last_name',
-            'user__userdetails__work_location',
+            'user__profile__work_location',
             'clock_in_time',
             'clock_out_time',
             'total_hours',
@@ -93,10 +93,10 @@ class UserService:
             return []
         
         # Get all active users with their details in one query
-        print("[DEBUG] Querying all active users with userdetails and shift")
+        print("[DEBUG] Querying all active users with profile and shift")
         users_query = User.objects.filter(
             is_active=True
-        ).select_related('userdetails', 'userdetails__shift')
+        ).select_related('profile', 'profile__shift')
         
         # Apply filters
         if filters:
@@ -105,11 +105,11 @@ class UserService:
                 print(f"[DEBUG] Filtering by location: {filters['location']}")
                 if filters['location'] == 'Unspecified':
                     users_query = users_query.filter(
-                        Q(userdetails__work_location__isnull=True) |
-                        Q(userdetails__work_location__exact='')
+                        Q(profile__work_location__isnull=True) |
+                        Q(profile__work_location__exact='')
                     )
                 else:
-                    users_query = users_query.filter(userdetails__work_location=filters['location'])
+                    users_query = users_query.filter(profile__work_location=filters['location'])
             
             if filters.get('search'):
                 search = filters['search']
@@ -118,7 +118,7 @@ class UserService:
                     Q(username__icontains=search) |
                     Q(first_name__icontains=search) |
                     Q(last_name__icontains=search) |
-                    Q(userdetails__work_location__icontains=search)
+                    Q(profile__work_location__icontains=search)
                 )
         
         # Get users who already have attendance records today
@@ -139,7 +139,7 @@ class UserService:
                 continue
             
             # Get user details
-            user_detail = getattr(user, 'userdetails', None)
+            user_detail = getattr(user, 'profile', None)
             shift = getattr(user_detail, 'shift', None) if user_detail else None
             
             # Calculate if user should have clocked in by now
@@ -187,7 +187,7 @@ class UserService:
                 'user_id': user['user_id'],
                 'username': user['user__username'],
                 'name': f"{user['user__first_name'] or ''} {user['user__last_name'] or ''}".strip() or user['user__username'],
-                'work_location': user['user__userdetails__work_location'] or 'Unspecified',
+                'work_location': user['user__profile__work_location'] or 'Unspecified',
                 'shift_name': user['shift__name'] or 'Regular',
                 'shift_start_time': user['shift__start_time'].strftime('%H:%M') if user['shift__start_time'] else None,
                 'shift_end_time': user['shift__end_time'].strftime('%H:%M') if user['shift__end_time'] else None,
