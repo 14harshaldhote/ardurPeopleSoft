@@ -7089,6 +7089,9 @@ from decimal import Decimal
 from calendar import monthrange
 
 from .models import Attendance, LeaveRequest, ShiftAssignment, Holiday
+from .services.user_service import UserService
+from .services.attendance_service import AttendanceService
+from .services.date_service import DateService
 
 User = get_user_model()
 
@@ -7148,13 +7151,16 @@ def get_status_users(request):
     """
     Optimized function to get users by status - returns HTML response
     """
+    print("desbg: get_status_users called")
     try:
         # Get and validate parameters
         status = request.GET.get('status')
         start_date = request.GET.get('start_date')
         end_date = request.GET.get('end_date')
-        
+        print(f"desbg: Parameters - status={status}, start_date={start_date}, end_date={end_date}")
+
         if not all([status, start_date, end_date]):
+            print("desbg: Missing required parameters")
             return render(request, 'components/hr/attendance/attendance_analytics.html', {
                 'error': 'Missing required parameters',
                 'users': [],
@@ -7166,7 +7172,9 @@ def get_status_users(request):
         try:
             start_date = parse_date(start_date)
             end_date = parse_date(end_date)
+            print(f"desbg: Parsed dates - start_date={start_date}, end_date={end_date}")
         except (ValueError, TypeError):
+            print("desbg: Invalid date format")
             return render(request, 'components/hr/attendance/attendance_analytics.html', {
                 'error': 'Invalid date format',
                 'users': [],
@@ -7179,13 +7187,17 @@ def get_status_users(request):
             'location': request.GET.get('location'),
             'search': request.GET.get('search', '').strip()
         }
+        print(f"desbg: Raw filters - {filters}")
         
         # Remove empty filters
         filters = {k: v for k, v in filters.items() if v and v != 'all'}
+        print(f"desbg: Cleaned filters - {filters}")
         
         # Initialize service and get users
         user_service = UserService()
+        print("desbg: UserService initialized")
         users = user_service.get_users_by_status(status, start_date, end_date, filters)
+        print(f"desbg: Retrieved {len(users)} users")
         
         # Pagination
         page = int(request.GET.get('page', 1))
@@ -7193,6 +7205,7 @@ def get_status_users(request):
         start_idx = (page - 1) * per_page
         end_idx = start_idx + per_page
         paginated_users = users[start_idx:end_idx]
+        print(f"desbg: Pagination - page={page}, per_page={per_page}, start_idx={start_idx}, end_idx={end_idx}")
         
         # Calculate pagination info
         total_users = len(users)
@@ -7213,10 +7226,11 @@ def get_status_users(request):
             'filters': filters,
             'show_users_section': True
         }
-        
+        print("desbg: Rendering attendance_analytics.html with context")
         return render(request, 'components/hr/attendance/attendance_analytics.html', context)
         
     except Exception as e:
+        print(f"desbg: Exception in get_status_users: {e}")
         logger.error(f"Error in get_status_users: {e}")
         return render(request, 'components/hr/attendance/attendance_analytics.html', {
             'error': 'An error occurred while loading user data.',
@@ -7230,6 +7244,7 @@ def get_status_users(request):
 @user_passes_test(is_hr_check)
 def export_status_users(request):
     """Export users by status to CSV"""
+    print("desbg: export_status_users called")
     import csv
     from django.http import HttpResponse
     
@@ -7238,26 +7253,33 @@ def export_status_users(request):
         status = request.GET.get('status')
         start_date = parse_date(request.GET.get('start_date'))
         end_date = parse_date(request.GET.get('end_date'))
+        print(f"desbg: Parameters - status={status}, start_date={start_date}, end_date={end_date}")
         
         filters = {
             'location': request.GET.get('location'),
             'search': request.GET.get('search', '').strip()
         }
+        print(f"desbg: Raw filters - {filters}")
         filters = {k: v for k, v in filters.items() if v and v != 'all'}
+        print(f"desbg: Cleaned filters - {filters}")
         
         # Get users
         user_service = UserService()
+        print("desbg: UserService initialized")
         users = user_service.get_users_by_status(status, start_date, end_date, filters)
+        print(f"desbg: Retrieved {len(users)} users for export")
         
         # Create CSV response
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = f'attachment; filename="{status}_users_{start_date}_{end_date}.csv"'
+        print("desbg: CSV response initialized")
         
         writer = csv.writer(response)
         
         # Write header
         if status == 'Yet to Clock In':
             writer.writerow(['Username', 'Name', 'Location', 'Shift', 'Start Time', 'Late By (minutes)'])
+            print("desbg: Writing header for 'Yet to Clock In'")
             for user in users:
                 writer.writerow([
                     user['username'],
@@ -7269,6 +7291,7 @@ def export_status_users(request):
                 ])
         elif status in ['Present', 'Present & Late', 'Work From Home']:
             writer.writerow(['Username', 'Name', 'Location', 'Clock In', 'Clock Out', 'Total Hours', 'Late Minutes', 'Attendance Days'])
+            print("desbg: Writing header for Present/Present & Late/Work From Home")
             for user in users:
                 writer.writerow([
                     user['username'],
@@ -7282,6 +7305,7 @@ def export_status_users(request):
                 ])
         elif status == 'On Leave':
             writer.writerow(['Username', 'Name', 'Location', 'Leave Type', 'Days on Leave'])
+            print("desbg: Writing header for 'On Leave'")
             for user in users:
                 writer.writerow([
                     user['username'],
@@ -7292,6 +7316,7 @@ def export_status_users(request):
                 ])
         else:
             writer.writerow(['Username', 'Name', 'Location', 'Status', 'Count'])
+            print("desbg: Writing header for other status")
             for user in users:
                 writer.writerow([
                     user['username'],
@@ -7301,9 +7326,11 @@ def export_status_users(request):
                     user['attendance_count']
                 ])
         
+        print("desbg: CSV export complete")
         return response
         
     except Exception as e:
+        print(f"desbg: Exception in export_status_users: {e}")
         logger.error(f"Error in export_status_users: {e}")
         return HttpResponse("Error exporting data", status=500)
 
@@ -7315,34 +7342,42 @@ def attendance_analytics(request):
     Optimized attendance analytics dashboard
     Removed reporting manager logic and optimized queries
     """
+    print("desbg: attendance_analytics called")
     try:
         # Initialize services
         attendance_service = AttendanceService()
         date_service = DateService()
+        print("desbg: AttendanceService and DateService initialized")
         
         # Get parameters
         time_period = request.GET.get('time_period', 'today')
         view_type = request.GET.get('view_type', 'daily')
         custom_start = request.GET.get('start_date')
         custom_end = request.GET.get('end_date')
+        print(f"desbg: Parameters - time_period={time_period}, view_type={view_type}, custom_start={custom_start}, custom_end={custom_end}")
         
         # Parse custom dates if provided
         if custom_start:
             try:
                 custom_start = parse_date(custom_start)
+                print(f"desbg: Parsed custom_start={custom_start}")
             except (ValueError, TypeError):
+                print("desbg: Invalid custom_start")
                 custom_start = None
                 
         if custom_end:
             try:
                 custom_end = parse_date(custom_end)
+                print(f"desbg: Parsed custom_end={custom_end}")
             except (ValueError, TypeError):
+                print("desbg: Invalid custom_end")
                 custom_end = None
         
         # Get date range
         date_range = date_service.get_date_range(time_period, custom_start, custom_end)
         start_date = date_range['start_date']
         end_date = date_range['end_date']
+        print(f"desbg: Date range - start_date={start_date}, end_date={end_date}")
         
         # Build filters
         filters = {
@@ -7351,17 +7386,21 @@ def attendance_analytics(request):
             'status': request.GET.get('status'),
             'search': request.GET.get('search', '').strip()
         }
+        print(f"desbg: Raw filters - {filters}")
         
         # Remove empty filters
         filters = {k: v for k, v in filters.items() if v and v != 'all'}
+        print(f"desbg: Cleaned filters - {filters}")
         
         # Get base attendance query
         base_query = attendance_service.get_base_attendance_query(start_date, end_date, filters)
+        print("desbg: Base attendance query obtained")
         
         # Get all statistics
         attendance_stats = attendance_service.get_attendance_statistics(base_query, view_type)
         overall_stats = attendance_service.get_overall_statistics(base_query)
         location_stats = attendance_service.get_location_statistics(start_date, end_date, base_query)
+        print("desbg: Attendance statistics, overall stats, and location stats obtained")
         
         # Get additional analytics data
         top_absent_users = base_query.filter(status='Absent').values(
@@ -7369,6 +7408,7 @@ def attendance_analytics(request):
         ).annotate(
             absent_count=Count('id')
         ).order_by('-absent_count')[:5]
+        print("desbg: Top absent users calculated")
         
         top_late_users = base_query.filter(status='Present & Late').values(
             'user_id', 'user__username', 'user__first_name', 'user__last_name'
@@ -7376,6 +7416,7 @@ def attendance_analytics(request):
             late_count=Count('id'),
             avg_late_minutes=Avg('late_minutes')
         ).order_by('-late_count')[:5]
+        print("desbg: Top late users calculated")
         
         # Get available locations for filter dropdown
         available_locations = UserDetails.objects.filter(
@@ -7385,10 +7426,12 @@ def attendance_analytics(request):
         ).exclude(
             work_location__exact=''
         ).values_list('work_location', flat=True).distinct().order_by('work_location')
+        print("desbg: Available locations obtained")
         
         # Get current date for "Yet to Clock In" functionality
         current_date = date_service.get_current_date()
         show_yet_to_clock_in = (end_date == current_date)
+        print(f"desbg: current_date={current_date}, show_yet_to_clock_in={show_yet_to_clock_in}")
         
         context = {
             'time_period': time_period,
@@ -7405,6 +7448,7 @@ def attendance_analytics(request):
             'show_yet_to_clock_in': show_yet_to_clock_in,
             'current_date': current_date,
         }
+        print("desbg: Context prepared for rendering/JSON")
         
         # Return JSON for AJAX requests, HTML for regular requests
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
@@ -7413,11 +7457,14 @@ def attendance_analytics(request):
             context_json['start_date'] = start_date.strftime('%Y-%m-%d')
             context_json['end_date'] = end_date.strftime('%Y-%m-%d')
             context_json['current_date'] = current_date.strftime('%Y-%m-%d')
+            print("desbg: Returning JSON response for AJAX")
             return JsonResponse(context_json, safe=False)
         
+        print("desbg: Rendering attendance_analytics.html")
         return render(request, 'components/hr/attendance/attendance_analytics.html', context)
         
     except Exception as e:
+        print(f"desbg: Exception in attendance_analytics: {e}")
         logger.error(f"Error in attendance_analytics: {e}")
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
             return JsonResponse({'error': 'An error occurred while loading analytics'}, status=500)
@@ -7433,34 +7480,42 @@ def get_analytics_data(request):
     """
     API endpoint to get analytics data in JSON format for AJAX updates
     """
+    print("desbg: get_analytics_data called")
     try:
         # Initialize services
         attendance_service = AttendanceService()
         date_service = DateService()
+        print("desbg: AttendanceService and DateService initialized")
         
         # Get parameters
         time_period = request.GET.get('time_period', 'today')
         view_type = request.GET.get('view_type', 'daily')
         custom_start = request.GET.get('start_date')
         custom_end = request.GET.get('end_date')
+        print(f"desbg: Parameters - time_period={time_period}, view_type={view_type}, custom_start={custom_start}, custom_end={custom_end}")
         
         # Parse custom dates if provided
         if custom_start:
             try:
                 custom_start = parse_date(custom_start)
+                print(f"desbg: Parsed custom_start={custom_start}")
             except (ValueError, TypeError):
+                print("desbg: Invalid custom_start")
                 custom_start = None
                 
         if custom_end:
             try:
                 custom_end = parse_date(custom_end)
+                print(f"desbg: Parsed custom_end={custom_end}")
             except (ValueError, TypeError):
+                print("desbg: Invalid custom_end")
                 custom_end = None
         
         # Get date range
         date_range = date_service.get_date_range(time_period, custom_start, custom_end)
         start_date = date_range['start_date']
         end_date = date_range['end_date']
+        print(f"desbg: Date range - start_date={start_date}, end_date={end_date}")
         
         # Build filters
         filters = {
@@ -7469,18 +7524,23 @@ def get_analytics_data(request):
             'status': request.GET.get('status'),
             'search': request.GET.get('search', '').strip()
         }
+        print(f"desbg: Raw filters - {filters}")
         
         # Remove empty filters
         filters = {k: v for k, v in filters.items() if v and v != 'all'}
+        print(f"desbg: Cleaned filters - {filters}")
         
         # Get base attendance query
         base_query = attendance_service.get_base_attendance_query(start_date, end_date, filters)
+        print("desbg: Base attendance query obtained")
         
         # Get statistics based on request type
         data_type = request.GET.get('data_type', 'overview')
+        print(f"desbg: data_type={data_type}")
         
         if data_type == 'overview':
             overall_stats = attendance_service.get_overall_statistics(base_query)
+            print("desbg: Returning overview stats")
             return JsonResponse({
                 'success': True,
                 'data': overall_stats,
@@ -7490,6 +7550,7 @@ def get_analytics_data(request):
         
         elif data_type == 'trends':
             attendance_stats = attendance_service.get_attendance_statistics(base_query, view_type)
+            print("desbg: Returning trends stats")
             return JsonResponse({
                 'success': True,
                 'data': list(attendance_stats),
@@ -7498,24 +7559,26 @@ def get_analytics_data(request):
         
         elif data_type == 'locations':
             location_stats = attendance_service.get_location_statistics(start_date, end_date, base_query)
+            print("desbg: Returning location stats")
             return JsonResponse({
                 'success': True,
                 'data': location_stats
             })
         
         else:
+            print("desbg: Invalid data type requested")
             return JsonResponse({
                 'success': False,
                 'error': 'Invalid data type requested'
             }, status=400)
         
     except Exception as e:
+        print(f"desbg: Exception in get_analytics_data: {e}")
         logger.error(f"Error in get_analytics_data: {e}")
         return JsonResponse({
             'success': False,
             'error': 'An error occurred while loading data'
         }, status=500)
-
 
 
 
@@ -14656,315 +14719,315 @@ def approve_leave(request):
     return render(request, 'components/manager/approve_leave.html', context)
 
 '''-------------------------- CHAT SYSTEM --------------------------------'''
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.contrib.auth.models import User, Group
-from django.contrib import messages
-from django.db.models import Q, Count, OuterRef, Subquery, F
-from django.core.exceptions import PermissionDenied
-from django.utils import timezone
-from django.http import JsonResponse
-from functools import wraps
-import re
+# from django.shortcuts import render, redirect, get_object_or_404
+# from django.contrib.auth.decorators import login_required, user_passes_test
+# from django.contrib.auth.models import User, Group
+# from django.contrib import messages
+# from django.db.models import Q, Count, OuterRef, Subquery, F
+# from django.core.exceptions import PermissionDenied
+# from django.utils import timezone
+# from django.http import JsonResponse
+# from functools import wraps
+# import re
 
-from .models import ChatGroup, GroupMember, DirectMessage, Message, MessageRead
-from .services import get_chat_history, mark_messages_as_read, get_unread_counts, create_group
-from .utils import validate_user_in_chat, send_notification
+# from .models import ChatGroup, GroupMember, DirectMessage, Message, MessageRead
+# from .services import get_chat_history, mark_messages_as_read, get_unread_counts, create_group
+# from .utils import validate_user_in_chat, send_notification
 
-@login_required
-def chat_home(request, chat_type=None, chat_id=None):
-    """Main chat view that renders the chat interface and handles all chat functionality"""
-    try:
-        # Get available users based on role
-        is_admin = request.user.groups.filter(name='Admin').exists()
-        is_manager = request.user.groups.filter(name='Manager').exists()
+# @login_required
+# def chat_home(request, chat_type=None, chat_id=None):
+#     """Main chat view that renders the chat interface and handles all chat functionality"""
+#     try:
+#         # Get available users based on role
+#         is_admin = request.user.groups.filter(name='Admin').exists()
+#         is_manager = request.user.groups.filter(name='Manager').exists()
 
-        available_users = User.objects.exclude(id=request.user.id)
-        if not is_admin:
-            if is_manager:
-                available_users = available_users.filter(groups__name='Employee')
-            else:
-                available_users = available_users.filter(
-                    Q(groups__name='Manager') | Q(groups__name='HR')
-                )
+#         available_users = User.objects.exclude(id=request.user.id)
+#         if not is_admin:
+#             if is_manager:
+#                 available_users = available_users.filter(groups__name='Employee')
+#             else:
+#                 available_users = available_users.filter(
+#                     Q(groups__name='Manager') | Q(groups__name='HR')
+#                 )
 
-        # Get chat lists for sidebar - Updated query
-        group_chats = ChatGroup.objects.filter(
-            memberships__user=request.user,
-            memberships__is_active=True,
-            is_active=True
-        ).annotate(
-            unread_count=Count(
-                'messages',
-                filter=Q(
-                    messages__read_receipts__user=request.user,
-                    messages__read_receipts__read_at__isnull=True,
-                    messages__is_deleted=False
-                )
-            ),
-            latest_message=Subquery(
-                Message.objects.filter(
-                    group=OuterRef('pk'),
-                    is_deleted=False
-                ).order_by('-sent_at').values('content')[:1]
-            )
-        ).prefetch_related('memberships', 'messages')
+#         # Get chat lists for sidebar - Updated query
+#         group_chats = ChatGroup.objects.filter(
+#             memberships__user=request.user,
+#             memberships__is_active=True,
+#             is_active=True
+#         ).annotate(
+#             unread_count=Count(
+#                 'messages',
+#                 filter=Q(
+#                     messages__read_receipts__user=request.user,
+#                     messages__read_receipts__read_at__isnull=True,
+#                     messages__is_deleted=False
+#                 )
+#             ),
+#             latest_message=Subquery(
+#                 Message.objects.filter(
+#                     group=OuterRef('pk'),
+#                     is_deleted=False
+#                 ).order_by('-sent_at').values('content')[:1]
+#             )
+#         ).prefetch_related('memberships', 'messages')
 
-        direct_messages = DirectMessage.objects.filter(
-            participants=request.user,
-            is_active=True
-        ).annotate(
-            unread_count=Count(
-                'messages',
-                filter=Q(
-                    messages__read_receipts__user=request.user,
-                    messages__read_receipts__read_at__isnull=True,
-                    messages__is_deleted=False
-                )
-            ),
-            latest_message=Subquery(
-                Message.objects.filter(
-                    direct_message=OuterRef('pk'),
-                    is_deleted=False
-                ).order_by('-sent_at').values('content')[:1]
-            )
-        ).prefetch_related('participants', 'messages')
+#         direct_messages = DirectMessage.objects.filter(
+#             participants=request.user,
+#             is_active=True
+#         ).annotate(
+#             unread_count=Count(
+#                 'messages',
+#                 filter=Q(
+#                     messages__read_receipts__user=request.user,
+#                     messages__read_receipts__read_at__isnull=True,
+#                     messages__is_deleted=False
+#                 )
+#             ),
+#             latest_message=Subquery(
+#                 Message.objects.filter(
+#                     direct_message=OuterRef('pk'),
+#                     is_deleted=False
+#                 ).order_by('-sent_at').values('content')[:1]
+#             )
+#         ).prefetch_related('participants', 'messages')
 
-        # Add other participant info for direct messages
-        for dm in direct_messages:
-            dm.other_user = dm.participants.exclude(id=request.user.id).first()
+#         # Add other participant info for direct messages
+#         for dm in direct_messages:
+#             dm.other_user = dm.participants.exclude(id=request.user.id).first()
 
-        context = {
-            'group_chats': group_chats,
-            'direct_messages': direct_messages,
-            'available_users': available_users,
-            'is_admin': is_admin,
-            'is_manager': is_manager,
-            'unread_counts': get_unread_counts(request.user)
-        }
+#         context = {
+#             'group_chats': group_chats,
+#             'direct_messages': direct_messages,
+#             'available_users': available_users,
+#             'is_admin': is_admin,
+#             'is_manager': is_manager,
+#             'unread_counts': get_unread_counts(request.user)
+#         }
 
-        # Handle chat detail view
-        if chat_type and chat_id:
-            try:
-                validate_user_in_chat(request.user, chat_id)
+#         # Handle chat detail view
+#         if chat_type and chat_id:
+#             try:
+#                 validate_user_in_chat(request.user, chat_id)
                 
-                if chat_type == 'group':
-                    chat = get_object_or_404(ChatGroup, id=chat_id, is_active=True)
-                    other_participant = None
-                else:
-                    chat = get_object_or_404(DirectMessage, id=chat_id, is_active=True)
-                    other_participant = chat.participants.exclude(id=request.user.id).first()
+#                 if chat_type == 'group':
+#                     chat = get_object_or_404(ChatGroup, id=chat_id, is_active=True)
+#                     other_participant = None
+#                 else:
+#                     chat = get_object_or_404(DirectMessage, id=chat_id, is_active=True)
+#                     other_participant = chat.participants.exclude(id=request.user.id).first()
 
-                messages_list = get_chat_history(chat_id, request.user, chat_type)
+#                 messages_list = get_chat_history(chat_id, request.user, chat_type)
                 
-                # Mark messages as read and only send notification if messages were actually read
-                unread_count = mark_messages_as_read(chat_id, request.user, chat_type)
+#                 # Mark messages as read and only send notification if messages were actually read
+#                 unread_count = mark_messages_as_read(chat_id, request.user, chat_type)
                 
-                # Only send notification if there were unread messages
-                if unread_count > 0:
-                    try:
-                        send_notification(
-                            request.user.id,
-                            "Messages marked as read",
-                            "read_status",
-                            chat_id
-                        )
-                    except Exception as notify_error:
-                        # Log notification errors without breaking the app flow
-                        import logging
-                        logger = logging.getLogger(__name__)
-                        logger.error(f"Notification error: {str(notify_error)}")
+#                 # Only send notification if there were unread messages
+#                 if unread_count > 0:
+#                     try:
+#                         send_notification(
+#                             request.user.id,
+#                             "Messages marked as read",
+#                             "read_status",
+#                             chat_id
+#                         )
+#                     except Exception as notify_error:
+#                         # Log notification errors without breaking the app flow
+#                         import logging
+#                         logger = logging.getLogger(__name__)
+#                         logger.error(f"Notification error: {str(notify_error)}")
                 
-                context.update({
-                    'chat': chat,
-                    'chat_type': chat_type,
-                    'messages': messages_list,
-                    'other_participant': other_participant,
-                    'can_manage': request.user.groups.filter(name__in=['Admin', 'Manager']).exists(),
-                    'chat_detail_view': True                
-                })
+#                 context.update({
+#                     'chat': chat,
+#                     'chat_type': chat_type,
+#                     'messages': messages_list,
+#                     'other_participant': other_participant,
+#                     'can_manage': request.user.groups.filter(name__in=['Admin', 'Manager']).exists(),
+#                     'chat_detail_view': True                
+#                 })
 
-            except Exception as e:
-                messages.error(request, f'Error loading chat: {str(e)}')
-                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                    return JsonResponse({'error': str(e)}, status=400)
-                return redirect('dashboard')
+#             except Exception as e:
+#                 messages.error(request, f'Error loading chat: {str(e)}')
+#                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+#                     return JsonResponse({'error': str(e)}, status=400)
+#                 return redirect('dashboard')
             
 
-        # Handle create group chat
-        if request.method == 'POST' and request.POST.get('action') == 'create_group':
-            if not request.user.groups.filter(name__in=['Admin', 'Manager']).exists():
-                raise PermissionDenied("You don't have permission to create groups")
+#         # Handle create group chat
+#         if request.method == 'POST' and request.POST.get('action') == 'create_group':
+#             if not request.user.groups.filter(name__in=['Admin', 'Manager']).exists():
+#                 raise PermissionDenied("You don't have permission to create groups")
                 
-            try:
-                name = request.POST.get('name')
-                description = request.POST.get('description', '')
-                member_ids = request.POST.getlist('members')
+#             try:
+#                 name = request.POST.get('name')
+#                 description = request.POST.get('description', '')
+#                 member_ids = request.POST.getlist('members')
 
-                chat = create_group(name, request.user, description)
-                GroupMember.objects.bulk_create([
-                    GroupMember(group=chat, user_id=member_id, role='member', is_active=True)
-                    for member_id in member_ids
-                ])
+#                 chat = create_group(name, request.user, description)
+#                 GroupMember.objects.bulk_create([
+#                     GroupMember(group=chat, user_id=member_id, role='member', is_active=True)
+#                     for member_id in member_ids
+#                 ])
 
-                for member_id in member_ids:
-                    send_notification(
-                        member_id,
-                        f"You've been added to group chat: {name}",
-                        "group_add",
-                        chat.id,
-                        request.user.username
-                    )
+#                 for member_id in member_ids:
+#                     send_notification(
+#                         member_id,
+#                         f"You've been added to group chat: {name}",
+#                         "group_add",
+#                         chat.id,
+#                         request.user.username
+#                     )
 
-                messages.success(request, 'Group chat created successfully')
-                return redirect('chat:detail', chat_type='group', chat_id=chat.id)
+#                 messages.success(request, 'Group chat created successfully')
+#                 return redirect('chat:detail', chat_type='group', chat_id=chat.id)
 
-            except Exception as e:
-                messages.error(request, f'Error creating group: {str(e)}')
-                return redirect('dashboard')
+#             except Exception as e:
+#                 messages.error(request, f'Error creating group: {str(e)}')
+#                 return redirect('dashboard')
 
-        # Handle create direct message
-        if request.method == 'POST' and request.POST.get('action') == 'create_direct':
-            try:
-                user_id = request.POST.get('user_id')
-                if not user_id:
-                    raise ValueError("No user_id provided")
+#         # Handle create direct message
+#         if request.method == 'POST' and request.POST.get('action') == 'create_direct':
+#             try:
+#                 user_id = request.POST.get('user_id')
+#                 if not user_id:
+#                     raise ValueError("No user_id provided")
                     
-                other_user = get_object_or_404(User, id=user_id)
+#                 other_user = get_object_or_404(User, id=user_id)
 
-                existing_chat = DirectMessage.objects.filter(
-                    participants=request.user
-                ).filter(
-                    participants=other_user,
-                    is_active=True
-                ).first()
+#                 existing_chat = DirectMessage.objects.filter(
+#                     participants=request.user
+#                 ).filter(
+#                     participants=other_user,
+#                     is_active=True
+#                 ).first()
 
-                if existing_chat:
-                    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                        return JsonResponse({'chat_id': existing_chat.id})
-                    return redirect('chat:detail', chat_type='direct', chat_id=existing_chat.id)
+#                 if existing_chat:
+#                     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+#                         return JsonResponse({'chat_id': existing_chat.id})
+#                     return redirect('chat:detail', chat_type='direct', chat_id=existing_chat.id)
 
-                chat = DirectMessage.objects.create(is_active=True)
-                chat.participants.add(request.user)
-                chat.participants.add(other_user)
-                chat.save()
+#                 chat = DirectMessage.objects.create(is_active=True)
+#                 chat.participants.add(request.user)
+#                 chat.participants.add(other_user)
+#                 chat.save()
 
-                send_notification(
-                    other_user.id,
-                    f"New message from {request.user.get_full_name() or request.user.username}",
-                    "direct_message",
-                    chat.id,
-                    request.user.username
-                )
+#                 send_notification(
+#                     other_user.id,
+#                     f"New message from {request.user.get_full_name() or request.user.username}",
+#                     "direct_message",
+#                     chat.id,
+#                     request.user.username
+#                 )
 
-                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                    return JsonResponse({'chat_id': chat.id})
-                return redirect('chat:detail', chat_type='direct', chat_id=chat.id)
+#                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+#                     return JsonResponse({'chat_id': chat.id})
+#                 return redirect('chat:detail', chat_type='direct', chat_id=chat.id)
 
-            except Exception as e:
-                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                    return JsonResponse({'error': str(e)}, status=400)
-                messages.error(request, f'Error creating chat: {str(e)}')
-                return redirect('dashboard')
+#             except Exception as e:
+#                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+#                     return JsonResponse({'error': str(e)}, status=400)
+#                 messages.error(request, f'Error creating chat: {str(e)}')
+#                 return redirect('dashboard')
 
-        # Handle message sending
-        if request.method == 'POST' and request.POST.get('message'):
-            try:
-                content = request.POST.get('message')
-                message_type = request.POST.get('message_type', 'text')
-                file_attachment = request.FILES.get('file_attachment')  # Get the file attachment
+#         # Handle message sending
+#         if request.method == 'POST' and request.POST.get('message'):
+#             try:
+#                 content = request.POST.get('message')
+#                 message_type = request.POST.get('message_type', 'text')
+#                 file_attachment = request.FILES.get('file_attachment')  # Get the file attachment
                 
-                # Start a database transaction to ensure message and read receipts are created atomically
-                from django.db import transaction
+#                 # Start a database transaction to ensure message and read receipts are created atomically
+#                 from django.db import transaction
                 
-                with transaction.atomic():
-                    if chat_type == 'group':
-                        chat = get_object_or_404(ChatGroup, id=chat_id)
-                        message = Message.objects.create(
-                            group=chat,
-                            sender=request.user,
-                            content=content,
-                            message_type=message_type,
-                            file_attachment=file_attachment  # Attach the file
-                        )
+#                 with transaction.atomic():
+#                     if chat_type == 'group':
+#                         chat = get_object_or_404(ChatGroup, id=chat_id)
+#                         message = Message.objects.create(
+#                             group=chat,
+#                             sender=request.user,
+#                             content=content,
+#                             message_type=message_type,
+#                             file_attachment=file_attachment  # Attach the file
+#                         )
                         
-                        # Get all active members for this group
-                        participants = User.objects.filter(
-                            group_memberships__group=chat,
-                            group_memberships__is_active=True
-                        )
+#                         # Get all active members for this group
+#                         participants = User.objects.filter(
+#                             group_memberships__group=chat,
+#                             group_memberships__is_active=True
+#                         )
                         
-                    else:
-                        chat = get_object_or_404(DirectMessage, id=chat_id)
-                        message = Message.objects.create(
-                            direct_message=chat,
-                            sender=request.user,
-                            content=content,
-                            message_type=message_type,
-                            file_attachment=file_attachment  # Attach the file
-                        )
+#                     else:
+#                         chat = get_object_or_404(DirectMessage, id=chat_id)
+#                         message = Message.objects.create(
+#                             direct_message=chat,
+#                             sender=request.user,
+#                             content=content,
+#                             message_type=message_type,
+#                             file_attachment=file_attachment  # Attach the file
+#                         )
                         
-                        # Get all participants for this direct message
-                        participants = chat.participants.all()
+#                         # Get all participants for this direct message
+#                         participants = chat.participants.all()
                     
-                    # Create read receipt for sender (already read)
-                    MessageRead.objects.create(
-                        message=message, 
-                        user=request.user, 
-                        read_at=timezone.now()
-                    )
+#                     # Create read receipt for sender (already read)
+#                     MessageRead.objects.create(
+#                         message=message, 
+#                         user=request.user, 
+#                         read_at=timezone.now()
+#                     )
                     
-                    # Create read receipts for other participants (unread)
-                    other_participants = participants.exclude(id=request.user.id)
-                    read_receipts = [
-                        MessageRead(message=message, user=participant)
-                        for participant in other_participants
-                    ]
+#                     # Create read receipts for other participants (unread)
+#                     other_participants = participants.exclude(id=request.user.id)
+#                     read_receipts = [
+#                         MessageRead(message=message, user=participant)
+#                         for participant in other_participants
+#                     ]
                     
-                    if read_receipts:
-                        MessageRead.objects.bulk_create(read_receipts)
+#                     if read_receipts:
+#                         MessageRead.objects.bulk_create(read_receipts)
                         
-                    # Notify other participants about the new message
-                    for participant in other_participants:
-                        try:
-                            sender_name = request.user.get_full_name() or request.user.username
-                            send_notification(
-                                participant.id,
-                                f"New message from {sender_name}",
-                                "new_message",
-                                chat_id,
-                                sender_name
-                            )
-                        except Exception as notify_error:
-                            # Log notification errors without breaking the message flow
-                            import logging
-                            logger = logging.getLogger(__name__)
-                            logger.error(f"Notification error: {str(notify_error)}")
+#                     # Notify other participants about the new message
+#                     for participant in other_participants:
+#                         try:
+#                             sender_name = request.user.get_full_name() or request.user.username
+#                             send_notification(
+#                                 participant.id,
+#                                 f"New message from {sender_name}",
+#                                 "new_message",
+#                                 chat_id,
+#                                 sender_name
+#                             )
+#                         except Exception as notify_error:
+#                             # Log notification errors without breaking the message flow
+#                             import logging
+#                             logger = logging.getLogger(__name__)
+#                             logger.error(f"Notification error: {str(notify_error)}")
 
-            except Exception as e:
-                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                    return JsonResponse({'status': 'error', 'error': str(e)}, status=400)
-                messages.error(request, f'Error sending message: {str(e)}')
-                return redirect('chat:detail', chat_type=chat_type, chat_id=chat_id)
+#             except Exception as e:
+#                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+#                     return JsonResponse({'status': 'error', 'error': str(e)}, status=400)
+#                 messages.error(request, f'Error sending message: {str(e)}')
+#                 return redirect('chat:detail', chat_type=chat_type, chat_id=chat_id)
                     
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return JsonResponse({'status': 'success', 'message_id': message.id})
-            return redirect('chat:detail', chat_type=chat_type, chat_id=chat_id)
+#             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+#                 return JsonResponse({'status': 'success', 'message_id': message.id})
+#             return redirect('chat:detail', chat_type=chat_type, chat_id=chat_id)
         
-        # Default return for GET requests when no other actions are taken
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return render(request, 'chat/chat_content.html', context)
-        return render(request, 'chat/chat_home.html', context)
+#         # Default return for GET requests when no other actions are taken
+#         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+#             return render(request, 'chat/chat_content.html', context)
+#         return render(request, 'chat/chat_home.html', context)
 
-    except Exception as e:
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.error(f"Error in chat_home view: {str(e)}")
+#     except Exception as e:
+#         import logging
+#         logger = logging.getLogger(__name__)
+#         logger.error(f"Error in chat_home view: {str(e)}")
                 
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({'status': 'error', 'error': str(e)}, status=400)
-        messages.error(request, f'Error: {str(e)}')
-        return redirect('dashboard')
+#         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+#             return JsonResponse({'status': 'error', 'error': str(e)}, status=400)
+#         messages.error(request, f'Error: {str(e)}')
+#         return redirect('dashboard')
 
 
 

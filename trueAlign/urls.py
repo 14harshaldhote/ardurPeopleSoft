@@ -167,11 +167,11 @@ manager_patterns = [
 ]
 
 # Chat URL patterns
-chat_patterns = [
-    path('', views.chat_home, name='home'),
-    path('<str:chat_type>/<int:chat_id>/', views.chat_home, name='detail'),
-    path('send/<str:chat_type>/<int:chat_id>/', views.chat_home, name='send_message'),
-]
+# chat_patterns = [
+#     path('', views.chat_home, name='home'),
+#     path('<str:chat_type>/<int:chat_id>/', views.chat_home, name='detail'),
+#     path('send/<str:chat_type>/<int:chat_id>/', views.chat_home, name='send_message'),
+# ]
 
 finance_patterns = [
     # Dashboard
@@ -304,16 +304,16 @@ attendance_patterns = [
 
     #new attendance analytics
 
-    path('analytics/', analytics_views.attendance_analytics, name='analytics'),
+    path('analytics/', views.attendance_analytics, name='analytics'),
     
     # AJAX endpoints for dynamic data loading
-    path('analytics/data/', analytics_views.get_analytics_data, name='analytics_data'),
+    path('analytics/data/', views.get_analytics_data, name='analytics_data'),
     
     # Status-specific user views
-    path('status/users/', status_views.get_status_users, name='status_users'),
+    path('status/users/', views.get_status_users, name='get_status_users'),
     
     # Export functionality
-    path('export/status-users/', status_views.export_status_users, name='export_status_users'),
+    path('export/status-users/', views.export_status_users, name='export_status_users'),
 
 ]
 
@@ -366,7 +366,7 @@ urlpatterns = [
     path('dashboard/', views.dashboard_view, name='dashboard'),
     
     # Include chat URLs with namespace
-    path('chat/', include((chat_patterns, 'chat'))),
+    # path('chat/', include((chat_patterns, 'chat'))),
 
     # Admin-specific URLs under 'admin/'
     path('administration/', include((admin_patterns, 'aps'), namespace='aps_admin')),

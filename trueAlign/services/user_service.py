@@ -1,3 +1,7 @@
+from .date_service import DateService
+from .attendance_service import AttendanceService
+from django.db.models import Q, Count, Avg, Max
+from ..models import User, Attendance
 
 # services/user_service.py
 class UserService:
@@ -8,11 +12,14 @@ class UserService:
     
     def get_users_by_status(self, status, start_date, end_date, filters=None):
         """Get users by attendance status with optimized queries"""
+        print(f"[DEBUG] get_users_by_status called with status={status}, start_date={start_date}, end_date={end_date}, filters={filters}")
         
         if status == 'Yet to Clock In':
+            print("[DEBUG] Status is 'Yet to Clock In', delegating to _get_yet_to_clock_in_users")
             return self._get_yet_to_clock_in_users(end_date, filters)
         
         # Standard status query with proper joins
+        print("[DEBUG] Building Attendance query for status:", status)
         query = Attendance.objects.filter(
             status=status,
             date__gte=start_date,
@@ -27,7 +34,9 @@ class UserService:
         
         # Apply filters
         if filters:
+            print(f"[DEBUG] Applying filters: {filters}")
             if filters.get('location') and filters['location'] != 'all':
+                print(f"[DEBUG] Filtering by location: {filters['location']}")
                 if filters['location'] == 'Unspecified':
                     query = query.filter(
                         Q(user__userdetails__work_location__isnull=True) |
@@ -38,6 +47,7 @@ class UserService:
             
             if filters.get('search'):
                 search = filters['search']
+                print(f"[DEBUG] Filtering by search: {search}")
                 query = query.filter(
                     Q(user__username__icontains=search) |
                     Q(user__first_name__icontains=search) |
@@ -46,6 +56,7 @@ class UserService:
                 )
         
         # Aggregate user data
+        print("[DEBUG] Aggregating user data with values and annotate")
         users_data = query.values(
             'user_id',
             'user__username',
@@ -67,24 +78,31 @@ class UserService:
             last_date=Max('date')
         ).order_by('user__first_name')
         
+        print(f"[DEBUG] users_data count: {users_data.count()}")
         return self._format_user_data(users_data, status)
     
     def _get_yet_to_clock_in_users(self, target_date, filters=None):
         """Get users who haven't clocked in yet - optimized version"""
+        print(f"[DEBUG] _get_yet_to_clock_in_users called with target_date={target_date}, filters={filters}")
         current_date = self.date_service.get_current_date()
+        print(f"[DEBUG] Current date: {current_date}")
         
         # Only process for current date
         if target_date != current_date:
+            print("[DEBUG] Target date does not match current date, returning empty list")
             return []
         
         # Get all active users with their details in one query
+        print("[DEBUG] Querying all active users with userdetails and shift")
         users_query = User.objects.filter(
             is_active=True
         ).select_related('userdetails', 'userdetails__shift')
         
         # Apply filters
         if filters:
+            print(f"[DEBUG] Applying filters: {filters}")
             if filters.get('location') and filters['location'] != 'all':
+                print(f"[DEBUG] Filtering by location: {filters['location']}")
                 if filters['location'] == 'Unspecified':
                     users_query = users_query.filter(
                         Q(userdetails__work_location__isnull=True) |
@@ -95,6 +113,7 @@ class UserService:
             
             if filters.get('search'):
                 search = filters['search']
+                print(f"[DEBUG] Filtering by search: {search}")
                 users_query = users_query.filter(
                     Q(username__icontains=search) |
                     Q(first_name__icontains=search) |
@@ -103,16 +122,20 @@ class UserService:
                 )
         
         # Get users who already have attendance records today
+        print(f"[DEBUG] Querying Attendance for users with attendance on {target_date}")
         users_with_attendance = set(
             Attendance.objects.filter(date=target_date).values_list('user_id', flat=True)
         )
+        print(f"[DEBUG] users_with_attendance count: {len(users_with_attendance)}")
         
         # Filter out users who already have attendance
         yet_to_clock_in_users = []
         current_time = self.date_service.get_current_date_time().time()
+        print(f"[DEBUG] Current time: {current_time}")
         
         for user in users_query:
             if user.id in users_with_attendance:
+                print(f"[DEBUG] Skipping user {user.id} ({user.username}) - already has attendance")
                 continue
             
             # Get user details
@@ -127,13 +150,17 @@ class UserService:
                 grace_period_minutes = 30  # 30 minutes grace period
                 shift_start_minutes = shift.start_time.hour * 60 + shift.start_time.minute
                 current_minutes = current_time.hour * 60 + current_time.minute
+                print(f"[DEBUG] User {user.id} shift start: {shift.start_time}, current_minutes: {current_minutes}, shift_start_minutes: {shift_start_minutes}")
                 
                 if current_minutes > shift_start_minutes + grace_period_minutes:
                     late_by = current_minutes - shift_start_minutes
+                    print(f"[DEBUG] User {user.id} is late by {late_by} minutes")
                 else:
                     should_be_clocked_in = False
+                    print(f"[DEBUG] User {user.id} should not be clocked in yet (within grace period)")
             
             if should_be_clocked_in:
+                print(f"[DEBUG] Adding user {user.id} ({user.username}) to yet_to_clock_in_users")
                 yet_to_clock_in_users.append({
                     'user_id': user.id,
                     'username': user.username,
@@ -146,13 +173,16 @@ class UserService:
                     'status': 'Yet to Clock In'
                 })
         
+        print(f"[DEBUG] yet_to_clock_in_users count: {len(yet_to_clock_in_users)}")
         return yet_to_clock_in_users
     
     def _format_user_data(self, users_data, status):
         """Format user data for display"""
+        print(f"[DEBUG] _format_user_data called with status={status}")
         formatted_users = []
         
         for user in users_data:
+            print(f"[DEBUG] Formatting user: {user.get('user_id', 'N/A')}")
             user_info = {
                 'user_id': user['user_id'],
                 'username': user['user__username'],
@@ -176,11 +206,14 @@ class UserService:
                     'late_minutes': user['late_minutes'] or 0,
                     'avg_late_minutes': float(user['avg_late_minutes']) if user['avg_late_minutes'] else 0
                 })
+                print(f"[DEBUG] Added present/late/WFH fields for user {user['user_id']}")
             elif status == 'On Leave':
                 user_info.update({
                     'leave_type': user['leave_type'] or 'Unknown'
                 })
+                print(f"[DEBUG] Added leave_type for user {user['user_id']}")
             
             formatted_users.append(user_info)
         
+        print(f"[DEBUG] Returning {len(formatted_users)} formatted users")
         return formatted_users
