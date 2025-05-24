@@ -303,17 +303,22 @@ attendance_patterns = [
 
 
     #new attendance analytics
-
     path('analytics/', views.attendance_analytics, name='analytics'),
-    
-    # AJAX endpoints for dynamic data loading
-    path('analytics/data/', views.get_analytics_data, name='analytics_data'),
-    
-    # Status-specific user views
-    path('status/users/', views.get_status_users, name='get_status_users'),
-    
-    # Export functionality
-    path('export/status-users/', views.export_status_users, name='export_status_users'),
+
+    # AJAX endpoint for users by status (modal)
+    path('status/users/', views.get_status_users_modal, name='get_status_users_modal'),
+
+    # AJAX endpoint for attendance by date
+    path('analytics/by-date/', views.get_attendance_by_date, name='get_attendance_by_date'),
+
+    # Export attendance data
+    path('export/attendance/', views.export_attendance_data, name='export_attendance_data'),
+
+    # AJAX endpoint for user attendance details
+    path('analytics/user-details/', views.get_user_attendance_details, name='get_user_attendance_details'),
+
+    # AJAX endpoint to refresh dashboard stats
+    path('analytics/dashboard-stats/', views.get_dashboard_stats, name='get_dashboard_stats'),
 
 ]
 

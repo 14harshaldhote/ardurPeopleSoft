@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+  {% extends 'base.html' %}
 {% load static %}
 
 {% block title %}Attendance Analytics{% endblock %}
@@ -121,6 +121,53 @@
             </aside>
             <!-- Main Content -->
             <main class="lg:col-span-3 space-y-6 sm:space-y-8">
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-2">
+                    <div class="bg-gradient-to-br from-blue-100 to-blue-300 rounded-2xl shadow-md p-4 sm:p-6 text-blue-900 flex flex-col items-center hover:scale-105 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 sm:h-10 sm:w-10 mb-2 opacity-90 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
+                        </svg>
+                        <span class="text-xs sm:text-sm font-medium opacity-80">Total Employees</span>
+                        <span class="text-2xl sm:text-3xl font-bold mt-1">{{ overall_stats.total_employees }}</span>
+                    </div>
+                    <div class="bg-gradient-to-br from-green-100 to-green-300 rounded-2xl shadow-md p-4 sm:p-6 text-green-900 flex flex-col items-center hover:scale-105 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 sm:h-10 sm:w-10 mb-2 opacity-90 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                        </svg>
+                        <span class="text-xs sm:text-sm font-medium opacity-80">Present</span>
+                        <span class="text-2xl sm:text-3xl font-bold mt-1">
+                            {{ overall_stats.present_count }}
+                            <span class="text-base font-medium text-green-700 opacity-80 ml-1">
+                                ({{ overall_stats.present_percentage|floatformat:2 }}%)
+                            </span>
+                        </span>
+                    </div>
+                    <div class="bg-gradient-to-br from-red-100 to-red-300 rounded-2xl shadow-md p-4 sm:p-6 text-red-700 flex flex-col items-center hover:scale-105 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 sm:h-10 sm:w-10 mb-2 opacity-90 text-red-300" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                        </svg>
+                        <span class="text-xs sm:text-sm font-medium opacity-80">Absent</span>
+                        <span class="text-2xl sm:text-3xl font-bold mt-1">
+                            {{ overall_stats.absent_count }}
+                            <span class="text-base font-medium text-red-700 opacity-80 ml-1">
+                                ({{ overall_stats.absent_percentage|floatformat:2 }}%)
+                            </span>
+                        </span>
+                    </div>
+                    <div class="bg-gradient-to-br from-yellow-100 to-yellow-300 rounded-2xl shadow-md p-4 sm:p-6 text-yellow-900 flex flex-col items-center hover:scale-105 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 sm:h-10 sm:w-10 mb-2 opacity-90 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+                        </svg>
+                        <span class="text-xs sm:text-sm font-medium opacity-80">Leave</span>
+                        <span class="text-2xl sm:text-3xl font-bold mt-1">
+                            {{ overall_stats.leave_count }}
+                            <span class="text-base font-medium text-yellow-700 opacity-80 ml-1">
+                                ({{ overall_stats.leave_percentage|floatformat:2 }}%)
+                            </span>
+                        </span>
+                    </div>
+                </div>
+
                 <!-- Quick Actions -->
                 <div class="bg-white rounded-2xl shadow-md overflow-hidden">
                     <div class="px-6 py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white">
@@ -159,39 +206,7 @@
                     </div>
                 </div>
 
-                <!-- Stats Cards -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-2">
-                    <div class="bg-gradient-to-br from-blue-100 to-blue-300 rounded-2xl shadow-md p-4 sm:p-6 text-blue-900 flex flex-col items-center hover:scale-105 transition">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 sm:h-10 sm:w-10 mb-2 opacity-90 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
-                        </svg>
-                        <span class="text-xs sm:text-sm font-medium opacity-80">Total Employees</span>
-                        <span class="text-2xl sm:text-3xl font-bold mt-1">{{ overall_stats.total_records }}</span>
-                    </div>
-                    <div class="bg-gradient-to-br from-green-100 to-green-300 rounded-2xl shadow-md p-4 sm:p-6 text-green-900 flex flex-col items-center hover:scale-105 transition">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 sm:h-10 sm:w-10 mb-2 opacity-90 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                        </svg>
-                        <span class="text-xs sm:text-sm font-medium opacity-80">Present %</span>
-                        <span class="text-2xl sm:text-3xl font-bold mt-1">{{ overall_stats.present_percentage|floatformat:2 }}%</span>
-                    </div>
-                    <div class="bg-gradient-to-br from-red-100 to-red-300 rounded-2xl shadow-md p-4 sm:p-6 text-red-700 flex flex-col items-center hover:scale-105 transition">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 sm:h-10 sm:w-10 mb-2 opacity-90 text-red-300" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                        </svg>
-                        <span class="text-xs sm:text-sm font-medium opacity-80">Absent %</span>
-                        <span class="text-2xl sm:text-3xl font-bold mt-1">{{ overall_stats.absent_percentage|floatformat:2 }}%</span>
-                    </div>
-                    <div class="bg-gradient-to-br from-yellow-100 to-yellow-300 rounded-2xl shadow-md p-4 sm:p-6 text-yellow-900 flex flex-col items-center hover:scale-105 transition">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 sm:h-10 sm:w-10 mb-2 opacity-90 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
-                        </svg>
-                        <span class="text-xs sm:text-sm font-medium opacity-80">Avg Working Hours</span>
-                        <span class="text-2xl sm:text-3xl font-bold mt-1">{{ overall_stats.avg_working_hours|floatformat:2 }}</span>
-                    </div>
-                </div>
-
-                <!-- Top Users Cards -->
+                 <!-- Top Users Cards -->
                 <div class="grid grid-cols-1 gap-6 sm:gap-8 lg:grid-cols-2">
                     <!-- Top Absent Users -->
                     <div class="bg-white rounded-2xl shadow-md overflow-hidden transition hover:shadow-lg">
@@ -214,14 +229,20 @@
                                     {% for user in top_absent_users %}
                                     <tr class="hover:bg-blue-50 transition">
                                         <td class="px-3 sm:px-6 py-4 whitespace-nowrap font-semibold text-blue-900">
-                                            {% if user.first_name or user.last_name %}
+                                            {% if user.name %}
+                                                {{ user.name }}
+                                            {% elif user.first_name or user.last_name %}
                                                 {{ user.first_name|default_if_none:"" }} {{ user.last_name|default_if_none:"" }}
                                             {% else %}
                                                 {{ user.username|default_if_none:"" }}
                                             {% endif %}
                                         </td>
-                                        <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-blue-700">{{ user.work_location|default:"Not specified" }}</td>
-                                        <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-blue-700">{{ user.absent_count }}</td>
+                                        <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-blue-700">
+                                            {{ user.work_location|default:"Not specified" }}
+                                        </td>
+                                        <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-blue-700">
+                                            {{ user.absent_count|default:"0" }}
+                                        </td>
                                     </tr>
                                     {% empty %}
                                     <tr>
@@ -254,10 +275,20 @@
                                     {% for user in top_late_users %}
                                     <tr class="hover:bg-yellow-50 transition">
                                         <td class="px-3 sm:px-6 py-4 whitespace-nowrap font-semibold text-yellow-900">
-                                            {{user.username}}
+                                            {% if user.name %}
+                                                {{ user.name }}
+                                            {% elif user.first_name or user.last_name %}
+                                                {{ user.first_name|default_if_none:"" }} {{ user.last_name|default_if_none:"" }}
+                                            {% else %}
+                                                {{ user.username|default_if_none:"" }}
+                                            {% endif %}
                                         </td>
-                                        <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-yellow-700">{{ user.late_count }}</td>
-                                        <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-yellow-700">{{ user.avg_late_minutes|floatformat:0 }}</td>
+                                        <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-yellow-700">
+                                            {{ user.late_count|default:"0" }}
+                                        </td>
+                                        <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-yellow-700">
+                                            {{ user.avg_late_minutes|default:"0"|floatformat:0 }}
+                                        </td>
                                     </tr>
                                     {% empty %}
                                     <tr>
@@ -408,7 +439,7 @@
             </button>
         </div>
     </div>
-</div>
+ </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -420,15 +451,23 @@ document.addEventListener('DOMContentLoaded', function() {
     const exportDataBtn = document.getElementById('exportDataBtn');
 
     function openModal() {
+        console.log('Action: Open Modal');
         modal.classList.remove('hidden');
         document.body.classList.add('overflow-hidden');
     }
     function closeModal() {
+        console.log('Action: Close Modal');
         modal.classList.add('hidden');
         document.body.classList.remove('overflow-hidden');
     }
-    document.getElementById('closeModal').onclick = closeModal;
-    document.getElementById('closeModalFooter').onclick = closeModal;
+    document.getElementById('closeModal').onclick = function() {
+        console.log('Action: Clicked Close Modal (header)');
+        closeModal();
+    };
+    document.getElementById('closeModalFooter').onclick = function() {
+        console.log('Action: Clicked Close Modal (footer)');
+        closeModal();
+    };
 
     // Status detail buttons
     document.querySelectorAll('.status-detail-btn').forEach(btn => {
@@ -437,320 +476,385 @@ document.addEventListener('DOMContentLoaded', function() {
             const url = this.getAttribute('href');
             const statusText = this.textContent.trim();
             const statusName = statusText.split(':')[0].trim();
+            console.log(`Action: Clicked status detail button for "${statusName}" (URL: ${url})`);
             modalTitle.textContent = `${statusName} Details`;
             openModal();
             statusDetailsContent.innerHTML = '<div class="flex justify-center items-center p-6"><div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div></div>';
             modalSearchContainer.classList.add('hidden');
 
-            fetch(url)
-                .then(response => {
-                    if (!response.ok) throw new Error('Network response was not ok');
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.status === 'success') {
-                        // The view returns {status: 'success', data: {users: [...], count: ...}}
-                        const users = data.data && data.data.users ? data.data.users : [];
-                        let tableHtml = '';
+            console.log(`Action: Fetching data from ${url}`);
+            
+            // Get CSRF token
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
 
-                        if (statusName.includes('Present') && !statusName.includes('Late')) {
-                            tableHtml = `
-                                <div class="overflow-x-auto" style="max-height:60vh;overflow-y:auto;">
-                                <table class="min-w-full divide-y divide-gray-200">
-                                    <thead class="bg-blue-50 sticky top-0">
-                                        <tr>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Name</th>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Location</th>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Clock In</th>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Clock Out</th>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Hours</th>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Shift</th>
+            const csrftoken = getCookie('csrftoken');
+            
+            fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrftoken
+                },
+                credentials: 'same-origin'
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers.get('content-type'));
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                // Check if response is actually JSON
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    console.error('Server returned non-JSON response. Content-Type:', contentType);
+                    throw new Error('Server returned non-JSON response');
+                }
+                
+                return response.json();
+            })
+            .then(data => {
+                console.log('Received data:', data);
+                
+                if (data.status === 'success') {
+                    // The view returns {status: 'success', data: {users: [...], count: ...}}
+                    const users = data.data && data.data.users ? data.data.users : [];
+                    let tableHtml = '';
+                    console.log(`Action: Data fetch success, ${users.length} users loaded for status "${statusName}"`);
+
+                    if (statusName.includes('Present') && !statusName.includes('Late')) {
+                        tableHtml = `
+                            <div class="overflow-x-auto" style="max-height:60vh;overflow-y:auto;">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-blue-50 sticky top-0">
+                                    <tr>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Name</th>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Location</th>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Clock In</th>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Clock Out</th>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Hours</th>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Shift</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-100">
+                                    ${users.map(user => `
+                                        <tr class="hover:bg-blue-50 transition">
+                                            <td class="px-4 py-2">${user.name || 'N/A'}</td>
+                                            <td class="px-4 py-2">${user.work_location || 'N/A'}</td>
+                                            <td class="px-4 py-2">${user.clock_in_time || '-'}</td>
+                                            <td class="px-4 py-2">${user.clock_out_time || '-'}</td>
+                                            <td class="px-4 py-2">${user.avg_hours ? (typeof user.avg_hours === 'string' ? parseFloat(user.avg_hours).toFixed(2) : user.avg_hours.toFixed(2)) : '-'}</td>
+                                            <td class="px-4 py-2">${user.shift_name || 'N/A'} (${user.shift_start_time || '-'} - ${user.shift_end_time || '-'})</td>
                                         </tr>
-                                    </thead>
-                                    <tbody class="bg-white divide-y divide-gray-100">
-                                        ${users.map(user => `
-                                            <tr class="hover:bg-blue-50 transition">
-                                                <td class="px-4 py-2">${user.name || 'N/A'}</td>
-                                                <td class="px-4 py-2">${user.work_location || 'N/A'}</td>
-                                                <td class="px-4 py-2">${user.clock_in_time || '-'}</td>
-                                                <td class="px-4 py-2">${user.clock_out_time || '-'}</td>
-                                                <td class="px-4 py-2">${user.avg_hours ? (typeof user.avg_hours === 'string' ? parseFloat(user.avg_hours).toFixed(2) : user.avg_hours.toFixed(2)) : '-'}</td>
-                                                <td class="px-4 py-2">${user.shift_name || 'N/A'} (${user.shift_start_time || '-'} - ${user.shift_end_time || '-'})</td>
-                                            </tr>
-                                        `).join('')}
-                                    </tbody>
-                                </table>
-                                </div>
-                            `;
-                        } else if (statusName.includes('Late') || statusName === 'Present & Late') {
-                            tableHtml = `
-                                <div class="overflow-x-auto" style="max-height:60vh;overflow-y:auto;">
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                            </div>
+                        `;
+                    } else if (statusName.includes('Late') || statusName === 'Present & Late') {
+                        tableHtml = `
+                            <div class="overflow-x-auto" style="max-height:60vh;overflow-y:auto;">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-blue-50 sticky top-0">
+                                    <tr>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Name</th>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Location</th>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Clock In</th>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Clock Out</th>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Late By (mins)</th>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Hours</th>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Shift</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-100">
+                                    ${users.map(user => `
+                                        <tr class="hover:bg-blue-50 transition">
+                                            <td class="px-4 py-2">${user.name || 'N/A'}</td>
+                                            <td class="px-4 py-2">${user.work_location || 'N/A'}</td>
+                                            <td class="px-4 py-2">${user.clock_in_time || '-'}</td>
+                                            <td class="px-4 py-2">${user.clock_out_time || '-'}</td>
+                                            <td class="px-4 py-2 text-red-600 font-medium">${user.late_by || user.late_minutes || '-'}</td>
+                                            <td class="px-4 py-2">${user.avg_hours ? (typeof user.avg_hours === 'string' ? parseFloat(user.avg_hours).toFixed(2) : user.avg_hours.toFixed(2)) : '-'}</td>
+                                            <td class="px-4 py-2">${user.shift_name || 'N/A'} (${user.shift_start_time || '-'} - ${user.shift_end_time || '-'})</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                            </div>
+                        `;
+                    } else if (statusName.includes('On Leave') || statusName.includes('Leave')) {
+                        tableHtml = `
+                            <div class="overflow-x-auto" style="max-height:60vh;overflow-y:auto;">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-blue-50 sticky top-0">
+                                    <tr>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Name</th>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Location</th>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Leave Type</th>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Start Date</th>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">End Date</th>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Days</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-100">
+                                    ${users.map(user => `
+                                        <tr class="hover:bg-blue-50 transition">
+                                            <td class="px-4 py-2">${user.name || 'N/A'}</td>
+                                            <td class="px-4 py-2">${user.work_location || 'N/A'}</td>
+                                            <td class="px-4 py-2">${user.leave_type || '-'}</td>
+                                            <td class="px-4 py-2">${user.leave_start_date || '-'}</td>
+                                            <td class="px-4 py-2">${user.leave_end_date || '-'}</td>
+                                            <td class="px-4 py-2">${user.leave_days || '1'}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                            </div>
+                        `;
+                    } else if (statusName.includes('Yet to Clock In') || statusName.includes('Not Clocked In')) {
+                        tableHtml = `
+                            <div class="overflow-x-auto" style="max-height:60vh;overflow-y:auto;">
                                 <table class="min-w-full divide-y divide-gray-200">
                                     <thead class="bg-blue-50 sticky top-0">
                                         <tr>
                                             <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Name</th>
                                             <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Location</th>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Clock In</th>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Clock Out</th>
+                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Shift</th>
+                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Shift Timing</th>
                                             <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Late By (mins)</th>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Hours</th>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Shift</th>
                                         </tr>
                                     </thead>
                                     <tbody class="bg-white divide-y divide-gray-100">
-                                        ${users.map(user => `
-                                            <tr class="hover:bg-blue-50 transition">
-                                                <td class="px-4 py-2">${user.name || 'N/A'}</td>
-                                                <td class="px-4 py-2">${user.work_location || 'N/A'}</td>
-                                                <td class="px-4 py-2">${user.clock_in_time || '-'}</td>
-                                                <td class="px-4 py-2">${user.clock_out_time || '-'}</td>
-                                                <td class="px-4 py-2 text-red-600 font-medium">${user.late_by || user.late_minutes || '-'}</td>
-                                                <td class="px-4 py-2">${user.avg_hours ? (typeof user.avg_hours === 'string' ? parseFloat(user.avg_hours).toFixed(2) : user.avg_hours.toFixed(2)) : '-'}</td>
-                                                <td class="px-4 py-2">${user.shift_name || 'N/A'} (${user.shift_start_time || '-'} - ${user.shift_end_time || '-'})</td>
-                                            </tr>
-                                        `).join('')}
+                                        ${
+                                            users && users.length > 0
+                                            ? users.map(user => `
+                                                <tr class="hover:bg-blue-50 transition">
+                                                    <td class="px-4 py-2">${user.name || 'N/A'}</td>
+                                                    <td class="px-4 py-2">${user.work_location || 'N/A'}</td>
+                                                    <td class="px-4 py-2">${user.shift_name || 'N/A'}</td>
+                                                    <td class="px-4 py-2">${(user.shift_start_time || '-') + ' - ' + (user.shift_end_time || '-')}</td>
+                                                    <td class="px-4 py-2${user.late_by && user.late_by > 0 ? ' text-red-600 font-medium' : ''}">${user.late_by && user.late_by > 0 ? user.late_by : '-'}</td>
+                                                </tr>
+                                            `).join('')
+                                            : `<tr><td colspan="5" class="px-4 py-2 text-center text-gray-400">No users pending clock-in</td></tr>`
+                                        }
                                     </tbody>
                                 </table>
-                                </div>
-                            `;
-                        } else if (statusName.includes('On Leave')) {
-                            tableHtml = `
-                                <div class="overflow-x-auto" style="max-height:60vh;overflow-y:auto;">
-                                <table class="min-w-full divide-y divide-gray-200">
-                                    <thead class="bg-blue-50 sticky top-0">
-                                        <tr>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Name</th>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Location</th>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Leave Type</th>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Start Date</th>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">End Date</th>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Days</th>
+                            </div>
+                        `;
+                    } else if (statusName.includes('Absent')) {
+                        tableHtml = `
+                            <div class="overflow-x-auto" style="max-height:60vh;overflow-y:auto;">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-blue-50 sticky top-0">
+                                    <tr>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Name</th>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Location</th>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Shift</th>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-100">
+                                    ${users.map(user => `
+                                        <tr class="hover:bg-blue-50 transition">
+                                            <td class="px-4 py-2">${user.name || 'N/A'}</td>
+                                            <td class="px-4 py-2">${user.work_location || 'N/A'}</td>
+                                            <td class="px-4 py-2">${user.shift_name || 'N/A'} (${user.shift_start_time || '-'} - ${user.shift_end_time || '-'})</td>
+                                            <td class="px-4 py-2">${user.last_attendance_date || '-'}</td>
                                         </tr>
-                                    </thead>
-                                    <tbody class="bg-white divide-y divide-gray-100">
-                                        ${users.map(user => `
-                                            <tr class="hover:bg-blue-50 transition">
-                                                <td class="px-4 py-2">${user.name || 'N/A'}</td>
-                                                <td class="px-4 py-2">${user.work_location || 'N/A'}</td>
-                                                <td class="px-4 py-2">${user.leave_type || '-'}</td>
-                                                <td class="px-4 py-2">${user.leave_start_date || '-'}</td>
-                                                <td class="px-4 py-2">${user.leave_end_date || '-'}</td>
-                                                <td class="px-4 py-2">${user.leave_days || '1'}</td>
-                                            </tr>
-                                        `).join('')}
-                                    </tbody>
-                                </table>
-                                </div>
-                            `;
-                        } else if (statusName.includes('Yet to Clock In') || statusName.includes('Not Clocked In')) {
-                            tableHtml = `
-                                <div class="overflow-x-auto" style="max-height:60vh;overflow-y:auto;">
-                                    <table class="min-w-full divide-y divide-gray-200">
-                                        <thead class="bg-blue-50 sticky top-0">
-                                            <tr>
-                                                <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Name</th>
-                                                <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Location</th>
-                                                <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Shift</th>
-                                                <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Shift Timing</th>
-                                                <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Late By (mins)</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="bg-white divide-y divide-gray-100">
-                                            ${
-                                                users && users.length > 0
-                                                ? users.map(user => `
-                                                    <tr class="hover:bg-blue-50 transition">
-                                                        <td class="px-4 py-2">${user.name || 'N/A'}</td>
-                                                        <td class="px-4 py-2">${user.work_location || 'N/A'}</td>
-                                                        <td class="px-4 py-2">${user.shift_name || 'N/A'}</td>
-                                                        <td class="px-4 py-2">${(user.shift_start_time || '-') + ' - ' + (user.shift_end_time || '-')}</td>
-                                                        <td class="px-4 py-2${user.late_by && user.late_by > 0 ? ' text-red-600 font-medium' : ''}">${user.late_by && user.late_by > 0 ? user.late_by : '-'}</td>
-                                                    </tr>
-                                                `).join('')
-                                                : `<tr><td colspan="5" class="px-4 py-2 text-center text-gray-400">No users pending clock-in</td></tr>`
-                                            }
-                                        </tbody>
-                                    </table>
-                                </div>
-                            `;
-                        } else if (statusName.includes('Absent')) {
-                            tableHtml = `
-                                <div class="overflow-x-auto" style="max-height:60vh;overflow-y:auto;">
-                                <table class="min-w-full divide-y divide-gray-200">
-                                    <thead class="bg-blue-50 sticky top-0">
-                                        <tr>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Name</th>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Location</th>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Shift</th>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Date</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="bg-white divide-y divide-gray-100">
-                                        ${users.map(user => `
-                                            <tr class="hover:bg-blue-50 transition">
-                                                <td class="px-4 py-2">${user.name || 'N/A'}</td>
-                                                <td class="px-4 py-2">${user.work_location || 'N/A'}</td>
-                                                <td class="px-4 py-2">${user.shift_name || 'N/A'} (${user.shift_start_time || '-'} - ${user.shift_end_time || '-'})</td>
-                                                <td class="px-4 py-2">${user.last_attendance_date || '-'}</td>
-                                            </tr>
-                                        `).join('')}
-                                    </tbody>
-                                </table>
-                                </div>
-                            `;
-                        } else {
-                            // Default table for other statuses
-                            tableHtml = `
-                                <div class="overflow-x-auto" style="max-height:60vh;overflow-y:auto;">
-                                <table class="min-w-full divide-y divide-gray-200">
-                                    <thead class="bg-blue-50 sticky top-0">
-                                        <tr>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Name</th>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Location</th>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Status</th>
-                                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Shift</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="bg-white divide-y divide-gray-100">
-                                        ${users.map(user => `
-                                            <tr class="hover:bg-blue-50 transition">
-                                                <td class="px-4 py-2">${user.name || 'N/A'}</td>
-                                                <td class="px-4 py-2">${user.work_location || 'N/A'}</td>
-                                                <td class="px-4 py-2">${user.status || statusName}</td>
-                                                <td class="px-4 py-2">${user.shift_name || 'N/A'} (${user.shift_start_time || '-'} - ${user.shift_end_time || '-'})</td>
-                                            </tr>
-                                        `).join('')}
-                                    </tbody>
-                                </table>
-                                </div>
-                            `;
-                        }
-                        
-                        if (users.length === 0) {
-                            tableHtml = `
-                                <div class="flex justify-center items-center p-6 text-gray-500">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mr-2 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-                                    </svg>
-                                    No records found for this status
-                                </div>
-                            `;
-                        }
-                        
-                        statusDetailsContent.innerHTML = tableHtml;
-                        
-                        if (users.length > 0) {
-                            const countIndicator = document.createElement('div');
-                            countIndicator.className = 'px-4 py-2 bg-blue-50 text-blue-800 text-sm font-medium';
-                            countIndicator.textContent = `${data.data.count || users.length} ${(data.data.count || users.length) === 1 ? 'record' : 'records'} found`;
-                            statusDetailsContent.insertAdjacentElement('afterbegin', countIndicator);
-                            modalSearchContainer.classList.remove('hidden');
-                        }
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                            </div>
+                        `;
                     } else {
-                        statusDetailsContent.innerHTML = `
-                            <div class="flex justify-center items-center p-6 text-red-500">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mr-2 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                                </svg>
-                                ${data.error || 'An error occurred'}
+                        // Default table for other statuses
+                        tableHtml = `
+                            <div class="overflow-x-auto" style="max-height:60vh;overflow-y:auto;">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-blue-50 sticky top-0">
+                                    <tr>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Name</th>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Location</th>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Status</th>
+                                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Shift</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-100">
+                                    ${users.map(user => `
+                                        <tr class="hover:bg-blue-50 transition">
+                                            <td class="px-4 py-2">${user.name || 'N/A'}</td>
+                                            <td class="px-4 py-2">${user.work_location || 'N/A'}</td>
+                                            <td class="px-4 py-2">${user.status || statusName}</td>
+                                            <td class="px-4 py-2">${user.shift_name || 'N/A'} (${user.shift_start_time || '-'} - ${user.shift_end_time || '-'})</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
                             </div>
                         `;
                     }
-                })
-                .catch(error => {
+                    
+                    if (users.length === 0) {
+                        console.log('Action: No records found for this status');
+                        tableHtml = `
+                            <div class="flex justify-center items-center p-6 text-gray-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mr-2 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                                </svg>
+                                No records found for this status
+                            </div>
+                        `;
+                    }
+                    
+                    statusDetailsContent.innerHTML = tableHtml;
+                    console.log('Action: Table rendered in modal');
+                    
+                    if (users.length > 0) {
+                        const countIndicator = document.createElement('div');
+                        countIndicator.className = 'px-4 py-2 bg-blue-50 text-blue-800 text-sm font-medium';
+                        countIndicator.textContent = `${data.data.count || users.length} ${(data.data.count || users.length) === 1 ? 'record' : 'records'} found`;
+                        statusDetailsContent.insertAdjacentElement('afterbegin', countIndicator);
+                        modalSearchContainer.classList.remove('hidden');
+                        console.log('Action: Count indicator and search bar shown');
+                    }
+                } else {
+                    console.log('Action: Data fetch error - invalid response format', data);
                     statusDetailsContent.innerHTML = `
                         <div class="flex justify-center items-center p-6 text-red-500">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mr-2 text-red-400" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
                             </svg>
-                            Failed to load data. Please try again.
+                            ${data.error || 'Invalid response format from server'}
                         </div>
                     `;
-                });
-        });
-    });
-
-    // Modal search
-    if (modalSearchContainer) {
-        modalSearchContainer.addEventListener('input', function(e) {
-            if (e.target.id !== 'modalSearchInput') return;
-            const searchValue = e.target.value.toLowerCase();
-            const rows = document.querySelectorAll('#statusDetailsContent table tbody tr');
-            let visible = 0;
-            rows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                if (text.includes(searchValue)) {
-                    row.style.display = '';
-                    visible++;
-                } else {
-                    row.style.display = 'none';
                 }
+            })
+            .catch(error => {
+                console.log('Action: Fetch error', error);
+                statusDetailsContent.innerHTML = `
+                    <div class="flex justify-center items-center p-6 text-red-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mr-2 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                        Failed to load data: ${error.message}
+                    </div>
+                `;
             });
-            // Update count indicator
-            const countIndicator = document.querySelector('#statusDetailsContent div.bg-blue-50');
-            if (countIndicator) {
-                countIndicator.textContent = `${visible} of ${rows.length} ${rows.length === 1 ? 'record' : 'records'} shown`;
-            }
         });
-    }
-
-    // Export functionality
-    if (exportDataBtn) {
-        exportDataBtn.addEventListener('click', function() {
-            const table = document.querySelector('#statusDetailsContent table');
-            if (!table) {
-                alert('No data available to export');
-                return;
-            }
-            const rows = Array.from(table.querySelectorAll('tr'));
-            const modalTitleText = modalTitle.textContent;
-            const headers = Array.from(rows[0].querySelectorAll('th')).map(th => th.textContent.trim());
-            const dataRows = rows.slice(1).map(row => {
-                const tds = Array.from(row.querySelectorAll('td'));
-                return tds.map(td => td.textContent.trim());
-            });
-            let csvContent = headers.join(',') + '\n';
-            csvContent += dataRows.map(row => row.join(',')).join('\n');
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            const today = new Date();
-            const dateStr = today.toISOString().slice(0, 10);
-            link.setAttribute('href', url);
-            link.setAttribute('download', `${modalTitleText.replace(' Details', '')}_${dateStr}.csv`);
-            link.style.display = 'none';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        });
-    }
-
-    // Filters
-    const locationFilter = document.getElementById('location-filter');
-    const timePeriodFilter = document.getElementById('time-period');
-    const globalSearch = document.getElementById('global-search');
-    
-    function applyFilters() {
-        const location = locationFilter.value;
-        const timePeriod = timePeriodFilter.value;
-        const search = globalSearch.value.trim();
-        let url = `{% url 'aps_attendance:analytics' %}?time_period=${timePeriod}`;
-        if (location) url += `&location=${encodeURIComponent(location)}`;
-        if (search) url += `&search=${encodeURIComponent(search)}`;
-        window.location.href = url;
-    }
-    
-    if (locationFilter) locationFilter.addEventListener('change', function(e) {
-        applyFilters();
     });
-    if (timePeriodFilter) timePeriodFilter.addEventListener('change', function(e) {
-        applyFilters();
-    });
-    if (globalSearch) {
-        globalSearch.addEventListener('keyup', function(e) {
-            if (e.key === 'Enter') applyFilters();
-        });
-    }
 });
+// Modal search
+if (modalSearchContainer) {
+    modalSearchContainer.addEventListener('input', function(e) {
+        if (e.target.id !== 'modalSearchInput') return;
+        const searchValue = e.target.value.toLowerCase();
+        console.log(`Action: Modal search input "${searchValue}"`);
+        const rows = document.querySelectorAll('#statusDetailsContent table tbody tr');
+        let visible = 0;
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            if (text.includes(searchValue)) {
+                row.style.display = '';
+                visible++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+        // Update count indicator
+        const countIndicator = document.querySelector('#statusDetailsContent div.bg-blue-50');
+        if (countIndicator) {
+            countIndicator.textContent = `${visible} of ${rows.length} ${rows.length === 1 ? 'record' : 'records'} shown`;
+            console.log(`Action: Modal search result count updated (${visible} of ${rows.length})`);
+        }
+    });
+}
+
+// Export functionality
+if (exportDataBtn) {
+    exportDataBtn.addEventListener('click', function() {
+        console.log('Action: Export button clicked');
+        const table = document.querySelector('#statusDetailsContent table');
+        if (!table) {
+            console.log('Action: Export failed - no table to export');
+            alert('No data available to export');
+            return;
+        }
+        const rows = Array.from(table.querySelectorAll('tr'));
+        const modalTitleText = modalTitle.textContent;
+        const headers = Array.from(rows[0].querySelectorAll('th')).map(th => th.textContent.trim());
+        const dataRows = rows.slice(1).map(row => {
+            const tds = Array.from(row.querySelectorAll('td'));
+            return tds.map(td => td.textContent.trim());
+        });
+        let csvContent = headers.join(',') + '\n';
+        csvContent += dataRows.map(row => row.join(',')).join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        const today = new Date();
+        const dateStr = today.toISOString().slice(0, 10);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `${modalTitleText.replace(' Details', '')}_${dateStr}.csv`);
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        console.log('Action: Exported table data as CSV');
+    });
+}
+
+// Filters
+const locationFilter = document.getElementById('location-filter');
+const timePeriodFilter = document.getElementById('time-period');
+const globalSearch = document.getElementById('global-search');
+
+function applyFilters() {
+    const location = locationFilter ? locationFilter.value : '';
+    const timePeriod = timePeriodFilter ? timePeriodFilter.value : '';
+    const search = globalSearch ? globalSearch.value.trim() : '';
+    let url = "{% url 'aps_attendance:analytics' %}?time_period=" + encodeURIComponent(timePeriod);
+    if (location) url += `&location=${encodeURIComponent(location)}`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    console.log(`Action: Applying filters - location: "${location}", timePeriod: "${timePeriod}", search: "${search}"`);
+    window.location.href = url;
+}
+
+if (locationFilter) {
+    locationFilter.addEventListener('change', function(e) {
+        console.log(`Action: Location filter changed to "${locationFilter.value}"`);
+        applyFilters();
+    });
+}
+if (timePeriodFilter) {
+    timePeriodFilter.addEventListener('change', function(e) {
+        console.log(`Action: Time period filter changed to "${timePeriodFilter.value}"`);
+        applyFilters();
+    });
+}
+if (globalSearch) {
+    globalSearch.addEventListener('keyup', function(e) {
+        if (e.key === 'Enter') {
+            console.log(`Action: Global search enter pressed, value: "${globalSearch.value}"`);
+            applyFilters();
+        }
+    });
+}
 </script>
 {% endblock %}

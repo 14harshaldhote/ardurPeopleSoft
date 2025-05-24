@@ -7056,45 +7056,17 @@ def manager_project_view(request, action=None, project_id=None):
 
 ''' ------------------------------------------- ATTENDACE AREA ------------------------------------------- '''
 
-import calendar
-from datetime import datetime, timedelta
-from django.contrib.auth.decorators import login_required
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+# views.py
 from django.shortcuts import render
-from django.utils.timezone import now, localtime, make_aware
-from django.db.models import Avg
-from datetime import time, timedelta
-
-import calendar
-from datetime import datetime, timedelta, time
-from django.contrib.auth.decorators import login_required
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.shortcuts import render
-from django.utils.timezone import now, localtime, make_aware
-from django.db.models import Avg
-
-from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.contrib.auth import get_user_model
-from django.contrib import messages
-from django.http import HttpResponse, JsonResponse
-from django.db.models import Q, Sum, Count, Case, When, Value, IntegerField, F, Avg
+from django.http import JsonResponse
+from django.db.models import Q, Count, Avg
 from django.utils import timezone
-from django.core.paginator import Paginator
-from django.views.decorators.http import require_POST
 from datetime import datetime, timedelta
-import csv
 import json
-from decimal import Decimal
-from calendar import monthrange
-
-from .models import Attendance, LeaveRequest, ShiftAssignment, Holiday
-from .services.user_service import UserService
 from .services.attendance_service import AttendanceService
+from .services.user_service import UserService
 from .services.date_service import DateService
-
-User = get_user_model()
-
 # Helper function to check if user is HR
 def is_hr_check(user):
     return user.groups.filter(name="HR").exists()
@@ -7107,479 +7079,401 @@ def is_hr_or_admin_check(user):
 def is_manager_check(user):
     return user.groups.filter(name="Manager").exists()
 
-# Helper function to check if user is Management
-def is_management_check(user):
-    return user.groups.filter(name__in=["Management", "Admin", "HR"]).exists()
-
-# Helper function to format datetime for display
-def format_time(time_obj):
-    if time_obj:
-        return time_obj.strftime('%I:%M %p')
-    return None
-
-from django.shortcuts import render
-from django.http import JsonResponse
-from django.db.models import Count, Avg, Sum, F, Q, Case, When, Value, IntegerField, DecimalField, DurationField, ExpressionWrapper
-from django.db.models.functions import TruncDay, TruncWeek, TruncMonth, TruncQuarter, TruncYear, Extract, Cast
-from django.utils import timezone
-from datetime import datetime, timedelta
-from decimal import Decimal
-import pytz
-import json
-from functools import wraps
-from django.utils.dateparse import parse_date
-from django.contrib.auth.decorators import login_required, user_passes_test
-try:
-    import xlsxwriter
-except ModuleNotFoundError:
-    # Handle missing xlsxwriter dependency
-    print("xlsxwriter module not found. Please install it using: pip install xlsxwriter")
-    xlsxwriter = None
-
-def is_hr_check(user):
-    """Check if the logged-in user has HR permissions"""
-    return user.groups.filter(name__in=['HR', 'Manager']).exists() or user.is_superuser
-
-
-def is_hr_check(user):
-    """Check if user has HR permissions"""
-    return user.groups.filter(name='HR').exists() or user.is_superuser
-
-@login_required
-@user_passes_test(is_hr_check)
-def get_status_users(request):
-    """
-    Optimized function to get users by status - returns HTML response
-    """
-    print("desbg: get_status_users called")
-    try:
-        # Get and validate parameters
-        status = request.GET.get('status')
-        start_date = request.GET.get('start_date')
-        end_date = request.GET.get('end_date')
-        print(f"desbg: Parameters - status={status}, start_date={start_date}, end_date={end_date}")
-
-        if not all([status, start_date, end_date]):
-            print("desbg: Missing required parameters")
-            return render(request, 'components/hr/attendance/attendance_analytics.html', {
-                'error': 'Missing required parameters',
-                'users': [],
-                'status': status,
-                'show_users_section': True
-            })
-        
-        # Parse dates
-        try:
-            start_date = parse_date(start_date)
-            end_date = parse_date(end_date)
-            print(f"desbg: Parsed dates - start_date={start_date}, end_date={end_date}")
-        except (ValueError, TypeError):
-            print("desbg: Invalid date format")
-            return render(request, 'components/hr/attendance/attendance_analytics.html', {
-                'error': 'Invalid date format',
-                'users': [],
-                'status': status,
-                'show_users_section': True
-            })
-        
-        # Build filters
-        filters = {
-            'location': request.GET.get('location'),
-            'search': request.GET.get('search', '').strip()
-        }
-        print(f"desbg: Raw filters - {filters}")
-        
-        # Remove empty filters
-        filters = {k: v for k, v in filters.items() if v and v != 'all'}
-        print(f"desbg: Cleaned filters - {filters}")
-        
-        # Initialize service and get users
-        user_service = UserService()
-        print("desbg: UserService initialized")
-        users = user_service.get_users_by_status(status, start_date, end_date, filters)
-        print(f"desbg: Retrieved {len(users)} users")
-        
-        # Pagination
-        page = int(request.GET.get('page', 1))
-        per_page = 50
-        start_idx = (page - 1) * per_page
-        end_idx = start_idx + per_page
-        paginated_users = users[start_idx:end_idx]
-        print(f"desbg: Pagination - page={page}, per_page={per_page}, start_idx={start_idx}, end_idx={end_idx}")
-        
-        # Calculate pagination info
-        total_users = len(users)
-        total_pages = (total_users + per_page - 1) // per_page
-        has_next = page < total_pages
-        has_prev = page > 1
-        
-        context = {
-            'users': paginated_users,
-            'status': status,
-            'total_users': total_users,
-            'current_page': page,
-            'total_pages': total_pages,
-            'has_next': has_next,
-            'has_prev': has_prev,
-            'start_date': start_date.strftime('%Y-%m-%d'),
-            'end_date': end_date.strftime('%Y-%m-%d'),
-            'filters': filters,
-            'show_users_section': True
-        }
-        print("desbg: Rendering attendance_analytics.html with context")
-        return render(request, 'components/hr/attendance/attendance_analytics.html', context)
-        
-    except Exception as e:
-        print(f"desbg: Exception in get_status_users: {e}")
-        logger.error(f"Error in get_status_users: {e}")
-        return render(request, 'components/hr/attendance/attendance_analytics.html', {
-            'error': 'An error occurred while loading user data.',
-            'users': [],
-            'status': status,
-            'show_users_section': True
-        })
-
-
-@login_required
-@user_passes_test(is_hr_check)
-def export_status_users(request):
-    """Export users by status to CSV"""
-    print("desbg: export_status_users called")
-    import csv
-    from django.http import HttpResponse
-    
-    try:
-        # Get parameters (same as get_status_users)
-        status = request.GET.get('status')
-        start_date = parse_date(request.GET.get('start_date'))
-        end_date = parse_date(request.GET.get('end_date'))
-        print(f"desbg: Parameters - status={status}, start_date={start_date}, end_date={end_date}")
-        
-        filters = {
-            'location': request.GET.get('location'),
-            'search': request.GET.get('search', '').strip()
-        }
-        print(f"desbg: Raw filters - {filters}")
-        filters = {k: v for k, v in filters.items() if v and v != 'all'}
-        print(f"desbg: Cleaned filters - {filters}")
-        
-        # Get users
-        user_service = UserService()
-        print("desbg: UserService initialized")
-        users = user_service.get_users_by_status(status, start_date, end_date, filters)
-        print(f"desbg: Retrieved {len(users)} users for export")
-        
-        # Create CSV response
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = f'attachment; filename="{status}_users_{start_date}_{end_date}.csv"'
-        print("desbg: CSV response initialized")
-        
-        writer = csv.writer(response)
-        
-        # Write header
-        if status == 'Yet to Clock In':
-            writer.writerow(['Username', 'Name', 'Location', 'Shift', 'Start Time', 'Late By (minutes)'])
-            print("desbg: Writing header for 'Yet to Clock In'")
-            for user in users:
-                writer.writerow([
-                    user['username'],
-                    user['name'],
-                    user['work_location'],
-                    user['shift_name'],
-                    user['shift_start_time'],
-                    user['late_by']
-                ])
-        elif status in ['Present', 'Present & Late', 'Work From Home']:
-            writer.writerow(['Username', 'Name', 'Location', 'Clock In', 'Clock Out', 'Total Hours', 'Late Minutes', 'Attendance Days'])
-            print("desbg: Writing header for Present/Present & Late/Work From Home")
-            for user in users:
-                writer.writerow([
-                    user['username'],
-                    user['name'],
-                    user['work_location'],
-                    user.get('clock_in_time', ''),
-                    user.get('clock_out_time', ''),
-                    user.get('total_hours', 0),
-                    user.get('late_minutes', 0),
-                    user['attendance_count']
-                ])
-        elif status == 'On Leave':
-            writer.writerow(['Username', 'Name', 'Location', 'Leave Type', 'Days on Leave'])
-            print("desbg: Writing header for 'On Leave'")
-            for user in users:
-                writer.writerow([
-                    user['username'],
-                    user['name'],
-                    user['work_location'],
-                    user.get('leave_type', 'Unknown'),
-                    user['attendance_count']
-                ])
-        else:
-            writer.writerow(['Username', 'Name', 'Location', 'Status', 'Count'])
-            print("desbg: Writing header for other status")
-            for user in users:
-                writer.writerow([
-                    user['username'],
-                    user['name'],
-                    user['work_location'],
-                    user['status'],
-                    user['attendance_count']
-                ])
-        
-        print("desbg: CSV export complete")
-        return response
-        
-    except Exception as e:
-        print(f"desbg: Exception in export_status_users: {e}")
-        logger.error(f"Error in export_status_users: {e}")
-        return HttpResponse("Error exporting data", status=500)
-
 
 @login_required
 @user_passes_test(is_hr_check)
 def attendance_analytics(request):
     """
-    Optimized attendance analytics dashboard
-    Removed reporting manager logic and optimized queries
+    Comprehensive attendance analytics dashboard with modal support
     """
-    print("desbg: attendance_analytics called")
+    print("debug: attendance_analytics called")
+    
+    # Initialize services
+    attendance_service = AttendanceService()
+    user_service = UserService()
+    date_service = DateService()
+    
+    # Get date parameters
+    selected_date = request.GET.get('date')
+    time_period = request.GET.get('time_period', 'today')
+    
     try:
-        # Initialize services
-        attendance_service = AttendanceService()
-        date_service = DateService()
-        print("desbg: AttendanceService and DateService initialized")
-        
-        # Get parameters
-        time_period = request.GET.get('time_period', 'today')
-        view_type = request.GET.get('view_type', 'daily')
-        custom_start = request.GET.get('start_date')
-        custom_end = request.GET.get('end_date')
-        print(f"desbg: Parameters - time_period={time_period}, view_type={view_type}, custom_start={custom_start}, custom_end={custom_end}")
-        
-        # Parse custom dates if provided
-        if custom_start:
-            try:
-                custom_start = parse_date(custom_start)
-                print(f"desbg: Parsed custom_start={custom_start}")
-            except (ValueError, TypeError):
-                print("desbg: Invalid custom_start")
-                custom_start = None
-                
-        if custom_end:
-            try:
-                custom_end = parse_date(custom_end)
-                print(f"desbg: Parsed custom_end={custom_end}")
-            except (ValueError, TypeError):
-                print("desbg: Invalid custom_end")
-                custom_end = None
-        
-        # Get date range
-        date_range = date_service.get_date_range(time_period, custom_start, custom_end)
-        start_date = date_range['start_date']
-        end_date = date_range['end_date']
-        print(f"desbg: Date range - start_date={start_date}, end_date={end_date}")
-        
-        # Build filters
-        filters = {
-            'location': request.GET.get('location'),
-            'user_id': request.GET.get('user_id'),
-            'status': request.GET.get('status'),
-            'search': request.GET.get('search', '').strip()
-        }
-        print(f"desbg: Raw filters - {filters}")
-        
-        # Remove empty filters
-        filters = {k: v for k, v in filters.items() if v and v != 'all'}
-        print(f"desbg: Cleaned filters - {filters}")
-        
-        # Get base attendance query
-        base_query = attendance_service.get_base_attendance_query(start_date, end_date, filters)
-        print("desbg: Base attendance query obtained")
-        
-        # Get all statistics
-        attendance_stats = attendance_service.get_attendance_statistics(base_query, view_type)
-        overall_stats = attendance_service.get_overall_statistics(base_query)
-        location_stats = attendance_service.get_location_statistics(start_date, end_date, base_query)
-        print("desbg: Attendance statistics, overall stats, and location stats obtained")
-        
-        # Get additional analytics data
-        top_absent_users = base_query.filter(status='Absent').values(
-            'user_id', 'user__username', 'user__first_name', 'user__last_name'
-        ).annotate(
-            absent_count=Count('id')
-        ).order_by('-absent_count')[:5]
-        print("desbg: Top absent users calculated")
-        
-        top_late_users = base_query.filter(status='Present & Late').values(
-            'user_id', 'user__username', 'user__first_name', 'user__last_name'
-        ).annotate(
-            late_count=Count('id'),
-            avg_late_minutes=Avg('late_minutes')
-        ).order_by('-late_count')[:5]
-        print("desbg: Top late users calculated")
-        
-        # Get available locations for filter dropdown
-        available_locations = UserDetails.objects.filter(
-            user__is_active=True
-        ).exclude(
-            work_location__isnull=True
-        ).exclude(
-            work_location__exact=''
-        ).values_list('work_location', flat=True).distinct().order_by('work_location')
-        print("desbg: Available locations obtained")
-        
-        # Get current date for "Yet to Clock In" functionality
+        if selected_date:
+            start_date = end_date = datetime.strptime(selected_date, '%Y-%m-%d').date()
+        else:
+            date_range = date_service.get_date_range(time_period)
+            start_date = date_range['start_date']
+            end_date = date_range['end_date']
+    except ValueError:
+        # Fallback to today if date parsing fails
         current_date = date_service.get_current_date()
-        show_yet_to_clock_in = (end_date == current_date)
-        print(f"desbg: current_date={current_date}, show_yet_to_clock_in={show_yet_to_clock_in}")
+        start_date = end_date = current_date
+
+    # Get search term for employee search
+    search_term = request.GET.get('search', '').strip()
+    
+    # Get all required data
+    overall_stats = attendance_service.get_attendance_overview(start_date, end_date)
+    location_stats = attendance_service.get_location_wise_attendance(start_date, end_date)
+    top_absent_users = attendance_service.get_top_absent_users(days=30, limit=10)
+    top_late_users = attendance_service.get_top_late_users(days=30, limit=10)
+    yet_to_clock_in_users = attendance_service.get_yet_to_clock_in_users(start_date)
+    
+    # Get total employee statistics
+    total_employees = user_service.get_total_employee_count()
+    all_locations = user_service.get_all_locations()
+    
+    # Calculate attendance percentages for total employees
+    present_percentage = round((overall_stats['present_count'] / total_employees * 100), 2) if total_employees > 0 else 0
+    absent_percentage = round((overall_stats['absent_count'] / total_employees * 100), 2) if total_employees > 0 else 0
+    leave_percentage = round((overall_stats['leave_count'] / total_employees * 100), 2) if total_employees > 0 else 0
+    
+    # Search functionality
+    search_results = []
+    if search_term:
+        search_results = user_service.search_users(search_term)
+    
+    context = {
+        # Date and time period
+        'start_date': start_date,
+        'end_date': end_date,
+        'selected_date': selected_date or start_date.strftime('%Y-%m-%d'),
+        'time_period': time_period,
         
-        context = {
-            'time_period': time_period,
-            'view_type': view_type,
-            'start_date': start_date,
-            'end_date': end_date,
-            'overall_stats': overall_stats,
-            'attendance_stats': list(attendance_stats),
-            'location_stats': location_stats,
-            'top_absent_users': list(top_absent_users),
-            'top_late_users': list(top_late_users),
-            'available_locations': list(available_locations),
-            'filters': filters,
-            'show_yet_to_clock_in': show_yet_to_clock_in,
-            'current_date': current_date,
-        }
-        print("desbg: Context prepared for rendering/JSON")
+        # Overall statistics
+        'overall_stats': overall_stats,
+        'total_employees': total_employees,
+        'present_percentage': present_percentage,
+        'absent_percentage': absent_percentage,
+        'leave_percentage': leave_percentage,
         
-        # Return JSON for AJAX requests, HTML for regular requests
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            # Format data for JSON response
-            context_json = context.copy()
-            context_json['start_date'] = start_date.strftime('%Y-%m-%d')
-            context_json['end_date'] = end_date.strftime('%Y-%m-%d')
-            context_json['current_date'] = current_date.strftime('%Y-%m-%d')
-            print("desbg: Returning JSON response for AJAX")
-            return JsonResponse(context_json, safe=False)
+        # Location-wise data
+        'location_stats': location_stats,
+        'all_locations': all_locations,
         
-        print("desbg: Rendering attendance_analytics.html")
-        return render(request, 'components/hr/attendance/attendance_analytics.html', context)
+        # Top users data
+        'top_absent_users': top_absent_users,
+        'top_late_users': top_late_users,
+        'yet_to_clock_in_users': yet_to_clock_in_users,
+        
+        # Search
+        'search_term': search_term,
+        'search_results': search_results,
+        
+        # Flags for conditional rendering
+        'has_location_data': len(location_stats) > 0,
+        'has_status_data': len(overall_stats.get('status_counts', [])) > 0,
+        'has_absent_data': len(top_absent_users) > 0,
+        'has_late_data': len(top_late_users) > 0,
+        'has_yet_to_clock_in_data': len(yet_to_clock_in_users) > 0,
+    }
+    
+    return render(request, 'components/hr/attendance/attendance_analyticss.html', context)
+
+
+@login_required
+@user_passes_test(is_hr_check)
+def get_status_users_modal(request):
+    """
+    AJAX endpoint to get users by status for modal display
+    """
+    status = request.GET.get('status', '')
+    location = request.GET.get('location', '')
+    start_date_str = request.GET.get('start_date', '')
+    end_date_str = request.GET.get('end_date', '')
+    
+    try:
+        # Parse dates
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date() if start_date_str else timezone.now().date()
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date() if end_date_str else start_date
+        
+        # Get attendance service
+        attendance_service = AttendanceService()
+        
+        # Get users by status
+        users_data = attendance_service.get_users_by_status(
+            status=status,
+            location=location if location else None,
+            start_date=start_date,
+            end_date=end_date
+        )
+        
+        # Determine table headers based on status
+        headers = get_table_headers(status)
+        
+        return JsonResponse({
+            'success': True,
+            'status': status,
+            'location': location,
+            'start_date': start_date.strftime('%Y-%m-%d'),
+            'end_date': end_date.strftime('%Y-%m-%d'),
+            'users': users_data,
+            'headers': headers,
+            'total_count': len(users_data)
+        })
         
     except Exception as e:
-        print(f"desbg: Exception in attendance_analytics: {e}")
-        logger.error(f"Error in attendance_analytics: {e}")
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse({'error': 'An error occurred while loading analytics'}, status=500)
+        print(f"Error in get_status_users_modal: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e),
+            'users': [],
+            'headers': [],
+            'total_count': 0
+        })
+
+
+def get_table_headers(status):
+    """
+    Get appropriate table headers based on attendance status
+    """
+    base_headers = ['Name', 'Location']
+    
+    if status in ['Present', 'Present & Late']:
+        return base_headers + ['Clock In', 'Clock Out', 'Late By (mins)', 'Hours', 'Shift']
+    elif status == 'On Leave':
+        return base_headers + ['Leave Type', 'Start Date', 'End Date', 'Days']
+    elif status == 'Absent':
+        return base_headers + ['Shift', 'Date']
+    elif status == 'Yet to Clock In':
+        return base_headers + ['Shift', 'Shift Timing', 'Late By (mins)']
+    else:
+        return base_headers + ['Status', 'Date']
+
+
+@login_required
+@user_passes_test(is_hr_check)
+def get_attendance_by_date(request):
+    """
+    AJAX endpoint to get attendance data for a specific date
+    """
+    date_str = request.GET.get('date', '')
+    
+    try:
+        # Parse date
+        if date_str:
+            selected_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        else:
+            selected_date = timezone.now().date()
         
-        return render(request, 'components/hr/attendance/attendance_analytics.html', {
-            'error': 'An error occurred while loading analytics data.'
+        # Get attendance service
+        attendance_service = AttendanceService()
+        
+        # Get attendance data for the date
+        attendance_data = attendance_service.get_attendance_by_date(selected_date)
+        overall_stats = attendance_service.get_attendance_overview(selected_date, selected_date)
+        location_stats = attendance_service.get_location_wise_attendance(selected_date, selected_date)
+        
+        return JsonResponse({
+            'success': True,
+            'date': selected_date.strftime('%Y-%m-%d'),
+            'attendance_data': attendance_data,
+            'overall_stats': overall_stats,
+            'location_stats': location_stats
+        })
+        
+    except Exception as e:
+        print(f"Error in get_attendance_by_date: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
         })
 
 
 @login_required
 @user_passes_test(is_hr_check)
-def get_analytics_data(request):
+def export_attendance_data(request):
     """
-    API endpoint to get analytics data in JSON format for AJAX updates
+    Export attendance data to CSV/Excel
     """
-    print("desbg: get_analytics_data called")
+    from django.http import HttpResponse
+    import csv
+    
+    status = request.GET.get('status', '')
+    location = request.GET.get('location', '')
+    start_date_str = request.GET.get('start_date', '')
+    end_date_str = request.GET.get('end_date', '')
+    export_format = request.GET.get('format', 'csv')
+    
     try:
-        # Initialize services
+        # Parse dates
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date() if start_date_str else timezone.now().date()
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date() if end_date_str else start_date
+        
+        # Get attendance service
         attendance_service = AttendanceService()
-        date_service = DateService()
-        print("desbg: AttendanceService and DateService initialized")
         
-        # Get parameters
-        time_period = request.GET.get('time_period', 'today')
-        view_type = request.GET.get('view_type', 'daily')
-        custom_start = request.GET.get('start_date')
-        custom_end = request.GET.get('end_date')
-        print(f"desbg: Parameters - time_period={time_period}, view_type={view_type}, custom_start={custom_start}, custom_end={custom_end}")
+        # Get users by status
+        users_data = attendance_service.get_users_by_status(
+            status=status,
+            location=location if location else None,
+            start_date=start_date,
+            end_date=end_date
+        )
         
-        # Parse custom dates if provided
-        if custom_start:
-            try:
-                custom_start = parse_date(custom_start)
-                print(f"desbg: Parsed custom_start={custom_start}")
-            except (ValueError, TypeError):
-                print("desbg: Invalid custom_start")
-                custom_start = None
-                
-        if custom_end:
-            try:
-                custom_end = parse_date(custom_end)
-                print(f"desbg: Parsed custom_end={custom_end}")
-            except (ValueError, TypeError):
-                print("desbg: Invalid custom_end")
-                custom_end = None
+        # Create response
+        response = HttpResponse(content_type='text/csv')
+        filename = f"attendance_{status.lower().replace(' ', '_')}_{start_date}_{end_date}.csv"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
         
-        # Get date range
-        date_range = date_service.get_date_range(time_period, custom_start, custom_end)
-        start_date = date_range['start_date']
-        end_date = date_range['end_date']
-        print(f"desbg: Date range - start_date={start_date}, end_date={end_date}")
+        # Write CSV data
+        writer = csv.writer(response)
         
-        # Build filters
-        filters = {
-            'location': request.GET.get('location'),
-            'user_id': request.GET.get('user_id'),
-            'status': request.GET.get('status'),
-            'search': request.GET.get('search', '').strip()
-        }
-        print(f"desbg: Raw filters - {filters}")
+        # Write headers
+        headers = get_table_headers(status)
+        writer.writerow(headers)
         
-        # Remove empty filters
-        filters = {k: v for k, v in filters.items() if v and v != 'all'}
-        print(f"desbg: Cleaned filters - {filters}")
+        # Write data rows
+        for user in users_data:
+            row = []
+            for header in headers:
+                key = header.lower().replace(' ', '_').replace('(', '').replace(')', '').replace('-', '_')
+                if key == 'name':
+                    row.append(user.get('name', ''))
+                elif key == 'location':
+                    row.append(user.get('location', ''))
+                elif key == 'clock_in':
+                    row.append(user.get('clock_in', ''))
+                elif key == 'clock_out':
+                    row.append(user.get('clock_out', ''))
+                elif key == 'late_by_mins':
+                    row.append(user.get('late_by_mins', 0))
+                elif key == 'hours':
+                    row.append(user.get('hours', ''))
+                elif key == 'shift':
+                    row.append(user.get('shift', ''))
+                elif key == 'leave_type':
+                    row.append(user.get('leave_type', ''))
+                elif key == 'start_date':
+                    row.append(user.get('start_date', ''))
+                elif key == 'end_date':
+                    row.append(user.get('end_date', ''))
+                elif key == 'days':
+                    row.append(user.get('days', ''))
+                elif key == 'date':
+                    row.append(user.get('date', ''))
+                elif key == 'shift_timing':
+                    row.append(user.get('shift_timing', ''))
+                else:
+                    row.append('')
+            writer.writerow(row)
         
-        # Get base attendance query
-        base_query = attendance_service.get_base_attendance_query(start_date, end_date, filters)
-        print("desbg: Base attendance query obtained")
-        
-        # Get statistics based on request type
-        data_type = request.GET.get('data_type', 'overview')
-        print(f"desbg: data_type={data_type}")
-        
-        if data_type == 'overview':
-            overall_stats = attendance_service.get_overall_statistics(base_query)
-            print("desbg: Returning overview stats")
-            return JsonResponse({
-                'success': True,
-                'data': overall_stats,
-                'start_date': start_date.strftime('%Y-%m-%d'),
-                'end_date': end_date.strftime('%Y-%m-%d')
-            })
-        
-        elif data_type == 'trends':
-            attendance_stats = attendance_service.get_attendance_statistics(base_query, view_type)
-            print("desbg: Returning trends stats")
-            return JsonResponse({
-                'success': True,
-                'data': list(attendance_stats),
-                'view_type': view_type
-            })
-        
-        elif data_type == 'locations':
-            location_stats = attendance_service.get_location_statistics(start_date, end_date, base_query)
-            print("desbg: Returning location stats")
-            return JsonResponse({
-                'success': True,
-                'data': location_stats
-            })
-        
-        else:
-            print("desbg: Invalid data type requested")
-            return JsonResponse({
-                'success': False,
-                'error': 'Invalid data type requested'
-            }, status=400)
+        return response
         
     except Exception as e:
-        print(f"desbg: Exception in get_analytics_data: {e}")
-        logger.error(f"Error in get_analytics_data: {e}")
+        print(f"Error in export_attendance_data: {str(e)}")
         return JsonResponse({
             'success': False,
-            'error': 'An error occurred while loading data'
-        }, status=500)
+            'error': str(e)
+        })
 
+
+@login_required
+@user_passes_test(is_hr_check)
+def get_user_attendance_details(request):
+    """
+    AJAX endpoint to get detailed attendance information for a specific user
+    """
+    user_id = request.GET.get('user_id')
+    start_date_str = request.GET.get('start_date', '')
+    end_date_str = request.GET.get('end_date', '')
+    
+    try:
+        # Parse dates
+        if start_date_str and end_date_str:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+        else:
+            # Default to last 30 days
+            end_date = timezone.now().date()
+            start_date = end_date - timedelta(days=30)
+        
+        # Get services
+        attendance_service = AttendanceService()
+        user_service = UserService()
+        
+        # Get user basic info
+        user_info = user_service.get_user_basic_info(int(user_id))
+        
+        # Get user attendance history
+        attendance_history = attendance_service.get_user_attendance_history(
+            int(user_id), start_date, end_date
+        )
+        
+        # Calculate attendance percentage
+        attendance_percentage = attendance_service.calculate_attendance_percentage(
+            int(user_id), start_date, end_date
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'user_info': user_info,
+            'attendance_history': attendance_history,
+            'attendance_percentage': attendance_percentage,
+            'date_range': {
+                'start_date': start_date.strftime('%Y-%m-%d'),
+                'end_date': end_date.strftime('%Y-%m-%d')
+            }
+        })
+        
+    except Exception as e:
+        print(f"Error in get_user_attendance_details: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        })
+
+
+@login_required
+@user_passes_test(is_hr_check)
+def get_dashboard_stats(request):
+    """
+    AJAX endpoint to refresh dashboard statistics
+    """
+    try:
+        # Get date parameters
+        start_date_str = request.GET.get('start_date')
+        end_date_str = request.GET.get('end_date')
+        
+        # Parse dates
+        if start_date_str and end_date_str:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+        else:
+            start_date = end_date = timezone.now().date()
+        
+        # Get services
+        attendance_service = AttendanceService()
+        user_service = UserService()
+        
+        # Get fresh statistics
+        overall_stats = attendance_service.get_attendance_overview(start_date, end_date)
+        location_stats = attendance_service.get_location_wise_attendance(start_date, end_date)
+        top_absent_users = attendance_service.get_top_absent_users(days=30, limit=10)
+        top_late_users = attendance_service.get_top_late_users(days=30, limit=10)
+        
+        # Get total employees for percentage calculation
+        total_employees = user_service.get_total_employee_count()
+        
+        return JsonResponse({
+            'success': True,
+            'overall_stats': overall_stats,
+            'location_stats': location_stats,
+            'top_absent_users': top_absent_users,
+            'top_late_users': top_late_users,
+            'total_employees': total_employees,
+            'date_range': {
+                'start_date': start_date.strftime('%Y-%m-%d'),
+                'end_date': end_date.strftime('%Y-%m-%d')
+            }
+        })
+        
+    except Exception as e:
+        print(f"Error in get_dashboard_stats: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        })
 
 
 
