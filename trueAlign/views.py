@@ -7182,8 +7182,8 @@ def attendance_analytics(request):
         'has_late_data': len(top_late_users) > 0,
         'has_yet_to_clock_in_data': len(yet_to_clock_in_users) > 0,
     }
-    print("[attendance_analytics] Rendering attendance_analyticss.html with context.")
-    return render(request, 'components/hr/attendance/attendance_analyticss.html', context)
+    print("[attendance_analytics] Rendering attendance_analytics.html with context.")
+    return render(request, 'components/hr/attendance/attendance_analytics.html', context)
 
 
 @login_required
