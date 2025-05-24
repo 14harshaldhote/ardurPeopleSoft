@@ -77,7 +77,7 @@ class UserService:
     def get_users_with_shifts(self, date: datetime.date = None) -> List[Dict[str, Any]]:
         """Get users with their current shift information"""
         try:
-            from .models import ShiftAssignment  # Import here to avoid circular imports
+            from ..models import ShiftAssignment  # Import here to avoid circular imports
             
             if not date:
                 date = timezone.now().date()

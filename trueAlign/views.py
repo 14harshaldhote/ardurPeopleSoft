@@ -7086,9 +7086,10 @@ def attendance_analytics(request):
     """
     Comprehensive attendance analytics dashboard with modal support
     """
-    print("debug: attendance_analytics called")
-    
+    print("[attendance_analytics] Called attendance_analytics view.")
+
     # Initialize services
+    print("[attendance_analytics] Initializing AttendanceService, UserService, DateService.")
     attendance_service = AttendanceService()
     user_service = UserService()
     date_service = DateService()
@@ -7096,43 +7097,57 @@ def attendance_analytics(request):
     # Get date parameters
     selected_date = request.GET.get('date')
     time_period = request.GET.get('time_period', 'today')
-    
+    print(f"[attendance_analytics] Received selected_date: {selected_date}, time_period: {time_period}")
+
     try:
         if selected_date:
+            print(f"[attendance_analytics] Parsing selected_date: {selected_date}")
             start_date = end_date = datetime.strptime(selected_date, '%Y-%m-%d').date()
         else:
+            print(f"[attendance_analytics] Getting date range for time_period: {time_period}")
             date_range = date_service.get_date_range(time_period)
             start_date = date_range['start_date']
             end_date = date_range['end_date']
     except ValueError:
-        # Fallback to today if date parsing fails
+        print("[attendance_analytics] ValueError in date parsing, falling back to current date.")
         current_date = date_service.get_current_date()
         start_date = end_date = current_date
 
     # Get search term for employee search
     search_term = request.GET.get('search', '').strip()
-    
+    print(f"[attendance_analytics] Search term: '{search_term}'")
+
     # Get all required data
+    print(f"[attendance_analytics] Fetching overall attendance stats for {start_date} to {end_date}")
     overall_stats = attendance_service.get_attendance_overview(start_date, end_date)
+    print(f"[attendance_analytics] Fetching location-wise attendance stats for {start_date} to {end_date}")
     location_stats = attendance_service.get_location_wise_attendance(start_date, end_date)
+    print("[attendance_analytics] Fetching top absent users (30 days, limit 10)")
     top_absent_users = attendance_service.get_top_absent_users(days=30, limit=10)
+    print("[attendance_analytics] Fetching top late users (30 days, limit 10)")
     top_late_users = attendance_service.get_top_late_users(days=30, limit=10)
+    print(f"[attendance_analytics] Fetching yet to clock in users for {start_date}")
     yet_to_clock_in_users = attendance_service.get_yet_to_clock_in_users(start_date)
-    
+
     # Get total employee statistics
+    print("[attendance_analytics] Fetching total employee count")
     total_employees = user_service.get_total_employee_count()
+    print("[attendance_analytics] Fetching all locations")
     all_locations = user_service.get_all_locations()
-    
+
     # Calculate attendance percentages for total employees
+    print("[attendance_analytics] Calculating attendance percentages")
     present_percentage = round((overall_stats['present_count'] / total_employees * 100), 2) if total_employees > 0 else 0
     absent_percentage = round((overall_stats['absent_count'] / total_employees * 100), 2) if total_employees > 0 else 0
     leave_percentage = round((overall_stats['leave_count'] / total_employees * 100), 2) if total_employees > 0 else 0
-    
+
     # Search functionality
     search_results = []
     if search_term:
+        print(f"[attendance_analytics] Performing user search for: {search_term}")
         search_results = user_service.search_users(search_term)
-    
+
+    print("[attendance_analytics] Preparing context for template rendering")
     context = {
         # Date and time period
         'start_date': start_date,
@@ -7167,7 +7182,7 @@ def attendance_analytics(request):
         'has_late_data': len(top_late_users) > 0,
         'has_yet_to_clock_in_data': len(yet_to_clock_in_users) > 0,
     }
-    
+    print("[attendance_analytics] Rendering attendance_analyticss.html with context.")
     return render(request, 'components/hr/attendance/attendance_analyticss.html', context)
 
 
@@ -7177,20 +7192,25 @@ def get_status_users_modal(request):
     """
     AJAX endpoint to get users by status for modal display
     """
+    print("[get_status_users_modal] Called get_status_users_modal view.")
     status = request.GET.get('status', '')
     location = request.GET.get('location', '')
     start_date_str = request.GET.get('start_date', '')
     end_date_str = request.GET.get('end_date', '')
-    
+    print(f"[get_status_users_modal] Params - status: {status}, location: {location}, start_date: {start_date_str}, end_date: {end_date_str}")
+
     try:
         # Parse dates
+        print("[get_status_users_modal] Parsing start and end dates.")
         start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date() if start_date_str else timezone.now().date()
         end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date() if end_date_str else start_date
         
         # Get attendance service
+        print("[get_status_users_modal] Initializing AttendanceService.")
         attendance_service = AttendanceService()
         
         # Get users by status
+        print(f"[get_status_users_modal] Fetching users by status: {status}, location: {location}, start_date: {start_date}, end_date: {end_date}")
         users_data = attendance_service.get_users_by_status(
             status=status,
             location=location if location else None,
@@ -7199,8 +7219,10 @@ def get_status_users_modal(request):
         )
         
         # Determine table headers based on status
+        print(f"[get_status_users_modal] Getting table headers for status: {status}")
         headers = get_table_headers(status)
         
+        print("[get_status_users_modal] Returning users data as JsonResponse.")
         return JsonResponse({
             'success': True,
             'status': status,
@@ -7213,7 +7235,7 @@ def get_status_users_modal(request):
         })
         
     except Exception as e:
-        print(f"Error in get_status_users_modal: {str(e)}")
+        print(f"[get_status_users_modal] Error: {str(e)}")
         return JsonResponse({
             'success': False,
             'error': str(e),
@@ -7227,17 +7249,23 @@ def get_table_headers(status):
     """
     Get appropriate table headers based on attendance status
     """
+    print(f"[get_table_headers] Called with status: {status}")
     base_headers = ['Name', 'Location']
     
     if status in ['Present', 'Present & Late']:
+        print("[get_table_headers] Returning headers for Present/Present & Late")
         return base_headers + ['Clock In', 'Clock Out', 'Late By (mins)', 'Hours', 'Shift']
     elif status == 'On Leave':
+        print("[get_table_headers] Returning headers for On Leave")
         return base_headers + ['Leave Type', 'Start Date', 'End Date', 'Days']
     elif status == 'Absent':
+        print("[get_table_headers] Returning headers for Absent")
         return base_headers + ['Shift', 'Date']
     elif status == 'Yet to Clock In':
+        print("[get_table_headers] Returning headers for Yet to Clock In")
         return base_headers + ['Shift', 'Shift Timing', 'Late By (mins)']
     else:
+        print("[get_table_headers] Returning default headers")
         return base_headers + ['Status', 'Date']
 
 
@@ -7247,23 +7275,32 @@ def get_attendance_by_date(request):
     """
     AJAX endpoint to get attendance data for a specific date
     """
+    print("[get_attendance_by_date] Called get_attendance_by_date view.")
     date_str = request.GET.get('date', '')
-    
+    print(f"[get_attendance_by_date] Received date: {date_str}")
+
     try:
         # Parse date
         if date_str:
+            print(f"[get_attendance_by_date] Parsing date: {date_str}")
             selected_date = datetime.strptime(date_str, '%Y-%m-%d').date()
         else:
+            print("[get_attendance_by_date] No date provided, using current date.")
             selected_date = timezone.now().date()
         
         # Get attendance service
+        print("[get_attendance_by_date] Initializing AttendanceService.")
         attendance_service = AttendanceService()
         
         # Get attendance data for the date
+        print(f"[get_attendance_by_date] Fetching attendance data for {selected_date}")
         attendance_data = attendance_service.get_attendance_by_date(selected_date)
+        print(f"[get_attendance_by_date] Fetching overall stats for {selected_date}")
         overall_stats = attendance_service.get_attendance_overview(selected_date, selected_date)
+        print(f"[get_attendance_by_date] Fetching location stats for {selected_date}")
         location_stats = attendance_service.get_location_wise_attendance(selected_date, selected_date)
         
+        print("[get_attendance_by_date] Returning attendance data as JsonResponse.")
         return JsonResponse({
             'success': True,
             'date': selected_date.strftime('%Y-%m-%d'),
@@ -7273,7 +7310,7 @@ def get_attendance_by_date(request):
         })
         
     except Exception as e:
-        print(f"Error in get_attendance_by_date: {str(e)}")
+        print(f"[get_attendance_by_date] Error: {str(e)}")
         return JsonResponse({
             'success': False,
             'error': str(e)
@@ -7286,6 +7323,7 @@ def export_attendance_data(request):
     """
     Export attendance data to CSV/Excel
     """
+    print("[export_attendance_data] Called export_attendance_data view.")
     from django.http import HttpResponse
     import csv
     
@@ -7294,16 +7332,20 @@ def export_attendance_data(request):
     start_date_str = request.GET.get('start_date', '')
     end_date_str = request.GET.get('end_date', '')
     export_format = request.GET.get('format', 'csv')
-    
+    print(f"[export_attendance_data] Params - status: {status}, location: {location}, start_date: {start_date_str}, end_date: {end_date_str}, format: {export_format}")
+
     try:
         # Parse dates
+        print("[export_attendance_data] Parsing start and end dates.")
         start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date() if start_date_str else timezone.now().date()
         end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date() if end_date_str else start_date
         
         # Get attendance service
+        print("[export_attendance_data] Initializing AttendanceService.")
         attendance_service = AttendanceService()
         
         # Get users by status
+        print(f"[export_attendance_data] Fetching users by status: {status}, location: {location}, start_date: {start_date}, end_date: {end_date}")
         users_data = attendance_service.get_users_by_status(
             status=status,
             location=location if location else None,
@@ -7312,6 +7354,7 @@ def export_attendance_data(request):
         )
         
         # Create response
+        print("[export_attendance_data] Creating HttpResponse for CSV export.")
         response = HttpResponse(content_type='text/csv')
         filename = f"attendance_{status.lower().replace(' ', '_')}_{start_date}_{end_date}.csv"
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
@@ -7320,10 +7363,12 @@ def export_attendance_data(request):
         writer = csv.writer(response)
         
         # Write headers
+        print(f"[export_attendance_data] Writing headers for status: {status}")
         headers = get_table_headers(status)
         writer.writerow(headers)
         
         # Write data rows
+        print("[export_attendance_data] Writing user data rows.")
         for user in users_data:
             row = []
             for header in headers:
@@ -7358,10 +7403,11 @@ def export_attendance_data(request):
                     row.append('')
             writer.writerow(row)
         
+        print("[export_attendance_data] Returning CSV response.")
         return response
         
     except Exception as e:
-        print(f"Error in export_attendance_data: {str(e)}")
+        print(f"[export_attendance_data] Error: {str(e)}")
         return JsonResponse({
             'success': False,
             'error': str(e)
@@ -7374,37 +7420,45 @@ def get_user_attendance_details(request):
     """
     AJAX endpoint to get detailed attendance information for a specific user
     """
+    print("[get_user_attendance_details] Called get_user_attendance_details view.")
     user_id = request.GET.get('user_id')
     start_date_str = request.GET.get('start_date', '')
     end_date_str = request.GET.get('end_date', '')
-    
+    print(f"[get_user_attendance_details] Params - user_id: {user_id}, start_date: {start_date_str}, end_date: {end_date_str}")
+
     try:
         # Parse dates
         if start_date_str and end_date_str:
+            print("[get_user_attendance_details] Parsing start and end dates.")
             start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
             end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
         else:
-            # Default to last 30 days
+            print("[get_user_attendance_details] No dates provided, defaulting to last 30 days.")
             end_date = timezone.now().date()
             start_date = end_date - timedelta(days=30)
         
         # Get services
+        print("[get_user_attendance_details] Initializing AttendanceService and UserService.")
         attendance_service = AttendanceService()
         user_service = UserService()
         
         # Get user basic info
+        print(f"[get_user_attendance_details] Fetching basic info for user_id: {user_id}")
         user_info = user_service.get_user_basic_info(int(user_id))
         
         # Get user attendance history
+        print(f"[get_user_attendance_details] Fetching attendance history for user_id: {user_id}, {start_date} to {end_date}")
         attendance_history = attendance_service.get_user_attendance_history(
             int(user_id), start_date, end_date
         )
         
         # Calculate attendance percentage
+        print(f"[get_user_attendance_details] Calculating attendance percentage for user_id: {user_id}, {start_date} to {end_date}")
         attendance_percentage = attendance_service.calculate_attendance_percentage(
             int(user_id), start_date, end_date
         )
         
+        print("[get_user_attendance_details] Returning user attendance details as JsonResponse.")
         return JsonResponse({
             'success': True,
             'user_info': user_info,
@@ -7417,7 +7471,7 @@ def get_user_attendance_details(request):
         })
         
     except Exception as e:
-        print(f"Error in get_user_attendance_details: {str(e)}")
+        print(f"[get_user_attendance_details] Error: {str(e)}")
         return JsonResponse({
             'success': False,
             'error': str(e)
@@ -7430,31 +7484,42 @@ def get_dashboard_stats(request):
     """
     AJAX endpoint to refresh dashboard statistics
     """
+    print("[get_dashboard_stats] Called get_dashboard_stats view.")
     try:
         # Get date parameters
         start_date_str = request.GET.get('start_date')
         end_date_str = request.GET.get('end_date')
-        
+        print(f"[get_dashboard_stats] Params - start_date: {start_date_str}, end_date: {end_date_str}")
+
         # Parse dates
         if start_date_str and end_date_str:
+            print("[get_dashboard_stats] Parsing start and end dates.")
             start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
             end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
         else:
+            print("[get_dashboard_stats] No dates provided, using current date.")
             start_date = end_date = timezone.now().date()
         
         # Get services
+        print("[get_dashboard_stats] Initializing AttendanceService and UserService.")
         attendance_service = AttendanceService()
         user_service = UserService()
         
         # Get fresh statistics
+        print(f"[get_dashboard_stats] Fetching overall stats for {start_date} to {end_date}")
         overall_stats = attendance_service.get_attendance_overview(start_date, end_date)
+        print(f"[get_dashboard_stats] Fetching location stats for {start_date} to {end_date}")
         location_stats = attendance_service.get_location_wise_attendance(start_date, end_date)
+        print("[get_dashboard_stats] Fetching top absent users (30 days, limit 10)")
         top_absent_users = attendance_service.get_top_absent_users(days=30, limit=10)
+        print("[get_dashboard_stats] Fetching top late users (30 days, limit 10)")
         top_late_users = attendance_service.get_top_late_users(days=30, limit=10)
         
         # Get total employees for percentage calculation
+        print("[get_dashboard_stats] Fetching total employee count")
         total_employees = user_service.get_total_employee_count()
         
+        print("[get_dashboard_stats] Returning dashboard stats as JsonResponse.")
         return JsonResponse({
             'success': True,
             'overall_stats': overall_stats,
@@ -7469,7 +7534,7 @@ def get_dashboard_stats(request):
         })
         
     except Exception as e:
-        print(f"Error in get_dashboard_stats: {str(e)}")
+        print(f"[get_dashboard_stats] Error: {str(e)}")
         return JsonResponse({
             'success': False,
             'error': str(e)
