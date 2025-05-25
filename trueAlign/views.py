@@ -6,6 +6,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST, require_GET
 from django.http import JsonResponse, HttpResponse
 from django.utils import timezone
+from django.utils.timezone import localtime, now  # Add this import
 from django.db import transaction
 from django.db.models import Q, Count, Avg, Sum, F
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -23,10 +24,10 @@ import csv
 import openpyxl
 
 from .models import (UserSession, SystemError, Attendance, Support, FailedLoginAttempt,
-                    PasswordChange, RoleAssignmentAudit, FeatureUsage, SystemUsage,
-                    Timesheet, GlobalUpdate, UserDetails, ProjectUpdate, Presence,
-                    PresenceStatus, Project, ClientProfile, ShiftMaster, ShiftAssignment,
-                    Appraisal, AppraisalItem, AppraisalWorkflow)
+                     PasswordChange, RoleAssignmentAudit, FeatureUsage, SystemUsage,
+                     Timesheet, GlobalUpdate, UserDetails, ProjectUpdate, Presence,
+                     PresenceStatus, Project, ClientProfile, ShiftMaster, ShiftAssignment,
+                     Appraisal, AppraisalItem, AppraisalWorkflow)
 from .helpers import is_user_in_group
 
 # Set up logging
@@ -53,7 +54,8 @@ def to_utc(dt_ist):
         return None
     if timezone.is_naive(dt_ist):
         dt_ist = IST_TIMEZONE.localize(dt_ist)
-    return dt_ist.astimezone(timezone.utc)
+    return dt_ist.astimezone(pytz.UTC)
+
 
 # ==================== SESSION MANAGEMENT VIEWS ====================
 
@@ -747,15 +749,35 @@ def login_view(request):
             current_time_ist = get_current_time_ist()
             current_time_utc = to_utc(current_time_ist)
 
+            # Debug logging
+            print(f"DEBUG: Current UTC time: {timezone.now()}")
+            print(f"DEBUG: Current IST time: {current_time_ist}")
+
             x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
             ip_address = x_forwarded_for.split(',')[0] if x_forwarded_for else request.META.get('REMOTE_ADDR')
 
-            UserSession.get_or_create_session(
-                user=user,
-                session_key=request.session.session_key,
-                ip_address=ip_address,
-                user_agent=request.META.get('HTTP_USER_AGENT', '')
-            )
+            try:
+                session = UserSession.get_or_create_session(
+                    user=user,
+                    session_key=request.session.session_key,
+                    ip_address=ip_address,
+                    user_agent=request.META.get('HTTP_USER_AGENT', '')
+                )
+                print(f"DEBUG: Session created: {session}")
+                print(f"DEBUG: Session login time (UTC): {session.login_time}")
+                print(f"DEBUG: Session login time (IST): {to_ist(session.login_time)}")
+                
+            except Exception as e:
+                logger.error(f"Error creating session: {e}")
+                print(f"ERROR: Session creation failed: {e}")
+
+            # Process attendance if applicable
+            try:
+                attendance_status = process_login_attendance(user)
+                if attendance_status:
+                    print(f"DEBUG: Login processed - User: {user.username}, Status: {attendance_status['status']}, Clock in: {attendance_status.get('clock_in')}")
+            except Exception as e:
+                logger.error(f"Error processing attendance: {e}")
 
             messages.success(request, f'Welcome back, {user.get_full_name() or user.username}!')
             return redirect('dashboard')
@@ -763,6 +785,7 @@ def login_view(request):
             messages.error(request, 'Invalid username or password.')
 
     return render(request, 'login.html')
+
 
 # # Login View
 # def login_view(request):
@@ -7491,8 +7514,10 @@ from .services.attendance_service import AttendanceService
 from .services.user_service import UserService
 from .services.date_service import DateService
 # Helper function to check if user is HR
+
 def is_hr_check(user):
-    return user.groups.filter(name="HR").exists()
+    return user.groups.filter(name__in=["HR", "Manager"]).exists()
+
 
 # Helper function to check if user is HR or Admin
 def is_hr_or_admin_check(user):
@@ -8335,9 +8360,6 @@ import json
 from .models import Attendance, UserDetails, LeaveRequest, User
 
 
-def is_hr_check(user):
-    """Check if user has HR permissions"""
-    return user.groups.filter(name='HR').exists() or user.is_superuser
 
 
 
@@ -11654,6 +11676,7 @@ def attendance_dashboard(request):
     }
 
     return render(request, 'components/employee/attendance_dashboard.html', context)
+
 
 @login_required
 def attendance_calendar(request):

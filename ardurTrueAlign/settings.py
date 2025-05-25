@@ -32,11 +32,39 @@ ALLOWED_HOSTS = []
 
 
 # Application definition
-ASGI_APPLICATION = 'ardurTrueAlign.asgi.application'
+# Session Configuration
+SESSION_COOKIE_AGE = 3600  # 1 hour
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+
+# Enhanced Session Management Configuration
+ENHANCED_SESSION_CONFIG = {
+    'IDLE_THRESHOLD_MINUTES': 5,
+    'AUTO_LOGOUT_MINUTES': 30,
+    'WARNING_THRESHOLD_MINUTES': 25,
+    'HEARTBEAT_INTERVAL_SECONDS': 30,
+    'MAX_ACTIVITY_BUFFER_SIZE': 100,
+    'ENABLE_DEVICE_FINGERPRINTING': True,
+    'ENABLE_SECURITY_MONITORING': True,
+    'OFFICE_IPS': ['116.75.62.90'],  # Add your office IP addresses
+    'MAX_REQUESTS_PER_MINUTE': 60,
+    'CLEANUP_INTERVAL_HOURS': 24,
+    'MAX_EVENTS_PER_SESSION': 1000,
+}
+
+# Caching Configuration (for rate limiting and session management)
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+    }
+}
 
 
 INSTALLED_APPS = [
-    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -45,24 +73,20 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'trueAlign',
     'rest_framework',
-    'channels',
     'widget_tweaks',
-    
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'trueAlign.middleware.IdleTimeTrackingMiddleware',
-    'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
+    'trueAlign.middleware.EnhancedSessionTrackingMiddleware',
+    'trueAlign.middleware.SessionAnalyticsMiddleware',
 ]
 
 
@@ -97,16 +121,6 @@ TEMPLATES = [
 
 
 WSGI_APPLICATION = 'ardurTrueAlign.wsgi.application'
-# Channels Configuration
-
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            "hosts": [('127.0.0.1', 6379)],  # Redis server host and port
-        },
-    },
-}
 
 
 # Database
@@ -142,15 +156,60 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-ASGI_APPLICATION = 'ardurTrueAlign.asgi.application'
+# Logging Configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+        'file': {
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'django.log'),
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'trueAlign.middleware': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'trueAlign.views.session_views': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    },
+}
 
 
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
-USE_TZ = True
+LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Asia/Kolkata'
+USE_I18N = True
+USE_L10N = True
+USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)

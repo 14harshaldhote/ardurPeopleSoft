@@ -33,7 +33,7 @@ def to_utc(dt_ist):
         return None
     if timezone.is_naive(dt_ist):
         dt_ist = IST_TIMEZONE.localize(dt_ist)
-    return dt_ist.astimezone(timezone.utc)
+    return dt_ist.astimezone(pytz.UTC)
 
 class EnhancedSessionTrackingMiddleware:
     """

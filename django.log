@@ -1,0 +1,751 @@
+INFO 2025-05-25 14:44:29,303 autoreload 53700 8675548928 Watching for file changes with StatReloader
+WARNING 2025-05-25 14:44:36,643 log 53700 6133051392 Forbidden (CSRF token from POST incorrect.): /login/
+WARNING 2025-05-25 14:44:36,643 basehttp 53700 6133051392 "POST /login/ HTTP/1.1" 403 2517
+INFO 2025-05-25 14:44:37,747 basehttp 53700 6133051392 "GET /login/ HTTP/1.1" 200 7284
+ERROR 2025-05-25 14:44:41,156 log 53700 6133051392 Internal Server Error: /login/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 748, in login_view
+    current_time_utc = to_utc(current_time_ist)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 56, in to_utc
+    return dt_ist.astimezone(timezone.utc)
+AttributeError: module 'django.utils.timezone' has no attribute 'utc'
+ERROR 2025-05-25 14:44:41,156 basehttp 53700 6133051392 "POST /login/ HTTP/1.1" 500 71085
+INFO 2025-05-25 14:47:01,545 basehttp 53700 6133051392 "GET / HTTP/1.1" 302 0
+INFO 2025-05-25 14:47:01,548 basehttp 53700 6133051392 "GET /login/ HTTP/1.1" 200 7284
+ERROR 2025-05-25 14:47:05,310 log 53700 6133051392 Internal Server Error: /login/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 748, in login_view
+    current_time_utc = to_utc(current_time_ist)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 56, in to_utc
+    return dt_ist.astimezone(timezone.utc)
+AttributeError: module 'django.utils.timezone' has no attribute 'utc'
+ERROR 2025-05-25 14:47:05,310 basehttp 53700 6133051392 "POST /login/ HTTP/1.1" 500 71083
+INFO 2025-05-25 14:49:17,675 autoreload 53700 8675548928 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py changed, reloading.
+INFO 2025-05-25 14:49:18,063 autoreload 56246 8675548928 Watching for file changes with StatReloader
+WARNING 2025-05-25 14:49:23,613 log 56246 6130479104 Forbidden (CSRF token from POST incorrect.): /login/
+WARNING 2025-05-25 14:49:23,614 basehttp 56246 6130479104 "POST /login/ HTTP/1.1" 403 2517
+INFO 2025-05-25 14:49:31,556 basehttp 56246 6130479104 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-05-25 14:49:34,502 basehttp 56246 6130479104 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-05-25 15:13:22,618 autoreload 68405 8675548928 Watching for file changes with StatReloader
+INFO 2025-05-25 15:14:00,846 basehttp 68405 6206517248 "GET / HTTP/1.1" 302 0
+INFO 2025-05-25 15:14:00,870 basehttp 68405 6206517248 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-05-25 15:14:00,888 basehttp 68405 6223343616 "GET /static/images/ardurtech.png HTTP/1.1" 200 31087
+INFO 2025-05-25 15:14:00,889 basehttp 68405 6206517248 "GET /static/images/logo.png HTTP/1.1" 200 215806
+ERROR 2025-05-25 15:14:04,968 log 68405 6206517248 Internal Server Error: /login/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/mysql/base.py", line 76, in execute
+    return self.cursor.execute(query, args)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/cursors.py", line 330, in _query
+    db.query(q)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/connections.py", line 280, in query
+    _mysql.connection.query(self, query)
+MySQLdb.OperationalError: (1054, "Unknown column 'trueAlign_usersession.tab_id' in 'field list'")
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 753, in login_view
+    UserSession.get_or_create_session(
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/models.py", line 212, in get_or_create_session
+    ).select_for_update().first()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 1097, in first
+    for obj in queryset[:1]:
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 400, in __iter__
+    self._fetch_all()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 1928, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/sql/compiler.py", line 1562, in execute_sql
+    cursor.execute(sql, params)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 122, in execute
+    return super().execute(sql, params)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/mysql/base.py", line 76, in execute
+    return self.cursor.execute(query, args)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/cursors.py", line 330, in _query
+    db.query(q)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/connections.py", line 280, in query
+    _mysql.connection.query(self, query)
+django.db.utils.OperationalError: (1054, "Unknown column 'trueAlign_usersession.tab_id' in 'field list'")
+ERROR 2025-05-25 15:14:04,969 basehttp 68405 6206517248 "POST /login/ HTTP/1.1" 500 209427
+INFO 2025-05-25 15:14:34,572 autoreload 69059 8675548928 Watching for file changes with StatReloader
+WARNING 2025-05-25 15:14:38,668 log 69059 6161575936 Forbidden (CSRF token from POST incorrect.): /login/
+WARNING 2025-05-25 15:14:38,668 basehttp 69059 6161575936 "POST /login/ HTTP/1.1" 403 2517
+INFO 2025-05-25 15:14:39,904 basehttp 69059 6161575936 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-05-25 15:14:41,273 basehttp 69059 6161575936 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-05-25 15:14:45,062 basehttp 69059 6161575936 "POST /login/ HTTP/1.1" 302 0
+ERROR 2025-05-25 15:14:45,080 middleware 69059 6161575936 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:14:45,142 basehttp 69059 6161575936 "GET /dashboard/ HTTP/1.1" 200 74287
+ERROR 2025-05-25 15:14:52,990 middleware 69059 6161575936 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:14:52,998 basehttp 69059 6178402304 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:14:53,026 basehttp 69059 6161575936 "GET /dashboard/ HTTP/1.1" 200 70995
+ERROR 2025-05-25 15:14:54,912 middleware 69059 6161575936 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:14:54,925 basehttp 69059 6178402304 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:14:54,937 basehttp 69059 6161575936 "GET /profile/14/ HTTP/1.1" 200 54917
+INFO 2025-05-25 15:14:54,971 basehttp 69059 6161575936 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:14:55,858 middleware 69059 6161575936 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:14:55,867 basehttp 69059 6178402304 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:14:55,908 basehttp 69059 6161575936 "GET /support/ HTTP/1.1" 200 59776
+INFO 2025-05-25 15:14:55,943 basehttp 69059 6161575936 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:14:56,524 middleware 69059 6161575936 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+ERROR 2025-05-25 15:14:56,552 log 69059 6161575936 Internal Server Error: /employee/attendance/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 11547, in attendance_dashboard
+    current_datetime = localtime(now())
+NameError: name 'localtime' is not defined
+ERROR 2025-05-25 15:14:56,553 basehttp 69059 6161575936 "GET /employee/attendance/ HTTP/1.1" 500 70813
+INFO 2025-05-25 15:14:56,555 basehttp 69059 6178402304 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:14:56,583 basehttp 69059 6178402304 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:15:02,828 middleware 69059 6178402304 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:15:02,841 basehttp 69059 6161575936 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:15:02,851 basehttp 69059 6178402304 "GET /employee/timesheet/ HTTP/1.1" 200 60507
+INFO 2025-05-25 15:15:02,886 basehttp 69059 6178402304 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:15:03,855 middleware 69059 6178402304 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:15:03,873 basehttp 69059 6161575936 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:15:03,884 basehttp 69059 6178402304 "GET /leave/employee/ HTTP/1.1" 200 42234
+INFO 2025-05-25 15:15:03,918 basehttp 69059 6178402304 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:15:04,456 middleware 69059 6178402304 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:15:04,461 basehttp 69059 6161575936 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:15:04,464 basehttp 69059 6178402304 "GET /employee/applications/ HTTP/1.1" 200 42455
+INFO 2025-05-25 15:15:04,486 basehttp 69059 6178402304 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:15:05,116 middleware 69059 6178402304 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:15:05,121 basehttp 69059 6161575936 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:15:05,200 basehttp 69059 6178402304 "GET /appraisal/list/ HTTP/1.1" 200 39712
+INFO 2025-05-25 15:15:05,264 basehttp 69059 6178402304 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:15:06,173 middleware 69059 6178402304 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:15:06,179 basehttp 69059 6161575936 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:15:06,411 basehttp 69059 6178402304 "GET /entertainment/ HTTP/1.1" 200 43936
+INFO 2025-05-25 15:15:06,434 basehttp 69059 6178402304 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:15:07,574 middleware 69059 6161575936 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+ERROR 2025-05-25 15:15:07,610 log 69059 6161575936 Internal Server Error: /employee/attendance/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 11547, in attendance_dashboard
+    current_datetime = localtime(now())
+NameError: name 'localtime' is not defined
+ERROR 2025-05-25 15:15:07,610 basehttp 69059 6161575936 "GET /employee/attendance/ HTTP/1.1" 500 70819
+INFO 2025-05-25 15:15:07,612 basehttp 69059 6178402304 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:15:07,636 basehttp 69059 6178402304 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:15:18,631 middleware 69059 6161575936 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:15:18,644 basehttp 69059 6178402304 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:15:18,675 basehttp 69059 6161575936 "GET /dashboard/ HTTP/1.1" 200 70995
+INFO 2025-05-25 15:15:18,708 basehttp 69059 6161575936 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:15:21,855 basehttp 69059 6161575936 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:15:31,286 middleware 69059 6161575936 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:15:31,296 basehttp 69059 6178402304 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:15:31,305 basehttp 69059 6161575936 "GET /logout/ HTTP/1.1" 302 0
+INFO 2025-05-25 15:15:31,309 basehttp 69059 6161575936 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-05-25 15:15:31,318 basehttp 69059 6161575936 "POST /update-activity/ HTTP/1.1" 302 0
+INFO 2025-05-25 15:15:39,193 basehttp 69059 6161575936 "POST /login/ HTTP/1.1" 200 7284
+INFO 2025-05-25 15:15:44,715 basehttp 69059 6161575936 "POST /login/ HTTP/1.1" 302 0
+ERROR 2025-05-25 15:15:44,730 middleware 69059 6161575936 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:15:44,759 basehttp 69059 6161575936 "GET /dashboard/ HTTP/1.1" 200 76508
+ERROR 2025-05-25 15:15:51,020 middleware 69059 6178402304 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:15:51,031 basehttp 69059 6161575936 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:15:51,042 basehttp 69059 6178402304 "GET /logout/ HTTP/1.1" 302 0
+INFO 2025-05-25 15:15:51,045 basehttp 69059 6178402304 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-05-25 15:15:51,050 basehttp 69059 6178402304 "POST /update-activity/ HTTP/1.1" 302 0
+INFO 2025-05-25 15:15:56,646 basehttp 69059 6178402304 "POST /login/ HTTP/1.1" 302 0
+ERROR 2025-05-25 15:15:56,662 middleware 69059 6178402304 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:15:56,695 basehttp 69059 6178402304 "GET /dashboard/ HTTP/1.1" 200 66734
+ERROR 2025-05-25 15:15:59,443 middleware 69059 6178402304 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:15:59,455 basehttp 69059 6161575936 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:15:59,470 basehttp 69059 6178402304 "GET /manager/shifts/ HTTP/1.1" 200 49421
+INFO 2025-05-25 15:15:59,501 basehttp 69059 6178402304 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:16:00,262 middleware 69059 6178402304 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:16:00,267 basehttp 69059 6178402304 "GET /attendance/analytics/ HTTP/1.1" 302 0
+INFO 2025-05-25 15:16:00,271 basehttp 69059 6161575936 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:16:00,293 middleware 69059 6178402304 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+WARNING 2025-05-25 15:16:00,300 log 69059 6178402304 Not Found: /accounts/login/
+WARNING 2025-05-25 15:16:00,300 basehttp 69059 6178402304 "GET /accounts/login/?next=/attendance/analytics/ HTTP/1.1" 404 7646
+INFO 2025-05-25 15:16:00,333 basehttp 69059 6178402304 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:16:02,793 middleware 69059 6161575936 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:16:02,797 basehttp 69059 6161575936 "GET /attendance/analytics/ HTTP/1.1" 302 0
+INFO 2025-05-25 15:16:02,800 basehttp 69059 6178402304 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:16:02,818 middleware 69059 6161575936 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+WARNING 2025-05-25 15:16:02,824 log 69059 6161575936 Not Found: /accounts/login/
+WARNING 2025-05-25 15:16:02,824 basehttp 69059 6161575936 "GET /accounts/login/?next=/attendance/analytics/ HTTP/1.1" 404 7646
+INFO 2025-05-25 15:16:02,852 basehttp 69059 6161575936 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:16:08,499 basehttp 69059 6161575936 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:16:41,810 autoreload 69059 8675548928 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py changed, reloading.
+INFO 2025-05-25 15:16:42,179 autoreload 70120 8675548928 Watching for file changes with StatReloader
+INFO 2025-05-25 15:16:43,838 autoreload 70120 8675548928 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py changed, reloading.
+INFO 2025-05-25 15:16:44,137 autoreload 70206 8675548928 Watching for file changes with StatReloader
+INFO 2025-05-25 15:16:46,802 autoreload 70206 8675548928 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py changed, reloading.
+INFO 2025-05-25 15:16:47,073 autoreload 70211 8675548928 Watching for file changes with StatReloader
+ERROR 2025-05-25 15:16:48,618 middleware 70211 6169817088 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:16:48,632 basehttp 70211 6186643456 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:16:48,678 basehttp 70211 6169817088 "GET /manager/shifts/ HTTP/1.1" 200 49421
+ERROR 2025-05-25 15:16:49,938 middleware 70211 6186643456 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:16:49,943 basehttp 70211 6186643456 "GET /attendance/analytics/ HTTP/1.1" 302 0
+INFO 2025-05-25 15:16:49,949 basehttp 70211 6169817088 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:16:49,962 middleware 70211 6186643456 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+WARNING 2025-05-25 15:16:49,968 log 70211 6186643456 Not Found: /accounts/login/
+WARNING 2025-05-25 15:16:49,968 basehttp 70211 6186643456 "GET /accounts/login/?next=/attendance/analytics/ HTTP/1.1" 404 7646
+INFO 2025-05-25 15:16:49,993 basehttp 70211 6186643456 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:16:55,197 middleware 70211 6169817088 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:16:55,208 basehttp 70211 6186643456 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:16:55,222 basehttp 70211 6169817088 "GET /manager/shifts/ HTTP/1.1" 200 49421
+ERROR 2025-05-25 15:16:56,030 middleware 70211 6169817088 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:16:56,045 basehttp 70211 6186643456 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:16:56,071 basehttp 70211 6169817088 "GET /dashboard/ HTTP/1.1" 200 63442
+INFO 2025-05-25 15:16:56,099 basehttp 70211 6169817088 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:16:56,673 middleware 70211 6169817088 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:16:56,678 basehttp 70211 6169817088 "GET /attendance/analytics/ HTTP/1.1" 302 0
+INFO 2025-05-25 15:16:56,686 basehttp 70211 6186643456 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:16:56,704 middleware 70211 6169817088 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+WARNING 2025-05-25 15:16:56,712 log 70211 6169817088 Not Found: /accounts/login/
+WARNING 2025-05-25 15:16:56,712 basehttp 70211 6169817088 "GET /accounts/login/?next=/attendance/analytics/ HTTP/1.1" 404 7646
+INFO 2025-05-25 15:16:56,744 basehttp 70211 6169817088 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:17:00,120 basehttp 70211 6169817088 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:17:12,744 middleware 70211 6186643456 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:17:12,754 basehttp 70211 6169817088 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:17:12,764 basehttp 70211 6186643456 "GET /logout/ HTTP/1.1" 302 0
+INFO 2025-05-25 15:17:12,768 basehttp 70211 6186643456 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-05-25 15:17:12,775 basehttp 70211 6186643456 "POST /update-activity/ HTTP/1.1" 302 0
+INFO 2025-05-25 15:17:18,854 basehttp 70211 6186643456 "POST /login/ HTTP/1.1" 302 0
+ERROR 2025-05-25 15:17:18,874 middleware 70211 6186643456 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:17:18,906 basehttp 70211 6186643456 "GET /dashboard/ HTTP/1.1" 200 79341
+ERROR 2025-05-25 15:17:20,721 middleware 70211 6169817088 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:17:20,728 basehttp 70211 6169817088 "GET /attendance/analytics/ HTTP/1.1" 302 0
+INFO 2025-05-25 15:17:20,730 basehttp 70211 6186643456 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:17:20,753 middleware 70211 6169817088 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+WARNING 2025-05-25 15:17:20,761 log 70211 6169817088 Not Found: /accounts/login/
+WARNING 2025-05-25 15:17:20,761 basehttp 70211 6169817088 "GET /accounts/login/?next=/attendance/analytics/ HTTP/1.1" 404 7646
+INFO 2025-05-25 15:17:20,793 basehttp 70211 6169817088 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:17:24,147 middleware 70211 6169817088 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:17:24,162 basehttp 70211 6186643456 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:17:24,178 basehttp 70211 6169817088 "GET /leave/hr/ HTTP/1.1" 200 43251
+INFO 2025-05-25 15:17:24,210 basehttp 70211 6169817088 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:17:25,166 middleware 70211 6169817088 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:17:25,170 basehttp 70211 6169817088 "GET /attendance/analytics/ HTTP/1.1" 302 0
+INFO 2025-05-25 15:17:25,177 basehttp 70211 6186643456 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:17:25,191 middleware 70211 6169817088 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+WARNING 2025-05-25 15:17:25,197 log 70211 6169817088 Not Found: /accounts/login/
+WARNING 2025-05-25 15:17:25,197 basehttp 70211 6169817088 "GET /accounts/login/?next=/attendance/analytics/ HTTP/1.1" 404 7646
+INFO 2025-05-25 15:17:25,226 basehttp 70211 6169817088 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:17:27,580 middleware 70211 6169817088 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:17:27,600 basehttp 70211 6186643456 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:17:27,653 basehttp 70211 6169817088 "GET /hr/dashboard/ HTTP/1.1" 200 150998
+INFO 2025-05-25 15:17:27,682 basehttp 70211 6169817088 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:17:28,774 middleware 70211 6169817088 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:17:28,779 basehttp 70211 6169817088 "GET /attendance/analytics/ HTTP/1.1" 302 0
+INFO 2025-05-25 15:17:28,786 basehttp 70211 6186643456 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:17:28,803 middleware 70211 6169817088 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+WARNING 2025-05-25 15:17:28,809 log 70211 6169817088 Not Found: /accounts/login/
+WARNING 2025-05-25 15:17:28,809 basehttp 70211 6169817088 "GET /accounts/login/?next=/attendance/analytics/ HTTP/1.1" 404 7646
+INFO 2025-05-25 15:17:28,837 basehttp 70211 6169817088 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:17:54,460 middleware 70211 6186643456 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:17:54,477 basehttp 70211 6169817088 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:17:54,500 basehttp 70211 6186643456 "GET /hr/dashboard/ HTTP/1.1" 200 150998
+ERROR 2025-05-25 15:17:56,959 middleware 70211 6169817088 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:17:56,967 basehttp 70211 6186643456 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:17:56,978 basehttp 70211 6169817088 "GET /logout/ HTTP/1.1" 302 0
+INFO 2025-05-25 15:17:56,981 basehttp 70211 6169817088 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-05-25 15:17:56,988 basehttp 70211 6169817088 "POST /update-activity/ HTTP/1.1" 302 0
+INFO 2025-05-25 15:18:01,779 basehttp 70211 6169817088 "POST /login/ HTTP/1.1" 302 0
+ERROR 2025-05-25 15:18:01,796 middleware 70211 6169817088 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:18:01,826 basehttp 70211 6169817088 "GET /dashboard/ HTTP/1.1" 200 60462
+ERROR 2025-05-25 15:18:03,737 middleware 70211 6169817088 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:18:03,756 basehttp 70211 6186643456 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:18:03,775 basehttp 70211 6169817088 "GET /administration/usersessions/ HTTP/1.1" 200 73355
+INFO 2025-05-25 15:18:03,806 basehttp 70211 6169817088 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:18:06,398 middleware 70211 6169817088 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:18:06,410 basehttp 70211 6186643456 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:18:06,425 basehttp 70211 6169817088 "GET /administration/user/1/sessions/2025-05-25/ HTTP/1.1" 200 38793
+INFO 2025-05-25 15:18:06,459 basehttp 70211 6169817088 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:18:08,147 basehttp 70211 6169817088 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:18:09,997 middleware 70211 6186643456 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:18:10,010 basehttp 70211 6169817088 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:18:10,041 basehttp 70211 6186643456 "GET /dashboard/ HTTP/1.1" 200 57174
+INFO 2025-05-25 15:18:10,074 basehttp 70211 6186643456 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:18:11,561 middleware 70211 6186643456 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:18:11,579 basehttp 70211 6169817088 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:18:11,598 basehttp 70211 6186643456 "GET /administration/usersessions/ HTTP/1.1" 200 73355
+INFO 2025-05-25 15:18:11,632 basehttp 70211 6186643456 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:18:13,577 middleware 70211 6186643456 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:18:13,591 basehttp 70211 6169817088 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:18:13,601 basehttp 70211 6186643456 "GET /logout/ HTTP/1.1" 302 0
+INFO 2025-05-25 15:18:13,604 basehttp 70211 6186643456 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-05-25 15:18:13,611 basehttp 70211 6186643456 "POST /update-activity/ HTTP/1.1" 302 0
+INFO 2025-05-25 15:18:18,532 basehttp 70211 6186643456 "POST /login/ HTTP/1.1" 302 0
+ERROR 2025-05-25 15:18:18,548 middleware 70211 6186643456 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:18:18,575 basehttp 70211 6186643456 "GET /dashboard/ HTTP/1.1" 200 79648
+ERROR 2025-05-25 15:18:19,862 middleware 70211 6186643456 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:18:19,868 basehttp 70211 6186643456 "GET /attendance/analytics/ HTTP/1.1" 302 0
+INFO 2025-05-25 15:18:19,874 basehttp 70211 6169817088 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:18:19,892 middleware 70211 6186643456 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+WARNING 2025-05-25 15:18:19,899 log 70211 6186643456 Not Found: /accounts/login/
+WARNING 2025-05-25 15:18:19,900 basehttp 70211 6186643456 "GET /accounts/login/?next=/attendance/analytics/ HTTP/1.1" 404 7646
+INFO 2025-05-25 15:18:19,931 basehttp 70211 6186643456 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:18:41,372 middleware 70211 6169817088 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:18:41,383 basehttp 70211 6186643456 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:18:41,395 basehttp 70211 6169817088 "GET /logout/ HTTP/1.1" 302 0
+INFO 2025-05-25 15:18:41,399 basehttp 70211 6169817088 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-05-25 15:18:41,406 basehttp 70211 6169817088 "POST /update-activity/ HTTP/1.1" 302 0
+INFO 2025-05-25 15:18:54,116 autoreload 71252 8675548928 Watching for file changes with StatReloader
+INFO 2025-05-25 15:18:58,182 basehttp 71252 6194819072 "POST /login/ HTTP/1.1" 302 0
+ERROR 2025-05-25 15:18:58,201 middleware 71252 6194819072 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:18:58,255 basehttp 71252 6194819072 "GET /dashboard/ HTTP/1.1" 200 79648
+ERROR 2025-05-25 15:19:05,450 middleware 71252 6211645440 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:19:05,457 basehttp 71252 6211645440 "GET /attendance/analytics/ HTTP/1.1" 302 0
+INFO 2025-05-25 15:19:05,458 basehttp 71252 6194819072 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:19:05,485 middleware 71252 6194819072 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+WARNING 2025-05-25 15:19:05,493 log 71252 6194819072 Not Found: /accounts/login/
+WARNING 2025-05-25 15:19:05,494 basehttp 71252 6194819072 "GET /accounts/login/?next=/attendance/analytics/ HTTP/1.1" 404 7646
+INFO 2025-05-25 15:19:05,530 basehttp 71252 6194819072 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:19:08,981 basehttp 71252 6194819072 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:19:17,551 basehttp 71252 6194819072 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:19:58,939 basehttp 71252 6194819072 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:20:43,664 basehttp 71252 6194819072 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:20:49,237 basehttp 71252 6194819072 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:20:58,929 basehttp 71252 6194819072 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:21:04,325 middleware 71252 6194819072 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+WARNING 2025-05-25 15:21:04,339 log 71252 6194819072 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-05-25 15:21:04,339 basehttp 71252 6194819072 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 7717
+ERROR 2025-05-25 15:21:18,220 middleware 71252 6211645440 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:21:18,234 basehttp 71252 6194819072 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:21:18,273 basehttp 71252 6211645440 "GET /dashboard/ HTTP/1.1" 200 76356
+ERROR 2025-05-25 15:21:18,315 middleware 71252 6211645440 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+WARNING 2025-05-25 15:21:18,321 log 71252 6211645440 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-05-25 15:21:18,322 basehttp 71252 6211645440 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 7717
+INFO 2025-05-25 15:21:29,880 basehttp 71252 6211645440 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:21:34,935 middleware 71252 6211645440 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:21:34,940 basehttp 71252 6211645440 "GET /attendance/analytics/ HTTP/1.1" 302 0
+INFO 2025-05-25 15:21:34,947 basehttp 71252 6194819072 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:21:34,965 middleware 71252 6211645440 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+WARNING 2025-05-25 15:21:34,973 log 71252 6211645440 Not Found: /accounts/login/
+WARNING 2025-05-25 15:21:34,973 basehttp 71252 6211645440 "GET /accounts/login/?next=/attendance/analytics/ HTTP/1.1" 404 7646
+INFO 2025-05-25 15:21:35,005 basehttp 71252 6211645440 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:21:43,251 basehttp 71252 6211645440 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:22:18,444 basehttp 71252 6211645440 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:22:19,125 basehttp 71252 6211645440 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:22:37,527 autoreload 71252 8675548928 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py changed, reloading.
+INFO 2025-05-25 15:22:37,908 autoreload 73148 8675548928 Watching for file changes with StatReloader
+ERROR 2025-05-25 15:22:40,209 middleware 73148 6194671616 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:22:40,225 basehttp 73148 6194671616 "GET /attendance/analytics/ HTTP/1.1" 302 0
+INFO 2025-05-25 15:22:40,226 basehttp 73148 6211497984 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:22:40,251 middleware 73148 6211497984 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+WARNING 2025-05-25 15:22:40,264 log 73148 6211497984 Not Found: /accounts/login/
+WARNING 2025-05-25 15:22:40,264 basehttp 73148 6211497984 "GET /accounts/login/?next=/attendance/analytics/ HTTP/1.1" 404 7646
+INFO 2025-05-25 15:22:40,292 basehttp 73148 6211497984 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:22:42,148 middleware 73148 6194671616 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:22:42,160 basehttp 73148 6211497984 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:22:42,223 basehttp 73148 6194671616 "GET /dashboard/ HTTP/1.1" 200 76356
+ERROR 2025-05-25 15:22:43,602 middleware 73148 6211497984 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:22:43,606 basehttp 73148 6211497984 "GET /attendance/analytics/ HTTP/1.1" 302 0
+INFO 2025-05-25 15:22:43,609 basehttp 73148 6194671616 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:22:43,624 middleware 73148 6211497984 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+WARNING 2025-05-25 15:22:43,631 log 73148 6211497984 Not Found: /accounts/login/
+WARNING 2025-05-25 15:22:43,631 basehttp 73148 6211497984 "GET /accounts/login/?next=/attendance/analytics/ HTTP/1.1" 404 7646
+INFO 2025-05-25 15:22:43,657 basehttp 73148 6211497984 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:22:46,552 basehttp 73148 6211497984 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:23:34,226 basehttp 73148 6194671616 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:23:39,644 basehttp 73148 6194671616 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:23:42,912 basehttp 73148 6194671616 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:23:50,887 basehttp 73148 6194671616 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:23:55,401 middleware 73148 6194671616 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:23:55,413 basehttp 73148 6211497984 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:23:55,450 basehttp 73148 6194671616 "GET /dashboard/ HTTP/1.1" 200 76356
+ERROR 2025-05-25 15:23:56,483 middleware 73148 6194671616 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:23:56,495 basehttp 73148 6211497984 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:23:56,506 basehttp 73148 6194671616 "GET /profile/6/ HTTP/1.1" 200 52202
+INFO 2025-05-25 15:23:56,540 basehttp 73148 6194671616 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:23:58,283 middleware 73148 6194671616 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:23:58,297 basehttp 73148 6211497984 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:23:58,312 basehttp 73148 6194671616 "GET /leave/hr/ HTTP/1.1" 200 43251
+INFO 2025-05-25 15:23:58,344 basehttp 73148 6194671616 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:24:00,099 middleware 73148 6211497984 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:24:00,109 basehttp 73148 6194671616 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:24:00,131 basehttp 73148 6211497984 "GET /hr/dashboard/ HTTP/1.1" 200 150998
+INFO 2025-05-25 15:24:00,159 basehttp 73148 6211497984 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:24:00,827 middleware 73148 6211497984 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:24:00,842 basehttp 73148 6194671616 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:24:00,896 basehttp 73148 6211497984 "GET /support/ HTTP/1.1" 200 65531
+INFO 2025-05-25 15:24:00,930 basehttp 73148 6211497984 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:24:01,509 middleware 73148 6211497984 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:24:01,526 basehttp 73148 6194671616 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:24:01,536 basehttp 73148 6211497984 "GET /appraisal/list/ HTTP/1.1" 200 37951
+INFO 2025-05-25 15:24:01,566 basehttp 73148 6211497984 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:24:03,516 middleware 73148 6194671616 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:24:03,522 basehttp 73148 6194671616 "GET /attendance/analytics/ HTTP/1.1" 302 0
+INFO 2025-05-25 15:24:03,528 basehttp 73148 6211497984 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:24:03,545 middleware 73148 6194671616 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+WARNING 2025-05-25 15:24:03,553 log 73148 6194671616 Not Found: /accounts/login/
+WARNING 2025-05-25 15:24:03,553 basehttp 73148 6194671616 "GET /accounts/login/?next=/attendance/analytics/ HTTP/1.1" 404 7646
+INFO 2025-05-25 15:24:03,584 basehttp 73148 6194671616 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:24:07,007 basehttp 73148 6194671616 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:24:19,685 middleware 73148 6194671616 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:24:19,697 basehttp 73148 6211497984 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:24:19,707 basehttp 73148 6194671616 "GET /logout/ HTTP/1.1" 302 0
+INFO 2025-05-25 15:24:19,712 basehttp 73148 6194671616 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-05-25 15:24:19,721 basehttp 73148 6194671616 "POST /update-activity/ HTTP/1.1" 302 0
+INFO 2025-05-25 15:24:24,399 autoreload 74095 8675548928 Watching for file changes with StatReloader
+INFO 2025-05-25 15:24:28,688 basehttp 74095 6127742976 "POST /login/ HTTP/1.1" 302 0
+ERROR 2025-05-25 15:24:28,704 middleware 74095 6127742976 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:24:28,755 basehttp 74095 6127742976 "GET /dashboard/ HTTP/1.1" 200 79648
+INFO 2025-05-25 15:24:31,546 basehttp 74095 6127742976 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:24:34,948 middleware 74095 6127742976 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:24:34,964 basehttp 74095 6144569344 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:24:34,975 basehttp 74095 6127742976 "GET /leave/hr/ HTTP/1.1" 200 43251
+INFO 2025-05-25 15:24:35,008 basehttp 74095 6127742976 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:24:36,087 middleware 74095 6127742976 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:24:36,101 basehttp 74095 6144569344 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:24:36,120 basehttp 74095 6127742976 "GET /hr/dashboard/ HTTP/1.1" 200 150998
+INFO 2025-05-25 15:24:36,147 basehttp 74095 6127742976 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:24:36,736 middleware 74095 6144569344 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:24:36,747 basehttp 74095 6127742976 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:24:36,795 basehttp 74095 6144569344 "GET /support/ HTTP/1.1" 200 65531
+INFO 2025-05-25 15:24:36,829 basehttp 74095 6144569344 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:24:37,353 middleware 74095 6127742976 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:24:37,363 basehttp 74095 6144569344 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:24:37,377 basehttp 74095 6127742976 "GET /appraisal/list/ HTTP/1.1" 200 37951
+INFO 2025-05-25 15:24:37,412 basehttp 74095 6127742976 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:24:38,215 middleware 74095 6127742976 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+INFO 2025-05-25 15:24:38,224 basehttp 74095 6127742976 "GET /attendance/analytics/ HTTP/1.1" 302 0
+INFO 2025-05-25 15:24:38,226 basehttp 74095 6144569344 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:24:38,249 middleware 74095 6144569344 Error in enhanced session tracking middleware: module 'django.utils.timezone' has no attribute 'utc'
+WARNING 2025-05-25 15:24:38,257 log 74095 6144569344 Not Found: /accounts/login/
+WARNING 2025-05-25 15:24:38,257 basehttp 74095 6144569344 "GET /accounts/login/?next=/attendance/analytics/ HTTP/1.1" 404 7646
+INFO 2025-05-25 15:24:38,290 basehttp 74095 6144569344 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:24:42,457 basehttp 74095 6127742976 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:24:51,067 basehttp 74095 6127742976 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:25:37,916 basehttp 74095 6127742976 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:26:37,904 basehttp 74095 6127742976 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:27:20,533 basehttp 74095 6127742976 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:27:34,814 autoreload 74095 8675548928 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py changed, reloading.
+INFO 2025-05-25 15:27:35,181 autoreload 75696 8675548928 Watching for file changes with StatReloader
+INFO 2025-05-25 15:27:37,539 basehttp 75696 6160330752 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:27:39,037 basehttp 75696 6160330752 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:27:41,247 basehttp 75696 6160330752 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:27:49,061 basehttp 75696 6160330752 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:27:58,548 autoreload 75696 8675548928 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py changed, reloading.
+INFO 2025-05-25 15:27:58,892 autoreload 75872 8675548928 Watching for file changes with StatReloader
+INFO 2025-05-25 15:28:03,662 basehttp 75872 6134050816 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:28:16,454 basehttp 75872 6134050816 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:28:22,399 basehttp 75872 6134050816 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:28:24,897 basehttp 75872 6134050816 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:28:37,909 basehttp 75872 6134050816 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:28:51,384 basehttp 75872 6134050816 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:29:03,173 basehttp 75872 6134050816 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:29:11,673 basehttp 75872 6134050816 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:29:31,420 basehttp 75872 6134050816 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:29:37,911 basehttp 75872 6134050816 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:29:45,234 autoreload 75872 8675548928 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/middleware.py changed, reloading.
+INFO 2025-05-25 15:29:45,621 autoreload 76749 8675548928 Watching for file changes with StatReloader
+INFO 2025-05-25 15:29:50,887 basehttp 76749 6189494272 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:29:50,910 basehttp 76749 6172667904 "GET /logout/ HTTP/1.1" 302 0
+INFO 2025-05-25 15:29:50,928 basehttp 76749 6172667904 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-05-25 15:29:50,937 basehttp 76749 6172667904 "POST /update-activity/ HTTP/1.1" 302 0
+INFO 2025-05-25 15:29:55,367 basehttp 76749 6172667904 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-05-25 15:29:55,528 basehttp 76749 6172667904 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-05-25 15:29:55,667 basehttp 76749 6172667904 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-05-25 15:29:55,810 basehttp 76749 6172667904 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-05-25 15:29:55,949 basehttp 76749 6172667904 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-05-25 15:29:56,168 basehttp 76749 6172667904 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-05-25 15:29:56,367 basehttp 76749 6172667904 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-05-25 15:29:56,529 basehttp 76749 6172667904 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-05-25 15:29:56,682 basehttp 76749 6172667904 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-05-25 15:29:56,814 basehttp 76749 6172667904 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-05-25 15:29:56,985 basehttp 76749 6172667904 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-05-25 15:29:57,128 basehttp 76749 6172667904 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-05-25 15:29:57,278 basehttp 76749 6172667904 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-05-25 15:29:57,417 basehttp 76749 6172667904 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-05-25 15:30:03,400 basehttp 76749 6172667904 "POST /login/ HTTP/1.1" 302 0
+INFO 2025-05-25 15:30:03,463 basehttp 76749 6172667904 "GET /dashboard/ HTTP/1.1" 200 79648
+INFO 2025-05-25 15:30:06,192 basehttp 76749 6172667904 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:30:06,197 basehttp 76749 6189494272 "GET /attendance/analytics/ HTTP/1.1" 302 0
+WARNING 2025-05-25 15:30:06,238 log 76749 6189494272 Not Found: /accounts/login/
+WARNING 2025-05-25 15:30:06,238 basehttp 76749 6189494272 "GET /accounts/login/?next=/attendance/analytics/ HTTP/1.1" 404 7646
+INFO 2025-05-25 15:30:06,271 basehttp 76749 6189494272 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:30:09,773 basehttp 76749 6172667904 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:31:00,972 autoreload 76749 8675548928 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py changed, reloading.
+INFO 2025-05-25 15:31:01,367 autoreload 77458 8675548928 Watching for file changes with StatReloader
+INFO 2025-05-25 15:31:03,774 basehttp 77458 6159855616 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:31:04,176 basehttp 77458 6159855616 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:31:04,177 basehttp 77458 6176681984 "GET /attendance/analytics/ HTTP/1.1" 302 0
+WARNING 2025-05-25 15:31:04,204 log 77458 6176681984 Not Found: /accounts/login/
+WARNING 2025-05-25 15:31:04,204 basehttp 77458 6176681984 "GET /accounts/login/?next=/attendance/analytics/ HTTP/1.1" 404 7646
+INFO 2025-05-25 15:31:04,231 basehttp 77458 6176681984 "POST /update-activity/ HTTP/1.1" 200 192
+WARNING 2025-05-25 15:31:05,491 log 77458 6176681984 Not Found: /accounts/login/
+WARNING 2025-05-25 15:31:05,492 basehttp 77458 6176681984 "GET /accounts/login/?next=/attendance/analytics/ HTTP/1.1" 404 7646
+INFO 2025-05-25 15:31:10,515 basehttp 77458 6176681984 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:31:10,578 basehttp 77458 6159855616 "GET /dashboard/ HTTP/1.1" 200 76356
+INFO 2025-05-25 15:31:12,008 basehttp 77458 6176681984 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:31:12,009 basehttp 77458 6159855616 "GET /attendance/analytics/ HTTP/1.1" 302 0
+WARNING 2025-05-25 15:31:12,040 log 77458 6159855616 Not Found: /accounts/login/
+WARNING 2025-05-25 15:31:12,040 basehttp 77458 6159855616 "GET /accounts/login/?next=/attendance/analytics/ HTTP/1.1" 404 7646
+INFO 2025-05-25 15:31:12,069 basehttp 77458 6159855616 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:31:14,883 basehttp 77458 6159855616 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:31:18,826 autoreload 77458 8675548928 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py changed, reloading.
+INFO 2025-05-25 15:31:19,119 autoreload 77635 8675548928 Watching for file changes with StatReloader
+INFO 2025-05-25 15:31:41,484 basehttp 77635 6214086656 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:31:41,496 basehttp 77635 6197260288 "GET /attendance/analytics/ HTTP/1.1" 302 0
+WARNING 2025-05-25 15:31:41,531 log 77635 6197260288 Not Found: /accounts/login/
+WARNING 2025-05-25 15:31:41,531 basehttp 77635 6197260288 "GET /accounts/login/?next=/attendance/analytics/ HTTP/1.1" 404 7646
+INFO 2025-05-25 15:31:41,557 basehttp 77635 6197260288 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:31:49,332 basehttp 77635 6197260288 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:32:10,906 basehttp 77635 6197260288 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:33:10,911 basehttp 77635 6197260288 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:33:20,396 basehttp 77635 6214086656 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:33:20,401 basehttp 77635 6197260288 "GET /attendance/analytics/ HTTP/1.1" 302 0
+WARNING 2025-05-25 15:33:20,442 log 77635 6197260288 Not Found: /accounts/login/
+WARNING 2025-05-25 15:33:20,442 basehttp 77635 6197260288 "GET /accounts/login/?next=/attendance/analytics/ HTTP/1.1" 404 7646
+INFO 2025-05-25 15:33:20,479 basehttp 77635 6197260288 "POST /update-activity/ HTTP/1.1" 200 192
+WARNING 2025-05-25 15:34:01,931 log 77635 6197260288 Not Found: /accounts/login/
+WARNING 2025-05-25 15:34:01,933 basehttp 77635 6197260288 "GET /accounts/login/?next=/attendance/analytics/ HTTP/1.1" 404 7646
+WARNING 2025-05-25 15:34:02,090 log 77635 6197260288 Not Found: /accounts/login/
+WARNING 2025-05-25 15:34:02,090 basehttp 77635 6197260288 "GET /accounts/login/?next=/attendance/analytics/ HTTP/1.1" 404 7646
+WARNING 2025-05-25 15:34:02,252 log 77635 6197260288 Not Found: /accounts/login/
+WARNING 2025-05-25 15:34:02,252 basehttp 77635 6197260288 "GET /accounts/login/?next=/attendance/analytics/ HTTP/1.1" 404 7646
+WARNING 2025-05-25 15:34:02,419 log 77635 6197260288 Not Found: /accounts/login/
+WARNING 2025-05-25 15:34:02,419 basehttp 77635 6197260288 "GET /accounts/login/?next=/attendance/analytics/ HTTP/1.1" 404 7646
+WARNING 2025-05-25 15:34:02,588 log 77635 6197260288 Not Found: /accounts/login/
+WARNING 2025-05-25 15:34:02,588 basehttp 77635 6197260288 "GET /accounts/login/?next=/attendance/analytics/ HTTP/1.1" 404 7646
+WARNING 2025-05-25 15:34:02,734 log 77635 6197260288 Not Found: /accounts/login/
+WARNING 2025-05-25 15:34:02,734 basehttp 77635 6197260288 "GET /accounts/login/?next=/attendance/analytics/ HTTP/1.1" 404 7646
+WARNING 2025-05-25 15:34:02,905 log 77635 6197260288 Not Found: /accounts/login/
+WARNING 2025-05-25 15:34:02,905 basehttp 77635 6197260288 "GET /accounts/login/?next=/attendance/analytics/ HTTP/1.1" 404 7646
+WARNING 2025-05-25 15:34:03,036 log 77635 6197260288 Not Found: /accounts/login/
+WARNING 2025-05-25 15:34:03,036 basehttp 77635 6197260288 "GET /accounts/login/?next=/attendance/analytics/ HTTP/1.1" 404 7646
+INFO 2025-05-25 15:38:54,192 basehttp 77635 6197260288 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:38:55,638 basehttp 77635 6197260288 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:38:55,686 basehttp 77635 6214086656 "GET /leave/hr/ HTTP/1.1" 200 43251
+INFO 2025-05-25 15:38:55,715 basehttp 77635 6214086656 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:38:56,358 basehttp 77635 6214086656 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:38:56,409 basehttp 77635 6197260288 "GET /dashboard/ HTTP/1.1" 200 76356
+INFO 2025-05-25 15:38:56,447 basehttp 77635 6197260288 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:38:58,037 basehttp 77635 6214086656 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:38:58,052 basehttp 77635 6197260288 "GET /logout/ HTTP/1.1" 302 0
+INFO 2025-05-25 15:38:58,057 basehttp 77635 6197260288 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-05-25 15:38:58,065 basehttp 77635 6197260288 "POST /update-activity/ HTTP/1.1" 302 0
+INFO 2025-05-25 15:39:04,368 autoreload 81427 8675548928 Watching for file changes with StatReloader
+INFO 2025-05-25 15:39:06,766 basehttp 81427 6133641216 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-05-25 15:39:06,907 basehttp 81427 6133641216 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-05-25 15:39:07,052 basehttp 81427 6133641216 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-05-25 15:39:07,220 basehttp 81427 6133641216 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-05-25 15:39:07,373 basehttp 81427 6133641216 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-05-25 15:39:10,102 basehttp 81427 6133641216 "POST /login/ HTTP/1.1" 302 0
+INFO 2025-05-25 15:39:10,163 basehttp 81427 6133641216 "GET /dashboard/ HTTP/1.1" 200 79648
+INFO 2025-05-25 15:39:12,088 basehttp 81427 6150467584 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:39:12,121 basehttp 81427 6133641216 "GET /dashboard/ HTTP/1.1" 200 76356
+INFO 2025-05-25 15:39:12,717 basehttp 81427 6133641216 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:39:12,739 basehttp 81427 6150467584 "GET /profile/6/ HTTP/1.1" 200 52202
+INFO 2025-05-25 15:39:12,776 basehttp 81427 6150467584 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:39:14,036 basehttp 81427 6133641216 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:39:14,047 basehttp 81427 6150467584 "GET /leave/hr/ HTTP/1.1" 200 43251
+INFO 2025-05-25 15:39:14,073 basehttp 81427 6150467584 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:39:14,822 basehttp 81427 6133641216 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:39:14,849 basehttp 81427 6150467584 "GET /hr/dashboard/ HTTP/1.1" 200 150998
+INFO 2025-05-25 15:39:14,876 basehttp 81427 6150467584 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:39:15,347 basehttp 81427 6133641216 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:39:15,385 basehttp 81427 6150467584 "GET /support/ HTTP/1.1" 200 65531
+INFO 2025-05-25 15:39:15,411 basehttp 81427 6150467584 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:39:16,056 basehttp 81427 6150467584 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:39:16,057 basehttp 81427 6133641216 "GET /attendance/analytics/ HTTP/1.1" 302 0
+WARNING 2025-05-25 15:39:16,093 log 81427 6133641216 Not Found: /accounts/login/
+WARNING 2025-05-25 15:39:16,093 basehttp 81427 6133641216 "GET /accounts/login/?next=/attendance/analytics/ HTTP/1.1" 404 7646
+INFO 2025-05-25 15:39:16,127 basehttp 81427 6133641216 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:41:32,878 basehttp 81427 6133641216 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:41:34,988 basehttp 81427 6133641216 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:41:34,994 basehttp 81427 6150467584 "GET /attendance/analytics/ HTTP/1.1" 302 0
+WARNING 2025-05-25 15:41:35,037 log 81427 6150467584 Not Found: /accounts/login/
+WARNING 2025-05-25 15:41:35,037 basehttp 81427 6150467584 "GET /accounts/login/?next=/attendance/analytics/ HTTP/1.1" 404 7646
+INFO 2025-05-25 15:41:35,072 basehttp 81427 6150467584 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:41:59,293 autoreload 81427 8675548928 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py changed, reloading.
+INFO 2025-05-25 15:41:59,744 autoreload 82938 8675548928 Watching for file changes with StatReloader
+WARNING 2025-05-25 15:42:04,466 log 82938 6161133568 Not Found: /accounts/login/
+WARNING 2025-05-25 15:42:04,466 basehttp 82938 6161133568 "GET /accounts/login/?next=/attendance/analytics/ HTTP/1.1" 404 7646
+INFO 2025-05-25 15:42:07,831 basehttp 82938 6161133568 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:42:15,574 basehttp 82938 6161133568 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:42:16,730 basehttp 82938 6161133568 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:42:51,340 basehttp 82938 6177959936 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:42:51,359 basehttp 82938 6161133568 "GET /logout/ HTTP/1.1" 302 0
+INFO 2025-05-25 15:42:51,373 basehttp 82938 6161133568 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-05-25 15:42:51,380 basehttp 82938 6161133568 "POST /update-activity/ HTTP/1.1" 302 0
+INFO 2025-05-25 15:42:55,213 basehttp 82938 6161133568 "POST /login/ HTTP/1.1" 302 0
+INFO 2025-05-25 15:42:55,274 basehttp 82938 6161133568 "GET /dashboard/ HTTP/1.1" 200 74279
+INFO 2025-05-25 15:42:56,786 basehttp 82938 6161133568 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-25 15:42:56,835 log 82938 6177959936 Internal Server Error: /employee/attendance/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 11571, in attendance_dashboard
+    current_datetime = localtime(now())
+NameError: name 'localtime' is not defined
+ERROR 2025-05-25 15:42:56,838 basehttp 82938 6177959936 "GET /employee/attendance/ HTTP/1.1" 500 70815
+INFO 2025-05-25 15:42:56,871 basehttp 82938 6177959936 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:43:43,790 autoreload 82938 8675548928 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py changed, reloading.
+INFO 2025-05-25 15:43:44,206 autoreload 83796 8675548928 Watching for file changes with StatReloader
+INFO 2025-05-25 15:44:46,733 autoreload 83796 8675548928 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py changed, reloading.
+INFO 2025-05-25 15:44:47,044 autoreload 84315 8675548928 Watching for file changes with StatReloader
+INFO 2025-05-25 15:51:40,740 autoreload 84315 8675548928 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py changed, reloading.
+INFO 2025-05-25 15:51:41,159 autoreload 87753 8675548928 Watching for file changes with StatReloader
+ERROR 2025-05-25 15:51:44,832 log 87753 6131757056 Internal Server Error: /employee/attendance/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 11568, in attendance_dashboard
+    current_datetime = localtime(now())
+NameError: name 'localtime' is not defined
+ERROR 2025-05-25 15:51:44,834 basehttp 87753 6131757056 "GET /employee/attendance/ HTTP/1.1" 500 70952
+ERROR 2025-05-25 15:51:45,576 log 87753 6131757056 Internal Server Error: /employee/attendance/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 11568, in attendance_dashboard
+    current_datetime = localtime(now())
+NameError: name 'localtime' is not defined
+ERROR 2025-05-25 15:51:45,576 basehttp 87753 6131757056 "GET /employee/attendance/ HTTP/1.1" 500 70952
+ERROR 2025-05-25 15:51:46,228 log 87753 6131757056 Internal Server Error: /employee/attendance/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 11568, in attendance_dashboard
+    current_datetime = localtime(now())
+NameError: name 'localtime' is not defined
+ERROR 2025-05-25 15:51:46,228 basehttp 87753 6131757056 "GET /employee/attendance/ HTTP/1.1" 500 70952
+ERROR 2025-05-25 15:51:47,049 log 87753 6131757056 Internal Server Error: /employee/attendance/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 11568, in attendance_dashboard
+    current_datetime = localtime(now())
+NameError: name 'localtime' is not defined
+ERROR 2025-05-25 15:51:47,049 basehttp 87753 6131757056 "GET /employee/attendance/ HTTP/1.1" 500 70952
+ERROR 2025-05-25 15:51:47,407 log 87753 6131757056 Internal Server Error: /employee/attendance/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 11568, in attendance_dashboard
+    current_datetime = localtime(now())
+NameError: name 'localtime' is not defined
+ERROR 2025-05-25 15:51:47,407 basehttp 87753 6131757056 "GET /employee/attendance/ HTTP/1.1" 500 70952
+ERROR 2025-05-25 15:51:47,560 log 87753 6131757056 Internal Server Error: /employee/attendance/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 11568, in attendance_dashboard
+    current_datetime = localtime(now())
+NameError: name 'localtime' is not defined
+ERROR 2025-05-25 15:51:47,560 basehttp 87753 6131757056 "GET /employee/attendance/ HTTP/1.1" 500 70952
+INFO 2025-05-25 15:51:53,051 autoreload 87856 8675548928 Watching for file changes with StatReloader
+INFO 2025-05-25 15:52:10,194 autoreload 87856 8675548928 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py changed, reloading.
+INFO 2025-05-25 15:52:10,527 autoreload 88040 8675548928 Watching for file changes with StatReloader
+INFO 2025-05-25 15:52:13,658 basehttp 88040 6168375296 "GET /employee/attendance/ HTTP/1.1" 200 55970
+INFO 2025-05-25 15:52:17,050 basehttp 88040 6185201664 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-25 15:52:17,071 basehttp 88040 6168375296 "GET /employee/attendance/ HTTP/1.1" 200 55970
+INFO 2025-05-25 15:52:17,745 basehttp 88040 6185201664 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-25 15:52:17,788 basehttp 88040 6168375296 "GET /support/ HTTP/1.1" 200 59776
+INFO 2025-05-25 15:52:17,822 basehttp 88040 6168375296 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-25 15:52:18,497 basehttp 88040 6185201664 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-25 15:52:18,516 basehttp 88040 6168375296 "GET /profile/11/ HTTP/1.1" 200 54909
+INFO 2025-05-25 15:52:18,547 basehttp 88040 6168375296 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-25 15:52:19,965 basehttp 88040 6185201664 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-25 15:52:20,009 basehttp 88040 6168375296 "GET /dashboard/ HTTP/1.1" 200 70991
+INFO 2025-05-25 15:52:20,044 basehttp 88040 6168375296 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-25 15:52:24,762 basehttp 88040 6185201664 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-25 15:52:24,780 basehttp 88040 6168375296 "GET /logout/ HTTP/1.1" 302 0
+INFO 2025-05-25 15:52:24,785 basehttp 88040 6168375296 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-05-25 15:52:24,795 basehttp 88040 6168375296 "POST /update-activity/ HTTP/1.1" 302 0
+INFO 2025-05-25 15:52:27,805 basehttp 88040 6168375296 "POST /login/ HTTP/1.1" 302 0
+INFO 2025-05-25 15:52:27,856 basehttp 88040 6168375296 "GET /dashboard/ HTTP/1.1" 200 79648
+INFO 2025-05-25 15:52:29,009 basehttp 88040 6168375296 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:52:29,057 basehttp 88040 6185201664 "GET /attendance/analytics/ HTTP/1.1" 200 114956
+INFO 2025-05-25 15:52:29,091 basehttp 88040 6185201664 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:52:30,344 basehttp 88040 6185201664 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:52:30,372 basehttp 88040 6168375296 "GET /leave/hr/ HTTP/1.1" 200 43251
+INFO 2025-05-25 15:52:30,412 basehttp 88040 6168375296 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:52:31,205 basehttp 88040 6168375296 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:52:31,264 basehttp 88040 6185201664 "GET /hr/dashboard/ HTTP/1.1" 200 150998
+INFO 2025-05-25 15:52:31,291 basehttp 88040 6185201664 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:52:31,855 basehttp 88040 6168375296 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:52:31,898 basehttp 88040 6185201664 "GET /support/ HTTP/1.1" 200 65531
+INFO 2025-05-25 15:52:31,933 basehttp 88040 6185201664 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:52:32,445 basehttp 88040 6185201664 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:52:32,462 basehttp 88040 6168375296 "GET /appraisal/list/ HTTP/1.1" 200 37951
+INFO 2025-05-25 15:52:32,496 basehttp 88040 6168375296 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:52:33,296 basehttp 88040 6185201664 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:52:33,316 basehttp 88040 6168375296 "GET /hr/dashboard/ HTTP/1.1" 200 150998
+INFO 2025-05-25 15:52:33,343 basehttp 88040 6168375296 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:52:33,892 basehttp 88040 6185201664 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:52:33,926 basehttp 88040 6168375296 "GET /attendance/analytics/ HTTP/1.1" 200 114956
+INFO 2025-05-25 15:52:33,961 basehttp 88040 6168375296 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:52:34,596 basehttp 88040 6185201664 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:52:34,610 basehttp 88040 6168375296 "GET /leave/hr/ HTTP/1.1" 200 43251
+INFO 2025-05-25 15:52:34,643 basehttp 88040 6168375296 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:52:35,274 basehttp 88040 6185201664 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:52:35,308 basehttp 88040 6168375296 "GET /attendance/analytics/ HTTP/1.1" 200 114956
+INFO 2025-05-25 15:52:35,339 basehttp 88040 6168375296 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:52:42,735 basehttp 88040 6168375296 "GET /attendance/status/users/?status=Absent&start_date=2025-05-25&end_date=2025-05-25 HTTP/1.1" 200 5669
+INFO 2025-05-25 15:52:53,145 basehttp 88040 6185201664 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-25 15:52:53,157 basehttp 88040 6168375296 "GET /logout/ HTTP/1.1" 302 0
+INFO 2025-05-25 15:52:53,162 basehttp 88040 6168375296 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-05-25 15:52:53,168 basehttp 88040 6168375296 "POST /update-activity/ HTTP/1.1" 302 0
