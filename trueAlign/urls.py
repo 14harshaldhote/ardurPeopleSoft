@@ -3,15 +3,14 @@ from django.urls import path, include
 from . import views
 from django.urls import path, register_converter
 from uuid import UUID
-from . import views
-
+from .views_modules import session_views
 # Create a UUID converter
 class UUIDConverter:
     regex = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
-    
+
     def to_python(self, value):
         return UUID(value)
-        
+
     def to_url(self, value):
         return str(value)
 
@@ -28,6 +27,16 @@ appraisal_patterns = [
     path('<int:pk>/submit/', views.appraisal_submit, name='appraisal_submit'),
     path('<int:pk>/review/', views.appraisal_review, name='appraisal_review'),
     path('dashboard/', views.appraisal_dashboard, name='appraisal_dashboard'),
+]
+
+# Enhanced Session Management URLs
+session_patterns = [
+    path('session-heartbeat/', session_views.session_heartbeat, name='session_heartbeat'),
+    path('log-activity/', session_views.log_activity, name='log_activity'),
+    path('end-session/', session_views.end_session, name='end_session'),
+    path('session-status/', session_views.session_status, name='session_status'),
+    path('session-analytics/', session_views.session_analytics, name='session_analytics'),
+    path('cleanup-sessions/', session_views.cleanup_sessions, name='cleanup_sessions'),
 ]
 
 # Admin-specific URLs under 'admin/'
@@ -84,12 +93,12 @@ hr_patterns = [
     path('user/add/', views.add_user, name='add_user'),
     path('user/import-errors/', views.import_errors, name='import_errors'),
     path('users/bulk-add/', views.bulk_add_users, name='bulk_add_users'),
-    
+
     # User Actions
     path('user/<int:user_id>/reset-password/', views.reset_user_password, name='reset_user_password'),
     path('user/<int:user_id>/change-status/', views.change_user_status, name='change_user_status'),
     path('user/<int:user_id>/change-role/', views.change_user_role, name='change_user_role'),
-    
+
     # Logs and Reports
     path('logs/', views.user_action_logs, name='user_action_logs'),
     path('logs/user/<int:user_id>/', views.user_action_logs, name='user_specific_logs'),
@@ -178,10 +187,10 @@ finance_patterns = [
     path('', views.finance_dashboard, name='dashboard'),
     # Expense Management
     path('expenses/', views.expense_entry, name='expense_entry'),
-    
-    # Voucher Management  
+
+    # Voucher Management
     path('vouchers/', views.voucher_entry, name='voucher_entry'),
-    
+
     # Bank Payment Management
     # Bank Payment URLs
     path('bank-payments/', views.bank_payment_list, name='bank_payment_list'),
@@ -193,19 +202,19 @@ finance_patterns = [
     path('bank-payments/<str:payment_id>/approve/', views.bank_payment_approve, name='bank_payment_approve'),
     path('bank-payments/<str:payment_id>/execute/', views.bank_payment_execute, name='bank_payment_execute'),
     path('bank-payments/<str:payment_id>/mark-failed/', views.bank_payment_mark_failed, name='bank_payment_mark_failed'),
-    
+
     # Bank Account URLs
     path('bank-accounts/', views.bank_account_list, name='bank_account_list'),
     path('bank-accounts/create/', views.bank_account_create, name='bank_account_create'),
     path('bank-accounts/<int:account_id>/update/', views.bank_account_update, name='bank_account_update'),
-    
+
     # Dashboard and Reports
     path('bank-payments/dashboard/', views.bank_payment_dashboard, name='bank_payment_dashboard'),
     path('bank-payments/reports/', views.bank_payment_report, name='bank_payment_report'),
-  
+
     # Subscription Management
     path('subscriptions/', views.subscription_payment_entry, name='subscription_payment_entry'),
-    
+
     # Invoice Management
     path('invoices/', views.invoice_generation, name='invoice_generation'),
     path('invoices/<int:invoice_id>/', views.invoice_detail, name='invoice_detail'),
@@ -273,27 +282,27 @@ leave_patterns = [
 attendance_patterns = [
     # Dashboard view
     path('dashboard/', views.hr_attendance_dashboard, name='hr_attendance_dashboard'),
-    
+
     # Attendance list view
     path('list/', views.hr_attendance_list, name='hr_attendance_list'),
-    
+
     # Edit specific attendance record
     path('records/<int:attendance_id>/edit/', views.hr_edit_attendance, name='hr_edit_attendance'),
-    
+
     # Regularization requests
-    path('regularization/<int:attendance_id>/process/', views.hr_process_regularization, name='hr_process_regularization'),    
+    path('regularization/<int:attendance_id>/process/', views.hr_process_regularization, name='hr_process_regularization'),
     # Process specific regularization request
-    path('regularization/requests/', views.hr_attendance_regularization_requests, name='hr_attendance_regularization_requests'),    
+    path('regularization/requests/', views.hr_attendance_regularization_requests, name='hr_attendance_regularization_requests'),
     # Generate attendance reports
     path('reports/', views.hr_generate_report, name='hr_generate_report'),
 
     path('calendar/', views.hr_attendance_view, name='hr_attendance_view'),
 
     path('add/', views.add_attendance, name='add_attendance'),
-    
+
     # Bulk update attendance
     path('bulk-update/', views.bulk_update_attendance, name='hr_bulk_update_attendance'),
-    
+
     # Attendance statistics
     path('statistics/', views.attendance_statistics, name='hr_attendance_statistics'),
 
@@ -342,10 +351,10 @@ holiday_pattern=[
 entertainment_patterns=[
     path('',views.entertainment_dashboard,name='entertainment'),
     path('games/', views.games, name='games_hub'),
-    
+
     # Tic-Tac-Toe game routes
     path('tictactoe/', views.TicTacToeGameView.as_view(), name='game_list'),
-    path('tictactoe/<uuid:game_id>/', views.TicTacToeGameView.as_view(), name='game_detail'), 
+    path('tictactoe/<uuid:game_id>/', views.TicTacToeGameView.as_view(), name='game_detail'),
     # Other game view routes
     path('notifications/', views.NotificationView.as_view(), name='notifications'),
     path('leaderboard/', views.LeaderboardView.as_view(), name='leaderboard'),
@@ -369,7 +378,7 @@ urlpatterns = [
     path('break/take/', views.take_break, name='take_break'),
     path('break/end/<int:break_id>/', views.end_break, name='end_break'),
     path('dashboard/', views.dashboard_view, name='dashboard'),
-    
+
     # Include chat URLs with namespace
     # path('chat/', include((chat_patterns, 'chat'))),
 
@@ -378,7 +387,7 @@ urlpatterns = [
 
     # Employee-specific URLs under 'employee/'
     path('employee/', include((employee_patterns, 'aps'), namespace='aps_employee')),
-    
+
     # Finance related URLS
     path('finance/', include((finance_patterns, 'aps'), namespace='aps_finance')),
 
@@ -387,6 +396,9 @@ urlpatterns = [
 
     # Manager-specific URLs under 'manager/'
     path('manager/', include((manager_patterns, 'aps'), namespace='aps_manager')),
+
+    # Enhanced Session Management URLs
+    path('', include(session_patterns)),
 
     # Leave-specific URLs under 'leave/'
     path('leave/', include((leave_patterns, 'aps'), namespace='aps_leave')),
@@ -401,7 +413,7 @@ urlpatterns = [
     # Appraisal URLs
     path('appraisal/', include((appraisal_patterns, 'appraisal'))),
 
-    path('reset-password/', views.reset_password, name='reset_password'),
+    path('reset-password/', views.reset_user_password, name='reset_password'),
 
     # Entertainment URLs
     path('entertainment/', include((entertainment_patterns, 'aps'), namespace='aps_entertainment')),

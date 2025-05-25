@@ -9,7 +9,13 @@ from datetime import time, timedelta, date
 from datetime import datetime
 from django.db import transaction
 from django.utils.timezone import localtime
-from django.db import transaction
+import logging
+
+# Set up logging
+logger = logging.getLogger(__name__)
+
+# Asia/Kolkata timezone
+IST_TIMEZONE = pytz.timezone('Asia/Kolkata')
 
 
 
@@ -46,6 +52,7 @@ class UserSession(models.Model):
     session_key = models.CharField(max_length=40)
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     user_agent = models.TextField(null=True, blank=True)
+    
     # Store all times in UTC in the DB, but always convert to IST for display and logic
     login_time = models.DateTimeField(default=timezone.now)  # Stored in UTC
     logout_time = models.DateTimeField(null=True, blank=True)
@@ -55,16 +62,85 @@ class UserSession(models.Model):
     location = models.CharField(max_length=50, null=True, blank=True)
     session_duration = models.FloatField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
-
+    
+    # Multi-tab tracking
+    tab_id = models.CharField(max_length=50, null=True, blank=True)  # Unique identifier for each tab
+    tab_title = models.CharField(max_length=255, null=True, blank=True)  # Page title when tab was created
+    tab_url = models.URLField(null=True, blank=True)  # Current URL of the tab
+    tab_opened_time = models.DateTimeField(null=True, blank=True)  # When this specific tab was opened
+    tab_last_focus = models.DateTimeField(null=True, blank=True)  # Last time this tab was focused
+    tab_total_focus_time = models.DurationField(default=timedelta(0))  # Total time spent focused on this tab
+    is_primary_tab = models.BooleanField(default=False)  # Is this the main/primary tab
+    parent_session_id = models.CharField(max_length=50, null=True, blank=True)  # Links tabs to same browser session
+    
+    # Security and fingerprinting
+    session_fingerprint = models.CharField(max_length=255, null=True, blank=True)
+    browser_fingerprint = models.TextField(null=True, blank=True)  # Detailed browser fingerprint
+    csrf_token = models.CharField(max_length=64, null=True, blank=True)
+    csrf_token_created = models.DateTimeField(null=True, blank=True)
+    security_incidents = models.JSONField(default=dict, blank=True)
+    
+    # Device and environment data
+    device_type = models.CharField(max_length=20, null=True, blank=True)  # mobile, desktop, tablet
+    screen_resolution = models.CharField(max_length=20, null=True, blank=True)
+    timezone_offset = models.IntegerField(null=True, blank=True)  # User's timezone offset
+    language = models.CharField(max_length=10, null=True, blank=True)
+    connection_type = models.CharField(max_length=20, null=True, blank=True)  # wifi, cellular, etc.
+    battery_level = models.FloatField(null=True, blank=True)  # 0 to 1
+    
+    # Enhanced activity tracking
+    page_views = models.JSONField(default=list, blank=True)  # Array of page visits with timestamps
+    click_events = models.JSONField(default=list, blank=True)  # Track user interactions
+    scroll_events = models.JSONField(default=list, blank=True)  # Scroll behavior
+    keyboard_events = models.JSONField(default=list, blank=True)  # Typing activity
+    mouse_movements = models.IntegerField(default=0)  # Count of mouse movements
+    
+    # Tab visibility and focus tracking
+    tab_visibility_log = models.JSONField(default=list, blank=True)  # Track when tab gains/loses focus
+    tab_switches = models.IntegerField(default=0)  # Number of times user switched to/from this tab
+    background_time = models.DurationField(default=timedelta(0))  # Time spent in background
+    
+    # Performance and analytics
+    performance_metrics = models.JSONField(default=dict, blank=True)  # Page load times, memory usage
+    network_events = models.JSONField(default=list, blank=True)  # Connection issues, reconnects
+    error_events = models.JSONField(default=list, blank=True)  # JavaScript errors, failed requests
+    
+    # Progressive session management
+    custom_timeout = models.PositiveIntegerField(null=True, blank=True)  # Custom timeout in minutes
+    inactivity_warnings_sent = models.IntegerField(default=0)  # Number of warnings shown
+    last_warning_time = models.DateTimeField(null=True, blank=True)
+    auto_logout_enabled = models.BooleanField(default=True)
+    
+    # Offline support
+    offline_data = models.JSONField(default=dict, blank=True)  # Store offline actions
+    last_sync_time = models.DateTimeField(null=True, blank=True)  # Last successful server sync
+    pending_sync_count = models.IntegerField(default=0)  # Number of actions waiting to sync
+    
+    # Cross-tab communication tracking
+    broadcast_messages_sent = models.IntegerField(default=0)
+    broadcast_messages_received = models.IntegerField(default=0)
+    cross_tab_activity_syncs = models.IntegerField(default=0)
+    
+    # Session quality metrics
+    productivity_score = models.FloatField(null=True, blank=True)  # Calculated productivity score
+    engagement_score = models.FloatField(null=True, blank=True)  # User engagement level
+    session_quality = models.CharField(max_length=20, null=True, blank=True)  # high, medium, low
+    
     # Define constants at the model level
     IDLE_THRESHOLD_MINUTES = 5
     SESSION_TIMEOUT_MINUTES = 30
+    AUTO_LOGOUT_MINUTES = 30
+    WARNING_THRESHOLD_MINUTES = 25  # Show warning 5 minutes before auto-logout
     OFFICE_IPS = ['116.75.62.90']
 
     class Meta:
         indexes = [
             models.Index(fields=['user', 'login_time']),
             models.Index(fields=['is_active']),
+            models.Index(fields=['tab_id']),
+            models.Index(fields=['parent_session_id']),
+            models.Index(fields=['last_activity']),
+            models.Index(fields=['user', 'is_active', 'parent_session_id']),
         ]
 
     @staticmethod
@@ -79,6 +155,7 @@ class UserSession(models.Model):
         """Get current time in IST timezone"""
         ist = pytz.timezone('Asia/Kolkata')
         return timezone.now().astimezone(ist)
+        return timezone.now().astimezone(IST_TIMEZONE)
 
     @staticmethod
     def convert_to_ist(utc_time):
@@ -87,6 +164,26 @@ class UserSession(models.Model):
             return None
         ist = pytz.timezone('Asia/Kolkata')
         return utc_time.astimezone(ist)
+        return utc_time.astimezone(IST_TIMEZONE)
+    
+    @staticmethod
+    def convert_to_utc(ist_time):
+        """Convert IST time to UTC for database storage"""
+        if ist_time is None:
+            return None
+        if timezone.is_naive(ist_time):
+            ist_time = IST_TIMEZONE.localize(ist_time)
+        return ist_time.astimezone(timezone.utc)
+    
+    @staticmethod
+    def now_ist():
+        """Get current time in IST timezone"""
+        return timezone.now().astimezone(IST_TIMEZONE)
+    
+    @staticmethod
+    def now_utc():
+        """Get current time in UTC for database storage"""
+        return timezone.now()
 
     def get_login_time_ist(self):
         """Get login time in IST timezone"""
@@ -253,11 +350,422 @@ class UserSession(models.Model):
         minutes = int((total_seconds % 3600) // 60)
         
         return f"{hours}h {minutes}m"
+
+    # ========== ENHANCED MULTI-TAB TRACKING METHODS ==========
+    
+    @classmethod
+    def create_tab_session(cls, user, tab_data, parent_session_id=None):
+        """Create a new tab session linked to a parent session"""
+        import uuid
+        
+        current_time = timezone.now()
+        tab_id = tab_data.get('tab_id') or str(uuid.uuid4())
+        
+        # If no parent session provided, generate one
+        if not parent_session_id:
+            parent_session_id = f"{user.id}_{current_time.strftime('%Y%m%d_%H%M%S')}"
+        
+        # Check if this is the first tab (primary tab)
+        existing_tabs = cls.objects.filter(
+            user=user,
+            parent_session_id=parent_session_id,
+            is_active=True
+        ).count()
+        
+        is_primary = existing_tabs == 0
+        
+        tab_session = cls.objects.create(
+            user=user,
+            session_key=tab_data.get('session_key', cls.generate_session_key()),
+            ip_address=tab_data.get('ip_address'),
+            user_agent=tab_data.get('user_agent'),
+            login_time=current_time,
+            last_activity=current_time,
+            tab_id=tab_id,
+            tab_title=tab_data.get('title', '')[:255],
+            tab_url=tab_data.get('url', ''),
+            tab_opened_time=current_time,
+            tab_last_focus=current_time,
+            is_primary_tab=is_primary,
+            parent_session_id=parent_session_id,
+            session_fingerprint=tab_data.get('fingerprint'),
+            device_type=tab_data.get('device_type'),
+            screen_resolution=tab_data.get('screen_resolution'),
+            timezone_offset=tab_data.get('timezone_offset'),
+            language=tab_data.get('language'),
+            is_active=True
+        )
+        
+        # Set location
+        tab_session.location = tab_session.determine_location()
+        tab_session.save(update_fields=['location'])
+        
+        return tab_session
+    
+    def update_tab_activity(self, activity_data):
+        """Update tab-specific activity and tracking"""
+        current_time = timezone.now()
+        
+        # Update basic activity
+        self.last_activity = current_time
+        
+        # Track tab focus changes
+        if activity_data.get('gained_focus'):
+            if self.tab_last_focus:
+                # Add to background time
+                background_duration = current_time - self.tab_last_focus
+                self.background_time += background_duration
+            
+            self.tab_last_focus = current_time
+            self.tab_switches += 1
+            
+            # Log visibility change
+            if not self.tab_visibility_log:
+                self.tab_visibility_log = []
+            self.tab_visibility_log.append({
+                'timestamp': current_time.isoformat(),
+                'action': 'focus_gained',
+                'url': activity_data.get('url', self.tab_url)
+            })
+        
+        # Track page views
+        if activity_data.get('page_change'):
+            self.tab_url = activity_data.get('url', self.tab_url)
+            self.tab_title = activity_data.get('title', self.tab_title)[:255]
+            
+            if not self.page_views:
+                self.page_views = []
+            self.page_views.append({
+                'url': self.tab_url,
+                'title': self.tab_title,
+                'timestamp': current_time.isoformat(),
+                'referrer': activity_data.get('referrer', '')
+            })
+        
+        # Track interactions
+        interaction_type = activity_data.get('interaction_type')
+        if interaction_type == 'click':
+            if not self.click_events:
+                self.click_events = []
+            self.click_events.append({
+                'timestamp': current_time.isoformat(),
+                'element': activity_data.get('element_info', {}),
+                'coordinates': activity_data.get('coordinates', {})
+            })
+        
+        elif interaction_type == 'scroll':
+            if not self.scroll_events:
+                self.scroll_events = []
+            self.scroll_events.append({
+                'timestamp': current_time.isoformat(),
+                'scroll_position': activity_data.get('scroll_position', 0),
+                'direction': activity_data.get('scroll_direction', 'down')
+            })
+        
+        elif interaction_type == 'keyboard':
+            if not self.keyboard_events:
+                self.keyboard_events = []
+            self.keyboard_events.append({
+                'timestamp': current_time.isoformat(),
+                'key_count': activity_data.get('key_count', 1),
+                'input_type': activity_data.get('input_type', 'typing')
+            })
+        
+        elif interaction_type == 'mouse_move':
+            self.mouse_movements += 1
+        
+        # Update performance metrics
+        if activity_data.get('performance_data'):
+            if not self.performance_metrics:
+                self.performance_metrics = {}
+            self.performance_metrics.update(activity_data['performance_data'])
+        
+        # Update device info
+        if activity_data.get('battery_level') is not None:
+            self.battery_level = activity_data['battery_level']
+        
+        if activity_data.get('connection_type'):
+            self.connection_type = activity_data['connection_type']
+        
+        # Record cross-tab communication
+        if activity_data.get('broadcast_sent'):
+            self.broadcast_messages_sent += 1
+        
+        if activity_data.get('broadcast_received'):
+            self.broadcast_messages_received += 1
+            self.cross_tab_activity_syncs += 1
+        
+        self.save()
+        
+        return self
+    
+    def calculate_productivity_score(self):
+        """Calculate productivity score based on activity patterns"""
+        if not self.is_active or not self.last_activity:
+            return 0
+        
+        current_time = timezone.now()
+        session_duration = (current_time - self.login_time).total_seconds()
+        
+        if session_duration < 300:  # Less than 5 minutes
+            return 0
+        
+        # Base score from working hours vs idle time
+        idle_seconds = self.idle_time.total_seconds() if self.idle_time else 0
+        working_ratio = max(0, (session_duration - idle_seconds) / session_duration)
+        base_score = working_ratio * 70  # 70% weight for time-based productivity
+        
+        # Interaction score (30% weight)
+        interaction_score = 0
+        if self.click_events:
+            interaction_score += min(len(self.click_events) * 2, 15)
+        if self.keyboard_events:
+            interaction_score += min(len(self.keyboard_events) * 1, 10)
+        if self.scroll_events:
+            interaction_score += min(len(self.scroll_events) * 0.5, 5)
+        
+        # Page view diversity bonus
+        if self.page_views:
+            unique_pages = len(set(pv.get('url', '') for pv in self.page_views))
+            if unique_pages > 1:
+                interaction_score += min(unique_pages, 5)
+        
+        # Penalty for excessive tab switching
+        if self.tab_switches > 20:
+            interaction_score -= min(self.tab_switches - 20, 10)
+        
+        total_score = min(base_score + interaction_score, 100)
+        self.productivity_score = total_score
+        
+        # Determine session quality
+        if total_score >= 80:
+            self.session_quality = 'high'
+        elif total_score >= 50:
+            self.session_quality = 'medium'
+        else:
+            self.session_quality = 'low'
+        
+        return total_score
+    
+    def calculate_engagement_score(self):
+        """Calculate user engagement score"""
+        if not self.is_active:
+            return 0
+        
+        current_time = timezone.now()
+        session_duration = (current_time - self.login_time).total_seconds() / 60  # in minutes
+        
+        if session_duration < 5:
+            return 0
+        
+        # Focus time ratio
+        focus_time = self.tab_total_focus_time.total_seconds() if self.tab_total_focus_time else 0
+        background_time = self.background_time.total_seconds() if self.background_time else 0
+        total_tab_time = focus_time + background_time
+        
+        focus_ratio = focus_time / total_tab_time if total_tab_time > 0 else 0
+        
+        # Interaction frequency
+        total_interactions = (
+            len(self.click_events or []) +
+            len(self.keyboard_events or []) +
+            len(self.scroll_events or [])
+        )
+        interaction_rate = total_interactions / session_duration
+        
+        # Page view engagement
+        page_view_rate = len(self.page_views or []) / session_duration
+        
+        # Calculate engagement score
+        engagement = (
+            focus_ratio * 40 +  # 40% weight for focus time
+            min(interaction_rate * 20, 30) +  # 30% weight for interactions
+            min(page_view_rate * 10, 20) +  # 20% weight for page views
+            min(session_duration / 60 * 5, 10)  # 10% weight for session length
+        )
+        
+        self.engagement_score = min(engagement, 100)
+        return self.engagement_score
+    
+    def check_security_anomalies(self, new_fingerprint=None):
+        """Check for potential security issues"""
+        anomalies = []
+        
+        # Fingerprint mismatch
+        if new_fingerprint and self.session_fingerprint:
+            if new_fingerprint != self.session_fingerprint:
+                anomalies.append({
+                    'type': 'fingerprint_mismatch',
+                    'severity': 'medium',
+                    'old_fingerprint': self.session_fingerprint,
+                    'new_fingerprint': new_fingerprint,
+                    'timestamp': timezone.now().isoformat()
+                })
+        
+        # Unusual activity patterns
+        if self.click_events and len(self.click_events) > 1000:  # Excessive clicking
+            anomalies.append({
+                'type': 'excessive_clicking',
+                'severity': 'low',
+                'click_count': len(self.click_events),
+                'timestamp': timezone.now().isoformat()
+            })
+        
+        # Rapid tab switching (potential bot behavior)
+        if self.tab_switches > 100:
+            anomalies.append({
+                'type': 'excessive_tab_switching',
+                'severity': 'medium',
+                'switch_count': self.tab_switches,
+                'timestamp': timezone.now().isoformat()
+            })
+        
+        # Update security incidents
+        if anomalies:
+            if not self.security_incidents:
+                self.security_incidents = {}
+            
+            incident_key = f"incident_{timezone.now().strftime('%Y%m%d_%H%M%S')}"
+            self.security_incidents[incident_key] = anomalies
+            self.save(update_fields=['security_incidents'])
+        
+        return anomalies
+    
+    def should_show_inactivity_warning(self):
+        """Check if inactivity warning should be shown"""
+        if not self.auto_logout_enabled or not self.is_active:
+            return False
+        
+        current_time = timezone.now()
+        inactive_duration = (current_time - self.last_activity).total_seconds() / 60
+        warning_threshold = self.WARNING_THRESHOLD_MINUTES
+        
+        # Don't show if already shown recently
+        if self.last_warning_time:
+            time_since_warning = (current_time - self.last_warning_time).total_seconds() / 60
+            if time_since_warning < 2:  # Don't show again within 2 minutes
+                return False
+        
+        return inactive_duration >= warning_threshold
+    
+    def should_auto_logout(self):
+        """Check if session should be automatically logged out"""
+        if not self.auto_logout_enabled or not self.is_active:
+            return False
+        
+        current_time = timezone.now()
+        inactive_duration = (current_time - self.last_activity).total_seconds() / 60
+        timeout_threshold = self.custom_timeout or self.AUTO_LOGOUT_MINUTES
+        
+        return inactive_duration >= timeout_threshold
+    
+    def record_inactivity_warning(self):
+        """Record that an inactivity warning was shown"""
+        self.inactivity_warnings_sent += 1
+        self.last_warning_time = timezone.now()
+        self.save(update_fields=['inactivity_warnings_sent', 'last_warning_time'])
+    
+    def get_related_tabs(self):
+        """Get all tabs from the same browser session"""
+        if not self.parent_session_id:
+            return UserSession.objects.filter(id=self.id)
+        
+        return UserSession.objects.filter(
+            parent_session_id=self.parent_session_id,
+            user=self.user,
+            is_active=True
+        ).order_by('tab_opened_time')
+    
+    def get_session_summary(self):
+        """Get comprehensive session summary"""
+        current_time = timezone.now()
+        session_duration = (current_time - self.login_time).total_seconds() / 60
+        
+        related_tabs = self.get_related_tabs()
+        
+        return {
+            'session_id': self.parent_session_id or self.tab_id,
+            'tab_id': self.tab_id,
+            'is_primary_tab': self.is_primary_tab,
+            'total_tabs': related_tabs.count(),
+            'session_duration_minutes': session_duration,
+            'idle_time_minutes': self.idle_time.total_seconds() / 60 if self.idle_time else 0,
+            'productivity_score': self.calculate_productivity_score(),
+            'engagement_score': self.calculate_engagement_score(),
+            'total_page_views': len(self.page_views or []),
+            'total_interactions': (
+                len(self.click_events or []) +
+                len(self.keyboard_events or []) +
+                len(self.scroll_events or [])
+            ),
+            'tab_switches': self.tab_switches,
+            'security_incidents': len(self.security_incidents or {}),
+            'device_info': {
+                'type': self.device_type,
+                'screen_resolution': self.screen_resolution,
+                'connection_type': self.connection_type,
+                'battery_level': self.battery_level
+            }
+        }
+    
+    @classmethod
+    def cleanup_expired_sessions(cls, hours=24):
+        """Clean up old expired sessions"""
+        cutoff_time = timezone.now() - timedelta(hours=hours)
+        
+        expired_sessions = cls.objects.filter(
+            is_active=False,
+            logout_time__lt=cutoff_time
+        )
+        
+        count = expired_sessions.count()
+        expired_sessions.delete()
+        
+        return count
+    
+    @classmethod
+    def get_multi_tab_analytics(cls, user=None, days=7):
+        """Get analytics for multi-tab usage"""
+        start_date = timezone.now() - timedelta(days=days)
+        
+        queryset = cls.objects.filter(login_time__gte=start_date)
+        if user:
+            queryset = queryset.filter(user=user)
+        
+        # Group by parent session
+        sessions_by_parent = {}
+        for session in queryset:
+            parent_id = session.parent_session_id or session.tab_id
+            if parent_id not in sessions_by_parent:
+                sessions_by_parent[parent_id] = []
+            sessions_by_parent[parent_id].append(session)
+        
+        # Calculate analytics
+        total_sessions = len(sessions_by_parent)
+        multi_tab_sessions = sum(1 for tabs in sessions_by_parent.values() if len(tabs) > 1)
+        avg_tabs_per_session = sum(len(tabs) for tabs in sessions_by_parent.values()) / total_sessions if total_sessions > 0 else 0
+        
+        return {
+            'total_sessions': total_sessions,
+            'multi_tab_sessions': multi_tab_sessions,
+            'multi_tab_percentage': (multi_tab_sessions / total_sessions * 100) if total_sessions > 0 else 0,
+            'avg_tabs_per_session': avg_tabs_per_session,
+            'max_tabs_in_session': max(len(tabs) for tabs in sessions_by_parent.values()) if sessions_by_parent else 0
+        }
             
     def save(self, *args, **kwargs):
         # Set location if not already set for new sessions
         if not self.pk and not self.location:
             self.location = self.determine_location()
+        
+        # Generate tab_id if not set
+        if not self.tab_id:
+            import uuid
+            self.tab_id = str(uuid.uuid4())
+        
+        # Set tab opened time for new records
+        if not self.pk and not self.tab_opened_time:
+            self.tab_opened_time = self.login_time
             
         # All times should already be in UTC when saved to DB
         super().save(*args, **kwargs)
