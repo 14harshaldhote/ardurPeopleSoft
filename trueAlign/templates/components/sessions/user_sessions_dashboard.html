@@ -1,0 +1,500 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}User Sessions Dashboard{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+<style>
+    .loader {
+        border: 4px solid #f3f4f6;
+        border-top: 4px solid #3b82f6;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .activity-indicator {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 4px;
+    }
+    .activity-active { background-color: #10b981; }
+    .activity-idle { background-color: #f59e0b; }
+    .activity-inactive { background-color: #ef4444; }
+
+    .heatmap-cell {
+        width: 20px;
+        height: 20px;
+        border: 1px solid #e5e7eb;
+        cursor: pointer;
+    }
+    .heatmap-0 { background-color: #f9fafb; }
+    .heatmap-1 { background-color: #dbeafe; }
+    .heatmap-2 { background-color: #93c5fd; }
+    .heatmap-3 { background-color: #3b82f6; }
+    .heatmap-4 { background-color: #1e40af; }
+    .heatmap-5 { background-color: #1e3a8a; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="bg-white rounded-lg shadow mb-6 p-6">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">User Sessions Dashboard</h1>
+                    <p class="text-sm text-gray-600 mt-1">Monitor employee activity and productivity</p>
+                </div>
+                <div class="flex space-x-3">
+                    <button id="refreshBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-200">
+                        <i class="fas fa-sync-alt mr-2"></i>Refresh
+                    </button>
+                    <button id="exportBtn" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition duration-200">
+                        <i class="fas fa-download mr-2"></i>Export
+                    </button>
+                </div>
+            </div>
+
+            <!-- Current Time -->
+            <div class="text-sm text-gray-500">
+                Last updated: <span id="currentTime">{{ current_time_ist|date:"Y-m-d H:i:s" }} IST</span>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="bg-white rounded-lg shadow mb-6 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Filters</h2>
+            <form method="GET" id="filterForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Date Range -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Date Range</label>
+                    <select name="date_range" id="dateRange" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="today" {% if filters.date_range == 'today' %}selected{% endif %}>Today</option>
+                        <option value="yesterday" {% if filters.date_range == 'yesterday' %}selected{% endif %}>Yesterday</option>
+                        <option value="last_7_days" {% if filters.date_range == 'last_7_days' %}selected{% endif %}>Last 7 Days</option>
+                        <option value="last_30_days" {% if filters.date_range == 'last_30_days' %}selected{% endif %}>Last 30 Days</option>
+                        <option value="this_month" {% if filters.date_range == 'this_month' %}selected{% endif %}>This Month</option>
+                        <option value="last_month" {% if filters.date_range == 'last_month' %}selected{% endif %}>Last Month</option>
+                        <option value="custom" {% if filters.date_range == 'custom' %}selected{% endif %}>Custom Range</option>
+                    </select>
+                </div>
+
+                <!-- Custom Date Range -->
+                <div id="customDates" class="{% if filters.date_range != 'custom' %}hidden{% endif %}">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">From - To</label>
+                    <div class="flex space-x-2">
+                        <input type="date" name="date_from" value="{{ filters.date_from|date:'Y-m-d' }}" class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <input type="date" name="date_to" value="{{ filters.date_to|date:'Y-m-d' }}" class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                </div>
+
+                <!-- User Filter -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">User</label>
+                    <select name="user_filter" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">All Users</option>
+                        {% for user in users_list %}
+                        <option value="{{ user.id }}" {% if filters.user_filter == user.id|stringformat:"s" %}selected{% endif %}>{{ user.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Location Filter -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                    <select name="location_filter" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">All Locations</option>
+                        {% for location in locations %}
+                        <option value="{{ location }}" {% if filters.location_filter == location %}selected{% endif %}>{{ location }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Device Filter -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Device Type</label>
+                    <select name="device_filter" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">All Devices</option>
+                        {% for device in device_types %}
+                        <option value="{{ device }}" {% if filters.device_filter == device %}selected{% endif %}>{{ device|title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Status Filter -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <select name="status_filter" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">All Sessions</option>
+                        <option value="active" {% if filters.status_filter == 'active' %}selected{% endif %}>Active</option>
+                        <option value="inactive" {% if filters.status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
+                    </select>
+                </div>
+
+                <!-- IP Type Filter -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">IP Type</label>
+                    <select name="ip_type_filter" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">All IPs</option>
+                        <option value="office" {% if filters.ip_type_filter == 'office' %}selected{% endif %}>Office</option>
+                        <option value="remote" {% if filters.ip_type_filter == 'remote' %}selected{% endif %}>Remote</option>
+                    </select>
+                </div>
+
+                <!-- Quality Filter -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Session Quality</label>
+                    <select name="quality_filter" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">All Qualities</option>
+                        {% for quality in session_qualities %}
+                        <option value="{{ quality }}" {% if filters.quality_filter == quality %}selected{% endif %}>{{ quality|title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </form>
+        </div>
+
+        <!-- Overview Metrics -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-users text-blue-600"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Total Sessions</p>
+                        <p class="text-2xl font-semibold text-gray-900">{{ overview_metrics.total_sessions }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-circle text-green-600"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Currently Online</p>
+                        <p class="text-2xl font-semibold text-gray-900">{{ overview_metrics.currently_online }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-chart-line text-purple-600"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Avg Productivity</p>
+                        <p class="text-2xl font-semibold text-gray-900">{{ overview_metrics.avg_productivity_score }}%</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-clock text-yellow-600"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Avg Session Time</p>
+                        <p class="text-2xl font-semibold text-gray-900">{{ overview_metrics.avg_session_duration_minutes }}m</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Activity Feed -->
+        <div class="bg-white rounded-lg shadow mb-6">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-lg font-semibold text-gray-900">Live Activity Feed</h2>
+                    <div class="flex items-center space-x-2">
+                        <div class="loader" id="liveLoader" style="display: none;"></div>
+                        <span class="text-sm text-gray-500">Auto-refresh: 30s</span>
+                    </div>
+                </div>
+            </div>
+            <div class="p-6">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Device</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current URL</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="liveActivityTable" class="bg-white divide-y divide-gray-200">
+                            {% for activity in live_activity_data %}
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 h-10 w-10">
+                                            <div class="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                                                <span class="text-sm font-medium text-gray-700">{{ activity.user.first_name.0|default:activity.user.username.0 }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-gray-900">{{ activity.user.username }}</div>
+                                            <div class="text-sm text-gray-500">{{ activity.user.first_name }} {{ activity.user.last_name }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <span class="activity-indicator activity-{{ activity.activity_status }}"></span>
+                                        <span class="text-sm text-gray-900 capitalize">{{ activity.activity_status }}</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {{ activity.session_duration_minutes }}m
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if activity.location == 'Office' %}bg-green-100 text-green-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+                                        {{ activity.location|default:"Unknown" }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {{ activity.device_type|title }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 max-w-xs truncate">
+                                    {{ activity.current_url|default:"Unknown" }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button onclick="terminateSession({{ activity.session_id }})" class="text-red-600 hover:text-red-900">
+                                        Terminate
+                                    </button>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">No active sessions found</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Tabs -->
+        <div class="bg-white rounded-lg shadow mb-6">
+            <div class="border-b border-gray-200">
+                <nav class="-mb-px flex space-x-8 px-6" aria-label="Tabs">
+                    <button class="tab-button active py-4 px-1 border-b-2 font-medium text-sm" data-tab="user-insights">
+                        User Insights
+                    </button>
+                    <button class="tab-button py-4 px-1 border-b-2 font-medium text-sm" data-tab="tab-behavior">
+                        Tab Behavior
+                    </button>
+                    <button class="tab-button py-4 px-1 border-b-2 font-medium text-sm" data-tab="security">
+                        Security
+                    </button>
+                    <button class="tab-button py-4 px-1 border-b-2 font-medium text-sm" data-tab="performance">
+                        Performance
+                    </button>
+                    <button class="tab-button py-4 px-1 border-b-2 font-medium text-sm" data-tab="quality">
+                        Quality
+                    </button>
+                </nav>
+            </div>
+
+            <!-- User Insights Tab -->
+            <div id="user-insights" class="tab-content p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Top User Activity</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sessions</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg Duration</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Productivity</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Engagement</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Office %</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for user in user_insights %}
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">{{ user.user__username }}</div>
+                                    <div class="text-sm text-gray-500">{{ user.user__first_name }} {{ user.user__last_name }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">{{ user.total_sessions }}</div>
+                                    <div class="text-sm text-gray-500">{{ user.active_sessions }} active</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {{ user.avg_session_duration }}m
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="w-16 bg-gray-200 rounded-full h-2">
+                                            <div class="bg-blue-600 h-2 rounded-full" style="width: {{ user.avg_productivity }}%"></div>
+                                        </div>
+                                        <span class="ml-2 text-sm text-gray-900">{{ user.avg_productivity }}%</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="w-16 bg-gray-200 rounded-full h-2">
+                                            <div class="bg-green-600 h-2 rounded-full" style="width: {{ user.avg_engagement }}%"></div>
+                                        </div>
+                                        <span class="ml-2 text-sm text-gray-900">{{ user.avg_engagement }}%</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {% widthratio user.office_sessions user.total_sessions 100 %}%
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab Behavior Tab -->
+            <div id="tab-behavior" class="tab-content p-6 hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Tab Statistics</h3>
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                <span class="text-sm font-medium text-gray-700">Avg Tab Switches/Session</span>
+                                <span class="text-sm font-semibold text-gray-900">{{ tab_analysis.avg_tab_switches_per_session }}</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                <span class="text-sm font-medium text-gray-700">Multi-tab Sessions</span>
+                                <span class="text-sm font-semibold text-gray-900">{{ tab_analysis.sessions_with_multiple_tabs }}</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                <span class="text-sm font-medium text-gray-700">High Tab Switchers</span>
+                                <span class="text-sm font-semibold text-gray-900">{{ tab_analysis.high_tab_switchers_count }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Most Visited URLs</h3>
+                        <div class="space-y-2 max-h-64 overflow-y-auto">
+                            {% for url, count in tab_analysis.most_visited_urls %}
+                            <div class="flex justify-between items-center p-2 bg-gray-50 rounded">
+                                <span class="text-sm text-gray-700 truncate flex-1 mr-2">{{ url }}</span>
+                                <span class="text-sm font-semibold text-gray-900">{{ count }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Security Tab -->
+            <div id="security" class="tab-content p-6 hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Security Overview</h3>
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                <span class="text-sm font-medium text-gray-700">Unique IP Addresses</span>
+                                <span class="text-sm font-semibold text-gray-900">{{ security_insights.unique_ips }}</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                <span class="text-sm font-medium text-gray-700">Office Sessions</span>
+                                <span class="text-sm font-semibold text-gray-900">{{ security_insights.office_sessions }} ({{ security_insights.office_percentage }}%)</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                <span class="text-sm font-medium text-gray-700">Remote Sessions</span>
+                                <span class="text-sm font-semibold text-gray-900">{{ security_insights.remote_sessions }}</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                <span class="text-sm font-medium text-gray-700">Security Incidents</span>
+                                <span class="text-sm font-semibold text-gray-900">{{ security_insights.sessions_with_security_incidents }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Top IPs by Usage</h3>
+                        <div class="space-y-2 max-h-64 overflow-y-auto">
+                            {% for ip_data in security_insights.top_ips_by_usage %}
+                            <div class="flex justify-between items-center p-2 bg-gray-50 rounded">
+                                <span class="text-sm text-gray-700">{{ ip_data.ip_address }}</span>
+                                <div class="text-right">
+                                    <div class="text-sm font-semibold text-gray-900">{{ ip_data.session_count }} sessions</div>
+                                    <div class="text-xs text-gray-500">{{ ip_data.user_count }} users</div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Tab -->
+            <div id="performance" class="tab-content p-6 hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Performance Metrics</h3>
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                <span class="text-sm font-medium text-gray-700">Avg Page Load Time</span>
+                                <span class="text-sm font-semibold text-gray-900">{{ performance_insights.avg_page_load_time }}s</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                <span class="text-sm font-medium text-gray-700">Avg Mouse Movements</span>
+                                <span class="text-sm font-semibold text-gray-900">{{ performance_insights.avg_mouse_movements }}</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                <span class="text-sm font-medium text-gray-700">Avg Interactions</span>
+                                <span class="text-sm font-semibold text-gray-900">{{ performance_insights.avg_interactions_per_session }}</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                <span class="text-sm font-medium text-gray-700">Slow Sessions</span>
+                                <span class="text-sm font-semibold text-gray-900">{{ performance_insights.slow_sessions }}</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                <span class="text-sm font-medium text-gray-700">Avg Session Duration</span>
+                                <span class="text-sm font-semibold text-gray-900">{{ performance_insights.avg_session_duration }}s</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                <span class="text-sm font-medium text-gray-700">Avg Page Views</span>
+                                <span class="text-sm font-semibold text-gray-900">{{ performance_insights.avg_page_views_per_session }}</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                <span class="text-sm font-medium text-gray-700">Avg Interactions</span>
+                                <span class="text-sm font-semibold text-gray-900">{{ performance_insights.avg_interactions_per_session }}</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                <span class="text-sm font-medium text-gray-700">Avg Interactions</span>
+                                <span class="text-sm font-semibold text-gray-900">{{ performance_insights.avg_interactions_per_session }}</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                <span class="text-sm font-medium text-gray-700">Avg Interactions</span>
+                                <span class="text-sm font-semibold text-gray-900">{{ performance_insights.avg_interactions_per_session }}</span>
+                            </div>
+                                { % endblock %}

@@ -1,694 +1,866 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="csrf-token" content="{{ csrf_token }}" />
+        <title>{% block title %}Tracking Web Application{% endblock %}</title>
+        {% load static %}
+        <script
+            src="https://cdn.jsdelivr.net/npm/alpinejs@2.8.2/dist/alpine.min.js"
+            defer
+        ></script>
+        <link
+            href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+            rel="stylesheet"
+        />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Linlegrey:wght@400;700&display=swap"
+            rel="stylesheet"
+        />
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/reconnecting-websocket/1.0.0/reconnecting-websocket.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token }}">
-    <title>{% block title %}Tracking Web Application{% endblock %}</title>
-    {% load static %}
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@2.8.2/dist/alpine.min.js" defer></script>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Linlegrey:wght@400;700&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/reconnecting-websocket/1.0.0/reconnecting-websocket.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
-
-    <style>
-        body {
-            background-color: #F2F3F6;
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-            position: relative;
-            font-family: 'Linlegrey', 'Inter', 'Segoe UI', Arial, sans-serif;
-        }
-
-        .greeting {
-            font-size: 2.5rem;
-            font-weight: 300;
-            color: #1F2937;
-            letter-spacing: -0.025em;
-            line-height: 1.2;
-            margin-bottom: 0.5rem;
-        }
-
-        .gradient-text {
-            background: linear-gradient(45deg, #F29F67 0%, #d54c5a 50%, #4252b9 100%);
-            background-size: 200% 200%;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: gradientAnimation 5s ease infinite, morphGradient 3s ease-in-out infinite;
-            border-bottom: 2px solid #118748;
-        }
-
-        .gradient-text:hover {
-            transform: perspective(500px) rotateX(10deg) scale(1.04);
-            transition: 0.3s;
-        }
-
-        @keyframes gradientAnimation {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        .navbar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100vh;
-            width: 240px;
-            overflow-y: auto;
-            transition: all 0.3s cubic-bezier(.4,0,.2,1);
-            border-right: 1px solid #e5e7eb;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
-            background: #fff;
-            z-index: 50;
-        }
-
-        .navbar-collapsed {
-            width: 64px !important;
-            min-width: 64px !important;
-        }
-
-        .navbar-mobile {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw !important;
-            height: 56px !important;
-            min-width: 0 !important;
-            border-right: none !important;
-            border-bottom: 1px solid #e5e7eb;
-            box-shadow: 0 2px 4px -1px rgba(0,0,0,0.03);
-            z-index: 60;
-        }
-
-        .content-wrapper {
-            margin-left: 240px;
-            padding: 20px;
-            flex-grow: 1;
-            overflow-y: auto;
-            min-height: calc(100vh - 40px);
-            padding-bottom: 80px;
-            transition: margin-left 0.3s cubic-bezier(.4,0,.2,1);
-        }
-
-        .content-wrapper-collapsed {
-            margin-left: 64px !important;
-        }
-
-        .content-wrapper-mobile {
-            margin-left: 0 !important;
-            margin-top: 56px !important;
-            padding: 12px !important;
-            min-height: calc(100vh - 56px - 40px) !important;
-        }
-
-        .watermark-container {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 50;
-            background: rgba(255, 255, 255, 0.211);
-            backdrop-filter: blur(8px);
-            padding: 12px 16px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.3s ease;
-        }
-
-        .watermark-container:hover {
-            transform: translateY(-2px) scale(1.03);
-            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-            background: rgba(255,255,255,0.56);
-        }
-
-        .watermark-image {
-            width: 128px;
-            height: auto;
-            object-fit: contain;
-            display: block;
-        }
-
-        @media (max-width: 1024px) {
-            .navbar {
-                width: 64px;
-                min-width: 64px;
+        <style>
+            body {
+                background-color: #f2f3f6;
+                margin: 0;
+                padding: 0;
+                min-height: 100vh;
+                position: relative;
+                font-family:
+                    "Linlegrey", "Inter", "Segoe UI", Arial, sans-serif;
             }
+
+            .greeting {
+                font-size: 2.5rem;
+                font-weight: 300;
+                color: #1f2937;
+                letter-spacing: -0.025em;
+                line-height: 1.2;
+                margin-bottom: 0.5rem;
+            }
+
+            .gradient-text {
+                background: linear-gradient(
+                    45deg,
+                    #f29f67 0%,
+                    #d54c5a 50%,
+                    #4252b9 100%
+                );
+                background-size: 200% 200%;
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                animation:
+                    gradientAnimation 5s ease infinite,
+                    morphGradient 3s ease-in-out infinite;
+                border-bottom: 2px solid #118748;
+            }
+
+            .gradient-text:hover {
+                transform: perspective(500px) rotateX(10deg) scale(1.04);
+                transition: 0.3s;
+            }
+
+            @keyframes gradientAnimation {
+                0% {
+                    background-position: 0% 50%;
+                }
+                50% {
+                    background-position: 100% 50%;
+                }
+                100% {
+                    background-position: 0% 50%;
+                }
+            }
+
+            /* Content wrapper that adjusts with navbar state */
             .content-wrapper {
-                margin-left: 64px;
+                margin-left: 16rem; /* 256px for expanded navbar */
+                padding: 20px;
+                flex-grow: 1;
+                overflow-y: auto;
+                min-height: calc(100vh - 40px);
+                padding-bottom: 80px;
+                transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             }
-        }
 
-        @media (max-width: 768px) {
-            .navbar {
-                width: 100vw !important;
-                height: 56px !important;
-                min-width: 0 !important;
-                border-right: none !important;
-                border-bottom: 1px solid #e5e7eb;
-                box-shadow: 0 2px 4px -1px rgba(0,0,0,0.03);
-                z-index: 60;
+            .content-wrapper-collapsed {
+                margin-left: 4rem; /* 64px for collapsed navbar */
             }
-            .content-wrapper {
-                margin-left: 0 !important;
-                margin-top: 56px !important;
-                padding: 12px !important;
-                min-height: calc(100vh - 56px - 40px) !important;
+
+            /* Mobile styles */
+            @media (max-width: 768px) {
+                .content-wrapper {
+                    margin-left: 0;
+                    margin-top: 4rem; /* Space for mobile navbar header */
+                    padding: 12px;
+                    min-height: calc(100vh - 4rem - 40px);
+                }
             }
+
             .watermark-container {
-                right: 8px;
-                bottom: 8px;
-                padding: 8px 10px;
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                z-index: 50;
+                background: rgba(255, 255, 255, 0.211);
+                backdrop-filter: blur(8px);
+                padding: 12px 16px;
+                border-radius: 12px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                transition: all 0.3s ease;
             }
-            .watermark-image {
-                width: 80px;
-            }
-        }
 
-        @media (max-width: 480px) {
-            .content-wrapper {
-                padding: 6px !important;
-                margin-top: 56px !important;
-                min-height: calc(100vh - 56px - 20px) !important;
+            .watermark-container:hover {
+                transform: translateY(-2px) scale(1.03);
+                box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+                background: rgba(255, 255, 255, 0.56);
             }
-            .watermark-container {
-                flex-direction: column;
-                align-items: flex-end;
-                gap: 2px;
-                padding: 6px 8px;
-            }
-            .watermark-image {
-                width: 60px;
-            }
-        }
 
-        .navbar-toggle-btn {
-            display: none;
-            position: absolute;
-            top: 16px;
-            right: 16px;
-            background: #f3f4f6;
-            border: none;
-            border-radius: 8px;
-            padding: 8px;
-            z-index: 70;
-            cursor: pointer;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-            transition: background 0.2s;
-        }
-        .navbar-toggle-btn:hover {
-            background: #e5e7eb;
-        }
-        @media (max-width: 1024px) {
-            .navbar-toggle-btn {
+            .watermark-image {
+                width: 128px;
+                height: auto;
+                object-fit: contain;
                 display: block;
             }
-        }
-        @media (max-width: 768px) {
-            .navbar-toggle-btn {
-                top: 10px;
-                right: 10px;
+
+            @media (max-width: 480px) {
+                .content-wrapper {
+                    padding: 6px !important;
+                    margin-top: 4rem !important;
+                    min-height: calc(100vh - 4rem - 20px) !important;
+                }
+                .watermark-container {
+                    flex-direction: column;
+                    align-items: flex-end;
+                    gap: 2px;
+                    padding: 6px 8px;
+                }
+                .watermark-image {
+                    width: 60px;
+                }
             }
-        }
-        .logo-container {
-            transition: all 0.3s ease-in-out;
-            transform-origin: center;
-        }
-        .login-logo, .dashboard-logo {
-            height: 3rem;
-            width: auto;
-            opacity: 1;
-        }
-    </style>
-</head>
 
-<body class="min-h-screen flex flex-col">
-    <div class="flex flex-1 min-h-0" x-data="navbarState()" x-init="init()">
-        <!-- Responsive Navbar -->
-        <nav :class="navbarClass" id="main-navbar">
-            <button class="navbar-toggle-btn" @click="toggleNavbar" aria-label="Toggle navigation">
-                <svg x-show="!collapsed" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
-                     viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M4 6h16M4 12h16M4 18h16"/>
-                </svg>
-                <svg x-show="collapsed" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
-                     viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-            </button>
+            .logo-container {
+                transition: all 0.3s ease-in-out;
+                transform-origin: center;
+            }
+
+            .login-logo,
+            .dashboard-logo {
+                height: 3rem;
+                width: auto;
+                opacity: 1;
+            }
+
+            /* Navbar item styling */
+            .nav-item {
+                @apply transition-all duration-200;
+            }
+
+            /* Animation for elements */
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .card,
+            .btn-primary,
+            .btn-secondary {
+                animation: fadeIn 0.5s ease-out;
+            }
+        </style>
+    </head>
+
+    <body class="min-h-screen flex flex-col">
+        <div class="flex flex-1 min-h-0">
+            <!-- Navbar - Now controlled by Alpine directly in navbar.html -->
             {% include 'navbar.html' %}
-        </nav>
 
-        <main :class="contentClass" class="content-wrapper flex-1 min-w-0 transition-all duration-300">
-            <header class="flex flex-col sm:flex-row justify-between items-center p-4 sm:p-6 gap-4 sm:gap-0">
-                <p id="greeting" class="font-medium text-3xl sm:text-4xl"></p>
-                <div class="text-sm text-white flex items-center space-x-2 sm:space-x-4">
-                    <span class="font-semibold text-black username">{{ user.username }}</span>
-                    <a href="{% url 'logout' %}" class="px-4 py-2 sm:px-6 sm:py-3 bg-gradient-to-r from-red-500 to-pink-600 text-white 
-                           rounded-xl shadow-lg hover:shadow-xl 
-                           transform hover:-translate-y-1 transition-all duration-300 
-                           flex items-center space-x-2 text-xs sm:text-base">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd"
-                                d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 1.293a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 01-1.414-1.414L14.586 11H7a1 1 0 110-2h7.586l-1.293-1.293a1 1 0 010-1.414z"
-                                clip-rule="evenodd" />
-                        </svg>
-                        <span>Logout</span>
-                    </a>
-                </div>
-            </header>
+            <!-- Main Content Area - Using Alpine directly -->
+            <main
+                x-data="{
+                isNavExpanded: false,
+                isMobile: window.innerWidth <= 768,
+                init() {
+                    this.checkMobile();
+                    window.addEventListener('resize', () => this.checkMobile());
 
-            <div>
-                 <!-- Page Header -->
-                 <div class="mb-8">
-                    {% if messages %}
-                    <div id="toast-container" class="fixed top-4 right-2 sm:right-4 z-50 space-y-2 w-11/12 sm:w-auto max-w-xs sm:max-w-md">
-                        {% for message in messages %}
-                        <div class="toast-message flex items-center p-3 sm:p-4 rounded-lg shadow-lg transform transition-all duration-300 ease-out opacity-0 translate-x-full
-                            {% if message.tags == 'success' %}bg-green-50 border-l-4 border-green-500
-                            {% elif message.tags == 'error' %}bg-red-50 border-l-4 border-red-500
-                            {% elif message.tags == 'warning' %}bg-yellow-50 border-l-4 border-yellow-500
-                            {% elif message.tags == 'info' %}bg-blue-50 border-l-4 border-blue-500
-                            {% else %}bg-gray-50 border-l-4 border-gray-500{% endif %}">
-                            
-                            <!-- Icon -->
-                            <div class="flex-shrink-0 mr-2 sm:mr-3">
-                                {% if message.tags == 'success' %}
-                                <svg class="w-4 h-4 sm:w-5 sm:h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                                </svg>
-                                {% elif message.tags == 'error' %}
-                                <svg class="w-4 h-4 sm:w-5 sm:h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-                                </svg>
-                                {% elif message.tags == 'warning' or message.tags == 'info' %}
-                                <svg class="w-4 h-4 sm:w-5 sm:h-5 {% if message.tags == 'warning' %}text-yellow-500{% else %}text-blue-500{% endif %}" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
-                                </svg>
-                                {% endif %}
-                            </div>
-                
-                            <!-- Message Text -->
-                            <div class="flex-1 mr-1 sm:mr-2">
-                                <p class="text-xs sm:text-sm font-medium
-                                    {% if message.tags == 'success' %}text-green-800
-                                    {% elif message.tags == 'error' %}text-red-800
-                                    {% elif message.tags == 'warning' %}text-yellow-800
-                                    {% elif message.tags == 'info' %}text-blue-800
-                                    {% else %}text-gray-800{% endif %}">
-                                    {{ message }}
-                                </p>
-                            </div>
-                
-                            <!-- Close Button -->
-                            <button class="flex-shrink-0 ml-2 sm:ml-4 text-gray-400 hover:text-gray-600 transition-colors duration-150 focus:outline-none" 
-                                    onclick="this.parentElement.remove()">
-                                <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                                </svg>
-                            </button>
-                        </div>
-                        {% endfor %}
+                    // Listen for navbar state changes from navbar component
+                    window.addEventListener('navbar-state-changed', (e) => {
+                        this.isNavExpanded = e.detail.isExpanded;
+                    });
+                },
+                checkMobile() {
+                    this.isMobile = window.innerWidth <= 768;
+                }
+            }"
+                x-init="init()"
+                :class="isMobile ? 'content-wrapper' : (isNavExpanded ? 'content-wrapper' : 'content-wrapper content-wrapper-collapsed')"
+                class="flex-1 min-w-0 transition-all duration-300"
+            >
+                <header
+                    class="flex flex-col sm:flex-row justify-between items-center p-4 sm:p-6 gap-4 sm:gap-0"
+                >
+                    <p
+                        id="greeting"
+                        class="font-medium text-3xl sm:text-4xl"
+                    ></p>
+                    <div
+                        class="text-sm text-white flex items-center space-x-2 sm:space-x-4"
+                    >
+                        <span class="font-semibold text-black username"
+                            >{{ user.username }}</span
+                        >
+                        <a
+                            href="{% url 'logout' %}"
+                            class="px-4 py-2 sm:px-6 sm:py-3 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 flex items-center space-x-2 text-xs sm:text-base"
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                class="h-4 w-4 sm:h-5 sm:w-5"
+                                viewBox="0 0 20 20"
+                                fill="currentColor"
+                            >
+                                <path
+                                    fill-rule="evenodd"
+                                    d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 1.293a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 01-1.414-1.414L14.586 11H7a1 1 0 110-2h7.586l-1.293-1.293a1 1 0 010-1.414z"
+                                    clip-rule="evenodd"
+                                />
+                            </svg>
+                            <span>Logout</span>
+                        </a>
                     </div>
-                
-                    <script>
-                        document.addEventListener('DOMContentLoaded', function() {
-                            const toasts = document.querySelectorAll('.toast-message');
-                            toasts.forEach((toast, index) => {
-                                setTimeout(() => {
-                                    toast.classList.remove('opacity-0', 'translate-x-full');
-                                    toast.classList.add('opacity-100', 'translate-x-0');
-                                    setTimeout(() => {
-                                        toast.classList.add('opacity-0', '-translate-x-full');
-                                        setTimeout(() => toast.remove(), 300);
-                                    }, 5000);
-                                }, index * 200);
+                </header>
+
+                <div>
+                    <!-- Page Header -->
+                    <div class="mb-8">
+                        {% if messages %}
+                        <div
+                            id="toast-container"
+                            class="fixed top-4 right-2 sm:right-4 z-50 space-y-2 w-11/12 sm:w-auto max-w-xs sm:max-w-md"
+                        >
+                            {% for message in messages %}
+                            <div
+                                class="toast-message flex items-center p-3 sm:p-4 rounded-lg shadow-lg transform transition-all duration-300 ease-out opacity-0 translate-x-full {% if message.tags == 'success' %}bg-green-50 border-l-4 border-green-500 {% elif message.tags == 'error' %}bg-red-50 border-l-4 border-red-500 {% elif message.tags == 'warning' %}bg-yellow-50 border-l-4 border-yellow-500 {% elif message.tags == 'info' %}bg-blue-50 border-l-4 border-blue-500 {% else %}bg-gray-50 border-l-4 border-gray-500{% endif %}"
+                            >
+                                <!-- Icon -->
+                                <div class="flex-shrink-0 mr-2 sm:mr-3">
+                                    {% if message.tags == 'success' %}
+                                    <svg
+                                        class="w-4 h-4 sm:w-5 sm:h-5 text-green-500"
+                                        fill="currentColor"
+                                        viewBox="0 0 20 20"
+                                    >
+                                        <path
+                                            fill-rule="evenodd"
+                                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                            clip-rule="evenodd"
+                                        />
+                                    </svg>
+                                    {% elif message.tags == 'error' %}
+                                    <svg
+                                        class="w-4 h-4 sm:w-5 sm:h-5 text-red-500"
+                                        fill="currentColor"
+                                        viewBox="0 0 20 20"
+                                    >
+                                        <path
+                                            fill-rule="evenodd"
+                                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                            clip-rule="evenodd"
+                                        />
+                                    </svg>
+                                    {% elif message.tags == 'warning' or
+                                    message.tags == 'info' %}
+                                    <svg
+                                        class="w-4 h-4 sm:w-5 sm:h-5 {% if message.tags == 'warning' %}text-yellow-500{% else %}text-blue-500{% endif %}"
+                                        fill="currentColor"
+                                        viewBox="0 0 20 20"
+                                    >
+                                        <path
+                                            fill-rule="evenodd"
+                                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                                            clip-rule="evenodd"
+                                        />
+                                    </svg>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Message Text -->
+                                <div class="flex-1 mr-1 sm:mr-2">
+                                    <p
+                                        class="text-xs sm:text-sm font-medium {% if message.tags == 'success' %}text-green-800 {% elif message.tags == 'error' %}text-red-800 {% elif message.tags == 'warning' %}text-yellow-800 {% elif message.tags == 'info' %}text-blue-800 {% else %}text-gray-800{% endif %}"
+                                    >
+                                        {{ message }}
+                                    </p>
+                                </div>
+
+                                <!-- Close Button -->
+                                <button
+                                    class="flex-shrink-0 ml-2 sm:ml-4 text-gray-400 hover:text-gray-600 transition-colors duration-150 focus:outline-none"
+                                    onclick="this.parentElement.remove()"
+                                >
+                                    <svg
+                                        class="w-3 h-3 sm:w-4 sm:h-4"
+                                        fill="currentColor"
+                                        viewBox="0 0 20 20"
+                                    >
+                                        <path
+                                            fill-rule="evenodd"
+                                            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                                            clip-rule="evenodd"
+                                        />
+                                    </svg>
+                                </button>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <script>
+                            document.addEventListener(
+                                "DOMContentLoaded",
+                                function () {
+                                    const toasts =
+                                        document.querySelectorAll(
+                                            ".toast-message",
+                                        );
+                                    toasts.forEach((toast, index) => {
+                                        setTimeout(() => {
+                                            toast.classList.remove(
+                                                "opacity-0",
+                                                "translate-x-full",
+                                            );
+                                            toast.classList.add(
+                                                "opacity-100",
+                                                "translate-x-0",
+                                            );
+                                            setTimeout(() => {
+                                                toast.classList.add(
+                                                    "opacity-0",
+                                                    "-translate-x-full",
+                                                );
+                                                setTimeout(
+                                                    () => toast.remove(),
+                                                    300,
+                                                );
+                                            }, 5000);
+                                        }, index * 200);
+                                    });
+                                },
+                            );
+                        </script>
+                        {% endif %}
+                    </div>
+                    {% block content %} {% endblock %}
+                </div>
+            </main>
+
+            <!-- Improved Watermark -->
+            <div class="watermark-container">
+                <p
+                    class="text-gray-800 font-medium text-xs sm:text-sm whitespace-nowrap"
+                >
+                    Product by
+                </p>
+                <img
+                    src="{% static 'images/ardurtech.png' %}"
+                    alt="Ardur Technology Watermark"
+                    class="watermark-image"
+                />
+            </div>
+        </div>
+
+        <!-- Scripts -->
+        <script>
+            // Event dispatcher for navbar state changes
+            document.addEventListener("DOMContentLoaded", function () {
+                // Setup communication between navbar and main content
+                // This will be triggered by the navbar component when its state changes
+                window.dispatchNavbarStateEvent = function (isExpanded) {
+                    window.dispatchEvent(
+                        new CustomEvent("navbar-state-changed", {
+                            detail: { isExpanded: isExpanded },
+                        }),
+                    );
+                };
+
+                // Dynamic Greeting
+                function getGreeting() {
+                    const hour = new Date().getHours();
+                    if (hour < 12) return "Good Morning";
+                    else if (hour < 18) return "Good Afternoon";
+                    return "Good Evening";
+                }
+
+                const greetingElement = document.getElementById("greeting");
+                if (greetingElement) {
+                    greetingElement.innerHTML = `${getGreeting()} <span class="font-medium text-4xl"></span>`;
+                }
+            });
+
+            // Update clock function
+            function updateClock() {
+                const now = new Date();
+                const hoursEl = document.getElementById("hours");
+                const minutesEl = document.getElementById("minutes");
+                const secondsEl = document.getElementById("seconds");
+                const ampmEl = document.getElementById("ampm");
+                const dateEl = document.getElementById("date");
+
+                let hours = now.getHours();
+                const minutes = now.getMinutes();
+                const seconds = now.getSeconds();
+                const ampm = hours >= 12 ? "PM" : "AM";
+
+                // Convert to 12-hour format
+                hours = hours % 12;
+                hours = hours ? hours : 12; // handle midnight (0 hours)
+
+                if (hoursEl)
+                    hoursEl.textContent = hours.toString().padStart(2, "0");
+                if (minutesEl)
+                    minutesEl.textContent = minutes.toString().padStart(2, "0");
+                if (secondsEl)
+                    secondsEl.textContent = seconds.toString().padStart(2, "0");
+                if (ampmEl) ampmEl.textContent = ampm;
+
+                if (dateEl)
+                    dateEl.textContent = now.toLocaleDateString(undefined, {
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
+                    });
+            }
+
+            // Update immediately and then every second
+            updateClock();
+            setInterval(updateClock, 1000);
+        </script>
+
+        <script>
+            // Alpine.js component for navbar state
+            function navbarState() {
+                return {
+                    collapsed: window.innerWidth <= 1024,
+                    mobile: window.innerWidth <= 768,
+                    init() {
+                        this.updateState();
+                        window.addEventListener("resize", () =>
+                            this.updateState(),
+                        );
+                    },
+                    updateState() {
+                        this.mobile = window.innerWidth <= 768;
+                        this.collapsed = this.mobile
+                            ? false
+                            : window.innerWidth <= 1024;
+                    },
+                    toggleNavbar() {
+                        if (this.mobile) {
+                            // On mobile, show/hide navbar as overlay
+                            const nav = document.getElementById("main-navbar");
+                            if (nav.classList.contains("navbar-mobile")) {
+                                nav.classList.remove("navbar-mobile");
+                                document.body.style.overflow = "";
+                            } else {
+                                nav.classList.add("navbar-mobile");
+                                document.body.style.overflow = "hidden";
+                            }
+                        } else {
+                            this.collapsed = !this.collapsed;
+                        }
+                    },
+                    get navbarClass() {
+                        if (this.mobile) return "navbar navbar-mobile";
+                        return this.collapsed
+                            ? "navbar navbar-collapsed"
+                            : "navbar";
+                    },
+                    get contentClass() {
+                        if (this.mobile)
+                            return "content-wrapper content-wrapper-mobile";
+                        return this.collapsed
+                            ? "content-wrapper content-wrapper-collapsed"
+                            : "content-wrapper";
+                    },
+                };
+            }
+        </script>
+
+        <!-- Scripts -->
+        <script>
+            // Dynamic Greeting
+            function getGreeting() {
+                const hour = new Date().getHours();
+                if (hour < 12) return "Good Morning";
+                else if (hour < 18) return "Good Afternoon";
+                return "Good Evening";
+            }
+
+            document.addEventListener("DOMContentLoaded", function () {
+                const greetingElement = document.getElementById("greeting");
+                greetingElement.innerHTML = `${getGreeting()} <span class="font-medium text-4xl"></span>`;
+            });
+        </script>
+        <!-- Add this to your base.html or main template -->
+        <script>
+            class SessionManager {
+                constructor(idleThresholdMinutes = 5) {
+                    // Changed to 5 minutes default
+                    this.idleTime = 0;
+                    this.idleThreshold = idleThresholdMinutes * 60 * 1000; // Convert to milliseconds
+                    this.activityEvents = [
+                        "mousemove",
+                        "keydown",
+                        "click",
+                        "scroll",
+                        "touchstart",
+                        "touchmove",
+                    ];
+                    this.isIdle = false;
+                    this.isFocused = document.visibilityState === "visible";
+                    this.lastUpdateTime = new Date().getTime();
+
+                    // Generate a unique tab ID
+                    this.tabId = `${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+
+                    // Setup cross-tab communication
+                    this.setupBroadcastChannel();
+
+                    this.setupEventListeners();
+                    this.startIdleCheck();
+                    this.startHeartbeat();
+
+                    // Debug logging
+                    console.log(
+                        `Session manager initialized with idle threshold: ${idleThresholdMinutes} minute(s)`,
+                    );
+                    console.log(
+                        `Tab ID: ${this.tabId}, URL: ${window.location.href}`,
+                    );
+                }
+
+                setupBroadcastChannel() {
+                    try {
+                        // Create a channel for cross-tab communication
+                        this.channel = new BroadcastChannel("session-activity");
+
+                        // Listen for messages from other tabs
+                        this.channel.onmessage = (event) => {
+                            if (event.data.type === "activity") {
+                                console.log(
+                                    `Activity received from tab ${event.data.tabId} (${event.data.url})`,
+                                );
+                                // Reset idle time when activity is detected in another tab
+                                this.resetIdleTime(false); // false = don't broadcast (prevent loops)
+                            }
+                        };
+
+                        console.log(
+                            "BroadcastChannel initialized successfully",
+                        );
+                    } catch (error) {
+                        console.error("BroadcastChannel not supported:", error);
+                        // Could implement localStorage fallback here for older browsers
+                    }
+                }
+
+                getCookie(name) {
+                    let cookieValue = null;
+                    if (document.cookie && document.cookie !== "") {
+                        const cookies = document.cookie.split(";");
+                        for (let i = 0; i < cookies.length; i++) {
+                            const cookie = cookies[i].trim();
+                            if (
+                                cookie.substring(0, name.length + 1) ===
+                                name + "="
+                            ) {
+                                cookieValue = decodeURIComponent(
+                                    cookie.substring(name.length + 1),
+                                );
+                                break;
+                            }
+                        }
+                    }
+                    return cookieValue;
+                }
+
+                async makeRequest(url, method = "POST", body = null) {
+                    try {
+                        const response = await fetch(
+                            "{% url 'update_last_activity' %}",
+                            {
+                                method: method,
+                                headers: {
+                                    "Content-Type": "application/json",
+                                    "X-CSRFToken": this.getCookie("csrftoken"),
+                                },
+                                body: body ? JSON.stringify(body) : null,
+                                credentials: "same-origin",
+                            },
+                        );
+
+                        if (!response.ok) {
+                            throw new Error(
+                                `HTTP error! status: ${response.status}`,
+                            );
+                        }
+
+                        return await response.json();
+                    } catch (error) {
+                        console.error(`Error making request to ${url}:`, error);
+
+                        // Queue retry if network issue
+                        if (error.name === "TypeError" && !navigator.onLine) {
+                            this.queueRetry(url, method, body);
+                        }
+
+                        throw error;
+                    }
+                }
+
+                queueRetry(url, method, body) {
+                    const retryHandler = () => {
+                        this.makeRequest(url, method, body)
+                            .then(() =>
+                                window.removeEventListener(
+                                    "online",
+                                    retryHandler,
+                                ),
+                            )
+                            .catch(() => console.log("Retry failed"));
+                    };
+
+                    window.addEventListener("online", retryHandler, {
+                        once: true,
+                    });
+                    console.log("Request queued for retry when online");
+                }
+
+                async updateServerActivity() {
+                    try {
+                        const now = new Date();
+                        const timeSinceLastUpdate =
+                            now.getTime() - this.lastUpdateTime;
+
+                        // Debug logging
+                        console.log(
+                            `Updating server activity: isIdle=${this.isIdle}, isFocused=${this.isFocused}, time since last update: ${timeSinceLastUpdate / 1000}s`,
+                        );
+
+                        const data = await this.makeRequest(
+                            "{% url 'update_last_activity' %}",
+                            "POST",
+                            {
+                                timestamp: now.toISOString(),
+                                isIdle: this.isIdle,
+                                isFocused: this.isFocused,
+                                tabId: this.tabId,
+                                url: window.location.href,
+                            },
+                        );
+
+                        if (data.status === "success") {
+                            console.log(
+                                `Activity updated successfully. Server idle time: ${data.idle_time}`,
+                            );
+                            this.lastUpdateTime = now.getTime();
+
+                            // Check if session expired on server
+                            if (data.sessionExpired) {
+                                console.log("Session expired, reloading page");
+                                window.location.reload();
+                            }
+                        }
+                    } catch (error) {
+                        console.error("Failed to update activity:", error);
+                    }
+                }
+
+                async handleLogout() {
+                    try {
+                        // First try to end the session properly
+                        await this.makeRequest(
+                            "{% url 'end_session' %}",
+                            "POST",
+                        );
+                        console.log("Session ended successfully");
+                    } catch (error) {
+                        console.error("Error ending session:", error);
+                    } finally {
+                        // Always proceed with logout
+                        window.location.href = "{% url 'logout' %}";
+                    }
+                }
+
+                resetIdleTime(broadcast = true) {
+                    const wasIdle = this.isIdle;
+
+                    this.idleTime = 0;
+
+                    if (wasIdle) {
+                        this.isIdle = false;
+                        console.log("User is now active after being idle");
+                        this.updateServerActivity();
+                    }
+
+                    // Broadcast activity to other tabs if this is a direct user interaction
+                    if (broadcast && this.channel) {
+                        this.channel.postMessage({
+                            type: "activity",
+                            tabId: this.tabId,
+                            url: window.location.href,
+                            timestamp: Date.now(),
+                        });
+                        console.log("Activity broadcast to other tabs");
+                    }
+                }
+
+                setupEventListeners() {
+                    // Activity events
+                    this.activityEvents.forEach((event) => {
+                        document.addEventListener(event, () =>
+                            this.resetIdleTime(true),
+                        );
+                    });
+
+                    // Visibility change
+                    document.addEventListener("visibilitychange", () => {
+                        const wasFocused = this.isFocused;
+                        this.isFocused = document.visibilityState === "visible";
+
+                        console.log(
+                            `Visibility changed: ${wasFocused ? "focused" : "unfocused"} -> ${this.isFocused ? "focused" : "unfocused"}`,
+                        );
+
+                        if (!wasFocused && this.isFocused) {
+                            // Coming back to the tab resets idle time
+                            this.resetIdleTime(true);
+                        } else if (wasFocused && !this.isFocused) {
+                            // Leaving the tab updates server immediately
+                            this.updateServerActivity();
+                        }
+                    });
+
+                    // Use sendBeacon for more reliable delivery during page unload
+                    window.addEventListener("beforeunload", () => {
+                        console.log(
+                            "Page unloading, sending final activity update",
+                        );
+                        navigator.sendBeacon(
+                            "{% url 'update_last_activity' %}",
+                            JSON.stringify({
+                                timestamp: new Date().toISOString(),
+                                isIdle: this.isIdle,
+                                isFocused: false,
+                                unloading: true,
+                                tabId: this.tabId,
+                                url: window.location.href,
+                            }),
+                        );
+                    });
+
+                    // Handle logout buttons
+                    document
+                        .querySelectorAll('[data-action="logout"]')
+                        .forEach((element) => {
+                            element.addEventListener("click", async (e) => {
+                                e.preventDefault();
+                                console.log("Logout initiated");
+                                await this.handleLogout();
                             });
                         });
-                    </script>
-                    {% endif %}
-                </div>
-                {% block content %}
-                {% endblock %}
-            </div>
-        </main>
+                }
 
-        <!-- Improved Watermark -->
-        <div class="watermark-container">
-            <p class="text-gray-800 font-medium text-xs sm:text-sm whitespace-nowrap">Product by</p>
-            <img src="{% static 'images/ardurtech.png' %}" alt="Ardur Technology Watermark" class="watermark-image">
-        </div>
-    </div>
+                startIdleCheck() {
+                    // Check idle time every second
+                    setInterval(() => {
+                        this.idleTime += 1000;
 
-    <script>
-        // Alpine.js component for navbar state
-        function navbarState() {
-            return {
-                collapsed: window.innerWidth <= 1024,
-                mobile: window.innerWidth <= 768,
-                init() {
-                    this.updateState();
-                    window.addEventListener('resize', () => this.updateState());
-                },
-                updateState() {
-                    this.mobile = window.innerWidth <= 768;
-                    this.collapsed = this.mobile ? false : (window.innerWidth <= 1024);
-                },
-                toggleNavbar() {
-                    if (this.mobile) {
-                        // On mobile, show/hide navbar as overlay
-                        const nav = document.getElementById('main-navbar');
-                        if (nav.classList.contains('navbar-mobile')) {
-                            nav.classList.remove('navbar-mobile');
-                            document.body.style.overflow = '';
-                        } else {
-                            nav.classList.add('navbar-mobile');
-                            document.body.style.overflow = 'hidden';
+                        // If crossing the threshold into idle, update server
+                        if (
+                            this.idleTime >= this.idleThreshold &&
+                            !this.isIdle
+                        ) {
+                            this.isIdle = true;
+                            console.log(
+                                `User is now idle (${this.idleTime / 1000}s of inactivity)`,
+                            );
+                            this.updateServerActivity();
                         }
-                    } else {
-                        this.collapsed = !this.collapsed;
-                    }
-                },
-                get navbarClass() {
-                    if (this.mobile) return 'navbar navbar-mobile';
-                    return this.collapsed ? 'navbar navbar-collapsed' : 'navbar';
-                },
-                get contentClass() {
-                    if (this.mobile) return 'content-wrapper content-wrapper-mobile';
-                    return this.collapsed ? 'content-wrapper content-wrapper-collapsed' : 'content-wrapper';
-                }
-            }
-        }
-    </script>
-
-    <!-- Scripts -->
-    <script>
-        // Dynamic Greeting
-        function getGreeting() {
-            const hour = new Date().getHours();
-            if (hour < 12) return "Good Morning";
-            else if (hour < 18) return "Good Afternoon";
-            return "Good Evening";
-        }
-
-        document.addEventListener('DOMContentLoaded', function () {
-            const greetingElement = document.getElementById("greeting");
-            greetingElement.innerHTML = `${getGreeting()} <span class="font-medium text-4xl"></span>`;
-        });
-    </script>
- <!-- Add this to your base.html or main template -->
-<script>
-    class SessionManager {
-        constructor(idleThresholdMinutes = 5) { // Changed to 5 minutes default
-            this.idleTime = 0;
-            this.idleThreshold = idleThresholdMinutes * 60 * 1000; // Convert to milliseconds
-            this.activityEvents = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart', 'touchmove'];
-            this.isIdle = false;
-            this.isFocused = document.visibilityState === 'visible';
-            this.lastUpdateTime = new Date().getTime();
-            
-            // Generate a unique tab ID
-            this.tabId = `${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
-            
-            // Setup cross-tab communication
-            this.setupBroadcastChannel();
-            
-            this.setupEventListeners();
-            this.startIdleCheck();
-            this.startHeartbeat();
-            
-            // Debug logging
-            console.log(`Session manager initialized with idle threshold: ${idleThresholdMinutes} minute(s)`);
-            console.log(`Tab ID: ${this.tabId}, URL: ${window.location.href}`);
-        }
-
-        setupBroadcastChannel() {
-            try {
-                // Create a channel for cross-tab communication
-                this.channel = new BroadcastChannel('session-activity');
-                
-                // Listen for messages from other tabs
-                this.channel.onmessage = (event) => {
-                    if (event.data.type === 'activity') {
-                        console.log(`Activity received from tab ${event.data.tabId} (${event.data.url})`);
-                        // Reset idle time when activity is detected in another tab
-                        this.resetIdleTime(false); // false = don't broadcast (prevent loops)
-                    }
-                };
-                
-                console.log('BroadcastChannel initialized successfully');
-            } catch (error) {
-                console.error('BroadcastChannel not supported:', error);
-                // Could implement localStorage fallback here for older browsers
-            }
-        }
-
-        getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
-        }
-
-        async makeRequest(url, method = 'POST', body = null) {
-            try {
-                const response = await fetch("{% url 'update_last_activity' %}", {
-                    method: method,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': this.getCookie('csrftoken')
-                    },
-                    body: body ? JSON.stringify(body) : null,
-                    credentials: 'same-origin'
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    }, 1000);
                 }
 
-                return await response.json();
-            } catch (error) {
-                console.error(`Error making request to ${url}:`, error);
-                
-                // Queue retry if network issue
-                if (error.name === 'TypeError' && !navigator.onLine) {
-                    this.queueRetry(url, method, body);
+                startHeartbeat() {
+                    // Update server every minute regardless of activity state
+                    setInterval(() => {
+                        console.log("Heartbeat check");
+                        this.updateServerActivity();
+                    }, 60000); // 60 seconds
                 }
-                
-                throw error;
             }
-        }
-        
-        queueRetry(url, method, body) {
-            const retryHandler = () => {
-                this.makeRequest(url, method, body)
-                    .then(() => window.removeEventListener('online', retryHandler))
-                    .catch(() => console.log('Retry failed'));
-            };
-            
-            window.addEventListener('online', retryHandler, { once: true });
-            console.log('Request queued for retry when online');
-        }
 
-        async updateServerActivity() {
-            try {
+            // Initialize when the page loads
+            document.addEventListener("DOMContentLoaded", () => {
+                window.sessionManager = new SessionManager(5); // Changed to 5 minutes idle threshold
+                console.log("Session manager initialized");
+            });
+        </script>
+
+        <script>
+            function updateClock() {
                 const now = new Date();
-                const timeSinceLastUpdate = now.getTime() - this.lastUpdateTime;
-                
-                // Debug logging
-                console.log(`Updating server activity: isIdle=${this.isIdle}, isFocused=${this.isFocused}, time since last update: ${timeSinceLastUpdate/1000}s`);
-                
-                const data = await this.makeRequest("{% url 'update_last_activity' %}", 'POST', {
-                    timestamp: now.toISOString(),
-                    isIdle: this.isIdle,
-                    isFocused: this.isFocused,
-                    tabId: this.tabId,
-                    url: window.location.href
-                });
+                const hoursEl = document.getElementById("hours");
+                const minutesEl = document.getElementById("minutes");
+                const secondsEl = document.getElementById("seconds");
+                const ampmEl = document.getElementById("ampm");
+                const dateEl = document.getElementById("date");
 
-                if (data.status === 'success') {
-                    console.log(`Activity updated successfully. Server idle time: ${data.idle_time}`);
-                    this.lastUpdateTime = now.getTime();
-                    
-                    // Check if session expired on server
-                    if (data.sessionExpired) {
-                        console.log('Session expired, reloading page');
-                        window.location.reload();
-                    }
-                }
-            } catch (error) {
-                console.error('Failed to update activity:', error);
+                let hours = now.getHours();
+                const minutes = now.getMinutes();
+                const seconds = now.getSeconds();
+                const ampm = hours >= 12 ? "PM" : "AM";
+
+                // Convert to 12-hour format
+                hours = hours % 12;
+                hours = hours ? hours : 12; // handle midnight (0 hours)
+
+                if (hoursEl)
+                    hoursEl.textContent = hours.toString().padStart(2, "0");
+                if (minutesEl)
+                    minutesEl.textContent = minutes.toString().padStart(2, "0");
+                if (secondsEl)
+                    secondsEl.textContent = seconds.toString().padStart(2, "0");
+                if (ampmEl) ampmEl.textContent = ampm;
+
+                if (dateEl)
+                    dateEl.textContent = now.toLocaleDateString(undefined, {
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
+                    });
             }
-        }
 
-        async handleLogout() {
-            try {
-                // First try to end the session properly
-                await this.makeRequest("{% url 'end_session' %}", 'POST');
-                console.log('Session ended successfully');
-            } catch (error) {
-                console.error('Error ending session:', error);
-            } finally {
-                // Always proceed with logout
-                window.location.href = "{% url 'logout' %}";
-            }
-        }
+            // Update immediately and then every second
+            updateClock();
+            setInterval(updateClock, 1000);
 
-        resetIdleTime(broadcast = true) {
-            const wasIdle = this.isIdle;
-            
-            this.idleTime = 0;
-            
-            if (wasIdle) {
-                this.isIdle = false;
-                console.log('User is now active after being idle');
-                this.updateServerActivity();
-            }
-            
-            // Broadcast activity to other tabs if this is a direct user interaction
-            if (broadcast && this.channel) {
-                this.channel.postMessage({
-                    type: 'activity',
-                    tabId: this.tabId,
-                    url: window.location.href,
-                    timestamp: Date.now()
-                });
-                console.log('Activity broadcast to other tabs');
-            }
-        }
-
-        setupEventListeners() {
-            // Activity events
-            this.activityEvents.forEach(event => {
-                document.addEventListener(event, () => this.resetIdleTime(true));
+            // Responsive Navbar Toggle for mobile
+            document.addEventListener("DOMContentLoaded", function () {
+                // If you want to add a hamburger menu for mobile, you can implement it here.
+                // For now, the navbar is always visible at the top on mobile.
             });
-
-            // Visibility change
-            document.addEventListener('visibilitychange', () => {
-                const wasFocused = this.isFocused;
-                this.isFocused = document.visibilityState === 'visible';
-                
-                console.log(`Visibility changed: ${wasFocused ? 'focused' : 'unfocused'} -> ${this.isFocused ? 'focused' : 'unfocused'}`);
-                
-                if (!wasFocused && this.isFocused) {
-                    // Coming back to the tab resets idle time
-                    this.resetIdleTime(true);
-                } else if (wasFocused && !this.isFocused) {
-                    // Leaving the tab updates server immediately
-                    this.updateServerActivity();
-                }
-            });
-
-            // Use sendBeacon for more reliable delivery during page unload
-            window.addEventListener('beforeunload', () => {
-                console.log('Page unloading, sending final activity update');
-                navigator.sendBeacon("{% url 'update_last_activity' %}", JSON.stringify({
-                    timestamp: new Date().toISOString(),
-                    isIdle: this.isIdle,
-                    isFocused: false,
-                    unloading: true,
-                    tabId: this.tabId,
-                    url: window.location.href
-                }));
-            });
-
-            // Handle logout buttons
-            document.querySelectorAll('[data-action="logout"]').forEach(element => {
-                element.addEventListener('click', async (e) => {
-                    e.preventDefault();
-                    console.log('Logout initiated');
-                    await this.handleLogout();
-                });
-            });
-        }
-
-        startIdleCheck() {
-            // Check idle time every second
-            setInterval(() => {
-                this.idleTime += 1000;
-                
-                // If crossing the threshold into idle, update server
-                if (this.idleTime >= this.idleThreshold && !this.isIdle) {
-                    this.isIdle = true;
-                    console.log(`User is now idle (${this.idleTime/1000}s of inactivity)`);
-                    this.updateServerActivity();
-                }
-            }, 1000);
-        }
-        
-        startHeartbeat() {
-            // Update server every minute regardless of activity state
-            setInterval(() => {
-                console.log('Heartbeat check');
-                this.updateServerActivity();
-            }, 60000); // 60 seconds
-        }
-    }
-    
-    // Initialize when the page loads
-    document.addEventListener('DOMContentLoaded', () => {
-        window.sessionManager = new SessionManager(5); // Changed to 5 minutes idle threshold
-        console.log('Session manager initialized');
-    });
-</script>
-
-
-    <script>
-        function updateClock() {
-            const now = new Date();
-            const hoursEl = document.getElementById('hours');
-            const minutesEl = document.getElementById('minutes');
-            const secondsEl = document.getElementById('seconds');
-            const ampmEl = document.getElementById('ampm');
-            const dateEl = document.getElementById('date');
-
-            let hours = now.getHours();
-            const minutes = now.getMinutes();
-            const seconds = now.getSeconds();
-            const ampm = hours >= 12 ? 'PM' : 'AM';
-
-            // Convert to 12-hour format
-            hours = hours % 12;
-            hours = hours ? hours : 12; // handle midnight (0 hours)
-
-            if (hoursEl) hoursEl.textContent = hours.toString().padStart(2, '0');
-            if (minutesEl) minutesEl.textContent = minutes.toString().padStart(2, '0');
-            if (secondsEl) secondsEl.textContent = seconds.toString().padStart(2, '0');
-            if (ampmEl) ampmEl.textContent = ampm;
-
-            if (dateEl) dateEl.textContent = now.toLocaleDateString(undefined, {
-                weekday: 'short',
-                month: 'short',
-                day: 'numeric'
-            });
-        }
-
-        // Update immediately and then every second
-        updateClock();
-        setInterval(updateClock, 1000);
-
-        // Responsive Navbar Toggle for mobile
-        document.addEventListener('DOMContentLoaded', function () {
-            // If you want to add a hamburger menu for mobile, you can implement it here.
-            // For now, the navbar is always visible at the top on mobile.
-        });
-    </script>
-
-</body>
-
+        </script>
+    </body>
 </html>

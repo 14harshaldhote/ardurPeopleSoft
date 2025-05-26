@@ -1,29 +1,97 @@
 {% load static %}
-<nav
-    class="fixed top-0 left-0 w-64 h-screen bg-white shadow-2xl border-r border-gray-100 py-8 px-4 overflow-y-auto transition-all duration-300 ease-in-out z-50"
+<div
+    x-data="{
+    isExpanded: false,
+    isMobile: window.innerWidth <= 768,
+    init() {
+        this.checkMobile();
+        window.addEventListener('resize', () => this.checkMobile());
+    },
+    checkMobile() {
+        this.isMobile = window.innerWidth <= 768;
+    }
+}"
+    x-init="init()"
+    @mouseenter="!isMobile && (isExpanded = true)"
+    @mouseleave="!isMobile && (isExpanded = false)"
+    :class="{
+    'w-16': !isExpanded && !isMobile,
+    'w-64': isExpanded || isMobile,
+    'h-16': isMobile,
+    'h-screen': !isMobile
+}"
+    class="fixed top-0 left-0 bg-white shadow-2xl border-r border-gray-100 overflow-hidden transition-all duration-300 ease-in-out z-50 group"
 >
-    <div class="flex flex-col h-full">
-        <!-- Logo Section -->
-        <div class="logo-container dashboard-logo flex justify-center mb-8">
+    <!-- Mobile Toggle Button -->
+    <button
+        x-show="isMobile"
+        @click="isExpanded = !isExpanded"
+        class="absolute top-2 right-2 p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors z-60"
+    >
+        <svg
+            class="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+        >
+            <path
+                x-show="!isExpanded"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 6h16M4 12h16M4 18h16"
+            />
+            <path
+                x-show="isExpanded"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+            />
+        </svg>
+    </button>
+
+    <!-- Mobile Overlay -->
+    <div
+        x-show="isMobile && isExpanded"
+        @click="isExpanded = false"
+        x-transition:enter="transition-opacity ease-out duration-300"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="transition-opacity ease-in duration-200"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        class="fixed inset-0 bg-black bg-opacity-50 z-40"
+    ></div>
+
+    <!-- Mobile Sidebar -->
+    <div
+        x-show="isMobile"
+        :class="isExpanded ? 'translate-x-0' : '-translate-x-full'"
+        class="fixed top-0 left-0 w-64 h-screen bg-white shadow-2xl transform transition-transform duration-300 ease-in-out z-50 overflow-y-auto"
+    >
+        <!-- Mobile Logo -->
+        <div class="flex justify-center py-6 border-b border-gray-100">
             <a href="{% url 'dashboard' %}">
                 <img
                     src="{% static 'images/logo.png' %}"
                     alt="Logo"
-                    class="h-14 w-auto p-1"
+                    class="h-12 w-auto"
                 />
             </a>
         </div>
-        <!-- Navigation Menu -->
-        <div class="px-2 py-2">
-            <ul class="space-y-1.5">
+
+        <!-- Mobile Menu Items -->
+        <div class="px-4 py-6">
+            <ul class="space-y-2">
                 <!-- Dashboard -->
                 <li>
                     <a
                         href="{% url 'dashboard' %}"
-                        class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-green-50 hover:text-green-700 group"
+                        class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-green-50 hover:text-green-700 transition-all"
                     >
                         <svg
-                            class="w-6 h-6 mr-4"
+                            class="w-5 h-5 mr-3"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -38,14 +106,15 @@
                         Dashboard
                     </a>
                 </li>
+
                 {% if not is_admin %}
                 <li>
                     <a
                         href="{% url 'user_profile' request.user.id %}"
-                        class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-green-50 hover:text-green-700 group"
+                        class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-green-50 hover:text-green-700 transition-all"
                     >
                         <svg
-                            class="w-6 h-6 mr-4"
+                            class="w-5 h-5 mr-3"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -61,7 +130,7 @@
                     </a>
                 </li>
                 {% endif %} {% if is_employee %}
-                <li class="pt-4">
+                <li class="pt-4 pb-2">
                     <p
                         class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider"
                     >
@@ -71,10 +140,10 @@
                 <li>
                     <a
                         href="{% url 'aps_support:support_dashboard' %}"
-                        class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group"
+                        class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
-                            class="w-6 h-6 mr-4"
+                            class="w-5 h-5 mr-3"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -92,14 +161,13 @@
                 <li>
                     <a
                         href="{% url 'aps_employee:attendance_dashboard' %}"
-                        class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group"
+                        class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
-                            class="w-6 h-6 mr-4"
+                            class="w-5 h-5 mr-3"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg"
                         >
                             <path
                                 stroke-linecap="round"
@@ -114,26 +182,19 @@
                 <li>
                     <a
                         href="{% url 'aps_employee:timesheet' %}"
-                        class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group"
+                        class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
-                            class="w-6 h-6 mr-4"
+                            class="w-5 h-5 mr-3"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg"
                         >
                             <path
                                 stroke-linecap="round"
                                 stroke-linejoin="round"
                                 stroke-width="2"
                                 d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M12 6v6l3 3"
                             />
                         </svg>
                         Time Sheet
@@ -142,10 +203,10 @@
                 <li>
                     <a
                         href="{% url 'aps_leave:employee_leave_view' %}"
-                        class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group"
+                        class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
-                            class="w-6 h-6 mr-4"
+                            class="w-5 h-5 mr-3"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -163,10 +224,10 @@
                 <li>
                     <a
                         href="{% url 'aps_employee:application_for_user' %}"
-                        class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group"
+                        class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
-                            class="w-6 h-6 mr-4"
+                            class="w-5 h-5 mr-3"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -184,10 +245,10 @@
                 <li>
                     <a
                         href="{% url 'appraisal:appraisal_list' %}"
-                        class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group"
+                        class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
-                            class="w-6 h-6 mr-4"
+                            class="w-5 h-5 mr-3"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -205,10 +266,10 @@
                 <li>
                     <a
                         href="{% url 'aps_entertainment:entertainment' %}"
-                        class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group"
+                        class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
-                            class="w-6 h-6 mr-4"
+                            class="w-5 h-5 mr-3"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -229,11 +290,8 @@
                         Entertainment
                     </a>
                 </li>
-                {% endif %}
-
-                <!-- HR Specific -->
-                {% if is_hr %}
-                <li class="pt-4">
+                {% endif %} {% if is_hr %}
+                <li class="pt-4 pb-2">
                     <p
                         class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider"
                     >
@@ -243,11 +301,10 @@
                 <li>
                     <a
                         href="{% url 'aps_leave:hr_leave_view' %}"
-                        class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group"
+                        class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
-                        <!-- Calendar Icon for Leave Management -->
                         <svg
-                            class="w-6 h-6 mr-4"
+                            class="w-5 h-5 mr-3"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -262,15 +319,13 @@
                         Leave Management
                     </a>
                 </li>
-
                 <li>
                     <a
                         href="{% url 'aps_attendance:analytics' %}"
-                        class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group"
+                        class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
-                        <!-- Chart Icon for Attendance -->
                         <svg
-                            class="w-6 h-6 mr-4"
+                            class="w-5 h-5 mr-3"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -285,14 +340,13 @@
                         Attendance
                     </a>
                 </li>
-
                 <li>
                     <a
                         href="{% url 'aps_hr:hr_dashboard' %}"
-                        class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group"
+                        class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
-                            class="w-6 h-6 mr-4"
+                            class="w-5 h-5 mr-3"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -310,10 +364,10 @@
                 <li>
                     <a
                         href="{% url 'aps_support:support_dashboard' %}"
-                        class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group"
+                        class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
-                            class="w-6 h-6 mr-4"
+                            class="w-5 h-5 mr-3"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -331,10 +385,10 @@
                 <li>
                     <a
                         href="{% url 'appraisal:appraisal_list' %}"
-                        class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group"
+                        class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
-                            class="w-6 h-6 mr-4"
+                            class="w-5 h-5 mr-3"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -349,11 +403,8 @@
                         Employee Appraisals
                     </a>
                 </li>
-                {% endif %}
-
-                <!-- Manager Specific -->
-                {% if is_manager %}
-                <li class="pt-4">
+                {% endif %} {% if is_manager %}
+                <li class="pt-4 pb-2">
                     <p
                         class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider"
                     >
@@ -363,10 +414,10 @@
                 <li>
                     <a
                         href="{% url 'aps_attendance:analytics' %}"
-                        class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group"
+                        class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
-                            class="w-6 h-6 mr-4"
+                            class="w-5 h-5 mr-3"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -384,10 +435,10 @@
                 <li>
                     <a
                         href="{% url 'aps_manager:shift_dashboard' %}"
-                        class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group"
+                        class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
-                            class="w-6 h-6 mr-4"
+                            class="w-5 h-5 mr-3"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -405,10 +456,10 @@
                 <li>
                     <a
                         href="{% url 'aps_manager:report' %}"
-                        class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group"
+                        class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
-                            class="w-6 h-6 mr-4"
+                            class="w-5 h-5 mr-3"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -426,10 +477,10 @@
                 <li>
                     <a
                         href="{% url 'aps_manager:project_list'%}"
-                        class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group"
+                        class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
-                            class="w-6 h-6 mr-4"
+                            class="w-5 h-5 mr-3"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -447,11 +498,10 @@
                 <li>
                     <a
                         href="{% url 'aps_manager:view_timesheets' %}"
-                        class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group"
+                        class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
-                        <!-- Fixed SVG: Clock/Timesheet Icon -->
                         <svg
-                            class="w-6 h-6 mr-4"
+                            class="w-5 h-5 mr-3"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -478,11 +528,10 @@
                 <li>
                     <a
                         href="{% url 'appraisal:appraisal_list' %}"
-                        class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group"
+                        class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
-                        <!-- Fixed SVG: Pencil/Edit/Document Icon -->
                         <svg
-                            class="w-6 h-6 mr-4"
+                            class="w-5 h-5 mr-3"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -509,11 +558,8 @@
                         Review Appraisals
                     </a>
                 </li>
-                {% endif %}
-
-                <!-- Admin Specific -->
-                {% if is_admin %}
-                <li class="pt-4">
+                {% endif %} {% if is_admin %}
+                <li class="pt-4 pb-2">
                     <p
                         class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider"
                     >
@@ -523,10 +569,10 @@
                 <li>
                     <a
                         href="{% url 'aps_admin:user_sessions' %}"
-                        class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group"
+                        class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
-                            class="w-6 h-6 mr-4"
+                            class="w-5 h-5 mr-3"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -544,10 +590,10 @@
                 <li>
                     <a
                         href="{% url 'aps_admin:view_leave_requests_admin' %}"
-                        class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group"
+                        class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
-                            class="w-6 h-6 mr-4"
+                            class="w-5 h-5 mr-3"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -565,10 +611,10 @@
                 <li>
                     <a
                         href="{% url 'aps_admin:report' %}"
-                        class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group"
+                        class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
-                            class="w-6 h-6 mr-4"
+                            class="w-5 h-5 mr-3"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -586,10 +632,10 @@
                 <li>
                     <a
                         href="{% url 'aps_admin:project_dashboard' %}"
-                        class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group"
+                        class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
-                            class="w-6 h-6 mr-4"
+                            class="w-5 h-5 mr-3"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -607,10 +653,10 @@
                 <li>
                     <a
                         href="{% url 'aps_support:support_dashboard' %}"
-                        class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group"
+                        class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
-                            class="w-6 h-6 mr-4"
+                            class="w-5 h-5 mr-3"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -626,12 +672,11 @@
                     </a>
                 </li>
                 <li>
-                    <a
-                        href=""
-                        class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-400 rounded-lg cursor-not-allowed"
+                    <span
+                        class="flex items-center px-4 py-3 text-sm font-medium text-gray-400 rounded-lg cursor-not-allowed"
                     >
                         <svg
-                            class="w-6 h-6 mr-4"
+                            class="w-5 h-5 mr-3"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -650,13 +695,10 @@
                             />
                         </svg>
                         Entertainment Control
-                    </a>
+                    </span>
                 </li>
-                {% endif %}
-
-                <!-- Finance Specific -->
-                {% if is_finance %}
-                <li class="pt-4">
+                {% endif %} {% if is_finance %}
+                <li class="pt-4 pb-2">
                     <p
                         class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider"
                     >
@@ -666,10 +708,10 @@
                 <li>
                     <a
                         href="{% url 'aps_finance:dashboard' %}"
-                        class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group"
+                        class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
-                            class="w-6 h-6 mr-4"
+                            class="w-5 h-5 mr-3"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -687,10 +729,10 @@
                 <li>
                     <a
                         href="{% url 'aps_finance:expense_entry' %}"
-                        class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group"
+                        class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
-                            class="w-6 h-6 mr-4"
+                            class="w-5 h-5 mr-3"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -708,10 +750,10 @@
                 <li>
                     <a
                         href="{% url 'aps_finance:voucher_entry' %}"
-                        class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group"
+                        class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
-                            class="w-6 h-6 mr-4"
+                            class="w-5 h-5 mr-3"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -729,10 +771,10 @@
                 <li>
                     <a
                         href="{% url 'aps_finance:invoice_generation' %}"
-                        class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group"
+                        class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
-                            class="w-6 h-6 mr-4"
+                            class="w-5 h-5 mr-3"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -750,10 +792,10 @@
                 <li>
                     <a
                         href="{% url 'aps_finance:bank_payment_dashboard' %}"
-                        class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group"
+                        class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
-                            class="w-6 h-6 mr-4"
+                            class="w-5 h-5 mr-3"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -771,10 +813,10 @@
                 <li>
                     <a
                         href="{% url 'aps_finance:subscription_payment_entry' %}"
-                        class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group"
+                        class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
-                            class="w-6 h-6 mr-4"
+                            class="w-5 h-5 mr-3"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -792,10 +834,10 @@
                 <li>
                     <a
                         href="{% url 'aps_finance:financial_parameter_list' %}"
-                        class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-900 rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 group"
+                        class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
-                            class="w-6 h-6 mr-4"
+                            class="w-5 h-5 mr-3"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -813,7 +855,7 @@
                 {% endif %}
 
                 <!-- Common Navigation for All Roles -->
-                <li class="pt-4">
+                <li class="pt-4 pb-2">
                     <p
                         class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider"
                     >
@@ -822,10 +864,10 @@
                 </li>
                 <li>
                     <span
-                        class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-400 rounded-lg cursor-not-allowed"
+                        class="flex items-center px-4 py-3 text-sm font-medium text-gray-400 rounded-lg cursor-not-allowed"
                     >
                         <svg
-                            class="w-6 h-6 mr-4"
+                            class="w-5 h-5 mr-3"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -843,4 +885,1021 @@
             </ul>
         </div>
     </div>
-</nav>
+
+    <!-- Desktop Navbar -->
+    <div x-show="!isMobile" class="h-full flex flex-col">
+        <!-- Logo Section -->
+        <div
+            class="flex-shrink-0 flex justify-center items-center py-6 border-b border-gray-100 transition-all duration-300"
+            :class="isExpanded ? 'px-6' : 'px-2'"
+        >
+            <a
+                href="{% url 'dashboard' %}"
+                class="flex items-center justify-center transition-all duration-300"
+            >
+                <img
+                    src="{% static 'images/logo.png' %}"
+                    alt="Logo"
+                    :class="isExpanded ? 'h-12' : 'h-8'"
+                    class="w-auto transition-all duration-300"
+                />
+            </a>
+        </div>
+
+        <!-- Navigation Menu -->
+        <div
+            class="flex-1 overflow-y-auto py-4"
+            :class="isExpanded ? 'px-4' : 'px-2'"
+        >
+            <ul class="space-y-1">
+                <!-- Dashboard -->
+                <li>
+                    <a
+                        href="{% url 'dashboard' %}"
+                        class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-green-50 hover:text-green-700"
+                        :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
+                        title="Dashboard"
+                    >
+                        <svg
+                            class="flex-shrink-0 w-5 h-5 transition-colors duration-200"
+                            :class="isExpanded ? 'mr-3' : ''"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                            />
+                        </svg>
+                        <span
+                            x-show="isExpanded"
+                            x-transition:enter="transition-opacity duration-300 delay-75"
+                            x-transition:enter-start="opacity-0"
+                            x-transition:enter-end="opacity-100"
+                            x-transition:leave="transition-opacity duration-150"
+                            x-transition:leave-start="opacity-100"
+                            x-transition:leave-end="opacity-0"
+                            class="text-sm font-medium text-gray-900"
+                            >Dashboard</span
+                        >
+                    </a>
+                </li>
+
+                <!-- Profile -->
+                <li>
+                    <a
+                        href="{% url 'user_profile' request.user.id %}"
+                        class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-green-50 hover:text-green-700"
+                        :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
+                        title="Profile"
+                    >
+                        <svg
+                            class="flex-shrink-0 w-5 h-5 transition-colors duration-200"
+                            :class="isExpanded ? 'mr-3' : ''"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                            />
+                        </svg>
+                        <span
+                            x-show="isExpanded"
+                            x-transition:enter="transition-opacity duration-300 delay-75"
+                            x-transition:enter-start="opacity-0"
+                            x-transition:enter-end="opacity-100"
+                            x-transition:leave="transition-opacity duration-150"
+                            x-transition:leave-start="opacity-100"
+                            x-transition:leave-end="opacity-0"
+                            class="text-sm font-medium text-gray-900"
+                            >Profile</span
+                        >
+                    </a>
+                </li>
+                {% if is_employee %}
+                <!-- Employee Section Header -->
+                <li x-show="isExpanded" class="pt-6 pb-2">
+                    <p
+                        class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                    >
+                        Employee
+                    </p>
+                </li>
+
+                <!-- Support -->
+                <li>
+                    <a
+                        href="{% url 'aps_support:support_dashboard' %}"
+                        class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
+                        :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
+                        title="Support"
+                    >
+                        <svg
+                            class="flex-shrink-0 w-5 h-5 transition-colors duration-200"
+                            :class="isExpanded ? 'mr-3' : ''"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"
+                            />
+                        </svg>
+                        <span
+                            x-show="isExpanded"
+                            x-transition:enter="transition-opacity duration-300 delay-75"
+                            x-transition:enter-start="opacity-0"
+                            x-transition:enter-end="opacity-100"
+                            x-transition:leave="transition-opacity duration-150"
+                            x-transition:leave-start="opacity-100"
+                            x-transition:leave-end="opacity-0"
+                            class="text-sm font-medium text-gray-900"
+                            >Support</span
+                        >
+                    </a>
+                </li>
+
+                <!-- Attendance -->
+                <li>
+                    <a
+                        href="{% url 'aps_employee:attendance_dashboard' %}"
+                        class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
+                        :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
+                        title="Attendance"
+                    >
+                        <svg
+                            class="flex-shrink-0 w-5 h-5 transition-colors duration-200"
+                            :class="isExpanded ? 'mr-3' : ''"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"
+                            />
+                        </svg>
+                        <span
+                            x-show="isExpanded"
+                            x-transition:enter="transition-opacity duration-300 delay-75"
+                            x-transition:enter-start="opacity-0"
+                            x-transition:enter-end="opacity-100"
+                            x-transition:leave="transition-opacity duration-150"
+                            x-transition:leave-start="opacity-100"
+                            x-transition:leave-end="opacity-0"
+                            class="text-sm font-medium text-gray-900"
+                            >Attendance</span
+                        >
+                    </a>
+                </li>
+
+                <!-- Time Sheet -->
+                <li>
+                    <a
+                        href="{% url 'aps_employee:timesheet' %}"
+                        class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
+                        :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
+                        title="Time Sheet"
+                    >
+                        <svg
+                            class="flex-shrink-0 w-5 h-5 transition-colors duration-200"
+                            :class="isExpanded ? 'mr-3' : ''"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                        </svg>
+                        <span
+                            x-show="isExpanded"
+                            x-transition:enter="transition-opacity duration-300 delay-75"
+                            x-transition:enter-start="opacity-0"
+                            x-transition:enter-end="opacity-100"
+                            x-transition:leave="transition-opacity duration-150"
+                            x-transition:leave-start="opacity-100"
+                            x-transition:leave-end="opacity-0"
+                            class="text-sm font-medium text-gray-900"
+                            >Time Sheet</span
+                        >
+                    </a>
+                </li>
+
+                <!-- Leave Management -->
+                <li>
+                    <a
+                        href="{% url 'aps_leave:employee_leave_view' %}"
+                        class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
+                        :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
+                        title="Leave Management"
+                    >
+                        <svg
+                            class="flex-shrink-0 w-5 h-5 transition-colors duration-200"
+                            :class="isExpanded ? 'mr-3' : ''"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                            />
+                        </svg>
+                        <span
+                            x-show="isExpanded"
+                            x-transition:enter="transition-opacity duration-300 delay-75"
+                            x-transition:enter-start="opacity-0"
+                            x-transition:enter-end="opacity-100"
+                            x-transition:leave="transition-opacity duration-150"
+                            x-transition:leave-start="opacity-100"
+                            x-transition:leave-end="opacity-0"
+                            class="text-sm font-medium text-gray-900"
+                            >Leave Management</span
+                        >
+                    </a>
+                </li>
+
+                <!-- Applications -->
+                <li>
+                    <a
+                        href="{% url 'aps_employee:application_for_user' %}"
+                        class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
+                        :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
+                        title="Applications"
+                    >
+                        <svg
+                            class="flex-shrink-0 w-5 h-5 transition-colors duration-200"
+                            :class="isExpanded ? 'mr-3' : ''"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                            />
+                        </svg>
+                        <span
+                            x-show="isExpanded"
+                            x-transition:enter="transition-opacity duration-300 delay-75"
+                            x-transition:enter-start="opacity-0"
+                            x-transition:enter-end="opacity-100"
+                            x-transition:leave="transition-opacity duration-150"
+                            x-transition:leave-start="opacity-100"
+                            x-transition:leave-end="opacity-0"
+                            class="text-sm font-medium text-gray-900"
+                            >Applications</span
+                        >
+                    </a>
+                </li>
+
+                <!-- My Appraisals -->
+                <li>
+                    <a
+                        href="{% url 'appraisal:appraisal_list' %}"
+                        class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
+                        :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
+                        title="My Appraisals"
+                    >
+                        <svg
+                            class="flex-shrink-0 w-5 h-5 transition-colors duration-200"
+                            :class="isExpanded ? 'mr-3' : ''"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                            />
+                        </svg>
+                        <span
+                            x-show="isExpanded"
+                            x-transition:enter="transition-opacity duration-300 delay-75"
+                            x-transition:enter-start="opacity-0"
+                            x-transition:enter-end="opacity-100"
+                            x-transition:leave="transition-opacity duration-150"
+                            x-transition:leave-start="opacity-100"
+                            x-transition:leave-end="opacity-0"
+                            class="text-sm font-medium text-gray-900"
+                            >My Appraisals</span
+                        >
+                    </a>
+                </li>
+
+                <!-- Entertainment -->
+                <li>
+                    <a
+                        href="{% url 'aps_entertainment:entertainment' %}"
+                        class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
+                        :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
+                        title="Entertainment"
+                    >
+                        <svg
+                            class="flex-shrink-0 w-5 h-5 transition-colors duration-200"
+                            :class="isExpanded ? 'mr-3' : ''"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
+                            />
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                        </svg>
+                        <span
+                            x-show="isExpanded"
+                            x-transition:enter="transition-opacity duration-300 delay-75"
+                            x-transition:enter-start="opacity-0"
+                            x-transition:enter-end="opacity-100"
+                            x-transition:leave="transition-opacity duration-150"
+                            x-transition:leave-start="opacity-100"
+                            x-transition:leave-end="opacity-0"
+                            class="text-sm font-medium text-gray-900"
+                            >Entertainment</span
+                        >
+                    </a>
+                </li>
+                {% endif %}
+
+                <!-- HR, Manager, Admin and Finance sections with similar pattern would go here -->
+                {% if is_hr %}
+                <li x-show="isExpanded" class="pt-6 pb-2">
+                    <p
+                        class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                    >
+                        Human Resources
+                    </p>
+                </li>
+                <li>
+                    <a
+                        href="{% url 'aps_leave:hr_leave_view' %}"
+                        class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
+                        :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
+                        title="Leave Management"
+                    >
+                        <svg
+                            class="flex-shrink-0 w-5 h-5 transition-colors duration-200"
+                            :class="isExpanded ? 'mr-3' : ''"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M8 7V3m8 4V3m-6 8h6m-6 4h6m5 3a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h14a2 2 0 012 2v12z"
+                            />
+                        </svg>
+                        <span
+                            x-show="isExpanded"
+                            x-transition:enter="transition-opacity duration-300 delay-75"
+                            x-transition:enter-start="opacity-0"
+                            x-transition:enter-end="opacity-100"
+                            x-transition:leave="transition-opacity duration-150"
+                            x-transition:leave-start="opacity-100"
+                            x-transition:leave-end="opacity-0"
+                            class="text-sm font-medium text-gray-900"
+                            >Leave Management</span
+                        >
+                    </a>
+                </li>
+
+                <li>
+                    <a
+                        href="{% url 'aps_attendance:analytics' %}"
+                        class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
+                        :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
+                        title="Attendance"
+                    >
+                        <svg
+                            class="flex-shrink-0 w-5 h-5 transition-colors duration-200"
+                            :class="isExpanded ? 'mr-3' : ''"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M11 17a4 4 0 100-8 4 4 0 000 8zm-7 4h14a2 2 0 002-2v-7a2 2 0 00-2-2h-3l-1-2H9l-1 2H5a2 2 0 00-2 2v7a2 2 0 002 2z"
+                            />
+                        </svg>
+                        <span
+                            x-show="isExpanded"
+                            x-transition:enter="transition-opacity duration-300 delay-75"
+                            x-transition:enter-start="opacity-0"
+                            x-transition:enter-end="opacity-100"
+                            x-transition:leave="transition-opacity duration-150"
+                            x-transition:leave-start="opacity-100"
+                            x-transition:leave-end="opacity-0"
+                            class="text-sm font-medium text-gray-900"
+                            >Attendance</span
+                        >
+                    </a>
+                </li>
+
+                <li>
+                    <a
+                        href="{% url 'aps_hr:hr_dashboard' %}"
+                        class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
+                        :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
+                        title="Employee Info"
+                    >
+                        <svg
+                            class="flex-shrink-0 w-5 h-5 transition-colors duration-200"
+                            :class="isExpanded ? 'mr-3' : ''"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                            />
+                        </svg>
+                        <span
+                            x-show="isExpanded"
+                            x-transition:enter="transition-opacity duration-300 delay-75"
+                            x-transition:enter-start="opacity-0"
+                            x-transition:enter-end="opacity-100"
+                            x-transition:leave="transition-opacity duration-150"
+                            x-transition:leave-start="opacity-100"
+                            x-transition:leave-end="opacity-0"
+                            class="text-sm font-medium text-gray-900"
+                            >Employee Info</span
+                        >
+                    </a>
+                </li>
+
+                <li>
+                    <a
+                        href="{% url 'aps_support:support_dashboard' %}"
+                        class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
+                        :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
+                        title="Support"
+                    >
+                        <svg
+                            class="flex-shrink-0 w-5 h-5 transition-colors duration-200"
+                            :class="isExpanded ? 'mr-3' : ''"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"
+                            />
+                        </svg>
+                        <span
+                            x-show="isExpanded"
+                            x-transition:enter="transition-opacity duration-300 delay-75"
+                            x-transition:enter-start="opacity-0"
+                            x-transition:enter-end="opacity-100"
+                            x-transition:leave="transition-opacity duration-150"
+                            x-transition:leave-start="opacity-100"
+                            x-transition:leave-end="opacity-0"
+                            class="text-sm font-medium text-gray-900"
+                            >Support</span
+                        >
+                    </a>
+                </li>
+
+                <li>
+                    <a
+                        href="{% url 'appraisal:appraisal_list' %}"
+                        class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
+                        :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
+                        title="Employee Appraisals"
+                    >
+                        <svg
+                            class="flex-shrink-0 w-5 h-5 transition-colors duration-200"
+                            :class="isExpanded ? 'mr-3' : ''"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                            />
+                        </svg>
+                        <span
+                            x-show="isExpanded"
+                            x-transition:enter="transition-opacity duration-300 delay-75"
+                            x-transition:enter-start="opacity-0"
+                            x-transition:enter-end="opacity-100"
+                            x-transition:leave="transition-opacity duration-150"
+                            x-transition:leave-start="opacity-100"
+                            x-transition:leave-end="opacity-0"
+                            class="text-sm font-medium text-gray-900"
+                            >Employee Appraisals</span
+                        >
+                    </a>
+                </li>
+                {% endif %} {% if is_manager %}
+                <li x-show="isExpanded" class="pt-6 pb-2">
+                    <p
+                        class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                    >
+                        Management
+                    </p>
+                </li>
+
+                <li>
+                    <a
+                        href="{% url 'aps_attendance:analytics' %}"
+                        class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
+                        :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
+                        title="Attendance"
+                    >
+                        <svg
+                            class="flex-shrink-0 w-5 h-5 transition-colors duration-200"
+                            :class="isExpanded ? 'mr-3' : ''"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                            />
+                        </svg>
+                        <span
+                            x-show="isExpanded"
+                            x-transition:enter="transition-opacity duration-300 delay-75"
+                            x-transition:enter-start="opacity-0"
+                            x-transition:enter-end="opacity-100"
+                            x-transition:leave="transition-opacity duration-150"
+                            x-transition:leave-start="opacity-100"
+                            x-transition:leave-end="opacity-0"
+                            class="text-sm font-medium text-gray-900"
+                            >Attendance</span
+                        >
+                    </a>
+                </li>
+
+                <li>
+                    <a
+                        href="{% url 'aps_manager:shift_dashboard' %}"
+                        class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
+                        :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
+                        title="Shift Management"
+                    >
+                        <svg
+                            class="flex-shrink-0 w-5 h-5 transition-colors duration-200"
+                            :class="isExpanded ? 'mr-3' : ''"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                        </svg>
+                        <span
+                            x-show="isExpanded"
+                            x-transition:enter="transition-opacity duration-300 delay-75"
+                            x-transition:enter-start="opacity-0"
+                            x-transition:enter-end="opacity-100"
+                            x-transition:leave="transition-opacity duration-150"
+                            x-transition:leave-start="opacity-100"
+                            x-transition:leave-end="opacity-0"
+                            class="text-sm font-medium text-gray-900"
+                            >Shift Management</span
+                        >
+                    </a>
+                </li>
+
+                <li>
+                    <a
+                        href="{% url 'aps_manager:report' %}"
+                        class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
+                        :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
+                        title="Report"
+                    >
+                        <svg
+                            class="flex-shrink-0 w-5 h-5 transition-colors duration-200"
+                            :class="isExpanded ? 'mr-3' : ''"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                            />
+                        </svg>
+                        <span
+                            x-show="isExpanded"
+                            x-transition:enter="transition-opacity duration-300 delay-75"
+                            x-transition:enter-start="opacity-0"
+                            x-transition:enter-end="opacity-100"
+                            x-transition:leave="transition-opacity duration-150"
+                            x-transition:leave-start="opacity-100"
+                            x-transition:leave-end="opacity-0"
+                            class="text-sm font-medium text-gray-900"
+                            >Report</span
+                        >
+                    </a>
+                </li>
+
+                <li>
+                    <a
+                        href="{% url 'aps_manager:project_list'%}"
+                        class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
+                        :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
+                        title="Projects"
+                    >
+                        <svg
+                            class="flex-shrink-0 w-5 h-5 transition-colors duration-200"
+                            :class="isExpanded ? 'mr-3' : ''"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+                            />
+                        </svg>
+                        <span
+                            x-show="isExpanded"
+                            x-transition:enter="transition-opacity duration-300 delay-75"
+                            x-transition:enter-start="opacity-0"
+                            x-transition:enter-end="opacity-100"
+                            x-transition:leave="transition-opacity duration-150"
+                            x-transition:leave-start="opacity-100"
+                            x-transition:leave-end="opacity-0"
+                            class="text-sm font-medium text-gray-900"
+                            >Projects</span
+                        >
+                    </a>
+                </li>
+
+                <li>
+                    <a
+                        href="{% url 'aps_manager:view_timesheets' %}"
+                        class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
+                        :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
+                        title="Employee Timesheets"
+                    >
+                        <svg
+                            class="flex-shrink-0 w-5 h-5 transition-colors duration-200"
+                            :class="isExpanded ? 'mr-3' : ''"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <circle
+                                cx="12"
+                                cy="12"
+                                r="9"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                fill="none"
+                            />
+                            <path
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M12 7v5l3 3"
+                            />
+                        </svg>
+                        <span
+                            x-show="isExpanded"
+                            x-transition:enter="transition-opacity duration-300 delay-75"
+                            x-transition:enter-start="opacity-0"
+                            x-transition:enter-end="opacity-100"
+                            x-transition:leave="transition-opacity duration-150"
+                            x-transition:leave-start="opacity-100"
+                            x-transition:leave-end="opacity-0"
+                            class="text-sm font-medium text-gray-900"
+                            >Employee Timesheets</span
+                        >
+                    </a>
+                </li>
+
+                <li>
+                    <a
+                        href="{% url 'appraisal:appraisal_list' %}"
+                        class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
+                        :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
+                        title="Review Appraisals"
+                    >
+                        <svg
+                            class="flex-shrink-0 w-5 h-5 transition-colors duration-200"
+                            :class="isExpanded ? 'mr-3' : ''"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <rect
+                                x="5"
+                                y="5"
+                                width="14"
+                                height="14"
+                                rx="2"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                fill="none"
+                            />
+                            <path
+                                d="M15.232 7.232a2 2 0 112.828 2.828l-7.07 7.07-3.03.202.202-3.03 7.07-7.07z"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                fill="none"
+                            />
+                        </svg>
+                        <span
+                            x-show="isExpanded"
+                            x-transition:enter="transition-opacity duration-300 delay-75"
+                            x-transition:enter-start="opacity-0"
+                            x-transition:enter-end="opacity-100"
+                            x-transition:leave="transition-opacity duration-150"
+                            x-transition:leave-start="opacity-100"
+                            x-transition:leave-end="opacity-0"
+                            class="text-sm font-medium text-gray-900"
+                            >Review Appraisals</span
+                        >
+                    </a>
+                </li>
+                {% endif %} {% if is_admin %}
+                <li x-show="isExpanded" class="pt-6 pb-2">
+                    <p
+                        class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                    >
+                        Administration
+                    </p>
+                </li>
+
+                <li>
+                    <a
+                        href="{% url 'aps_admin:user_sessions' %}"
+                        class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
+                        :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
+                        title="User Sessions"
+                    >
+                        <svg
+                            class="flex-shrink-0 w-5 h-5 transition-colors duration-200"
+                            :class="isExpanded ? 'mr-3' : ''"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                            />
+                        </svg>
+                        <span
+                            x-show="isExpanded"
+                            x-transition:enter="transition-opacity duration-300 delay-75"
+                            x-transition:enter-start="opacity-0"
+                            x-transition:enter-end="opacity-100"
+                            x-transition:leave="transition-opacity duration-150"
+                            x-transition:leave-start="opacity-100"
+                            x-transition:leave-end="opacity-0"
+                            class="text-sm font-medium text-gray-900"
+                            >User Sessions</span
+                        >
+                    </a>
+                </li>
+
+                <li>
+                    <a
+                        href="{% url 'aps_admin:view_leave_requests_admin' %}"
+                        class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
+                        :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
+                        title="Leave Requests"
+                    >
+                        <svg
+                            class="flex-shrink-0 w-5 h-5 transition-colors duration-200"
+                            :class="isExpanded ? 'mr-3' : ''"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                            />
+                        </svg>
+                        <span
+                            x-show="isExpanded"
+                            x-transition:enter="transition-opacity duration-300 delay-75"
+                            x-transition:enter-start="opacity-0"
+                            x-transition:enter-end="opacity-100"
+                            x-transition:leave="transition-opacity duration-150"
+                            x-transition:leave-start="opacity-100"
+                            x-transition:leave-end="opacity-0"
+                            class="text-sm font-medium text-gray-900"
+                            >Leave Requests</span
+                        >
+                    </a>
+                </li>
+
+                <li>
+                    <a
+                        href="{% url 'aps_admin:report' %}"
+                        class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
+                        :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
+                        title="Report"
+                    >
+                        <svg
+                            class="flex-shrink-0 w-5 h-5 transition-colors duration-200"
+                            :class="isExpanded ? 'mr-3' : ''"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M9 17v-6m4 6v-4m4 4v-2M5 5a2 2 0 012-2h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5z"
+                            />
+                        </svg>
+                        <span
+                            x-show="isExpanded"
+                            x-transition:enter="transition-opacity duration-300 delay-75"
+                            x-transition:enter-start="opacity-0"
+                            x-transition:enter-end="opacity-100"
+                            x-transition:leave="transition-opacity duration-150"
+                            x-transition:leave-start="opacity-100"
+                            x-transition:leave-end="opacity-0"
+                            class="text-sm font-medium text-gray-900"
+                            >Report</span
+                        >
+                    </a>
+                </li>
+
+                <li>
+                    <a
+                        href="{% url 'aps_admin:project_dashboard' %}"
+                        class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
+                        :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
+                        title="Projects"
+                    >
+                        <svg
+                            class="flex-shrink-0 w-5 h-5 transition-colors duration-200"
+                            :class="isExpanded ? 'mr-3' : ''"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"
+                            />
+                        </svg>
+                        <span
+                            x-show="isExpanded"
+                            x-transition:enter="transition-opacity duration-300 delay-75"
+                            x-transition:enter-start="opacity-0"
+                            x-transition:enter-end="opacity-100"
+                            x-transition:leave="transition-opacity duration-150"
+                            x-transition:leave-start="opacity-100"
+                            x-transition:leave-end="opacity-0"
+                            class="text-sm font-medium text-gray-900"
+                            >Projects</span
+                        >
+                    </a>
+                </li>
+
+                <li>
+                    <a
+                        href="{% url 'aps_support:support_dashboard' %}"
+                        class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
+                        :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
+                        title="Support"
+                    >
+                        <svg
+                            class="flex-shrink-0 w-5 h-5 transition-colors duration-200"
+                            :class="isExpanded ? 'mr-3' : ''"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"
+                            />
+                        </svg>
+                        <span
+                            x-show="isExpanded"
+                            x-transition:enter="transition-opacity duration-300 delay-75"
+                            x-transition:enter-start="opacity-0"
+                            x-transition:enter-end="opacity-100"
+                            x-transition:leave="transition-opacity duration-150"
+                            x-transition:leave-start="opacity-100"
+                            x-transition:leave-end="opacity-0"
+                            class="text-sm font-medium text-gray-900"
+                            >Support</span
+                        >
+                    </a>
+                </li>
+                {% endif %}
+
+                <li x-show="isExpanded" class="pt-6 pb-2">
+                    <p
+                        class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                    >
+                        Communication
+                    </p>
+                </li>
+                <li>
+                    <span
+                        class="nav-item group flex items-center rounded-lg text-gray-400 cursor-not-allowed"
+                        :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
+                        title="Chat Room (Coming Soon)"
+                    >
+                        <svg
+                            class="flex-shrink-0 w-5 h-5 transition-colors duration-200"
+                            :class="isExpanded ? 'mr-3' : ''"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                            />
+                        </svg>
+                        <span
+                            x-show="isExpanded"
+                            x-transition:enter="transition-opacity duration-300 delay-75"
+                            x-transition:enter-start="opacity-0"
+                            x-transition:enter-end="opacity-100"
+                            x-transition:leave="transition-opacity duration-150"
+                            x-transition:leave-start="opacity-100"
+                            x-transition:leave-end="opacity-0"
+                            class="text-sm font-medium"
+                            >Chat Room (Coming Soon)</span
+                        >
+                    </span>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>

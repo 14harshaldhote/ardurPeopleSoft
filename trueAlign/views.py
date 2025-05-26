@@ -766,7 +766,7 @@ def login_view(request):
                 print(f"DEBUG: Session created: {session}")
                 print(f"DEBUG: Session login time (UTC): {session.login_time}")
                 print(f"DEBUG: Session login time (IST): {to_ist(session.login_time)}")
-                
+
             except Exception as e:
                 logger.error(f"Error creating session: {e}")
                 print(f"ERROR: Session creation failed: {e}")
@@ -3730,39 +3730,63 @@ def system_usage_view(request):
 
 
 ''' -------------- usersession ---------------'''
-from django.db.models import Count, Min, Max, Sum, Case, When, BooleanField, Avg, F, Q
-from django.db.models.functions import Coalesce, ExtractHour
-from datetime import datetime, date, timedelta
-from django.utils import timezone
-from django.contrib import messages
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required, user_passes_test
-from .models import UserSession, User
-from django.core.paginator import Paginator
-import logging
+from django.http import JsonResponse, HttpResponse
+from django.utils import timezone
+from django.db import transaction
+from django.db.models import (Q, Count, Avg, Sum, F, Max, Min, Case, When,
+                             IntegerField, FloatField, DurationField, Value)
+from django.db.models.functions import (TruncDate, TruncHour, Extract,
+                                       Coalesce, Cast)
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.utils.dateparse import parse_date, parse_datetime
+from django.template.loader import render_to_string
+from datetime import datetime, timedelta, date
+from decimal import Decimal
 import json
+import logging
+import pytz
+import csv
+import openpyxl
+from openpyxl.styles import Font, Alignment, PatternFill
+from io import BytesIO
+from collections import defaultdict, Counter
+
+from .models import UserSession
+from .helpers import is_user_in_group
+
+# Set up logging
+logger = logging.getLogger(__name__)
+
+# Asia/Kolkata timezone
+IST_TIMEZONE = pytz.timezone('Asia/Kolkata')
 
 def is_admin(user):
-    """
-    Check if the user is an administrator based on group membership.
+    """Check if user is admin or has appropriate permissions"""
+    return user.is_staff or user.is_superuser or is_user_in_group(user, 'Admin')
 
-    Args:
-        user: A Django User object to check for admin privileges
+def get_current_time_ist():
+    """Return current time in Asia/Kolkata timezone (aware)."""
+    return timezone.now().astimezone(IST_TIMEZONE)
 
-    Returns:
-        bool: True if user is in the 'Admin' group, False otherwise
-    """
-    # Check if user is authenticated first (redundant with @login_required but good practice)
-    if not user.is_authenticated:
-        return False
+def to_ist(dt):
+    """Convert a datetime to Asia/Kolkata timezone (aware)."""
+    if dt is None:
+        return None
+    if timezone.is_naive(dt):
+        return IST_TIMEZONE.localize(dt)
+    return dt.astimezone(IST_TIMEZONE)
 
-    # Check if user is a superuser (optional, depending on your needs)
-    if user.is_superuser:
-        return True
+def to_utc(dt_ist):
+    """Convert IST datetime to UTC for database storage."""
+    if dt_ist is None:
+        return None
+    if timezone.is_naive(dt_ist):
+        dt_ist = IST_TIMEZONE.localize(dt_ist)
+    return dt_ist.astimezone(pytz.UTC)
 
-    # Check if user belongs to the 'Admin' group
-    return user.groups.filter(name='Admin').exists()
-logger = logging.getLogger(__name__)
 @login_required
 @user_passes_test(is_admin)
 def user_sessions_view(request):
@@ -3771,281 +3795,180 @@ def user_sessions_view(request):
     for tracking employee productivity.
     """
     try:
-        # Advanced filtering parameters with defaults
-        filters = {
-            'username': request.GET.get('username', ''),
-            'date_from': request.GET.get('date_from', ''),
-            'date_to': request.GET.get('date_to', ''),
-            'location': request.GET.get('location', ''),
-            'status': request.GET.get('status', ''),
-            'min_hours': request.GET.get('min_hours', ''),
-            'max_hours': request.GET.get('max_hours', ''),
-            'idle_threshold': request.GET.get('idle_threshold', ''),
-            'ip_address': request.GET.get('ip_address', '')
-        }
+        # Get current time in IST
+        current_time_ist = get_current_time_ist()
+        current_time_utc = timezone.now()
 
-        # Base queryset with select_related for performance
-        sessions = UserSession.objects.select_related('user').all()
+        # Parse filters from request
+        filters = _parse_session_filters(request)
+        date_from = filters['date_from']
+        date_to = filters['date_to']
+        user_filter = filters['user_filter']
+        location_filter = filters['location_filter']
+        device_filter = filters['device_filter']
+        status_filter = filters['status_filter']
+        ip_type_filter = filters['ip_type_filter']
+        quality_filter = filters['quality_filter']
 
-        # Build complex filter conditions
-        filter_conditions = Q()
+        # Handle AJAX requests for live data
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            ajax_type = request.GET.get('type')
 
-        # Advanced username/user filtering
-        if filters['username']:
-            filter_conditions &= (
-                Q(user__username__icontains=filters['username']) |
-                Q(user__first_name__icontains=filters['username']) |
-                Q(user__last_name__icontains=filters['username']) |
-                Q(user__email__icontains=filters['username'])
-            )
+            if ajax_type == 'live_activity':
+                return _get_live_activity_data(request)
+            elif ajax_type == 'overview_metrics':
+                return _get_overview_metrics(request, date_from, date_to)
+            elif ajax_type == 'session_analytics':
+                return _get_session_analytics(request, date_from, date_to, filters)
+            elif ajax_type == 'export':
+                return _export_session_data(request, filters)
 
-        # Date range filtering
-        if filters['date_from'] or filters['date_to']:
-            try:
-                date_from = None
-                date_to = None
+        # Base queryset with filters
+        base_queryset = _get_filtered_sessions(filters)
 
-                if filters['date_from']:
-                    date_from = datetime.strptime(filters['date_from'], "%Y-%m-%d")
-                if filters['date_to']:
-                    date_to = datetime.strptime(filters['date_to'], "%Y-%m-%d") + timedelta(days=1)
+        # ==================== HIGH-LEVEL OVERVIEW METRICS ====================
+        overview_metrics = _calculate_overview_metrics(base_queryset, current_time_utc)
 
-                if date_from and date_to:
-                    filter_conditions &= (
-                        Q(login_time__range=[date_from, date_to]) |
-                        Q(logout_time__range=[date_from, date_to])
-                    )
-                elif date_from:
-                    filter_conditions &= Q(login_time__gte=date_from)
-                elif date_to:
-                    filter_conditions &= Q(login_time__lt=date_to)
+        # ==================== LIVE ACTIVITY FEED ====================
+        live_sessions = UserSession.objects.filter(
+            is_active=True,
+            last_activity__gte=current_time_utc - timedelta(minutes=5)
+        ).select_related('user').order_by('-last_activity')[:50]
 
-            except ValueError:
-                messages.error(request, "Invalid date format. Use YYYY-MM-DD.")
+        live_activity_data = []
+        for session in live_sessions:
+            last_activity_ist = to_ist(session.last_activity)
+            login_time_ist = to_ist(session.login_time)
 
-        # Location filtering
-        if filters['location']:
-            filter_conditions &= Q(location__icontains=filters['location'])
+            # Calculate session duration
+            session_duration = (current_time_utc - session.login_time).total_seconds() / 60
 
-        # Enhanced status filtering
-        if filters['status']:
-            if filters['status'] == 'active':
-                filter_conditions &= Q(is_active=True)
-            elif filters['status'] == 'inactive':
-                filter_conditions &= Q(is_active=False)
-            elif filters['status'] == 'idle':
-                idle_threshold = timedelta(minutes=int(UserSession.IDLE_THRESHOLD_MINUTES))
-                filter_conditions &= Q(idle_time__gt=idle_threshold)
+            # Determine activity status
+            time_since_activity = (current_time_utc - session.last_activity).total_seconds() / 60
+            if time_since_activity <= 1:
+                activity_status = 'active'
+            elif time_since_activity <= 5:
+                activity_status = 'idle'
+            else:
+                activity_status = 'inactive'
 
-        # Working hours range filtering
-        if filters['min_hours']:
-            try:
-                min_hours = float(filters['min_hours'])
-                min_duration = timedelta(hours=min_hours)
-                filter_conditions &= Q(working_hours__gte=min_duration)
-            except ValueError:
-                messages.warning(request, "Invalid minimum hours value")
+            live_activity_data.append({
+                'user': session.user,
+                'session_id': session.id,
+                'tab_id': session.tab_id,
+                'ip_address': session.ip_address,
+                'location': session.location,
+                'device_type': session.device_type,
+                'is_primary_tab': session.is_primary_tab,
+                'login_time_ist': login_time_ist,
+                'last_activity_ist': last_activity_ist,
+                'session_duration_minutes': round(session_duration, 1),
+                'activity_status': activity_status,
+                'productivity_score': session.productivity_score or 0,
+                'engagement_score': session.engagement_score or 0,
+                'tab_switches': session.tab_switches,
+                'current_url': session.tab_url,
+                'is_office_ip': session.ip_address in UserSession.OFFICE_IPS if session.ip_address else False
+            })
 
-        if filters['max_hours']:
-            try:
-                max_hours = float(filters['max_hours'])
-                max_duration = timedelta(hours=max_hours)
-                filter_conditions &= Q(working_hours__lte=max_duration)
-            except ValueError:
-                messages.warning(request, "Invalid maximum hours value")
+        # ==================== USER-BASED INSIGHTS ====================
+        user_insights = _calculate_user_insights(base_queryset, date_from, date_to)
 
-        # Idle time threshold filtering
-        if filters['idle_threshold']:
-            try:
-                idle_mins = float(filters['idle_threshold'])
-                idle_duration = timedelta(minutes=idle_mins)
-                filter_conditions &= Q(idle_time__gte=idle_duration)
-            except ValueError:
-                messages.warning(request, "Invalid idle threshold value")
+        # ==================== TAB BEHAVIOR ANALYSIS ====================
+        tab_analysis = _calculate_tab_behavior_analysis(base_queryset)
 
-        # IP address filtering
-        if filters['ip_address']:
-            filter_conditions &= Q(ip_address__icontains=filters['ip_address'])
+        # ==================== SECURITY & DEVICE MONITORING ====================
+        security_insights = _calculate_security_insights(base_queryset)
 
-        # Apply all filters
-        sessions = sessions.filter(filter_conditions).order_by('-login_time')
+        # ==================== LOCATION & ENVIRONMENT TRACKING ====================
+        location_insights = _calculate_location_insights(base_queryset)
 
-        # Pagination
-        paginator = Paginator(sessions, 20)  # Show 20 sessions per page
-        page_number = request.GET.get('page', 1)
-        page_obj = paginator.get_page(page_number)
+        # ==================== PERFORMANCE MONITORING ====================
+        performance_insights = _calculate_performance_insights(base_queryset)
 
-        # Calculate analytics for all matching sessions
-        total_sessions = sessions.count()
+        # ==================== SESSION QUALITY SCORING ====================
+        quality_insights = _calculate_quality_insights(base_queryset)
 
-        # Location distribution
-        location_distribution = dict(sessions.values('location')
-                                    .annotate(count=Count('id'))
-                                    .values_list('location', 'count'))
+        # ==================== PAGINATION FOR DETAILED SESSION LIST ====================
+        sessions_list = base_queryset.select_related('user').order_by('-login_time')
 
-        # Calculate average working hours and idle time
-        avg_working_hours = sessions.exclude(working_hours=None).aggregate(
-            avg=Coalesce(Avg('working_hours'), timedelta())
-        )['avg']
+        page = request.GET.get('page', 1)
+        paginator = Paginator(sessions_list, 25)
 
-        avg_idle_time = sessions.aggregate(
-            avg=Coalesce(Avg('idle_time'), timedelta())
-        )['avg']
+        try:
+            sessions_page = paginator.page(page)
+        except PageNotAnInteger:
+            sessions_page = paginator.page(1)
+        except EmptyPage:
+            sessions_page = paginator.page(paginator.num_pages)
 
-        # Get peak activity hours
-        peak_hours = sessions.annotate(
-            hour=ExtractHour('login_time')
-        ).values('hour').annotate(count=Count('id')).order_by('-count')[:3]
+        # Convert session times to IST for display
+        sessions_display = []
+        for session in sessions_page:
+            login_time_ist = to_ist(session.login_time)
+            last_activity_ist = to_ist(session.last_activity)
+            logout_time_ist = to_ist(session.logout_time) if session.logout_time else None
 
-        # Get most productive users
-        productive_users = sessions.values('user__username').annotate(
-            total_working_hours=Sum('working_hours'),
-            avg_idle_time=Avg('idle_time')
-        ).order_by('-total_working_hours')[:5]
+            # Calculate current session duration for active sessions
+            if session.is_active:
+                current_duration = (current_time_utc - session.login_time).total_seconds() / 60
+            else:
+                current_duration = session.session_duration or 0
 
-        # Consolidate sessions by user and date
-        daily_user_sessions = consolidate_daily_sessions(page_obj)
+            sessions_display.append({
+                'session': session,
+                'login_time_ist': login_time_ist,
+                'last_activity_ist': last_activity_ist,
+                'logout_time_ist': logout_time_ist,
+                'current_duration_minutes': round(current_duration, 1),
+                'working_hours_display': session.get_total_working_hours_display(),
+                'idle_time_minutes': (session.idle_time.total_seconds() / 60) if session.idle_time else 0,
+                'is_office_ip': session.ip_address in UserSession.OFFICE_IPS if session.ip_address else False,
+                'page_views_count': len(session.page_views or []),
+                'interactions_count': (
+                    len(session.click_events or []) +
+                    len(session.keyboard_events or []) +
+                    len(session.scroll_events or [])
+                ),
+                'security_incidents_count': len(session.security_incidents or {})
+            })
 
-        # Get all possible locations from the database
-        all_locations = list(UserSession.objects.values_list('location', flat=True).distinct())
-        # Filter out None values and add default options
-        location_choices = [loc for loc in all_locations if loc] + ['Home', 'Unknown']
-        # Remove duplicates
-        location_choices = list(set(location_choices))
-
-        # Prepare context with enhanced options
+        # ==================== CONTEXT DATA ====================
         context = {
-            'sessions': page_obj,
-            'daily_sessions': daily_user_sessions,
+            'current_time_ist': current_time_ist,
+            'overview_metrics': overview_metrics,
+            'live_activity_data': live_activity_data,
+            'user_insights': user_insights,
+            'tab_analysis': tab_analysis,
+            'security_insights': security_insights,
+            'location_insights': location_insights,
+            'performance_insights': performance_insights,
+            'quality_insights': quality_insights,
+            'sessions_page': sessions_page,
+            'sessions_display': sessions_display,
             'filters': filters,
-            'analytics': {
-                'total_sessions': total_sessions,
-                'active_sessions': sessions.filter(is_active=True).count(),
-                'avg_working_hours': avg_working_hours.total_seconds() / 3600 if avg_working_hours else 0,
-                'avg_idle_time': avg_idle_time.total_seconds() / 3600 if avg_idle_time else 0,
-                'location_distribution': location_distribution,
-                'peak_hours': peak_hours,
-                'productive_users': productive_users
-            },
-            'location_choices': location_choices,
-            'status_choices': [
-                ('active', 'Active'),
-                ('inactive', 'Inactive'),
-                ('idle', 'Idle')
+            'users_list': User.objects.filter(is_active=True).order_by('username'),
+            'date_range_options': [
+                ('today', 'Today'),
+                ('yesterday', 'Yesterday'),
+                ('last_7_days', 'Last 7 Days'),
+                ('last_30_days', 'Last 30 Days'),
+                ('this_month', 'This Month'),
+                ('last_month', 'Last Month'),
+                ('custom', 'Custom Range')
             ],
-            'idle_thresholds': [
-                (UserSession.IDLE_THRESHOLD_MINUTES, f'{UserSession.IDLE_THRESHOLD_MINUTES} minutes'),
-                (UserSession.SESSION_TIMEOUT_MINUTES, f'{UserSession.SESSION_TIMEOUT_MINUTES} minutes'),
-                (60, '1 hour')
-            ]
+            'device_types': ['desktop', 'mobile', 'tablet'],
+            'locations': ['Office', 'Home', 'Unknown'],
+            'session_qualities': ['high', 'medium', 'low']
         }
 
-        return render(request, 'components/admin/user_sessions.html', context)
+        return render(request, 'components/sessions/user_sessions_dashboard.html', context)
 
     except Exception as e:
-        logger.error(f"Error in user_sessions_view: {str(e)}", exc_info=True)
-        messages.error(request, f"An error occurred while processing your request: {str(e)}")
-        return redirect('dashboard')
-
-def consolidate_daily_sessions(sessions):
-    """
-    Consolidate user sessions by user and date to provide a comprehensive view
-    of daily productivity metrics.
-    """
-    daily_sessions = {}
-
-    for session in sessions:
-        # Use login date as the key date
-        if not session.login_time:
-            continue
-
-        session_date = timezone.localtime(session.login_time).date()
-        user_key = (session.user.id, session_date)
-
-        if user_key not in daily_sessions:
-            daily_sessions[user_key] = {
-                'user': session.user,
-                'date': session_date,
-                'sessions': [],
-                'first_login': None,
-                'last_logout': None,
-                'total_working_hours': timedelta(),
-                'total_idle_time': timedelta(),
-                'locations': set(),
-                'ip_addresses': set(),
-                'session_count': 0,
-                'is_active': False
-            }
-
-        # Add session data
-        daily_sessions[user_key]['sessions'].append(session)
-        daily_sessions[user_key]['session_count'] += 1
-
-        # Update first login time using local time
-        login_time_local = timezone.localtime(session.login_time) if session.login_time else None
-        if login_time_local and (daily_sessions[user_key]['first_login'] is None or
-                                login_time_local < daily_sessions[user_key]['first_login']):
-            daily_sessions[user_key]['first_login'] = login_time_local
-
-        # Update last logout time using local time
-        logout_time_local = timezone.localtime(session.logout_time) if session.logout_time else None
-        if logout_time_local and (daily_sessions[user_key]['last_logout'] is None or
-                                 logout_time_local > daily_sessions[user_key]['last_logout']):
-            daily_sessions[user_key]['last_logout'] = logout_time_local
-
-        # Add working hours and idle time
-        if session.working_hours:
-            daily_sessions[user_key]['total_working_hours'] += session.working_hours
-
-        if session.idle_time:
-            daily_sessions[user_key]['total_idle_time'] += session.idle_time
-
-        # Add location and IP
-        if session.location:
-            daily_sessions[user_key]['locations'].add(session.location)
-
-        if session.ip_address:
-            daily_sessions[user_key]['ip_addresses'].add(session.ip_address)
-
-        # Check if any session is active
-        if session.is_active:
-            daily_sessions[user_key]['is_active'] = True
-
-    # Process the consolidated data for display
-    result = []
-    for data in daily_sessions.values():
-        # Calculate productivity score
-        total_duration = data['total_working_hours'] + data['total_idle_time']
-        if total_duration > timedelta():
-            productivity_score = (data['total_working_hours'].total_seconds() / total_duration.total_seconds()) * 100
-        else:
-            productivity_score = 0
-
-        # Calculate total duration in hours
-        if data['first_login']:
-            end_time = data['last_logout'] or timezone.localtime(timezone.now())
-            total_duration = (end_time - data['first_login']).total_seconds() / 3600
-        else:
-            total_duration = 0
-
-        # Format data for template with hours
-        result.append({
-            'user': data['user'],
-            'date': data['date'],
-            'first_login': data['first_login'],
-            'last_logout': data['last_logout'] or timezone.localtime(timezone.now()) if data['is_active'] else data['last_logout'],
-            'total_working_hours': data['total_working_hours'].total_seconds() / 3600,
-            'total_idle_time': data['total_idle_time'].total_seconds() / 3600,
-            'locations': list(data['locations']),
-            'ip_addresses': list(data['ip_addresses']),
-            'session_count': data['session_count'],
-            'is_active': data['is_active'],
-            'productivity_score': round(productivity_score, 1),
-            'total_duration': round(total_duration, 1)
+        logger.error(f"Error in user_sessions_view: {str(e)}")
+        return render(request, 'components/sessions/error.html', {
+            'error_message': 'An error occurred while loading the dashboard.'
         })
-
-    # Sort by date (newest first) and then by username
-    return sorted(result, key=lambda x: (x['date'], x['user'].username), reverse=True)
 
 @login_required
 @user_passes_test(is_admin)
@@ -4055,184 +3978,1149 @@ def user_session_detail_view(request, user_id, date_str):
     Shows session timeline and productivity metrics.
     """
     try:
-        # Parse date and get user, with validation
+        # Get user and parse date
+        user = get_object_or_404(User, id=user_id)
+
         try:
-            date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
-            user = User.objects.get(id=user_id)
-            print(f"User: {user.username} (ID: {user_id})")
-            print(f"Date: {date_str}")
-            logger.debug(f"Looking for sessions for user ID {user_id} ({user.username}) on {date_str}")
-        except (ValueError, User.DoesNotExist) as e:
-            logger.error(f"Invalid date format or user not found: {str(e)}")
-            messages.error(request, "Invalid date format or user not found")
-            return redirect('aps_admin:user_sessions')
+            target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        except ValueError:
+            return render(request, 'components/sessions/error.html', {
+                'error_message': 'Invalid date format. Please use YYYY-MM-DD.'
+            })
 
-        # Debug: Check all sessions for this user
-        debug_sessions = UserSession.objects.filter(user=user)
-        print(f"Total sessions for user: {debug_sessions.count()}")
-        logger.debug(f"All sessions for user {user.username}: {debug_sessions.count()}")
-        if debug_sessions.exists():
-            recent = debug_sessions.order_by('-login_time').first()
-            login_time_local = timezone.localtime(recent.login_time) if recent.login_time else None
-            print(f"Most recent session: {login_time_local}")
-            print(f"Working hours: {recent.working_hours}")
-            print(f"Idle time: {recent.idle_time}")
-            logger.debug(f"Most recent session: {login_time_local} - Working: {recent.working_hours}, Idle: {recent.idle_time}")
+        # Calculate date range in UTC for database queries
+        start_of_day_ist = IST_TIMEZONE.localize(datetime.combine(target_date, datetime.min.time()))
+        end_of_day_ist = IST_TIMEZONE.localize(datetime.combine(target_date, datetime.max.time()))
+        start_of_day_utc = to_utc(start_of_day_ist)
+        end_of_day_utc = to_utc(end_of_day_ist)
 
-        # Get timezone-aware date range for the specific date
-        tz = timezone.get_current_timezone()
-        start_date = datetime.combine(date_obj, datetime.min.time(), tzinfo=tz)
-        end_date = datetime.combine(date_obj + timedelta(days=1), datetime.min.time(), tzinfo=tz)
-
-        # Get all sessions for this user on this date
+        # Get user's sessions for the specified date
         sessions = UserSession.objects.filter(
             user=user,
-            login_time__gte=start_date,
-            login_time__lt=end_date
+            login_time__gte=start_of_day_utc,
+            login_time__lte=end_of_day_utc
         ).order_by('login_time')
 
-        print(f"Sessions found for date {date_str}: {sessions.count()}")
-        logger.debug(f"Found {sessions.count()} sessions for date {date_str}")
+        if not sessions.exists():
+            return render(request, 'components/sessions/user_session_detail.html', {
+                'user': user,
+                'target_date': target_date,
+                'no_sessions': True
+            })
 
-        if sessions.count() == 0:
-            all_user_sessions = UserSession.objects.filter(user=user).count()
-            print(f"Total sessions across all dates: {all_user_sessions}")
-            logger.debug(f"User has {all_user_sessions} total sessions across all dates")
+        # ============== SESSION TIMELINE ANALYSIS ==============
+        timeline_data = []
+        total_working_time = timedelta(0)
+        total_idle_time = timedelta(0)
+        total_session_time = timedelta(0)
 
-        # Initialize totals
-        total_working_hours = timedelta()
-        total_idle_time = timedelta()
-        current_time = timezone.now()
-        processed_sessions = []
-
-        # Process each session
         for session in sessions:
-            # Get working and idle hours, defaulting to 0 if None
-            working_hours = session.working_hours or timedelta()
-            idle_time = session.idle_time or timedelta()
+            login_time_ist = to_ist(session.login_time)
+            logout_time_ist = to_ist(session.logout_time) if session.logout_time else None
+            last_activity_ist = to_ist(session.last_activity)
 
-            print(f"\nSession details:")
-            login_time_local = timezone.localtime(session.login_time) if session.login_time else None
-            logout_time_local = timezone.localtime(session.logout_time) if session.logout_time else None
-            print(f"Login time: {login_time_local}")
-            print(f"Logout time: {logout_time_local}")
-            print(f"Working hours: {working_hours}")
-            print(f"Idle time: {idle_time}")
-            print(f"Location: {session.location or 'Unknown'}")
-            print(f"IP Address: {session.ip_address or 'Unknown'}")
-            print(f"Active: {session.is_active}")
-
-            # For active sessions, calculate current working/idle time
+            # Calculate session duration
             if session.is_active:
-                # Calculate time since last activity
-                time_since_last = current_time - session.last_activity
-                print(f"Time since last activity: {time_since_last}")
+                session_end = timezone.now()
+                current_duration = session_end - session.login_time
+            else:
+                session_end = session.logout_time
+                current_duration = timedelta(minutes=session.session_duration) if session.session_duration else timedelta(0)
 
-                # Calculate session duration so far
-                current_duration = current_time - session.login_time
+            total_session_time += current_duration
 
-                # Add to idle time if exceeds threshold
-                current_idle = idle_time
-                if time_since_last > timedelta(minutes=int(session.IDLE_THRESHOLD_MINUTES)):
-                    current_idle = idle_time + time_since_last
-                    print(f"Additional idle time: {time_since_last}")
+            if session.working_hours:
+                total_working_time += session.working_hours
 
-                # Calculate current working hours
-                current_working = current_duration - current_idle
+            if session.idle_time:
+                total_idle_time += session.idle_time
 
-                # Use these calculated values
-                working_hours = current_working
-                idle_time = current_idle
+            # Analyze tab behavior
+            tab_focus_analysis = _analyze_tab_focus_patterns(session)
 
-                print(f"Current duration: {current_duration}")
-                print(f"Current working hours: {working_hours}")
-                print(f"Current idle time: {idle_time}")
+            # Calculate hourly activity distribution
+            hourly_activity = _calculate_hourly_activity(session)
 
-            # Add to running totals
-            total_working_hours += working_hours
-            total_idle_time += idle_time
+            timeline_data.append({
+                'session': session,
+                'login_time_ist': login_time_ist,
+                'logout_time_ist': logout_time_ist,
+                'last_activity_ist': last_activity_ist,
+                'duration_hours': current_duration.total_seconds() / 3600,
+                'working_hours': session.working_hours.total_seconds() / 3600 if session.working_hours else 0,
+                'idle_hours': session.idle_time.total_seconds() / 3600 if session.idle_time else 0,
+                'productivity_score': session.productivity_score or 0,
+                'engagement_score': session.engagement_score or 0,
+                'tab_focus_analysis': tab_focus_analysis,
+                'hourly_activity': hourly_activity,
+                'page_views_count': len(session.page_views or []),
+                'interactions_count': (
+                    len(session.click_events or []) +
+                    len(session.keyboard_events or []) +
+                    len(session.scroll_events or [])
+                ),
+                'tab_switches': session.tab_switches,
+                'mouse_movements': session.mouse_movements,
+                'is_office_location': session.location == 'Office',
+                'device_info': {
+                    'type': session.device_type,
+                    'screen_resolution': session.screen_resolution,
+                    'browser_fingerprint': session.browser_fingerprint
+                }
+            })
 
-            # Create session object with all required fields
-            processed_session = {
-                'login_time': login_time_local,
-                'logout_time': logout_time_local or timezone.localtime(current_time),  # Use current time for active sessions
-                'working_hours': working_hours,
-                'idle_time': idle_time,
-                'location': session.location or 'Unknown',
-                'ip_address': session.ip_address or 'Unknown',
-                'is_active': session.is_active,
-                # Add formatted display versions
-                'working_hours_display': format_timedelta(working_hours),
-                'idle_time_display': format_timedelta(idle_time),
-            }
-            processed_sessions.append(processed_session)
-
-        # Debug processed sessions
-        print(f"\nProcessed sessions summary:")
-        print(f"Total sessions processed: {len(processed_sessions)}")
-        logger.debug(f"Sessions being sent to template: {len(processed_sessions)}")
-        for i, s in enumerate(processed_sessions):
-            print(f"\nSession {i+1}:")
-            print(f"Login: {s['login_time']}")
-            print(f"Working hours: {s['working_hours']}")
-            print(f"Idle time: {s['idle_time']}")
-            print(f"Location: {s['location']}")
-            print(f"IP Address: {s['ip_address']}")
-            print(f"Active: {s['is_active']}")
-            logger.debug(f"Session {i+1}: Login {s['login_time']}, Working: {s['working_hours']}")
-
-        # Calculate productivity score
-        total_duration = total_working_hours + total_idle_time
-        if total_duration > timedelta():
-            productivity_score = (total_working_hours.total_seconds() / total_duration.total_seconds()) * 100
-        else:
-            productivity_score = 0
-
-        print(f"\nFinal Summary:")
-        print(f"Total working hours: {total_working_hours.total_seconds() / 3600:.2f} hours")
-        print(f"Total idle time: {total_idle_time.total_seconds() / 3600:.2f} hours")
-        print(f"Productivity score: {round(productivity_score, 1)}%")
-
-        context = {
-            'user': user,
-            'date': date_obj,
-            'sessions': processed_sessions,
-            'total_working_hours': total_working_hours.total_seconds() / 3600,
-            'total_idle_time': total_idle_time.total_seconds() / 3600,
-            'total_working_hours_display': format_timedelta(total_working_hours),
-            'total_idle_time_display': format_timedelta(total_idle_time),
-            'productivity_score': round(productivity_score, 1)
+        # ============== DAILY SUMMARY METRICS ==============
+        daily_summary = {
+            'total_sessions': sessions.count(),
+            'active_sessions': sessions.filter(is_active=True).count(),
+            'multi_tab_sessions': sessions.filter(parent_session_id__isnull=False).values('parent_session_id').distinct().count(),
+            'total_session_hours': total_session_time.total_seconds() / 3600,
+            'total_working_hours': total_working_time.total_seconds() / 3600,
+            'total_idle_hours': total_idle_time.total_seconds() / 3600,
+            'avg_productivity_score': sessions.aggregate(Avg('productivity_score'))['productivity_score__avg'] or 0,
+            'avg_engagement_score': sessions.aggregate(Avg('engagement_score'))['engagement_score__avg'] or 0,
+            'office_sessions': sessions.filter(location='Office').count(),
+            'home_sessions': sessions.filter(location='Home').count(),
+            'desktop_sessions': sessions.filter(device_type='desktop').count(),
+            'mobile_sessions': sessions.filter(device_type='mobile').count(),
+            'tablet_sessions': sessions.filter(device_type='tablet').count()
         }
 
-        print("\nContext data being sent to template:")
-        print(context)
+        # Calculate productivity percentage
+        if daily_summary['total_session_hours'] > 0:
+            daily_summary['productivity_percentage'] = (
+                daily_summary['total_working_hours'] / daily_summary['total_session_hours'] * 100
+            )
+        else:
+            daily_summary['productivity_percentage'] = 0
 
-        return render(request, 'components/admin/user_session_detail.html', context)
+        # ============== PAGE VISIT ANALYSIS ==============
+        page_visits = []
+        url_counter = Counter()
+
+        for session in sessions:
+            if session.page_views:
+                for page_view in session.page_views:
+                    url = page_view.get('url', 'Unknown')
+                    url_counter[url] += 1
+
+                    # Parse timestamp
+                    try:
+                        timestamp_str = page_view.get('timestamp', '')
+                        if timestamp_str:
+                            timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+                            timestamp_ist = to_ist(timestamp)
+                        else:
+                            timestamp_ist = None
+                    except:
+                        timestamp_ist = None
+
+                    page_visits.append({
+                        'url': url,
+                        'title': page_view.get('title', 'Unknown'),
+                        'timestamp_ist': timestamp_ist,
+                        'session_id': session.id,
+                        'tab_id': session.tab_id
+                    })
+
+        # Sort page visits by timestamp
+        page_visits.sort(key=lambda x: x['timestamp_ist'] or datetime.min.replace(tzinfo=IST_TIMEZONE))
+
+        # Top visited pages
+        top_pages = url_counter.most_common(10)
+
+        # ============== ACTIVITY HEATMAP DATA ==============
+        activity_heatmap = _generate_activity_heatmap(sessions, target_date)
+
+        # ============== SECURITY ANALYSIS ==============
+        security_analysis = {
+            'unique_ips': list(set(s.ip_address for s in sessions if s.ip_address)),
+            'unique_devices': list(set(s.device_type for s in sessions if s.device_type)),
+            'security_incidents': [],
+            'fingerprint_changes': 0
+        }
+
+        # Collect security incidents
+        for session in sessions:
+            if session.security_incidents:
+                for incident_key, incidents in session.security_incidents.items():
+                    security_analysis['security_incidents'].extend(incidents)
+
+        # Check for fingerprint changes
+        fingerprints = [s.session_fingerprint for s in sessions if s.session_fingerprint]
+        security_analysis['fingerprint_changes'] = len(set(fingerprints)) - 1 if len(fingerprints) > 1 else 0
+
+        # ============== CONTEXT DATA ==============
+        context = {
+            'user': user,
+            'target_date': target_date,
+            'sessions': sessions,
+            'timeline_data': timeline_data,
+            'daily_summary': daily_summary,
+            'page_visits': page_visits[:50],  # Limit to 50 most recent
+            'top_pages': top_pages,
+            'activity_heatmap': activity_heatmap,
+            'security_analysis': security_analysis,
+            'current_time_ist': get_current_time_ist()
+        }
+
+        return render(request, 'components/sessions/user_session_detail.html', context)
 
     except Exception as e:
-        logger.error(f"Error in user_session_detail_view: {str(e)}", exc_info=True)
-        messages.error(request, "An error occurred while processing the request")
-        return redirect('aps_admin:user_sessions')
+        logger.error(f"Error in user_session_detail_view: {str(e)}")
+        return render(request, 'components/sessions/error.html', {
+            'error_message': 'An error occurred while loading the session details.'
+        })
 
+# ==================== HELPER FUNCTIONS ====================
+#
+#
 
-def format_timedelta(td):
-    """Format a timedelta into a human-friendly string (e.g., '2h 45m')"""
-    total_seconds = td.total_seconds()
-    hours = int(total_seconds // 3600)
-    minutes = int((total_seconds % 3600) // 60)
+import json
+import math
+from decimal import Decimal
 
-    if hours > 0:
-        return f"{hours}h {minutes}m"
-    return f"{minutes}m"
+def safe_json_serialize(data, context_name="Unknown"):
+    """
+    Helper function to safely serialize data and identify problematic values
+    """
+    def clean_value(obj, path="root"):
+        if isinstance(obj, dict):
+            cleaned = {}
+            for key, value in obj.items():
+                try:
+                    cleaned[key] = clean_value(value, f"{path}.{key}")
+                except Exception as e:
+                    print(f"Error at {path}.{key}: {e}")
+                    cleaned[key] = None
+            return cleaned
+        elif isinstance(obj, list):
+            cleaned = []
+            for i, item in enumerate(obj):
+                try:
+                    cleaned.append(clean_value(item, f"{path}[{i}]"))
+                except Exception as e:
+                    print(f"Error at {path}[{i}]: {e}")
+                    cleaned.append(None)
+            return cleaned
+        elif isinstance(obj, float):
+            if math.isinf(obj) or math.isnan(obj):
+                print(f"Found invalid float at {path}: {obj}")
+                return 0.0  # or None, depending on your needs
+            return obj
+        elif isinstance(obj, Decimal):
+            if math.isinf(float(obj)) or math.isnan(float(obj)):
+                print(f"Found invalid Decimal at {path}: {obj}")
+                return 0.0
+            return float(obj)
+        else:
+            return obj
 
-def calculate_productivity_score(working_hours, idle_time):
-    """Calculate productivity score based on working hours and idle time"""
-    total_duration = working_hours + idle_time
-    if total_duration <= timedelta():
-        return 0
+    try:
+        cleaned_data = clean_value(data)
+        json.dumps(cleaned_data)  # Test serialization
+        return cleaned_data
+    except Exception as e:
+        print(f"JSON serialization error in {context_name}: {e}")
+        return {}
 
-    productivity = (working_hours.total_seconds() / total_duration.total_seconds()) * 100
-    return min(round(productivity, 1), 100)
+# Common problematic calculations to fix:
+
+def safe_divide(numerator, denominator):
+    """Safe division that returns 0 instead of infinity"""
+    if denominator == 0 or denominator is None:
+        return 0.0
+    result = numerator / denominator
+    if math.isinf(result) or math.isnan(result):
+        return 0.0
+    return result
+
+def safe_percentage(part, total):
+    """Safe percentage calculation"""
+    if total == 0 or total is None or part is None:
+        return 0.0
+    result = (part / total) * 100
+    if math.isinf(result) or math.isnan(result):
+        return 0.0
+    return round(result, 2)
+
+def safe_average(values):
+    """Safe average calculation"""
+    if not values or len(values) == 0:
+        return 0.0
+    clean_values = [v for v in values if v is not None and not (math.isinf(v) or math.isnan(v))]
+    if not clean_values:
+        return 0.0
+    return sum(clean_values) / len(clean_values)
+
+# Fix session duration calculations
+# Replace your AJAX handling section with this:
+def safe_ajax_handler(request, date_from, date_to, filters):
+    """Safe AJAX request handler with error catching"""
+    ajax_type = request.GET.get('type')
+
+    try:
+        if ajax_type == 'live_activity':
+            data = _get_live_activity_data(request)
+            clean_data = safe_json_serialize(data, "live_activity")
+            return JsonResponse(clean_data)
+
+        elif ajax_type == 'overview_metrics':
+            data = _get_overview_metrics(request, date_from, date_to)
+            clean_data = safe_json_serialize(data, "overview_metrics")
+            return JsonResponse(clean_data)
+
+        elif ajax_type == 'session_analytics':
+            data = _get_session_analytics(request, date_from, date_to, filters)
+            clean_data = safe_json_serialize(data, "session_analytics")
+            return JsonResponse(clean_data)
+
+        elif ajax_type == 'export':
+            return _export_session_data(request, filters)
+
+    except Exception as e:
+        logger.error(f"AJAX handler error for type {ajax_type}: {str(e)}")
+        return JsonResponse({
+            'error': True,
+            'message': 'Data processing error occurred',
+            'type': ajax_type
+        }, status=500)
+
+    return JsonResponse({'error': True, 'message': 'Unknown request type'}, status=400)
+
+def _parse_session_filters(request):
+    """Parse and validate session filters from request"""
+    current_time_ist = get_current_time_ist()
+
+    # Date range handling
+    date_range = request.GET.get('date_range', 'last_7_days')
+    custom_from = request.GET.get('date_from')
+    custom_to = request.GET.get('date_to')
+
+    if date_range == 'today':
+        date_from = current_time_ist.date()
+        date_to = current_time_ist.date()
+    elif date_range == 'yesterday':
+        yesterday = current_time_ist.date() - timedelta(days=1)
+        date_from = yesterday
+        date_to = yesterday
+    elif date_range == 'last_7_days':
+        date_from = current_time_ist.date() - timedelta(days=7)
+        date_to = current_time_ist.date()
+    elif date_range == 'last_30_days':
+        date_from = current_time_ist.date() - timedelta(days=30)
+        date_to = current_time_ist.date()
+    elif date_range == 'this_month':
+        date_from = current_time_ist.replace(day=1).date()
+        date_to = current_time_ist.date()
+    elif date_range == 'last_month':
+        last_month = current_time_ist.replace(day=1) - timedelta(days=1)
+        date_from = last_month.replace(day=1).date()
+        date_to = last_month.date()
+    elif date_range == 'custom' and custom_from and custom_to:
+        try:
+            date_from = parse_date(custom_from)
+            date_to = parse_date(custom_to)
+        except:
+            date_from = current_time_ist.date() - timedelta(days=7)
+            date_to = current_time_ist.date()
+    else:
+        date_from = current_time_ist.date() - timedelta(days=7)
+        date_to = current_time_ist.date()
+
+    return {
+        'date_range': date_range,
+        'date_from': date_from,
+        'date_to': date_to,
+        'user_filter': request.GET.get('user_filter'),
+        'location_filter': request.GET.get('location_filter'),
+        'device_filter': request.GET.get('device_filter'),
+        'status_filter': request.GET.get('status_filter'),
+        'ip_type_filter': request.GET.get('ip_type_filter'),
+        'quality_filter': request.GET.get('quality_filter')
+    }
+
+def _get_filtered_sessions(filters):
+    """Get filtered session queryset based on filters"""
+    # Convert date range to UTC for database queries
+    start_of_day_ist = IST_TIMEZONE.localize(datetime.combine(filters['date_from'], datetime.min.time()))
+    end_of_day_ist = IST_TIMEZONE.localize(datetime.combine(filters['date_to'], datetime.max.time()))
+    start_of_day_utc = to_utc(start_of_day_ist)
+    end_of_day_utc = to_utc(end_of_day_ist)
+
+    queryset = UserSession.objects.filter(
+        login_time__gte=start_of_day_utc,
+        login_time__lte=end_of_day_utc
+    )
+
+    # Apply filters
+    if filters['user_filter']:
+        try:
+            user_id = int(filters['user_filter'])
+            queryset = queryset.filter(user_id=user_id)
+        except ValueError:
+            pass
+
+    if filters['location_filter']:
+        queryset = queryset.filter(location=filters['location_filter'])
+
+    if filters['device_filter']:
+        queryset = queryset.filter(device_type=filters['device_filter'])
+
+    if filters['status_filter']:
+        if filters['status_filter'] == 'active':
+            queryset = queryset.filter(is_active=True)
+        elif filters['status_filter'] == 'inactive':
+            queryset = queryset.filter(is_active=False)
+
+    if filters['ip_type_filter']:
+        if filters['ip_type_filter'] == 'office':
+            queryset = queryset.filter(ip_address__in=UserSession.OFFICE_IPS)
+        elif filters['ip_type_filter'] == 'remote':
+            queryset = queryset.exclude(ip_address__in=UserSession.OFFICE_IPS)
+
+    if filters['quality_filter']:
+        queryset = queryset.filter(session_quality=filters['quality_filter'])
+
+    return queryset
+
+def _calculate_overview_metrics(queryset, current_time_utc):
+    """Calculate high-level overview metrics"""
+    # Basic counts
+    total_sessions = queryset.count()
+    active_sessions = queryset.filter(is_active=True).count()
+
+    # Unique users
+    unique_users = queryset.values('user').distinct().count()
+    currently_online = queryset.filter(
+        is_active=True,
+        last_activity__gte=current_time_utc - timedelta(minutes=5)
+    ).values('user').distinct().count()
+
+    # Duration metrics
+    avg_session_duration = queryset.aggregate(
+        avg_duration=Avg('session_duration')
+    )['avg_duration'] or 0
+
+    avg_idle_time = queryset.aggregate(
+        avg_idle=Avg('idle_time')
+    )['avg_idle']
+    avg_idle_minutes = avg_idle_time.total_seconds() / 60 if avg_idle_time else 0
+
+    # Productivity metrics
+    avg_productivity = queryset.filter(
+        productivity_score__isnull=False
+    ).aggregate(Avg('productivity_score'))['productivity_score__avg'] or 0
+
+    avg_engagement = queryset.filter(
+        engagement_score__isnull=False
+    ).aggregate(Avg('engagement_score'))['engagement_score__avg'] or 0
+
+    # Location breakdown
+    location_stats = queryset.values('location').annotate(
+        count=Count('id')
+    ).order_by('-count')
+
+    # Device breakdown
+    device_stats = queryset.values('device_type').annotate(
+        count=Count('id')
+    ).order_by('-count')
+
+    # Multi-tab sessions
+    multi_tab_sessions = queryset.filter(
+        parent_session_id__isnull=False
+    ).values('parent_session_id').distinct().count()
+
+    return {
+        'total_sessions': total_sessions,
+        'active_sessions': active_sessions,
+        'unique_users': unique_users,
+        'currently_online': currently_online,
+        'avg_session_duration_minutes': round(avg_session_duration, 1),
+        'avg_idle_time_minutes': round(avg_idle_minutes, 1),
+        'avg_productivity_score': round(avg_productivity, 1),
+        'avg_engagement_score': round(avg_engagement, 1),
+        'location_breakdown': list(location_stats),
+        'device_breakdown': list(device_stats),
+        'multi_tab_sessions': multi_tab_sessions,
+        'multi_tab_percentage': (multi_tab_sessions / total_sessions * 100) if total_sessions > 0 else 0
+    }
+
+def _calculate_user_insights(queryset, date_from, date_to):
+    """Calculate detailed user-based insights"""
+    user_stats = queryset.values('user__username', 'user__first_name', 'user__last_name', 'user_id').annotate(
+        total_sessions=Count('id'),
+        active_sessions=Count(Case(
+            When(is_active=True, then=1),
+            output_field=IntegerField()
+        )),
+        avg_session_duration=Avg('session_duration'),
+        total_working_hours=Sum('working_hours'),
+        total_idle_time=Sum('idle_time'),
+        avg_productivity=Avg('productivity_score'),
+        avg_engagement=Avg('engagement_score'),
+        office_sessions=Count(Case(
+            When(location='Office', then=1),
+            output_field=IntegerField()
+        )),
+        home_sessions=Count(Case(
+            When(location='Home', then=1),
+            output_field=IntegerField()
+        )),
+        desktop_sessions=Count(Case(
+            When(device_type='desktop', then=1),
+            output_field=IntegerField()
+        )),
+        mobile_sessions=Count(Case(
+            When(device_type='mobile', then=1),
+            output_field=IntegerField()
+        )),
+        total_page_views=Sum(
+            Case(
+                When(page_views__isnull=False, then=F('page_views')),
+                default=Value(0),
+                output_field=IntegerField()
+            )
+        ),
+        total_interactions=Sum(
+            Coalesce(F('mouse_movements'), 0) +
+            Case(
+                When(click_events__isnull=False, then=F('click_events')),
+                default=Value(0),
+                output_field=IntegerField()
+            )
+        ),
+        security_incidents=Count(Case(
+            When(security_incidents__isnull=False, then=1),
+            output_field=IntegerField()
+        ))
+    ).order_by('-total_sessions')
+
+    # Calculate additional metrics for each user
+    enhanced_user_stats = []
+    for user_stat in user_stats:
+        # Calculate productivity percentage
+        if user_stat['avg_session_duration'] and user_stat['avg_session_duration'] > 0:
+            working_hours_minutes = (user_stat['total_working_hours'].total_seconds() / 60) if user_stat['total_working_hours'] else 0
+            session_hours_minutes = user_stat['avg_session_duration'] * user_stat['total_sessions']
+            productivity_percentage = (working_hours_minutes / session_hours_minutes * 100) if session_hours_minutes > 0 else 0
+        else:
+            productivity_percentage = 0
+
+        user_stat['productivity_percentage'] = round(productivity_percentage, 1)
+        user_stat['avg_productivity'] = round(user_stat['avg_productivity'] or 0, 1)
+        user_stat['avg_engagement'] = round(user_stat['avg_engagement'] or 0, 1)
+        user_stat['avg_session_duration'] = round(user_stat['avg_session_duration'] or 0, 1)
+
+        enhanced_user_stats.append(user_stat)
+
+    return enhanced_user_stats[:20]  # Top 20 users
+
+def _calculate_tab_behavior_analysis(queryset):
+    """Analyze tab behavior patterns"""
+    # Most visited URLs
+    url_counter = Counter()
+    tab_switch_stats = []
+
+    for session in queryset:
+        if session.page_views:
+            for page_view in session.page_views:
+                url = page_view.get('url', 'Unknown')
+                url_counter[url] += 1
+
+        if session.tab_switches:
+            tab_switch_stats.append({
+                'session_id': session.id,
+                'user': session.user.username,
+                'tab_switches': session.tab_switches,
+                'session_duration': session.session_duration or 0
+            })
+
+    # Calculate tab switch patterns
+    avg_tab_switches = sum(stat['tab_switches'] for stat in tab_switch_stats) / len(tab_switch_stats) if tab_switch_stats else 0
+    high_tab_switchers = [stat for stat in tab_switch_stats if stat['tab_switches'] > avg_tab_switches * 1.5]
+
+    return {
+        'most_visited_urls': url_counter.most_common(20),
+        'avg_tab_switches_per_session': round(avg_tab_switches, 1),
+        'high_tab_switchers_count': len(high_tab_switchers),
+        'sessions_with_multiple_tabs': queryset.filter(parent_session_id__isnull=False).count(),
+        'primary_tab_sessions': queryset.filter(is_primary_tab=True).count()
+    }
+
+def _calculate_security_insights(queryset):
+    """Calculate security-related insights"""
+    # IP address analysis
+    ip_stats = queryset.values('ip_address').annotate(
+        session_count=Count('id'),
+        user_count=Count('user', distinct=True)
+    ).order_by('-session_count')
+
+    # Office vs Remote sessions
+    office_sessions = queryset.filter(ip_address__in=UserSession.OFFICE_IPS).count()
+    total_sessions = queryset.count()
+    remote_sessions = total_sessions - office_sessions
+
+    # Suspicious activity detection
+    suspicious_activities = []
+
+    # Multiple IPs per user
+    users_multiple_ips = queryset.values('user').annotate(
+        ip_count=Count('ip_address', distinct=True)
+    ).filter(ip_count__gt=2)
+
+    # Sessions with security incidents
+    sessions_with_incidents = queryset.filter(
+        security_incidents__isnull=False
+    ).count()
+
+    # Device fingerprint changes
+    fingerprint_changes = queryset.values('user').annotate(
+        fingerprint_count=Count('session_fingerprint', distinct=True)
+    ).filter(fingerprint_count__gt=1)
+
+    return {
+        'unique_ips': len(ip_stats),
+        'office_sessions': office_sessions,
+        'remote_sessions': remote_sessions,
+        'office_percentage': round(office_sessions / total_sessions * 100, 1) if total_sessions > 0 else 0,
+        'users_with_multiple_ips': users_multiple_ips.count(),
+        'sessions_with_security_incidents': sessions_with_incidents,
+        'users_with_fingerprint_changes': fingerprint_changes.count(),
+        'top_ips_by_usage': list(ip_stats[:10])
+    }
+
+def _calculate_location_insights(queryset):
+    """Calculate location and environment insights"""
+    location_stats = queryset.values('location').annotate(
+        count=Count('id'),
+        unique_users=Count('user', distinct=True),
+        avg_productivity=Avg('productivity_score'),
+        avg_session_duration=Avg('session_duration')
+    ).order_by('-count')
+
+    # Time zone analysis
+    timezone_patterns = {}
+    for session in queryset.select_related('user'):
+        login_hour = to_ist(session.login_time).hour
+        timezone_patterns[login_hour] = timezone_patterns.get(login_hour, 0) + 1
+
+    # Peak hours
+    peak_hours = sorted(timezone_patterns.items(), key=lambda x: x[1], reverse=True)[:5]
+
+    return {
+        'location_breakdown': list(location_stats),
+        'peak_login_hours': peak_hours,
+        'timezone_distribution': timezone_patterns
+    }
+
+def _calculate_performance_insights(queryset):
+    """Calculate performance-related insights"""
+    # Session quality distribution
+    quality_stats = queryset.values('session_quality').annotate(
+        count=Count('id')
+    ).order_by('-count')
+
+    # Performance metrics
+    performance_metrics = queryset.aggregate(
+        avg_page_load_time=Avg('performance_metrics'),
+        avg_mouse_movements=Avg('mouse_movements'),
+        avg_keyboard_events=Avg('keyboard_events'),
+        avg_scroll_events=Avg('scroll_events')
+    )
+
+    # Slow sessions (longer than average + 1 std dev)
+    avg_duration = queryset.aggregate(Avg('session_duration'))['session_duration__avg'] or 0
+    slow_sessions = queryset.filter(session_duration__gt=avg_duration * 1.5).count()
+
+    return {
+        'quality_distribution': list(quality_stats),
+        'avg_page_load_time': round(performance_metrics['avg_page_load_time'] or 0, 2),
+        'avg_mouse_movements': round(performance_metrics['avg_mouse_movements'] or 0, 1),
+        'avg_interactions_per_session': round(
+            (performance_metrics['avg_keyboard_events'] or 0) +
+            (performance_metrics['avg_scroll_events'] or 0), 1
+        ),
+        'slow_sessions_count': slow_sessions,
+        'slow_sessions_percentage': round(slow_sessions / queryset.count() * 100, 1) if queryset.count() > 0 else 0
+    }
+
+def _calculate_quality_insights(queryset):
+    """Calculate session quality insights"""
+    # Quality score distribution
+    quality_ranges = {
+        'excellent': queryset.filter(productivity_score__gte=80).count(),
+        'good': queryset.filter(productivity_score__gte=60, productivity_score__lt=80).count(),
+        'average': queryset.filter(productivity_score__gte=40, productivity_score__lt=60).count(),
+        'poor': queryset.filter(productivity_score__lt=40).count()
+    }
+
+    # Engagement patterns
+    high_engagement = queryset.filter(engagement_score__gte=70).count()
+    low_engagement = queryset.filter(engagement_score__lt=30).count()
+
+    # Idle time analysis
+    high_idle_sessions = queryset.filter(
+        idle_time__gt=timedelta(minutes=30)
+    ).count()
+
+    return {
+        'quality_distribution': quality_ranges,
+        'high_engagement_sessions': high_engagement,
+        'low_engagement_sessions': low_engagement,
+        'high_idle_sessions': high_idle_sessions,
+        'avg_quality_score': round(queryset.aggregate(Avg('productivity_score'))['productivity_score__avg'] or 0, 1)
+    }
+
+def _analyze_tab_focus_patterns(session):
+    """Analyze tab focus patterns for a session"""
+    if not session.page_views:
+        return {
+            'total_pages': 0,
+            'unique_domains': 0,
+            'focus_time_distribution': {},
+            'most_visited_page': None
+        }
+
+    page_counter = Counter()
+    domain_counter = Counter()
+
+    for page_view in session.page_views:
+        url = page_view.get('url', '')
+        page_counter[url] += 1
+
+        # Extract domain
+        try:
+            from urllib.parse import urlparse
+            domain = urlparse(url).netloc
+            domain_counter[domain] += 1
+        except:
+            pass
+
+    return {
+        'total_pages': len(session.page_views),
+        'unique_pages': len(page_counter),
+        'unique_domains': len(domain_counter),
+        'most_visited_page': page_counter.most_common(1)[0] if page_counter else None,
+        'top_domains': domain_counter.most_common(5)
+    }
+
+def _calculate_hourly_activity(session):
+    """Calculate hourly activity distribution for a session"""
+    hourly_data = {i: 0 for i in range(24)}
+
+    if session.page_views:
+        for page_view in session.page_views:
+            try:
+                timestamp_str = page_view.get('timestamp', '')
+                if timestamp_str:
+                    timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+                    hour = to_ist(timestamp).hour
+                    hourly_data[hour] += 1
+            except:
+                pass
+
+    return hourly_data
+
+def _generate_activity_heatmap(sessions, target_date):
+    """Generate activity heatmap data for a specific date"""
+    heatmap_data = []
+
+    # Create 24-hour grid with 15-minute intervals
+    for hour in range(24):
+        hour_data = {'hour': hour, 'intervals': []}
+        for quarter in range(4):  # 15-minute intervals
+            interval_start = hour * 60 + quarter * 15  # minutes from start of day
+            activity_count = 0
+
+            # Count activities in this interval across all sessions
+            for session in sessions:
+                if session.page_views:
+                    for page_view in session.page_views:
+                        try:
+                            timestamp_str = page_view.get('timestamp', '')
+                            if timestamp_str:
+                                timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+                                timestamp_ist = to_ist(timestamp)
+
+                                if timestamp_ist.date() == target_date:
+                                    minutes_from_start = timestamp_ist.hour * 60 + timestamp_ist.minute
+                                    if interval_start <= minutes_from_start < interval_start + 15:
+                                        activity_count += 1
+                        except:
+                            pass
+
+            hour_data['intervals'].append({
+                'quarter': quarter,
+                'activity_count': activity_count,
+                'time_label': f"{hour:02d}:{quarter*15:02d}"
+            })
+
+        heatmap_data.append(hour_data)
+
+    return heatmap_data
+
+def _get_live_activity_data(request):
+    """Get live activity data for AJAX requests"""
+    current_time_utc = timezone.now()
+
+    # Get currently active sessions
+    active_sessions = UserSession.objects.filter(
+        is_active=True,
+        last_activity__gte=current_time_utc - timedelta(minutes=10)
+    ).select_related('user').order_by('-last_activity')[:20]
+
+    activity_data = []
+    for session in active_sessions:
+        time_since_activity = (current_time_utc - session.last_activity).total_seconds() / 60
+
+        activity_data.append({
+            'user_id': session.user.id,
+            'username': session.user.username,
+            'last_activity': to_ist(session.last_activity).strftime('%H:%M:%S'),
+            'session_duration': round((current_time_utc - session.login_time).total_seconds() / 60, 1),
+            'activity_status': 'active' if time_since_activity <= 2 else 'idle',
+            'location': session.location,
+            'device_type': session.device_type,
+            'current_url': session.tab_url or 'Unknown'
+        })
+
+    return JsonResponse({
+        'status': 'success',
+        'data': activity_data,
+        'timestamp': get_current_time_ist().strftime('%Y-%m-%d %H:%M:%S')
+    })
+
+def _get_overview_metrics(request, date_from, date_to):
+    """Get overview metrics for AJAX requests"""
+    filters = _parse_session_filters(request)
+    queryset = _get_filtered_sessions(filters)
+    metrics = _calculate_overview_metrics(queryset, timezone.now())
+
+    return JsonResponse({
+        'status': 'success',
+        'data': metrics
+    })
+
+def _get_session_analytics(request, date_from, date_to, filters):
+    """Get session analytics data for AJAX requests"""
+    queryset = _get_filtered_sessions(filters)
+
+    analytics_data = {
+        'user_insights': _calculate_user_insights(queryset, date_from, date_to)[:10],
+        'tab_analysis': _calculate_tab_behavior_analysis(queryset),
+        'security_insights': _calculate_security_insights(queryset),
+        'performance_insights': _calculate_performance_insights(queryset)
+    }
+
+    return JsonResponse({
+        'status': 'success',
+        'data': analytics_data
+    })
+
+def _export_session_data(request, filters):
+    """Export session data to Excel"""
+    try:
+        queryset = _get_filtered_sessions(filters)
+        export_format = request.GET.get('format', 'excel')
+
+        if export_format == 'csv':
+            return _export_to_csv(queryset, filters)
+        else:
+            return _export_to_excel(queryset, filters)
+
+    except Exception as e:
+        logger.error(f"Error exporting session data: {str(e)}")
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Failed to export data'
+        })
+
+def _export_to_csv(queryset, filters):
+    """Export session data to CSV"""
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="user_sessions_{filters["date_from"]}_to_{filters["date_to"]}.csv"'
+
+    writer = csv.writer(response)
+
+    # Write header
+    writer.writerow([
+        'User', 'Login Time (IST)', 'Logout Time (IST)', 'Duration (minutes)',
+        'Location', 'Device Type', 'IP Address', 'Status', 'Productivity Score',
+        'Engagement Score', 'Tab Switches', 'Page Views', 'Working Hours',
+        'Idle Time (minutes)', 'Session Quality'
+    ])
+
+    # Write data
+    for session in queryset.select_related('user'):
+        login_time_ist = to_ist(session.login_time)
+        logout_time_ist = to_ist(session.logout_time) if session.logout_time else None
+
+        writer.writerow([
+            session.user.username,
+            login_time_ist.strftime('%Y-%m-%d %H:%M:%S'),
+            logout_time_ist.strftime('%Y-%m-%d %H:%M:%S') if logout_time_ist else 'Active',
+            session.session_duration or 0,
+            session.location or 'Unknown',
+            session.device_type or 'Unknown',
+            session.ip_address or 'Unknown',
+            'Active' if session.is_active else 'Inactive',
+            session.productivity_score or 0,
+            session.engagement_score or 0,
+            session.tab_switches or 0,
+            len(session.page_views) if session.page_views else 0,
+            session.working_hours.total_seconds() / 3600 if session.working_hours else 0,
+            session.idle_time.total_seconds() / 60 if session.idle_time else 0,
+            session.session_quality or 'Unknown'
+        ])
+
+    return response
+
+def _export_to_excel(queryset, filters):
+    """Export session data to Excel with formatting"""
+    # Create workbook and worksheet
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "User Sessions"
+
+    # Define styles
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+    header_alignment = Alignment(horizontal="center", vertical="center")
+
+    # Headers
+    headers = [
+        'User', 'Login Time (IST)', 'Logout Time (IST)', 'Duration (minutes)',
+        'Location', 'Device Type', 'IP Address', 'Status', 'Productivity Score',
+        'Engagement Score', 'Tab Switches', 'Page Views', 'Working Hours',
+        'Idle Time (minutes)', 'Session Quality'
+    ]
+
+    # Write and format headers
+    for col, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col, value=header)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = header_alignment
+
+    # Write data
+    for row, session in enumerate(queryset.select_related('user'), 2):
+        login_time_ist = to_ist(session.login_time)
+        logout_time_ist = to_ist(session.logout_time) if session.logout_time else None
+
+        data = [
+            session.user.username,
+            login_time_ist.strftime('%Y-%m-%d %H:%M:%S'),
+            logout_time_ist.strftime('%Y-%m-%d %H:%M:%S') if logout_time_ist else 'Active',
+            session.session_duration or 0,
+            session.location or 'Unknown',
+            session.device_type or 'Unknown',
+            session.ip_address or 'Unknown',
+            'Active' if session.is_active else 'Inactive',
+            session.productivity_score or 0,
+            session.engagement_score or 0,
+            session.tab_switches or 0,
+            len(session.page_views) if session.page_views else 0,
+            round(session.working_hours.total_seconds() / 3600, 2) if session.working_hours else 0,
+            round(session.idle_time.total_seconds() / 60, 2) if session.idle_time else 0,
+            session.session_quality or 'Unknown'
+        ]
+
+        for col, value in enumerate(data, 1):
+            ws.cell(row=row, column=col, value=value)
+
+    # Auto-adjust column widths
+    for column in ws.columns:
+        max_length = 0
+        column_letter = column[0].column_letter
+        for cell in column:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(str(cell.value))
+            except:
+                pass
+        adjusted_width = min(max_length + 2, 50)
+        ws.column_dimensions[column_letter].width = adjusted_width
+
+    # Save to BytesIO
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    # Create response
+    response = HttpResponse(
+        output.getvalue(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = f'attachment; filename="user_sessions_{filters["date_from"]}_to_{filters["date_to"]}.xlsx"'
+
+    return response
+
+@login_required
+@user_passes_test(is_admin)
+def session_analytics_api(request):
+    """
+    API endpoint for session analytics data
+    """
+    try:
+        filters = _parse_session_filters(request)
+        queryset = _get_filtered_sessions(filters)
+
+        analytics_type = request.GET.get('type', 'overview')
+
+        if analytics_type == 'overview':
+            data = _calculate_overview_metrics(queryset, timezone.now())
+        elif analytics_type == 'users':
+            data = _calculate_user_insights(queryset, filters['date_from'], filters['date_to'])
+        elif analytics_type == 'security':
+            data = _calculate_security_insights(queryset)
+        elif analytics_type == 'performance':
+            data = _calculate_performance_insights(queryset)
+        elif analytics_type == 'quality':
+            data = _calculate_quality_insights(queryset)
+        elif analytics_type == 'tabs':
+            data = _calculate_tab_behavior_analysis(queryset)
+        elif analytics_type == 'locations':
+            data = _calculate_location_insights(queryset)
+        else:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Invalid analytics type'
+            })
+
+        return JsonResponse({
+            'status': 'success',
+            'data': data,
+            'filters': filters,
+            'timestamp': get_current_time_ist().isoformat()
+        })
+
+    except Exception as e:
+        logger.error(f"Error in session_analytics_api: {str(e)}")
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Failed to fetch analytics data'
+        })
+
+@login_required
+@user_passes_test(is_admin)
+def terminate_session(request, session_id):
+    """
+    Terminate a specific user session
+    """
+    if request.method != 'POST':
+        return JsonResponse({
+            'status': 'error',
+            'message': 'POST method required'
+        })
+
+    try:
+        session = get_object_or_404(UserSession, id=session_id)
+
+        if not session.is_active:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Session is already inactive'
+            })
+
+        # Mark session as inactive
+        session.is_active = False
+        session.logout_time = timezone.now()
+        session.session_duration = (session.logout_time - session.login_time).total_seconds() / 60
+        session.save()
+
+        logger.info(f"Session {session_id} terminated by admin {request.user.username}")
+
+        return JsonResponse({
+            'status': 'success',
+            'message': f'Session for {session.user.username} has been terminated'
+        })
+
+    except Exception as e:
+        logger.error(f"Error terminating session {session_id}: {str(e)}")
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Failed to terminate session'
+        })
+
+@login_required
+@user_passes_test(is_admin)
+def bulk_session_actions(request):
+    """
+    Perform bulk actions on multiple sessions
+    """
+    if request.method != 'POST':
+        return JsonResponse({
+            'status': 'error',
+            'message': 'POST method required'
+        })
+
+    try:
+        data = json.loads(request.body)
+        action = data.get('action')
+        session_ids = data.get('session_ids', [])
+
+        if not session_ids:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'No sessions selected'
+            })
+
+        sessions = UserSession.objects.filter(id__in=session_ids)
+
+        if action == 'terminate':
+            active_sessions = sessions.filter(is_active=True)
+            count = active_sessions.count()
+
+            active_sessions.update(
+                is_active=False,
+                logout_time=timezone.now()
+            )
+
+            # Update session durations
+            for session in active_sessions:
+                session.session_duration = (timezone.now() - session.login_time).total_seconds() / 60
+                session.save()
+
+            logger.info(f"Bulk terminated {count} sessions by admin {request.user.username}")
+
+            return JsonResponse({
+                'status': 'success',
+                'message': f'Successfully terminated {count} active sessions'
+            })
+
+        elif action == 'export':
+            # This would trigger an export of selected sessions
+            filters = {
+                'date_from': datetime.now().date() - timedelta(days=30),
+                'date_to': datetime.now().date(),
+                'user_filter': None,
+                'location_filter': None,
+                'device_filter': None,
+                'status_filter': None,
+                'ip_type_filter': None,
+                'quality_filter': None
+            }
+
+            return _export_to_excel(sessions, filters)
+
+        else:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Invalid action'
+            })
+
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Invalid JSON data'
+        })
+    except Exception as e:
+        logger.error(f"Error in bulk_session_actions: {str(e)}")
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Failed to perform bulk action'
+        })
 
 
 
