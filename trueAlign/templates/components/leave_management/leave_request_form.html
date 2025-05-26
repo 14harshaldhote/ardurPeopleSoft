@@ -1,58 +1,129 @@
-{% extends 'base.html' %}
-
-{% block content %}
-<div class="min-h-screen  py-8">
+{% extends 'base.html' %} {% block content %}
+<div class="min-h-screen py-8 ">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Back button -->
         <div class="mb-6">
-            <a href="{% url 'aps_leave:leave_request_list' %}" class="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors duration-200">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            <a
+                href="{% url 'aps_leave:leave_request_list' %}"
+                class="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors duration-200 group"
+            >
+                <svg
+                    class="w-5 h-5 mr-2 transform group-hover:-translate-x-1 transition-transform duration-200"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                    />
                 </svg>
-                Back to Leave Requests
+                <span>Back to Leave Requests</span>
             </a>
         </div>
 
-        <div class="bg-white shadow-lg rounded-xl overflow-hidden">
+        <div
+            class="bg-white shadow-md rounded-xl overflow-hidden border border-blue-100"
+        >
             <!-- Header -->
-            <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-8">
-                <h1 class="text-2xl font-bold text-white">{{ leave_request.id|yesno:"Update,Create" }} Leave Request</h1>
-                <p class="mt-2 text-blue-100">Complete the form below to submit your leave request</p>
-                <p class="mt-1 text-blue-100">Logged in as: {{ request.user.get_full_name|default:request.user.username }}</p>
-                
+            <div
+                class="bg-gradient-to-r from-blue-500 to-indigo-500 px-6 py-8 relative overflow-hidden"
+            >
+                <div class="absolute top-0 right-0 -mt-4 -mr-16 opacity-20">
+                    <svg
+                        width="160"
+                        height="160"
+                        viewBox="0 0 160 160"
+                        fill="none"
+                    >
+                        <circle cx="80" cy="80" r="80" fill="white" />
+                        <path
+                            d="M80 40V120M40 80H120"
+                            stroke="white"
+                            stroke-width="12"
+                            stroke-linecap="round"
+                        />
+                    </svg>
+                </div>
+                <h1 class="text-2xl font-bold text-white">
+                    {{ leave_request.id|yesno:"Update,Create" }} Leave Request
+                </h1>
+                <p class="mt-2 text-blue-100">
+                    Complete the form below to submit your leave request
+                </p>
+                <p class="mt-1 text-blue-100 flex items-center">
+                    <svg
+                        class="w-4 h-4 mr-2"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                        />
+                    </svg>
+                    <span
+                        >Logged in as: {{ request.user.get_full_name|default:request.user.username }}</span
+                    >
+                </p>
+
                 {% if leave_request %}
-                    <div class="mt-4 bg-blue-700 bg-opacity-50 rounded-lg p-3">
-                        <p class="text-white text-sm">
-                            <span class="font-semibold">Request Status:</span> 
-                            <span class="px-2 py-1 rounded-full text-xs {% if leave_request.status == 'Pending' %}bg-yellow-400 text-yellow-800{% elif leave_request.status == 'Approved' %}bg-green-400 text-green-800{% elif leave_request.status == 'Rejected' %}bg-red-400 text-red-800{% elif leave_request.status == 'Cancelled' %}bg-gray-400 text-gray-800{% else %}bg-blue-400 text-blue-800{% endif %}">
-                                {{ leave_request.status }}
-                            </span>
-                        </p>
-                        {% if leave_request.approver %}
-                        <p class="text-white text-sm mt-2">
-                            <span class="font-semibold">Approver:</span> {{ leave_request.approver.get_full_name|default:leave_request.approver.username }}
-                        </p>
-                        {% endif %}
-                    </div>
+                <div class="mt-4 bg-blue-600 bg-opacity-40 rounded-lg p-3">
+                    <p class="text-white text-sm">
+                        <span class="font-semibold">Request Status:</span>
+                        <span
+                            class="px-2 py-1 rounded-full text-xs {% if leave_request.status == 'Pending' %}bg-yellow-300 text-yellow-800{% elif leave_request.status == 'Approved' %}bg-green-300 text-green-800{% elif leave_request.status == 'Rejected' %}bg-red-300 text-red-800{% elif leave_request.status == 'Cancelled' %}bg-gray-300 text-gray-800{% else %}bg-blue-300 text-blue-800{% endif %}"
+                        >
+                            {{ leave_request.status }}
+                        </span>
+                    </p>
+                    {% if leave_request.approver %}
+                    <p class="text-white text-sm mt-2">
+                        <span class="font-semibold">Approver:</span> {{
+                        leave_request.approver.get_full_name|default:leave_request.approver.username
+                        }}
+                    </p>
+                    {% endif %}
+                </div>
                 {% endif %}
             </div>
 
             <!-- Leave Balances -->
             {% if balances %}
-            <div class="px-6 py-4 bg-blue-50">
-                <h2 class="text-lg font-semibold text-blue-900 mb-4">Current Leave Balances</h2>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div class="px-6 py-4 bg-blue-100">
+                <h2 class="text-lg font-semibold text-blue-800 mb-4">
+                    Current Leave Balances
+                </h2>
+                <div
+                    class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+                >
                     {% for balance in balances %}
-                    <div class="bg-white rounded-lg p-4 shadow-sm border border-blue-100 hover:border-blue-300 transition-colors duration-200">
-                        <h3 class="font-medium text-gray-900">{{ balance.leave_type.name }}</h3>
+                    <div
+                        class="bg-white rounded-lg p-4 shadow-sm border border-blue-200 hover:border-blue-300 transition-colors duration-200"
+                    >
+                        <h3 class="font-medium text-blue-800">
+                            {{ balance.leave_type.name }}
+                        </h3>
                         <div class="mt-2 space-y-1">
                             <div class="flex justify-between items-center">
-                                <span class="text-sm text-gray-600">Available:</span>
-                                <span class="font-semibold text-blue-600">{{ balance.remaining }}</span>
+                                <span class="text-sm text-blue-600"
+                                    >Available:</span
+                                >
+                                <span class="font-semibold text-blue-600"
+                                    >{{ balance.remaining }}</span
+                                >
                             </div>
                             <div class="flex justify-between items-center">
-                                <span class="text-sm text-gray-600">Used:</span>
-                                <span class="text-gray-700">{{ balance.used }} / {{ balance.allocated }}</span>
+                                <span class="text-sm text-blue-600">Used:</span>
+                                <span class="text-blue-700"
+                                    >{{ balance.used }} / {{ balance.allocated
+                                    }}</span
+                                >
                             </div>
                         </div>
                     </div>
@@ -62,14 +133,26 @@
             {% endif %}
 
             <!-- Form -->
-            <div class="p-6">
+            <div class="p-6 bg-blue-50">
                 {% if form.non_field_errors %}
-                <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <div
+                    class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg"
+                >
                     <div class="flex items-center text-red-700 mb-2">
-                        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                        <svg
+                            class="w-5 h-5 mr-2"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                        >
+                            <path
+                                fill-rule="evenodd"
+                                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                                clip-rule="evenodd"
+                            />
                         </svg>
-                        <span class="font-semibold">There were errors with your submission:</span>
+                        <span class="font-semibold"
+                            >There were errors with your submission:</span
+                        >
                     </div>
                     <ul class="list-disc pl-5 text-red-600">
                         {% for error in form.non_field_errors %}
@@ -79,31 +162,52 @@
                 </div>
                 {% endif %}
 
-                <form method="POST" enctype="multipart/form-data" class="space-y-6" id="leaveRequestForm">
+                <form
+                    method="POST"
+                    enctype="multipart/form-data"
+                    class="space-y-6"
+                    id="leaveRequestForm"
+                >
                     {% csrf_token %}
-                    
+
                     <!-- Hidden user field automatically set by view -->
-                    <input type="hidden" name="user" value="{{ request.user.id }}">
-                    
+                    <input
+                        type="hidden"
+                        name="user"
+                        value="{{ request.user.id }}"
+                    />
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <!-- Leave Type -->
                         <div class="space-y-2 md:col-span-2">
-                            <label for="{{ form.leave_type.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                                {{ form.leave_type.label }}
-                                {% if form.leave_type.field.required %}<span class="text-red-500">*</span>{% endif %}
+                            <label
+                                for="{{ form.leave_type.id_for_label }}"
+                                class="block text-sm font-medium text-blue-700"
+                            >
+                                {{ form.leave_type.label }} {% if form.leave_type.field.required %}<span
+                                    class="text-red-500"
+                                    >*</span
+                                >{% endif %}
                             </label>
-                            <div class="mt-1">
-                                {{ form.leave_type }}
-                            </div>
+                            <div class="mt-1">{{ form.leave_type }}</div>
                             {% if form.leave_type.help_text %}
-                            <p class="text-sm text-gray-500 italic">{{ form.leave_type.help_text }}</p>
-                            {% endif %}
-                            {% if form.leave_type.errors %}
+                            <p class="text-sm text-blue-600 italic">
+                                {{ form.leave_type.help_text }}
+                            </p>
+                            {% endif %} {% if form.leave_type.errors %}
                             <div class="text-red-600 text-sm mt-1">
                                 {% for error in form.leave_type.errors %}
                                 <p class="flex items-center">
-                                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                    <svg
+                                        class="w-4 h-4 mr-1"
+                                        fill="currentColor"
+                                        viewBox="0 0 20 20"
+                                    >
+                                        <path
+                                            fill-rule="evenodd"
+                                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                                            clip-rule="evenodd"
+                                        />
                                     </svg>
                                     {{ error }}
                                 </p>
@@ -114,22 +218,34 @@
 
                         <!-- Start Date -->
                         <div class="space-y-2">
-                            <label for="{{ form.start_date.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                                {{ form.start_date.label }}
-                                {% if form.start_date.field.required %}<span class="text-red-500">*</span>{% endif %}
+                            <label
+                                for="{{ form.start_date.id_for_label }}"
+                                class="block text-sm font-medium text-blue-700"
+                            >
+                                {{ form.start_date.label }} {% if form.start_date.field.required %}<span
+                                    class="text-red-500"
+                                    >*</span
+                                >{% endif %}
                             </label>
-                            <div class="mt-1">
-                                {{ form.start_date }}
-                            </div>
+                            <div class="mt-1">{{ form.start_date }}</div>
                             {% if form.start_date.help_text %}
-                            <p class="text-sm text-gray-500 italic">{{ form.start_date.help_text }}</p>
-                            {% endif %}
-                            {% if form.start_date.errors %}
+                            <p class="text-sm text-blue-600 italic">
+                                {{ form.start_date.help_text }}
+                            </p>
+                            {% endif %} {% if form.start_date.errors %}
                             <div class="text-red-600 text-sm mt-1">
                                 {% for error in form.start_date.errors %}
                                 <p class="flex items-center">
-                                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                    <svg
+                                        class="w-4 h-4 mr-1"
+                                        fill="currentColor"
+                                        viewBox="0 0 20 20"
+                                    >
+                                        <path
+                                            fill-rule="evenodd"
+                                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                                            clip-rule="evenodd"
+                                        />
                                     </svg>
                                     {{ error }}
                                 </p>
@@ -140,22 +256,34 @@
 
                         <!-- End Date -->
                         <div class="space-y-2">
-                            <label for="{{ form.end_date.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                                {{ form.end_date.label }}
-                                {% if form.end_date.field.required %}<span class="text-red-500">*</span>{% endif %}
+                            <label
+                                for="{{ form.end_date.id_for_label }}"
+                                class="block text-sm font-medium text-blue-700"
+                            >
+                                {{ form.end_date.label }} {% if form.end_date.field.required %}<span
+                                    class="text-red-500"
+                                    >*</span
+                                >{% endif %}
                             </label>
-                            <div class="mt-1">
-                                {{ form.end_date }}
-                            </div>
+                            <div class="mt-1">{{ form.end_date }}</div>
                             {% if form.end_date.help_text %}
-                            <p class="text-sm text-gray-500 italic">{{ form.end_date.help_text }}</p>
-                            {% endif %}
-                            {% if form.end_date.errors %}
+                            <p class="text-sm text-blue-600 italic">
+                                {{ form.end_date.help_text }}
+                            </p>
+                            {% endif %} {% if form.end_date.errors %}
                             <div class="text-red-600 text-sm mt-1">
                                 {% for error in form.end_date.errors %}
                                 <p class="flex items-center">
-                                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                    <svg
+                                        class="w-4 h-4 mr-1"
+                                        fill="currentColor"
+                                        viewBox="0 0 20 20"
+                                    >
+                                        <path
+                                            fill-rule="evenodd"
+                                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                                            clip-rule="evenodd"
+                                        />
                                     </svg>
                                     {{ error }}
                                 </p>
@@ -166,22 +294,34 @@
 
                         <!-- Half Day Option -->
                         <div class="space-y-2">
-                            <label for="{{ form.half_day.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                                {{ form.half_day.label }}
-                                {% if form.half_day.field.required %}<span class="text-red-500">*</span>{% endif %}
+                            <label
+                                for="{{ form.half_day.id_for_label }}"
+                                class="block text-sm font-medium text-blue-700"
+                            >
+                                {{ form.half_day.label }} {% if form.half_day.field.required %}<span
+                                    class="text-red-500"
+                                    >*</span
+                                >{% endif %}
                             </label>
-                            <div class="mt-1">
-                                {{ form.half_day }}
-                            </div>
+                            <div class="mt-1">{{ form.half_day }}</div>
                             {% if form.half_day.help_text %}
-                            <p class="text-sm text-gray-500 italic">{{ form.half_day.help_text }}</p>
-                            {% endif %}
-                            {% if form.half_day.errors %}
+                            <p class="text-sm text-blue-600 italic">
+                                {{ form.half_day.help_text }}
+                            </p>
+                            {% endif %} {% if form.half_day.errors %}
                             <div class="text-red-600 text-sm mt-1">
                                 {% for error in form.half_day.errors %}
                                 <p class="flex items-center">
-                                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                    <svg
+                                        class="w-4 h-4 mr-1"
+                                        fill="currentColor"
+                                        viewBox="0 0 20 20"
+                                    >
+                                        <path
+                                            fill-rule="evenodd"
+                                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                                            clip-rule="evenodd"
+                                        />
                                     </svg>
                                     {{ error }}
                                 </p>
@@ -192,22 +332,34 @@
 
                         <!-- Is Retroactive -->
                         <div class="space-y-2">
-                            <label for="{{ form.is_retroactive.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                                {{ form.is_retroactive.label }}
-                                {% if form.is_retroactive.field.required %}<span class="text-red-500">*</span>{% endif %}
+                            <label
+                                for="{{ form.is_retroactive.id_for_label }}"
+                                class="block text-sm font-medium text-blue-700"
+                            >
+                                {{ form.is_retroactive.label }} {% if form.is_retroactive.field.required %}<span
+                                    class="text-red-500"
+                                    >*</span
+                                >{% endif %}
                             </label>
-                            <div class="mt-1">
-                                {{ form.is_retroactive }}
-                            </div>
+                            <div class="mt-1">{{ form.is_retroactive }}</div>
                             {% if form.is_retroactive.help_text %}
-                            <p class="text-sm text-gray-500 italic">{{ form.is_retroactive.help_text }}</p>
-                            {% endif %}
-                            {% if form.is_retroactive.errors %}
+                            <p class="text-sm text-blue-600 italic">
+                                {{ form.is_retroactive.help_text }}
+                            </p>
+                            {% endif %} {% if form.is_retroactive.errors %}
                             <div class="text-red-600 text-sm mt-1">
                                 {% for error in form.is_retroactive.errors %}
                                 <p class="flex items-center">
-                                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                    <svg
+                                        class="w-4 h-4 mr-1"
+                                        fill="currentColor"
+                                        viewBox="0 0 20 20"
+                                    >
+                                        <path
+                                            fill-rule="evenodd"
+                                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                                            clip-rule="evenodd"
+                                        />
                                     </svg>
                                     {{ error }}
                                 </p>
@@ -218,22 +370,34 @@
 
                         <!-- Reason -->
                         <div class="space-y-2 md:col-span-2">
-                            <label for="{{ form.reason.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                                {{ form.reason.label }}
-                                {% if form.reason.field.required %}<span class="text-red-500">*</span>{% endif %}
+                            <label
+                                for="{{ form.reason.id_for_label }}"
+                                class="block text-sm font-medium text-blue-700"
+                            >
+                                {{ form.reason.label }} {% if form.reason.field.required %}<span
+                                    class="text-red-500"
+                                    >*</span
+                                >{% endif %}
                             </label>
-                            <div class="mt-1">
-                                {{ form.reason }}
-                            </div>
+                            <div class="mt-1">{{ form.reason }}</div>
                             {% if form.reason.help_text %}
-                            <p class="text-sm text-gray-500 italic">{{ form.reason.help_text }}</p>
-                            {% endif %}
-                            {% if form.reason.errors %}
+                            <p class="text-sm text-blue-600 italic">
+                                {{ form.reason.help_text }}
+                            </p>
+                            {% endif %} {% if form.reason.errors %}
                             <div class="text-red-600 text-sm mt-1">
                                 {% for error in form.reason.errors %}
                                 <p class="flex items-center">
-                                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                    <svg
+                                        class="w-4 h-4 mr-1"
+                                        fill="currentColor"
+                                        viewBox="0 0 20 20"
+                                    >
+                                        <path
+                                            fill-rule="evenodd"
+                                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                                            clip-rule="evenodd"
+                                        />
                                     </svg>
                                     {{ error }}
                                 </p>
@@ -244,32 +408,56 @@
 
                         <!-- Documentation -->
                         <div class="space-y-2 md:col-span-2">
-                            <label for="{{ form.documentation.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                                {{ form.documentation.label }}
-                                {% if form.documentation.field.required %}<span class="text-red-500">*</span>{% endif %}
+                            <label
+                                for="{{ form.documentation.id_for_label }}"
+                                class="block text-sm font-medium text-blue-700"
+                            >
+                                {{ form.documentation.label }} {% if form.documentation.field.required %}<span
+                                    class="text-red-500"
+                                    >*</span
+                                >{% endif %}
                             </label>
-                            <div class="mt-1">
-                                {{ form.documentation }}
-                            </div>
+                            <div class="mt-1">{{ form.documentation }}</div>
                             {% if form.documentation.help_text %}
-                            <p class="text-sm text-gray-500 italic">{{ form.documentation.help_text }}</p>
-                            {% endif %}
-                            {% if leave_request.documentation %}
+                            <p class="text-sm text-blue-600 italic">
+                                {{ form.documentation.help_text }}
+                            </p>
+                            {% endif %} {% if leave_request.documentation %}
                             <p class="text-sm text-blue-600 mt-1">
-                                <a href="{{ leave_request.documentation.url }}" target="_blank" class="flex items-center">
-                                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/>
+                                <a
+                                    href="{{ leave_request.documentation.url }}"
+                                    target="_blank"
+                                    class="flex items-center"
+                                >
+                                    <svg
+                                        class="w-4 h-4 mr-1"
+                                        fill="currentColor"
+                                        viewBox="0 0 20 20"
+                                    >
+                                        <path
+                                            fill-rule="evenodd"
+                                            d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
+                                            clip-rule="evenodd"
+                                        />
                                     </svg>
-                                    Current document: {{ leave_request.documentation.name|slice:"11:" }}
+                                    Current document:
+                                    {{leave_request.documentation.name|slice:"11:"}}
                                 </a>
                             </p>
-                            {% endif %}
-                            {% if form.documentation.errors %}
+                            {% endif %} {% if form.documentation.errors %}
                             <div class="text-red-600 text-sm mt-1">
                                 {% for error in form.documentation.errors %}
                                 <p class="flex items-center">
-                                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                    <svg
+                                        class="w-4 h-4 mr-1"
+                                        fill="currentColor"
+                                        viewBox="0 0 20 20"
+                                    >
+                                        <path
+                                            fill-rule="evenodd"
+                                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                                            clip-rule="evenodd"
+                                        />
                                     </svg>
                                     {{ error }}
                                 </p>
@@ -281,104 +469,126 @@
 
                     <!-- Calculated Leave Days Display -->
                     {% if leave_request and leave_request.leave_days %}
-                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <div
+                        class="bg-blue-100 p-4 rounded-lg border border-blue-200"
+                    >
                         <div class="flex items-center justify-between">
-                            <span class="text-gray-700 font-medium">Calculated Leave Days:</span>
-                            <span class="font-semibold text-blue-600">{{ leave_request.leave_days }}</span>
+                            <span class="text-blue-700 font-medium"
+                                >Calculated Leave Days:</span
+                            >
+                            <span class="font-semibold text-blue-600"
+                                >{{ leave_request.leave_days }}</span
+                            >
                         </div>
                     </div>
                     {% endif %}
 
                     <!-- Action Buttons -->
-                    <div class="flex justify-between pt-6 border-t">
+                    <div
+                        class="flex justify-between pt-6 border-t border-blue-200"
+                    >
                         <div>
-                            <a href="{% url 'aps_leave:leave_request_list' %}" 
-                               class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+                            <a
+                                href="{% url 'aps_leave:leave_request_list' %}"
+                                class="px-4 py-2 border border-blue-300 rounded-lg text-blue-700 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+                            >
                                 Cancel
                             </a>
                         </div>
-                        
+
                         <div class="space-x-3">
-                            {% if leave_request %}
-                                {% if leave_request.status == 'Pending' %}
-                                    <a href="{% url 'aps_leave:leave_request_cancel' leave_request.id %}" 
-                                       class="px-4 py-2 border border-red-300 rounded-lg text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200">
-                                        Cancel Request
-                                    </a>
-                                    <button type="submit"
-                                            class="px-6 py-2 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
-                                        Update Request
-                                    </button>
-                                {% elif leave_request.status == 'Approved' %}
-                                    {% if can_approve %}
-                                    <button type="submit"
-                                            class="px-6 py-2 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
-                                        Update Request
-                                    </button>
-                                    {% else %}
-                                    <a href="{% url 'aps_leave:leave_request_cancel' leave_request.id %}" 
-                                       class="px-4 py-2 border border-red-300 rounded-lg text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200">
-                                        Cancel Request
-                                    </a>
-                                    <button type="button" disabled
-                                            class="px-6 py-2 border border-transparent rounded-lg shadow-sm text-white bg-gray-400 cursor-not-allowed">
-                                        Request Approved
-                                    </button>
-                                    {% endif %}
-                                {% elif leave_request.status == 'Rejected' %}
-                                    {% if can_approve %}
-                                    <button type="submit"
-                                            class="px-6 py-2 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
-                                        Update Request
-                                    </button>
-                                    {% else %}
-                                    <a href="{% url 'aps_leave:leave_request_create' %}" 
-                                       class="px-6 py-2 border border-transparent rounded-lg shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200">
-                                        Submit New Request
-                                    </a>
-                                    {% endif %}
-                                {% else %}
-                                    <button type="button" disabled
-                                            class="px-6 py-2 border border-transparent rounded-lg shadow-sm text-white bg-gray-400 cursor-not-allowed">
-                                        {{ leave_request.status }}
-                                    </button>
-                                {% endif %}
+                            {% if leave_request %} {% if leave_request.status == 'Pending' %}
+                            <a
+                                href="{% url 'aps_leave:leave_request_cancel' leave_request.id %}"
+                                class="px-4 py-2 border border-red-300 rounded-lg text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200"
+                            >
+                                Cancel Request
+                            </a>
+                            <button
+                                type="submit"
+                                class="px-6 py-2 border border-transparent rounded-lg shadow-sm text-white bg-blue-500 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+                            >
+                                Update Request
+                            </button>
+                            {% elif leave_request.status == 'Approved' %} {% if can_approve %}
+                            <button
+                                type="submit"
+                                class="px-6 py-2 border border-transparent rounded-lg shadow-sm text-white bg-blue-500 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+                            >
+                                Update Request
+                            </button>
                             {% else %}
-                                <button type="submit"
-                                        class="px-6 py-2 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
-                                    Submit Request
-                                </button>
+                            <a
+                                href="{% url 'aps_leave:leave_request_cancel' leave_request.id %}"
+                                class="px-4 py-2 border border-red-300 rounded-lg text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200"
+                            >
+                                Cancel Request
+                            </a>
+                            <button
+                                type="button"
+                                disabled
+                                class="px-6 py-2 border border-transparent rounded-lg shadow-sm text-white bg-gray-400 cursor-not-allowed"
+                            >
+                                Request Approved
+                            </button>
+                            {% endif %} {% elif leave_request.status == 'Rejected' %} {% if can_approve %}
+                            <button
+                                type="submit"
+                                class="px-6 py-2 border border-transparent rounded-lg shadow-sm text-white bg-blue-500 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+                            >
+                                Update Request
+                            </button>
+                            {% else %}
+                            <a
+                                href="{% url 'aps_leave:leave_request_create' %}"
+                                class="px-6 py-2 border border-transparent rounded-lg shadow-sm text-white bg-green-500 hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200"
+                            >
+                                Submit New Request
+                            </a>
+                            {% endif %} {% else %}
+                            <button
+                                type="button"
+                                disabled
+                                class="px-6 py-2 border border-transparent rounded-lg shadow-sm text-white bg-gray-400 cursor-not-allowed"
+                            >
+                                {{ leave_request.status }}
+                            </button>
+                            {% endif %} {% else %}
+                            <button
+                                type="submit"
+                                class="px-6 py-2 border border-transparent rounded-lg shadow-sm text-white bg-blue-500 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+                            >
+                                Submit Request
+                            </button>
                             {% endif %}
                         </div>
                     </div>
                 </form>
             </div>
         </div>
-        
-        
     </div>
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener("DOMContentLoaded", function () {
         // Auto-redirect after successful form submission
-        const form = document.getElementById('leaveRequestForm');
-        form.addEventListener('submit', function() {
+        const form = document.getElementById("leaveRequestForm");
+        form.addEventListener("submit", function () {
             // Add a hidden field to indicate successful submission
-            const hiddenField = document.createElement('input');
-            hiddenField.type = 'hidden';
-            hiddenField.name = 'submitted';
-            hiddenField.value = 'true';
+            const hiddenField = document.createElement("input");
+            hiddenField.type = "hidden";
+            hiddenField.name = "submitted";
+            hiddenField.value = "true";
             form.appendChild(hiddenField);
         });
 
         // Calculate leave days dynamically
-        const startDateInput = document.getElementById('id_start_date');
-        const endDateInput = document.getElementById('id_end_date');
-        const halfDayCheckbox = document.getElementById('id_half_day');
-        
+        const startDateInput = document.getElementById("id_start_date");
+        const endDateInput = document.getElementById("id_end_date");
+        const halfDayCheckbox = document.getElementById("id_half_day");
+
         if (startDateInput && endDateInput) {
-            const updateDays = function() {
+            const updateDays = function () {
                 // This is just a placeholder - actual calculation would be done server-side
                 // But we can show a loading indicator or temporary calculation
                 if (startDateInput.value && endDateInput.value) {
@@ -387,38 +597,46 @@
                     if (start && end && start <= end) {
                         // Simple calculation for UI feedback
                         const diffTime = Math.abs(end - start);
-                        let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-                        
+                        let diffDays =
+                            Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
                         if (halfDayCheckbox && halfDayCheckbox.checked) {
                             diffDays = diffDays - 0.5;
                         }
-                        
+
                         // Create or update the days display
-                        let daysDisplay = document.getElementById('calculated-days');
+                        let daysDisplay =
+                            document.getElementById("calculated-days");
                         if (!daysDisplay) {
-                            daysDisplay = document.createElement('div');
-                            daysDisplay.id = 'calculated-days';
-                            daysDisplay.className = 'mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200';
-                            form.insertBefore(daysDisplay, form.querySelector('.flex.justify-between.pt-6'));
+                            daysDisplay = document.createElement("div");
+                            daysDisplay.id = "calculated-days";
+                            daysDisplay.className =
+                                "mt-4 p-3 bg-blue-100 rounded-lg border border-blue-200";
+                            form.insertBefore(
+                                daysDisplay,
+                                form.querySelector(
+                                    ".flex.justify-between.pt-6",
+                                ),
+                            );
                         }
-                        
+
                         daysDisplay.innerHTML = `
                             <div class="flex items-center justify-between">
-                                <span class="text-gray-700 font-medium">Estimated Leave Days:</span>
+                                <span class="text-blue-700 font-medium">Estimated Leave Days:</span>
                                 <span class="font-semibold text-blue-600">${diffDays}</span>
                             </div>
                         `;
                     }
                 }
             };
-            
+
             // Add event listeners to update days calculation
-            startDateInput.addEventListener('change', updateDays);
-            endDateInput.addEventListener('change', updateDays);
+            startDateInput.addEventListener("change", updateDays);
+            endDateInput.addEventListener("change", updateDays);
             if (halfDayCheckbox) {
-                halfDayCheckbox.addEventListener('change', updateDays);
+                halfDayCheckbox.addEventListener("change", updateDays);
             }
-            
+
             // Initial calculation if values are present
             updateDays();
         }

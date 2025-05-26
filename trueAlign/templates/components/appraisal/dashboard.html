@@ -1,71 +1,127 @@
-{% extends 'base.html' %}
-
-{% block content %}
-<div class="min-h-screen bg-gray-100 py-6">
+{% extends 'base.html' %} {% block content %}
+<div class="min-h-screen bg-blue-50 py-6">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 class="text-3xl font-bold text-gray-900 mb-8">Appraisal Dashboard</h1>
+        <h1 class="text-3xl font-bold text-blue-900 mb-8">
+            Appraisal Dashboard
+        </h1>
 
         <!-- Overview Stats -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="bg-white shadow-sm rounded-lg border border-blue-100">
                 <div class="p-5">
                     <div class="flex items-center">
-                        <div class="flex-shrink-0 bg-indigo-500 rounded-md p-3">
-                            <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                        <div class="flex-shrink-0 bg-blue-400 rounded-md p-3">
+                            <svg
+                                class="h-6 w-6 text-white"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                                />
                             </svg>
                         </div>
                         <div class="ml-5">
-                            <p class="text-sm font-medium text-gray-500">Total Appraisals</p>
-                            <p class="text-2xl font-semibold text-gray-900">{{ overview_stats.total_appraisals }}</p>
+                            <p class="text-sm font-medium text-blue-600">
+                                Total Appraisals
+                            </p>
+                            <p class="text-2xl font-semibold text-blue-900">
+                                {{ overview_stats.total_appraisals }}
+                            </p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="bg-white shadow-sm rounded-lg border border-green-100">
                 <div class="p-5">
                     <div class="flex items-center">
-                        <div class="flex-shrink-0 bg-green-500 rounded-md p-3">
-                            <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        <div class="flex-shrink-0 bg-green-400 rounded-md p-3">
+                            <svg
+                                class="h-6 w-6 text-white"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                                />
                             </svg>
                         </div>
                         <div class="ml-5">
-                            <p class="text-sm font-medium text-gray-500">Completed</p>
-                            <p class="text-2xl font-semibold text-gray-900">{{ overview_stats.completed_appraisals }}</p>
+                            <p class="text-sm font-medium text-green-600">
+                                Completed
+                            </p>
+                            <p class="text-2xl font-semibold text-green-900">
+                                {{ overview_stats.completed_appraisals }}
+                            </p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="bg-white shadow-sm rounded-lg border border-yellow-100">
                 <div class="p-5">
                     <div class="flex items-center">
-                        <div class="flex-shrink-0 bg-yellow-500 rounded-md p-3">
-                            <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        <div class="flex-shrink-0 bg-yellow-400 rounded-md p-3">
+                            <svg
+                                class="h-6 w-6 text-white"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                />
                             </svg>
                         </div>
                         <div class="ml-5">
-                            <p class="text-sm font-medium text-gray-500">In Progress</p>
-                            <p class="text-2xl font-semibold text-gray-900">{{ overview_stats.in_progress }}</p>
+                            <p class="text-sm font-medium text-yellow-600">
+                                In Progress
+                            </p>
+                            <p class="text-2xl font-semibold text-yellow-900">
+                                {{ overview_stats.in_progress }}
+                            </p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="bg-white shadow-sm rounded-lg border border-red-100">
                 <div class="p-5">
                     <div class="flex items-center">
-                        <div class="flex-shrink-0 bg-red-500 rounded-md p-3">
-                            <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        <div class="flex-shrink-0 bg-red-400 rounded-md p-3">
+                            <svg
+                                class="h-6 w-6 text-white"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                                />
                             </svg>
                         </div>
                         <div class="ml-5">
-                            <p class="text-sm font-medium text-gray-500">Pending Reviews</p>
-                            <p class="text-2xl font-semibold text-gray-900">{{ overview_stats.pending_reviews }}</p>
+                            <p class="text-sm font-medium text-red-600">
+                                Pending Reviews
+                            </p>
+                            <p class="text-2xl font-semibold text-red-900">
+                                {{ overview_stats.pending_reviews }}
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -73,64 +129,102 @@
         </div>
 
         <!-- Completion Times -->
-        <div class="bg-white shadow rounded-lg mb-8">
-            <div class="px-6 py-5 border-b border-gray-200">
-                <h3 class="text-lg font-medium leading-6 text-gray-900">Completion Times</h3>
+        <div class="bg-white shadow-sm rounded-lg border border-blue-100 mb-8">
+            <div class="px-6 py-5 border-b border-blue-100">
+                <h3 class="text-lg font-medium leading-6 text-blue-900">
+                    Completion Times
+                </h3>
             </div>
             <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="text-center">
-                    <p class="text-sm font-medium text-gray-500">Average Time</p>
-                    <p class="mt-1 text-xl font-semibold text-gray-900">{{ completion_times.avg_time|default:"N/A" }}</p>
+                    <p class="text-sm font-medium text-blue-600">
+                        Average Time
+                    </p>
+                    <p class="mt-1 text-xl font-semibold text-blue-900">
+                        {{ completion_times.avg_time|default:"N/A" }}
+                    </p>
                 </div>
                 <div class="text-center">
-                    <p class="text-sm font-medium text-gray-500">Minimum Time</p>
-                    <p class="mt-1 text-xl font-semibold text-gray-900">{{ completion_times.min_time|default:"N/A" }}</p>
+                    <p class="text-sm font-medium text-blue-600">
+                        Minimum Time
+                    </p>
+                    <p class="mt-1 text-xl font-semibold text-blue-900">
+                        {{ completion_times.min_time|default:"N/A" }}
+                    </p>
                 </div>
                 <div class="text-center">
-                    <p class="text-sm font-medium text-gray-500">Maximum Time</p>
-                    <p class="mt-1 text-xl font-semibold text-gray-900">{{ completion_times.max_time|default:"N/A" }}</p>
+                    <p class="text-sm font-medium text-blue-600">
+                        Maximum Time
+                    </p>
+                    <p class="mt-1 text-xl font-semibold text-blue-900">
+                        {{ completion_times.max_time|default:"N/A" }}
+                    </p>
                 </div>
             </div>
         </div>
 
         <!-- Rating Statistics -->
-        <div class="bg-white shadow rounded-lg">
-            <div class="px-6 py-5 border-b border-gray-200">
-                <h3 class="text-lg font-medium leading-6 text-gray-900">Rating Statistics</h3>
+        <div class="bg-white shadow-sm rounded-lg border border-blue-100">
+            <div class="px-6 py-5 border-b border-blue-100">
+                <h3 class="text-lg font-medium leading-6 text-blue-900">
+                    Rating Statistics
+                </h3>
             </div>
             <div class="p-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="border rounded-lg p-4">
-                        <h4 class="text-lg font-medium text-gray-900 mb-4">Employee Ratings</h4>
+                    <div class="border border-blue-100 rounded-lg p-4">
+                        <h4 class="text-lg font-medium text-blue-900 mb-4">
+                            Employee Ratings
+                        </h4>
                         <div class="grid grid-cols-3 gap-4">
                             <div class="text-center">
-                                <p class="text-sm text-gray-500">Average</p>
-                                <p class="text-xl font-bold">{{ rating_stats.employee.avg|floatformat:1|default:"N/A" }}</p>
+                                <p class="text-sm text-blue-600">Average</p>
+                                <p class="text-xl font-bold text-blue-900">
+                                    {{
+                                    rating_stats.employee.avg|floatformat:1|default:"N/A"
+                                    }}
+                                </p>
                             </div>
                             <div class="text-center">
-                                <p class="text-sm text-gray-500">Minimum</p>
-                                <p class="text-xl font-bold">{{ rating_stats.employee.min|default:"N/A" }}</p>
+                                <p class="text-sm text-blue-600">Minimum</p>
+                                <p class="text-xl font-bold text-blue-900">
+                                    {{ rating_stats.employee.min|default:"N/A"
+                                    }}
+                                </p>
                             </div>
                             <div class="text-center">
-                                <p class="text-sm text-gray-500">Maximum</p>
-                                <p class="text-xl font-bold">{{ rating_stats.employee.max|default:"N/A" }}</p>
+                                <p class="text-sm text-blue-600">Maximum</p>
+                                <p class="text-xl font-bold text-blue-900">
+                                    {{ rating_stats.employee.max|default:"N/A"
+                                    }}
+                                </p>
                             </div>
                         </div>
                     </div>
-                    <div class="border rounded-lg p-4">
-                        <h4 class="text-lg font-medium text-gray-900 mb-4">Manager Ratings</h4>
+                    <div class="border border-blue-100 rounded-lg p-4">
+                        <h4 class="text-lg font-medium text-blue-900 mb-4">
+                            Manager Ratings
+                        </h4>
                         <div class="grid grid-cols-3 gap-4">
                             <div class="text-center">
-                                <p class="text-sm text-gray-500">Average</p>
-                                <p class="text-xl font-bold">{{ rating_stats.manager.avg|floatformat:1|default:"N/A" }}</p>
+                                <p class="text-sm text-blue-600">Average</p>
+                                <p class="text-xl font-bold text-blue-900">
+                                    {{
+                                    rating_stats.manager.avg|floatformat:1|default:"N/A"
+                                    }}
+                                </p>
                             </div>
                             <div class="text-center">
-                                <p class="text-sm text-gray-500">Minimum</p>
-                                <p class="text-xl font-bold">{{ rating_stats.manager.min|default:"N/A" }}</p>
+                                <p class="text-sm text-blue-600">Minimum</p>
+                                <p class="text-xl font-bold text-blue-900">
+                                    {{ rating_stats.manager.min|default:"N/A" }}
+                                </p>
                             </div>
                             <div class="text-center">
-                                <p class="text-sm text-gray-500">Maximum</p>
-                                <p class="text-xl font-bold">{{ rating_stats.manager.max|default:"N/A" }}</p>
+                                <p class="text-sm text-blue-600">Maximum</p>
+                                <p class="text-xl font-bold text-blue-900">
+                                    {{ rating_stats.manager.max|default:"N/A" }}
+                                </p>
                             </div>
                         </div>
                     </div>

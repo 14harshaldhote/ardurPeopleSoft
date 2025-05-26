@@ -74,7 +74,7 @@
                 }
             }
 
-            /* Content wrapper that adjusts with navbar state */
+            /* Enhanced content wrapper that adjusts with navbar state */
             .content-wrapper {
                 margin-left: 16rem; /* 256px for expanded navbar */
                 padding: 20px;
@@ -82,20 +82,24 @@
                 overflow-y: auto;
                 min-height: calc(100vh - 40px);
                 padding-bottom: 80px;
-                transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                width: calc(100% - 16rem);
             }
 
             .content-wrapper-collapsed {
                 margin-left: 4rem; /* 64px for collapsed navbar */
+                width: calc(100% - 4rem);
             }
 
             /* Mobile styles */
             @media (max-width: 768px) {
-                .content-wrapper {
+                .content-wrapper,
+                .content-wrapper-collapsed {
                     margin-left: 0;
                     margin-top: 4rem; /* Space for mobile navbar header */
                     padding: 12px;
                     min-height: calc(100vh - 4rem - 40px);
+                    width: 100% !important;
                 }
             }
 
@@ -129,10 +133,12 @@
             }
 
             @media (max-width: 480px) {
-                .content-wrapper {
+                .content-wrapper,
+                .content-wrapper-collapsed {
                     padding: 6px !important;
                     margin-top: 4rem !important;
                     min-height: calc(100vh - 4rem - 20px) !important;
+                    width: 100% !important;
                 }
                 .watermark-container {
                     flex-direction: column;
@@ -179,6 +185,15 @@
             .btn-secondary {
                 animation: fadeIn 0.5s ease-out;
             }
+
+            /* Enhanced dynamic width adjustment for content */
+            .content-container {
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                width: 100%;
+                padding: 0;
+            }
+
+            /* Remove the old content-container classes since we're handling this differently */
         </style>
     </head>
 
@@ -187,7 +202,7 @@
             <!-- Navbar - Now controlled by Alpine directly in navbar.html -->
             {% include 'navbar.html' %}
 
-            <!-- Main Content Area - Using Alpine directly -->
+            <!-- Main Content Area - Enhanced Alpine.js integration -->
             <main
                 x-data="{
                 isNavExpanded: false,
@@ -199,15 +214,33 @@
                     // Listen for navbar state changes from navbar component
                     window.addEventListener('navbar-state-changed', (e) => {
                         this.isNavExpanded = e.detail.isExpanded;
+                        console.log('Navbar state changed:', this.isNavExpanded);
                     });
+
+                    // Initialize navbar state if available
+                    if (window.navbarState) {
+                        this.isNavExpanded = window.navbarState.isExpanded;
+                    }
                 },
                 checkMobile() {
+                    const wasMobile = this.isMobile;
                     this.isMobile = window.innerWidth <= 768;
+
+                    // Reset navbar state logic on mobile change
+                    if (wasMobile !== this.isMobile) {
+                        console.log('Mobile state changed:', this.isMobile);
+                    }
+                },
+                get contentClasses() {
+                    if (this.isMobile) {
+                        return 'content-wrapper';
+                    }
+                    return this.isNavExpanded ? 'content-wrapper' : 'content-wrapper content-wrapper-collapsed';
                 }
             }"
                 x-init="init()"
-                :class="isMobile ? 'content-wrapper' : (isNavExpanded ? 'content-wrapper' : 'content-wrapper content-wrapper-collapsed')"
-                class="flex-1 min-w-0 transition-all duration-300"
+                :class="contentClasses"
+                class="flex-1 min-w-0 transition-all duration-300 ease-in-out"
             >
                 <header
                     class="flex flex-col sm:flex-row justify-between items-center p-4 sm:p-6 gap-4 sm:gap-0"
@@ -243,7 +276,8 @@
                     </div>
                 </header>
 
-                <div>
+                <!-- Content Section with smooth transitions -->
+                <div class="transition-all duration-300 ease-in-out">
                     <!-- Page Header -->
                     <div class="mb-8">
                         {% if messages %}
@@ -362,7 +396,11 @@
                         </script>
                         {% endif %}
                     </div>
-                    {% block content %} {% endblock %}
+
+                    <!-- Block Content Container - Now inherits responsive behavior -->
+                    <div class="w-full transition-all duration-300 ease-in-out">
+                        {% block content %} {% endblock %}
+                    </div>
                 </div>
             </main>
 
