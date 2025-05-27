@@ -5985,3 +5985,450 @@ INFO 2025-05-27 15:44:32,964 basehttp 30325 6141390848 "GET /attendance/analytic
 INFO 2025-05-27 15:44:33,003 basehttp 30325 6141390848 "POST /update-activity/ HTTP/1.1" 200 192
 INFO 2025-05-27 15:44:34,943 basehttp 30325 6141390848 "GET /attendance/status/users/?status=Present&start_date=2025-05-27&end_date=2025-05-27&location=Pune HTTP/1.1" 200 750
 INFO 2025-05-27 15:44:38,743 basehttp 30325 6141390848 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:46:19,003 autoreload 31870 8460771072 Watching for file changes with StatReloader
+INFO 2025-05-27 15:46:33,401 basehttp 31870 6174748672 "POST /update-activity/ HTTP/1.1" 200 177
+INFO 2025-05-27 15:46:33,453 basehttp 31870 6174748672 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:46:33,570 basehttp 31870 6191575040 "GET /dashboard/ HTTP/1.1" 200 102918
+INFO 2025-05-27 15:46:33,751 basehttp 31870 6208401408 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:46:36,618 basehttp 31870 6208401408 "GET /attendance/status/users/?status=Present&start_date=2025-05-27&end_date=2025-05-27&location=Pune HTTP/1.1" 200 750
+INFO 2025-05-27 15:47:11,584 basehttp 31870 6225227776 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:47:11,634 basehttp 31870 6208401408 "GET /hr/dashboard/ HTTP/1.1" 200 178865
+INFO 2025-05-27 15:47:11,666 basehttp 31870 6208401408 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:47:34,764 basehttp 31870 6191575040 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:47:59,700 basehttp 31870 6225227776 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:47:59,731 basehttp 31870 6208401408 "GET /hr/dashboard/?search=&status=active&work_location=&role=&employee_type= HTTP/1.1" 200 180979
+INFO 2025-05-27 15:47:59,764 basehttp 31870 6208401408 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:48:15,105 basehttp 31870 6225227776 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:48:15,145 basehttp 31870 6208401408 "GET /dashboard/ HTTP/1.1" 200 104223
+INFO 2025-05-27 15:48:15,182 basehttp 31870 6208401408 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:48:28,412 basehttp 31870 6191575040 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:48:28,433 basehttp 31870 6174748672 "GET /leave/hr/ HTTP/1.1" 200 71118
+INFO 2025-05-27 15:48:28,459 basehttp 31870 6174748672 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:48:34,759 basehttp 31870 6174748672 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:48:37,923 basehttp 31870 6174748672 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:49:28,735 basehttp 31870 6174748672 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:49:34,756 basehttp 31870 6174748672 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:50:28,759 basehttp 31870 6174748672 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:50:34,744 basehttp 31870 6174748672 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:51:28,760 basehttp 31870 6174748672 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:51:34,760 basehttp 31870 6174748672 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:52:28,756 basehttp 31870 6174748672 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:52:34,750 basehttp 31870 6174748672 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:53:28,754 basehttp 31870 6174748672 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:54:06,749 basehttp 31870 6174748672 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:54:28,743 basehttp 31870 6174748672 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:55:06,741 basehttp 31870 6174748672 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:56:06,733 basehttp 31870 6174748672 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:56:06,733 basehttp 31870 6191575040 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:56:17,159 basehttp 31870 6191575040 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:56:17,177 basehttp 31870 6174748672 "GET /logout/ HTTP/1.1" 302 0
+INFO 2025-05-27 15:56:17,182 basehttp 31870 6174748672 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-05-27 15:56:17,193 basehttp 31870 6174748672 "POST /update-activity/ HTTP/1.1" 302 0
+INFO 2025-05-27 15:56:20,649 basehttp 31870 6174748672 "POST /login/ HTTP/1.1" 302 0
+INFO 2025-05-27 15:56:20,702 basehttp 31870 6174748672 "GET /dashboard/ HTTP/1.1" 200 107997
+INFO 2025-05-27 15:56:23,357 basehttp 31870 6191575040 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:56:23,420 basehttp 31870 6174748672 "GET /support/ HTTP/1.1" 200 91703
+INFO 2025-05-27 15:56:23,463 basehttp 31870 6174748672 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:56:25,683 basehttp 31870 6191575040 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:56:25,698 basehttp 31870 6174748672 "GET /employee/attendance/ HTTP/1.1" 200 87896
+INFO 2025-05-27 15:56:25,736 basehttp 31870 6174748672 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:56:28,130 basehttp 31870 6191575040 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:56:28,139 basehttp 31870 6174748672 "GET /employee/timesheet/ HTTP/1.1" 200 92434
+INFO 2025-05-27 15:56:28,167 basehttp 31870 6174748672 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:56:30,108 basehttp 31870 6191575040 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:56:30,122 basehttp 31870 6174748672 "GET /leave/employee/ HTTP/1.1" 200 86527
+INFO 2025-05-27 15:56:30,157 basehttp 31870 6174748672 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:56:33,006 basehttp 31870 6191575040 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:56:33,021 basehttp 31870 6174748672 "GET /employee/applications/ HTTP/1.1" 200 74382
+INFO 2025-05-27 15:56:33,062 basehttp 31870 6174748672 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:56:37,147 basehttp 31870 6174748672 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:57:06,757 basehttp 31870 6174748672 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:57:22,690 basehttp 31870 6191575040 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:57:22,704 basehttp 31870 6174748672 "GET /logout/ HTTP/1.1" 302 0
+INFO 2025-05-27 15:57:22,708 basehttp 31870 6174748672 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-05-27 15:57:22,714 basehttp 31870 6174748672 "POST /update-activity/ HTTP/1.1" 302 0
+INFO 2025-05-27 15:57:26,192 basehttp 31870 6174748672 "POST /login/ HTTP/1.1" 302 0
+INFO 2025-05-27 15:57:26,241 basehttp 31870 6174748672 "GET /dashboard/ HTTP/1.1" 200 89968
+INFO 2025-05-27 15:57:30,845 basehttp 31870 6191575040 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-27 15:57:30,863 log 31870 6174748672 Internal Server Error: /administration/leave-requests/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 7372, in view_leave_requests_admin
+    leave_requests = Leave.objects.all().select_related('user', 'approver').order_by('-created_at')
+NameError: name 'Leave' is not defined
+ERROR 2025-05-27 15:57:30,865 basehttp 31870 6174748672 "GET /administration/leave-requests/ HTTP/1.1" 500 77165
+INFO 2025-05-27 15:57:30,898 basehttp 31870 6174748672 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-27 15:57:33,161 log 31870 6174748672 Internal Server Error: /administration/report/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 3494, in report_view
+    'url': reverse('aps_admin:attendance')  # Add URL to the nav item
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/resolvers.py", line 851, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'attendance' not found. 'attendance' is not a valid view function or pattern name.
+INFO 2025-05-27 15:57:33,163 basehttp 31870 6191575040 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-27 15:57:33,164 basehttp 31870 6174748672 "GET /administration/report/ HTTP/1.1" 500 86970
+INFO 2025-05-27 15:57:33,198 basehttp 31870 6174748672 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:57:35,293 basehttp 31870 6191575040 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:57:35,311 basehttp 31870 6174748672 "GET /administration/projects/ HTTP/1.1" 200 100254
+INFO 2025-05-27 15:57:35,346 basehttp 31870 6174748672 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:57:37,583 basehttp 31870 6191575040 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:57:37,631 basehttp 31870 6174748672 "GET /support/ HTTP/1.1" 200 108165
+INFO 2025-05-27 15:57:37,663 basehttp 31870 6174748672 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:57:40,735 basehttp 31870 6191575040 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:57:40,797 basehttp 31870 6174748672 "GET /administration/usersessions/ HTTP/1.1" 200 21
+INFO 2025-05-27 15:57:40,830 basehttp 31870 6174748672 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:57:43,661 basehttp 31870 6191575040 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:57:43,718 basehttp 31870 6174748672 "GET /administration/usersessions/ HTTP/1.1" 200 21
+INFO 2025-05-27 15:57:43,746 basehttp 31870 6174748672 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:57:48,409 basehttp 31870 6191575040 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:57:48,469 basehttp 31870 6174748672 "GET /administration/usersessions/ HTTP/1.1" 200 21
+INFO 2025-05-27 15:57:48,504 basehttp 31870 6174748672 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:58:06,734 basehttp 31870 6174748672 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 15:59:06,770 basehttp 31870 6174748672 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:00:06,755 basehttp 31870 6174748672 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:01:06,725 basehttp 31870 6174748672 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:02:06,722 basehttp 31870 6174748672 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:03:06,738 basehttp 31870 6174748672 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:03:40,871 basehttp 31870 6174748672 "GET /administration/usersessions/ HTTP/1.1" 200 21
+INFO 2025-05-27 16:04:06,721 basehttp 31870 6174748672 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:05:06,731 basehttp 31870 6174748672 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:06:06,748 basehttp 31870 6174748672 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:07:06,741 basehttp 31870 6174748672 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:08:06,741 basehttp 31870 6174748672 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:08:57,192 autoreload 31870 8460771072 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py changed, reloading.
+INFO 2025-05-27 16:08:57,710 autoreload 43576 8460771072 Watching for file changes with StatReloader
+INFO 2025-05-27 16:09:01,317 basehttp 43576 6138343424 "GET /administration/usersessions/ HTTP/1.1" 200 21
+INFO 2025-05-27 16:09:06,745 basehttp 43576 6138343424 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:10:06,727 basehttp 43576 6138343424 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:11:06,736 basehttp 43576 6138343424 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:11:27,791 autoreload 43576 8460771072 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py changed, reloading.
+INFO 2025-05-27 16:11:28,187 autoreload 44924 8460771072 Watching for file changes with StatReloader
+INFO 2025-05-27 16:11:31,886 basehttp 44924 6125957120 "GET /administration/usersessions/ HTTP/1.1" 200 21
+INFO 2025-05-27 16:11:33,839 basehttp 44924 6142783488 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-27 16:11:33,892 basehttp 44924 6125957120 "GET /dashboard/ HTTP/1.1" 200 84903
+INFO 2025-05-27 16:11:33,922 basehttp 44924 6125957120 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-27 16:11:35,014 basehttp 44924 6142783488 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-27 16:11:35,030 basehttp 44924 6125957120 "GET /profile/1/ HTTP/1.1" 200 79813
+INFO 2025-05-27 16:11:35,067 basehttp 44924 6125957120 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-27 16:11:36,573 basehttp 44924 6142783488 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-27 16:11:36,643 basehttp 44924 6125957120 "GET /administration/usersessions/ HTTP/1.1" 200 21
+INFO 2025-05-27 16:11:36,679 basehttp 44924 6125957120 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-27 16:12:06,746 basehttp 44924 6125957120 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:13:06,725 basehttp 44924 6125957120 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:13:22,589 autoreload 44924 8460771072 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py changed, reloading.
+INFO 2025-05-27 16:13:23,033 autoreload 45907 8460771072 Watching for file changes with StatReloader
+INFO 2025-05-27 16:13:28,106 basehttp 45907 6167506944 "GET /administration/usersessions/ HTTP/1.1" 200 21
+INFO 2025-05-27 16:14:06,746 basehttp 45907 6167506944 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:14:49,222 basehttp 45907 6167506944 "GET /administration/usersessions/ HTTP/1.1" 200 21
+INFO 2025-05-27 16:15:06,733 basehttp 45907 6167506944 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:15:30,843 basehttp 45907 6167506944 "GET /administration/usersessions/ HTTP/1.1" 200 118298
+INFO 2025-05-27 16:15:55,825 basehttp 45907 6167506944 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-27 16:16:06,740 basehttp 45907 6167506944 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:16:31,720 basehttp 45907 6167506944 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-27 16:17:06,716 basehttp 45907 6167506944 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:17:31,722 basehttp 45907 6167506944 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-27 16:18:06,722 basehttp 45907 6167506944 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:18:31,760 basehttp 45907 6167506944 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-27 16:18:35,986 basehttp 45907 6167506944 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-27 16:19:06,726 basehttp 45907 6167506944 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:19:31,718 basehttp 45907 6167506944 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-27 16:20:06,723 basehttp 45907 6167506944 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:20:31,730 basehttp 45907 6167506944 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-27 16:21:06,721 basehttp 45907 6167506944 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:21:31,714 basehttp 45907 6167506944 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-27 16:22:06,716 basehttp 45907 6167506944 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:23:06,722 basehttp 45907 6184333312 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:23:06,722 basehttp 45907 6167506944 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-27 16:24:06,729 basehttp 45907 6184333312 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:24:06,729 basehttp 45907 6167506944 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-27 16:25:06,719 basehttp 45907 6167506944 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:25:06,719 basehttp 45907 6184333312 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-27 16:26:06,732 basehttp 45907 6184333312 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:26:06,732 basehttp 45907 6167506944 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-27 16:27:06,740 basehttp 45907 6167506944 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-27 16:27:06,740 basehttp 45907 6184333312 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:28:06,728 basehttp 45907 6184333312 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-27 16:28:06,729 basehttp 45907 6167506944 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:29:06,713 basehttp 45907 6167506944 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-27 16:29:06,718 basehttp 45907 6184333312 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:30:06,711 basehttp 45907 6167506944 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-27 16:30:06,711 basehttp 45907 6184333312 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:31:06,718 basehttp 45907 6184333312 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:31:06,719 basehttp 45907 6167506944 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-27 16:32:06,729 basehttp 45907 6167506944 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:32:06,729 basehttp 45907 6184333312 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-27 16:32:17,951 basehttp 45907 6184333312 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-27 16:32:18,097 basehttp 45907 6167506944 "GET /administration/usersessions/ HTTP/1.1" 200 21
+INFO 2025-05-27 16:32:18,130 basehttp 45907 6167506944 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-27 16:32:18,132 basehttp 45907 6167506944 - Broken pipe from ('127.0.0.1', 55566)
+INFO 2025-05-27 16:33:06,741 basehttp 45907 6167506944 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:34:06,706 basehttp 45907 6167506944 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:34:40,827 basehttp 45907 6167506944 "GET /administration/usersessions/ HTTP/1.1" 200 21
+INFO 2025-05-27 16:35:06,707 basehttp 45907 6167506944 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:36:06,713 basehttp 45907 6167506944 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:36:14,397 autoreload 45907 8460771072 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/urls.py changed, reloading.
+INFO 2025-05-27 16:36:14,762 autoreload 58079 8460771072 Watching for file changes with StatReloader
+INFO 2025-05-27 16:36:16,438 basehttp 58079 6325039104 "GET /administration/usersessions/ HTTP/1.1" 200 21
+INFO 2025-05-27 16:37:06,749 basehttp 58079 6325039104 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:38:06,716 basehttp 58079 6325039104 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:38:45,534 basehttp 58079 6325039104 "GET /administration/usersessions/ HTTP/1.1" 200 21
+INFO 2025-05-27 16:39:06,716 basehttp 58079 6325039104 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:40:06,696 basehttp 58079 6325039104 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:41:06,700 basehttp 58079 6325039104 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:41:47,130 autoreload 58079 8460771072 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py changed, reloading.
+INFO 2025-05-27 16:41:47,651 autoreload 61008 8460771072 Watching for file changes with StatReloader
+INFO 2025-05-27 16:41:51,040 basehttp 61008 6159626240 "GET /administration/usersessions/ HTTP/1.1" 200 21
+INFO 2025-05-27 16:42:06,716 basehttp 61008 6176452608 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:42:14,307 autoreload 61008 8460771072 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py changed, reloading.
+INFO 2025-05-27 16:42:14,703 autoreload 61331 8460771072 Watching for file changes with StatReloader
+INFO 2025-05-27 16:43:06,718 basehttp 61331 6160855040 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:43:11,259 autoreload 61331 8460771072 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py changed, reloading.
+INFO 2025-05-27 16:43:11,681 autoreload 61800 8460771072 Watching for file changes with StatReloader
+INFO 2025-05-27 16:43:21,178 autoreload 61990 8460771072 Watching for file changes with StatReloader
+INFO 2025-05-27 16:43:35,702 autoreload 61990 8460771072 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py changed, reloading.
+INFO 2025-05-27 16:43:36,031 autoreload 62173 8460771072 Watching for file changes with StatReloader
+ERROR 2025-05-27 16:43:37,718 log 62173 6127415296 Internal Server Error: /administration/usersessions/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 4018, in user_sessions_view
+    return render(request, 'components/sessions/user_sessions_dashboard.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 326, in render
+    return nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1059, in render
+    output = self.filter_expression.resolve(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 710, in resolve
+    obj = self.var.resolve(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 842, in resolve
+    value = self._resolve_lookup(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 909, in _resolve_lookup
+    current = current()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/paginator.py", line 218, in previous_page_number
+    return self.paginator.validate_number(self.number - 1)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/paginator.py", line 69, in validate_number
+    raise EmptyPage(self.error_messages["min_page"])
+django.core.paginator.EmptyPage: That page number is less than 1
+ERROR 2025-05-27 16:43:37,720 basehttp 62173 6127415296 "GET /administration/usersessions/ HTTP/1.1" 500 377143
+INFO 2025-05-27 16:44:06,707 basehttp 62173 6144241664 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:45:06,687 basehttp 62173 6144241664 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:45:55,179 autoreload 62173 8460771072 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py changed, reloading.
+INFO 2025-05-27 16:45:55,686 autoreload 63307 8460771072 Watching for file changes with StatReloader
+ERROR 2025-05-27 16:45:58,031 log 63307 6204698624 Internal Server Error: /administration/usersessions/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 4026, in user_sessions_view
+    return render(request, 'components/sessions/user_sessions_dashboard.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 326, in render
+    return nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1059, in render
+    output = self.filter_expression.resolve(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 710, in resolve
+    obj = self.var.resolve(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 842, in resolve
+    value = self._resolve_lookup(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 909, in _resolve_lookup
+    current = current()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/paginator.py", line 218, in previous_page_number
+    return self.paginator.validate_number(self.number - 1)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/paginator.py", line 69, in validate_number
+    raise EmptyPage(self.error_messages["min_page"])
+django.core.paginator.EmptyPage: That page number is less than 1
+ERROR 2025-05-27 16:45:58,032 basehttp 63307 6204698624 "GET /administration/usersessions/ HTTP/1.1" 500 376806
+ERROR 2025-05-27 16:45:59,183 log 63307 6204698624 Internal Server Error: /administration/usersessions/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 4026, in user_sessions_view
+    return render(request, 'components/sessions/user_sessions_dashboard.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 326, in render
+    return nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1059, in render
+    output = self.filter_expression.resolve(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 710, in resolve
+    obj = self.var.resolve(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 842, in resolve
+    value = self._resolve_lookup(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 909, in _resolve_lookup
+    current = current()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/paginator.py", line 218, in previous_page_number
+    return self.paginator.validate_number(self.number - 1)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/paginator.py", line 69, in validate_number
+    raise EmptyPage(self.error_messages["min_page"])
+django.core.paginator.EmptyPage: That page number is less than 1
+ERROR 2025-05-27 16:45:59,183 basehttp 63307 6204698624 "GET /administration/usersessions/ HTTP/1.1" 500 376806
+INFO 2025-05-27 16:46:06,653 basehttp 63307 6221524992 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:47:06,671 basehttp 63307 6221524992 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:47:12,627 basehttp 63307 6204698624 "GET /administration/usersessions/ HTTP/1.1" 200 424825
+INFO 2025-05-27 16:47:12,645 basehttp 63307 6204698624 "GET /static/images/cropedlogo.png HTTP/1.1" 304 0
+INFO 2025-05-27 16:47:45,453 basehttp 63307 6238351360 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-27 16:47:45,562 basehttp 63307 6204698624 "GET /administration/usersessions/?page=2 HTTP/1.1" 200 422008
+INFO 2025-05-27 16:47:45,596 basehttp 63307 6204698624 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-27 16:47:49,626 basehttp 63307 6204698624 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-27 16:48:06,669 basehttp 63307 6221524992 "POST /update-activity/ HTTP/1.1" 200 192
+WARNING 2025-05-27 16:48:07,395 log 63307 6204698624 Not Found: /admin/sessions/bulk-actions/
+WARNING 2025-05-27 16:48:07,396 basehttp 63307 6204698624 "POST /admin/sessions/bulk-actions/ HTTP/1.1" 404 4370
+INFO 2025-05-27 16:48:21,332 basehttp 63307 6204698624 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-27 16:48:21,398 basehttp 63307 6238351360 "GET /administration/usersessions/?date_range=last_7_days&user_filter=&location_filter=&device_filter=desktop&status_filter= HTTP/1.1" 200 91882
+INFO 2025-05-27 16:48:21,427 basehttp 63307 6238351360 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-27 16:48:24,300 basehttp 63307 6204698624 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-27 16:48:24,388 basehttp 63307 6238351360 "GET /administration/usersessions/?date_range=last_7_days&user_filter=&location_filter=&device_filter=desktop&status_filter= HTTP/1.1" 200 91882
+INFO 2025-05-27 16:48:37,104 basehttp 63307 6204698624 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-27 16:48:37,229 basehttp 63307 6238351360 "GET /administration/usersessions/ HTTP/1.1" 200 424826
+INFO 2025-05-27 16:48:37,260 basehttp 63307 6238351360 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-27 16:48:55,129 basehttp 63307 6238351360 "POST /update-activity/ HTTP/1.1" 200 199

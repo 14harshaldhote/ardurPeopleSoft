@@ -3803,49 +3803,66 @@ def user_sessions_view(request):
     Enhanced view to display user sessions with advanced filtering, analytics and insights
     for tracking employee productivity.
     """
+    print(f"DEBUG: user_sessions_view called by user: {request.user.username}")
+
     try:
         # Get current time in IST
+        print("DEBUG: Getting current time in IST")
         current_time_ist = get_current_time_ist()
         current_time_utc = timezone.now()
+        print(f"DEBUG: Current time IST: {current_time_ist}, UTC: {current_time_utc}")
 
         # Parse filters from request
+        print("DEBUG: Parsing session filters from request")
         filters = _parse_session_filters(request)
         date_from = filters['date_from']
         date_to = filters['date_to']
         user_filter = filters['user_filter']
         location_filter = filters['location_filter']
         device_filter = filters['device_filter']
-        status_filter = filters['status_filter']
-        ip_type_filter = filters['ip_type_filter']
-        quality_filter = filters['quality_filter']
+        print(f"DEBUG: Filters parsed - date_from: {date_from}, date_to: {date_to}")
+        print(f"DEBUG: Additional filters - user: {user_filter}, location: {location_filter}, device: {device_filter}")
 
         # Handle AJAX requests for live data
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            print("DEBUG: AJAX request detected")
             ajax_type = request.GET.get('type')
+            print(f"DEBUG: AJAX type: {ajax_type}")
 
             if ajax_type == 'live_activity':
+                print("DEBUG: Returning live activity data")
                 return _get_live_activity_data(request)
             elif ajax_type == 'overview_metrics':
+                print("DEBUG: Returning overview metrics")
                 return _get_overview_metrics(request, date_from, date_to)
             elif ajax_type == 'session_analytics':
+                print("DEBUG: Returning session analytics")
                 return _get_session_analytics(request, date_from, date_to, filters)
             elif ajax_type == 'export':
+                print("DEBUG: Exporting session data")
                 return _export_session_data(request, filters)
 
         # Base queryset with filters
+        print("DEBUG: Getting filtered sessions queryset")
         base_queryset = _get_filtered_sessions(filters)
+        print(f"DEBUG: Base queryset count: {base_queryset.count()}")
 
         # ==================== HIGH-LEVEL OVERVIEW METRICS ====================
+        print("DEBUG: Calculating overview metrics")
         overview_metrics = _calculate_overview_metrics(base_queryset, current_time_utc)
+        print(f"DEBUG: Overview metrics calculated: {overview_metrics}")
 
         # ==================== LIVE ACTIVITY FEED ====================
+        print("DEBUG: Getting live activity sessions")
         live_sessions = UserSession.objects.filter(
             is_active=True,
             last_activity__gte=current_time_utc - timedelta(minutes=5)
         ).select_related('user').order_by('-last_activity')[:50]
+        print(f"DEBUG: Live sessions count: {live_sessions.count()}")
 
         live_activity_data = []
         for session in live_sessions:
+            print(f"DEBUG: Processing live session {session.id} for user {session.user.username}")
             last_activity_ist = to_ist(session.last_activity)
             login_time_ist = to_ist(session.login_time)
 
@@ -3879,41 +3896,72 @@ def user_sessions_view(request):
                 'current_url': session.tab_url,
                 'is_office_ip': session.ip_address in UserSession.OFFICE_IPS if session.ip_address else False
             })
+        print(f"DEBUG: Live activity data prepared for {len(live_activity_data)} sessions")
 
         # ==================== USER-BASED INSIGHTS ====================
+        print("DEBUG: Calculating user insights")
         user_insights = _calculate_user_insights(base_queryset, date_from, date_to)
+        print(f"DEBUG: User insights calculated for {len(user_insights)} users")
 
         # ==================== TAB BEHAVIOR ANALYSIS ====================
+        print("DEBUG: Calculating tab behavior analysis")
         tab_analysis = _calculate_tab_behavior_analysis(base_queryset)
+        print(f"DEBUG: Tab analysis completed: {tab_analysis}")
 
         # ==================== SECURITY & DEVICE MONITORING ====================
+        print("DEBUG: Calculating security insights")
         security_insights = _calculate_security_insights(base_queryset)
+        print(f"DEBUG: Security insights calculated: {security_insights}")
 
         # ==================== LOCATION & ENVIRONMENT TRACKING ====================
+        print("DEBUG: Calculating location insights")
         location_insights = _calculate_location_insights(base_queryset)
+        print(f"DEBUG: Location insights calculated: {location_insights}")
 
         # ==================== PERFORMANCE MONITORING ====================
+        print("DEBUG: Calculating performance insights")
         performance_insights = _calculate_performance_insights(base_queryset)
+        print(f"DEBUG: Performance insights calculated: {performance_insights}")
 
         # ==================== SESSION QUALITY SCORING ====================
+        print("DEBUG: Calculating quality insights")
         quality_insights = _calculate_quality_insights(base_queryset)
+        print(f"DEBUG: Quality insights calculated: {quality_insights}")
 
         # ==================== PAGINATION FOR DETAILED SESSION LIST ====================
+        print("DEBUG: Setting up pagination for sessions")
         sessions_list = base_queryset.select_related('user').order_by('-login_time')
 
-        page = request.GET.get('page', 1)
+        # Safely get and validate page number
+        page_param = request.GET.get('page', '1')
+        try:
+            page_num = int(page_param)
+            # Ensure page number is at least 1
+            if page_num < 1:
+                page_num = 1
+        except (ValueError, TypeError):
+            page_num = 1
+
         paginator = Paginator(sessions_list, 25)
+        print(f"DEBUG: Paginator created with {paginator.count} total sessions")
 
         try:
-            sessions_page = paginator.page(page)
+            sessions_page = paginator.page(page_num)
+            print(f"DEBUG: Page {page_num} loaded successfully")
         except PageNotAnInteger:
+            print("DEBUG: PageNotAnInteger error, loading page 1")
             sessions_page = paginator.page(1)
         except EmptyPage:
+            print("DEBUG: EmptyPage error, loading last page")
+            # If the requested page is too high, go to the last page
+            # num_pages is guaranteed to be at least 1
             sessions_page = paginator.page(paginator.num_pages)
 
         # Convert session times to IST for display
+        print("DEBUG: Converting session times to IST for display")
         sessions_display = []
         for session in sessions_page:
+            print(f"DEBUG: Processing session {session.id} for display")
             login_time_ist = to_ist(session.login_time)
             last_activity_ist = to_ist(session.last_activity)
             logout_time_ist = to_ist(session.logout_time) if session.logout_time else None
@@ -3941,8 +3989,10 @@ def user_sessions_view(request):
                 ),
                 'security_incidents_count': len(session.security_incidents or {})
             })
+        print(f"DEBUG: Sessions display data prepared for {len(sessions_display)} sessions")
 
         # ==================== CONTEXT DATA ====================
+        print("DEBUG: Preparing context data for template")
         context = {
             'current_time_ist': current_time_ist,
             'overview_metrics': overview_metrics,
@@ -3970,14 +4020,17 @@ def user_sessions_view(request):
             'locations': ['Office', 'Home', 'Unknown'],
             'session_qualities': ['high', 'medium', 'low']
         }
+        print("DEBUG: Context data prepared successfully")
 
+        print("DEBUG: Rendering user_sessions_dashboard.html template")
         return render(request, 'components/sessions/user_sessions_dashboard.html', context)
-
     except Exception as e:
-        logger.error(f"Error in user_sessions_view: {str(e)}")
-        return render(request, 'components/sessions/error.html', {
-            'error_message': 'An error occurred while loading the dashboard.'
-        })
+            print(f"DEBUG ERROR: Exception in user_sessions_view: {str(e)}")
+            print(f"DEBUG ERROR: Exception type: {type(e)}")
+            import traceback
+            print(f"DEBUG ERROR: Traceback: {traceback.format_exc()}")
+            logger.error(f"Error in user_sessions_view: {str(e)}")
+            raise
 
 @login_required
 @user_passes_test(is_admin)
@@ -3986,31 +4039,43 @@ def user_session_detail_view(request, user_id, date_str):
     Detailed view of a user's sessions for a specific date.
     Shows session timeline and productivity metrics.
     """
+    print(f"DEBUG: user_session_detail_view called for user_id: {user_id}, date: {date_str}")
+
     try:
         # Get user and parse date
+        print(f"DEBUG: Getting user with ID: {user_id}")
         user = get_object_or_404(User, id=user_id)
+        print(f"DEBUG: User found: {user.username}")
 
         try:
+            print(f"DEBUG: Parsing date string: {date_str}")
             target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
-        except ValueError:
+            print(f"DEBUG: Target date parsed: {target_date}")
+        except ValueError as ve:
+            print(f"DEBUG ERROR: Date parsing failed: {ve}")
             return render(request, 'components/sessions/error.html', {
                 'error_message': 'Invalid date format. Please use YYYY-MM-DD.'
             })
 
         # Calculate date range in UTC for database queries
+        print("DEBUG: Calculating date range in UTC for database queries")
         start_of_day_ist = IST_TIMEZONE.localize(datetime.combine(target_date, datetime.min.time()))
         end_of_day_ist = IST_TIMEZONE.localize(datetime.combine(target_date, datetime.max.time()))
         start_of_day_utc = to_utc(start_of_day_ist)
         end_of_day_utc = to_utc(end_of_day_ist)
+        print(f"DEBUG: Date range - Start UTC: {start_of_day_utc}, End UTC: {end_of_day_utc}")
 
         # Get user's sessions for the specified date
+        print("DEBUG: Querying user sessions for the specified date")
         sessions = UserSession.objects.filter(
             user=user,
             login_time__gte=start_of_day_utc,
             login_time__lte=end_of_day_utc
         ).order_by('login_time')
+        print(f"DEBUG: Found {sessions.count()} sessions for user {user.username} on {target_date}")
 
         if not sessions.exists():
+            print("DEBUG: No sessions found, returning no_sessions template")
             return render(request, 'components/sessions/user_session_detail.html', {
                 'user': user,
                 'target_date': target_date,
@@ -4018,12 +4083,14 @@ def user_session_detail_view(request, user_id, date_str):
             })
 
         # ============== SESSION TIMELINE ANALYSIS ==============
+        print("DEBUG: Starting session timeline analysis")
         timeline_data = []
         total_working_time = timedelta(0)
         total_idle_time = timedelta(0)
         total_session_time = timedelta(0)
 
         for session in sessions:
+            print(f"DEBUG: Processing session {session.id} for timeline")
             login_time_ist = to_ist(session.login_time)
             logout_time_ist = to_ist(session.logout_time) if session.logout_time else None
             last_activity_ist = to_ist(session.last_activity)
@@ -4032,22 +4099,28 @@ def user_session_detail_view(request, user_id, date_str):
             if session.is_active:
                 session_end = timezone.now()
                 current_duration = session_end - session.login_time
+                print(f"DEBUG: Active session duration: {current_duration}")
             else:
                 session_end = session.logout_time
                 current_duration = timedelta(minutes=session.session_duration) if session.session_duration else timedelta(0)
+                print(f"DEBUG: Inactive session duration: {current_duration}")
 
             total_session_time += current_duration
 
             if session.working_hours:
                 total_working_time += session.working_hours
+                print(f"DEBUG: Added working hours: {session.working_hours}")
 
             if session.idle_time:
                 total_idle_time += session.idle_time
+                print(f"DEBUG: Added idle time: {session.idle_time}")
 
             # Analyze tab behavior
+            print("DEBUG: Analyzing tab focus patterns")
             tab_focus_analysis = _analyze_tab_focus_patterns(session)
 
             # Calculate hourly activity distribution
+            print("DEBUG: Calculating hourly activity")
             hourly_activity = _calculate_hourly_activity(session)
 
             timeline_data.append({
@@ -4077,8 +4150,10 @@ def user_session_detail_view(request, user_id, date_str):
                     'browser_fingerprint': session.browser_fingerprint
                 }
             })
+        print(f"DEBUG: Timeline data prepared for {len(timeline_data)} sessions")
 
         # ============== DAILY SUMMARY METRICS ==============
+        print("DEBUG: Calculating daily summary metrics")
         daily_summary = {
             'total_sessions': sessions.count(),
             'active_sessions': sessions.filter(is_active=True).count(),
@@ -4094,6 +4169,7 @@ def user_session_detail_view(request, user_id, date_str):
             'mobile_sessions': sessions.filter(device_type='mobile').count(),
             'tablet_sessions': sessions.filter(device_type='tablet').count()
         }
+        print(f"DEBUG: Daily summary calculated: {daily_summary}")
 
         # Calculate productivity percentage
         if daily_summary['total_session_hours'] > 0:
@@ -4102,12 +4178,15 @@ def user_session_detail_view(request, user_id, date_str):
             )
         else:
             daily_summary['productivity_percentage'] = 0
+        print(f"DEBUG: Productivity percentage: {daily_summary['productivity_percentage']}")
 
         # ============== PAGE VISIT ANALYSIS ==============
+        print("DEBUG: Starting page visit analysis")
         page_visits = []
         url_counter = Counter()
 
         for session in sessions:
+            print(f"DEBUG: Processing page views for session {session.id}")
             if session.page_views:
                 for page_view in session.page_views:
                     url = page_view.get('url', 'Unknown')
@@ -4121,7 +4200,8 @@ def user_session_detail_view(request, user_id, date_str):
                             timestamp_ist = to_ist(timestamp)
                         else:
                             timestamp_ist = None
-                    except:
+                    except Exception as ts_error:
+                        print(f"DEBUG ERROR: Timestamp parsing failed: {ts_error}")
                         timestamp_ist = None
 
                     page_visits.append({
@@ -4133,15 +4213,20 @@ def user_session_detail_view(request, user_id, date_str):
                     })
 
         # Sort page visits by timestamp
+        print("DEBUG: Sorting page visits by timestamp")
         page_visits.sort(key=lambda x: x['timestamp_ist'] or datetime.min.replace(tzinfo=IST_TIMEZONE))
 
         # Top visited pages
         top_pages = url_counter.most_common(10)
+        print(f"DEBUG: Page visit analysis complete - {len(page_visits)} visits, {len(top_pages)} top pages")
 
         # ============== ACTIVITY HEATMAP DATA ==============
+        print("DEBUG: Generating activity heatmap")
         activity_heatmap = _generate_activity_heatmap(sessions, target_date)
+        print(f"DEBUG: Activity heatmap generated with {len(activity_heatmap)} hours")
 
         # ============== SECURITY ANALYSIS ==============
+        print("DEBUG: Starting security analysis")
         security_analysis = {
             'unique_ips': list(set(s.ip_address for s in sessions if s.ip_address)),
             'unique_devices': list(set(s.device_type for s in sessions if s.device_type)),
@@ -4158,8 +4243,10 @@ def user_session_detail_view(request, user_id, date_str):
         # Check for fingerprint changes
         fingerprints = [s.session_fingerprint for s in sessions if s.session_fingerprint]
         security_analysis['fingerprint_changes'] = len(set(fingerprints)) - 1 if len(fingerprints) > 1 else 0
+        print(f"DEBUG: Security analysis complete: {security_analysis}")
 
         # ============== CONTEXT DATA ==============
+        print("DEBUG: Preparing context data for template")
         context = {
             'user': user,
             'target_date': target_date,
@@ -4172,10 +4259,16 @@ def user_session_detail_view(request, user_id, date_str):
             'security_analysis': security_analysis,
             'current_time_ist': get_current_time_ist()
         }
+        print("DEBUG: Context data prepared successfully")
 
+        print("DEBUG: Rendering user_session_detail.html template")
         return render(request, 'components/sessions/user_session_detail.html', context)
 
     except Exception as e:
+        print(f"DEBUG ERROR: Exception in user_session_detail_view: {str(e)}")
+        print(f"DEBUG ERROR: Exception type: {type(e)}")
+        import traceback
+        print(f"DEBUG ERROR: Traceback: {traceback.format_exc()}")
         logger.error(f"Error in user_session_detail_view: {str(e)}")
         return render(request, 'components/sessions/error.html', {
             'error_message': 'An error occurred while loading the session details.'
@@ -4184,44 +4277,76 @@ def user_session_detail_view(request, user_id, date_str):
 # ==================== HELPER FUNCTIONS ====================
 #
 #
-
 import json
 import math
 from decimal import Decimal
+
+def safe_json_parse(value, default=None):
+    """
+    Safely parse JSON from various input types
+    """
+    if value is None:
+        return default
+
+    # If it's already parsed (dict/list), return as-is
+    if isinstance(value, (dict, list)):
+        return value
+
+    # If it's a string/bytes/bytearray, try to parse
+    if isinstance(value, (str, bytes, bytearray)):
+        try:
+            return json.loads(value)
+        except (json.JSONDecodeError, ValueError):
+            return default
+
+    # If it's a numeric type, don't try to parse as JSON
+    if isinstance(value, (int, float, Decimal)):
+        return default
+
+    # For any other type, return default
+    return default
 
 def safe_json_serialize(data, context_name="Unknown"):
     """
     Helper function to safely serialize data and identify problematic values
     """
-    def clean_value(obj, path="root"):
+    def clean_value(obj, path="root", depth=0):
+        # Prevent infinite recursion
+        if depth > 10:
+            return None
+
         if isinstance(obj, dict):
             cleaned = {}
             for key, value in obj.items():
                 try:
-                    cleaned[key] = clean_value(value, f"{path}.{key}")
+                    cleaned[key] = clean_value(value, f"{path}.{key}", depth + 1)
                 except Exception as e:
-                    print(f"Error at {path}.{key}: {e}")
+                    logger.error(f"Error at {path}.{key}: {e}")
                     cleaned[key] = None
             return cleaned
         elif isinstance(obj, list):
             cleaned = []
             for i, item in enumerate(obj):
                 try:
-                    cleaned.append(clean_value(item, f"{path}[{i}]"))
+                    cleaned.append(clean_value(item, f"{path}[{i}]", depth + 1))
                 except Exception as e:
-                    print(f"Error at {path}[{i}]: {e}")
+                    logger.error(f"Error at {path}[{i}]: {e}")
                     cleaned.append(None)
             return cleaned
         elif isinstance(obj, float):
             if math.isinf(obj) or math.isnan(obj):
-                print(f"Found invalid float at {path}: {obj}")
-                return 0.0  # or None, depending on your needs
+                logger.warning(f"Found invalid float at {path}: {obj}")
+                return 0.0
             return obj
         elif isinstance(obj, Decimal):
-            if math.isinf(float(obj)) or math.isnan(float(obj)):
-                print(f"Found invalid Decimal at {path}: {obj}")
+            try:
+                float_val = float(obj)
+                if math.isinf(float_val) or math.isnan(float_val):
+                    logger.warning(f"Found invalid Decimal at {path}: {obj}")
+                    return 0.0
+                return float_val
+            except (ValueError, OverflowError):
                 return 0.0
-            return float(obj)
         else:
             return obj
 
@@ -4230,72 +4355,48 @@ def safe_json_serialize(data, context_name="Unknown"):
         json.dumps(cleaned_data)  # Test serialization
         return cleaned_data
     except Exception as e:
-        print(f"JSON serialization error in {context_name}: {e}")
+        logger.error(f"JSON serialization error in {context_name}: {e}")
         return {}
-
-# Common problematic calculations to fix:
 
 def safe_divide(numerator, denominator):
     """Safe division that returns 0 instead of infinity"""
     if denominator == 0 or denominator is None:
         return 0.0
-    result = numerator / denominator
-    if math.isinf(result) or math.isnan(result):
+    try:
+        result = numerator / denominator
+        if math.isinf(result) or math.isnan(result):
+            return 0.0
+        return result
+    except (ZeroDivisionError, TypeError):
         return 0.0
-    return result
 
 def safe_percentage(part, total):
     """Safe percentage calculation"""
     if total == 0 or total is None or part is None:
         return 0.0
-    result = (part / total) * 100
-    if math.isinf(result) or math.isnan(result):
+    try:
+        result = (part / total) * 100
+        if math.isinf(result) or math.isnan(result):
+            return 0.0
+        return round(result, 2)
+    except (ZeroDivisionError, TypeError):
         return 0.0
-    return round(result, 2)
 
 def safe_average(values):
     """Safe average calculation"""
     if not values or len(values) == 0:
         return 0.0
-    clean_values = [v for v in values if v is not None and not (math.isinf(v) or math.isnan(v))]
+    clean_values = []
+    for v in values:
+        if v is not None:
+            try:
+                if not (math.isinf(v) or math.isnan(v)):
+                    clean_values.append(v)
+            except TypeError:
+                continue
     if not clean_values:
         return 0.0
     return sum(clean_values) / len(clean_values)
-
-# Fix session duration calculations
-# Replace your AJAX handling section with this:
-def safe_ajax_handler(request, date_from, date_to, filters):
-    """Safe AJAX request handler with error catching"""
-    ajax_type = request.GET.get('type')
-
-    try:
-        if ajax_type == 'live_activity':
-            data = _get_live_activity_data(request)
-            clean_data = safe_json_serialize(data, "live_activity")
-            return JsonResponse(clean_data)
-
-        elif ajax_type == 'overview_metrics':
-            data = _get_overview_metrics(request, date_from, date_to)
-            clean_data = safe_json_serialize(data, "overview_metrics")
-            return JsonResponse(clean_data)
-
-        elif ajax_type == 'session_analytics':
-            data = _get_session_analytics(request, date_from, date_to, filters)
-            clean_data = safe_json_serialize(data, "session_analytics")
-            return JsonResponse(clean_data)
-
-        elif ajax_type == 'export':
-            return _export_session_data(request, filters)
-
-    except Exception as e:
-        logger.error(f"AJAX handler error for type {ajax_type}: {str(e)}")
-        return JsonResponse({
-            'error': True,
-            'message': 'Data processing error occurred',
-            'type': ajax_type
-        }, status=500)
-
-    return JsonResponse({'error': True, 'message': 'Unknown request type'}, status=400)
 
 def _parse_session_filters(request):
     """Parse and validate session filters from request"""
@@ -4406,24 +4507,28 @@ def _calculate_overview_metrics(queryset, current_time_utc):
         last_activity__gte=current_time_utc - timedelta(minutes=5)
     ).values('user').distinct().count()
 
-    # Duration metrics
+    # Duration metrics with safe handling
     avg_session_duration = queryset.aggregate(
         avg_duration=Avg('session_duration')
     )['avg_duration'] or 0
+    avg_session_duration = safe_divide(avg_session_duration, 1)
 
     avg_idle_time = queryset.aggregate(
         avg_idle=Avg('idle_time')
     )['avg_idle']
     avg_idle_minutes = avg_idle_time.total_seconds() / 60 if avg_idle_time else 0
+    avg_idle_minutes = safe_divide(avg_idle_minutes, 1)
 
-    # Productivity metrics
+    # Productivity metrics with safe handling
     avg_productivity = queryset.filter(
         productivity_score__isnull=False
     ).aggregate(Avg('productivity_score'))['productivity_score__avg'] or 0
+    avg_productivity = safe_divide(avg_productivity, 1)
 
     avg_engagement = queryset.filter(
         engagement_score__isnull=False
     ).aggregate(Avg('engagement_score'))['engagement_score__avg'] or 0
+    avg_engagement = safe_divide(avg_engagement, 1)
 
     # Location breakdown
     location_stats = queryset.values('location').annotate(
@@ -4435,10 +4540,12 @@ def _calculate_overview_metrics(queryset, current_time_utc):
         count=Count('id')
     ).order_by('-count')
 
-    # Multi-tab sessions
+    # Multi-tab sessions with safe percentage calculation
     multi_tab_sessions = queryset.filter(
         parent_session_id__isnull=False
     ).values('parent_session_id').distinct().count()
+
+    multi_tab_percentage = safe_percentage(multi_tab_sessions, total_sessions)
 
     return {
         'total_sessions': total_sessions,
@@ -4452,7 +4559,7 @@ def _calculate_overview_metrics(queryset, current_time_utc):
         'location_breakdown': list(location_stats),
         'device_breakdown': list(device_stats),
         'multi_tab_sessions': multi_tab_sessions,
-        'multi_tab_percentage': (multi_tab_sessions / total_sessions * 100) if total_sessions > 0 else 0
+        'multi_tab_percentage': multi_tab_percentage
     }
 
 def _calculate_user_insights(queryset, date_from, date_to):
@@ -4505,21 +4612,25 @@ def _calculate_user_insights(queryset, date_from, date_to):
         ))
     ).order_by('-total_sessions')
 
-    # Calculate additional metrics for each user
+    # Calculate additional metrics for each user with safe calculations
     enhanced_user_stats = []
     for user_stat in user_stats:
-        # Calculate productivity percentage
-        if user_stat['avg_session_duration'] and user_stat['avg_session_duration'] > 0:
-            working_hours_minutes = (user_stat['total_working_hours'].total_seconds() / 60) if user_stat['total_working_hours'] else 0
-            session_hours_minutes = user_stat['avg_session_duration'] * user_stat['total_sessions']
-            productivity_percentage = (working_hours_minutes / session_hours_minutes * 100) if session_hours_minutes > 0 else 0
-        else:
-            productivity_percentage = 0
+        # Calculate productivity percentage safely
+        avg_duration = user_stat['avg_session_duration'] or 0
+        total_sessions = user_stat['total_sessions'] or 1
 
-        user_stat['productivity_percentage'] = round(productivity_percentage, 1)
+        if user_stat['total_working_hours']:
+            working_hours_minutes = user_stat['total_working_hours'].total_seconds() / 60
+        else:
+            working_hours_minutes = 0
+
+        session_hours_minutes = avg_duration * total_sessions
+        productivity_percentage = safe_percentage(working_hours_minutes, session_hours_minutes)
+
+        user_stat['productivity_percentage'] = productivity_percentage
         user_stat['avg_productivity'] = round(user_stat['avg_productivity'] or 0, 1)
         user_stat['avg_engagement'] = round(user_stat['avg_engagement'] or 0, 1)
-        user_stat['avg_session_duration'] = round(user_stat['avg_session_duration'] or 0, 1)
+        user_stat['avg_session_duration'] = round(avg_duration, 1)
 
         enhanced_user_stats.append(user_stat)
 
@@ -4532,21 +4643,25 @@ def _calculate_tab_behavior_analysis(queryset):
     tab_switch_stats = []
 
     for session in queryset:
-        if session.page_views:
-            for page_view in session.page_views:
-                url = page_view.get('url', 'Unknown')
-                url_counter[url] += 1
+        # Safely parse page_views
+        page_views = safe_json_parse(session.page_views, [])
+        if page_views:
+            for page_view in page_views:
+                if isinstance(page_view, dict):
+                    url = page_view.get('url', 'Unknown')
+                    url_counter[url] += 1
 
-        if session.tab_switches:
+        tab_switches = session.tab_switches or 0
+        if tab_switches > 0:
             tab_switch_stats.append({
                 'session_id': session.id,
                 'user': session.user.username,
-                'tab_switches': session.tab_switches,
+                'tab_switches': tab_switches,
                 'session_duration': session.session_duration or 0
             })
 
-    # Calculate tab switch patterns
-    avg_tab_switches = sum(stat['tab_switches'] for stat in tab_switch_stats) / len(tab_switch_stats) if tab_switch_stats else 0
+    # Calculate tab switch patterns safely
+    avg_tab_switches = safe_average([stat['tab_switches'] for stat in tab_switch_stats])
     high_tab_switchers = [stat for stat in tab_switch_stats if stat['tab_switches'] > avg_tab_switches * 1.5]
 
     return {
@@ -4570,9 +4685,6 @@ def _calculate_security_insights(queryset):
     total_sessions = queryset.count()
     remote_sessions = total_sessions - office_sessions
 
-    # Suspicious activity detection
-    suspicious_activities = []
-
     # Multiple IPs per user
     users_multiple_ips = queryset.values('user').annotate(
         ip_count=Count('ip_address', distinct=True)
@@ -4588,11 +4700,13 @@ def _calculate_security_insights(queryset):
         fingerprint_count=Count('session_fingerprint', distinct=True)
     ).filter(fingerprint_count__gt=1)
 
+    office_percentage = safe_percentage(office_sessions, total_sessions)
+
     return {
         'unique_ips': len(ip_stats),
         'office_sessions': office_sessions,
         'remote_sessions': remote_sessions,
-        'office_percentage': round(office_sessions / total_sessions * 100, 1) if total_sessions > 0 else 0,
+        'office_percentage': office_percentage,
         'users_with_multiple_ips': users_multiple_ips.count(),
         'sessions_with_security_incidents': sessions_with_incidents,
         'users_with_fingerprint_changes': fingerprint_changes.count(),
@@ -4608,11 +4722,16 @@ def _calculate_location_insights(queryset):
         avg_session_duration=Avg('session_duration')
     ).order_by('-count')
 
-    # Time zone analysis
+    # Time zone analysis with safe datetime handling
     timezone_patterns = {}
     for session in queryset.select_related('user'):
-        login_hour = to_ist(session.login_time).hour
-        timezone_patterns[login_hour] = timezone_patterns.get(login_hour, 0) + 1
+        try:
+            login_time_ist = to_ist(session.login_time)
+            if login_time_ist:
+                login_hour = login_time_ist.hour
+                timezone_patterns[login_hour] = timezone_patterns.get(login_hour, 0) + 1
+        except (AttributeError, TypeError):
+            continue
 
     # Peak hours
     peak_hours = sorted(timezone_patterns.items(), key=lambda x: x[1], reverse=True)[:5]
@@ -4630,17 +4749,88 @@ def _calculate_performance_insights(queryset):
         count=Count('id')
     ).order_by('-count')
 
-    # Performance metrics
-    performance_metrics = queryset.aggregate(
-        avg_page_load_time=Avg('performance_metrics'),
-        avg_mouse_movements=Avg('mouse_movements'),
-        avg_keyboard_events=Avg('keyboard_events'),
-        avg_scroll_events=Avg('scroll_events')
-    )
+    # Performance metrics - handle JSONField aggregation safely
+    try:
+        # For JSONField aggregation, we need to handle cases where the field might contain
+        # non-JSON data (like raw floats) or be null
+        performance_metrics = {
+            'avg_page_load_time': 0,
+            'avg_mouse_movements': 0,
+            'avg_keyboard_events': 0,
+            'avg_scroll_events': 0
+        }
+
+        # Calculate averages manually to avoid JSON aggregation issues
+        valid_sessions = queryset.exclude(performance_metrics__isnull=True)
+
+        if valid_sessions.exists():
+            # Calculate mouse movements average safely
+            mouse_movements_sum = 0
+            mouse_movements_count = 0
+
+            for session in queryset:
+                if session.mouse_movements is not None:
+                    mouse_movements_sum += session.mouse_movements
+                    mouse_movements_count += 1
+
+            if mouse_movements_count > 0:
+                performance_metrics['avg_mouse_movements'] = mouse_movements_sum / mouse_movements_count
+
+            # For performance_metrics JSONField, extract numeric values safely
+            page_load_times = []
+            keyboard_events = []
+            scroll_events = []
+
+            for session in valid_sessions:
+                try:
+                    # Safely parse performance_metrics JSON field
+                    perf_data = safe_json_parse(session.performance_metrics, {})
+
+                    # Extract page load time if it exists
+                    if isinstance(perf_data, dict):
+                        if 'page_load_time' in perf_data:
+                            page_load_times.append(float(perf_data['page_load_time']))
+                    elif isinstance(perf_data, (int, float)):
+                        # If it's a raw number, treat it as page load time
+                        page_load_times.append(float(perf_data))
+
+                    # Extract keyboard events safely
+                    keyboard_data = safe_json_parse(session.keyboard_events, [])
+                    if isinstance(keyboard_data, list):
+                        keyboard_events.append(len(keyboard_data))
+                    elif isinstance(keyboard_data, (int, float)):
+                        keyboard_events.append(int(keyboard_data))
+
+                    # Extract scroll events safely
+                    scroll_data = safe_json_parse(session.scroll_events, [])
+                    if isinstance(scroll_data, list):
+                        scroll_events.append(len(scroll_data))
+                    elif isinstance(scroll_data, (int, float)):
+                        scroll_events.append(int(scroll_data))
+
+                except (ValueError, TypeError, AttributeError):
+                    # Skip sessions with invalid data
+                    continue
+
+            # Calculate averages from collected data
+            performance_metrics['avg_page_load_time'] = safe_average(page_load_times)
+            performance_metrics['avg_keyboard_events'] = safe_average(keyboard_events)
+            performance_metrics['avg_scroll_events'] = safe_average(scroll_events)
+
+    except Exception as e:
+        logger.error(f"Error calculating performance metrics: {str(e)}")
+        performance_metrics = {
+            'avg_page_load_time': 0,
+            'avg_mouse_movements': 0,
+            'avg_keyboard_events': 0,
+            'avg_scroll_events': 0
+        }
 
     # Slow sessions (longer than average + 1 std dev)
     avg_duration = queryset.aggregate(Avg('session_duration'))['session_duration__avg'] or 0
     slow_sessions = queryset.filter(session_duration__gt=avg_duration * 1.5).count()
+
+    slow_sessions_percentage = safe_percentage(slow_sessions, queryset.count())
 
     return {
         'quality_distribution': list(quality_stats),
@@ -4651,7 +4841,7 @@ def _calculate_performance_insights(queryset):
             (performance_metrics['avg_scroll_events'] or 0), 1
         ),
         'slow_sessions_count': slow_sessions,
-        'slow_sessions_percentage': round(slow_sessions / queryset.count() * 100, 1) if queryset.count() > 0 else 0
+        'slow_sessions_percentage': slow_sessions_percentage
     }
 
 def _calculate_quality_insights(queryset):
@@ -4673,17 +4863,21 @@ def _calculate_quality_insights(queryset):
         idle_time__gt=timedelta(minutes=30)
     ).count()
 
+    avg_quality = queryset.aggregate(Avg('productivity_score'))['productivity_score__avg'] or 0
+
     return {
         'quality_distribution': quality_ranges,
         'high_engagement_sessions': high_engagement,
         'low_engagement_sessions': low_engagement,
         'high_idle_sessions': high_idle_sessions,
-        'avg_quality_score': round(queryset.aggregate(Avg('productivity_score'))['productivity_score__avg'] or 0, 1)
+        'avg_quality_score': round(avg_quality, 1)
     }
 
 def _analyze_tab_focus_patterns(session):
     """Analyze tab focus patterns for a session"""
-    if not session.page_views:
+    page_views = safe_json_parse(session.page_views, [])
+
+    if not page_views:
         return {
             'total_pages': 0,
             'unique_domains': 0,
@@ -4694,20 +4888,21 @@ def _analyze_tab_focus_patterns(session):
     page_counter = Counter()
     domain_counter = Counter()
 
-    for page_view in session.page_views:
-        url = page_view.get('url', '')
-        page_counter[url] += 1
+    for page_view in page_views:
+        if isinstance(page_view, dict):
+            url = page_view.get('url', '')
+            page_counter[url] += 1
 
-        # Extract domain
-        try:
-            from urllib.parse import urlparse
-            domain = urlparse(url).netloc
-            domain_counter[domain] += 1
-        except:
-            pass
+            # Extract domain
+            try:
+                from urllib.parse import urlparse
+                domain = urlparse(url).netloc
+                domain_counter[domain] += 1
+            except:
+                pass
 
     return {
-        'total_pages': len(session.page_views),
+        'total_pages': len(page_views),
         'unique_pages': len(page_counter),
         'unique_domains': len(domain_counter),
         'most_visited_page': page_counter.most_common(1)[0] if page_counter else None,
@@ -4718,16 +4913,21 @@ def _calculate_hourly_activity(session):
     """Calculate hourly activity distribution for a session"""
     hourly_data = {i: 0 for i in range(24)}
 
-    if session.page_views:
-        for page_view in session.page_views:
-            try:
-                timestamp_str = page_view.get('timestamp', '')
-                if timestamp_str:
-                    timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
-                    hour = to_ist(timestamp).hour
-                    hourly_data[hour] += 1
-            except:
-                pass
+    page_views = safe_json_parse(session.page_views, [])
+
+    if page_views:
+        for page_view in page_views:
+            if isinstance(page_view, dict):
+                try:
+                    timestamp_str = page_view.get('timestamp', '')
+                    if timestamp_str:
+                        timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+                        timestamp_ist = to_ist(timestamp)
+                        if timestamp_ist:
+                            hour = timestamp_ist.hour
+                            hourly_data[hour] += 1
+                except:
+                    pass
 
     return hourly_data
 
@@ -4744,20 +4944,23 @@ def _generate_activity_heatmap(sessions, target_date):
 
             # Count activities in this interval across all sessions
             for session in sessions:
-                if session.page_views:
-                    for page_view in session.page_views:
-                        try:
-                            timestamp_str = page_view.get('timestamp', '')
-                            if timestamp_str:
-                                timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
-                                timestamp_ist = to_ist(timestamp)
+                page_views = safe_json_parse(session.page_views, [])
 
-                                if timestamp_ist.date() == target_date:
-                                    minutes_from_start = timestamp_ist.hour * 60 + timestamp_ist.minute
-                                    if interval_start <= minutes_from_start < interval_start + 15:
-                                        activity_count += 1
-                        except:
-                            pass
+                if page_views:
+                    for page_view in page_views:
+                        if isinstance(page_view, dict):
+                            try:
+                                timestamp_str = page_view.get('timestamp', '')
+                                if timestamp_str:
+                                    timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+                                    timestamp_ist = to_ist(timestamp)
+
+                                    if timestamp_ist and timestamp_ist.date() == target_date:
+                                        minutes_from_start = timestamp_ist.hour * 60 + timestamp_ist.minute
+                                        if interval_start <= minutes_from_start < interval_start + 15:
+                                            activity_count += 1
+                            except:
+                                pass
 
             hour_data['intervals'].append({
                 'quarter': quarter,
@@ -4783,10 +4986,13 @@ def _get_live_activity_data(request):
     for session in active_sessions:
         time_since_activity = (current_time_utc - session.last_activity).total_seconds() / 60
 
+        last_activity_ist = to_ist(session.last_activity)
+        last_activity_str = last_activity_ist.strftime('%H:%M:%S') if last_activity_ist else 'Unknown'
+
         activity_data.append({
             'user_id': session.user.id,
             'username': session.user.username,
-            'last_activity': to_ist(session.last_activity).strftime('%H:%M:%S'),
+            'last_activity': last_activity_str,
             'session_duration': round((current_time_utc - session.login_time).total_seconds() / 60, 1),
             'activity_status': 'active' if time_since_activity <= 2 else 'idle',
             'location': session.location,
@@ -4794,11 +5000,14 @@ def _get_live_activity_data(request):
             'current_url': session.tab_url or 'Unknown'
         })
 
-    return JsonResponse({
+    current_time_ist = get_current_time_ist()
+    timestamp_str = current_time_ist.strftime('%Y-%m-%d %H:%M:%S') if current_time_ist else 'Unknown'
+
+    return {
         'status': 'success',
         'data': activity_data,
-        'timestamp': get_current_time_ist().strftime('%Y-%m-%d %H:%M:%S')
-    })
+        'timestamp': timestamp_str
+    }
 
 def _get_overview_metrics(request, date_from, date_to):
     """Get overview metrics for AJAX requests"""
@@ -4806,10 +5015,10 @@ def _get_overview_metrics(request, date_from, date_to):
     queryset = _get_filtered_sessions(filters)
     metrics = _calculate_overview_metrics(queryset, timezone.now())
 
-    return JsonResponse({
+    return {
         'status': 'success',
         'data': metrics
-    })
+    }
 
 def _get_session_analytics(request, date_from, date_to, filters):
     """Get session analytics data for AJAX requests"""
@@ -4822,10 +5031,10 @@ def _get_session_analytics(request, date_from, date_to, filters):
         'performance_insights': _calculate_performance_insights(queryset)
     }
 
-    return JsonResponse({
+    return {
         'status': 'success',
         'data': analytics_data
-    })
+    }
 
 def _export_session_data(request, filters):
     """Export session data to Excel"""

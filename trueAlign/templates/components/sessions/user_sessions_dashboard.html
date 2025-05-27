@@ -1,107 +1,56 @@
 {% extends 'base.html' %}
 {% load static %}
-
 {% block title %}User Sessions Dashboard{% endblock %}
 
 {% block extra_head %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
-<style>
-    .loader {
-        border: 4px solid #f3f4f6;
-        border-top: 4px solid #3b82f6;
-        border-radius: 50%;
-        width: 24px;
-        height: 24px;
-        animation: spin 1s linear infinite;
-    }
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-    .activity-indicator {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        display: inline-block;
-        margin-right: 4px;
-    }
-    .activity-active { background-color: #10b981; }
-    .activity-idle { background-color: #f59e0b; }
-    .activity-inactive { background-color: #ef4444; }
-
-    .heatmap-cell {
-        width: 20px;
-        height: 20px;
-        border: 1px solid #e5e7eb;
-        cursor: pointer;
-    }
-    .heatmap-0 { background-color: #f9fafb; }
-    .heatmap-1 { background-color: #dbeafe; }
-    .heatmap-2 { background-color: #93c5fd; }
-    .heatmap-3 { background-color: #3b82f6; }
-    .heatmap-4 { background-color: #1e40af; }
-    .heatmap-5 { background-color: #1e3a8a; }
-</style>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 {% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50 py-6">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Header -->
-        <div class="bg-white rounded-lg shadow mb-6 p-6">
-            <div class="flex justify-between items-center mb-4">
+<div class="min-h-screen bg-gray-50">
+    <!-- Header Section -->
+    <div class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-6">
                 <div>
                     <h1 class="text-3xl font-bold text-gray-900">User Sessions Dashboard</h1>
-                    <p class="text-sm text-gray-600 mt-1">Monitor employee activity and productivity</p>
+                    <p class="mt-1 text-sm text-gray-500">Monitor and analyze user activity in real-time</p>
                 </div>
-                <div class="flex space-x-3">
-                    <button id="refreshBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-200">
-                        <i class="fas fa-sync-alt mr-2"></i>Refresh
-                    </button>
-                    <button id="exportBtn" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition duration-200">
-                        <i class="fas fa-download mr-2"></i>Export
+                <div class="flex items-center space-x-4">
+                    <div class="text-sm text-gray-500">
+                        Last updated: <span id="last-updated">{{ current_time_ist|date:"M d, Y H:i:s" }}</span>
+                    </div>
+                    <button id="refresh-btn" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        Refresh
                     </button>
                 </div>
-            </div>
-
-            <!-- Current Time -->
-            <div class="text-sm text-gray-500">
-                Last updated: <span id="currentTime">{{ current_time_ist|date:"Y-m-d H:i:s" }} IST</span>
             </div>
         </div>
+    </div>
 
-        <!-- Filters -->
-        <div class="bg-white rounded-lg shadow mb-6 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4">Filters</h2>
-            <form method="GET" id="filterForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- Filters Section -->
+    <div class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <form id="filters-form" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
                 <!-- Date Range -->
-                <div>
+                <div class="col-span-2">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Date Range</label>
-                    <select name="date_range" id="dateRange" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        <option value="today" {% if filters.date_range == 'today' %}selected{% endif %}>Today</option>
-                        <option value="yesterday" {% if filters.date_range == 'yesterday' %}selected{% endif %}>Yesterday</option>
-                        <option value="last_7_days" {% if filters.date_range == 'last_7_days' %}selected{% endif %}>Last 7 Days</option>
-                        <option value="last_30_days" {% if filters.date_range == 'last_30_days' %}selected{% endif %}>Last 30 Days</option>
-                        <option value="this_month" {% if filters.date_range == 'this_month' %}selected{% endif %}>This Month</option>
-                        <option value="last_month" {% if filters.date_range == 'last_month' %}selected{% endif %}>Last Month</option>
-                        <option value="custom" {% if filters.date_range == 'custom' %}selected{% endif %}>Custom Range</option>
+                    <select name="date_range" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        {% for value, label in date_range_options %}
+                        <option value="{{ value }}" {% if filters.date_range == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
                     </select>
-                </div>
-
-                <!-- Custom Date Range -->
-                <div id="customDates" class="{% if filters.date_range != 'custom' %}hidden{% endif %}">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">From - To</label>
-                    <div class="flex space-x-2">
-                        <input type="date" name="date_from" value="{{ filters.date_from|date:'Y-m-d' }}" class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        <input type="date" name="date_to" value="{{ filters.date_to|date:'Y-m-d' }}" class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    </div>
                 </div>
 
                 <!-- User Filter -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">User</label>
-                    <select name="user_filter" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <select name="user_filter" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                         <option value="">All Users</option>
                         {% for user in users_list %}
                         <option value="{{ user.id }}" {% if filters.user_filter == user.id|stringformat:"s" %}selected{% endif %}>{{ user.username }}</option>
@@ -112,7 +61,7 @@
                 <!-- Location Filter -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Location</label>
-                    <select name="location_filter" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <select name="location_filter" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                         <option value="">All Locations</option>
                         {% for location in locations %}
                         <option value="{{ location }}" {% if filters.location_filter == location %}selected{% endif %}>{{ location }}</option>
@@ -122,8 +71,8 @@
 
                 <!-- Device Filter -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Device Type</label>
-                    <select name="device_filter" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Device</label>
+                    <select name="device_filter" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                         <option value="">All Devices</option>
                         {% for device in device_types %}
                         <option value="{{ device }}" {% if filters.device_filter == device %}selected{% endif %}>{{ device|title }}</option>
@@ -134,367 +83,1739 @@
                 <!-- Status Filter -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                    <select name="status_filter" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        <option value="">All Sessions</option>
-                        <option value="active" {% if filters.status_filter == 'active' %}selected{% endif %}>Active</option>
-                        <option value="inactive" {% if filters.status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
-                    </select>
-                </div>
-
-                <!-- IP Type Filter -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">IP Type</label>
-                    <select name="ip_type_filter" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        <option value="">All IPs</option>
-                        <option value="office" {% if filters.ip_type_filter == 'office' %}selected{% endif %}>Office</option>
-                        <option value="remote" {% if filters.ip_type_filter == 'remote' %}selected{% endif %}>Remote</option>
-                    </select>
-                </div>
-
-                <!-- Quality Filter -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Session Quality</label>
-                    <select name="quality_filter" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        <option value="">All Qualities</option>
-                        {% for quality in session_qualities %}
-                        <option value="{{ quality }}" {% if filters.quality_filter == quality %}selected{% endif %}>{{ quality|title }}</option>
-                        {% endfor %}
+                    <select name="status_filter" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        <option value="">All Status</option>
+                        <option value="active" {% if filters.status_filter == "active" %}selected{% endif %}>Active</option>
+                        <option value="inactive" {% if filters.status_filter == "inactive" %}selected{% endif %}>Inactive</option>
                     </select>
                 </div>
             </form>
         </div>
+    </div>
 
-        <!-- Overview Metrics -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-            <div class="bg-white rounded-lg shadow p-6">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                            <i class="fas fa-users text-blue-600"></i>
+    <!-- Overview Metrics -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Total Sessions -->
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                </svg>
+                            </div>
                         </div>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-500">Total Sessions</p>
-                        <p class="text-2xl font-semibold text-gray-900">{{ overview_metrics.total_sessions }}</p>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Total Sessions</dt>
+                                <dd class="text-lg font-medium text-gray-900">{{ overview_metrics.total_sessions }}</dd>
+                            </dl>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-white rounded-lg shadow p-6">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                            <i class="fas fa-circle text-green-600"></i>
+            <!-- Active Sessions -->
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                </svg>
+                            </div>
                         </div>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-500">Currently Online</p>
-                        <p class="text-2xl font-semibold text-gray-900">{{ overview_metrics.currently_online }}</p>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Active Sessions</dt>
+                                <dd class="text-lg font-medium text-gray-900">{{ overview_metrics.active_sessions }}</dd>
+                            </dl>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-white rounded-lg shadow p-6">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                            <i class="fas fa-chart-line text-purple-600"></i>
+            <!-- Unique Users -->
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="w-8 h-8 bg-yellow-500 rounded-md flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                                </svg>
+                            </div>
                         </div>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-500">Avg Productivity</p>
-                        <p class="text-2xl font-semibold text-gray-900">{{ overview_metrics.avg_productivity_score }}%</p>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Unique Users</dt>
+                                <dd class="text-lg font-medium text-gray-900">{{ overview_metrics.unique_users }}</dd>
+                            </dl>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-white rounded-lg shadow p-6">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
-                            <i class="fas fa-clock text-yellow-600"></i>
+            <!-- Currently Online -->
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="w-8 h-8 bg-red-500 rounded-md flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.636 18.364a9 9 0 010-12.728m12.728 0a9 9 0 010 12.728m-9.9-2.829a5 5 0 010-7.07m7.072 0a5 5 0 010 7.07M13 12a1 1 0 11-2 0 1 1 0 012 0z"></path>
+                                </svg>
+                            </div>
                         </div>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-500">Avg Session Time</p>
-                        <p class="text-2xl font-semibold text-gray-900">{{ overview_metrics.avg_session_duration_minutes }}m</p>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Currently Online</dt>
+                                <dd class="text-lg font-medium text-gray-900">{{ overview_metrics.currently_online }}</dd>
+                            </dl>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Live Activity Feed -->
-        <div class="bg-white rounded-lg shadow mb-6">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <div class="flex justify-between items-center">
-                    <h2 class="text-lg font-semibold text-gray-900">Live Activity Feed</h2>
-                    <div class="flex items-center space-x-2">
-                        <div class="loader" id="liveLoader" style="display: none;"></div>
-                        <span class="text-sm text-gray-500">Auto-refresh: 30s</span>
-                    </div>
-                </div>
-            </div>
-            <div class="p-6">
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Device</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current URL</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="liveActivityTable" class="bg-white divide-y divide-gray-200">
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Live Activity Feed -->
+            <div class="lg:col-span-2">
+                <div class="bg-white shadow rounded-lg">
+                    <div class="px-4 py-5 sm:p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900">Live Activity Feed</h3>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                <span class="w-2 h-2 bg-green-400 rounded-full mr-1 animate-pulse"></span>
+                                Live
+                            </span>
+                        </div>
+                        <div id="live-activity-container" class="space-y-4 max-h-96 overflow-y-auto">
                             {% for activity in live_activity_data %}
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        <div class="flex-shrink-0 h-10 w-10">
-                                            <div class="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                                                <span class="text-sm font-medium text-gray-700">{{ activity.user.first_name.0|default:activity.user.username.0 }}</span>
-                                            </div>
-                                        </div>
-                                        <div class="ml-4">
-                                            <div class="text-sm font-medium text-gray-900">{{ activity.user.username }}</div>
-                                            <div class="text-sm text-gray-500">{{ activity.user.first_name }} {{ activity.user.last_name }}</div>
+                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                <div class="flex items-center space-x-3">
+                                    <div class="flex-shrink-0">
+                                        <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                                            <span class="text-sm font-medium text-gray-700">{{ activity.user.first_name|first|default:activity.user.username|first }}</span>
                                         </div>
                                     </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        <span class="activity-indicator activity-{{ activity.activity_status }}"></span>
-                                        <span class="text-sm text-gray-900 capitalize">{{ activity.activity_status }}</span>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900">{{ activity.user.get_full_name|default:activity.user.username }}</p>
+                                        <p class="text-sm text-gray-500">{{ activity.location }} • {{ activity.device_type|title }}</p>
                                     </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {{ activity.session_duration_minutes }}m
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if activity.location == 'Office' %}bg-green-100 text-green-800{% else %}bg-blue-100 text-blue-800{% endif %}">
-                                        {{ activity.location|default:"Unknown" }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {{ activity.device_type|title }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 max-w-xs truncate">
-                                    {{ activity.current_url|default:"Unknown" }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <button onclick="terminateSession({{ activity.session_id }})" class="text-red-600 hover:text-red-900">
-                                        Terminate
-                                    </button>
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">No active sessions found</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- Analytics Tabs -->
-        <div class="bg-white rounded-lg shadow mb-6">
-            <div class="border-b border-gray-200">
-                <nav class="-mb-px flex space-x-8 px-6" aria-label="Tabs">
-                    <button class="tab-button active py-4 px-1 border-b-2 font-medium text-sm" data-tab="user-insights">
-                        User Insights
-                    </button>
-                    <button class="tab-button py-4 px-1 border-b-2 font-medium text-sm" data-tab="tab-behavior">
-                        Tab Behavior
-                    </button>
-                    <button class="tab-button py-4 px-1 border-b-2 font-medium text-sm" data-tab="security">
-                        Security
-                    </button>
-                    <button class="tab-button py-4 px-1 border-b-2 font-medium text-sm" data-tab="performance">
-                        Performance
-                    </button>
-                    <button class="tab-button py-4 px-1 border-b-2 font-medium text-sm" data-tab="quality">
-                        Quality
-                    </button>
-                </nav>
-            </div>
-
-            <!-- User Insights Tab -->
-            <div id="user-insights" class="tab-content p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Top User Activity</h3>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sessions</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg Duration</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Productivity</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Engagement</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Office %</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            {% for user in user_insights %}
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-medium text-gray-900">{{ user.user__username }}</div>
-                                    <div class="text-sm text-gray-500">{{ user.user__first_name }} {{ user.user__last_name }}</div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-900">{{ user.total_sessions }}</div>
-                                    <div class="text-sm text-gray-500">{{ user.active_sessions }} active</div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {{ user.avg_session_duration }}m
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        <div class="w-16 bg-gray-200 rounded-full h-2">
-                                            <div class="bg-blue-600 h-2 rounded-full" style="width: {{ user.avg_productivity }}%"></div>
-                                        </div>
-                                        <span class="ml-2 text-sm text-gray-900">{{ user.avg_productivity }}%</span>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        <div class="w-16 bg-gray-200 rounded-full h-2">
-                                            <div class="bg-green-600 h-2 rounded-full" style="width: {{ user.avg_engagement }}%"></div>
-                                        </div>
-                                        <span class="ml-2 text-sm text-gray-900">{{ user.avg_engagement }}%</span>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {% widthratio user.office_sessions user.total_sessions 100 %}%
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Tab Behavior Tab -->
-            <div id="tab-behavior" class="tab-content p-6 hidden">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div>
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Tab Statistics</h3>
-                        <div class="space-y-4">
-                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                <span class="text-sm font-medium text-gray-700">Avg Tab Switches/Session</span>
-                                <span class="text-sm font-semibold text-gray-900">{{ tab_analysis.avg_tab_switches_per_session }}</span>
-                            </div>
-                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                <span class="text-sm font-medium text-gray-700">Multi-tab Sessions</span>
-                                <span class="text-sm font-semibold text-gray-900">{{ tab_analysis.sessions_with_multiple_tabs }}</span>
-                            </div>
-                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                <span class="text-sm font-medium text-gray-700">High Tab Switchers</span>
-                                <span class="text-sm font-semibold text-gray-900">{{ tab_analysis.high_tab_switchers_count }}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Most Visited URLs</h3>
-                        <div class="space-y-2 max-h-64 overflow-y-auto">
-                            {% for url, count in tab_analysis.most_visited_urls %}
-                            <div class="flex justify-between items-center p-2 bg-gray-50 rounded">
-                                <span class="text-sm text-gray-700 truncate flex-1 mr-2">{{ url }}</span>
-                                <span class="text-sm font-semibold text-gray-900">{{ count }}</span>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Security Tab -->
-            <div id="security" class="tab-content p-6 hidden">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div>
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Security Overview</h3>
-                        <div class="space-y-4">
-                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                <span class="text-sm font-medium text-gray-700">Unique IP Addresses</span>
-                                <span class="text-sm font-semibold text-gray-900">{{ security_insights.unique_ips }}</span>
-                            </div>
-                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                <span class="text-sm font-medium text-gray-700">Office Sessions</span>
-                                <span class="text-sm font-semibold text-gray-900">{{ security_insights.office_sessions }} ({{ security_insights.office_percentage }}%)</span>
-                            </div>
-                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                <span class="text-sm font-medium text-gray-700">Remote Sessions</span>
-                                <span class="text-sm font-semibold text-gray-900">{{ security_insights.remote_sessions }}</span>
-                            </div>
-                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                <span class="text-sm font-medium text-gray-700">Security Incidents</span>
-                                <span class="text-sm font-semibold text-gray-900">{{ security_insights.sessions_with_security_incidents }}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Top IPs by Usage</h3>
-                        <div class="space-y-2 max-h-64 overflow-y-auto">
-                            {% for ip_data in security_insights.top_ips_by_usage %}
-                            <div class="flex justify-between items-center p-2 bg-gray-50 rounded">
-                                <span class="text-sm text-gray-700">{{ ip_data.ip_address }}</span>
+                                </div>
                                 <div class="text-right">
-                                    <div class="text-sm font-semibold text-gray-900">{{ ip_data.session_count }} sessions</div>
-                                    <div class="text-xs text-gray-500">{{ ip_data.user_count }} users</div>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
+                                            {% if activity.activity_status == 'active' %}bg-green-100 text-green-800
+                                            {% elif activity.activity_status == 'idle' %}bg-yellow-100 text-yellow-800
+                                            {% else %}bg-red-100 text-red-800{% endif %}">
+                                            {{ activity.activity_status|title }}
+                                        </span>
+                                    </div>
+                                    <p class="text-xs text-gray-500">{{ activity.session_duration_minutes }}m session</p>
                                 </div>
                             </div>
+                            {% empty %}
+                            <div class="text-center py-8">
+                                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2M4 13h2m8-8v2m0 0V3m0 2h2M8 7h2m-2 0H6m2 0v2m0-2V5"></path>
+                                </svg>
+                                <h3 class="mt-2 text-sm font-medium text-gray-900">No active sessions</h3>
+                                <p class="mt-1 text-sm text-gray-500">No users are currently active.</p>
+                            </div>
                             {% endfor %}
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Performance Tab -->
-            <div id="performance" class="tab-content p-6 hidden">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div>
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Performance Metrics</h3>
-                        <div class="space-y-4">
-                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                <span class="text-sm font-medium text-gray-700">Avg Page Load Time</span>
-                                <span class="text-sm font-semibold text-gray-900">{{ performance_insights.avg_page_load_time }}s</span>
+            <!-- Analytics Summary -->
+            <div class="space-y-6">
+                <!-- Performance Metrics -->
+                <div class="bg-white shadow rounded-lg">
+                    <div class="px-4 py-5 sm:p-6">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Performance Metrics</h3>
+                        <dl class="space-y-3">
+                            <div class="flex justify-between">
+                                <dt class="text-sm text-gray-500">Avg Session Duration</dt>
+                                <dd class="text-sm font-medium text-gray-900">{{ overview_metrics.avg_session_duration_minutes }}m</dd>
                             </div>
-                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                <span class="text-sm font-medium text-gray-700">Avg Mouse Movements</span>
-                                <span class="text-sm font-semibold text-gray-900">{{ performance_insights.avg_mouse_movements }}</span>
+                            <div class="flex justify-between">
+                                <dt class="text-sm text-gray-500">Avg Idle Time</dt>
+                                <dd class="text-sm font-medium text-gray-900">{{ overview_metrics.avg_idle_time_minutes }}m</dd>
                             </div>
-                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                <span class="text-sm font-medium text-gray-700">Avg Interactions</span>
-                                <span class="text-sm font-semibold text-gray-900">{{ performance_insights.avg_interactions_per_session }}</span>
+                            <div class="flex justify-between">
+                                <dt class="text-sm text-gray-500">Avg Productivity</dt>
+                                <dd class="text-sm font-medium text-gray-900">{{ overview_metrics.avg_productivity_score }}%</dd>
                             </div>
-                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                <span class="text-sm font-medium text-gray-700">Slow Sessions</span>
-                                <span class="text-sm font-semibold text-gray-900">{{ performance_insights.slow_sessions }}</span>
+                            <div class="flex justify-between">
+                                <dt class="text-sm text-gray-500">Multi-tab Sessions</dt>
+                                <dd class="text-sm font-medium text-gray-900">{{ overview_metrics.multi_tab_percentage }}%</dd>
                             </div>
-                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                <span class="text-sm font-medium text-gray-700">Avg Session Duration</span>
-                                <span class="text-sm font-semibold text-gray-900">{{ performance_insights.avg_session_duration }}s</span>
+                        </dl>
+                    </div>
+                </div>
+
+                <!-- Security Status -->
+                <div class="bg-white shadow rounded-lg">
+                    <div class="px-4 py-5 sm:p-6">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Security Status</h3>
+                        <dl class="space-y-3">
+                            <div class="flex justify-between">
+                                <dt class="text-sm text-gray-500">Office Sessions</dt>
+                                <dd class="text-sm font-medium text-gray-900">{{ security_insights.office_percentage }}%</dd>
                             </div>
-                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                <span class="text-sm font-medium text-gray-700">Avg Page Views</span>
-                                <span class="text-sm font-semibold text-gray-900">{{ performance_insights.avg_page_views_per_session }}</span>
+                            <div class="flex justify-between">
+                                <dt class="text-sm text-gray-500">Unique IPs</dt>
+                                <dd class="text-sm font-medium text-gray-900">{{ security_insights.unique_ips }}</dd>
                             </div>
-                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                <span class="text-sm font-medium text-gray-700">Avg Interactions</span>
-                                <span class="text-sm font-semibold text-gray-900">{{ performance_insights.avg_interactions_per_session }}</span>
+                            <div class="flex justify-between">
+                                <dt class="text-sm text-gray-500">Security Incidents</dt>
+                                <dd class="text-sm font-medium text-red-600">{{ security_insights.sessions_with_security_incidents }}</dd>
                             </div>
-                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                <span class="text-sm font-medium text-gray-700">Avg Interactions</span>
-                                <span class="text-sm font-semibold text-gray-900">{{ performance_insights.avg_interactions_per_session }}</span>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Location Distribution Chart -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Location Distribution</h3>
+                    <div class="h-64">
+                        <canvas id="location-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Device Distribution Chart -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Device Distribution</h3>
+                    <div class="h-64">
+                        <canvas id="device-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Session List -->
+        <div class="mt-8">
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">Recent Sessions</h3>
+                        <div class="flex space-x-2">
+                            <button type="button" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                Export
+                            </button>
+                            <button type="button" id="bulk-actions-btn" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" disabled>
+                                Bulk Actions
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Session Table -->
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="relative px-6 py-3">
+                                        <input type="checkbox" id="select-all" class="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                    </th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Session Times</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Activity</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Productivity</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Engagement</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Security</th>
+                                    <th scope="col" class="relative px-6 py-3"><span class="sr-only">Actions</span></th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% for session_data in sessions_display %}
+                                <tr class="hover:bg-gray-50 transition-colors duration-150">
+                                    <td class="relative px-6 py-4">
+                                        <input type="checkbox" class="session-checkbox absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" value="{{ session_data.session.id }}">
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <div class="flex-shrink-0 h-10 w-10">
+                                                <div class="h-10 w-10 rounded-full bg-gradient-to-r from-blue-400 to-blue-600 flex items-center justify-center">
+                                                    <span class="text-sm font-medium text-white">{{ session_data.session.user.first_name|first|default:session_data.session.user.username|first|upper }}</span>
+                                                </div>
+                                            </div>
+                                            <div class="ml-4">
+                                                <div class="text-sm font-medium text-gray-900">{{ session_data.session.user.get_full_name|default:session_data.session.user.username }}</div>
+                                                <div class="text-sm text-gray-500">{{ session_data.session.user.email }}</div>
+                                                <div class="text-xs text-gray-400">{{ session_data.session.device_type|title }} • {{ session_data.session.ip_address|default:"Unknown IP" }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-900">
+                                            <div class="flex items-center space-x-1">
+                                                <svg class="w-3 h-3 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+                                                </svg>
+                                                <span>{{ session_data.login_time_ist|date:"M d, H:i" }}</span>
+                                            </div>
+                                            {% if session_data.logout_time_ist %}
+                                            <div class="flex items-center space-x-1 mt-1">
+                                                <svg class="w-3 h-3 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+                                                </svg>
+                                                <span class="text-xs">{{ session_data.logout_time_ist|date:"H:i" }}</span>
+                                            </div>
+                                            {% endif %}
+                                            <div class="text-xs text-gray-500 mt-1">
+                                                Last: {{ session_data.last_activity_ist|date:"H:i" }}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-900">
+                                            <div class="font-medium">{{ session_data.current_duration_minutes }}m</div>
+                                            {% if session_data.working_hours_display %}
+                                            <div class="text-xs text-green-600">Work: {{ session_data.working_hours_display }}</div>
+                                            {% endif %}
+                                            {% if session_data.idle_time_minutes > 0 %}
+                                            <div class="text-xs text-yellow-600">Idle: {{ session_data.idle_time_minutes|floatformat:0 }}m</div>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center space-x-2">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                                {% if session_data.session.location == 'Office' %}bg-green-100 text-green-800
+                                                {% elif session_data.session.location == 'Home' %}bg-blue-100 text-blue-800
+                                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                                {% if session_data.session.location == 'Office' %}
+                                                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-6a1 1 0 00-1-1H9a1 1 0 00-1 1v6a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clip-rule="evenodd"></path>
+                                                </svg>
+                                                {% elif session_data.session.location == 'Home' %}
+                                                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path>
+                                                </svg>
+                                                {% endif %}
+                                                {{ session_data.session.location|default:"Unknown" }}
+                                            </span>
+                                            {% if session_data.is_office_ip %}
+                                            <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" title="Verified Office IP">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                            </svg>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex flex-col space-y-1">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                                {% if session_data.session.is_active %}bg-green-100 text-green-800
+                                                {% else %}bg-red-100 text-red-800{% endif %}">
+                                                <span class="w-2 h-2 rounded-full mr-1
+                                                    {% if session_data.session.is_active %}bg-green-400 animate-pulse
+                                                    {% else %}bg-red-400{% endif %}"></span>
+                                                {% if session_data.session.is_active %}Active{% else %}Inactive{% endif %}
+                                            </span>
+                                            <div class="text-xs text-gray-500">
+                                                {% if session_data.page_views_count > 0 %}
+                                                <div>{{ session_data.page_views_count }} pages</div>
+                                                {% endif %}
+                                                {% if session_data.interactions_count > 0 %}
+                                                <div>{{ session_data.interactions_count }} interactions</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center space-x-2">
+                                            <div class="flex-1">
+                                                <div class="flex items-center space-x-1">
+                                                    <div class="flex-1 bg-gray-200 rounded-full h-2">
+                                                        <div class="h-2 rounded-full transition-all duration-300
+                                                            {% if session_data.session.productivity_score >= 80 %}bg-green-500
+                                                            {% elif session_data.session.productivity_score >= 60 %}bg-yellow-500
+                                                            {% elif session_data.session.productivity_score >= 40 %}bg-orange-500
+                                                            {% else %}bg-red-500{% endif %}"
+                                                            style="width: {{ session_data.session.productivity_score|default:0 }}%"></div>
+                                                    </div>
+                                                    <span class="text-xs text-gray-900 w-8">{{ session_data.session.productivity_score|default:0 }}%</span>
+                                                </div>
+                                                {% if session_data.session.tab_switches > 0 %}
+                                                <div class="text-xs text-gray-500 mt-1">{{ session_data.session.tab_switches }} tab switches</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center space-x-2">
+                                            <div class="flex-1 bg-gray-200 rounded-full h-2">
+                                                <div class="h-2 rounded-full transition-all duration-300
+                                                    {% if session_data.session.engagement_score >= 80 %}bg-blue-500
+                                                    {% elif session_data.session.engagement_score >= 60 %}bg-indigo-500
+                                                    {% elif session_data.session.engagement_score >= 40 %}bg-purple-500
+                                                    {% else %}bg-gray-400{% endif %}"
+                                                    style="width: {{ session_data.session.engagement_score|default:0 }}%"></div>
+                                            </div>
+                                            <span class="text-xs text-gray-900 w-8">{{ session_data.session.engagement_score|default:0 }}%</span>
+                                        </div>
+                                        {% if session_data.session.mouse_movements > 0 %}
+                                        <div class="text-xs text-gray-500 mt-1">{{ session_data.session.mouse_movements }} movements</div>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex flex-col space-y-1">
+                                            {% if session_data.security_incidents_count > 0 %}
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                                                </svg>
+                                                {{ session_data.security_incidents_count }}
+                                            </span>
+                                            {% else %}
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                                </svg>
+                                                Secure
+                                            </span>
+                                            {% endif %}
+                                            {% if session_data.session.session_quality %}
+                                            <div class="text-xs text-gray-500">{{ session_data.session.session_quality|title }} Quality</div>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <div class="flex items-center justify-end space-x-2">
+                                            <a href="{% url 'aps_admin:user_session_detail' session_data.session.user.id session_data.login_time_ist|date:'Y-m-d' %}"
+                                               class="inline-flex items-center px-2 py-1 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-150">
+                                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                                </svg>
+                                                View
+                                            </a>
+                                            {% if session_data.session.is_active %}
+                                            <button type="button"
+                                                    class="terminate-session-btn inline-flex items-center px-2 py-1 border border-red-300 rounded-md text-xs font-medium text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-150"
+                                                    data-session-id="{{ session_data.session.id }}"
+                                                    title="Terminate this session">
+                                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                                </svg>
+                                                Terminate
+                                            </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="10" class="px-6 py-12 text-center">
+                                        <div class="flex flex-col items-center justify-center space-y-4">
+                                            <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2M4 13h2m8-8v2m0 0V3m0 2h2M8 7h2m-2 0H6m2 0v2m0-2V5"></path>
+                                            </svg>
+                                            <div class="text-center">
+                                                <h3 class="text-lg font-medium text-gray-900 mb-2">No sessions found</h3>
+                                                <p class="text-sm text-gray-500 mb-4">No user sessions match your current filters.</p>
+                                                <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 justify-center">
+                                                    <button type="button"
+                                                            onclick="document.getElementById('filters-form').reset(); document.getElementById('filters-form').submit();"
+                                                            class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                                        </svg>
+                                                        Clear Filters
+                                                    </button>
+                                                    <button type="button"
+                                                            onclick="location.reload();"
+                                                            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                                        </svg>
+                                                        Refresh Data
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Enhanced Pagination -->
+                    {% if sessions_page.has_other_pages %}
+                    <div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
+                        <div class="flex flex-col sm:flex-row items-center justify-between space-y-3 sm:space-y-0">
+                            <!-- Results Info and Page Size Selector -->
+                            <div class="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4">
+                                <div class="text-sm text-gray-700">
+                                    Showing <span class="font-medium">{{ sessions_page.start_index }}</span> to
+                                    <span class="font-medium">{{ sessions_page.end_index }}</span> of
+                                    <span class="font-medium">{{ sessions_page.paginator.count }}</span> sessions
+                                </div>
+
+                                <!-- Page Size Selector -->
+                                <div class="flex items-center space-x-2">
+                                    <label for="page-size" class="text-sm text-gray-700">Show:</label>
+                                    <select id="page-size" name="page_size" class="text-sm rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                        <option value="10" {% if request.GET.page_size == "10" %}selected{% endif %}>10</option>
+                                        <option value="25" {% if request.GET.page_size == "25" or not request.GET.page_size %}selected{% endif %}>25</option>
+                                        <option value="50" {% if request.GET.page_size == "50" %}selected{% endif %}>50</option>
+                                        <option value="100" {% if request.GET.page_size == "100" %}selected{% endif %}>100</option>
+                                    </select>
+                                    <span class="text-sm text-gray-700">per page</span>
+                                </div>
                             </div>
-                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                <span class="text-sm font-medium text-gray-700">Avg Interactions</span>
-                                <span class="text-sm font-semibold text-gray-900">{{ performance_insights.avg_interactions_per_session }}</span>
+
+                            <!-- Main Pagination Controls -->
+                            <div class="flex items-center space-x-2">
+                                <!-- First Page -->
+                                {% if sessions_page.number > 2 %}
+                                <a href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                                   class="relative inline-flex items-center px-2 py-2 rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors duration-150"
+                                   title="First page">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path>
+                                    </svg>
+                                </a>
+                                {% endif %}
+
+                                <!-- Previous Page -->
+                                {% if sessions_page.has_previous %}
+                                <a href="?page={{ sessions_page.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                                   class="relative inline-flex items-center px-3 py-2 rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors duration-150"
+                                   title="Previous page">
+                                    <svg class="h-4 w-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    <span class="hidden sm:inline">Previous</span>
+                                </a>
+                                {% else %}
+                                <span class="relative inline-flex items-center px-3 py-2 rounded-md border border-gray-200 bg-gray-50 text-sm font-medium text-gray-300 cursor-not-allowed">
+                                    <svg class="h-4 w-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    <span class="hidden sm:inline">Previous</span>
+                                </span>
+                                {% endif %}
+
+                                <!-- Page Numbers -->
+                                <div class="hidden sm:flex items-center space-x-1">
+                                    {% for page_num in sessions_page.paginator.page_range %}
+                                        {% if page_num == sessions_page.number %}
+                                            <span class="relative inline-flex items-center px-4 py-2 rounded-md border border-indigo-500 bg-indigo-600 text-sm font-medium text-white shadow-sm">
+                                                {{ page_num }}
+                                            </span>
+                                        {% elif page_num == 1 or page_num == sessions_page.paginator.num_pages or page_num >= sessions_page.number|add:"-2" and page_num <= sessions_page.number|add:"2" %}
+                                            <a href="?page={{ page_num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                                               class="relative inline-flex items-center px-4 py-2 rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-colors duration-150">
+                                                {{ page_num }}
+                                            </a>
+                                        {% elif page_num == sessions_page.number|add:"-3" or page_num == sessions_page.number|add:"3" %}
+                                            <span class="relative inline-flex items-center px-2 py-2 text-sm font-medium text-gray-400">
+                                                ...
+                                            </span>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+
+                                <!-- Mobile Page Info -->
+                                <div class="sm:hidden flex items-center space-x-2">
+                                    <span class="text-sm text-gray-700">
+                                        Page {{ sessions_page.number }} of {{ sessions_page.paginator.num_pages }}
+                                    </span>
+                                </div>
+
+                                <!-- Next Page -->
+                                {% if sessions_page.has_next %}
+                                <a href="?page={{ sessions_page.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                                   class="relative inline-flex items-center px-3 py-2 rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors duration-150"
+                                   title="Next page">
+                                    <span class="hidden sm:inline">Next</span>
+                                    <svg class="h-4 w-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </a>
+                                {% else %}
+                                <span class="relative inline-flex items-center px-3 py-2 rounded-md border border-gray-200 bg-gray-50 text-sm font-medium text-gray-300 cursor-not-allowed">
+                                    <span class="hidden sm:inline">Next</span>
+                                    <svg class="h-4 w-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </span>
+                                {% endif %}
+
+                                <!-- Last Page -->
+                                {% if sessions_page.number < sessions_page.paginator.num_pages|add:"-1" %}
+                                <a href="?page={{ sessions_page.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                                   class="relative inline-flex items-center px-2 py-2 rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors duration-150"
+                                   title="Last page">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path>
+                                    </svg>
+                                </a>
+                                {% endif %}
+
+                                <!-- Jump to Page -->
+                                <div class="hidden lg:flex items-center space-x-2 ml-4 pl-4 border-l border-gray-200">
+                                    <label for="jump-to-page" class="text-sm text-gray-700">Go to:</label>
+                                    <input type="number"
+                                           id="jump-to-page"
+                                           min="1"
+                                           max="{{ sessions_page.paginator.num_pages }}"
+                                           value="{{ sessions_page.number }}"
+                                           class="w-16 text-sm rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                           onkeypress="if(event.keyCode === 13) jumpToPage(this.value)">
+                                    <button type="button"
+                                            onclick="jumpToPage(document.getElementById('jump-to-page').value)"
+                                            class="inline-flex items-center px-2 py-1 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-150">
+                                        Go
+                                    </button>
+                                </div>
                             </div>
-                                { % endblock %}
+                        </div>
+
+                        <!-- Quick Stats Bar -->
+                        <div class="mt-3 pt-3 border-t border-gray-100">
+                            <div class="flex flex-wrap items-center justify-between text-xs text-gray-500">
+                                <div class="flex items-center space-x-4">
+                                    <span>Page {{ sessions_page.number }} of {{ sessions_page.paginator.num_pages }}</span>
+                                    {% if sessions_page.paginator.count > 0 %}
+                                    <span>{{ sessions_page.paginator.count }} total result{{ sessions_page.paginator.count|pluralize }}</span>
+                                    {% endif %}
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <button type="button"
+                                            onclick="refreshData()"
+                                            class="inline-flex items-center text-xs text-indigo-600 hover:text-indigo-500 transition-colors duration-150">
+                                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                        </svg>
+                                        Refresh
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <script>
+                    // Global variables for managing state
+                    let isAutoRefreshEnabled = false;
+                    let autoRefreshInterval;
+                    let liveDataInterval;
+                    let selectedSessions = new Set();
+
+                    // Dynamic pagination functionality
+                    function jumpToPage(pageNum) {
+                        const page = parseInt(pageNum);
+                        if (page >= 1 && page <= {{ sessions_page.paginator.num_pages }}) {
+                            const currentUrl = new URL(window.location);
+                            currentUrl.searchParams.set('page', page);
+                            window.location.href = currentUrl.toString();
+                        } else {
+                            showNotification('Please enter a valid page number between 1 and {{ sessions_page.paginator.num_pages }}', 'warning');
+                        }
+                    }
+
+                    // Handle page size changes
+                    const pageSizeElement = document.getElementById('page-size');
+                    if (pageSizeElement) {
+                        pageSizeElement.addEventListener('change', function() {
+                            const currentUrl = new URL(window.location);
+                            currentUrl.searchParams.set('page_size', this.value);
+                            currentUrl.searchParams.set('page', '1'); // Reset to first page
+                            window.location.href = currentUrl.toString();
+                        });
+                    }
+
+                    // Keyboard navigation for pagination
+                    document.addEventListener('keydown', function(e) {
+                        // Don't interfere if user is typing in an input field
+                        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+                            return;
+                        }
+
+                        // Left arrow or 'p' for previous page
+                        {% if sessions_page.has_previous %}
+                        if ((e.key === 'ArrowLeft' || e.key === 'p')) {
+                            e.preventDefault();
+                            const currentUrl = new URL(window.location);
+                            currentUrl.searchParams.set('page', '{{ sessions_page.previous_page_number }}');
+                            window.location.href = currentUrl.toString();
+                        }
+                        {% endif %}
+
+                        // Right arrow or 'n' for next page
+                        {% if sessions_page.has_next %}
+                        if ((e.key === 'ArrowRight' || e.key === 'n')) {
+                            e.preventDefault();
+                            const currentUrl = new URL(window.location);
+                            currentUrl.searchParams.set('page', '{{ sessions_page.next_page_number }}');
+                            window.location.href = currentUrl.toString();
+                        }
+                        {% endif %}
+
+                        // Home key for first page
+                        if (e.key === 'Home' && {{ sessions_page.number }} > 1) {
+                            e.preventDefault();
+                            const currentUrl = new URL(window.location);
+                            currentUrl.searchParams.set('page', '1');
+                            window.location.href = currentUrl.toString();
+                        }
+
+                        // End key for last page
+                        if (e.key === 'End' && {{ sessions_page.number }} < {{ sessions_page.paginator.num_pages }}) {
+                            e.preventDefault();
+                            const currentUrl = new URL(window.location);
+                            currentUrl.searchParams.set('page', '{{ sessions_page.paginator.num_pages }}');
+                            window.location.href = currentUrl.toString();
+                        }
+                    });
+
+                    // Enhanced refresh data function with loading state
+                    function refreshData() {
+                        showLoadingState();
+                        window.location.reload();
+                    }
+
+                    // Live data updates via AJAX
+                    function updateLiveData() {
+                        fetch(window.location.href + '?type=live_activity', {
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.status === 'success') {
+                                updateLiveActivityFeed(data.data);
+                                updateLastUpdatedTime(data.timestamp);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error updating live data:', error);
+                        });
+                    }
+
+                    // Update live activity feed
+                    function updateLiveActivityFeed(activities) {
+                        const container = document.getElementById('live-activity-container');
+                        if (!container) return;
+
+                        if (activities.length === 0) {
+                            container.innerHTML = `
+                                <div class="text-center py-8">
+                                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2M4 13h2m8-8v2m0 0V3m0 2h2M8 7h2m-2 0H6m2 0v2m0-2V5"></path>
+                                    </svg>
+                                    <h3 class="mt-2 text-sm font-medium text-gray-900">No active sessions</h3>
+                                    <p class="mt-1 text-sm text-gray-500">No users are currently active.</p>
+                                </div>
+                            `;
+                            return;
+                        }
+
+                        const activityHTML = activities.map(activity => {
+                            const statusClass = activity.activity_status === 'active' ? 'bg-green-100 text-green-800' :
+                                              activity.activity_status === 'idle' ? 'bg-yellow-100 text-yellow-800' :
+                                              'bg-red-100 text-red-800';
+
+                            return `
+                                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="flex-shrink-0">
+                                            <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                                                <span class="text-sm font-medium text-gray-700">${activity.username.charAt(0).toUpperCase()}</span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-900">${activity.username}</p>
+                                            <p class="text-sm text-gray-500">${activity.location} • ${activity.device_type}</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="flex items-center space-x-2">
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${statusClass}">
+                                                ${activity.activity_status.charAt(0).toUpperCase() + activity.activity_status.slice(1)}
+                                            </span>
+                                        </div>
+                                        <p class="text-xs text-gray-500">${activity.session_duration}m session</p>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('');
+
+                        container.innerHTML = activityHTML;
+                    }
+
+                    // Update last updated time
+                    function updateLastUpdatedTime(timestamp) {
+                        const element = document.getElementById('last-updated');
+                        if (element) {
+                            element.textContent = timestamp;
+                        }
+                    }
+
+                    // Session checkbox management
+                    function initializeSessionCheckboxes() {
+                        const selectAllCheckbox = document.getElementById('select-all');
+                        const sessionCheckboxes = document.querySelectorAll('.session-checkbox');
+                        const bulkActionsBtn = document.getElementById('bulk-actions-btn');
+
+                        // Select all functionality
+                        if (selectAllCheckbox) {
+                            selectAllCheckbox.addEventListener('change', function() {
+                                sessionCheckboxes.forEach(checkbox => {
+                                    checkbox.checked = this.checked;
+                                    if (this.checked) {
+                                        selectedSessions.add(checkbox.value);
+                                    } else {
+                                        selectedSessions.delete(checkbox.value);
+                                    }
+                                });
+                                updateBulkActionsButton();
+                            });
+                        }
+
+                        // Individual checkbox handling
+                        sessionCheckboxes.forEach(checkbox => {
+                            checkbox.addEventListener('change', function() {
+                                if (this.checked) {
+                                    selectedSessions.add(this.value);
+                                } else {
+                                    selectedSessions.delete(this.value);
+                                }
+
+                                // Update select all checkbox state
+                                if (selectAllCheckbox) {
+                                    selectAllCheckbox.checked = selectedSessions.size === sessionCheckboxes.length;
+                                    selectAllCheckbox.indeterminate = selectedSessions.size > 0 && selectedSessions.size < sessionCheckboxes.length;
+                                }
+
+                                updateBulkActionsButton();
+                            });
+                        });
+                    }
+
+                    // Update bulk actions button state
+                    function updateBulkActionsButton() {
+                        const bulkActionsBtn = document.getElementById('bulk-actions-btn');
+                        if (bulkActionsBtn) {
+                            bulkActionsBtn.disabled = selectedSessions.size === 0;
+                            bulkActionsBtn.textContent = selectedSessions.size > 0 ?
+                                `Bulk Actions (${selectedSessions.size})` : 'Bulk Actions';
+                        }
+                    }
+
+                    // Session termination functionality
+                    function initializeSessionTermination() {
+                        document.addEventListener('click', function(e) {
+                            if (e.target.classList.contains('terminate-session-btn')) {
+                                e.preventDefault();
+                                const sessionId = e.target.getAttribute('data-session-id');
+                                terminateSession(sessionId);
+                            }
+                        });
+                    }
+
+                    // Terminate individual session
+                    function terminateSession(sessionId) {
+                        if (!confirm('Are you sure you want to terminate this session?')) {
+                            return;
+                        }
+
+                        showLoadingState();
+
+                        fetch(`/admin/sessions/terminate/${sessionId}/`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': getCsrfToken()
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            hideLoadingState();
+                            if (data.status === 'success') {
+                                showNotification(data.message, 'success');
+                                setTimeout(() => window.location.reload(), 1000);
+                            } else {
+                                showNotification(data.message || 'Failed to terminate session', 'error');
+                            }
+                        })
+                        .catch(error => {
+                            hideLoadingState();
+                            showNotification('Network error occurred', 'error');
+                            console.error('Error:', error);
+                        });
+                    }
+
+                    // Bulk actions functionality
+                    function initializeBulkActions() {
+                        const bulkActionsBtn = document.getElementById('bulk-actions-btn');
+                        if (bulkActionsBtn) {
+                            bulkActionsBtn.addEventListener('click', function() {
+                                if (selectedSessions.size === 0) return;
+                                showBulkActionsModal();
+                            });
+                        }
+                    }
+
+                    // Show bulk actions modal
+                    function showBulkActionsModal() {
+                        const modal = document.createElement('div');
+                        modal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50';
+                        modal.innerHTML = `
+                            <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                                <div class="mt-3 text-center">
+                                    <h3 class="text-lg font-medium text-gray-900">Bulk Actions</h3>
+                                    <div class="mt-4 space-y-3">
+                                        <button onclick="performBulkAction('terminate')" class="w-full inline-flex justify-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700">
+                                            Terminate Selected Sessions (${selectedSessions.size})
+                                        </button>
+                                        <button onclick="performBulkAction('export')" class="w-full inline-flex justify-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700">
+                                            Export Selected Sessions
+                                        </button>
+                                        <button onclick="closeBulkActionsModal()" class="w-full inline-flex justify-center px-4 py-2 bg-gray-300 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-400">
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        document.body.appendChild(modal);
+                    }
+
+                    // Perform bulk action
+                    function performBulkAction(action) {
+                        closeBulkActionsModal();
+
+                        if (action === 'terminate' && !confirm(`Are you sure you want to terminate ${selectedSessions.size} sessions?`)) {
+                            return;
+                        }
+
+                        showLoadingState();
+
+                        fetch('/admin/sessions/bulk-actions/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': getCsrfToken()
+                            },
+                            body: JSON.stringify({
+                                action: action,
+                                session_ids: Array.from(selectedSessions)
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            hideLoadingState();
+                            if (data.status === 'success') {
+                                showNotification(data.message, 'success');
+                                if (action === 'terminate') {
+                                    setTimeout(() => window.location.reload(), 1000);
+                                }
+                            } else {
+                                showNotification(data.message || 'Action failed', 'error');
+                            }
+                        })
+                        .catch(error => {
+                            hideLoadingState();
+                            showNotification('Network error occurred', 'error');
+                            console.error('Error:', error);
+                        });
+                    }
+
+                    // Close bulk actions modal
+                    function closeBulkActionsModal() {
+                        const modal = document.querySelector('.fixed.inset-0.bg-gray-600');
+                        if (modal) {
+                            modal.remove();
+                        }
+                    }
+
+                    // Filter form handling
+                    function initializeFilters() {
+                        const filtersForm = document.getElementById('filters-form');
+                        if (filtersForm) {
+                            const inputs = filtersForm.querySelectorAll('select, input');
+                            inputs.forEach(input => {
+                                input.addEventListener('change', function() {
+                                    // Auto-submit form when filters change
+                                    setTimeout(() => {
+                                        const formData = new FormData(filtersForm);
+                                        const params = new URLSearchParams(formData);
+                                        window.location.href = window.location.pathname + '?' + params.toString();
+                                    }, 100);
+                                });
+                            });
+                        }
+                    }
+
+                    // Charts initialization
+                    function initializeCharts() {
+                        // Location distribution chart
+                        const locationCtx = document.getElementById('location-chart');
+                        if (locationCtx) {
+                            const locationData = {{ overview_metrics.location_breakdown|safe }};
+                            new Chart(locationCtx, {
+                                type: 'doughnut',
+                                data: {
+                                    labels: locationData.map(item => item.location || 'Unknown'),
+                                    datasets: [{
+                                        data: locationData.map(item => item.count),
+                                        backgroundColor: ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6']
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: {
+                                            position: 'bottom'
+                                        }
+                                    }
+                                }
+                            });
+                        }
+
+                        // Device distribution chart
+                        const deviceCtx = document.getElementById('device-chart');
+                        if (deviceCtx) {
+                            const deviceData = {{ overview_metrics.device_breakdown|safe }};
+                            new Chart(deviceCtx, {
+                                type: 'bar',
+                                data: {
+                                    labels: deviceData.map(item => item.device_type || 'Unknown'),
+                                    datasets: [{
+                                        label: 'Sessions',
+                                        data: deviceData.map(item => item.count),
+                                        backgroundColor: '#3B82F6'
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: {
+                                            display: false
+                                        }
+                                    },
+                                    scales: {
+                                        y: {
+                                            beginAtZero: true
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                    }
+
+                    // Utility functions
+                    function getCsrfToken() {
+                        return document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
+                               document.querySelector('meta[name=csrf-token]')?.getAttribute('content') || '';
+                    }
+
+                    function showLoadingState() {
+                        const loadingOverlay = document.createElement('div');
+                        loadingOverlay.id = 'loading-overlay';
+                        loadingOverlay.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50';
+                        loadingOverlay.innerHTML = `
+                            <div class="bg-white p-6 rounded-lg shadow-lg">
+                                <div class="flex items-center space-x-3">
+                                    <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>
+                                    <span class="text-gray-700">Loading...</span>
+                                </div>
+                            </div>
+                        `;
+                        document.body.appendChild(loadingOverlay);
+                    }
+
+                    function hideLoadingState() {
+                        const loadingOverlay = document.getElementById('loading-overlay');
+                        if (loadingOverlay) {
+                            loadingOverlay.remove();
+                        }
+                    }
+
+                    function showNotification(message, type = 'info') {
+                        const notification = document.createElement('div');
+                        const bgColor = {
+                            'success': 'bg-green-500',
+                            'error': 'bg-red-500',
+                            'warning': 'bg-yellow-500',
+                            'info': 'bg-blue-500'
+                        }[type] || 'bg-blue-500';
+
+                        notification.className = `fixed top-4 right-4 ${bgColor} text-white px-6 py-3 rounded-md shadow-lg z-50 transform transition-all duration-300 translate-x-full`;
+                        notification.textContent = message;
+
+                        document.body.appendChild(notification);
+
+                        // Slide in
+                        setTimeout(() => {
+                            notification.classList.remove('translate-x-full');
+                        }, 100);
+
+                        // Auto-remove after 5 seconds
+                        setTimeout(() => {
+                            notification.classList.add('translate-x-full');
+                            setTimeout(() => notification.remove(), 300);
+                        }, 5000);
+                    }
+
+                    // Auto-refresh functionality (every 30 seconds)
+                    function setupAutoRefresh() {
+                        const autoRefreshToggle = document.createElement('button');
+                        autoRefreshToggle.className = 'ml-2 text-xs text-gray-500 hover:text-gray-700 transition-colors duration-150';
+                        autoRefreshToggle.innerHTML = '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+                        autoRefreshToggle.title = 'Toggle auto-refresh (30s)';
+
+                        autoRefreshToggle.addEventListener('click', function() {
+                            if (isAutoRefreshEnabled) {
+                                clearInterval(autoRefreshInterval);
+                                clearInterval(liveDataInterval);
+                                this.classList.remove('text-indigo-600');
+                                this.classList.add('text-gray-500');
+                                isAutoRefreshEnabled = false;
+                                showNotification('Auto-refresh disabled', 'info');
+                            } else {
+                                autoRefreshInterval = setInterval(refreshData, 30000);
+                                liveDataInterval = setInterval(updateLiveData, 10000);
+                                this.classList.remove('text-gray-500');
+                                this.classList.add('text-indigo-600');
+                                isAutoRefreshEnabled = true;
+                                showNotification('Auto-refresh enabled (30s)', 'success');
+                            }
+                        });
+
+                        // Add auto-refresh toggle to the refresh button area
+                        const refreshButtonArea = document.querySelector('.flex.items-center.space-x-2');
+                        if (refreshButtonArea) {
+                            refreshButtonArea.appendChild(autoRefreshToggle);
+                        }
+                    }
+                    // Initialize everything when DOM is loaded
+                    document.addEventListener('DOMContentLoaded', function() {
+                        console.log('Dashboard initialization starting...');
+
+                        try {
+                            // Initialize core functionality with error handling
+                            const initPromises = [];
+
+                            // Core session management
+                            initPromises.push(initializeSessionCheckboxes());
+                            initPromises.push(initializeSessionTermination());
+                            initPromises.push(initializeBulkActions());
+
+                            // UI and interaction features
+                            initPromises.push(initializeFilters());
+                            initPromises.push(initializeCharts());
+                            initPromises.push(setupAutoRefresh());
+
+                            // Advanced features
+                            initPromises.push(initializeKeyboardShortcuts());
+                            initPromises.push(initializeSearchFunctionality());
+                            initPromises.push(initializeTooltips());
+                            initPromises.push(initializeModalHandlers());
+
+                            // Wait for all initializations to complete
+                            Promise.all(initPromises).then(() => {
+                                console.log('All dashboard components initialized successfully');
+
+                                // Start live data updates after everything is ready
+                                startLiveDataUpdates();
+
+                                // Initialize performance monitoring
+                                initializePerformanceMonitoring();
+
+                                // Setup visibility change detection for pausing updates
+                                setupVisibilityChangeHandler();
+
+                                // Show success notification
+                                showNotification('Dashboard loaded successfully', 'success');
+
+                                // Add dashboard ready class for any CSS transitions
+                                document.body.classList.add('dashboard-ready');
+
+                            }).catch(error => {
+                                console.error('Dashboard initialization error:', error);
+                                showNotification('Some dashboard features may not work correctly', 'warning');
+                            });
+
+                        } catch (error) {
+                            console.error('Critical dashboard initialization error:', error);
+                            showNotification('Dashboard failed to load properly', 'error');
+                        }
+                    });
+
+                    // Enhanced live data updates with better management
+                    function startLiveDataUpdates() {
+                        // Update live activity every 15 seconds
+                        liveDataInterval = setInterval(() => {
+                            if (!document.hidden) {
+                                updateLiveData();
+                            }
+                        }, 15000);
+
+                        // Update session counts every 30 seconds
+                        setInterval(() => {
+                            if (!document.hidden) {
+                                updateSessionCounts();
+                            }
+                        }, 30000);
+
+                        // Update charts every 60 seconds
+                        setInterval(() => {
+                            if (!document.hidden) {
+                                updateChartData();
+                            }
+                        }, 60000);
+                    }
+
+                    // Keyboard shortcuts for power users
+                    function initializeKeyboardShortcuts() {
+                        return new Promise((resolve) => {
+                            document.addEventListener('keydown', function(e) {
+                                // Don't trigger shortcuts when typing in inputs
+                                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+                                    return;
+                                }
+
+                                // Ctrl/Cmd + R: Refresh data
+                                if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+                                    e.preventDefault();
+                                    refreshData();
+                                }
+
+                                // Ctrl/Cmd + A: Select all sessions
+                                if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+                                    e.preventDefault();
+                                    const selectAllCheckbox = document.getElementById('select-all');
+                                    if (selectAllCheckbox) {
+                                        selectAllCheckbox.checked = true;
+                                        selectAllCheckbox.dispatchEvent(new Event('change'));
+                                    }
+                                }
+
+                                // Escape: Clear selection and close modals
+                                if (e.key === 'Escape') {
+                                    const modal = document.querySelector('.fixed.inset-0.bg-gray-600');
+                                    if (modal) {
+                                        closeBulkActionsModal();
+                                    } else {
+                                        // Clear session selection
+                                        const selectAllCheckbox = document.getElementById('select-all');
+                                        if (selectAllCheckbox && selectAllCheckbox.checked) {
+                                            selectAllCheckbox.checked = false;
+                                            selectAllCheckbox.dispatchEvent(new Event('change'));
+                                        }
+                                    }
+                                }
+
+                                // F: Focus on filters
+                                if (e.key === 'f' || e.key === 'F') {
+                                    e.preventDefault();
+                                    const firstFilter = document.querySelector('#filters-form select, #filters-form input');
+                                    if (firstFilter) {
+                                        firstFilter.focus();
+                                    }
+                                }
+                            });
+                            resolve();
+                        });
+                    }
+
+                    // Enhanced search functionality
+                    function initializeSearchFunctionality() {
+                        return new Promise((resolve) => {
+                            // Add search input if it doesn't exist
+                            const searchContainer = document.createElement('div');
+                            searchContainer.className = 'relative max-w-md';
+                            searchContainer.innerHTML = `
+                                <input type="text"
+                                       id="session-search"
+                                       placeholder="Search users, IPs, locations..."
+                                       class="block w-full rounded-md border-gray-300 pl-10 pr-3 py-2 text-sm placeholder-gray-500 focus:border-indigo-500 focus:ring-indigo-500">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                    </svg>
+                                </div>
+                            `;
+
+                            // Insert search box in the header
+                            const headerActions = document.querySelector('.flex.items-center.space-x-4');
+                            if (headerActions) {
+                                headerActions.insertBefore(searchContainer, headerActions.firstChild);
+                            }
+
+                            // Add search functionality
+                            const searchInput = document.getElementById('session-search');
+                            if (searchInput) {
+                                let searchTimeout;
+                                searchInput.addEventListener('input', function() {
+                                    clearTimeout(searchTimeout);
+                                    searchTimeout = setTimeout(() => {
+                                        performSearch(this.value);
+                                    }, 300);
+                                });
+                            }
+                            resolve();
+                        });
+                    }
+
+                    // Search functionality
+                    function performSearch(query) {
+                        const rows = document.querySelectorAll('tbody tr');
+                        const searchTerm = query.toLowerCase().trim();
+
+                        if (!searchTerm) {
+                            // Show all rows if search is empty
+                            rows.forEach(row => {
+                                row.style.display = '';
+                            });
+                            return;
+                        }
+
+                        rows.forEach(row => {
+                            const text = row.textContent.toLowerCase();
+                            if (text.includes(searchTerm)) {
+                                row.style.display = '';
+                            } else {
+                                row.style.display = 'none';
+                            }
+                        });
+                    }
+
+                    // Initialize tooltips for better UX
+                    function initializeTooltips() {
+                        return new Promise((resolve) => {
+                            const tooltipElements = document.querySelectorAll('[title]');
+                            tooltipElements.forEach(element => {
+                                element.addEventListener('mouseenter', showTooltip);
+                                element.addEventListener('mouseleave', hideTooltip);
+                            });
+                            resolve();
+                        });
+                    }
+
+                    // Tooltip functions
+                    function showTooltip(e) {
+                        const tooltip = document.createElement('div');
+                        tooltip.className = 'absolute z-50 px-2 py-1 text-xs text-white bg-gray-900 rounded shadow-lg tooltip';
+                        tooltip.textContent = e.target.title;
+
+                        // Remove title to prevent default tooltip
+                        e.target.setAttribute('data-tooltip', e.target.title);
+                        e.target.removeAttribute('title');
+
+                        document.body.appendChild(tooltip);
+
+                        // Position tooltip
+                        const rect = e.target.getBoundingClientRect();
+                        tooltip.style.left = rect.left + (rect.width / 2) - (tooltip.offsetWidth / 2) + 'px';
+                        tooltip.style.top = rect.top - tooltip.offsetHeight - 5 + 'px';
+                    }
+
+                    function hideTooltip(e) {
+                        const tooltip = document.querySelector('.tooltip');
+                        if (tooltip) {
+                            tooltip.remove();
+                        }
+
+                        // Restore title
+                        if (e.target.hasAttribute('data-tooltip')) {
+                            e.target.title = e.target.getAttribute('data-tooltip');
+                            e.target.removeAttribute('data-tooltip');
+                        }
+                    }
+
+                    // Modal handlers for better UX
+                    function initializeModalHandlers() {
+                        return new Promise((resolve) => {
+                            // Close modals when clicking outside
+                            document.addEventListener('click', function(e) {
+                                if (e.target.classList.contains('fixed') && e.target.classList.contains('inset-0')) {
+                                    closeBulkActionsModal();
+                                }
+                            });
+                            resolve();
+                        });
+                    }
+
+                    // Performance monitoring
+                    function initializePerformanceMonitoring() {
+                        // Monitor page load performance
+                        if (window.performance && window.performance.timing) {
+                            const perfData = window.performance.timing;
+                            const loadTime = perfData.loadEventEnd - perfData.navigationStart;
+                            console.log(`Dashboard loaded in ${loadTime}ms`);
+
+                            if (loadTime > 5000) {
+                                showNotification('Dashboard loaded slower than expected', 'warning');
+                            }
+                        }
+
+                        // Monitor memory usage if available
+                        if (window.performance && window.performance.memory) {
+                            setInterval(() => {
+                                const memory = window.performance.memory;
+                                const usedMB = Math.round(memory.usedJSHeapSize / 1048576);
+                                const limitMB = Math.round(memory.jsHeapSizeLimit / 1048576);
+
+                                if (usedMB > limitMB * 0.8) {
+                                    console.warn(`High memory usage: ${usedMB}MB / ${limitMB}MB`);
+                                }
+                            }, 60000);
+                        }
+                    }
+
+                    // Handle visibility changes to pause/resume updates
+                    function setupVisibilityChangeHandler() {
+                        document.addEventListener('visibilitychange', function() {
+                            if (document.hidden) {
+                                console.log('Dashboard hidden, pausing updates');
+                            } else {
+                                console.log('Dashboard visible, resuming updates');
+                                updateLiveData(); // Immediate update when tab becomes visible
+                            }
+                        });
+                    }
+
+                    // Update session counts in real-time
+                    function updateSessionCounts() {
+                        fetch(window.location.href + '?type=overview_metrics', {
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.status === 'success') {
+                                updateMetricCards(data.data);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error updating session counts:', error);
+                        });
+                    }
+
+                    // Update metric cards with new data
+                    function updateMetricCards(metrics) {
+                        const metricUpdates = [
+                            { selector: 'Total Sessions', value: metrics.total_sessions },
+                            { selector: 'Active Sessions', value: metrics.active_sessions },
+                            { selector: 'Unique Users', value: metrics.unique_users },
+                            { selector: 'Currently Online', value: metrics.currently_online }
+                        ];
+
+                        metricUpdates.forEach(update => {
+                            const element = Array.from(document.querySelectorAll('dt')).find(el =>
+                                el.textContent.trim() === update.selector
+                            );
+                            if (element) {
+                                const valueElement = element.nextElementSibling;
+                                if (valueElement && valueElement.tagName === 'DD') {
+                                    const oldValue = parseInt(valueElement.textContent);
+                                    const newValue = update.value;
+
+                                    if (oldValue !== newValue) {
+                                        valueElement.textContent = newValue;
+                                        // Add a flash effect to show the change
+                                        valueElement.classList.add('bg-yellow-100');
+                                        setTimeout(() => {
+                                            valueElement.classList.remove('bg-yellow-100');
+                                        }, 1000);
+                                    }
+                                }
+                            }
+                        });
+                    }
+
+                    // Update chart data with enhanced error handling and animation
+                    function updateChartData() {
+                        fetch(window.location.href + '?type=session_analytics', {
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            if (data.status === 'success') {
+                                // Update location chart with enhanced animation
+                                if (window.locationChart && data.data.location_breakdown) {
+                                    const newData = data.data.location_breakdown.map(item => item.count);
+                                    const newLabels = data.data.location_breakdown.map(item => item.location || 'Unknown');
+
+                                    window.locationChart.data.datasets[0].data = newData;
+                                    window.locationChart.data.labels = newLabels;
+                                    window.locationChart.update('active');
+
+                                    // Add visual indicator for chart update
+                                    const chartContainer = document.getElementById('location-chart').parentElement;
+                                    chartContainer.classList.add('animate-pulse');
+                                    setTimeout(() => chartContainer.classList.remove('animate-pulse'), 1000);
+                                }
+
+                                // Update device chart with enhanced animation
+                                if (window.deviceChart && data.data.device_breakdown) {
+                                    const newData = data.data.device_breakdown.map(item => item.count);
+                                    const newLabels = data.data.device_breakdown.map(item => item.device_type || 'Unknown');
+
+                                    window.deviceChart.data.datasets[0].data = newData;
+                                    window.deviceChart.data.labels = newLabels;
+                                    window.deviceChart.update('active');
+
+                                    // Add visual indicator for chart update
+                                    const chartContainer = document.getElementById('device-chart').parentElement;
+                                    chartContainer.classList.add('animate-pulse');
+                                    setTimeout(() => chartContainer.classList.remove('animate-pulse'), 1000);
+                                }
+
+                                // Update additional charts if they exist
+                                if (window.hourlyActivityChart && data.data.hourly_activity) {
+                                    window.hourlyActivityChart.data.datasets[0].data = data.data.hourly_activity;
+                                    window.hourlyActivityChart.update('active');
+                                }
+
+                                if (window.productivityTrendChart && data.data.productivity_trend) {
+                                    window.productivityTrendChart.data.datasets[0].data = data.data.productivity_trend;
+                                    window.productivityTrendChart.update('active');
+                                }
+
+                                // Show success notification with chart update count
+                                const chartCount = (window.locationChart ? 1 : 0) + (window.deviceChart ? 1 : 0);
+                                if (chartCount > 0) {
+                                    showNotification(`${chartCount} chart${chartCount > 1 ? 's' : ''} updated successfully`, 'success');
+                                }
+
+                                console.log('Charts updated successfully with new data');
+                            } else {
+                                throw new Error(data.message || 'Failed to fetch chart data');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error updating chart data:', error);
+                            showNotification('Failed to update charts: ' + error.message, 'error');
+
+                            // Add error state visual indicators
+                            const chartContainers = document.querySelectorAll('#location-chart, #device-chart').forEach(chart => {
+                                if (chart && chart.parentElement) {
+                                    chart.parentElement.classList.add('border-red-200', 'bg-red-50');
+                                    setTimeout(() => {
+                                        chart.parentElement.classList.remove('border-red-200', 'bg-red-50');
+                                    }, 3000);
+                                }
+                            });
+                        });
+                    }
+
+                    // Enhanced real-time data sync
+                    function syncDashboardData() {
+                        const syncOperations = [
+                            updateLiveData(),
+                            updateSessionCounts(),
+                            updateChartData()
+                        ];
+
+                        Promise.allSettled(syncOperations).then(results => {
+                            const successful = results.filter(result => result.status === 'fulfilled').length;
+                            const failed = results.filter(result => result.status === 'rejected').length;
+
+                            if (failed > 0) {
+                                showNotification(`${successful} updates completed, ${failed} failed`, 'warning');
+                            } else {
+                                console.log('All dashboard data synchronized successfully');
+                            }
+                        });
+                    }
+
+                    // Network status monitoring
+                    function initializeNetworkMonitoring() {
+                        let isOnline = navigator.onLine;
+
+                        window.addEventListener('online', function() {
+                            if (!isOnline) {
+                                isOnline = true;
+                                showNotification('Connection restored - syncing data...', 'success');
+                                syncDashboardData();
+                            }
+                        });
+
+                        window.addEventListener('offline', function() {
+                            isOnline = false;
+                            showNotification('Connection lost - dashboard will retry automatically', 'warning');
+                        });
+
+                        return isOnline;
+                    }
+
+                    // Enhanced error handling for the entire dashboard
+                    window.addEventListener('error', function(e) {
+                        console.error('Dashboard error:', e.error);
+
+                        // Categorize errors for better user feedback
+                        if (e.error && e.error.message) {
+                            if (e.error.message.includes('network') || e.error.message.includes('fetch')) {
+                                showNotification('Network connection issue detected - retrying...', 'error');
+                                // Retry network operations after a delay
+                                setTimeout(() => {
+                                    if (navigator.onLine) {
+                                        syncDashboardData();
+                                    }
+                                }, 5000);
+                            } else if (e.error.message.includes('JSON')) {
+                                showNotification('Data format error - please refresh the page', 'error');
+                            } else if (e.error.message.includes('Chart')) {
+                                showNotification('Chart rendering error - trying to recover', 'warning');
+                                // Attempt to reinitialize charts
+                                setTimeout(() => {
+                                    try {
+                                        initializeCharts();
+                                    } catch (chartError) {
+                                        console.error('Chart recovery failed:', chartError);
+                                    }
+                                }, 2000);
+                            } else {
+                                showNotification('An unexpected error occurred', 'error');
+                            }
+                        }
+
+                        // Log detailed error information for debugging
+                        const errorDetails = {
+                            message: e.error?.message || 'Unknown error',
+                            filename: e.filename || 'Unknown file',
+                            lineno: e.lineno || 'Unknown line',
+                            colno: e.colno || 'Unknown column',
+                            stack: e.error?.stack || 'No stack trace',
+                            timestamp: new Date().toISOString(),
+                            userAgent: navigator.userAgent,
+                            url: window.location.href
+                        };
+
+                        console.error('Detailed error information:', errorDetails);
+
+                        // Optional: Send error reports to server for monitoring
+                        // sendErrorReport(errorDetails);
+                    });
+
+                    // Handle unhandled promise rejections with detailed categorization
+                    window.addEventListener('unhandledrejection', function(e) {
+                        console.error('Unhandled promise rejection:', e.reason);
+
+                        // Prevent the default browser error dialog
+                        e.preventDefault();
+
+                        // Categorize promise rejections
+                        const reason = e.reason?.message || e.reason || 'Unknown rejection';
+
+                        if (typeof reason === 'string') {
+                            if (reason.includes('fetch') || reason.includes('network')) {
+                                showNotification('Network request failed - dashboard will retry', 'warning');
+                                // Implement exponential backoff retry
+                                setTimeout(() => {
+                                    if (navigator.onLine) {
+                                        syncDashboardData();
+                                    }
+                                }, Math.min(1000 * Math.pow(2, retryAttempts), 30000));
+                                retryAttempts++;
+                            } else if (reason.includes('timeout')) {
+                                showNotification('Request timeout - please check your connection', 'error');
+                            } else if (reason.includes('abort')) {
+                                console.log('Request was aborted - this is usually intentional');
+                            } else {
+                                showNotification('An unexpected error occurred', 'error');
+                            }
+                        }
+
+                        // Log promise rejection details
+                        const rejectionDetails = {
+                            reason: reason,
+                            promise: e.promise,
+                            timestamp: new Date().toISOString(),
+                            url: window.location.href
+                        };
+
+                        console.error('Promise rejection details:', rejectionDetails);
+                    });
+
+                    // Global retry counter for exponential backoff
+                    let retryAttempts = 0;
+
+                    // Reset retry counter on successful operations
+                    function resetRetryCounter() {
+                        retryAttempts = 0;
+                    }
+
+                    // Dashboard health check
+                    function performHealthCheck() {
+                        const healthChecks = {
+                            network: navigator.onLine,
+                            localStorage: (() => {
+                                try {
+                                    localStorage.setItem('healthCheck', 'test');
+                                    localStorage.removeItem('healthCheck');
+                                    return true;
+                                } catch {
+                                    return false;
+                                }
+                            })(),
+                            charts: !!(window.Chart && window.locationChart && window.deviceChart),
+                            websockets: false, // Can be enhanced if WebSocket support is added
+                            performance: window.performance && window.performance.now() ? true : false
+                        };
+
+                        const healthyChecks = Object.values(healthChecks).filter(Boolean).length;
+                        const totalChecks = Object.keys(healthChecks).length;
+
+                        console.log(`Dashboard health: ${healthyChecks}/${totalChecks} systems operational`, healthChecks);
+
+                        if (healthyChecks < totalChecks) {
+                            const failedSystems = Object.entries(healthChecks)
+                                .filter(([key, value]) => !value)
+                                .map(([key]) => key);
+
+                            showNotification(`Some dashboard features may be limited: ${failedSystems.join(', ')}`, 'warning');
+                        }
+
+                        return healthChecks;
+                    }
+
+                    // Initialize error handling and monitoring when dashboard loads
+                    document.addEventListener('DOMContentLoaded', function() {
+                        // Perform initial health check
+                        setTimeout(() => {
+                            performHealthCheck();
+                            initializeNetworkMonitoring();
+                        }, 1000);
+
+                        // Set up periodic health checks (every 5 minutes)
+                        setInterval(performHealthCheck, 300000);
+                    });
+
+                    </script>
+                    {% endif %}
+                    {% endblock %}

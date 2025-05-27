@@ -41,7 +41,8 @@ session_patterns = [
 
 # Admin-specific URLs under 'admin/'
 admin_patterns = [
-    path('usersessions/', views.user_sessions_view, name='user_sessions'),
+path('usersessions/', views.user_sessions_view, name='user_sessions'),
+path('usersessions/<int:user_id>/<str:date_str>/', views.user_session_detail_view, name='user_session_detail'),
     path('report/', views.report_view, name='report'),
     path('reports/projects/', views.projects_report_view, name='projects_report'),
     path('reports/errors/', views.system_error_view, name='system_errors'),
@@ -60,7 +61,6 @@ admin_patterns = [
     path('reports/breaks/', views.break_report_view, name='break_report_view'),
     path('support/', views.admin_support, name='admin_support'),
     path('support/<uuid:ticket_id>/', views.admin_support, name='admin_support_with_ticket'),
-    path('user/<int:user_id>/sessions/<str:date_str>/', views.user_session_detail_view, name='user_session_detail'),
 ]
 
 # Employee-specific URLs under 'employee/'
