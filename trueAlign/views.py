@@ -38,23 +38,32 @@ IST_TIMEZONE = pytz.timezone('Asia/Kolkata')
 
 def get_current_time_ist():
     """Return current time in Asia/Kolkata timezone (aware)."""
-    return timezone.now().astimezone(IST_TIMEZONE)
+    current_time = timezone.now().astimezone(IST_TIMEZONE)
+    print(f"Current IST time: {current_time}")
+    return current_time
 
 def to_ist(dt):
     """Convert a datetime to Asia/Kolkata timezone (aware)."""
     if dt is None:
+        print(f"Converting None to IST: None returned")
         return None
     if timezone.is_naive(dt):
-        return IST_TIMEZONE.localize(dt)
-    return dt.astimezone(IST_TIMEZONE)
+        ist_time = IST_TIMEZONE.localize(dt)
+    else:
+        ist_time = dt.astimezone(IST_TIMEZONE)
+    print(f"Converting {dt} to IST: {ist_time}")
+    return ist_time
 
 def to_utc(dt_ist):
     """Convert IST datetime to UTC for database storage."""
     if dt_ist is None:
+        print(f"Converting None to UTC: None returned")
         return None
     if timezone.is_naive(dt_ist):
         dt_ist = IST_TIMEZONE.localize(dt_ist)
-    return dt_ist.astimezone(pytz.UTC)
+    utc_time = dt_ist.astimezone(pytz.UTC)
+    print(f"Converting {dt_ist} to UTC: {utc_time}")
+    return utc_time
 
 
 # ==================== SESSION MANAGEMENT VIEWS ====================
@@ -8389,8 +8398,8 @@ def manager_project_view(request, action=None, project_id=None):
     return redirect('aps_manager:project_list')
 
 ''' ------------------------------------------- ATTENDACE AREA ------------------------------------------- '''
-
 # views.py
+import pytz
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import JsonResponse
@@ -8401,11 +8410,31 @@ import json
 from .services.attendance_service import AttendanceService
 from .services.user_service import UserService
 from .services.date_service import DateService
-# Helper function to check if user is HR
 
+# Asia/Kolkata timezone
+IST_TIMEZONE = pytz.timezone('Asia/Kolkata')
+
+def get_current_time_ist():
+    """Return current time in Asia/Kolkata timezone (aware)."""
+    current_time = timezone.now().astimezone(IST_TIMEZONE)
+    print(f"Current IST time: {current_time}")
+    return current_time
+
+def to_ist(dt):
+    """Convert a datetime to Asia/Kolkata timezone (aware)."""
+    if dt is None:
+        print("Converting None to IST: None returned")
+        return None
+    if timezone.is_naive(dt):
+        ist_time = IST_TIMEZONE.localize(dt)
+    else:
+        ist_time = dt.astimezone(IST_TIMEZONE)
+    print(f"Converting {dt} to IST: {ist_time}")
+    return ist_time
+
+# Helper function to check if user is HR
 def is_hr_check(user):
     return user.groups.filter(name__in=["HR", "Manager"]).exists()
-
 
 # Helper function to check if user is HR or Admin
 def is_hr_or_admin_check(user):
@@ -8483,6 +8512,9 @@ def attendance_analytics(request):
         print(f"[attendance_analytics] Performing user search for: {search_term}")
         search_results = user_service.search_users(search_term)
 
+    # Get current IST time for display
+    current_ist_time = get_current_time_ist()
+
     print("[attendance_analytics] Preparing context for template rendering")
     context = {
         # Date and time period
@@ -8490,6 +8522,7 @@ def attendance_analytics(request):
         'end_date': end_date,
         'selected_date': selected_date or start_date.strftime('%Y-%m-%d'),
         'time_period': time_period,
+        'current_ist_time': current_ist_time,
 
         # Overall statistics
         'overall_stats': overall_stats,
@@ -8538,8 +8571,16 @@ def get_status_users_modal(request):
     try:
         # Parse dates
         print("[get_status_users_modal] Parsing start and end dates.")
-        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date() if start_date_str else timezone.now().date()
-        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date() if end_date_str else start_date
+        if start_date_str:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        else:
+            # Get current date in IST
+            start_date = get_current_time_ist().date()
+
+        if end_date_str:
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+        else:
+            end_date = start_date
 
         # Get attendance service
         print("[get_status_users_modal] Initializing AttendanceService.")
@@ -8554,6 +8595,24 @@ def get_status_users_modal(request):
             end_date=end_date
         )
 
+        # Convert time fields to IST
+        for user in users_data:
+            if 'clock_in' in user and user['clock_in']:
+                try:
+                    clock_in_time = datetime.strptime(user['clock_in'], '%H:%M:%S')
+                    clock_in_time = timezone.make_aware(clock_in_time, timezone.utc)
+                    user['clock_in'] = to_ist(clock_in_time).strftime('%H:%M:%S')
+                except (ValueError, TypeError):
+                    pass
+
+            if 'clock_out' in user and user['clock_out']:
+                try:
+                    clock_out_time = datetime.strptime(user['clock_out'], '%H:%M:%S')
+                    clock_out_time = timezone.make_aware(clock_out_time, timezone.utc)
+                    user['clock_out'] = to_ist(clock_out_time).strftime('%H:%M:%S')
+                except (ValueError, TypeError):
+                    pass
+
         # Determine table headers based on status
         print(f"[get_status_users_modal] Getting table headers for status: {status}")
         headers = get_table_headers(status)
@@ -8567,7 +8626,8 @@ def get_status_users_modal(request):
             'end_date': end_date.strftime('%Y-%m-%d'),
             'users': users_data,
             'headers': headers,
-            'total_count': len(users_data)
+            'total_count': len(users_data),
+            'current_ist_time': get_current_time_ist().strftime('%Y-%m-%d %H:%M:%S')
         })
 
     except Exception as e:
@@ -8590,7 +8650,7 @@ def get_table_headers(status):
 
     if status in ['Present', 'Present & Late']:
         print("[get_table_headers] Returning headers for Present/Present & Late")
-        return base_headers + ['Clock In', 'Clock Out', 'Late By (mins)', 'Hours', 'Shift']
+        return base_headers + ['Clock In (IST)', 'Clock Out (IST)', 'Late By (mins)', 'Hours', 'Shift']
     elif status == 'On Leave':
         print("[get_table_headers] Returning headers for On Leave")
         return base_headers + ['Leave Type', 'Start Date', 'End Date', 'Days']
@@ -8621,8 +8681,8 @@ def get_attendance_by_date(request):
             print(f"[get_attendance_by_date] Parsing date: {date_str}")
             selected_date = datetime.strptime(date_str, '%Y-%m-%d').date()
         else:
-            print("[get_attendance_by_date] No date provided, using current date.")
-            selected_date = timezone.now().date()
+            print("[get_attendance_by_date] No date provided, using current date in IST.")
+            selected_date = get_current_time_ist().date()
 
         # Get attendance service
         print("[get_attendance_by_date] Initializing AttendanceService.")
@@ -8631,6 +8691,25 @@ def get_attendance_by_date(request):
         # Get attendance data for the date
         print(f"[get_attendance_by_date] Fetching attendance data for {selected_date}")
         attendance_data = attendance_service.get_attendance_by_date(selected_date)
+
+        # Convert time fields to IST
+        for record in attendance_data:
+            if 'clock_in_time' in record and record['clock_in_time']:
+                try:
+                    clock_in_time = datetime.strptime(record['clock_in_time'], '%H:%M:%S')
+                    clock_in_time = timezone.make_aware(clock_in_time, timezone.utc)
+                    record['clock_in_time'] = to_ist(clock_in_time).strftime('%H:%M:%S')
+                except (ValueError, TypeError):
+                    pass
+
+            if 'clock_out_time' in record and record['clock_out_time']:
+                try:
+                    clock_out_time = datetime.strptime(record['clock_out_time'], '%H:%M:%S')
+                    clock_out_time = timezone.make_aware(clock_out_time, timezone.utc)
+                    record['clock_out_time'] = to_ist(clock_out_time).strftime('%H:%M:%S')
+                except (ValueError, TypeError):
+                    pass
+
         print(f"[get_attendance_by_date] Fetching overall stats for {selected_date}")
         overall_stats = attendance_service.get_attendance_overview(selected_date, selected_date)
         print(f"[get_attendance_by_date] Fetching location stats for {selected_date}")
@@ -8640,6 +8719,7 @@ def get_attendance_by_date(request):
         return JsonResponse({
             'success': True,
             'date': selected_date.strftime('%Y-%m-%d'),
+            'current_ist_time': get_current_time_ist().strftime('%Y-%m-%d %H:%M:%S'),
             'attendance_data': attendance_data,
             'overall_stats': overall_stats,
             'location_stats': location_stats
@@ -8673,7 +8753,7 @@ def export_attendance_data(request):
     try:
         # Parse dates
         print("[export_attendance_data] Parsing start and end dates.")
-        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date() if start_date_str else timezone.now().date()
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date() if start_date_str else get_current_time_ist().date()
         end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date() if end_date_str else start_date
 
         # Get attendance service
@@ -8713,9 +8793,9 @@ def export_attendance_data(request):
                     row.append(user.get('name', ''))
                 elif key == 'location':
                     row.append(user.get('location', ''))
-                elif key == 'clock_in':
+                elif key == 'clock_in_ist':
                     row.append(user.get('clock_in', ''))
-                elif key == 'clock_out':
+                elif key == 'clock_out_ist':
                     row.append(user.get('clock_out', ''))
                 elif key == 'late_by_mins':
                     row.append(user.get('late_by_mins', 0))
@@ -8770,7 +8850,7 @@ def get_user_attendance_details(request):
             end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
         else:
             print("[get_user_attendance_details] No dates provided, defaulting to last 30 days.")
-            end_date = timezone.now().date()
+            end_date = get_current_time_ist().date()
             start_date = end_date - timedelta(days=30)
 
         # Get services
@@ -8834,7 +8914,7 @@ def get_dashboard_stats(request):
             end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
         else:
             print("[get_dashboard_stats] No dates provided, using current date.")
-            start_date = end_date = timezone.now().date()
+            start_date = end_date = get_current_time_ist().date()
 
         # Get services
         print("[get_dashboard_stats] Initializing AttendanceService and UserService.")
@@ -8875,8 +8955,6 @@ def get_dashboard_stats(request):
             'success': False,
             'error': str(e)
         })
-
-
 
 
 
