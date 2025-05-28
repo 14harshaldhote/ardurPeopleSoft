@@ -5,6 +5,7 @@
     href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.css"
     rel="stylesheet"
 />
+
 {% endblock %} {% block content %}
 <div class="min-h-screen  py-6">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -126,15 +127,15 @@
             </div>
 
             <div
-                class="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl shadow-sm border border-emerald-200 p-6 hover:shadow-md transition-all duration-200"
+                class="bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-sm border border-green-200 p-6 hover:shadow-md transition-all duration-200"
             >
                 <div class="flex items-center">
                     <div class="flex-shrink-0">
                         <div
-                            class="h-12 w-12 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-full flex items-center justify-center shadow-sm"
+                            class="h-12 w-12 bg-gradient-to-br from-green-100 to-green-200 rounded-full flex items-center justify-center shadow-sm"
                         >
                             <svg
-                                class="h-6 w-6 text-emerald-600"
+                                class="h-6 w-6 text-green-600"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
@@ -149,32 +150,32 @@
                         </div>
                     </div>
                     <div class="ml-5">
-                        <p class="text-sm font-medium text-emerald-700">
+                        <p class="text-sm font-medium text-green-700">
                             Total Hours
                         </p>
-                        <p class="text-3xl font-bold text-emerald-900">
+                        <p class="text-3xl font-bold text-green-900">
                             {{ daily_summary.total_session_hours|floatformat:1 }}
                         </p>
                     </div>
                 </div>
-                <div class="mt-4 pt-3 border-t border-emerald-200">
+                <div class="mt-4 pt-3 border-t border-green-200">
                     <span
-                        class="text-sm text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full"
+                        class="text-sm text-green-600 bg-green-50 px-2 py-1 rounded-full"
                         >{{ daily_summary.total_working_hours|floatformat:1 }}h productive</span
                     >
                 </div>
             </div>
 
             <div
-                class="bg-gradient-to-br from-violet-50 to-violet-100 rounded-xl shadow-sm border border-violet-200 p-6 hover:shadow-md transition-all duration-200"
+                class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl shadow-sm border border-purple-200 p-6 hover:shadow-md transition-all duration-200"
             >
                 <div class="flex items-center">
                     <div class="flex-shrink-0">
                         <div
-                            class="h-12 w-12 bg-gradient-to-br from-violet-100 to-violet-200 rounded-full flex items-center justify-center shadow-sm"
+                            class="h-12 w-12 bg-gradient-to-br from-purple-100 to-purple-200 rounded-full flex items-center justify-center shadow-sm"
                         >
                             <svg
-                                class="h-6 w-6 text-violet-600"
+                                class="h-6 w-6 text-purple-600"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
@@ -189,32 +190,32 @@
                         </div>
                     </div>
                     <div class="ml-5">
-                        <p class="text-sm font-medium text-violet-700">
+                        <p class="text-sm font-medium text-purple-700">
                             Productivity
                         </p>
-                        <p class="text-3xl font-bold text-violet-900">
+                        <p class="text-3xl font-bold text-purple-900">
                             {{ daily_summary.productivity_percentage|floatformat:0  }}%
                         </p>
                     </div>
                 </div>
-                <div class="mt-4 pt-3 border-t border-violet-200">
+                <div class="mt-4 pt-3 border-t border-purple-200">
                     <span
-                        class="text-sm text-violet-600 bg-violet-50 px-2 py-1 rounded-full"
+                        class="text-sm text-purple-600 bg-purple-50 px-2 py-1 rounded-full"
                         >{{ daily_summary.avg_productivity_score|floatformat:1 }} avg score</span
                     >
                 </div>
             </div>
 
             <div
-                class="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl shadow-sm border border-amber-200 p-6 hover:shadow-md transition-all duration-200"
+                class="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl shadow-sm border border-yellow-200 p-6 hover:shadow-md transition-all duration-200"
             >
                 <div class="flex items-center">
                     <div class="flex-shrink-0">
                         <div
-                            class="h-12 w-12 bg-gradient-to-br from-amber-100 to-amber-200 rounded-full flex items-center justify-center shadow-sm"
+                            class="h-12 w-12 bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-full flex items-center justify-center shadow-sm"
                         >
                             <svg
-                                class="h-6 w-6 text-amber-600"
+                                class="h-6 w-6 text-yellow-600"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
@@ -235,17 +236,17 @@
                         </div>
                     </div>
                     <div class="ml-5">
-                        <p class="text-sm font-medium text-amber-700">
+                        <p class="text-sm font-medium text-yellow-700">
                             Engagement
                         </p>
-                        <p class="text-3xl font-bold text-amber-900">
+                        <p class="text-3xl font-bold text-yellow-900">
                             {{ daily_summary.avg_engagement_score|floatformat:1 }}
                         </p>
                     </div>
                 </div>
-                <div class="mt-4 pt-3 border-t border-amber-200">
+                <div class="mt-4 pt-3 border-t border-yellow-200">
                     <span
-                        class="text-sm text-amber-600 bg-amber-50 px-2 py-1 rounded-full"
+                        class="text-sm text-yellow-600 bg-yellow-50 px-2 py-1 rounded-full"
                         >Average score</span
                     >
                 </div>
@@ -260,10 +261,10 @@
             >
                 <div class="flex items-center mb-6">
                     <div
-                        class="h-10 w-10 bg-gradient-to-br from-indigo-100 to-indigo-200 rounded-lg flex items-center justify-center mr-3"
+                        class="h-10 w-10 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg flex items-center justify-center mr-3"
                     >
                         <svg
-                            class="h-5 w-5 text-indigo-600"
+                            class="h-5 w-5 text-blue-600"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -276,25 +277,25 @@
                             />
                         </svg>
                     </div>
-                    <h3 class="text-lg font-semibold text-slate-800">
+                    <h3 class="text-lg font-semibold text-gray-800">
                         Activity Heatmap
                     </h3>
                 </div>
                 <div class="space-y-3">
                     {% for hour_data in activity_heatmap %}
                     <div
-                        class="flex items-center space-x-3 p-2 rounded-lg hover:bg-slate-50 transition-colors duration-150"
+                        class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 transition-colors duration-150"
                     >
                         <span
-                            class="text-sm font-mono text-slate-600 w-12 font-medium"
+                            class="text-sm font-mono text-gray-600 w-12 font-medium"
                             >{{ hour_data.hour|stringformat:"02d" }}:00</span
                         >
                         <div
-                            class="flex-1 bg-slate-100 rounded-full h-5 relative overflow-hidden"
+                            class="flex-1 bg-gray-100 rounded-full h-5 relative overflow-hidden"
                         >
                             {% if hour_data.activity_level > 0 %}
                             <div
-                                class="h-5 rounded-full transition-all duration-300 {% if hour_data.activity_level > 80 %}bg-gradient-to-r from-emerald-300 to-emerald-400{% elif hour_data.activity_level > 60 %}bg-gradient-to-r from-lime-300 to-lime-400{% elif hour_data.activity_level > 40 %}bg-gradient-to-r from-amber-300 to-amber-400{% elif hour_data.activity_level > 20 %}bg-gradient-to-r from-orange-300 to-orange-400{% else %}bg-gradient-to-r from-rose-300 to-rose-400{% endif %}"
+                                class="h-5 rounded-full transition-all duration-300 {% if hour_data.activity_level > 80 %}bg-gradient-to-r from-yellow-300 to-yellow-400{% elif hour_data.activity_level > 60 %}bg-gradient-to-r from-red-300 to-red-400{% elif hour_data.activity_level > 40 %}bg-gradient-to-r from-amber-300 to-amber-400{% elif hour_data.activity_level > 20 %}bg-gradient-to-r from-orange-300 to-orange-400{% else %}bg-gradient-to-r from-rose-300 to-rose-400{% endif %}"
                                 style="width: {{ hour_data.activity_level }}%"
                             ></div>
                             {% endif %}
@@ -767,5 +768,7 @@
     </div>
 </div>
 {% endblock %} {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 {% endblock %}

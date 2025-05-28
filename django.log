@@ -7768,3 +7768,132 @@ INFO 2025-05-28 10:10:44,677 basehttp 33211 6213480448 "POST /update-activity/ H
 INFO 2025-05-28 10:10:44,693 basehttp 33211 6196654080 "GET /logout/ HTTP/1.1" 302 0
 INFO 2025-05-28 10:10:44,697 basehttp 33211 6196654080 "GET /login/ HTTP/1.1" 200 7284
 INFO 2025-05-28 10:10:44,704 basehttp 33211 6196654080 "POST /update-activity/ HTTP/1.1" 302 0
+INFO 2025-05-28 15:13:49,742 autoreload 13071 8675122944 Watching for file changes with StatReloader
+INFO 2025-05-28 15:13:56,452 basehttp 13071 6170636288 "GET / HTTP/1.1" 302 0
+INFO 2025-05-28 15:13:56,470 basehttp 13071 6170636288 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-05-28 15:14:00,951 basehttp 13071 6170636288 "POST /login/ HTTP/1.1" 302 0
+INFO 2025-05-28 15:14:01,013 basehttp 13071 6170636288 "GET /dashboard/ HTTP/1.1" 200 90275
+INFO 2025-05-28 15:14:01,030 basehttp 13071 6170636288 "GET /static/images/cropedlogo.png HTTP/1.1" 304 0
+INFO 2025-05-28 15:14:03,117 basehttp 13071 6325039104 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:14:03,229 basehttp 13071 6170636288 "GET /administration/usersessions/ HTTP/1.1" 200 366895
+INFO 2025-05-28 15:14:03,260 basehttp 13071 6170636288 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-28 15:14:33,406 log 13071 6170636288 Internal Server Error: /administration/usersessions/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 136, in __call__
+    response = self.process_response(request, response)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/clickjacking.py", line 34, in process_response
+    response.headers["X-Frame-Options"] = self.get_xframe_options_value(
+AttributeError: 'dict' object has no attribute 'headers'
+ERROR 2025-05-28 15:14:33,407 basehttp 13071 6170636288 "GET /administration/usersessions/?type=live_activity HTTP/1.1" 500 67093
+ERROR 2025-05-28 15:15:03,395 log 13071 6170636288 Internal Server Error: /administration/usersessions/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 136, in __call__
+    response = self.process_response(request, response)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/clickjacking.py", line 34, in process_response
+    response.headers["X-Frame-Options"] = self.get_xframe_options_value(
+AttributeError: 'dict' object has no attribute 'headers'
+ERROR 2025-05-28 15:15:03,395 basehttp 13071 6170636288 "GET /administration/usersessions/?type=live_activity HTTP/1.1" 500 67093
+INFO 2025-05-28 15:15:03,410 basehttp 13071 6325039104 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-28 15:15:33,402 log 13071 6325039104 Internal Server Error: /administration/usersessions/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 136, in __call__
+    response = self.process_response(request, response)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/clickjacking.py", line 34, in process_response
+    response.headers["X-Frame-Options"] = self.get_xframe_options_value(
+AttributeError: 'dict' object has no attribute 'headers'
+ERROR 2025-05-28 15:15:33,403 basehttp 13071 6325039104 "GET /administration/usersessions/?type=live_activity HTTP/1.1" 500 67093
+ERROR 2025-05-28 15:16:03,378 log 13071 6325039104 Internal Server Error: /administration/usersessions/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 136, in __call__
+    response = self.process_response(request, response)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/clickjacking.py", line 34, in process_response
+    response.headers["X-Frame-Options"] = self.get_xframe_options_value(
+AttributeError: 'dict' object has no attribute 'headers'
+ERROR 2025-05-28 15:16:03,379 basehttp 13071 6325039104 "GET /administration/usersessions/?type=live_activity HTTP/1.1" 500 67093
+INFO 2025-05-28 15:16:03,399 basehttp 13071 6170636288 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-28 15:16:33,395 log 13071 6170636288 Internal Server Error: /administration/usersessions/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 136, in __call__
+    response = self.process_response(request, response)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/clickjacking.py", line 34, in process_response
+    response.headers["X-Frame-Options"] = self.get_xframe_options_value(
+AttributeError: 'dict' object has no attribute 'headers'
+ERROR 2025-05-28 15:16:33,395 basehttp 13071 6170636288 "GET /administration/usersessions/?type=live_activity HTTP/1.1" 500 67093
+INFO 2025-05-28 15:16:41,082 basehttp 13071 6325039104 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:16:41,142 basehttp 13071 6170636288 "GET /administration/usersessions/1/2025-05-28/ HTTP/1.1" 200 139316
+INFO 2025-05-28 15:16:41,174 basehttp 13071 6170636288 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:17:41,420 basehttp 13071 6170636288 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:18:41,416 basehttp 13071 6170636288 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:19:41,406 basehttp 13071 6170636288 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:20:41,422 basehttp 13071 6170636288 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:21:41,420 basehttp 13071 6170636288 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:22:23,625 basehttp 13071 6170636288 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:22:35,576 basehttp 13071 6170636288 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:22:42,207 basehttp 13071 6170636288 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:23:07,650 basehttp 13071 6325039104 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:23:07,703 basehttp 13071 6170636288 "GET /administration/usersessions/1/2025-05-28/ HTTP/1.1" 200 139308
+INFO 2025-05-28 15:23:10,568 basehttp 13071 6170636288 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:23:16,098 basehttp 13071 6325039104 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:23:16,142 basehttp 13071 6170636288 "GET /administration/usersessions/1/2025-05-28/ HTTP/1.1" 200 139308
+INFO 2025-05-28 15:23:17,209 basehttp 13071 6325039104 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:23:17,253 basehttp 13071 6170636288 "GET /administration/usersessions/1/2025-05-28/ HTTP/1.1" 200 139306
+INFO 2025-05-28 15:23:19,627 basehttp 13071 6170636288 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:23:33,178 basehttp 13071 6325039104 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:23:33,228 basehttp 13071 6170636288 "GET /administration/usersessions/1/2025-05-28/ HTTP/1.1" 200 139302
+INFO 2025-05-28 15:23:37,274 basehttp 13071 6170636288 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:23:49,475 basehttp 13071 6170636288 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:24:15,852 basehttp 13071 6325039104 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:24:15,901 basehttp 13071 6170636288 "GET /administration/usersessions/1/2025-05-28/ HTTP/1.1" 200 139294
+INFO 2025-05-28 15:24:20,102 basehttp 13071 6170636288 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:24:30,436 basehttp 13071 6325039104 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:24:30,484 basehttp 13071 6170636288 "GET /administration/usersessions/1/2025-05-28/ HTTP/1.1" 200 139294
+INFO 2025-05-28 15:24:32,787 basehttp 13071 6170636288 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:24:41,550 basehttp 13071 6325039104 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:24:41,598 basehttp 13071 6170636288 "GET /administration/usersessions/1/2025-05-28/ HTTP/1.1" 200 139294
+INFO 2025-05-28 15:24:44,459 basehttp 13071 6170636288 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:25:05,452 basehttp 13071 6325039104 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:25:05,499 basehttp 13071 6170636288 "GET /administration/usersessions/1/2025-05-28/ HTTP/1.1" 200 139294
+INFO 2025-05-28 15:25:09,121 basehttp 13071 6170636288 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:25:21,067 basehttp 13071 6325039104 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:25:21,120 basehttp 13071 6170636288 "GET /administration/usersessions/1/2025-05-28/ HTTP/1.1" 200 139294
+INFO 2025-05-28 15:25:23,442 basehttp 13071 6170636288 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:25:55,367 basehttp 13071 6325039104 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:25:55,419 basehttp 13071 6170636288 "GET /administration/usersessions/1/2025-05-28/ HTTP/1.1" 200 139305
+INFO 2025-05-28 15:26:00,852 basehttp 13071 6170636288 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:26:12,846 basehttp 13071 6170636288 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:26:43,681 basehttp 13071 6325039104 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:26:43,732 basehttp 13071 6170636288 "GET /administration/usersessions/1/2025-05-28/ HTTP/1.1" 200 139298
+INFO 2025-05-28 15:26:45,452 basehttp 13071 6325039104 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:26:45,500 basehttp 13071 6170636288 "GET /administration/usersessions/1/2025-05-28/ HTTP/1.1" 200 139298
+INFO 2025-05-28 15:26:48,826 basehttp 13071 6170636288 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:27:04,036 basehttp 13071 6325039104 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:27:04,109 basehttp 13071 6170636288 "GET /administration/usersessions/1/2025-05-28/ HTTP/1.1" 200 139250
+INFO 2025-05-28 15:27:05,013 basehttp 13071 6325039104 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:27:05,069 basehttp 13071 6170636288 "GET /administration/usersessions/1/2025-05-28/ HTTP/1.1" 200 139250
+INFO 2025-05-28 15:27:07,594 basehttp 13071 6170636288 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:28:05,056 basehttp 13071 6170636288 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:28:06,196 basehttp 13071 6170636288 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:28:31,970 basehttp 13071 6325039104 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:28:32,019 basehttp 13071 6170636288 "GET /administration/usersessions/1/2025-05-28/ HTTP/1.1" 200 139226
+INFO 2025-05-28 15:28:32,870 basehttp 13071 6325039104 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:28:32,915 basehttp 13071 6170636288 "GET /administration/usersessions/1/2025-05-28/ HTTP/1.1" 200 139226
+INFO 2025-05-28 15:28:33,618 basehttp 13071 6325039104 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:28:33,663 basehttp 13071 6170636288 "GET /administration/usersessions/1/2025-05-28/ HTTP/1.1" 200 139226
+INFO 2025-05-28 15:28:36,092 basehttp 13071 6170636288 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:29:00,342 basehttp 13071 6325039104 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:29:00,387 basehttp 13071 6170636288 "GET /administration/usersessions/1/2025-05-28/ HTTP/1.1" 200 139226
+INFO 2025-05-28 15:29:01,217 basehttp 13071 6325039104 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:29:01,261 basehttp 13071 6170636288 "GET /administration/usersessions/1/2025-05-28/ HTTP/1.1" 200 139226
+INFO 2025-05-28 15:29:01,914 basehttp 13071 6325039104 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 15:29:01,958 basehttp 13071 6170636288 "GET /administration/usersessions/1/2025-05-28/ HTTP/1.1" 200 139226
+INFO 2025-05-28 15:29:03,782 basehttp 13071 6170636288 "POST /update-activity/ HTTP/1.1" 200 192
