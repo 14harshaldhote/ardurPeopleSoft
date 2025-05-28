@@ -4270,9 +4270,7 @@ def user_session_detail_view(request, user_id, date_str):
         import traceback
         print(f"DEBUG ERROR: Traceback: {traceback.format_exc()}")
         logger.error(f"Error in user_session_detail_view: {str(e)}")
-        return render(request, 'components/sessions/error.html', {
-            'error_message': 'An error occurred while loading the session details.'
-        })
+        raise
 
 # ==================== HELPER FUNCTIONS ====================
 #

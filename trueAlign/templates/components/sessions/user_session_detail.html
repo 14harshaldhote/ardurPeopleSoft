@@ -1,0 +1,771 @@
+{% extends 'base.html' %} {% load static %} {% block title %}Session Details -
+{{ user.get_full_name|default:user.username }} - {{ target_date|date:"F d, Y"
+}}{% endblock %} {% block extra_css %}
+<link
+    href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.css"
+    rel="stylesheet"
+/>
+{% endblock %} {% block content %}
+<div class="min-h-screen  py-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header Section -->
+        <div
+            class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6"
+        >
+            <div
+                class="flex flex-col sm:flex-row sm:items-center sm:justify-between"
+            >
+                <div class="flex items-center space-x-4">
+                    <div
+                        class="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center"
+                    >
+                        <span class="text-blue-600 font-semibold text-lg">
+                            {{ user.first_name.0|default:user.username.0|upper }}{{ user.last_name.0|upper }}
+                            
+                        </span>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">
+                            {{ user.get_full_name|default:user.username }}
+                        </h1>
+                        <p class="text-gray-600">
+                            Session Details for {{ target_date|date:"F d, Y" }}
+                        </p>
+                    </div>
+                </div>
+                <div class="mt-4 sm:mt-0 flex space-x-2">
+                    <a
+                        href="{% url 'aps_admin:user_sessions' %}"
+                        class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                        <svg
+                            class="mr-2 h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                            />
+                        </svg>
+                        Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Check for no sessions -->
+        {% if no_sessions %}
+        <div
+            class="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center"
+        >
+            <svg
+                class="mx-auto h-12 w-12 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+            >
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+            </svg>
+            <h3 class="mt-4 text-lg font-medium text-gray-900">
+                No sessions found
+            </h3>
+            <p class="mt-2 text-gray-500">
+                No session data available for {{ user.get_full_name|default:user.username }} on {{ target_date|date:"F d, Y" }}.
+            </p>
+        </div>
+        {% else %}
+        <!-- Daily Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div
+                class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-sm border border-blue-200 p-6 hover:shadow-md transition-all duration-200"
+            >
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div
+                            class="h-12 w-12 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center shadow-sm"
+                        >
+                            <svg
+                                class="h-6 w-6 text-blue-600"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-5">
+                        <p class="text-sm font-medium text-blue-700">
+                            Total Sessions
+                        </p>
+                        <p class="text-3xl font-bold text-blue-900">
+                            {{ daily_summary.total_sessions }}
+                        </p>
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-blue-200">
+                    <span
+                        class="text-sm text-blue-600 bg-blue-50 px-2 py-1 rounded-full"
+                        >{{ daily_summary.active_sessions }} active</span
+                    >
+                </div>
+            </div>
+
+            <div
+                class="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl shadow-sm border border-emerald-200 p-6 hover:shadow-md transition-all duration-200"
+            >
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div
+                            class="h-12 w-12 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-full flex items-center justify-center shadow-sm"
+                        >
+                            <svg
+                                class="h-6 w-6 text-emerald-600"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                                />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-5">
+                        <p class="text-sm font-medium text-emerald-700">
+                            Total Hours
+                        </p>
+                        <p class="text-3xl font-bold text-emerald-900">
+                            {{ daily_summary.total_session_hours|floatformat:1 }}
+                        </p>
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-emerald-200">
+                    <span
+                        class="text-sm text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full"
+                        >{{ daily_summary.total_working_hours|floatformat:1 }}h productive</span
+                    >
+                </div>
+            </div>
+
+            <div
+                class="bg-gradient-to-br from-violet-50 to-violet-100 rounded-xl shadow-sm border border-violet-200 p-6 hover:shadow-md transition-all duration-200"
+            >
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div
+                            class="h-12 w-12 bg-gradient-to-br from-violet-100 to-violet-200 rounded-full flex items-center justify-center shadow-sm"
+                        >
+                            <svg
+                                class="h-6 w-6 text-violet-600"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                                />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-5">
+                        <p class="text-sm font-medium text-violet-700">
+                            Productivity
+                        </p>
+                        <p class="text-3xl font-bold text-violet-900">
+                            {{ daily_summary.productivity_percentage|floatformat:0  }}%
+                        </p>
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-violet-200">
+                    <span
+                        class="text-sm text-violet-600 bg-violet-50 px-2 py-1 rounded-full"
+                        >{{ daily_summary.avg_productivity_score|floatformat:1 }} avg score</span
+                    >
+                </div>
+            </div>
+
+            <div
+                class="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl shadow-sm border border-amber-200 p-6 hover:shadow-md transition-all duration-200"
+            >
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div
+                            class="h-12 w-12 bg-gradient-to-br from-amber-100 to-amber-200 rounded-full flex items-center justify-center shadow-sm"
+                        >
+                            <svg
+                                class="h-6 w-6 text-amber-600"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                />
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-5">
+                        <p class="text-sm font-medium text-amber-700">
+                            Engagement
+                        </p>
+                        <p class="text-3xl font-bold text-amber-900">
+                            {{ daily_summary.avg_engagement_score|floatformat:1 }}
+                        </p>
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-amber-200">
+                    <span
+                        class="text-sm text-amber-600 bg-amber-50 px-2 py-1 rounded-full"
+                        >Average score</span
+                    >
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity Heatmap and Session Timeline -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Activity Heatmap -->
+            <div
+                class="bg-gradient-to-br from-slate-50 to-white rounded-xl shadow-sm border border-slate-200 p-8 hover:shadow-md transition-all duration-200"
+            >
+                <div class="flex items-center mb-6">
+                    <div
+                        class="h-10 w-10 bg-gradient-to-br from-indigo-100 to-indigo-200 rounded-lg flex items-center justify-center mr-3"
+                    >
+                        <svg
+                            class="h-5 w-5 text-indigo-600"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                            />
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-slate-800">
+                        Activity Heatmap
+                    </h3>
+                </div>
+                <div class="space-y-3">
+                    {% for hour_data in activity_heatmap %}
+                    <div
+                        class="flex items-center space-x-3 p-2 rounded-lg hover:bg-slate-50 transition-colors duration-150"
+                    >
+                        <span
+                            class="text-sm font-mono text-slate-600 w-12 font-medium"
+                            >{{ hour_data.hour|stringformat:"02d" }}:00</span
+                        >
+                        <div
+                            class="flex-1 bg-slate-100 rounded-full h-5 relative overflow-hidden"
+                        >
+                            {% if hour_data.activity_level > 0 %}
+                            <div
+                                class="h-5 rounded-full transition-all duration-300 {% if hour_data.activity_level > 80 %}bg-gradient-to-r from-emerald-300 to-emerald-400{% elif hour_data.activity_level > 60 %}bg-gradient-to-r from-lime-300 to-lime-400{% elif hour_data.activity_level > 40 %}bg-gradient-to-r from-amber-300 to-amber-400{% elif hour_data.activity_level > 20 %}bg-gradient-to-r from-orange-300 to-orange-400{% else %}bg-gradient-to-r from-rose-300 to-rose-400{% endif %}"
+                                style="width: {{ hour_data.activity_level }}%"
+                            ></div>
+                            {% endif %}
+                        </div>
+                        <span class="text-sm text-slate-600 w-10 font-medium"
+                            >{{ hour_data.activity_level|floatformat:0 }}%</span
+                        >
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Session Summary by Location/Device -->
+            <div
+                class="bg-gradient-to-br from-slate-50 to-white rounded-xl shadow-sm border border-slate-200 p-8 hover:shadow-md transition-all duration-200"
+            >
+                <div class="flex items-center mb-6">
+                    <div
+                        class="h-10 w-10 bg-gradient-to-br from-teal-100 to-teal-200 rounded-lg flex items-center justify-center mr-3"
+                    >
+                        <svg
+                            class="h-5 w-5 text-teal-600"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                            />
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                            />
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-slate-800">
+                        Session Distribution
+                    </h3>
+                </div>
+                <div class="space-y-6">
+                    <!-- Location Distribution -->
+                    <div
+                        class="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg p-4"
+                    >
+                        <h4
+                            class="text-sm font-semibold text-slate-700 mb-3 flex items-center"
+                        >
+                            <svg
+                                class="h-4 w-4 text-blue-500 mr-2"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h4M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                                />
+                            </svg>
+                            By Location
+                        </h4>
+                        <div class="space-y-3">
+                            <div
+                                class="flex items-center justify-between p-2 bg-white rounded-md"
+                            >
+                                <span class="text-sm text-slate-700 font-medium"
+                                    >Office</span
+                                >
+                                <span
+                                    class="text-sm font-semibold text-blue-600 bg-blue-100 px-2 py-1 rounded-full"
+                                    >{{ daily_summary.office_sessions }}</span
+                                >
+                            </div>
+                            <div
+                                class="flex items-center justify-between p-2 bg-white rounded-md"
+                            >
+                                <span class="text-sm text-slate-700 font-medium"
+                                    >Home</span
+                                >
+                                <span
+                                    class="text-sm font-semibold text-cyan-600 bg-cyan-100 px-2 py-1 rounded-full"
+                                    >{{ daily_summary.home_sessions }}</span
+                                >
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Device Distribution -->
+                    <div
+                        class="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4"
+                    >
+                        <h4
+                            class="text-sm font-semibold text-slate-700 mb-3 flex items-center"
+                        >
+                            <svg
+                                class="h-4 w-4 text-purple-500 mr-2"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                                />
+                            </svg>
+                            By Device
+                        </h4>
+                        <div class="space-y-3">
+                            <div
+                                class="flex items-center justify-between p-2 bg-white rounded-md"
+                            >
+                                <span class="text-sm text-slate-700 font-medium"
+                                    >Desktop</span
+                                >
+                                <span
+                                    class="text-sm font-semibold text-purple-600 bg-purple-100 px-2 py-1 rounded-full"
+                                    >{{ daily_summary.desktop_sessions }}</span
+                                >
+                            </div>
+                            <div
+                                class="flex items-center justify-between p-2 bg-white rounded-md"
+                            >
+                                <span class="text-sm text-slate-700 font-medium"
+                                    >Mobile</span
+                                >
+                                <span
+                                    class="text-sm font-semibold text-pink-600 bg-pink-100 px-2 py-1 rounded-full"
+                                    >{{ daily_summary.mobile_sessions }}</span
+                                >
+                            </div>
+                            <div
+                                class="flex items-center justify-between p-2 bg-white rounded-md"
+                            >
+                                <span class="text-sm text-slate-700 font-medium"
+                                    >Tablet</span
+                                >
+                                <span
+                                    class="text-sm font-semibold text-indigo-600 bg-indigo-100 px-2 py-1 rounded-full"
+                                    >{{ daily_summary.tablet_sessions }}</span
+                                >
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Session Timeline -->
+        <div
+            class="bg-gradient-to-br from-slate-50 to-white rounded-xl shadow-sm border border-slate-200 p-8 mb-8 hover:shadow-md transition-all duration-200"
+        >
+            <div class="flex items-center mb-6">
+                <div
+                    class="h-10 w-10 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-lg flex items-center justify-center mr-3"
+                >
+                    <svg
+                        class="h-5 w-5 text-emerald-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-semibold text-slate-800">
+                    Session Timeline
+                </h3>
+            </div>
+            <div class="space-y-6">
+                {% for session_data in timeline_data %}
+                <div
+                    class="bg-gradient-to-r from-white to-slate-50 border border-slate-200 rounded-xl p-6 hover:shadow-md hover:border-slate-300 transition-all duration-200"
+                >
+                    <div
+                        class="flex flex-col lg:flex-row lg:items-center lg:justify-between"
+                    >
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-4 mb-4">
+                                <div
+                                    class="h-4 w-4 rounded-full {% if session_data.session.is_active %}bg-emerald-400 shadow-sm shadow-emerald-200{% else %}bg-slate-300{% endif %}"
+                                ></div>
+                                <span
+                                    class="text-sm font-semibold text-slate-800"
+                                    >Session {{ session_data.session.id }}</span
+                                >
+                                {% if session_data.session.is_primary_tab %}
+                                <span
+                                    class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 shadow-sm"
+                                    >Primary</span
+                                >
+                                {% endif %} {% if session_data.is_office_location %}
+                                <span
+                                    class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-emerald-100 to-emerald-200 text-emerald-800 shadow-sm"
+                                    >Office</span
+                                >
+                                {% endif %}
+                            </div>
+
+                            <div
+                                class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm bg-slate-50 rounded-lg p-4"
+                            >
+                                <div class="text-center">
+                                    <span
+                                        class="block text-xs text-slate-500 font-medium"
+                                        >Login</span
+                                    >
+                                    <span
+                                        class="block text-slate-800 font-semibold"
+                                        >{{ session_data.login_time_ist|date:"H:i"  }}</span
+                                    >
+                                </div>
+                                {% if session_data.logout_time_ist %}
+                                <div class="text-center">
+                                    <span
+                                        class="block text-xs text-slate-500 font-medium"
+                                        >Logout</span
+                                    >
+                                    <span
+                                        class="block text-slate-800 font-semibold"
+                                        >{{ session_data.logout_time_ist|date:"H:i" }}</span
+                                    >
+                                </div>
+                                {% endif %}
+                                <div class="text-center">
+                                    <span
+                                        class="block text-xs text-slate-500 font-medium"
+                                        >Duration</span
+                                    >
+                                    <span
+                                        class="block text-slate-800 font-semibold"
+                                        >{{ session_data.duration_hours|floatformat:1 }}h</span
+                                    >
+                                </div>
+                                <div class="text-center">
+                                    <span
+                                        class="block text-xs text-slate-500 font-medium"
+                                        >Productive</span
+                                    >
+                                    <span
+                                        class="block text-slate-800 font-semibold"
+                                        >{{ session_data.working_hours|floatformat:1 }}h</span
+                                    >
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 lg:mt-0 lg:ml-8">
+                            <div class="flex items-center space-x-6 text-sm">
+                                <div
+                                    class="text-center p-3 bg-white rounded-lg shadow-sm"
+                                >
+                                    <span
+                                        class="block text-xs text-slate-500 font-medium mb-1"
+                                        >Productivity</span
+                                    >
+                                    <span
+                                        class="block font-bold text-lg {% if session_data.productivity_score >= 80 %}text-emerald-600{% elif session_data.productivity_score >= 60 %}text-amber-600{% else %}text-rose-500{% endif %}"
+                                    >
+                                        {{ session_data.productivity_score|floatformat:0 }}%
+                                    </span>
+                                </div>
+                                <div
+                                    class="text-center p-3 bg-white rounded-lg shadow-sm"
+                                >
+                                    <span
+                                        class="block text-xs text-slate-500 font-medium mb-1"
+                                        >Page Views</span
+                                    >
+                                    <span
+                                        class="block font-bold text-lg text-slate-800"
+                                        >{{ session_data.page_views_count }}</span
+                                    >
+                                </div>
+                                <div
+                                    class="text-center p-3 bg-white rounded-lg shadow-sm"
+                                >
+                                    <span
+                                        class="block text-xs text-slate-500 font-medium mb-1"
+                                        >Interactions</span
+                                    >
+                                    <span
+                                        class="block font-bold text-lg text-slate-800"
+                                        >{{ session_data.interactions_count }}</span
+                                    >
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if session_data.device_info %}
+                    <div class="mt-4 pt-4 border-t border-slate-200">
+                        <div
+                            class="flex flex-wrap items-center gap-4 text-xs text-slate-600"
+                        >
+                            <span
+                                class="bg-slate-100 px-2 py-1 rounded-md font-medium"
+                                >Device: {{ session_data.device_info.type|title }}</span
+                            >
+                            {% if session_data.device_info.screen_resolution %}
+                            <span
+                                class="bg-slate-100 px-2 py-1 rounded-md font-medium"
+                                >Resolution: {{ session_data.device_info.screen_resolution }}</span
+                            >
+                            {% endif %} {% if session_data.session.ip_address %}
+                            <span
+                                class="bg-slate-100 px-2 py-1 rounded-md font-medium"
+                                >IP: {{ session_data.session.ip_address }}</span
+                            >
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        <!-- Page Visits Analysis -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- Recent Page Visits -->
+            <div
+                class="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+            >
+                <h3 class="text-lg font-medium text-gray-900 mb-4">
+                    Recent Page Visits
+                </h3>
+                <div class="space-y-3">
+                    {% for visit in page_visits|slice:":10" %}
+                    <div class="flex items-start space-x-3">
+                        <div class="flex-shrink-0 mt-1">
+                            <div class="h-2 w-2 bg-blue-400 rounded-full"></div>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p
+                                class="text-sm font-medium text-gray-900 truncate"
+                            >
+                                {{ visit.title|default:"Untitled Page" }}
+                            </p>
+                            <p class="text-xs text-gray-500 truncate">
+                                {{ visit.url }}
+                            </p>
+                            {% if visit.timestamp_ist %}
+                            <p class="text-xs text-gray-400">
+                                {{ visit.timestamp_ist|date:"H:i:s" }}
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-gray-500 text-sm">No page visits recorded</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Top Visited Pages -->
+            <div
+                class="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+            >
+                <h3 class="text-lg font-medium text-gray-900 mb-4">
+                    Top Visited Pages
+                </h3>
+                <div class="space-y-3">
+                    {% for url, count in top_pages %}
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1 min-w-0">
+                            <p
+                                class="text-sm font-medium text-gray-900 truncate"
+                            >
+                                {{ url }}
+                            </p>
+                        </div>
+                        <span
+                            class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
+                        >
+                            {{ count }} visit{{ count|pluralize }}
+                        </span>
+                    </div>
+                    {% empty %}
+                    <p class="text-gray-500 text-sm">
+                        No page visit data available
+                    </p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Security Analysis -->
+        {% if security_analysis %}
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">
+                Security Analysis
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <h4 class="text-sm font-medium text-gray-700 mb-2">
+                        IP Addresses
+                    </h4>
+                    <div class="space-y-1">
+                        {% for ip in security_analysis.unique_ips %}
+                        <span
+                            class="inline-block text-xs px-2 py-1 bg-gray-100 rounded"
+                            >{{ ip }}</span
+                        >
+                        {% empty %}
+                        <span class="text-sm text-gray-500">No IP data</span>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="text-sm font-medium text-gray-700 mb-2">
+                        Devices Used
+                    </h4>
+                    <div class="space-y-1">
+                        {% for device in security_analysis.unique_devices %}
+                        <span
+                            class="inline-block text-xs px-2 py-1 bg-gray-100 rounded"
+                            >{{ device|title }}</span
+                        >
+                        {% empty %}
+                        <span class="text-sm text-gray-500"
+                            >No device data</span
+                        >
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="text-sm font-medium text-gray-700 mb-2">
+                        Security Status
+                    </h4>
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600"
+                                >Fingerprint Changes</span
+                            >
+                            <span
+                                class="text-sm font-medium {% if security_analysis.fingerprint_changes > 0 %}text-yellow-600{% else %}text-green-600{% endif %}"
+                            >
+                                {{ security_analysis.fingerprint_changes }}
+                            </span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600"
+                                >Security Incidents</span
+                            >
+                            <span
+                                class="text-sm font-medium {% if security_analysis.security_incidents %}text-red-600{% else %}text-green-600{% endif %}"
+                            >
+                                {{ security_analysis.security_incidents|length }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %} {% endif %}
+    </div>
+</div>
+{% endblock %} {% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+{% endblock %}

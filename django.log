@@ -6432,3 +6432,1303 @@ INFO 2025-05-27 16:48:37,104 basehttp 63307 6204698624 "POST /update-activity/ H
 INFO 2025-05-27 16:48:37,229 basehttp 63307 6238351360 "GET /administration/usersessions/ HTTP/1.1" 200 424826
 INFO 2025-05-27 16:48:37,260 basehttp 63307 6238351360 "POST /update-activity/ HTTP/1.1" 200 199
 INFO 2025-05-27 16:48:55,129 basehttp 63307 6238351360 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-27 16:49:36,701 autoreload 65798 8460771072 Watching for file changes with StatReloader
+INFO 2025-05-27 16:49:37,668 basehttp 65798 6199455744 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-27 16:49:56,141 basehttp 65798 6216282112 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-27 16:49:56,244 basehttp 65798 6199455744 "GET /administration/usersessions/ HTTP/1.1" 200 0
+INFO 2025-05-27 16:50:06,656 basehttp 65798 6199455744 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:51:06,654 basehttp 65798 6199455744 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:52:06,717 basehttp 65798 6199455744 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:59:53,509 basehttp 65798 6199455744 "POST /update-activity/ HTTP/1.1" 200 177
+INFO 2025-05-27 16:59:53,596 basehttp 65798 6199455744 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 16:59:53,722 basehttp 65798 6199455744 "GET /dashboard/ HTTP/1.1" 200 102918
+INFO 2025-05-27 17:47:26,380 middleware 65798 6199455744 Created new session for user AT0023, tab_id: 68b3ec1c-78ab-448f-8f1a-7303dbc9f15a, primary: True
+INFO 2025-05-27 17:47:26,394 basehttp 65798 6216282112 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-27 17:47:26,408 basehttp 65798 6199455744 "GET /logout/ HTTP/1.1" 302 0
+INFO 2025-05-27 17:47:26,414 basehttp 65798 6199455744 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-05-27 17:47:26,425 basehttp 65798 6199455744 "POST /update-activity/ HTTP/1.1" 302 0
+INFO 2025-05-27 18:19:10,613 basehttp 65798 6199455744 "GET /administration/usersessions/ HTTP/1.1" 302 0
+WARNING 2025-05-27 18:19:10,628 log 65798 6199455744 Not Found: /accounts/login/
+WARNING 2025-05-27 18:19:10,628 basehttp 65798 6199455744 "GET /accounts/login/?next=/administration/usersessions/ HTTP/1.1" 404 7653
+INFO 2025-05-28 08:51:43,571 autoreload 1550 8675122944 Watching for file changes with StatReloader
+INFO 2025-05-28 08:51:59,981 basehttp 1550 6175748096 "GET / HTTP/1.1" 302 0
+INFO 2025-05-28 08:52:00,239 basehttp 1550 6175748096 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-05-28 08:52:00,257 basehttp 1550 6175748096 "GET /static/images/logo.png HTTP/1.1" 304 0
+INFO 2025-05-28 08:52:00,257 basehttp 1550 6192574464 "GET /static/images/ardurtech.png HTTP/1.1" 304 0
+WARNING 2025-05-28 08:52:00,521 log 1550 6192574464 Not Found: /favicon.ico
+WARNING 2025-05-28 08:52:00,522 basehttp 1550 6192574464 "GET /favicon.ico HTTP/1.1" 404 7606
+INFO 2025-05-28 08:52:11,749 basehttp 1550 6175748096 "POST /login/ HTTP/1.1" 302 0
+INFO 2025-05-28 08:52:11,863 basehttp 1550 6175748096 "GET /dashboard/ HTTP/1.1" 200 90275
+INFO 2025-05-28 08:52:11,882 basehttp 1550 6175748096 "GET /static/images/cropedlogo.png HTTP/1.1" 304 0
+INFO 2025-05-28 08:52:15,412 basehttp 1550 6192574464 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-28 08:52:15,422 log 1550 6175748096 Internal Server Error: /administration/leave-requests/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 7581, in view_leave_requests_admin
+    leave_requests = Leave.objects.all().select_related('user', 'approver').order_by('-created_at')
+NameError: name 'Leave' is not defined
+ERROR 2025-05-28 08:52:15,468 basehttp 1550 6175748096 "GET /administration/leave-requests/ HTTP/1.1" 500 76746
+INFO 2025-05-28 08:52:15,505 basehttp 1550 6175748096 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 08:52:16,971 basehttp 1550 6192574464 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-05-28 08:52:17,113 basehttp 1550 6175748096 "GET /administration/usersessions/ HTTP/1.1" 200 0
+INFO 2025-05-28 08:52:17,148 basehttp 1550 6175748096 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-05-28 09:02:59,745 log 1550 6175748096 Internal Server Error: /administration/usersessions/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 4026, in user_sessions_view
+    return render(request, 'components/sessions/user_sessions_dashboard.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 242, in render
+    nodelist.append(node.render_annotated(context))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/resolvers.py", line 851, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'user_session_detail' not found. 'user_session_detail' is not a valid view function or pattern name.
+ERROR 2025-05-28 09:02:59,746 basehttp 1550 6175748096 "GET /administration/usersessions/ HTTP/1.1" 500 344605
+INFO 2025-05-28 09:03:21,581 basehttp 1550 6175748096 "GET /administration/usersessions/ HTTP/1.1" 200 147845
+INFO 2025-05-28 09:03:44,126 basehttp 1550 6175748096 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:03:44,186 basehttp 1550 6192574464 "GET /administration/usersessions/?date_range=last_7_days&user_filter=7&device_filter=&location_filter=&status_filter= HTTP/1.1" 200 96283
+INFO 2025-05-28 09:03:44,224 basehttp 1550 6192574464 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:03:54,094 basehttp 1550 6192574464 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:03:54,156 basehttp 1550 6175748096 "GET /administration/usersessions/?date_range=last_7_days&user_filter=1&device_filter=&location_filter=&status_filter= HTTP/1.1" 200 113585
+INFO 2025-05-28 09:03:54,192 basehttp 1550 6175748096 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:04:02,241 basehttp 1550 6175748096 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:04:24,377 basehttp 1550 6175748096 "GET /administration/usersessions/?date_range=last_7_days&user_filter=1&device_filter=&location_filter=&status_filter=?type=live_activity HTTP/1.1" 200 113585
+INFO 2025-05-28 09:04:25,607 basehttp 1550 6175748096 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:04:25,722 basehttp 1550 6192574464 "GET /administration/usersessions/?date_range=last_7_days&user_filter=&device_filter=&location_filter=&status_filter= HTTP/1.1" 200 147845
+INFO 2025-05-28 09:04:25,754 basehttp 1550 6192574464 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:04:28,505 basehttp 1550 6192574464 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:04:28,582 basehttp 1550 6175748096 "GET /administration/usersessions/?date_range=last_7_days&user_filter=&device_filter=desktop&location_filter=&status_filter= HTTP/1.1" 200 98738
+INFO 2025-05-28 09:04:28,620 basehttp 1550 6175748096 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:04:54,221 basehttp 1550 6192574464 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:04:54,251 basehttp 1550 6175748096 "GET /administration/usersessions/11/2025-05-27/ HTTP/1.1" 200 0
+INFO 2025-05-28 09:04:54,280 basehttp 1550 6175748096 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:04:58,823 basehttp 1550 6175748096 "GET /administration/usersessions/?date_range=last_7_days&user_filter=&device_filter=desktop&location_filter=&status_filter=?type=live_activity HTTP/1.1" 200 98738
+INFO 2025-05-28 09:05:01,508 basehttp 1550 6175748096 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:05:29,252 basehttp 1550 6192574464 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:05:29,357 basehttp 1550 6175748096 "GET /administration/usersessions/?date_range=last_7_days&user_filter=&device_filter=desktop&location_filter=&status_filter=?type=live_activity HTTP/1.1" 200 98738
+INFO 2025-05-28 09:05:59,344 basehttp 1550 6175748096 "GET /administration/usersessions/?date_range=last_7_days&user_filter=&device_filter=desktop&location_filter=&status_filter=?type=live_activity HTTP/1.1" 200 98738
+INFO 2025-05-28 09:06:29,316 basehttp 1550 6192574464 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:06:29,425 basehttp 1550 6175748096 "GET /administration/usersessions/?date_range=last_7_days&user_filter=&device_filter=desktop&location_filter=&status_filter=?type=live_activity HTTP/1.1" 200 98738
+INFO 2025-05-28 09:06:59,443 basehttp 1550 6175748096 "GET /administration/usersessions/?date_range=last_7_days&user_filter=&device_filter=desktop&location_filter=&status_filter=?type=live_activity HTTP/1.1" 200 98738
+INFO 2025-05-28 09:07:29,333 basehttp 1550 6192574464 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:07:29,443 basehttp 1550 6175748096 "GET /administration/usersessions/?date_range=last_7_days&user_filter=&device_filter=desktop&location_filter=&status_filter=?type=live_activity HTTP/1.1" 200 98738
+INFO 2025-05-28 09:07:41,053 basehttp 1550 6192574464 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:07:41,073 basehttp 1550 6175748096 "GET /administration/usersessions/11/2025-05-27/ HTTP/1.1" 200 21
+INFO 2025-05-28 09:07:41,096 basehttp 1550 6175748096 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:08:39,626 autoreload 1550 8675122944 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py changed, reloading.
+INFO 2025-05-28 09:08:40,030 autoreload 10005 8675122944 Watching for file changes with StatReloader
+ERROR 2025-05-28 09:08:41,817 log 10005 6163427328 Internal Server Error: /administration/usersessions/11/2025-05-27/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'endif'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 4265, in user_session_detail_view
+    return render(request, 'components/sessions/user_session_detail.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 975, in do_if
+    nodelist = parser.parse(("endif",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 861, in do_for
+    nodelist_loop = parser.parse(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 390: 'endif', expected 'empty' or 'endfor'. Did you forget to register or load this tag?
+ERROR 2025-05-28 09:08:41,818 basehttp 10005 6163427328 "GET /administration/usersessions/11/2025-05-27/ HTTP/1.1" 500 346291
+ERROR 2025-05-28 09:11:44,681 log 10005 6163427328 Internal Server Error: /administration/usersessions/11/2025-05-27/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 4265, in user_session_detail_view
+    return render(request, 'components/sessions/user_session_detail.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/resolvers.py", line 851, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'user_sessions_view' not found. 'user_sessions_view' is not a valid view function or pattern name.
+ERROR 2025-05-28 09:11:44,682 basehttp 10005 6163427328 "GET /administration/usersessions/11/2025-05-27/ HTTP/1.1" 500 291368
+ERROR 2025-05-28 09:11:45,653 log 10005 6163427328 Internal Server Error: /administration/usersessions/11/2025-05-27/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 4265, in user_session_detail_view
+    return render(request, 'components/sessions/user_session_detail.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/resolvers.py", line 851, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'user_sessions_view' not found. 'user_sessions_view' is not a valid view function or pattern name.
+ERROR 2025-05-28 09:11:45,653 basehttp 10005 6163427328 "GET /administration/usersessions/11/2025-05-27/ HTTP/1.1" 500 291368
+ERROR 2025-05-28 09:11:59,126 log 10005 6163427328 Internal Server Error: /administration/usersessions/11/2025-05-27/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 4265, in user_session_detail_view
+    return render(request, 'components/sessions/user_session_detail.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/resolvers.py", line 851, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'user_sessions_view' not found. 'user_sessions_view' is not a valid view function or pattern name.
+ERROR 2025-05-28 09:11:59,127 basehttp 10005 6163427328 "GET /administration/usersessions/11/2025-05-27/ HTTP/1.1" 500 291368
+ERROR 2025-05-28 09:12:00,156 log 10005 6163427328 Internal Server Error: /administration/usersessions/11/2025-05-27/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 4265, in user_session_detail_view
+    return render(request, 'components/sessions/user_session_detail.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/resolvers.py", line 851, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'user_sessions_view' not found. 'user_sessions_view' is not a valid view function or pattern name.
+ERROR 2025-05-28 09:12:00,157 basehttp 10005 6163427328 "GET /administration/usersessions/11/2025-05-27/ HTTP/1.1" 500 292020
+ERROR 2025-05-28 09:12:01,190 log 10005 6163427328 Internal Server Error: /administration/usersessions/11/2025-05-27/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 4265, in user_session_detail_view
+    return render(request, 'components/sessions/user_session_detail.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/resolvers.py", line 851, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'user_sessions_view' not found. 'user_sessions_view' is not a valid view function or pattern name.
+ERROR 2025-05-28 09:12:01,191 basehttp 10005 6163427328 "GET /administration/usersessions/11/2025-05-27/ HTTP/1.1" 500 292020
+ERROR 2025-05-28 09:12:21,984 log 10005 6163427328 Internal Server Error: /administration/usersessions/11/2025-05-27/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 4265, in user_session_detail_view
+    return render(request, 'components/sessions/user_session_detail.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/resolvers.py", line 851, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'user_sessions_view' not found. 'user_sessions_view' is not a valid view function or pattern name.
+ERROR 2025-05-28 09:12:21,985 basehttp 10005 6163427328 "GET /administration/usersessions/11/2025-05-27/ HTTP/1.1" 500 292020
+INFO 2025-05-28 09:12:22,864 basehttp 10005 6163427328 "GET /administration/usersessions/11/2025-05-27/ HTTP/1.1" 200 122809
+INFO 2025-05-28 09:12:42,291 basehttp 10005 6163427328 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:13:23,323 basehttp 10005 6163427328 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:14:23,209 basehttp 10005 6163427328 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:15:02,210 basehttp 10005 6163427328 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:15:19,194 basehttp 10005 6180253696 "POST /update-activity/ HTTP/1.1" 200 199
+ERROR 2025-05-28 09:15:19,270 log 10005 6163427328 Internal Server Error: /administration/usersessions/11/2025-05-27/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'endif'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 4265, in user_session_detail_view
+    return render(request, 'components/sessions/user_session_detail.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 975, in do_if
+    nodelist = parser.parse(("endif",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 861, in do_for
+    nodelist_loop = parser.parse(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 515: 'endif', expected 'empty' or 'endfor'. Did you forget to register or load this tag?
+ERROR 2025-05-28 09:15:19,270 basehttp 10005 6163427328 "GET /administration/usersessions/11/2025-05-27/ HTTP/1.1" 500 346470
+INFO 2025-05-28 09:17:21,561 basehttp 10005 6163427328 "GET /administration/usersessions/11/2025-05-27/ HTTP/1.1" 200 143016
+INFO 2025-05-28 09:17:33,212 basehttp 10005 6163427328 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:18:18,476 basehttp 10005 6180253696 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:18:18,511 basehttp 10005 6163427328 "GET /administration/usersessions/11/2025-05-27/ HTTP/1.1" 200 142863
+INFO 2025-05-28 09:18:59,506 basehttp 10005 6163427328 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:19:09,807 basehttp 10005 6180253696 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:19:09,844 basehttp 10005 6163427328 "GET /administration/usersessions/11/2025-05-27/ HTTP/1.1" 200 142783
+INFO 2025-05-28 09:19:25,309 basehttp 10005 6163427328 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:19:33,672 basehttp 10005 6180253696 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:19:33,711 basehttp 10005 6163427328 "GET /administration/usersessions/11/2025-05-27/ HTTP/1.1" 200 142773
+INFO 2025-05-28 09:19:46,196 basehttp 10005 6163427328 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:19:53,940 basehttp 10005 6163427328 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:20:34,307 basehttp 10005 6163427328 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:21:02,730 basehttp 10005 6180253696 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:21:02,833 basehttp 10005 6163427328 "GET /administration/usersessions/ HTTP/1.1" 200 141310
+WARNING 2025-05-28 09:21:02,851 basehttp 10005 6180253696 "GET /static/images/dashboard-icon.svg HTTP/1.1" 404 1834
+INFO 2025-05-28 09:21:02,864 basehttp 10005 6163427328 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:21:08,813 basehttp 10005 6163427328 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:21:16,602 basehttp 10005 6180253696 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:21:16,702 basehttp 10005 6163427328 "GET /administration/usersessions/ HTTP/1.1" 200 141303
+WARNING 2025-05-28 09:21:16,716 basehttp 10005 6163427328 "GET /static/images/dashboard-icon.svg HTTP/1.1" 404 1834
+ERROR 2025-05-28 09:21:20,737 log 10005 6180253696 Internal Server Error: /administration/usersessions/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 136, in __call__
+    response = self.process_response(request, response)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/clickjacking.py", line 34, in process_response
+    response.headers["X-Frame-Options"] = self.get_xframe_options_value(
+AttributeError: 'dict' object has no attribute 'headers'
+ERROR 2025-05-28 09:21:20,738 basehttp 10005 6180253696 "GET /administration/usersessions/?type=live_activity HTTP/1.1" 500 67095
+INFO 2025-05-28 09:21:37,643 basehttp 10005 6180253696 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:21:42,677 basehttp 10005 6180253696 "POST /update-activity/ HTTP/1.1" 200 199
+ERROR 2025-05-28 09:21:47,335 log 10005 6180253696 Internal Server Error: /administration/usersessions/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 136, in __call__
+    response = self.process_response(request, response)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/clickjacking.py", line 34, in process_response
+    response.headers["X-Frame-Options"] = self.get_xframe_options_value(
+AttributeError: 'dict' object has no attribute 'headers'
+ERROR 2025-05-28 09:21:47,335 basehttp 10005 6180253696 "GET /administration/usersessions/?type=live_activity HTTP/1.1" 500 67095
+INFO 2025-05-28 09:21:53,876 basehttp 10005 6163427328 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:21:53,978 basehttp 10005 6180253696 "GET /administration/usersessions/ HTTP/1.1" 200 144195
+WARNING 2025-05-28 09:21:53,993 basehttp 10005 6180253696 "GET /static/images/dashboard-icon.svg HTTP/1.1" 404 1834
+INFO 2025-05-28 09:21:57,589 basehttp 10005 6163427328 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:22:02,252 basehttp 10005 6180253696 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:22:02,351 basehttp 10005 6163427328 "GET /administration/usersessions/ HTTP/1.1" 200 144195
+WARNING 2025-05-28 09:22:02,368 basehttp 10005 6163427328 "GET /static/images/dashboard-icon.svg HTTP/1.1" 404 1834
+INFO 2025-05-28 09:22:05,325 basehttp 10005 6180253696 "POST /update-activity/ HTTP/1.1" 200 199
+ERROR 2025-05-28 09:22:33,365 log 10005 6180253696 Internal Server Error: /administration/usersessions/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 136, in __call__
+    response = self.process_response(request, response)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/clickjacking.py", line 34, in process_response
+    response.headers["X-Frame-Options"] = self.get_xframe_options_value(
+AttributeError: 'dict' object has no attribute 'headers'
+ERROR 2025-05-28 09:22:33,366 basehttp 10005 6180253696 "GET /administration/usersessions/?type=live_activity HTTP/1.1" 500 67095
+ERROR 2025-05-28 09:23:03,358 log 10005 6180253696 Internal Server Error: /administration/usersessions/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 136, in __call__
+    response = self.process_response(request, response)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/clickjacking.py", line 34, in process_response
+    response.headers["X-Frame-Options"] = self.get_xframe_options_value(
+AttributeError: 'dict' object has no attribute 'headers'
+INFO 2025-05-28 09:23:03,358 basehttp 10005 6163427328 "POST /update-activity/ HTTP/1.1" 200 199
+ERROR 2025-05-28 09:23:03,359 basehttp 10005 6180253696 "GET /administration/usersessions/?type=live_activity HTTP/1.1" 500 67095
+ERROR 2025-05-28 09:23:33,348 log 10005 6180253696 Internal Server Error: /administration/usersessions/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 136, in __call__
+    response = self.process_response(request, response)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/clickjacking.py", line 34, in process_response
+    response.headers["X-Frame-Options"] = self.get_xframe_options_value(
+AttributeError: 'dict' object has no attribute 'headers'
+ERROR 2025-05-28 09:23:33,349 basehttp 10005 6180253696 "GET /administration/usersessions/?type=live_activity HTTP/1.1" 500 67095
+ERROR 2025-05-28 09:24:03,358 log 10005 6180253696 Internal Server Error: /administration/usersessions/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 136, in __call__
+    response = self.process_response(request, response)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/clickjacking.py", line 34, in process_response
+    response.headers["X-Frame-Options"] = self.get_xframe_options_value(
+AttributeError: 'dict' object has no attribute 'headers'
+INFO 2025-05-28 09:24:03,358 basehttp 10005 6163427328 "POST /update-activity/ HTTP/1.1" 200 199
+ERROR 2025-05-28 09:24:03,359 basehttp 10005 6180253696 "GET /administration/usersessions/?type=live_activity HTTP/1.1" 500 67095
+ERROR 2025-05-28 09:24:32,625 log 10005 6180253696 Internal Server Error: /administration/usersessions/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 136, in __call__
+    response = self.process_response(request, response)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/clickjacking.py", line 34, in process_response
+    response.headers["X-Frame-Options"] = self.get_xframe_options_value(
+AttributeError: 'dict' object has no attribute 'headers'
+ERROR 2025-05-28 09:24:32,626 basehttp 10005 6180253696 "GET /administration/usersessions/?type=live_activity HTTP/1.1" 500 67095
+INFO 2025-05-28 09:24:33,296 basehttp 10005 6163427328 "POST /update-activity/ HTTP/1.1" 200 199
+ERROR 2025-05-28 09:24:33,448 log 10005 6180253696 Internal Server Error: /administration/usersessions/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'endfor'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 4026, in user_sessions_view
+    return render(request, 'components/sessions/user_sessions_dashboard.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 391: 'endfor', expected 'endblock'. Did you forget to register or load this tag?
+ERROR 2025-05-28 09:24:33,449 basehttp 10005 6180253696 "GET /administration/usersessions/ HTTP/1.1" 500 292282
+ERROR 2025-05-28 09:24:51,836 log 10005 6180253696 Internal Server Error: /administration/usersessions/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'else'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 4026, in user_sessions_view
+    return render(request, 'components/sessions/user_sessions_dashboard.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 861, in do_for
+    nodelist_loop = parser.parse(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 551: 'else', expected 'empty' or 'endfor'. Did you forget to register or load this tag?
+ERROR 2025-05-28 09:24:51,836 basehttp 10005 6180253696 "GET /administration/usersessions/ HTTP/1.1" 500 318127
+ERROR 2025-05-28 09:25:14,824 log 10005 6180253696 Internal Server Error: /administration/usersessions/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'endfor'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 4026, in user_sessions_view
+    return render(request, 'components/sessions/user_sessions_dashboard.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 630: 'endfor', expected 'endblock'. Did you forget to register or load this tag?
+ERROR 2025-05-28 09:25:14,825 basehttp 10005 6180253696 "GET /administration/usersessions/ HTTP/1.1" 500 262689
+ERROR 2025-05-28 09:25:34,204 log 10005 6180253696 Internal Server Error: /administration/usersessions/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'endif'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 4026, in user_sessions_view
+    return render(request, 'components/sessions/user_sessions_dashboard.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 640: 'endif', expected 'endblock'. Did you forget to register or load this tag?
+ERROR 2025-05-28 09:25:34,204 basehttp 10005 6180253696 "GET /administration/usersessions/ HTTP/1.1" 500 259009
+ERROR 2025-05-28 09:25:56,151 log 10005 6180253696 Internal Server Error: /administration/usersessions/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'empty'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 4026, in user_sessions_view
+    return render(request, 'components/sessions/user_sessions_dashboard.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 988: 'empty', expected 'endblock'. Did you forget to register or load this tag?
+ERROR 2025-05-28 09:25:56,151 basehttp 10005 6180253696 "GET /administration/usersessions/ HTTP/1.1" 500 237651
+INFO 2025-05-28 09:26:25,551 basehttp 10005 6180253696 "GET /administration/usersessions/ HTTP/1.1" 200 207184
+ERROR 2025-05-28 09:26:55,848 log 10005 6180253696 Internal Server Error: /administration/usersessions/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 136, in __call__
+    response = self.process_response(request, response)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/clickjacking.py", line 34, in process_response
+    response.headers["X-Frame-Options"] = self.get_xframe_options_value(
+AttributeError: 'dict' object has no attribute 'headers'
+ERROR 2025-05-28 09:26:55,849 basehttp 10005 6180253696 "GET /administration/usersessions/?type=live_activity HTTP/1.1" 500 67095
+ERROR 2025-05-28 09:27:25,856 log 10005 6180253696 Internal Server Error: /administration/usersessions/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 136, in __call__
+    response = self.process_response(request, response)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/clickjacking.py", line 34, in process_response
+    response.headers["X-Frame-Options"] = self.get_xframe_options_value(
+AttributeError: 'dict' object has no attribute 'headers'
+ERROR 2025-05-28 09:27:25,856 basehttp 10005 6180253696 "GET /administration/usersessions/?type=live_activity HTTP/1.1" 500 67095
+INFO 2025-05-28 09:27:25,870 basehttp 10005 6163427328 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:27:27,321 basehttp 10005 6163427328 "POST /update-activity/ HTTP/1.1" 200 199
+ERROR 2025-05-28 09:27:56,354 log 10005 6163427328 Internal Server Error: /administration/usersessions/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 136, in __call__
+    response = self.process_response(request, response)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/clickjacking.py", line 34, in process_response
+    response.headers["X-Frame-Options"] = self.get_xframe_options_value(
+AttributeError: 'dict' object has no attribute 'headers'
+ERROR 2025-05-28 09:27:56,355 basehttp 10005 6163427328 "GET /administration/usersessions/?type=live_activity HTTP/1.1" 500 67095
+ERROR 2025-05-28 09:28:26,332 log 10005 6163427328 Internal Server Error: /administration/usersessions/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 136, in __call__
+    response = self.process_response(request, response)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/clickjacking.py", line 34, in process_response
+    response.headers["X-Frame-Options"] = self.get_xframe_options_value(
+AttributeError: 'dict' object has no attribute 'headers'
+ERROR 2025-05-28 09:28:26,333 basehttp 10005 6163427328 "GET /administration/usersessions/?type=live_activity HTTP/1.1" 500 67095
+INFO 2025-05-28 09:28:26,333 basehttp 10005 6180253696 "POST /update-activity/ HTTP/1.1" 200 199
+ERROR 2025-05-28 09:28:56,329 log 10005 6163427328 Internal Server Error: /administration/usersessions/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 136, in __call__
+    response = self.process_response(request, response)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/clickjacking.py", line 34, in process_response
+    response.headers["X-Frame-Options"] = self.get_xframe_options_value(
+AttributeError: 'dict' object has no attribute 'headers'
+ERROR 2025-05-28 09:28:56,329 basehttp 10005 6163427328 "GET /administration/usersessions/?type=live_activity HTTP/1.1" 500 67095
+INFO 2025-05-28 09:29:26,315 basehttp 10005 6180253696 "POST /update-activity/ HTTP/1.1" 200 199
+ERROR 2025-05-28 09:29:26,328 log 10005 6163427328 Internal Server Error: /administration/usersessions/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 136, in __call__
+    response = self.process_response(request, response)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/clickjacking.py", line 34, in process_response
+    response.headers["X-Frame-Options"] = self.get_xframe_options_value(
+AttributeError: 'dict' object has no attribute 'headers'
+ERROR 2025-05-28 09:29:26,328 basehttp 10005 6163427328 "GET /administration/usersessions/?type=live_activity HTTP/1.1" 500 67095
+ERROR 2025-05-28 09:30:00,325 log 10005 6163427328 Internal Server Error: /administration/usersessions/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 136, in __call__
+    response = self.process_response(request, response)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/clickjacking.py", line 34, in process_response
+    response.headers["X-Frame-Options"] = self.get_xframe_options_value(
+AttributeError: 'dict' object has no attribute 'headers'
+ERROR 2025-05-28 09:30:00,326 basehttp 10005 6163427328 "GET /administration/usersessions/?type=live_activity HTTP/1.1" 500 67095
+INFO 2025-05-28 09:30:26,335 basehttp 10005 6163427328 "POST /update-activity/ HTTP/1.1" 200 199
+ERROR 2025-05-28 09:31:00,340 log 10005 6163427328 Internal Server Error: /administration/usersessions/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 136, in __call__
+    response = self.process_response(request, response)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/clickjacking.py", line 34, in process_response
+    response.headers["X-Frame-Options"] = self.get_xframe_options_value(
+AttributeError: 'dict' object has no attribute 'headers'
+ERROR 2025-05-28 09:31:00,340 basehttp 10005 6163427328 "GET /administration/usersessions/?type=live_activity HTTP/1.1" 500 67095
+INFO 2025-05-28 09:31:23,477 basehttp 10005 6163427328 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:31:26,303 basehttp 10005 6180253696 "POST /update-activity/ HTTP/1.1" 200 199
+ERROR 2025-05-28 09:31:26,315 log 10005 6163427328 Internal Server Error: /administration/usersessions/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 136, in __call__
+    response = self.process_response(request, response)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/clickjacking.py", line 34, in process_response
+    response.headers["X-Frame-Options"] = self.get_xframe_options_value(
+AttributeError: 'dict' object has no attribute 'headers'
+ERROR 2025-05-28 09:31:26,315 basehttp 10005 6163427328 "GET /administration/usersessions/?type=live_activity HTTP/1.1" 500 67095
+ERROR 2025-05-28 09:31:56,335 log 10005 6163427328 Internal Server Error: /administration/usersessions/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 136, in __call__
+    response = self.process_response(request, response)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/clickjacking.py", line 34, in process_response
+    response.headers["X-Frame-Options"] = self.get_xframe_options_value(
+AttributeError: 'dict' object has no attribute 'headers'
+ERROR 2025-05-28 09:31:56,336 basehttp 10005 6163427328 "GET /administration/usersessions/?type=live_activity HTTP/1.1" 500 67095
+INFO 2025-05-28 09:32:26,325 basehttp 10005 6163427328 "POST /update-activity/ HTTP/1.1" 200 199
+ERROR 2025-05-28 09:33:00,344 log 10005 6163427328 Internal Server Error: /administration/usersessions/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 136, in __call__
+    response = self.process_response(request, response)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/clickjacking.py", line 34, in process_response
+    response.headers["X-Frame-Options"] = self.get_xframe_options_value(
+AttributeError: 'dict' object has no attribute 'headers'
+ERROR 2025-05-28 09:33:00,345 basehttp 10005 6163427328 "GET /administration/usersessions/?type=live_activity HTTP/1.1" 500 67095
+INFO 2025-05-28 09:33:12,349 basehttp 10005 6180253696 "POST /update-activity/ HTTP/1.1" 200 199
+ERROR 2025-05-28 09:33:12,503 log 10005 6163427328 Internal Server Error: /administration/usersessions/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'endfor'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 4026, in user_sessions_view
+    return render(request, 'components/sessions/user_sessions_dashboard.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 891: 'endfor', expected 'endblock'. Did you forget to register or load this tag?
+ERROR 2025-05-28 09:33:12,503 basehttp 10005 6163427328 "GET /administration/usersessions/ HTTP/1.1" 500 263420
+INFO 2025-05-28 09:33:12,532 basehttp 10005 6163427328 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:33:12,534 basehttp 10005 6163427328 - Broken pipe from ('127.0.0.1', 49696)
+ERROR 2025-05-28 09:33:57,132 log 10005 6180253696 Internal Server Error: /administration/usersessions/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'empty'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 4026, in user_sessions_view
+    return render(request, 'components/sessions/user_sessions_dashboard.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 1246: 'empty', expected 'endblock'. Did you forget to register or load this tag?
+ERROR 2025-05-28 09:33:57,133 basehttp 10005 6180253696 "GET /administration/usersessions/ HTTP/1.1" 500 238747
+INFO 2025-05-28 09:34:18,120 basehttp 10005 6180253696 "GET /administration/usersessions/ HTTP/1.1" 200 266698
+INFO 2025-05-28 09:34:43,753 basehttp 10005 6163427328 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:34:43,847 basehttp 10005 6180253696 "GET /administration/usersessions/?export=csv HTTP/1.1" 200 266698
+INFO 2025-05-28 09:34:43,881 basehttp 10005 6180253696 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:34:47,385 basehttp 10005 6163427328 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:34:47,490 basehttp 10005 6180253696 "GET /administration/usersessions/?export=excel HTTP/1.1" 200 266698
+INFO 2025-05-28 09:34:47,527 basehttp 10005 6180253696 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:34:58,053 basehttp 10005 6180253696 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:35:10,449 basehttp 10005 6163427328 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:35:10,527 basehttp 10005 6180253696 "GET /administration/usersessions/?export=excel HTTP/1.1" 200 266618
+INFO 2025-05-28 09:35:14,427 basehttp 10005 6180253696 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:35:19,333 basehttp 10005 6180253696 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:35:24,557 basehttp 10005 6180253696 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:35:29,874 basehttp 10005 6163427328 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:35:30,014 basehttp 10005 6180253696 "GET /administration/usersessions/?export=excel HTTP/1.1" 200 266539
+INFO 2025-05-28 09:35:38,069 basehttp 10005 6180253696 "GET /administration/usersessions/?export=excel?type=live_activity HTTP/1.1" 200 266539
+INFO 2025-05-28 09:35:46,358 basehttp 10005 6180253696 "GET /administration/usersessions/?export=excel?type=live_activity HTTP/1.1" 200 266539
+INFO 2025-05-28 09:35:46,724 basehttp 10005 6180253696 "GET /administration/usersessions/?export=excel?type=live_activity HTTP/1.1" 200 266539
+INFO 2025-05-28 09:35:57,109 basehttp 10005 6180253696 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:36:00,410 basehttp 10005 6180253696 "GET /administration/usersessions/?export=excel?type=live_activity HTTP/1.1" 200 266539
+INFO 2025-05-28 09:36:30,316 basehttp 10005 6163427328 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:36:30,432 basehttp 10005 6180253696 "GET /administration/usersessions/?export=excel?type=live_activity HTTP/1.1" 200 266539
+INFO 2025-05-28 09:37:00,467 basehttp 10005 6180253696 "GET /administration/usersessions/?export=excel?type=live_activity HTTP/1.1" 200 266539
+INFO 2025-05-28 09:37:03,908 basehttp 10005 6163427328 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:37:04,014 basehttp 10005 6180253696 "GET /administration/usersessions/?export=excel HTTP/1.1" 200 268768
+INFO 2025-05-28 09:37:25,050 basehttp 10005 6180253696 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:37:34,437 basehttp 10005 6180253696 "GET /administration/usersessions/?export=excel?type=live_activity HTTP/1.1" 200 268768
+INFO 2025-05-28 09:38:04,459 basehttp 10005 6180253696 "GET /administration/usersessions/?export=excel?type=live_activity HTTP/1.1" 200 268768
+INFO 2025-05-28 09:38:05,344 basehttp 10005 6180253696 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:38:34,430 basehttp 10005 6180253696 "GET /administration/usersessions/?export=excel?type=live_activity HTTP/1.1" 200 268837
+INFO 2025-05-28 09:38:35,941 basehttp 10005 6163427328 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:38:36,072 basehttp 10005 6180253696 "GET /administration/usersessions/?export=excel HTTP/1.1" 200 268837
+INFO 2025-05-28 09:38:41,115 basehttp 10005 6180253696 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:39:07,419 basehttp 10005 6180253696 "GET /administration/usersessions/?export=excel?type=live_activity HTTP/1.1" 200 268837
+INFO 2025-05-28 09:39:37,341 basehttp 10005 6163427328 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:39:37,466 basehttp 10005 6180253696 "GET /administration/usersessions/?export=excel?type=live_activity HTTP/1.1" 200 268837
+INFO 2025-05-28 09:40:07,469 basehttp 10005 6180253696 "GET /administration/usersessions/?export=excel?type=live_activity HTTP/1.1" 200 268837
+INFO 2025-05-28 09:40:37,329 basehttp 10005 6163427328 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:40:37,416 basehttp 10005 6180253696 "GET /administration/usersessions/?export=excel?type=live_activity HTTP/1.1" 200 268837
+INFO 2025-05-28 09:41:02,770 basehttp 10005 6163427328 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:41:02,912 basehttp 10005 6180253696 "GET /administration/usersessions/?export=excel HTTP/1.1" 200 366895
+INFO 2025-05-28 09:41:15,153 basehttp 10005 6180253696 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:41:33,485 basehttp 10005 6180253696 "GET /administration/usersessions/?export=excel?type=live_activity HTTP/1.1" 200 366895
+INFO 2025-05-28 09:42:03,336 basehttp 10005 6163427328 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:42:03,414 basehttp 10005 6180253696 "GET /administration/usersessions/?export=excel?type=live_activity HTTP/1.1" 200 366895
+INFO 2025-05-28 09:42:33,485 basehttp 10005 6180253696 "GET /administration/usersessions/?export=excel?type=live_activity HTTP/1.1" 200 366895
+INFO 2025-05-28 09:43:03,339 basehttp 10005 6163427328 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:43:03,457 basehttp 10005 6180253696 "GET /administration/usersessions/?export=excel?type=live_activity HTTP/1.1" 200 366895
+INFO 2025-05-28 09:43:33,442 basehttp 10005 6180253696 "GET /administration/usersessions/?export=excel?type=live_activity HTTP/1.1" 200 366895
+INFO 2025-05-28 09:43:50,398 basehttp 10005 6163427328 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:43:50,509 basehttp 10005 6180253696 "GET /administration/usersessions/?export=excel HTTP/1.1" 200 366893
+INFO 2025-05-28 09:44:20,982 basehttp 10005 6180253696 "GET /administration/usersessions/?export=excel?type=live_activity HTTP/1.1" 200 366893
+WARNING 2025-05-28 09:44:29,828 middleware 10005 6163427328 Rapid requests detected for user adminHarshal, tab 85c44eb4-944e-4fbd-992b-375795d274e1
+INFO 2025-05-28 09:44:29,829 basehttp 10005 6180253696 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:44:29,919 basehttp 10005 6163427328 "GET /administration/usersessions/?date_range=today&user=1&user=6&user=11&user=12&user=13&device_type=&location= HTTP/1.1" 200 229238
+INFO 2025-05-28 09:44:29,956 basehttp 10005 6163427328 "POST /update-activity/ HTTP/1.1" 200 199
+INFO 2025-05-28 09:44:48,174 basehttp 10005 6163427328 "POST /update-activity/ HTTP/1.1" 200 199
+WARNING 2025-05-28 09:44:48,177 middleware 10005 6180253696 Rapid requests detected for user adminHarshal, tab 85c44eb4-944e-4fbd-992b-375795d274e1
+INFO 2025-05-28 09:44:48,290 basehttp 10005 6180253696 "GET /administration/usersessions/?date_range=last_7_days&user=1&user=6&device_type=&location= HTTP/1.1" 200 366893
+INFO 2025-05-28 09:44:48,326 basehttp 10005 6180253696 "POST /update-activity/ HTTP/1.1" 200 199
+WARNING 2025-05-28 09:44:59,988 middleware 10005 6180253696 Rapid requests detected for user adminHarshal, tab 85c44eb4-944e-4fbd-992b-375795d274e1
+INFO 2025-05-28 09:45:00,132 basehttp 10005 6180253696 "GET /administration/usersessions/?date_range=last_7_days&user=1&user=6&device_type=&location=?type=live_activity HTTP/1.1" 200 366893
+INFO 2025-05-28 09:45:06,255 basehttp 10005 6180253696 "POST /update-activity/ HTTP/1.1" 200 199
