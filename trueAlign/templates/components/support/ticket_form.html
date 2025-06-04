@@ -1,217 +1,471 @@
-{% extends 'base.html' %}
-
-{% block title %}{{ title }}{% endblock %}
-
-{% block content %}
+{% extends 'base.html' %} {% block title %}{{ title }}{% endblock %} {% block
+content %}
 <div class="max-w-3xl mx-auto py-8 px-4">
-  <div class="bg-white shadow-2xl rounded-2xl overflow-hidden border border-gray-100">
-    <!-- Header with back button and title -->
-    <div class="bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-5 border-b flex flex-col sm:flex-row items-center justify-between gap-4">
-      <a href="{% url 'aps_support:support_dashboard' %}" 
-         class="flex items-center group text-blue-700 hover:text-blue-900 transition font-semibold px-3 py-2 rounded-lg hover:bg-blue-200/40">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 group-hover:-translate-x-1 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-        </svg>
-        <span class="text-sm">Dashboard</span>
-      </a>
-      <h1 class="text-2xl font-extrabold text-blue-900 text-center flex-1">{{ title }}</h1>
-      <div class="hidden sm:block w-32"></div>
-    </div>
-    
-    <div class="p-6">
-      <!-- Form status indicator -->
-      {% if ticket %}
-        <div class="mb-6 flex items-center bg-blue-100 text-blue-800 p-4 rounded-lg shadow">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span class="font-semibold">Updating ticket <span class="text-blue-600">#{{ ticket.id }}</span></span>
+    <div
+        class="bg-white shadow-2xl rounded-2xl overflow-hidden border border-gray-100"
+    >
+        <!-- Header with back button and title -->
+        <div
+            class="bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-5 border-b flex flex-col sm:flex-row items-center justify-between gap-4"
+        >
+            <a
+                href="{% url 'aps_support:support_dashboard' %}"
+                class="flex items-center group text-blue-700 hover:text-blue-900 transition font-semibold px-3 py-2 rounded-lg hover:bg-blue-200/40"
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-5 w-5 mr-2 group-hover:-translate-x-1 transition-transform duration-200"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                    />
+                </svg>
+                <span class="text-sm">Dashboard</span>
+            </a>
+            <h1
+                class="text-2xl font-extrabold text-blue-900 text-center flex-1"
+            >
+                {{ title }}
+            </h1>
+            <div class="hidden sm:block w-32"></div>
         </div>
-      {% else %}
-        <div class="mb-8 text-center">
-          <h2 class="text-2xl font-bold text-blue-900">New Support Request</h2>
-          <p class="text-gray-600 mt-2">Fill out the form to create a support ticket. Our team will respond promptly.</p>
-        </div>
-      {% endif %}
-      
-      <form method="post" enctype="multipart/form-data" class="space-y-8" autocomplete="off">
-        {% csrf_token %}
-        
-        {% if form.non_field_errors %}
-          <div class="bg-red-100 border-l-4 border-red-500 text-red-800 p-4 mb-6 rounded-lg shadow">
-            {{ form.non_field_errors }}
-          </div>
-        {% endif %}
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <!-- Subject field -->
-          <div class="md:col-span-2">
-            <label for="{{ form.subject.id_for_label }}" class="block text-base font-semibold text-gray-800 mb-2">
-              Subject <span class="text-red-500">*</span>
-            </label>
-            {{ form.subject.errors }}
-            <input type="text" name="{{ form.subject.name }}" id="{{ form.subject.id_for_label }}" 
-                  value="{{ form.subject.value|default:'' }}" 
-                  class="w-full rounded-xl border-gray-300 shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-400 focus:ring-opacity-40 transition duration-200 px-4 py-2 text-gray-900"
-                  placeholder="Briefly summarize your issue" maxlength="120" required>
-          </div>
-          
-          <!-- Issue Type field -->
-          <div>
-            <label for="{{ form.issue_type.id_for_label }}" class="block text-base font-semibold text-gray-800 mb-2">
-              Issue Type <span class="text-red-500">*</span>
-            </label>
-            {{ form.issue_type.errors }}
-            <select name="{{ form.issue_type.name }}" id="{{ form.issue_type.id_for_label }}" 
-                    class="w-full rounded-xl border-gray-300 shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-400 focus:ring-opacity-40 transition duration-200 px-3 py-2 text-gray-900"
-                    required>
-              <option value="" disabled {% if not form.issue_type.value %}selected{% endif %}>Select issue type...</option>
-              {% for value, text in form.issue_type.field.choices %}
-                <option value="{{ value }}" {% if form.issue_type.value == value %}selected{% endif %}>{{ text }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          
-          {% if form.priority %}
-          <!-- Priority field (only visible to admins and HR) -->
-          <div>
-            <label for="{{ form.priority.id_for_label }}" class="block text-base font-semibold text-gray-800 mb-2">
-              Priority
-            </label>
-            {{ form.priority.errors }}
-            <select name="{{ form.priority.name }}" id="{{ form.priority.id_for_label }}" 
-                    class="w-full rounded-xl border-gray-300 shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-400 focus:ring-opacity-40 transition duration-200 px-3 py-2 text-gray-900">
-              {% for value, text in form.priority.field.choices %}
-                <option value="{{ value }}" {% if form.priority.value == value %}selected{% endif %}>{{ text }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          {% endif %}
-          
-          {% if form.assigned_group %}
-          <!-- Assigned Group field (only visible to admins and HR) -->
-          <div class="{% if not form.priority %}md:col-span-2{% endif %}">
-            <label for="{{ form.assigned_group.id_for_label }}" class="block text-base font-semibold text-gray-800 mb-2">
-              Assigned Group
-            </label>
-            {{ form.assigned_group.errors }}
-            <select name="{{ form.assigned_group.name }}" id="{{ form.assigned_group.id_for_label }}" 
-                    class="w-full rounded-xl border-gray-300 shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-400 focus:ring-opacity-40 transition duration-200 px-3 py-2 text-gray-900">
-              {% for value, text in form.assigned_group.field.choices %}
-                <option value="{{ value }}" {% if form.assigned_group.value == value %}selected{% endif %}>{{ text }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          {% endif %}
-          
-          {% if form.assigned_to_user %}
-          <!-- Assigned User field (only visible to admins and HR) -->
-          <div class="md:col-span-2">
-            <label for="{{ form.assigned_to_user.id_for_label }}" class="block text-base font-semibold text-gray-800 mb-2">
-              Assigned To
-            </label>
-            {{ form.assigned_to_user.errors }}
-            <select name="{{ form.assigned_to_user.name }}" id="{{ form.assigned_to_user.id_for_label }}" 
-                    class="w-full rounded-xl border-gray-300 shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-400 focus:ring-opacity-40 transition duration-200 px-3 py-2 text-gray-900">
-              <option value="">Select an assignee...</option>
-              {% for value, text in form.assigned_to_user.field.choices %}
-                <option value="{{ value }}" {% if form.assigned_to_user.value == value %}selected{% endif %}>{{ text }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          {% endif %}
-        </div>
-          
-        <!-- Description field -->
-        <div>
-          <label for="{{ form.description.id_for_label }}" class="block text-base font-semibold text-gray-800 mb-2">
-            Description <span class="text-red-500">*</span>
-          </label>
-          {{ form.description.errors }}
-          <textarea name="{{ form.description.name }}" id="{{ form.description.id_for_label }}" rows="7"
-                    class="w-full rounded-xl border-gray-300 shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-400 focus:ring-opacity-40 transition duration-200 px-4 py-2 text-gray-900 resize-vertical"
-                    placeholder="Describe your issue in detail..." required>{{ form.description.value|default:'' }}</textarea>
-        </div>
-        
-        <!-- File attachments -->
-        <div class="bg-blue-50 p-6 rounded-2xl shadow-inner">
-          <div class="flex items-center mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-            </svg>
-            <label for="id_attachments" class="text-base font-semibold text-blue-900">
-              Attachments
-            </label>
-          </div>
-          <div class="border-2 border-dashed border-blue-200 rounded-2xl px-6 pt-5 pb-6 flex justify-center hover:border-blue-400 transition-colors duration-200">
-            <div class="space-y-2 text-center">
-              <svg class="mx-auto h-12 w-12 text-blue-300" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" 
-                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-              </svg>
-              <div class="flex text-sm text-blue-700 justify-center">
-                <label for="id_attachments" class="relative cursor-pointer bg-white rounded-md font-medium text-blue-700 hover:text-blue-900 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-400 transition-colors duration-200 px-2 py-1">
-                  <span>Upload files</span>
-                  <input id="id_attachments" name="attachments" type="file" multiple class="sr-only">
-                </label>
-                <span class="pl-1">or drag &amp; drop</span>
-              </div>
-              <p class="text-xs text-blue-500">
-                PDF, DOC, DOCX, JPG, PNG (max 10MB each)
-              </p>
+
+        <div class="p-6">
+            <!-- Form status indicator -->
+            {% if ticket %}
+            <div
+                class="mb-6 flex items-center bg-blue-100 text-blue-800 p-4 rounded-lg shadow"
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-6 w-6 mr-3"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                </svg>
+                <span class="font-semibold"
+                    >Updating ticket
+                    <span class="text-blue-600">#{{ ticket.id }}</span></span
+                >
             </div>
-          </div>
-        </div>
-          
-        <!-- Current attachments display (for update view) -->
-        {% if ticket and ticket.attachments.all %}
-          <div class="border-t pt-6 mt-6">
-            <h3 class="font-semibold text-blue-900 mb-4 flex items-center text-lg">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              Current Attachments
-            </h3>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {% for attachment in ticket.attachments.all %}
-                <div class="flex items-center justify-between bg-blue-50 p-4 rounded-lg hover:bg-blue-100 transition duration-200">
-                  <div class="flex items-center truncate">
-                    <svg class="h-5 w-5 text-blue-400 mr-3 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                    </svg>
-                    <span class="text-sm truncate font-medium">{{ attachment.file.name|slice:"10:" }}</span>
-                  </div>
-                  <a href="{{ attachment.file.url }}" target="_blank" 
-                     class="text-blue-700 hover:text-blue-900 text-sm flex items-center ml-3 flex-shrink-0 bg-white px-3 py-1 rounded-md shadow hover:shadow-md transition duration-200">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                    Download
-                  </a>
+            {% else %}
+            <div class="mb-8 text-center">
+                <h2 class="text-2xl font-bold text-blue-900">
+                    New Support Request
+                </h2>
+                <p class="text-gray-600 mt-2">
+                    Fill out the form to create a support ticket. Our team will
+                    respond promptly.
+                </p>
+            </div>
+            {% endif %}
+
+            <form
+                method="post"
+                enctype="multipart/form-data"
+                class="space-y-8"
+                autocomplete="off"
+            >
+                {% csrf_token %} {% if form.non_field_errors %}
+                <div
+                    class="bg-red-100 border-l-4 border-red-500 text-red-800 p-4 mb-6 rounded-lg shadow"
+                >
+                    {{ form.non_field_errors }}
                 </div>
-              {% endfor %}
-            </div>
-          </div>
-        {% endif %}
-        
-        <div class="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4 pt-6 border-t">
-          <a href="{% url 'aps_support:ticket_list' %}" 
-             class="inline-flex justify-center items-center px-6 py-2.5 border border-gray-300 rounded-xl shadow text-sm font-medium text-gray-700 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 transition duration-200">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-            Cancel
-          </a>
-          <button type="submit" 
-                  class="inline-flex justify-center items-center px-6 py-2.5 border border-transparent rounded-xl shadow text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 transition duration-200">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg>
-            {% if ticket %}Update Ticket{% else %}Create Ticket{% endif %}
-          </button>
+                {% endif %}
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Subject field -->
+                    <div class="md:col-span-2">
+                        <label
+                            for="{{ form.subject.id_for_label }}"
+                            class="block text-base font-semibold text-gray-800 mb-2"
+                        >
+                            Subject <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.subject.errors }}
+                        <input
+                            type="text"
+                            name="{{ form.subject.name }}"
+                            id="{{ form.subject.id_for_label }}"
+                            value="{{ form.subject.value|default:'' }}"
+                            class="w-full rounded-xl border-gray-300 shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-400 focus:ring-opacity-40 transition duration-200 px-4 py-2 text-gray-900"
+                            placeholder="Briefly summarize your issue"
+                            maxlength="120"
+                            required
+                        />
+                    </div>
+
+                    <!-- Issue Type field -->
+                    <div>
+                        <label
+                            for="{{ form.issue_type.id_for_label }}"
+                            class="block text-base font-semibold text-gray-800 mb-2"
+                        >
+                            Issue Type <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.issue_type.errors }}
+                        <select
+                            name="{{ form.issue_type.name }}"
+                            id="{{ form.issue_type.id_for_label }}"
+                            class="w-full rounded-xl border-gray-300 shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-400 focus:ring-opacity-40 transition duration-200 px-3 py-2 text-gray-900"
+                            required
+                        >
+                            <option
+                                value=""
+                                disabled
+                                {%
+                                if
+                                not
+                                form.issue_type.value
+                                %}selected{%
+                                endif
+                                %}
+                            >
+                                Select issue type...
+                            </option>
+                            {% for value, text in form.issue_type.field.choices
+                            %}
+                            <option
+                                value="{{ value }}"
+                                {%
+                                if
+                                form.issue_type.value=""
+                                ="value"
+                                %}selected{%
+                                endif
+                                %}
+                            >
+                                {{ text }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    {% if form.priority %}
+                    <!-- Priority field (only visible to admins and HR) -->
+                    <div>
+                        <label
+                            for="{{ form.priority.id_for_label }}"
+                            class="block text-base font-semibold text-gray-800 mb-2"
+                        >
+                            Priority
+                        </label>
+                        {{ form.priority.errors }}
+                        <select
+                            name="{{ form.priority.name }}"
+                            id="{{ form.priority.id_for_label }}"
+                            class="w-full rounded-xl border-gray-300 shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-400 focus:ring-opacity-40 transition duration-200 px-3 py-2 text-gray-900"
+                        >
+                            {% for value, text in form.priority.field.choices %}
+                            <option
+                                value="{{ value }}"
+                                {%
+                                if
+                                form.priority.value=""
+                                ="value"
+                                %}selected{%
+                                endif
+                                %}
+                            >
+                                {{ text }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %} {% if form.assigned_group %}
+                    <!-- Assigned Group field (only visible to admins and HR) -->
+                    <div
+                        class="{% if not form.priority %}md:col-span-2{% endif %}"
+                    >
+                        <label
+                            for="{{ form.assigned_group.id_for_label }}"
+                            class="block text-base font-semibold text-gray-800 mb-2"
+                        >
+                            Assigned Group
+                        </label>
+                        {{ form.assigned_group.errors }}
+                        <select
+                            name="{{ form.assigned_group.name }}"
+                            id="{{ form.assigned_group.id_for_label }}"
+                            class="w-full rounded-xl border-gray-300 shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-400 focus:ring-opacity-40 transition duration-200 px-3 py-2 text-gray-900"
+                        >
+                            {% for value, text in
+                            form.assigned_group.field.choices %}
+                            <option
+                                value="{{ value }}"
+                                {%
+                                if
+                                form.assigned_group.value=""
+                                ="value"
+                                %}selected{%
+                                endif
+                                %}
+                            >
+                                {{ text }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %} {% if form.assigned_to_user %}
+                    <!-- Assigned User field (only visible to admins and HR) -->
+                    <div class="md:col-span-2">
+                        <label
+                            for="{{ form.assigned_to_user.id_for_label }}"
+                            class="block text-base font-semibold text-gray-800 mb-2"
+                        >
+                            Assigned To
+                        </label>
+                        {{ form.assigned_to_user.errors }}
+                        <select
+                            name="{{ form.assigned_to_user.name }}"
+                            id="{{ form.assigned_to_user.id_for_label }}"
+                            class="w-full rounded-xl border-gray-300 shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-400 focus:ring-opacity-40 transition duration-200 px-3 py-2 text-gray-900"
+                        >
+                            <option value="">Select an assignee...</option>
+                            {% for value, text in
+                            form.assigned_to_user.field.choices %}
+                            <option
+                                value="{{ value }}"
+                                {%
+                                if
+                                form.assigned_to_user.value=""
+                                ="value"
+                                %}selected{%
+                                endif
+                                %}
+                            >
+                                {{ text }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Description field -->
+                <div>
+                    <label
+                        for="{{ form.description.id_for_label }}"
+                        class="block text-base font-semibold text-gray-800 mb-2"
+                    >
+                        Description <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.description.errors }}
+                    <textarea
+                        name="{{ form.description.name }}"
+                        id="{{ form.description.id_for_label }}"
+                        rows="7"
+                        class="w-full rounded-xl border-gray-300 shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-400 focus:ring-opacity-40 transition duration-200 px-4 py-2 text-gray-900 resize-vertical"
+                        placeholder="Describe your issue in detail..."
+                        required
+                    >
+{{ form.description.value|default:'' }}</textarea
+                    >
+                </div>
+
+                <!-- File attachments -->
+                <div class="bg-blue-50 p-6 rounded-2xl shadow-inner">
+                    <div class="flex items-center mb-4">
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-6 w-6 text-blue-400 mr-2"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
+                            />
+                        </svg>
+                        <label
+                            for="id_attachments"
+                            class="text-base font-semibold text-blue-900"
+                        >
+                            Attachments
+                        </label>
+                    </div>
+                    <div
+                        class="border-2 border-dashed border-blue-200 rounded-2xl px-6 pt-5 pb-6 flex justify-center hover:border-blue-400 transition-colors duration-200"
+                    >
+                        <div class="space-y-2 text-center">
+                            <svg
+                                class="mx-auto h-12 w-12 text-blue-300"
+                                stroke="currentColor"
+                                fill="none"
+                                viewBox="0 0 48 48"
+                            >
+                                <path
+                                    d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                />
+                            </svg>
+                            <div
+                                class="flex text-sm text-blue-700 justify-center"
+                            >
+                                <label
+                                    for="id_attachments"
+                                    class="relative cursor-pointer bg-white rounded-md font-medium text-blue-700 hover:text-blue-900 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-400 transition-colors duration-200 px-2 py-1"
+                                >
+                                    <span>Upload files</span>
+                                    <input
+                                        id="id_attachments"
+                                        name="attachments"
+                                        type="file"
+                                        multiple
+                                        class="sr-only"
+                                    />
+                                </label>
+                                <span class="pl-1">or drag &amp; drop</span>
+                            </div>
+                            <p class="text-xs text-blue-500">
+                                PDF, DOC, DOCX, JPG, PNG (max 10MB each)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Current attachments display (for update view) -->
+                {% if ticket and ticket.attachments.all %}
+                <div class="border-t pt-6 mt-6">
+                    <h3
+                        class="font-semibold text-blue-900 mb-4 flex items-center text-lg"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-5 w-5 text-blue-400 mr-2"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                            />
+                        </svg>
+                        Current Attachments
+                    </h3>
+                    <div
+                        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+                    >
+                        {% for attachment in ticket.attachments.all %}
+                        <div
+                            class="flex items-center justify-between bg-blue-50 p-4 rounded-lg hover:bg-blue-100 transition duration-200"
+                        >
+                            <div class="flex items-center truncate">
+                                <svg
+                                    class="h-5 w-5 text-blue-400 mr-3 flex-shrink-0"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
+                                    />
+                                </svg>
+                                <span class="text-sm truncate font-medium"
+                                    >{{ attachment.file.name|slice:"10:"
+                                    }}</span
+                                >
+                            </div>
+                            <a
+                                href="{{ attachment.file.url }}"
+                                target="_blank"
+                                class="text-blue-700 hover:text-blue-900 text-sm flex items-center ml-3 flex-shrink-0 bg-white px-3 py-1 rounded-md shadow hover:shadow-md transition duration-200"
+                            >
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    class="h-4 w-4 mr-1"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                                    />
+                                </svg>
+                                Download
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <div
+                    class="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4 pt-6 border-t"
+                >
+                    <a
+                        href="{% url 'aps_support:ticket_list' %}"
+                        class="inline-flex justify-center items-center px-6 py-2.5 border border-gray-300 rounded-xl shadow text-sm font-medium text-gray-700 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 transition duration-200"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-4 w-4 mr-2"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"
+                            />
+                        </svg>
+                        Cancel
+                    </a>
+                    <button
+                        type="submit"
+                        class="inline-flex justify-center items-center px-6 py-2.5 border border-transparent rounded-xl shadow text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 transition duration-200"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-4 w-4 mr-2"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M5 13l4 4L19 7"
+                            />
+                        </svg>
+                        {% if ticket %}Update Ticket{% else %}Create Ticket{%
+                        endif %}
+                    </button>
+                </div>
+            </form>
         </div>
-      </form>
     </div>
-  </div>
 </div>
 {% endblock %}

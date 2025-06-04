@@ -3003,34 +3003,17 @@ class Attendance(models.Model):
 #             'yearly_totals': yearly_totals
 #         }
 
+
 '''-------------------------------------------- SUPPORT AREA ---------------------------------------'''
 import uuid
 from django.db import models
-from django.utils import timezone
+from django.utils.timezone import now
+from django.contrib.auth import get_user_model
+
+from django.db import models
+from django.utils.timezone import now
+import uuid
 from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError
-from django.contrib.contenttypes.models import ContentType
-from django.contrib.contenttypes.fields import GenericForeignKey
-from django.db.models.signals import post_save, pre_save
-from django.dispatch import receiver
-
-
-class SupportTicketManager(models.Manager):
-    """Custom manager for Support model with soft delete support"""
-
-    def get_queryset(self):
-        """Return only non-deleted tickets by default"""
-        return super().get_queryset().filter(is_deleted=False)
-
-    def with_deleted(self):
-        """Return all tickets including deleted ones"""
-        return super().get_queryset()
-
-    def deleted_only(self):
-        """Return only deleted tickets"""
-        return super().get_queryset().filter(is_deleted=True)
-
-
 class Support(models.Model):
     class Status(models.TextChoices):
         NEW = 'New', 'New'
@@ -3041,7 +3024,6 @@ class Support(models.Model):
         ON_HOLD = 'On Hold', 'On Hold'
         RESOLVED = 'Resolved', 'Resolved'
         CLOSED = 'Closed', 'Closed'
-        REOPENED = 'Reopened', 'Reopened'
 
     class Priority(models.TextChoices):
         LOW = 'Low', 'Low'
@@ -3063,14 +3045,11 @@ class Support(models.Model):
     class AssignedGroup(models.TextChoices):
         HR = 'HR', 'HR'
         ADMIN = 'Admin', 'Admin'
-        IT_SUPPORT = 'IT Support', 'IT Support'
-        MANAGEMENT = 'Management', 'Management'
 
     # SLA Status choices
     class SLAStatus(models.TextChoices):
         WITHIN_SLA = 'Within SLA', 'Within SLA'
         BREACHED = 'Breached', 'Breached'
-        PAUSED = 'Paused', 'Paused'
 
     # Core Fields
     ticket_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
@@ -3091,7 +3070,7 @@ class Support(models.Model):
         related_name='assigned_tickets'
     )
 
-    # CC Users
+    # CC Users (NEW FIELD)
     cc_users = models.ManyToManyField(
         User,
         blank=True,
@@ -3100,7 +3079,7 @@ class Support(models.Model):
     )
 
     # Timestamps
-    created_at = models.DateTimeField(default=timezone.now)
+    created_at = models.DateTimeField(default=now)
     updated_at = models.DateTimeField(auto_now=True)
     resolved_at = models.DateTimeField(null=True, blank=True)
     due_date = models.DateTimeField(null=True, blank=True)
@@ -3130,9 +3109,6 @@ class Support(models.Model):
         blank=True,
         help_text="Status of SLA compliance"
     )
-    sla_paused_at = models.DateTimeField(null=True, blank=True, help_text="When SLA was paused")
-    sla_paused_duration = models.DurationField(default=timezone.timedelta(0), help_text="Total time SLA was paused")
-
     resolution_summary = models.TextField(blank=True)
     resolution_time = models.DurationField(null=True, blank=True)
 
@@ -3142,8 +3118,6 @@ class Support(models.Model):
         blank=True,
         help_text="Time taken for first response"
     )
-    first_response_at = models.DateTimeField(null=True, blank=True, help_text="When first response was provided")
-    closed_at = models.DateTimeField(null=True, blank=True)
     time_to_close = models.DurationField(
         null=True,
         blank=True,
@@ -3155,44 +3129,10 @@ class Support(models.Model):
         default=0,
         help_text="Current escalation level of the ticket"
     )
-    last_escalated_at = models.DateTimeField(null=True, blank=True)
-    escalated_by = models.ForeignKey(
-        User,
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name='escalated_tickets'
-    )
-
-    # Reopen tracking
-    reopened_at = models.DateTimeField(null=True, blank=True)
-    reopen_count = models.PositiveIntegerField(default=0)
-    last_reopened_by = models.ForeignKey(
-        User,
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name='reopened_tickets'
-    )
 
     # User Satisfaction
     satisfaction_rating = models.IntegerField(null=True, blank=True, choices=[(i, i) for i in range(1, 6)])
     feedback = models.TextField(blank=True)
-
-    # Soft delete
-    is_deleted = models.BooleanField(default=False)
-    deleted_at = models.DateTimeField(null=True, blank=True)
-    deleted_by = models.ForeignKey(
-        User,
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name='deleted_tickets'
-    )
-
-    # Managers
-    objects = SupportTicketManager()
-    all_objects = models.Manager()  # Access to all objects including deleted
 
     class Meta:
         ordering = ['-created_at']
@@ -3202,127 +3142,18 @@ class Support(models.Model):
             models.Index(fields=['created_at']),
             models.Index(fields=['user']),
             models.Index(fields=['due_date']),
-            models.Index(fields=['resolved_at']),
-            models.Index(fields=['priority']),
-            models.Index(fields=['assigned_group']),
-            models.Index(fields=['is_deleted']),
-            models.Index(fields=['sla_target_date']),
-            models.Index(fields=['escalation_level']),
+            models.Index(fields=['resolved_at']),  # Added index for resolved_at
+            models.Index(fields=['priority']),     # Added index for priority
         ]
         verbose_name = "Support Ticket"
         verbose_name_plural = "Support Tickets"
-        permissions = [
-            ("can_escalate_ticket", "Can escalate tickets"),
-            ("can_reopen_ticket", "Can reopen tickets"),
-            ("can_view_internal_comments", "Can view internal comments"),
-            ("can_manage_sla", "Can manage SLA settings"),
-        ]
 
     def __str__(self):
         return f"[{self.priority}] {self.ticket_id} - {self.subject} ({self.status})"
 
     @property
     def is_overdue(self):
-        return bool(self.due_date and self.due_date < timezone.now() and self.status not in [self.Status.RESOLVED, self.Status.CLOSED])
-
-    @property
-    def effective_sla_target(self):
-        """Calculate SLA target considering paused time"""
-        if not self.sla_target_date:
-            return None
-        return self.sla_target_date + self.sla_paused_duration
-
-    def soft_delete(self, user=None):
-        """Soft delete the ticket"""
-        self.is_deleted = True
-        self.deleted_at = timezone.now()
-        self.deleted_by = user
-        self.save()
-
-    def restore(self):
-        """Restore a soft-deleted ticket"""
-        self.is_deleted = False
-        self.deleted_at = None
-        self.deleted_by = None
-        self.save()
-
-    def reopen(self, user=None, reason=None):
-        """Reopen a closed/resolved ticket"""
-        if self.status not in [self.Status.CLOSED, self.Status.RESOLVED]:
-            raise ValidationError("Only closed or resolved tickets can be reopened")
-
-        self.status = self.Status.REOPENED
-        self.reopened_at = timezone.now()
-        self.reopen_count += 1
-        self.last_reopened_by = user
-        self.resolved_at = None
-        self.resolution_time = None
-        self.save()
-
-        # Create activity log
-        TicketActivity.objects.create(
-            ticket=self,
-            action=TicketActivity.Action.REOPENED,
-            user=user,
-            details=f"Ticket reopened. Reason: {reason or 'No reason provided'}"
-        )
-
-    def escalate(self, user=None, reason=None):
-        """Escalate the ticket to next level"""
-        self.escalation_level += 1
-        self.last_escalated_at = timezone.now()
-        self.escalated_by = user
-
-        # Auto-assign to higher group based on escalation level
-        if self.escalation_level >= 2:
-            self.assigned_group = self.AssignedGroup.MANAGEMENT
-
-        self.save()
-
-        # Create activity log
-        TicketActivity.objects.create(
-            ticket=self,
-            action=TicketActivity.Action.ESCALATED,
-            user=user,
-            details=f"Ticket escalated to level {self.escalation_level}. Reason: {reason or 'Auto-escalation'}"
-        )
-
-    def pause_sla(self):
-        """Pause SLA clock (typically when status is ON_HOLD)"""
-        if self.sla_status != self.SLAStatus.PAUSED:
-            self.sla_paused_at = timezone.now()
-            self.sla_status = self.SLAStatus.PAUSED
-            self.save()
-
-    def resume_sla(self):
-        """Resume SLA clock and add paused duration"""
-        if self.sla_status == self.SLAStatus.PAUSED and self.sla_paused_at:
-            paused_duration = timezone.now() - self.sla_paused_at
-            self.sla_paused_duration += paused_duration
-            self.sla_paused_at = None
-            self.sla_status = self.SLAStatus.WITHIN_SLA
-            self.save()
-
-    def check_auto_escalation(self):
-        """Check if ticket should be auto-escalated based on time"""
-        if self.status in [self.Status.RESOLVED, self.Status.CLOSED]:
-            return False
-
-        escalation_rules = {
-            self.Priority.CRITICAL: 2,  # 2 hours
-            self.Priority.HIGH: 4,      # 4 hours
-            self.Priority.MEDIUM: 12,   # 12 hours
-            self.Priority.LOW: 24,      # 24 hours
-        }
-
-        hours_since_creation = (timezone.now() - self.created_at).total_seconds() / 3600
-        escalation_threshold = escalation_rules.get(self.priority, 24)
-
-        if hours_since_creation > escalation_threshold and self.escalation_level == 0:
-            self.escalate(reason="Auto-escalation due to time threshold")
-            return True
-
-        return False
+        return bool(self.due_date and self.due_date < now())
 
     def save(self, *args, **kwargs):
         # Extract user from kwargs (if present) before passing to super().save()
@@ -3337,64 +3168,38 @@ class Support(models.Model):
         if not self.sla_target_date and self.created_at:
             self.set_sla_target_date()
 
-        # Handle SLA pause/resume based on status
-        if self.status == self.Status.ON_HOLD:
-            self.pause_sla()
-        elif self.sla_status == self.SLAStatus.PAUSED and self.status != self.Status.ON_HOLD:
-            self.resume_sla()
-
         # Track status changes
         if self.pk:
-            try:
-                old_ticket = Support.objects.get(pk=self.pk)
+            old_ticket = Support.objects.get(pk=self.pk)
 
-                # Check for status changes
-                if old_ticket.status != self.status:
-                    self._status_changed = (old_ticket.status, self.status)
+            # Check for status changes
+            if old_ticket.status != self.status:
+                self._status_changed = (old_ticket.status, self.status)
 
-                    # Track resolution time when moving to Resolved status
-                    if self.status == self.Status.RESOLVED and not self.resolved_at:
-                        self.resolved_at = timezone.now()
-                        if self.created_at:
-                            self.resolution_time = self.resolved_at - self.created_at
+                # Track resolution time when moving to Resolved status
+                if self.status == self.Status.RESOLVED and not self.resolved_at:
+                    self.resolved_at = now()
+                    if self.created_at:
+                        self.resolution_time = self.resolved_at - self.created_at
 
-                    # Calculate time_to_close when status changes to Closed
-                    if self.status == self.Status.CLOSED and not self.time_to_close:
-                        if self.created_at:
-                            self.time_to_close = timezone.now() - self.created_at
-                else:
-                    self._status_changed = None
-
-                # Track field changes for audit
-                self._field_changes = {}
-                for field in ['priority', 'assigned_to_user', 'subject', 'description']:
-                    old_value = getattr(old_ticket, field)
-                    new_value = getattr(self, field)
-                    if old_value != new_value:
-                        self._field_changes[field] = {'old': old_value, 'new': new_value}
-
-            except Support.DoesNotExist:
-                pass
+                # Calculate time_to_close when status changes to Closed
+                if self.status == self.Status.CLOSED and not self.time_to_close:
+                    if self.created_at:
+                        self.time_to_close = now() - self.created_at
+            else:
+                self._status_changed = None
         else:
             # New ticket
             self._status_changed = (None, self.status)
-            self._field_changes = {}
 
         # Check SLA compliance based on target date
-        if self.effective_sla_target:
-            current_time = timezone.now()
-            if self.resolved_at:
-                check_time = self.resolved_at
-            else:
-                check_time = current_time
-
-            if check_time > self.effective_sla_target:
+        if self.sla_target_date:
+            if self.resolved_at and self.resolved_at > self.sla_target_date:
                 self.sla_breach = True
                 self.sla_status = self.SLAStatus.BREACHED
-            elif self.resolved_at and self.resolved_at <= self.effective_sla_target:
+            elif self.resolved_at and self.resolved_at <= self.sla_target_date:
                 self.sla_breach = False
-                if self.sla_status != self.SLAStatus.PAUSED:
-                    self.sla_status = self.SLAStatus.WITHIN_SLA
+                self.sla_status = self.SLAStatus.WITHIN_SLA
 
         super().save(*args, **kwargs)
 
@@ -3407,17 +3212,6 @@ class Support(models.Model):
                 new_status=new_status,
                 changed_by=user
             )
-
-        # Create field change logs
-        if hasattr(self, '_field_changes') and self._field_changes:
-            for field, change in self._field_changes.items():
-                TicketFieldChange.objects.create(
-                    ticket=self,
-                    field_name=field,
-                    old_value=str(change['old']) if change['old'] is not None else '',
-                    new_value=str(change['new']) if change['new'] is not None else '',
-                    changed_by=user
-                )
 
     def set_sla_target_date(self):
         """Calculate SLA target date based on priority"""
@@ -3439,70 +3233,15 @@ class Support(models.Model):
         self.sla_target_date = self.created_at + timezone.timedelta(hours=target_hours)
 
 
-class TicketTag(models.Model):
-    """Model for tagging tickets"""
-    name = models.CharField(max_length=50, unique=True)
-    color = models.CharField(max_length=7, default='#007bff', help_text="Hex color code")
-    description = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.name
-
-
-class TicketTagging(models.Model):
-    """Through model for ticket-tag relationship"""
-    ticket = models.ForeignKey(Support, on_delete=models.CASCADE, related_name='ticket_tags')
-    tag = models.ForeignKey(TicketTag, on_delete=models.CASCADE, related_name='tagged_tickets')
-    tagged_by = models.ForeignKey(User, on_delete=models.CASCADE)
-    tagged_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = ['ticket', 'tag']
-
-
 class StatusLog(models.Model):
     ticket = models.ForeignKey(Support, on_delete=models.CASCADE, related_name='status_logs')
     old_status = models.CharField(max_length=30, blank=True)
     new_status = models.CharField(max_length=30, choices=Support.Status.choices)
     changed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     changed_at = models.DateTimeField(auto_now_add=True)
-    duration_in_status = models.DurationField(null=True, blank=True, help_text="Time spent in previous status")
-
-    class Meta:
-        ordering = ['-changed_at']
-
-    def save(self, *args, **kwargs):
-        # Calculate duration in previous status
-        if self.old_status:
-            previous_log = StatusLog.objects.filter(
-                ticket=self.ticket,
-                new_status=self.old_status
-            ).order_by('-changed_at').first()
-
-            if previous_log:
-                self.duration_in_status = self.changed_at - previous_log.changed_at
-
-        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.ticket.ticket_id}: {self.old_status} -> {self.new_status}"
-
-
-class TicketFieldChange(models.Model):
-    """Model for tracking field-level changes"""
-    ticket = models.ForeignKey(Support, on_delete=models.CASCADE, related_name='field_changes')
-    field_name = models.CharField(max_length=50)
-    old_value = models.TextField(blank=True)
-    new_value = models.TextField(blank=True)
-    changed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
-    changed_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ['-changed_at']
-
-    def __str__(self):
-        return f"{self.ticket.ticket_id}: {self.field_name} changed"
 
 
 class TicketComment(models.Model):
@@ -3511,34 +3250,10 @@ class TicketComment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)  # or any other config
     is_internal = models.BooleanField(default=False, help_text="Internal notes only visible to staff")
-    is_first_response = models.BooleanField(default=False, help_text="Whether this is the first staff response")
 
     class Meta:
         ordering = ['created_at']
-        indexes = [
-            models.Index(fields=['ticket', 'created_at']),
-            models.Index(fields=['is_internal']),
-        ]
-
-    def save(self, *args, **kwargs):
-        # Check if this is the first response from staff
-        if not self.pk and not self.is_internal:
-            # Check if user is staff and this is first non-internal comment from staff
-            if (self.user.is_staff and
-                not self.ticket.comments.filter(user__is_staff=True, is_internal=False).exists() and
-                self.user != self.ticket.user):
-
-                self.is_first_response = True
-
-                # Update ticket's first response time
-                if not self.ticket.first_response_at:
-                    self.ticket.first_response_at = timezone.now()
-                    self.ticket.response_time = self.ticket.first_response_at - self.ticket.created_at
-                    self.ticket.save()
-
-        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Comment on {self.ticket.ticket_id} by {self.user.username}"
@@ -3547,31 +3262,13 @@ class TicketComment(models.Model):
 class TicketAttachment(models.Model):
     """Model for file attachments on tickets"""
     ticket = models.ForeignKey(Support, on_delete=models.CASCADE, related_name='attachments')
-    comment = models.ForeignKey(TicketComment, on_delete=models.CASCADE, null=True, blank=True, related_name='attachments')
-    file = models.FileField(upload_to='ticket_attachments/%Y/%m/%d/')
-    original_filename = models.CharField(max_length=255)
-    file_size = models.PositiveIntegerField(default=0, help_text="File size in bytes")
-    mime_type = models.CharField(max_length=100, blank=True)
+    file = models.FileField(upload_to='ticket_attachments/')
     uploaded_by = models.ForeignKey(User, on_delete=models.CASCADE)
     uploaded_at = models.DateTimeField(auto_now_add=True)
     description = models.CharField(max_length=255, blank=True)
-    version = models.PositiveIntegerField(default=1)
-    is_active = models.BooleanField(default=True)
-
-    class Meta:
-        ordering = ['-uploaded_at']
-        indexes = [
-            models.Index(fields=['ticket', 'uploaded_at']),
-        ]
-
-    def save(self, *args, **kwargs):
-        if self.file:
-            self.original_filename = self.file.name
-            self.file_size = self.file.size
-        super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"Attachment for {self.ticket.ticket_id}: {self.original_filename}"
+        return f"Attachment for {self.ticket.ticket_id}"
 
 
 class TicketActivity(models.Model):
@@ -3585,76 +3282,19 @@ class TicketActivity(models.Model):
         ESCALATED = 'ESCALATED', 'Escalated'
         RESOLVED = 'RESOLVED', 'Resolved'
         CLOSED = 'CLOSED', 'Closed'
-        DELETED = 'DELETED', 'Deleted'
-        RESTORED = 'RESTORED', 'Restored'
-        SLA_BREACHED = 'SLA_BREACHED', 'SLA Breached'
-        PRIORITY_CHANGED = 'PRIORITY_CHANGED', 'Priority Changed'
 
-    ticket = models.ForeignKey(Support, on_delete=models.CASCADE, related_name='activities')
+    ticket = models.ForeignKey(Support, on_delete=models.CASCADE, related_name='ticket_activity')
     action = models.CharField(max_length=20, choices=Action.choices)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     timestamp = models.DateTimeField(auto_now_add=True)
     details = models.TextField(blank=True)
 
-    # For system-generated activities
-    is_system_generated = models.BooleanField(default=False)
-
     class Meta:
         ordering = ['-timestamp']
         verbose_name_plural = "Ticket Activities"
-        indexes = [
-            models.Index(fields=['ticket', 'timestamp']),
-            models.Index(fields=['action']),
-        ]
 
     def __str__(self):
         return f"{self.action} on {self.ticket.ticket_id} by {self.user.username if self.user else 'System'}"
-
-
-class EscalationRule(models.Model):
-    """Model for defining auto-escalation rules"""
-    name = models.CharField(max_length=100)
-    priority = models.CharField(max_length=20, choices=Support.Priority.choices)
-    issue_type = models.CharField(max_length=50, choices=Support.IssueType.choices, blank=True)
-    threshold_hours = models.PositiveIntegerField(help_text="Hours after which to escalate")
-    escalate_to_group = models.CharField(max_length=50, choices=Support.AssignedGroup.choices)
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = ['priority', 'issue_type']
-
-    def __str__(self):
-        return f"Escalation rule for {self.priority} priority"
-
-
-# Signal handlers for automatic tracking and notifications
-@receiver(post_save, sender=Support)
-def create_ticket_activity(sender, instance, created, **kwargs):
-    """Create activity log when ticket is created or significantly updated"""
-    if created:
-        TicketActivity.objects.create(
-            ticket=instance,
-            action=TicketActivity.Action.CREATED,
-            user=instance.user,
-            details=f"Ticket created with priority {instance.priority}",
-            is_system_generated=True
-        )
-
-
-@receiver(post_save, sender=TicketComment)
-def create_comment_activity(sender, instance, created, **kwargs):
-    """Create activity when comment is added"""
-    if created:
-        TicketActivity.objects.create(
-            ticket=instance.ticket,
-            action=TicketActivity.Action.COMMENTED,
-            user=instance.user,
-            details=f"Comment added {'(Internal)' if instance.is_internal else '(Public)'}",
-            is_system_generated=True
-        )
-
-
 ''' ------------------------------------------- REmove employee AREA ------------------------------------------- '''
 
 # Employee model to store employee-specific information

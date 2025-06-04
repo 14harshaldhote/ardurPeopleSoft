@@ -334,10 +334,10 @@ attendance_patterns = [
 support_patterns = [
     path('', views.support_dashboard, name='support_dashboard'),
     path('create/', views.create_ticket, name='create_ticket'),
-    path('<int:pk>/update/', views.update_ticket, name='update_ticket'),
-    path('list/', views.ticket_list, name='ticket_list'),
     path('<int:pk>/', views.ticket_detail, name='ticket_detail'),
-    path('api/analytics/', views.support_analytics_api, name='support_analytics_api'),
+    path('<int:pk>/update/', views.update_ticket, name='update_ticket'),
+    path('<int:pk>/assign/', views.assign_ticket, name='assign_ticket'),
+    path('list/', views.ticket_list, name='ticket_list'),
 ]
 
 holiday_pattern=[
