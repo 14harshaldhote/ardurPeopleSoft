@@ -27,11 +27,11 @@ class ClientProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='client_profile')
     company_name = models.CharField(max_length=100)
     contact_info = models.TextField()
-    
+
     # Professional Level Details
     industry_type = models.CharField(max_length=100)  # Industry type the company belongs to
     company_size = models.CharField(
-        max_length=50, 
+        max_length=50,
         choices=[('Small', 'Small'), ('Medium', 'Medium'), ('Large', 'Large')],  # Company size categories
         default='Small'
     )
@@ -45,14 +45,14 @@ class ClientProfile(models.Model):
 
     def __str__(self):
         return self.company_name
-    
+
 '''------------------------- USERSESSION --------------------'''
 class UserSession(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     session_key = models.CharField(max_length=40)
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     user_agent = models.TextField(null=True, blank=True)
-    
+
     # Store all times in UTC in the DB, but always convert to IST for display and logic
     login_time = models.DateTimeField(default=timezone.now)  # Stored in UTC
     logout_time = models.DateTimeField(null=True, blank=True)
@@ -62,7 +62,7 @@ class UserSession(models.Model):
     location = models.CharField(max_length=50, null=True, blank=True)
     session_duration = models.FloatField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
-    
+
     # Multi-tab tracking
     tab_id = models.CharField(max_length=50, null=True, blank=True)  # Unique identifier for each tab
     tab_title = models.CharField(max_length=255, null=True, blank=True)  # Page title when tab was created
@@ -72,14 +72,14 @@ class UserSession(models.Model):
     tab_total_focus_time = models.DurationField(default=timedelta(0))  # Total time spent focused on this tab
     is_primary_tab = models.BooleanField(default=False)  # Is this the main/primary tab
     parent_session_id = models.CharField(max_length=50, null=True, blank=True)  # Links tabs to same browser session
-    
+
     # Security and fingerprinting
     session_fingerprint = models.CharField(max_length=255, null=True, blank=True)
     browser_fingerprint = models.TextField(null=True, blank=True)  # Detailed browser fingerprint
     csrf_token = models.CharField(max_length=64, null=True, blank=True)
     csrf_token_created = models.DateTimeField(null=True, blank=True)
     security_incidents = models.JSONField(default=dict, blank=True)
-    
+
     # Device and environment data
     device_type = models.CharField(max_length=20, null=True, blank=True)  # mobile, desktop, tablet
     screen_resolution = models.CharField(max_length=20, null=True, blank=True)
@@ -87,45 +87,45 @@ class UserSession(models.Model):
     language = models.CharField(max_length=10, null=True, blank=True)
     connection_type = models.CharField(max_length=20, null=True, blank=True)  # wifi, cellular, etc.
     battery_level = models.FloatField(null=True, blank=True)  # 0 to 1
-    
+
     # Enhanced activity tracking
     page_views = models.JSONField(default=list, blank=True)  # Array of page visits with timestamps
     click_events = models.JSONField(default=list, blank=True)  # Track user interactions
     scroll_events = models.JSONField(default=list, blank=True)  # Scroll behavior
     keyboard_events = models.JSONField(default=list, blank=True)  # Typing activity
     mouse_movements = models.IntegerField(default=0)  # Count of mouse movements
-    
+
     # Tab visibility and focus tracking
     tab_visibility_log = models.JSONField(default=list, blank=True)  # Track when tab gains/loses focus
     tab_switches = models.IntegerField(default=0)  # Number of times user switched to/from this tab
     background_time = models.DurationField(default=timedelta(0))  # Time spent in background
-    
+
     # Performance and analytics
     performance_metrics = models.JSONField(default=dict, blank=True)  # Page load times, memory usage
     network_events = models.JSONField(default=list, blank=True)  # Connection issues, reconnects
     error_events = models.JSONField(default=list, blank=True)  # JavaScript errors, failed requests
-    
+
     # Progressive session management
     custom_timeout = models.PositiveIntegerField(null=True, blank=True)  # Custom timeout in minutes
     inactivity_warnings_sent = models.IntegerField(default=0)  # Number of warnings shown
     last_warning_time = models.DateTimeField(null=True, blank=True)
     auto_logout_enabled = models.BooleanField(default=True)
-    
+
     # Offline support
     offline_data = models.JSONField(default=dict, blank=True)  # Store offline actions
     last_sync_time = models.DateTimeField(null=True, blank=True)  # Last successful server sync
     pending_sync_count = models.IntegerField(default=0)  # Number of actions waiting to sync
-    
+
     # Cross-tab communication tracking
     broadcast_messages_sent = models.IntegerField(default=0)
     broadcast_messages_received = models.IntegerField(default=0)
     cross_tab_activity_syncs = models.IntegerField(default=0)
-    
+
     # Session quality metrics
     productivity_score = models.FloatField(null=True, blank=True)  # Calculated productivity score
     engagement_score = models.FloatField(null=True, blank=True)  # User engagement level
     session_quality = models.CharField(max_length=20, null=True, blank=True)  # high, medium, low
-    
+
     # Define constants at the model level
     IDLE_THRESHOLD_MINUTES = 5
     SESSION_TIMEOUT_MINUTES = 30
@@ -165,7 +165,7 @@ class UserSession(models.Model):
         ist = pytz.timezone('Asia/Kolkata')
         return utc_time.astimezone(ist)
         return utc_time.astimezone(IST_TIMEZONE)
-    
+
     @staticmethod
     def convert_to_utc(ist_time):
         """Convert IST time to UTC for database storage"""
@@ -174,12 +174,12 @@ class UserSession(models.Model):
         if timezone.is_naive(ist_time):
             ist_time = IST_TIMEZONE.localize(ist_time)
         return ist_time.astimezone(timezone.utc)
-    
+
     @staticmethod
     def now_ist():
         """Get current time in IST timezone"""
         return timezone.now().astimezone(IST_TIMEZONE)
-    
+
     @staticmethod
     def now_utc():
         """Get current time in UTC for database storage"""
@@ -192,7 +192,7 @@ class UserSession(models.Model):
     def get_last_activity_ist(self):
         """Get last activity time in IST timezone"""
         return self.convert_to_ist(self.last_activity)
-    
+
     def get_logout_time_ist(self):
         """Get logout time in IST timezone"""
         return self.convert_to_ist(self.logout_time)
@@ -201,10 +201,10 @@ class UserSession(models.Model):
     def get_or_create_session(cls, user, session_key=None, ip_address=None, user_agent=None):
         """Get existing active session or create new one"""
         from django.db import transaction
-        
+
         with transaction.atomic():
             current_time = timezone.now()  # Store in UTC
-            
+
             # Look for an active session
             existing_session = cls.objects.filter(
                 user=user,
@@ -229,11 +229,11 @@ class UserSession(models.Model):
                     # Update last activity and continue with the same session
                     existing_session.update_activity(current_time)
                     return existing_session
-            
+
             # If no active session, create a new session
             if not session_key:
                 session_key = cls.generate_session_key()
-                
+
             new_session = cls.objects.create(
                 user=user,
                 session_key=session_key,
@@ -243,31 +243,31 @@ class UserSession(models.Model):
                 last_activity=current_time,
                 is_active=True
             )
-            
+
             # Set location
             new_session.location = new_session.determine_location()
             new_session.save(update_fields=['location'])
-            
+
             return new_session
 
     def determine_location(self):
         """Determine if the user is working from home or office based on IP address."""
         if not self.ip_address:
             return 'Unknown'
-            
+
         ip = self.ip_address.strip()
         return 'Office' if ip in self.OFFICE_IPS else 'Home'
 
     def update_activity(self, current_time=None, is_idle=False):
         """Update the last activity timestamp and calculate idle time"""
         from django.db import transaction
-        
+
         with transaction.atomic():
             current_time = current_time or timezone.now()  # Store in UTC
-            
+
             # Calculate time since last activity
             time_since_last_activity = current_time - self.last_activity
-            
+
             # Only update idle time if the frontend reports user as idle
             if is_idle:
                 from django.db.models import F
@@ -280,20 +280,20 @@ class UserSession(models.Model):
                 # If not idle, just update last_activity
                 self.last_activity = current_time
                 self.save(update_fields=['last_activity'])
-            
+
             return self
 
     def end_session(self, logout_time=None, is_idle=False):
         """End the current session"""
         if not self.is_active:
             return self
-        
+
         with transaction.atomic():
             logout_time = logout_time or timezone.now()  # Store in UTC
-            
+
             # Calculate final idle time
             time_since_last_activity = logout_time - self.last_activity
-            
+
             # Only add to idle time if the user was reported as idle
             if is_idle:
                 from django.db.models import F
@@ -301,34 +301,34 @@ class UserSession(models.Model):
                     idle_time=F('idle_time') + time_since_last_activity
                 )
                 self.refresh_from_db(fields=['idle_time'])
-            
+
             # Set logout time
             self.logout_time = logout_time
             self.is_active = False
-            
+
             # Calculate working hours
             total_duration = logout_time - self.login_time
             self.working_hours = total_duration - self.idle_time
-            
+
             # Calculate session duration in minutes
             self.session_duration = (logout_time - self.login_time).total_seconds() / 60
-            
+
             self.save(update_fields=['logout_time', 'is_active', 'working_hours', 'session_duration'])
-            
+
             return self
-    
+
     def get_session_duration_display(self):
         """Get formatted session duration"""
         if self.session_duration is None:
             return "Session active"
-        
+
         hours = int(self.session_duration // 60)
         minutes = int(self.session_duration % 60)
-        
+
         if hours > 0:
             return f"{hours}h {minutes}m"
         return f"{minutes}m"
-    
+
     def get_total_working_hours_display(self):
         """Get formatted working hours"""
         if self.working_hours is None:
@@ -342,38 +342,38 @@ class UserSession(models.Model):
                 return "N/A"
         else:
             total_seconds = self.working_hours.total_seconds()
-            
+
         # Ensure we don't show negative time
         total_seconds = max(0, total_seconds)
-        
+
         hours = int(total_seconds // 3600)
         minutes = int((total_seconds % 3600) // 60)
-        
+
         return f"{hours}h {minutes}m"
 
     # ========== ENHANCED MULTI-TAB TRACKING METHODS ==========
-    
+
     @classmethod
     def create_tab_session(cls, user, tab_data, parent_session_id=None):
         """Create a new tab session linked to a parent session"""
         import uuid
-        
+
         current_time = timezone.now()
         tab_id = tab_data.get('tab_id') or str(uuid.uuid4())
-        
+
         # If no parent session provided, generate one
         if not parent_session_id:
             parent_session_id = f"{user.id}_{current_time.strftime('%Y%m%d_%H%M%S')}"
-        
+
         # Check if this is the first tab (primary tab)
         existing_tabs = cls.objects.filter(
             user=user,
             parent_session_id=parent_session_id,
             is_active=True
         ).count()
-        
+
         is_primary = existing_tabs == 0
-        
+
         tab_session = cls.objects.create(
             user=user,
             session_key=tab_data.get('session_key', cls.generate_session_key()),
@@ -395,30 +395,30 @@ class UserSession(models.Model):
             language=tab_data.get('language'),
             is_active=True
         )
-        
+
         # Set location
         tab_session.location = tab_session.determine_location()
         tab_session.save(update_fields=['location'])
-        
+
         return tab_session
-    
+
     def update_tab_activity(self, activity_data):
         """Update tab-specific activity and tracking"""
         current_time = timezone.now()
-        
+
         # Update basic activity
         self.last_activity = current_time
-        
+
         # Track tab focus changes
         if activity_data.get('gained_focus'):
             if self.tab_last_focus:
                 # Add to background time
                 background_duration = current_time - self.tab_last_focus
                 self.background_time += background_duration
-            
+
             self.tab_last_focus = current_time
             self.tab_switches += 1
-            
+
             # Log visibility change
             if not self.tab_visibility_log:
                 self.tab_visibility_log = []
@@ -427,12 +427,12 @@ class UserSession(models.Model):
                 'action': 'focus_gained',
                 'url': activity_data.get('url', self.tab_url)
             })
-        
+
         # Track page views
         if activity_data.get('page_change'):
             self.tab_url = activity_data.get('url', self.tab_url)
             self.tab_title = activity_data.get('title', self.tab_title)[:255]
-            
+
             if not self.page_views:
                 self.page_views = []
             self.page_views.append({
@@ -441,7 +441,7 @@ class UserSession(models.Model):
                 'timestamp': current_time.isoformat(),
                 'referrer': activity_data.get('referrer', '')
             })
-        
+
         # Track interactions
         interaction_type = activity_data.get('interaction_type')
         if interaction_type == 'click':
@@ -452,7 +452,7 @@ class UserSession(models.Model):
                 'element': activity_data.get('element_info', {}),
                 'coordinates': activity_data.get('coordinates', {})
             })
-        
+
         elif interaction_type == 'scroll':
             if not self.scroll_events:
                 self.scroll_events = []
@@ -461,7 +461,7 @@ class UserSession(models.Model):
                 'scroll_position': activity_data.get('scroll_position', 0),
                 'direction': activity_data.get('scroll_direction', 'down')
             })
-        
+
         elif interaction_type == 'keyboard':
             if not self.keyboard_events:
                 self.keyboard_events = []
@@ -470,51 +470,51 @@ class UserSession(models.Model):
                 'key_count': activity_data.get('key_count', 1),
                 'input_type': activity_data.get('input_type', 'typing')
             })
-        
+
         elif interaction_type == 'mouse_move':
             self.mouse_movements += 1
-        
+
         # Update performance metrics
         if activity_data.get('performance_data'):
             if not self.performance_metrics:
                 self.performance_metrics = {}
             self.performance_metrics.update(activity_data['performance_data'])
-        
+
         # Update device info
         if activity_data.get('battery_level') is not None:
             self.battery_level = activity_data['battery_level']
-        
+
         if activity_data.get('connection_type'):
             self.connection_type = activity_data['connection_type']
-        
+
         # Record cross-tab communication
         if activity_data.get('broadcast_sent'):
             self.broadcast_messages_sent += 1
-        
+
         if activity_data.get('broadcast_received'):
             self.broadcast_messages_received += 1
             self.cross_tab_activity_syncs += 1
-        
+
         self.save()
-        
+
         return self
-    
+
     def calculate_productivity_score(self):
         """Calculate productivity score based on activity patterns"""
         if not self.is_active or not self.last_activity:
             return 0
-        
+
         current_time = timezone.now()
         session_duration = (current_time - self.login_time).total_seconds()
-        
+
         if session_duration < 300:  # Less than 5 minutes
             return 0
-        
+
         # Base score from working hours vs idle time
         idle_seconds = self.idle_time.total_seconds() if self.idle_time else 0
         working_ratio = max(0, (session_duration - idle_seconds) / session_duration)
         base_score = working_ratio * 70  # 70% weight for time-based productivity
-        
+
         # Interaction score (30% weight)
         interaction_score = 0
         if self.click_events:
@@ -523,20 +523,20 @@ class UserSession(models.Model):
             interaction_score += min(len(self.keyboard_events) * 1, 10)
         if self.scroll_events:
             interaction_score += min(len(self.scroll_events) * 0.5, 5)
-        
+
         # Page view diversity bonus
         if self.page_views:
             unique_pages = len(set(pv.get('url', '') for pv in self.page_views))
             if unique_pages > 1:
                 interaction_score += min(unique_pages, 5)
-        
+
         # Penalty for excessive tab switching
         if self.tab_switches > 20:
             interaction_score -= min(self.tab_switches - 20, 10)
-        
+
         total_score = min(base_score + interaction_score, 100)
         self.productivity_score = total_score
-        
+
         # Determine session quality
         if total_score >= 80:
             self.session_quality = 'high'
@@ -544,27 +544,27 @@ class UserSession(models.Model):
             self.session_quality = 'medium'
         else:
             self.session_quality = 'low'
-        
+
         return total_score
-    
+
     def calculate_engagement_score(self):
         """Calculate user engagement score"""
         if not self.is_active:
             return 0
-        
+
         current_time = timezone.now()
         session_duration = (current_time - self.login_time).total_seconds() / 60  # in minutes
-        
+
         if session_duration < 5:
             return 0
-        
+
         # Focus time ratio
         focus_time = self.tab_total_focus_time.total_seconds() if self.tab_total_focus_time else 0
         background_time = self.background_time.total_seconds() if self.background_time else 0
         total_tab_time = focus_time + background_time
-        
+
         focus_ratio = focus_time / total_tab_time if total_tab_time > 0 else 0
-        
+
         # Interaction frequency
         total_interactions = (
             len(self.click_events or []) +
@@ -572,10 +572,10 @@ class UserSession(models.Model):
             len(self.scroll_events or [])
         )
         interaction_rate = total_interactions / session_duration
-        
+
         # Page view engagement
         page_view_rate = len(self.page_views or []) / session_duration
-        
+
         # Calculate engagement score
         engagement = (
             focus_ratio * 40 +  # 40% weight for focus time
@@ -583,14 +583,14 @@ class UserSession(models.Model):
             min(page_view_rate * 10, 20) +  # 20% weight for page views
             min(session_duration / 60 * 5, 10)  # 10% weight for session length
         )
-        
+
         self.engagement_score = min(engagement, 100)
         return self.engagement_score
-    
+
     def check_security_anomalies(self, new_fingerprint=None):
         """Check for potential security issues"""
         anomalies = []
-        
+
         # Fingerprint mismatch
         if new_fingerprint and self.session_fingerprint:
             if new_fingerprint != self.session_fingerprint:
@@ -601,7 +601,7 @@ class UserSession(models.Model):
                     'new_fingerprint': new_fingerprint,
                     'timestamp': timezone.now().isoformat()
                 })
-        
+
         # Unusual activity patterns
         if self.click_events and len(self.click_events) > 1000:  # Excessive clicking
             anomalies.append({
@@ -610,7 +610,7 @@ class UserSession(models.Model):
                 'click_count': len(self.click_events),
                 'timestamp': timezone.now().isoformat()
             })
-        
+
         # Rapid tab switching (potential bot behavior)
         if self.tab_switches > 100:
             anomalies.append({
@@ -619,70 +619,70 @@ class UserSession(models.Model):
                 'switch_count': self.tab_switches,
                 'timestamp': timezone.now().isoformat()
             })
-        
+
         # Update security incidents
         if anomalies:
             if not self.security_incidents:
                 self.security_incidents = {}
-            
+
             incident_key = f"incident_{timezone.now().strftime('%Y%m%d_%H%M%S')}"
             self.security_incidents[incident_key] = anomalies
             self.save(update_fields=['security_incidents'])
-        
+
         return anomalies
-    
+
     def should_show_inactivity_warning(self):
         """Check if inactivity warning should be shown"""
         if not self.auto_logout_enabled or not self.is_active:
             return False
-        
+
         current_time = timezone.now()
         inactive_duration = (current_time - self.last_activity).total_seconds() / 60
         warning_threshold = self.WARNING_THRESHOLD_MINUTES
-        
+
         # Don't show if already shown recently
         if self.last_warning_time:
             time_since_warning = (current_time - self.last_warning_time).total_seconds() / 60
             if time_since_warning < 2:  # Don't show again within 2 minutes
                 return False
-        
+
         return inactive_duration >= warning_threshold
-    
+
     def should_auto_logout(self):
         """Check if session should be automatically logged out"""
         if not self.auto_logout_enabled or not self.is_active:
             return False
-        
+
         current_time = timezone.now()
         inactive_duration = (current_time - self.last_activity).total_seconds() / 60
         timeout_threshold = self.custom_timeout or self.AUTO_LOGOUT_MINUTES
-        
+
         return inactive_duration >= timeout_threshold
-    
+
     def record_inactivity_warning(self):
         """Record that an inactivity warning was shown"""
         self.inactivity_warnings_sent += 1
         self.last_warning_time = timezone.now()
         self.save(update_fields=['inactivity_warnings_sent', 'last_warning_time'])
-    
+
     def get_related_tabs(self):
         """Get all tabs from the same browser session"""
         if not self.parent_session_id:
             return UserSession.objects.filter(id=self.id)
-        
+
         return UserSession.objects.filter(
             parent_session_id=self.parent_session_id,
             user=self.user,
             is_active=True
         ).order_by('tab_opened_time')
-    
+
     def get_session_summary(self):
         """Get comprehensive session summary"""
         current_time = timezone.now()
         session_duration = (current_time - self.login_time).total_seconds() / 60
-        
+
         related_tabs = self.get_related_tabs()
-        
+
         return {
             'session_id': self.parent_session_id or self.tab_id,
             'tab_id': self.tab_id,
@@ -707,31 +707,31 @@ class UserSession(models.Model):
                 'battery_level': self.battery_level
             }
         }
-    
+
     @classmethod
     def cleanup_expired_sessions(cls, hours=24):
         """Clean up old expired sessions"""
         cutoff_time = timezone.now() - timedelta(hours=hours)
-        
+
         expired_sessions = cls.objects.filter(
             is_active=False,
             logout_time__lt=cutoff_time
         )
-        
+
         count = expired_sessions.count()
         expired_sessions.delete()
-        
+
         return count
-    
+
     @classmethod
     def get_multi_tab_analytics(cls, user=None, days=7):
         """Get analytics for multi-tab usage"""
         start_date = timezone.now() - timedelta(days=days)
-        
+
         queryset = cls.objects.filter(login_time__gte=start_date)
         if user:
             queryset = queryset.filter(user=user)
-        
+
         # Group by parent session
         sessions_by_parent = {}
         for session in queryset:
@@ -739,12 +739,12 @@ class UserSession(models.Model):
             if parent_id not in sessions_by_parent:
                 sessions_by_parent[parent_id] = []
             sessions_by_parent[parent_id].append(session)
-        
+
         # Calculate analytics
         total_sessions = len(sessions_by_parent)
         multi_tab_sessions = sum(1 for tabs in sessions_by_parent.values() if len(tabs) > 1)
         avg_tabs_per_session = sum(len(tabs) for tabs in sessions_by_parent.values()) / total_sessions if total_sessions > 0 else 0
-        
+
         return {
             'total_sessions': total_sessions,
             'multi_tab_sessions': multi_tab_sessions,
@@ -752,21 +752,21 @@ class UserSession(models.Model):
             'avg_tabs_per_session': avg_tabs_per_session,
             'max_tabs_in_session': max(len(tabs) for tabs in sessions_by_parent.values()) if sessions_by_parent else 0
         }
-            
+
     def save(self, *args, **kwargs):
         # Set location if not already set for new sessions
         if not self.pk and not self.location:
             self.location = self.determine_location()
-        
+
         # Generate tab_id if not set
         if not self.tab_id:
             import uuid
             self.tab_id = str(uuid.uuid4())
-        
+
         # Set tab opened time for new records
         if not self.pk and not self.tab_opened_time:
             self.tab_opened_time = self.login_time
-            
+
         # All times should already be in UTC when saved to DB
         super().save(*args, **kwargs)
 
@@ -785,7 +785,7 @@ class LeavePolicy(models.Model):
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     def __str__(self):
         return f"{self.name} for {self.group.name}"
 
@@ -803,7 +803,7 @@ class LeaveType(models.Model):
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     def __str__(self):
         return self.name
 
@@ -817,10 +817,10 @@ class LeaveAllocation(models.Model):
     carry_forward_limit = models.DecimalField(max_digits=5, decimal_places=1, default=0)
     max_consecutive_days = models.IntegerField(default=0)  # 0 means no limit
     advance_notice_days = models.IntegerField(default=0)  # How many days in advance leave should be requested
-    
+
     class Meta:
         unique_together = ('policy', 'leave_type')
-        
+
     def __str__(self):
         return f"{self.leave_type.name} allocation for {self.policy.name}"
 
@@ -835,17 +835,17 @@ class UserLeaveBalance(models.Model):
     used = models.DecimalField(max_digits=5, decimal_places=1, default=0)
     carried_forward = models.DecimalField(max_digits=5, decimal_places=1, default=0)
     additional = models.DecimalField(max_digits=5, decimal_places=1, default=0)  # For comp-offs or special additions
-    
+
     class Meta:
         unique_together = ('user', 'leave_type', 'year')
-        
+
     @property
     def available(self):
         return self.allocated + self.carried_forward + self.additional - self.used
-    
+
     def __str__(self):
         return f"{self.user.username}'s {self.leave_type.name} balance for {self.year}"
-        
+
 class LeaveRequest(models.Model):
     """
     Enhanced leave request model with dynamic leave types
@@ -853,10 +853,10 @@ class LeaveRequest(models.Model):
     STATUS_CHOICES = [
         ('Pending', 'Pending'),
         ('Approved', 'Approved'),
-        ('Rejected', 'Rejected'), 
+        ('Rejected', 'Rejected'),
         ('Cancelled', 'Cancelled')
     ]
-    
+
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='leave_requests')
     leave_type = models.ForeignKey(LeaveType, on_delete=models.CASCADE)
     start_date = models.DateField()
@@ -873,28 +873,28 @@ class LeaveRequest(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     _balance_updated = False  # Flag to track if balance has been updated
-    
+
     class Meta:
         indexes = [
             models.Index(fields=['user', 'start_date', 'status']),
         ]
-    
+
     def clean(self):
         if not self.user_id:
             raise ValidationError("User is required")
-            
+
         # Check if end date is after start date
         if self.start_date > self.end_date:
             raise ValidationError("End date must be after start date")
-        
+
         # Check if leave type allows half day
         if self.half_day and not self.leave_type.can_be_half_day:
             raise ValidationError(f"{self.leave_type.name} cannot be taken as half day")
-        
+
         # Check for documentation if required
         if self.leave_type.requires_documentation and not self.documentation:
             raise ValidationError(f"{self.leave_type.name} requires supporting documentation")
-        
+
         # Check for advance notice requirement
         user_policy = self.get_user_policy()
         if user_policy:
@@ -906,7 +906,7 @@ class LeaveRequest(models.Model):
                         raise ValidationError(
                             f"{self.leave_type.name} requires {allocation.advance_notice_days} days advance notice"
                         )
-                
+
                 # Check consecutive days limit
                 if allocation.max_consecutive_days > 0:
                     days_requested = (self.end_date - self.start_date).days + 1
@@ -916,7 +916,7 @@ class LeaveRequest(models.Model):
                         )
             except LeaveAllocation.DoesNotExist:
                 pass
-        
+
         # Check for overlapping leaves
         overlapping_leaves = LeaveRequest.objects.filter(
             status='Approved',
@@ -924,23 +924,23 @@ class LeaveRequest(models.Model):
             end_date__gte=self.start_date,
             user=self.user
         ).exclude(id=self.id)
-        
+
         if overlapping_leaves.exists():
             raise ValidationError("You already have approved leave during this period")
-        
+
         # Check leave balance
         if not self.has_sufficient_balance():
             raise ValidationError(f"Insufficient {self.leave_type.name} balance")
-    
+
     def get_user_policy(self):
         """Get the applicable leave policy for this user"""
         if not self.user_id:
             return None
-            
+
         user_groups = self.user.groups.all()
         if not user_groups:
             return None
-        
+
         # Get the first active policy that matches any of user's groups
         try:
             return LeavePolicy.objects.filter(
@@ -949,27 +949,27 @@ class LeaveRequest(models.Model):
             ).first()
         except LeavePolicy.DoesNotExist:
             return None
-    
+
     def calculate_leave_days(self):
         """Calculate actual leave days based on leave type configuration"""
         if not (self.start_date and self.end_date):
             return 0
-            
+
         total_days = 0
         current_date = self.start_date
-        
+
         while current_date <= self.end_date:
             # Skip weekends unless leave type counts weekends
             is_weekend = current_date.weekday() >= 5  # Saturday or Sunday
-            
+
             if not is_weekend or self.leave_type.count_weekends:
                 if self.half_day:
                     total_days += 0.5
                 else:
                     total_days += 1.0
-                    
+
             current_date += timedelta(days=1)
-            
+
         return total_days
 
     def has_sufficient_balance(self):
@@ -977,12 +977,12 @@ class LeaveRequest(models.Model):
         if not self.user_id:
             print("DEBUG: has_sufficient_balance - no user_id")
             return False
-            
+
         # Skip balance check for unpaid leave types
         if not self.leave_type.is_paid:
             print(f"DEBUG: has_sufficient_balance - leave type not paid, returning True")
             return True
-            
+
         year = self.start_date.year
         try:
             balance = UserLeaveBalance.objects.get(
@@ -997,7 +997,7 @@ class LeaveRequest(models.Model):
         except UserLeaveBalance.DoesNotExist:
             print(f"DEBUG: has_sufficient_balance - no balance record found")
             return False
-    
+
     def auto_convert_leave_type(self):
         """Try to convert to Loss of Pay if insufficient balance"""
         # Find Loss of Pay leave type
@@ -1007,7 +1007,7 @@ class LeaveRequest(models.Model):
             return True
         except LeaveType.DoesNotExist:
             return False
-    
+
     def update_leave_balance(self):
         """Update leave balance when leave is approved - tracks ALL leave types (paid and unpaid)"""
         print(f"DEBUG: Updating leave balance for user {self.user_id}, leave type {self.leave_type}")
@@ -1019,11 +1019,11 @@ class LeaveRequest(models.Model):
         # This allows tracking of unpaid leave like Loss of Pay/Leave Without Pay
         year = self.start_date.year
         print(f"DEBUG: Looking for balance record for year {year}")
-        
+
         # Ensure leave_days is a Decimal for arithmetic operations
         from decimal import Decimal
         leave_days_decimal = Decimal(str(self.leave_days))
-        
+
         try:
             balance = UserLeaveBalance.objects.get(
                 user=self.user,
@@ -1031,11 +1031,11 @@ class LeaveRequest(models.Model):
                 year=year
             )
             print(f"DEBUG: Found balance - current used: {balance.used}, adding: {leave_days_decimal}")
-            
+
             # Use the Decimal version for the addition
             balance.used = balance.used + leave_days_decimal
             balance.save()
-            
+
             print(f"DEBUG: Updated balance - new used total: {balance.used}")
             self._balance_updated = True
         except UserLeaveBalance.DoesNotExist:
@@ -1045,7 +1045,7 @@ class LeaveRequest(models.Model):
             if policy:
                 try:
                     allocation = LeaveAllocation.objects.get(
-                        policy=policy, 
+                        policy=policy,
                         leave_type=self.leave_type
                     )
                     # Create a new balance record
@@ -1089,35 +1089,35 @@ class LeaveRequest(models.Model):
                 )
                 print(f"DEBUG: Created default tracking record with 0 allocation and {leave_days_decimal} used")
                 self._balance_updated = True
-            
+
     def revert_leave_balance(self):
         """Revert leave balance when leave is cancelled/rejected"""
         if not self.user_id or self.status != 'Approved':
             return
-        
+
         # REMOVED: condition for is_paid - we revert all leave types
         year = self.start_date.year
-        
+
         # Ensure leave_days is a Decimal for arithmetic operations
         from decimal import Decimal
         leave_days_decimal = Decimal(str(self.leave_days))
-        
+
         try:
             balance = UserLeaveBalance.objects.get(
                 user=self.user,
                 leave_type=self.leave_type,
                 year=year
             )
-            
+
             # Use the Decimal version for the subtraction
             balance.used = balance.used - leave_days_decimal
             balance.save()
-            
+
             print(f"DEBUG: Reverted balance - removed {leave_days_decimal} days, new used total: {balance.used}")
         except UserLeaveBalance.DoesNotExist:
             print(f"DEBUG: No balance record found to revert for {self.user_id}, {self.leave_type}")
             pass
-    
+
 
     def save(self, *args, **kwargs):
         is_new = self._state.adding
@@ -1153,7 +1153,7 @@ class LeaveRequest(models.Model):
         try:
             with transaction.atomic():
                 super().save(*args, **kwargs)
-                
+
                 print(f"DEBUG: After save, status: {self.status}")
 
                 if self.status == 'Approved':
@@ -1196,17 +1196,17 @@ class LeaveRequest(models.Model):
         except Exception as e:
             print(f"DEBUG: Exception occurred in save method: {str(e)}")
             raise
-    
-    
+
+
     def update_attendance(self):
         """Update attendance records for approved leave period"""
         if not self.user_id:
             return
-            
+
         current_date = self.start_date
         while current_date <= self.end_date:
             is_weekend = current_date.weekday() >= 5  # Saturday or Sunday
-            
+
             # Skip weekends unless leave type counts weekends
             if not is_weekend or self.leave_type.count_weekends:
                 defaults = {
@@ -1215,7 +1215,7 @@ class LeaveRequest(models.Model):
                     'is_half_day': self.half_day,
                     'remarks': f"Auto-marked by leave system: {self.leave_type.name}"
                 }
-                    
+
                 Attendance.objects.update_or_create(
                     user=self.user,
                     date=current_date,
@@ -1232,7 +1232,7 @@ class CompOffRequest(models.Model):
         ('Approved', 'Approved'),
         ('Rejected', 'Rejected')
     ]
-    
+
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comp_off_requests')
     worked_date = models.DateField()
     reason = models.TextField()
@@ -1241,34 +1241,34 @@ class CompOffRequest(models.Model):
     approver = models.ForeignKey(User, related_name='comp_off_approvals', on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-        
+
         # If approved, update the user's comp-off balance
         if self.status == 'Approved':
             self.update_comp_off_balance()
-    
+
     def update_comp_off_balance(self):
         """Update user's comp-off balance when request is approved"""
         # Find comp-off leave type
         try:
             comp_off_type = LeaveType.objects.get(name='Comp Off')
             year = self.worked_date.year
-            
+
             # Calculate days - typical 8 hour workday
             days_earned = self.hours_worked / 8.0
-            
+
             balance, created = UserLeaveBalance.objects.get_or_create(
                 user=self.user,
                 leave_type=comp_off_type,
                 year=year,
                 defaults={'allocated': 0}
             )
-            
+
             balance.additional += days_earned
             balance.save()
-            
+
             # Update attendance record
             Attendance.objects.update_or_create(
                 user=self.user,
@@ -1285,7 +1285,7 @@ class CompOffRequest(models.Model):
         except LeaveType.DoesNotExist:
             pass
 
-        
+
 
 '''---------- ATTENDANCE AREA ----------'''
 
@@ -1298,7 +1298,7 @@ class ShiftMaster(models.Model):
     ]
     WORK_DAYS_CHOICES = [
         ('Weekdays', 'Monday to Friday'),
-        ('All Days', 'Monday to Saturday'), 
+        ('All Days', 'Monday to Saturday'),
         ('Custom', 'Custom Days')
     ]
     name = models.CharField(max_length=50)
@@ -1328,10 +1328,10 @@ class ShiftMaster(models.Model):
     def working_days_list(self):
         """Return a list of working days (0=Monday, 6=Sunday)"""
         weekday_map = {
-            'Monday': 0, 'Tuesday': 1, 'Wednesday': 2, 
+            'Monday': 0, 'Tuesday': 1, 'Wednesday': 2,
             'Thursday': 3, 'Friday': 4, 'Saturday': 5, 'Sunday': 6
         }
-        
+
         if self.work_days == 'Weekdays':
             return [0, 1, 2, 3, 4]  # Monday to Friday
         elif self.work_days == 'All Days':
@@ -1355,16 +1355,16 @@ class ShiftMaster(models.Model):
         start_datetime = timezone.make_aware(
             timezone.datetime.combine(date, self.start_time)
         )
-        
+
         # If shift crosses midnight, end_datetime should be on the next day
         end_date = date
         if self.crosses_midnight:
             end_date = date + timedelta(days=1)
-        
+
         end_datetime = timezone.make_aware(
             timezone.datetime.combine(end_date, self.end_time)
         )
-        
+
         return start_datetime <= datetime_obj <= end_datetime
 
     def expected_hours(self):
@@ -1388,7 +1388,7 @@ class ShiftMaster(models.Model):
             self.end_time = time(3, 30)    # 3:30 AM (9 hours)
             self.shift_duration = 9.0
             self.work_days = 'Weekdays'  # Monday to Friday
-        
+
         # Calculate shift duration if not provided
         if not self.shift_duration:
             # Calculate hours between start and end time
@@ -1403,7 +1403,7 @@ class ShiftMaster(models.Model):
                 hours = self.end_time.hour - self.start_time.hour
                 minutes = self.end_time.minute - self.start_time.minute
                 self.shift_duration = round(hours + minutes/60, 2)
-        
+
         super().save(*args, **kwargs)
 
 # Now, let's add a holiday model to properly track holidays
@@ -1426,7 +1426,7 @@ class Holiday(models.Model):
         # Check for exact date match
         if cls.objects.filter(date=date).exists():
             return True
-        
+
         # Check for recurring yearly holidays (same month and day)
         if cls.objects.filter(
             recurring_yearly=True,
@@ -1434,7 +1434,7 @@ class Holiday(models.Model):
             date__day=date.day
         ).exists():
             return True
-        
+
         return False
 
 # Now, let's enhance the shift assignment model to assign shifts to employees
@@ -1462,7 +1462,7 @@ class ShiftAssignment(models.Model):
         # Convert effective_from to a proper date object if it's a string
         if isinstance(self.effective_from, str):
             self.effective_from = timezone.datetime.strptime(self.effective_from, '%Y-%m-%d').date()
-        
+
         # If this is a new current assignment, make all other assignments for this user not current
         if self.is_current:
             # Get other current assignments for this user
@@ -1470,13 +1470,13 @@ class ShiftAssignment(models.Model):
                 user=self.user,
                 is_current=True
             ).exclude(id=self.id if self.id else None)
-            
+
             # Update each assignment individually to prevent type errors
             for assignment in other_assignments:
                 assignment.is_current = False
                 assignment.effective_to = self.effective_from - timedelta(days=1)
                 assignment.save(update_fields=['is_current', 'effective_to'])
-        
+
         super().save(*args, **kwargs)
 
     @classmethod
@@ -1484,14 +1484,14 @@ class ShiftAssignment(models.Model):
         """Get the user's assigned shift for a specific date or current date if not specified"""
         if date is None:
             date = timezone.now().date()
-        
+
         # Try to find an active assignment for the given date
         assignment = cls.objects.filter(
             user=user,
             effective_from__lte=date,
             effective_to__isnull=True
         ).select_related('shift').first()
-        
+
         if not assignment:
             # Try with effective_to date for completed assignments
             assignment = cls.objects.filter(
@@ -1499,14 +1499,14 @@ class ShiftAssignment(models.Model):
                 effective_from__lte=date,
                 effective_to__gte=date
             ).select_related('shift').first()
-        
+
         if not assignment:
             # If no assignment found, get most recent assignment
             assignment = cls.objects.filter(
                 user=user,
                 effective_from__lte=date
             ).order_by('-effective_from').select_related('shift').first()
-        
+
         # If still no assignment, return default Day Shift
         if not assignment:
             day_shift = ShiftMaster.objects.filter(name='Day Shift').first()
@@ -1520,9 +1520,9 @@ class ShiftAssignment(models.Model):
                     work_days='All Days'
                 )
             return day_shift
-        
+
         return assignment.shift
-        
+
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
@@ -1546,7 +1546,7 @@ class Attendance(models.Model):
     """
     STATUS_CHOICES = [
         ('Present', 'Present'),
-        ('Present & Late', 'Present & Late'), 
+        ('Present & Late', 'Present & Late'),
         ('Absent', 'Absent'),
         ('Late', 'Late'),
         ('On Leave', 'On Leave'),
@@ -1593,19 +1593,19 @@ class Attendance(models.Model):
         ('Rejected', 'Rejected')
     ], null=True, blank=True)
     requested_status = models.CharField(
-        max_length=20, 
+        max_length=20,
         choices=STATUS_CHOICES,
-        null=True, 
+        null=True,
         blank=True,
         help_text="Status requested by employee during regularization"
     )
-    
+
     # Session tracking
     first_session = models.ForeignKey('UserSession', on_delete=models.SET_NULL, null=True, blank=True, related_name='first_session_attendance')
     last_session = models.ForeignKey('UserSession', on_delete=models.SET_NULL, null=True, blank=True, related_name='last_session_attendance')
     total_sessions = models.IntegerField(default=0)
     idle_time = models.DurationField(default=timedelta(0))
-    
+
     overtime_hours = models.DecimalField(max_digits=5, decimal_places=2, default=0)
     is_overtime_approved = models.BooleanField(default=False)
     # Additional fields for the Attendance model:
@@ -1624,21 +1624,21 @@ class Attendance(models.Model):
             models.Index(fields=['date', 'status']),
         ]
         ordering = ['-date', 'user']
-    
+
     def __str__(self):
         return f"{self.user.username} - {self.date} - {self.status}"
 
     def is_on_leave(self):
         """
         Check if the user is on leave for this attendance date
-        
+
         Returns:
             bool: True if the user is on leave, False otherwise
         """
         # Check if status is already set to a leave-related status
         if self.status == 'On Leave' or (hasattr(self, 'leave_type') and self.leave_type):
             return True
-            
+
         # Check for approved leave requests that cover this date
         try:
             leave_request = LeaveRequest.objects.filter(
@@ -1665,12 +1665,12 @@ class Attendance(models.Model):
                 logger.debug(f"Subtracting idle time: {self.idle_time}")
                 idle_hours = self.idle_time.total_seconds() / 3600
                 self.total_hours = max(0, self.total_hours - round(Decimal(str(idle_hours)), 2))
-        
+
         # Calculate overtime based on shift if present
         if self.shift and self.total_hours and self.total_hours > self.shift.shift_duration:
             logger.debug(f"Calculating overtime for {self.user.username}")
             self.overtime_hours = self.total_hours - Decimal(str(self.shift.shift_duration))
-        
+
         # Mark weekend based on date
         weekday = self.date.weekday()
         is_weekend = False
@@ -1689,13 +1689,13 @@ class Attendance(models.Model):
             logger.debug("No shift assigned, using default weekend rules")
             is_weekend = weekday >= 5
         self.is_weekend = is_weekend
-        
+
         # Check for holidays
         try:
             logger.debug("Checking for holidays")
             holiday = Holiday.objects.filter(
-                Q(date=self.date) | 
-                (Q(recurring_yearly=True) & 
+                Q(date=self.date) |
+                (Q(recurring_yearly=True) &
                 Q(date__day=self.date.day, date__month=self.date.month))
             ).first()
             if holiday:
@@ -1706,17 +1706,17 @@ class Attendance(models.Model):
                     self.status = 'Holiday'
         except Exception as e:
             logger.error(f"Error checking holidays: {e}")
-        
+
         # Set weekend status if not on leave and is a weekend
         if not self.is_on_leave() and self.is_weekend and self.status not in ['Present', 'Present & Late', 'Work From Home', 'Comp Off']:
             logger.debug("Setting weekend status")
             self.status = 'Weekend'
-        
+
         # Handle "Yet to Clock In" status using IST timezone
         IST = pytz.timezone('Asia/Kolkata')
         current_time_ist = timezone.localtime(timezone.now(), IST).time()
         today_ist = timezone.localtime(timezone.now(), IST).date()
-        
+
         if self.status == 'Yet to Clock In' and not self.clock_in_time:
             if self.shift and self.date == today_ist:
                 if self.is_shift_ended(current_time_ist, self.shift.start_time, self.shift.end_time):
@@ -1741,7 +1741,7 @@ class Attendance(models.Model):
             elif not self.is_on_leave() and not self.is_holiday and not self.is_weekend:
                 logger.debug("On-time attendance, marking as present")
                 self.status = 'Present'
-        
+
         # Set early departure status if clock-out time is before shift end time
         if self.clock_out_time and self.shift:
             logger.debug("Checking early departure")
@@ -1753,14 +1753,14 @@ class Attendance(models.Model):
                 logger.debug(f"Left early by {shift_end_minutes - clock_out_minutes} minutes")
                 self.left_early = True
                 self.early_departure_minutes = shift_end_minutes - clock_out_minutes
-        
+
         # Set present status if total hours meet minimum threshold and not marked otherwise
-        if (self.total_hours and self.total_hours >= Decimal('4.0') and 
+        if (self.total_hours and self.total_hours >= Decimal('4.0') and
             self.status not in ['Present & Late', 'On Leave', 'Holiday', 'Weekend', 'Comp Off', 'Absent'] and
             not self.is_on_leave()):
             logger.debug("Marking as present based on total hours")
             self.status = 'Present'
-        
+
         super().save(*args, **kwargs)
         logger.debug(f"save() completed for {self.user.username} - {self.date}")
 
@@ -1828,8 +1828,8 @@ class Attendance(models.Model):
                 if not is_leave:
                     try:
                         holiday = Holiday.objects.filter(
-                            Q(date=attendance_date) | 
-                            (Q(recurring_yearly=True) & 
+                            Q(date=attendance_date) |
+                            (Q(recurring_yearly=True) &
                             Q(date__day=attendance_date.day, date__month=attendance_date.month))
                         ).first()
                         if holiday:
@@ -1905,7 +1905,7 @@ class Attendance(models.Model):
         except cls.DoesNotExist:
             logger.warning(f"No attendance record found for {user.username} on {attendance_date}")
             attendance = cls.create_attendance(
-                user=user, 
+                user=user,
                 clock_in_time=clock_out_time - timedelta(minutes=1),
                 location=location,
                 ip_address=ip_address,
@@ -1991,7 +1991,7 @@ class Attendance(models.Model):
                 attendance.save()
                 updated_count += 1
         print(f"update_yet_to_clock_in_statuses() completed - updated {updated_count} records")
-        return updated_count       
+        return updated_count
 
     @classmethod
     def auto_mark_attendance(cls):
@@ -2056,8 +2056,8 @@ class Attendance(models.Model):
                             holiday_name = None
                             try:
                                 holiday = Holiday.objects.filter(
-                                    Q(date=today) | 
-                                    (Q(recurring_yearly=True) & 
+                                    Q(date=today) |
+                                    (Q(recurring_yearly=True) &
                                     Q(date__day=today.day, date__month=today.month))
                                 ).first()
                                 if holiday:
@@ -2289,7 +2289,7 @@ class Attendance(models.Model):
 # class Attendance(models.Model):
 #     STATUS_CHOICES = [
 #         ('Present', 'Present'),
-#         ('Present & Late', 'Present & Late'), 
+#         ('Present & Late', 'Present & Late'),
 #         ('Absent', 'Absent'),
 #         ('Late', 'Late'),
 #         ('Half Day', 'Half Day'),
@@ -2304,7 +2304,7 @@ class Attendance(models.Model):
 #     LOCATION_CHOICES = [
 #         ('Office', 'Office'),
 #         ('Home', 'Home'),
-#         ('Remote', 'Remote'), 
+#         ('Remote', 'Remote'),
 #         ('Other', 'Other')
 #     ]
 
@@ -2367,23 +2367,23 @@ class Attendance(models.Model):
 
 #             # Convert clock_in_time to local timezone (IST)
 #             user_clock_in = timezone.localtime(self.clock_in_time)
-            
+
 #             # Get the date in local timezone to properly handle day boundaries
 #             local_date = timezone.localtime(timezone.make_aware(
 #                 datetime.combine(self.date, time(0, 0)),
 #                 timezone.get_current_timezone()
 #             )).date()
-            
+
 #             # Create shift start time in local timezone
 #             local_shift_start = timezone.make_aware(
 #                 datetime.combine(local_date, self.shift.start_time),
 #                 timezone.get_current_timezone()
 #             )
-            
+
 #             # Add grace period
 #             grace_period = getattr(self.shift, 'grace_period', timedelta(minutes=10))
 #             latest_allowed_time = local_shift_start + grace_period
-            
+
 #             # Compare clock in time with allowed time - now both are in local timezone
 #             if user_clock_in > latest_allowed_time:
 #                 self.status = 'Present & Late'
@@ -2403,20 +2403,20 @@ class Attendance(models.Model):
 #         """Check if user left early based on shift timing"""
 #         if not (self.clock_in_time and self.clock_out_time) or not self.shift:
 #             return False
-        
+
 #         try:
 #             # Convert clock_out_time to user's timezone
 #             user_clock_out = timezone.localtime(self.clock_out_time)
-            
+
 #             # Get shift end time for the date in user's timezone
 #             shift_end = timezone.make_aware(
 #                 timezone.datetime.combine(self.date, self.shift.end_time),
 #                 timezone.get_current_timezone()
 #             )
-            
+
 #             # Consider grace period for leaving early (10 minutes)
 #             early_leave_threshold = shift_end - timedelta(minutes=10)
-            
+
 #             if user_clock_out < early_leave_threshold:
 #                 early_minutes = int((shift_end - user_clock_out).total_seconds() // 60)
 #                 self.remarks = f"{self.remarks or ''} Left early by {early_minutes} minutes."
@@ -2510,10 +2510,10 @@ class Attendance(models.Model):
 #                 self.status = 'Holiday'
 #                 self.is_holiday = True
 #                 return True
-                
+
 #             # Check for weekend based on shift settings
 #             is_weekend = self.date.weekday() >= 5  # Saturday or Sunday
-            
+
 #             if is_weekend and self.shift:
 #                 if self.shift.work_days == 'Custom':
 #                     weekday = calendar.day_name[self.date.weekday()]
@@ -2530,7 +2530,7 @@ class Attendance(models.Model):
 #                 self.status = 'Weekend'
 #                 self.is_weekend = True
 #                 return True
-            
+
 #             return False
 #         except Exception as e:
 #             print(f"Error checking weekend/holiday: {str(e)}")
@@ -2540,14 +2540,14 @@ class Attendance(models.Model):
 #         """Determine if attendance should be marked as half day"""
 #         if not (self.clock_in_time and self.clock_out_time) or self.total_hours is None:
 #             return False
-        
+
 #         try:
 #             # Get expected hours from shift or default to 8 hours
 #             expected_hours = float(self.expected_hours or (self.shift.shift_duration if self.shift else 8.0))
-            
+
 #             # Half day threshold is half of expected hours
 #             half_day_threshold = expected_hours / 2
-            
+
 #             # If worked less than half of expected hours but more than 0, mark as half day
 #             if 0 < float(self.total_hours) < half_day_threshold:
 #                 self.status = 'Half Day'
@@ -2569,7 +2569,7 @@ class Attendance(models.Model):
 #     def determine_attendance_status(self):
 #         """Determine final attendance status based on various factors"""
 #         # Priority order for status determination
-        
+
 #         # 1. Check for approved leave
 #         from .models import Leave
 #         leave = Leave.objects.filter(
@@ -2578,36 +2578,36 @@ class Attendance(models.Model):
 #             end_date__gte=self.date,
 #             status='Approved'
 #         ).first()
-        
+
 #         if leave:
 #             self.status = 'On Leave'
 #             self.leave_type = leave.leave_type
 #             self.is_half_day = leave.half_day
 #             return
-        
+
 #         # 2. Check for holiday/weekend
 #         if self.check_weekend_holiday():
 #             return
-        
+
 #         # 3. If no clock in recorded, mark as Not Marked
 #         if not self.clock_in_time:
 #             self.status = 'Not Marked'
 #             return
-        
+
 #         # 4. Handle Work From Home
 #         if self.handle_wfh():
 #             return
-        
+
 #         # 5. Check for half day
 #         if self.check_half_day():
 #             return
-        
+
 #         # 6. Check for late arrival
 #         self.check_late_arrival()
-        
+
 #         # 7. Check for early departure (doesn't change status, just adds remarks)
 #         self.check_early_departure()
-        
+
 #         # If we've made it here without setting a status, default to Present
 #         if not self.status or self.status == 'Not Marked':
 #             self.status = 'Present'
@@ -2639,21 +2639,21 @@ class Attendance(models.Model):
 #             # Only allow marking comp off for non-holiday, non-weekend days
 #             if self.is_holiday or self.is_weekend:
 #                 return False, "Cannot mark Comp Off for weekends or holidays"
-            
+
 #             # Check if user has comp off balance
 #             from .models import Leave
 #             comp_off_balance = float(Leave.get_comp_off_balance(self.user))
-            
+
 #             if comp_off_balance <= 0:
 #                 return False, "Insufficient Comp Off balance"
-            
+
 #             # Mark as Comp Off
 #             self.status = 'Comp Off'
 #             self.remarks = f"{self.remarks or ''} Comp Off used. Reason: {reason or 'Not specified'}. Approved by: {approved_by.get_full_name() if approved_by else 'System'}"
-            
+
 #             self.save()
 #             return True, "Successfully marked as Comp Off"
-        
+
 #         except Exception as e:
 #             return False, f"Error marking Comp Off: {str(e)}"
 
@@ -2726,19 +2726,19 @@ class Attendance(models.Model):
 #             # Convert clock_in_time to user's timezone
 #             user_clock_in = timezone.localtime(clock_in_time)
 #             attendance_date = user_clock_in.date()
-            
+
 #             from .models import ShiftAssignment
 #             shift = ShiftAssignment.get_user_current_shift(user, attendance_date)
-            
+
 #             # Handle overnight shifts
 #             if shift and shift.start_time > shift.end_time:
 #                 # If clock in is before midnight, use current date
 #                 # If clock in is after midnight, use previous date
 #                 if user_clock_in.time() < shift.end_time:
 #                     attendance_date = attendance_date - timedelta(days=1)
-            
+
 #             return attendance_date, shift
-            
+
 #         except Exception as e:
 #             print(f"Error in determine_shift_date: {str(e)}")
 #             return clock_in_time.date(), None
@@ -2771,7 +2771,7 @@ class Attendance(models.Model):
 #             from .models import Holiday
 #             is_holiday = Holiday.is_holiday(shift_date)
 #             is_weekend = shift_date.weekday() >= 5
-            
+
 #             # Check if it's a working day based on shift
 #             is_working_day = True
 #             if shift:
@@ -2858,7 +2858,7 @@ class Attendance(models.Model):
 #             # Convert clock_out_time to user's timezone
 #             user_clock_out = timezone.localtime(clock_out_time)
 #             today = user_clock_out.date()
-            
+
 #             # Get current date's attendance
 #             attendance = cls.objects.filter(
 #                 user=user,
@@ -3003,17 +3003,34 @@ class Attendance(models.Model):
 #             'yearly_totals': yearly_totals
 #         }
 
-
 '''-------------------------------------------- SUPPORT AREA ---------------------------------------'''
 import uuid
 from django.db import models
-from django.utils.timezone import now
-from django.contrib.auth import get_user_model
-
-from django.db import models
-from django.utils.timezone import now
-import uuid
+from django.utils import timezone
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.db.models.signals import post_save, pre_save
+from django.dispatch import receiver
+
+
+class SupportTicketManager(models.Manager):
+    """Custom manager for Support model with soft delete support"""
+
+    def get_queryset(self):
+        """Return only non-deleted tickets by default"""
+        return super().get_queryset().filter(is_deleted=False)
+
+    def with_deleted(self):
+        """Return all tickets including deleted ones"""
+        return super().get_queryset()
+
+    def deleted_only(self):
+        """Return only deleted tickets"""
+        return super().get_queryset().filter(is_deleted=True)
+
+
 class Support(models.Model):
     class Status(models.TextChoices):
         NEW = 'New', 'New'
@@ -3024,6 +3041,7 @@ class Support(models.Model):
         ON_HOLD = 'On Hold', 'On Hold'
         RESOLVED = 'Resolved', 'Resolved'
         CLOSED = 'Closed', 'Closed'
+        REOPENED = 'Reopened', 'Reopened'
 
     class Priority(models.TextChoices):
         LOW = 'Low', 'Low'
@@ -3045,11 +3063,14 @@ class Support(models.Model):
     class AssignedGroup(models.TextChoices):
         HR = 'HR', 'HR'
         ADMIN = 'Admin', 'Admin'
-        
+        IT_SUPPORT = 'IT Support', 'IT Support'
+        MANAGEMENT = 'Management', 'Management'
+
     # SLA Status choices
     class SLAStatus(models.TextChoices):
         WITHIN_SLA = 'Within SLA', 'Within SLA'
         BREACHED = 'Breached', 'Breached'
+        PAUSED = 'Paused', 'Paused'
 
     # Core Fields
     ticket_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
@@ -3063,14 +3084,14 @@ class Support(models.Model):
     priority = models.CharField(max_length=20, choices=Priority.choices, default=Priority.MEDIUM)
     assigned_group = models.CharField(max_length=50, choices=AssignedGroup.choices, null=True, blank=True)
     assigned_to_user = models.ForeignKey(
-        User, 
-        on_delete=models.SET_NULL, 
-        null=True, 
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
         blank=True,
         related_name='assigned_tickets'
     )
 
-    # CC Users (NEW FIELD)
+    # CC Users
     cc_users = models.ManyToManyField(
         User,
         blank=True,
@@ -3079,7 +3100,7 @@ class Support(models.Model):
     )
 
     # Timestamps
-    created_at = models.DateTimeField(default=now)
+    created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
     resolved_at = models.DateTimeField(null=True, blank=True)
     due_date = models.DateTimeField(null=True, blank=True)
@@ -3103,36 +3124,75 @@ class Support(models.Model):
     sla_breach = models.BooleanField(default=False)
     sla_target_date = models.DateTimeField(null=True, blank=True, help_text="Target date for SLA compliance")
     sla_status = models.CharField(
-        max_length=20, 
-        choices=SLAStatus.choices, 
-        null=True, 
+        max_length=20,
+        choices=SLAStatus.choices,
+        null=True,
         blank=True,
         help_text="Status of SLA compliance"
     )
+    sla_paused_at = models.DateTimeField(null=True, blank=True, help_text="When SLA was paused")
+    sla_paused_duration = models.DurationField(default=timezone.timedelta(0), help_text="Total time SLA was paused")
+
     resolution_summary = models.TextField(blank=True)
     resolution_time = models.DurationField(null=True, blank=True)
-    
+
     # Response time tracking
     response_time = models.DurationField(
-        null=True, 
-        blank=True, 
+        null=True,
+        blank=True,
         help_text="Time taken for first response"
     )
+    first_response_at = models.DateTimeField(null=True, blank=True, help_text="When first response was provided")
+    closed_at = models.DateTimeField(null=True, blank=True)
     time_to_close = models.DurationField(
-        null=True, 
-        blank=True, 
+        null=True,
+        blank=True,
         help_text="Total time from creation to closure"
     )
-    
+
     # Escalation tracking
     escalation_level = models.PositiveSmallIntegerField(
         default=0,
         help_text="Current escalation level of the ticket"
     )
+    last_escalated_at = models.DateTimeField(null=True, blank=True)
+    escalated_by = models.ForeignKey(
+        User,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='escalated_tickets'
+    )
+
+    # Reopen tracking
+    reopened_at = models.DateTimeField(null=True, blank=True)
+    reopen_count = models.PositiveIntegerField(default=0)
+    last_reopened_by = models.ForeignKey(
+        User,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='reopened_tickets'
+    )
 
     # User Satisfaction
     satisfaction_rating = models.IntegerField(null=True, blank=True, choices=[(i, i) for i in range(1, 6)])
     feedback = models.TextField(blank=True)
+
+    # Soft delete
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    deleted_by = models.ForeignKey(
+        User,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='deleted_tickets'
+    )
+
+    # Managers
+    objects = SupportTicketManager()
+    all_objects = models.Manager()  # Access to all objects including deleted
 
     class Meta:
         ordering = ['-created_at']
@@ -3142,67 +3202,202 @@ class Support(models.Model):
             models.Index(fields=['created_at']),
             models.Index(fields=['user']),
             models.Index(fields=['due_date']),
-            models.Index(fields=['resolved_at']),  # Added index for resolved_at
-            models.Index(fields=['priority']),     # Added index for priority
+            models.Index(fields=['resolved_at']),
+            models.Index(fields=['priority']),
+            models.Index(fields=['assigned_group']),
+            models.Index(fields=['is_deleted']),
+            models.Index(fields=['sla_target_date']),
+            models.Index(fields=['escalation_level']),
         ]
         verbose_name = "Support Ticket"
         verbose_name_plural = "Support Tickets"
+        permissions = [
+            ("can_escalate_ticket", "Can escalate tickets"),
+            ("can_reopen_ticket", "Can reopen tickets"),
+            ("can_view_internal_comments", "Can view internal comments"),
+            ("can_manage_sla", "Can manage SLA settings"),
+        ]
 
     def __str__(self):
         return f"[{self.priority}] {self.ticket_id} - {self.subject} ({self.status})"
 
     @property
     def is_overdue(self):
-        return bool(self.due_date and self.due_date < now())
-    
+        return bool(self.due_date and self.due_date < timezone.now() and self.status not in [self.Status.RESOLVED, self.Status.CLOSED])
+
+    @property
+    def effective_sla_target(self):
+        """Calculate SLA target considering paused time"""
+        if not self.sla_target_date:
+            return None
+        return self.sla_target_date + self.sla_paused_duration
+
+    def soft_delete(self, user=None):
+        """Soft delete the ticket"""
+        self.is_deleted = True
+        self.deleted_at = timezone.now()
+        self.deleted_by = user
+        self.save()
+
+    def restore(self):
+        """Restore a soft-deleted ticket"""
+        self.is_deleted = False
+        self.deleted_at = None
+        self.deleted_by = None
+        self.save()
+
+    def reopen(self, user=None, reason=None):
+        """Reopen a closed/resolved ticket"""
+        if self.status not in [self.Status.CLOSED, self.Status.RESOLVED]:
+            raise ValidationError("Only closed or resolved tickets can be reopened")
+
+        self.status = self.Status.REOPENED
+        self.reopened_at = timezone.now()
+        self.reopen_count += 1
+        self.last_reopened_by = user
+        self.resolved_at = None
+        self.resolution_time = None
+        self.save()
+
+        # Create activity log
+        TicketActivity.objects.create(
+            ticket=self,
+            action=TicketActivity.Action.REOPENED,
+            user=user,
+            details=f"Ticket reopened. Reason: {reason or 'No reason provided'}"
+        )
+
+    def escalate(self, user=None, reason=None):
+        """Escalate the ticket to next level"""
+        self.escalation_level += 1
+        self.last_escalated_at = timezone.now()
+        self.escalated_by = user
+
+        # Auto-assign to higher group based on escalation level
+        if self.escalation_level >= 2:
+            self.assigned_group = self.AssignedGroup.MANAGEMENT
+
+        self.save()
+
+        # Create activity log
+        TicketActivity.objects.create(
+            ticket=self,
+            action=TicketActivity.Action.ESCALATED,
+            user=user,
+            details=f"Ticket escalated to level {self.escalation_level}. Reason: {reason or 'Auto-escalation'}"
+        )
+
+    def pause_sla(self):
+        """Pause SLA clock (typically when status is ON_HOLD)"""
+        if self.sla_status != self.SLAStatus.PAUSED:
+            self.sla_paused_at = timezone.now()
+            self.sla_status = self.SLAStatus.PAUSED
+            self.save()
+
+    def resume_sla(self):
+        """Resume SLA clock and add paused duration"""
+        if self.sla_status == self.SLAStatus.PAUSED and self.sla_paused_at:
+            paused_duration = timezone.now() - self.sla_paused_at
+            self.sla_paused_duration += paused_duration
+            self.sla_paused_at = None
+            self.sla_status = self.SLAStatus.WITHIN_SLA
+            self.save()
+
+    def check_auto_escalation(self):
+        """Check if ticket should be auto-escalated based on time"""
+        if self.status in [self.Status.RESOLVED, self.Status.CLOSED]:
+            return False
+
+        escalation_rules = {
+            self.Priority.CRITICAL: 2,  # 2 hours
+            self.Priority.HIGH: 4,      # 4 hours
+            self.Priority.MEDIUM: 12,   # 12 hours
+            self.Priority.LOW: 24,      # 24 hours
+        }
+
+        hours_since_creation = (timezone.now() - self.created_at).total_seconds() / 3600
+        escalation_threshold = escalation_rules.get(self.priority, 24)
+
+        if hours_since_creation > escalation_threshold and self.escalation_level == 0:
+            self.escalate(reason="Auto-escalation due to time threshold")
+            return True
+
+        return False
+
     def save(self, *args, **kwargs):
         # Extract user from kwargs (if present) before passing to super().save()
         user = kwargs.pop('user', None)
-        
+
         # Auto-assign tickets to HR or Admin based on issue type
         if not self.assigned_group:
             hr_issues = [self.IssueType.HR, self.IssueType.ACCESS]
             self.assigned_group = self.AssignedGroup.HR if self.issue_type in hr_issues else self.AssignedGroup.ADMIN
-        
+
         # Calculate SLA target date if not set
         if not self.sla_target_date and self.created_at:
             self.set_sla_target_date()
-            
+
+        # Handle SLA pause/resume based on status
+        if self.status == self.Status.ON_HOLD:
+            self.pause_sla()
+        elif self.sla_status == self.SLAStatus.PAUSED and self.status != self.Status.ON_HOLD:
+            self.resume_sla()
+
         # Track status changes
         if self.pk:
-            old_ticket = Support.objects.get(pk=self.pk)
-            
-            # Check for status changes
-            if old_ticket.status != self.status:
-                self._status_changed = (old_ticket.status, self.status)
-                
-                # Track resolution time when moving to Resolved status
-                if self.status == self.Status.RESOLVED and not self.resolved_at:
-                    self.resolved_at = now()
-                    if self.created_at:
-                        self.resolution_time = self.resolved_at - self.created_at
-                
-                # Calculate time_to_close when status changes to Closed
-                if self.status == self.Status.CLOSED and not self.time_to_close:
-                    if self.created_at:
-                        self.time_to_close = now() - self.created_at
-            else:
-                self._status_changed = None
+            try:
+                old_ticket = Support.objects.get(pk=self.pk)
+
+                # Check for status changes
+                if old_ticket.status != self.status:
+                    self._status_changed = (old_ticket.status, self.status)
+
+                    # Track resolution time when moving to Resolved status
+                    if self.status == self.Status.RESOLVED and not self.resolved_at:
+                        self.resolved_at = timezone.now()
+                        if self.created_at:
+                            self.resolution_time = self.resolved_at - self.created_at
+
+                    # Calculate time_to_close when status changes to Closed
+                    if self.status == self.Status.CLOSED and not self.time_to_close:
+                        if self.created_at:
+                            self.time_to_close = timezone.now() - self.created_at
+                else:
+                    self._status_changed = None
+
+                # Track field changes for audit
+                self._field_changes = {}
+                for field in ['priority', 'assigned_to_user', 'subject', 'description']:
+                    old_value = getattr(old_ticket, field)
+                    new_value = getattr(self, field)
+                    if old_value != new_value:
+                        self._field_changes[field] = {'old': old_value, 'new': new_value}
+
+            except Support.DoesNotExist:
+                pass
         else:
             # New ticket
             self._status_changed = (None, self.status)
-            
+            self._field_changes = {}
+
         # Check SLA compliance based on target date
-        if self.sla_target_date:
-            if self.resolved_at and self.resolved_at > self.sla_target_date:
+        if self.effective_sla_target:
+            current_time = timezone.now()
+            if self.resolved_at:
+                check_time = self.resolved_at
+            else:
+                check_time = current_time
+
+            if check_time > self.effective_sla_target:
                 self.sla_breach = True
                 self.sla_status = self.SLAStatus.BREACHED
-            elif self.resolved_at and self.resolved_at <= self.sla_target_date:
+            elif self.resolved_at and self.resolved_at <= self.effective_sla_target:
                 self.sla_breach = False
-                self.sla_status = self.SLAStatus.WITHIN_SLA
-            
+                if self.sla_status != self.SLAStatus.PAUSED:
+                    self.sla_status = self.SLAStatus.WITHIN_SLA
+
         super().save(*args, **kwargs)
-        
+
         # Create status log if needed
         if hasattr(self, '_status_changed') and self._status_changed:
             old_status, new_status = self._status_changed
@@ -3212,12 +3407,23 @@ class Support(models.Model):
                 new_status=new_status,
                 changed_by=user
             )
-    
+
+        # Create field change logs
+        if hasattr(self, '_field_changes') and self._field_changes:
+            for field, change in self._field_changes.items():
+                TicketFieldChange.objects.create(
+                    ticket=self,
+                    field_name=field,
+                    old_value=str(change['old']) if change['old'] is not None else '',
+                    new_value=str(change['new']) if change['new'] is not None else '',
+                    changed_by=user
+                )
+
     def set_sla_target_date(self):
         """Calculate SLA target date based on priority"""
         if not self.created_at:
             return
-            
+
         # Define SLA target times based on priority (in hours)
         sla_targets = {
             self.Priority.CRITICAL: 4,    # 4 hours
@@ -3225,12 +3431,34 @@ class Support(models.Model):
             self.Priority.MEDIUM: 24,     # 24 hours
             self.Priority.LOW: 48,        # 48 hours
         }
-        
+
         # Get target hours for this ticket's priority
         target_hours = sla_targets.get(self.priority, 24)  # Default to 24 hours
-        
+
         # Calculate target date (considering business hours could be added here)
         self.sla_target_date = self.created_at + timezone.timedelta(hours=target_hours)
+
+
+class TicketTag(models.Model):
+    """Model for tagging tickets"""
+    name = models.CharField(max_length=50, unique=True)
+    color = models.CharField(max_length=7, default='#007bff', help_text="Hex color code")
+    description = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+
+class TicketTagging(models.Model):
+    """Through model for ticket-tag relationship"""
+    ticket = models.ForeignKey(Support, on_delete=models.CASCADE, related_name='ticket_tags')
+    tag = models.ForeignKey(TicketTag, on_delete=models.CASCADE, related_name='tagged_tickets')
+    tagged_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    tagged_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['ticket', 'tag']
 
 
 class StatusLog(models.Model):
@@ -3239,9 +3467,42 @@ class StatusLog(models.Model):
     new_status = models.CharField(max_length=30, choices=Support.Status.choices)
     changed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     changed_at = models.DateTimeField(auto_now_add=True)
+    duration_in_status = models.DurationField(null=True, blank=True, help_text="Time spent in previous status")
+
+    class Meta:
+        ordering = ['-changed_at']
+
+    def save(self, *args, **kwargs):
+        # Calculate duration in previous status
+        if self.old_status:
+            previous_log = StatusLog.objects.filter(
+                ticket=self.ticket,
+                new_status=self.old_status
+            ).order_by('-changed_at').first()
+
+            if previous_log:
+                self.duration_in_status = self.changed_at - previous_log.changed_at
+
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.ticket.ticket_id}: {self.old_status} -> {self.new_status}"
+
+
+class TicketFieldChange(models.Model):
+    """Model for tracking field-level changes"""
+    ticket = models.ForeignKey(Support, on_delete=models.CASCADE, related_name='field_changes')
+    field_name = models.CharField(max_length=50)
+    old_value = models.TextField(blank=True)
+    new_value = models.TextField(blank=True)
+    changed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    changed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-changed_at']
+
+    def __str__(self):
+        return f"{self.ticket.ticket_id}: {self.field_name} changed"
 
 
 class TicketComment(models.Model):
@@ -3250,11 +3511,35 @@ class TicketComment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)  # or any other config
     is_internal = models.BooleanField(default=False, help_text="Internal notes only visible to staff")
-    
+    is_first_response = models.BooleanField(default=False, help_text="Whether this is the first staff response")
+
     class Meta:
         ordering = ['created_at']
-    
+        indexes = [
+            models.Index(fields=['ticket', 'created_at']),
+            models.Index(fields=['is_internal']),
+        ]
+
+    def save(self, *args, **kwargs):
+        # Check if this is the first response from staff
+        if not self.pk and not self.is_internal:
+            # Check if user is staff and this is first non-internal comment from staff
+            if (self.user.is_staff and
+                not self.ticket.comments.filter(user__is_staff=True, is_internal=False).exists() and
+                self.user != self.ticket.user):
+
+                self.is_first_response = True
+
+                # Update ticket's first response time
+                if not self.ticket.first_response_at:
+                    self.ticket.first_response_at = timezone.now()
+                    self.ticket.response_time = self.ticket.first_response_at - self.ticket.created_at
+                    self.ticket.save()
+
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"Comment on {self.ticket.ticket_id} by {self.user.username}"
 
@@ -3262,13 +3547,31 @@ class TicketComment(models.Model):
 class TicketAttachment(models.Model):
     """Model for file attachments on tickets"""
     ticket = models.ForeignKey(Support, on_delete=models.CASCADE, related_name='attachments')
-    file = models.FileField(upload_to='ticket_attachments/')
+    comment = models.ForeignKey(TicketComment, on_delete=models.CASCADE, null=True, blank=True, related_name='attachments')
+    file = models.FileField(upload_to='ticket_attachments/%Y/%m/%d/')
+    original_filename = models.CharField(max_length=255)
+    file_size = models.PositiveIntegerField(default=0, help_text="File size in bytes")
+    mime_type = models.CharField(max_length=100, blank=True)
     uploaded_by = models.ForeignKey(User, on_delete=models.CASCADE)
     uploaded_at = models.DateTimeField(auto_now_add=True)
     description = models.CharField(max_length=255, blank=True)
-    
+    version = models.PositiveIntegerField(default=1)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['-uploaded_at']
+        indexes = [
+            models.Index(fields=['ticket', 'uploaded_at']),
+        ]
+
+    def save(self, *args, **kwargs):
+        if self.file:
+            self.original_filename = self.file.name
+            self.file_size = self.file.size
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        return f"Attachment for {self.ticket.ticket_id}"
+        return f"Attachment for {self.ticket.ticket_id}: {self.original_filename}"
 
 
 class TicketActivity(models.Model):
@@ -3282,19 +3585,76 @@ class TicketActivity(models.Model):
         ESCALATED = 'ESCALATED', 'Escalated'
         RESOLVED = 'RESOLVED', 'Resolved'
         CLOSED = 'CLOSED', 'Closed'
-    
-    ticket = models.ForeignKey(Support, on_delete=models.CASCADE, related_name='ticket_activity')
+        DELETED = 'DELETED', 'Deleted'
+        RESTORED = 'RESTORED', 'Restored'
+        SLA_BREACHED = 'SLA_BREACHED', 'SLA Breached'
+        PRIORITY_CHANGED = 'PRIORITY_CHANGED', 'Priority Changed'
+
+    ticket = models.ForeignKey(Support, on_delete=models.CASCADE, related_name='activities')
     action = models.CharField(max_length=20, choices=Action.choices)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     timestamp = models.DateTimeField(auto_now_add=True)
     details = models.TextField(blank=True)
-    
+
+    # For system-generated activities
+    is_system_generated = models.BooleanField(default=False)
+
     class Meta:
         ordering = ['-timestamp']
         verbose_name_plural = "Ticket Activities"
-    
+        indexes = [
+            models.Index(fields=['ticket', 'timestamp']),
+            models.Index(fields=['action']),
+        ]
+
     def __str__(self):
         return f"{self.action} on {self.ticket.ticket_id} by {self.user.username if self.user else 'System'}"
+
+
+class EscalationRule(models.Model):
+    """Model for defining auto-escalation rules"""
+    name = models.CharField(max_length=100)
+    priority = models.CharField(max_length=20, choices=Support.Priority.choices)
+    issue_type = models.CharField(max_length=50, choices=Support.IssueType.choices, blank=True)
+    threshold_hours = models.PositiveIntegerField(help_text="Hours after which to escalate")
+    escalate_to_group = models.CharField(max_length=50, choices=Support.AssignedGroup.choices)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['priority', 'issue_type']
+
+    def __str__(self):
+        return f"Escalation rule for {self.priority} priority"
+
+
+# Signal handlers for automatic tracking and notifications
+@receiver(post_save, sender=Support)
+def create_ticket_activity(sender, instance, created, **kwargs):
+    """Create activity log when ticket is created or significantly updated"""
+    if created:
+        TicketActivity.objects.create(
+            ticket=instance,
+            action=TicketActivity.Action.CREATED,
+            user=instance.user,
+            details=f"Ticket created with priority {instance.priority}",
+            is_system_generated=True
+        )
+
+
+@receiver(post_save, sender=TicketComment)
+def create_comment_activity(sender, instance, created, **kwargs):
+    """Create activity when comment is added"""
+    if created:
+        TicketActivity.objects.create(
+            ticket=instance.ticket,
+            action=TicketActivity.Action.COMMENTED,
+            user=instance.user,
+            details=f"Comment added {'(Internal)' if instance.is_internal else '(Public)'}",
+            is_system_generated=True
+        )
+
+
 ''' ------------------------------------------- REmove employee AREA ------------------------------------------- '''
 
 # Employee model to store employee-specific information
@@ -3309,7 +3669,7 @@ class Employee(models.Model):
     def __str__(self):
         """Return a string representation of the employee."""
         return f"{self.user.username} - {', '.join([group.name for group in self.user.groups.all()])}"
-    
+
 ''' ------------------------------------------- PROFILE AREA ------------------------------------------- '''
 # models.py
 from django.db import models
@@ -3334,14 +3694,14 @@ def validate_aadhar(value):
     """Validate Aadhar number format."""
     if not value.isdigit() or len(value) != 12:
         raise ValidationError('Aadhar number must be 12 digits.')
-  
+
 class UserDetails(models.Model):
     """Enhanced model for storing comprehensive employee information."""
-    
+
     # Employee Status Choices
     EMPLOYMENT_STATUS_CHOICES = [
         ('active', 'Active'),
-        ('inactive', 'Inactive'), 
+        ('inactive', 'Inactive'),
         ('terminated', 'Terminated'),
         ('resigned', 'Resigned'),
         ('suspended', 'Suspended'),
@@ -3351,7 +3711,7 @@ class UserDetails(models.Model):
         ('sabbatical', 'Sabbatical'),
         ('long_leave', 'Long Leave')
     ]
-    
+
     # Employee Type Choices
     EMPLOYEE_TYPE_CHOICES = [
         ('full_time', 'Full-Time Employee'),
@@ -3362,7 +3722,7 @@ class UserDetails(models.Model):
         ('probationary', 'Probationary Employee'),
         ('remote', 'Remote Worker')
     ]
-    
+
     # Blood Group Choices
     BLOOD_GROUP_CHOICES = [
         ('A+', 'A+'),
@@ -3374,7 +3734,7 @@ class UserDetails(models.Model):
         ('O+', 'O+'),
         ('O-', 'O-'),
     ]
-    
+
     # Gender Choices
     GENDER_CHOICES = [
         ('Male', 'Male'),
@@ -3382,7 +3742,7 @@ class UserDetails(models.Model):
         ('Other', 'Other'),
         ('Prefer not to say', 'Prefer not to say')
     ]
-    
+
     # Marital Status Choices
     MARITAL_STATUS_CHOICES = [
         ('single', 'Single'),
@@ -3392,23 +3752,23 @@ class UserDetails(models.Model):
         ('separated', 'Separated'),
         ('other', 'Other')
     ]
-    
+
     # Basic User Connection
     user = models.OneToOneField(
-        User, 
+        User,
         on_delete=models.CASCADE,
         related_name='profile'
     )
-    
+
     # Personal Information
     dob = models.DateField(
-        null=True, 
-        blank=True, 
+        null=True,
+        blank=True,
         verbose_name="Date of Birth",
         validators=[validate_future_date]
     )
     blood_group = models.CharField(
-        max_length=10, 
+        max_length=10,
         choices=BLOOD_GROUP_CHOICES,
         null=True,
         blank=True,
@@ -3427,7 +3787,7 @@ class UserDetails(models.Model):
         blank=True
     )
 
-    
+
     # Contact Information
     contact_number_primary = models.CharField(
         max_length=15,
@@ -3437,8 +3797,8 @@ class UserDetails(models.Model):
     )
 
     personal_email = models.EmailField(
-        unique=True, 
-        null=True, 
+        unique=True,
+        null=True,
         blank=True
     )
     company_email = models.EmailField(
@@ -3447,18 +3807,18 @@ class UserDetails(models.Model):
         blank=True,
         help_text="Official company email"
     )
-    
+
     # Address Information
     current_address_line1 = models.CharField(max_length=255, null=True, blank=True)
-    current_address_line2 = models.CharField(max_length=255, null=True, blank=True) 
+    current_address_line2 = models.CharField(max_length=255, null=True, blank=True)
     current_city = models.CharField(max_length=100, null=True, blank=True)
     current_state = models.CharField(max_length=100, null=True, blank=True)
     current_postal_code = models.CharField(max_length=10, null=True, blank=True)
     current_country = models.CharField(max_length=100, null=True, blank=True)
-    
+
     # Permanent Address
     permanent_address_line1 = models.CharField(max_length=255, null=True, blank=True)
-    permanent_address_line2 = models.CharField(max_length=255, null=True, blank=True) 
+    permanent_address_line2 = models.CharField(max_length=255, null=True, blank=True)
     permanent_city = models.CharField(max_length=100, null=True, blank=True)
     permanent_state = models.CharField(max_length=100, null=True, blank=True)
     permanent_postal_code = models.CharField(max_length=10, null=True, blank=True)
@@ -3467,17 +3827,17 @@ class UserDetails(models.Model):
         default=False,
         help_text="Is current address same as permanent address?"
     )
-    
+
     # Emergency Contact
     emergency_contact_name = models.CharField(max_length=255, null=True, blank=True)
     emergency_contact_number = models.CharField(max_length=15, null=True, blank=True)
     emergency_contact_relationship = models.CharField(max_length=50, null=True, blank=True)
-    
+
     # Secondary Emergency Contact
     secondary_emergency_contact_name = models.CharField(max_length=255, null=True, blank=True)
     secondary_emergency_contact_number = models.CharField(max_length=15, null=True, blank=True)
     secondary_emergency_contact_relationship = models.CharField(max_length=50, null=True, blank=True)
-    
+
     # Employment Information
     employee_type = models.CharField(
         max_length=20,
@@ -3493,17 +3853,17 @@ class UserDetails(models.Model):
         related_name='direct_reports'
     )
     hire_date = models.DateField(
-        null=True, 
+        null=True,
         blank=True,
         help_text="Date when offer was accepted"
     )
     start_date = models.DateField(
-        null=True, 
+        null=True,
         blank=True,
         help_text="First day of work"
     )
     probation_end_date = models.DateField(
-        null=True, 
+        null=True,
         blank=True,
         help_text="Date when probation period ends"
     )
@@ -3520,31 +3880,31 @@ class UserDetails(models.Model):
         db_index=True
     )
     exit_date = models.DateField(
-        null=True, 
+        null=True,
         blank=True,
         help_text="Last working day"
     )
     exit_reason = models.TextField(
-        null=True, 
+        null=True,
         blank=True,
         help_text="Reason for leaving the company"
     )
     rehire_eligibility = models.BooleanField(
-        null=True, 
+        null=True,
         blank=True,
         help_text="Eligible for rehire"
     )
-    
+
     # Compensation Details
     salary_currency = models.CharField(
-        max_length=3, 
+        max_length=3,
         default='INR',
         help_text="Currency code (e.g., INR, USD)"
     )
     base_salary = models.DecimalField(
-        max_digits=12, 
+        max_digits=12,
         decimal_places=2,
-        null=True, 
+        null=True,
         blank=True
     )
     salary_frequency = models.CharField(
@@ -3556,79 +3916,79 @@ class UserDetails(models.Model):
         ],
         default='monthly'
     )
-    
+
     # Government IDs
     pan_number = models.CharField(
-        max_length=10, 
-        null=True, 
-        blank=True, 
+        max_length=10,
+        null=True,
+        blank=True,
         verbose_name="PAN Number",
         validators=[validate_pan]
     )
     aadhar_number = models.CharField(
-        max_length=12, 
-        null=True, 
-        blank=True, 
+        max_length=12,
+        null=True,
+        blank=True,
         verbose_name="Aadhar Number",
         validators=[validate_aadhar]
     )
     passport_number = models.CharField(
-        max_length=20, 
-        null=True, 
+        max_length=20,
+        null=True,
         blank=True
     )
     passport_expiry = models.DateField(
-        null=True, 
+        null=True,
         blank=True
     )
-    
+
     # Banking Details
     bank_name = models.CharField(max_length=100, null=True, blank=True)
     bank_account_number = models.CharField(max_length=30, null=True, blank=True)
     bank_ifsc = models.CharField(
-        max_length=11, 
-        null=True, 
+        max_length=11,
+        null=True,
         blank=True
     )
-    
+
     # Previous Employment
     previous_company = models.CharField(max_length=255, null=True, blank=True)
     previous_position = models.CharField(max_length=100, null=True, blank=True)
     previous_experience_years = models.PositiveIntegerField(
-        null=True, 
+        null=True,
         blank=True
     )
-    
+
     # HR Management
     onboarded_by = models.ForeignKey(
-        User, 
-        on_delete=models.SET_NULL, 
-        null=True, 
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
         blank=True,
         related_name='onboarded_users'
     )
     onboarding_date = models.DateTimeField(auto_now_add=True)
     last_updated = models.DateTimeField(auto_now=True)
     last_status_change = models.DateTimeField(null=True, blank=True)
-    
+
     # Skills and Competencies
     skills = models.TextField(
-        null=True, 
+        null=True,
         blank=True,
         help_text="Comma-separated list of skills"
     )
-    
+
     # Additional HR Notes
     confidential_notes = models.TextField(
-        null=True, 
+        null=True,
         blank=True,
         help_text="Confidential HR notes (visible only to HR)"
     )
-    
+
     # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         verbose_name = "User Detail"
         verbose_name_plural = "User Details"
@@ -3645,15 +4005,15 @@ class UserDetails(models.Model):
             ("export_employee_data", "Can export employee data"),
             ("manage_employee_status", "Can change employee status"),
         ]
-    
+
     def save(self, *args, **kwargs):
         # Handle email fields
         if self.company_email == "":
             self.company_email = None
-            
+
         if self.personal_email == "":
             self.personal_email = None
-            
+
         # Update last_status_change when employment status changes
         try:
             if self.pk:
@@ -3662,7 +4022,7 @@ class UserDetails(models.Model):
                     self.last_status_change = timezone.now()
         except UserDetails.DoesNotExist:
             pass
-                
+
         # Handle same address flag
         if self.is_current_same_as_permanent:
             self.permanent_address_line1 = self.current_address_line1
@@ -3671,33 +4031,33 @@ class UserDetails(models.Model):
             self.permanent_state = self.current_state
             self.permanent_postal_code = self.current_postal_code
             self.permanent_country = self.current_country
-            
+
         super().save(*args, **kwargs)
-    
+
     def __str__(self):
         return f"{self.user.get_full_name() or self.user.username}"
-    
+
     @property
     def full_name(self):
         return self.user.get_full_name() or self.user.username
-    
+
     @property
     def age(self):
         if not self.dob:
             return None
         today = timezone.now().date()
         return today.year - self.dob.year - ((today.month, today.day) < (self.dob.month, self.dob.day))
-    
+
     @property
     def employment_duration(self):
         if not self.start_date:
             return None
-        
+
         end_date = self.exit_date if self.exit_date else timezone.now().date()
         delta = end_date - self.start_date
         years = delta.days // 365
         months = (delta.days % 365) // 30
-        
+
         if years > 0:
             return f"{years} year{'s' if years > 1 else ''}, {months} month{'s' if months > 1 else ''}"
         return f"{months} month{'s' if months > 1 else ''}"
@@ -3707,7 +4067,7 @@ class UserDetails(models.Model):
         status_colors = {
             'active': 'success',
             'inactive': 'secondary',
-            'terminated': 'danger', 
+            'terminated': 'danger',
             'resigned': 'warning',
             'suspended': 'info',
             'absconding': 'dark',
@@ -3716,33 +4076,33 @@ class UserDetails(models.Model):
             'sabbatical': 'purple',
             'long_leave': 'orange'
         }
-        
+
         status_text = dict(self.EMPLOYMENT_STATUS_CHOICES).get(self.employment_status)
         status_color = status_colors.get(self.employment_status, 'secondary')
-        
+
         return {'text': status_text, 'color': status_color}
-    
+
     @property
     def is_on_notice(self):
         return self.employment_status == 'notice_period'
-    
+
     @property
     def remaining_notice_period(self):
         if not self.is_on_notice or not self.exit_date:
             return None
-        
+
         today = timezone.now().date()
         if today >= self.exit_date:
             return 0
-        
+
         return (self.exit_date - today).days
-    
+
     @property
     def get_reporting_chain(self):
         """Get the hierarchical reporting chain for this employee."""
         chain = []
         current = self.reporting_manager
-        
+
         while current:
             try:
                 manager_profile = UserDetails.objects.get(user=current)
@@ -3753,7 +4113,7 @@ class UserDetails(models.Model):
                 current = manager_profile.reporting_manager
             except (UserDetails.DoesNotExist, AttributeError):
                 break
-                
+
         return chain
 
 # User action log for tracking important HR actions
@@ -3767,16 +4127,16 @@ class UserActionLog(models.Model):
         ('activate', 'User Activated'),
         ('password_reset', 'Password Reset'),
     ]
-    
+
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_logs')
     action_type = models.CharField(max_length=20, choices=ACTION_TYPES)
     action_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='performed_actions')
     timestamp = models.DateTimeField(auto_now_add=True)
     details = models.TextField(blank=True, null=True)
-    
+
     class Meta:
         ordering = ['-timestamp']
-    
+
     def __str__(self):
         return f"{self.get_action_type_display()} for {self.user.username} on {self.timestamp.strftime('%Y-%m-%d %H:%M')}"
 
@@ -3787,7 +4147,7 @@ class Project(models.Model):
     start_date = models.DateField(default=timezone.now)
     deadline = models.DateField()
     status = models.CharField(
-        max_length=20, 
+        max_length=20,
         choices=[('Completed', 'Completed'), ('In Progress', 'In Progress'), ('Pending', 'Pending'),('On Hold', 'On Hold')]
     )
     created_at = models.DateTimeField(auto_now_add=True)
@@ -3832,7 +4192,7 @@ class ProjectAssignment(models.Model):
     assigned_date = models.DateField(auto_now_add=True)
     hours_worked = models.FloatField(default=0.0)
     role_in_project = models.CharField(
-        max_length=50, 
+        max_length=50,
         choices=[('Manager', 'Manager'), ('Employee', 'Employee'), ('Support', 'Support'),
                  ('Appraisal', 'Appraisal'), ('QC', 'QC')],
         default='Employee'
@@ -3938,7 +4298,7 @@ class Timesheet(models.Model):
         ('Rejected', 'Rejected'),
         ('Clarification_Requested', 'Clarification Requested')
     ]
-    
+
     REJECTION_REASON_CHOICES = [
         ('Insufficient_Detail', 'Insufficient Detail'),
         ('Hours_Discrepancy', 'Hours Discrepancy'),
@@ -3946,7 +4306,7 @@ class Timesheet(models.Model):
         ('Incomplete_Documentation', 'Incomplete Documentation'),
         ('Other', 'Other')
     ]
-    
+
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='timesheets')
     week_start_date = models.DateField()
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='timesheets')
@@ -3962,7 +4322,7 @@ class Timesheet(models.Model):
     rejection_reason = models.CharField(
         max_length=30,
         choices=REJECTION_REASON_CHOICES,
-        null=True, 
+        null=True,
         blank=True
     )
     manager_comments = models.TextField(blank=True, null=True)
@@ -3970,10 +4330,10 @@ class Timesheet(models.Model):
     reviewed_at = models.DateTimeField(null=True, blank=True)
     original_submission_id = models.IntegerField(null=True, blank=True, help_text="ID of original submission if this is a resubmission")
     version = models.PositiveIntegerField(default=1, help_text="Version number of this timesheet entry")
-    
+
     def __str__(self):
         return f"Timesheet for {self.project.name} - {self.week_start_date} (v{self.version})"
-    
+
     def clean(self):
         # Convert string dates to datetime.date objects if needed
         if isinstance(self.week_start_date, str):
@@ -3982,22 +4342,22 @@ class Timesheet(models.Model):
                 self.week_start_date = datetime.strptime(self.week_start_date, '%Y-%m-%d').date()
             except ValueError:
                 raise ValidationError("Invalid date format for week_start_date")
-        
+
         # Get current date for comparison
         current_date = timezone.now().date()
-        
+
         # Prevent backdated submissions beyond 14 days
         if self.week_start_date < (current_date - timedelta(days=14)):
             raise ValidationError("Cannot submit timesheet entries older than 14 days")
-        
+
         # Prevent future submissions beyond current week
         if self.week_start_date > current_date:
             raise ValidationError("Cannot submit timesheet entries for future dates")
-        
+
         # Enforce maximum hours per day (8 hours)
         if self.hours > 8:
             raise ValidationError("Maximum 8 hours can be logged per day per project")
-        
+
         # Check weekly hour limit (45 hours) across all projects for this week
         week_end_date = self.week_start_date + timedelta(days=6)
         total_hours = Timesheet.objects.filter(
@@ -4005,14 +4365,14 @@ class Timesheet(models.Model):
             week_start_date__gte=self.week_start_date,
             week_start_date__lte=week_end_date
         ).exclude(pk=self.pk).aggregate(models.Sum('hours'))['hours__sum'] or 0
-        
+
         if total_hours + self.hours > 45:
             raise ValidationError(f"Total weekly hours cannot exceed 45. Current total: {total_hours}")
-    
+
     def save(self, *args, **kwargs):
         self.clean()
         super().save(*args, **kwargs)
-    
+
     class Meta:
         unique_together = ('user', 'week_start_date', 'project', 'task_name', 'version')
         ordering = ['-week_start_date', '-version']
@@ -4032,7 +4392,7 @@ def update_reviewed_at(sender, instance, **kwargs):
             old_instance = Timesheet.objects.get(pk=instance.pk)
             if old_instance.approval_status != instance.approval_status:
                 instance.reviewed_at = timezone.now()
-                
+
                 # If this is a rejection and no original submission exists yet
                 if instance.approval_status == 'Rejected' and not instance.original_submission_id:
                     instance.original_submission_id = instance.pk
@@ -4050,12 +4410,12 @@ def handle_resubmission(sender, instance, **kwargs):
             latest_version = Timesheet.objects.filter(
                 original_submission_id=instance.original_submission_id or instance.pk
             ).order_by('-version').first()
-            
+
             if latest_version:
                 instance.version = latest_version.version + 1
             else:
                 instance.version = 2
-                
+
             if not instance.original_submission_id:
                 instance.original_submission_id = instance.pk
 
@@ -4110,25 +4470,25 @@ class Break(models.Model):
         ('Lunch/Dinner Break', 'Lunch/Dinner Break'),
         ('Tea Break 2', 'Tea Break 2'),
     ]
-    
+
     BREAK_DURATIONS = {
         'Tea Break 1': timedelta(minutes=5),
         'Lunch/Dinner Break': timedelta(minutes=35),
         'Tea Break 2': timedelta(minutes=5),
     }
-    
+
     DAILY_BREAK_LIMITS = {
         'Tea Break': 1,
         'Lunch/Dinner Break ': 1,
         'Tea Break ': 1,
     }
-    
+
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     break_type = models.CharField(max_length=50, choices=BREAK_TYPES)
     start_time = models.DateTimeField(auto_now_add=True)
     end_time = models.DateTimeField(null=True, blank=True)
     reason_for_extension = models.TextField(null=True, blank=True)
-    
+
     class Meta:
         verbose_name = "Break"
         verbose_name_plural = "Breaks"
@@ -4138,7 +4498,7 @@ class Break(models.Model):
         """Get the number of breaks taken today by type."""
         today_start = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
         today_end = today_start + timedelta(days=1)
-        
+
         return Break.objects.filter(
             user=self.user,
             break_type=self.break_type,
@@ -4148,21 +4508,21 @@ class Break(models.Model):
     def clean(self):
         """Enhanced validation to check for daily break limits and active breaks."""
         super().clean()
-        
+
         # Check for active breaks
         if not self.end_time:  # Only check for new breaks
             active_breaks = Break.objects.filter(
-                user=self.user, 
+                user=self.user,
                 end_time__isnull=True
             ).exclude(pk=self.pk)
-            
+
             if active_breaks.exists():
                 raise ValidationError("You already have an active break.")
-            
+
             # Check daily limit for this break type
             breaks_taken = self.get_breaks_taken_today()
             allowed_breaks = self.DAILY_BREAK_LIMITS.get(self.break_type, 1)
-            
+
             if breaks_taken >= allowed_breaks:
                 break_type_display = dict(self.BREAK_TYPES)[self.break_type]
                 raise ValidationError(
@@ -4183,7 +4543,7 @@ class Break(models.Model):
         """End the break and record reason if provided."""
         if not self.is_active:
             raise ValidationError("This break has already ended.")
-        
+
         self.end_time = timezone.now()
         if reason:
             self.reason_for_extension = reason
@@ -4194,28 +4554,28 @@ class Break(models.Model):
         """Get list of break types still available today for the user."""
         today_start = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
         today_end = today_start + timedelta(days=1)
-        
+
         taken_breaks = Break.objects.filter(
             user=user,
             start_time__range=(today_start, today_end)
         ).values_list('break_type', flat=True)
-        
+
         # Count breaks taken today by type
         break_counts = {}
         for break_type in taken_breaks:
             break_counts[break_type] = break_counts.get(break_type, 0) + 1
-        
+
         # Filter available breaks based on limits
         available_breaks = []
         for break_type, limit in cls.DAILY_BREAK_LIMITS.items():
             if break_counts.get(break_type, 0) < limit:
                 available_breaks.append(break_type)
-        
+
         return available_breaks
 
     def __str__(self):
         return f"{self.user.username} - {self.break_type} ({'Active' if self.is_active else 'Ended'})"
-    
+
 '''---------------------------------- Manager updates team --------------------------------'''
 
 
@@ -4230,7 +4590,7 @@ class ProjectUpdate(models.Model):
 
     def __str__(self):
         return f"Update for {self.project.name} by {self.created_by.username}"
-    
+
 
 '''---------------- Chat System Models -----------------------'''
 from django.db import models
@@ -4321,12 +4681,12 @@ class DirectMessage(models.Model):
     def get_messages(self):
         """Get all messages in this conversation"""
         return self.messages.all().order_by('sent_at')
-    
+
 class Message(models.Model):
     """Represents messages in both groups and direct messages"""
     MESSAGE_TYPES = [
         ('text', 'Text Message'),
-        ('file', 'File Attachment'), 
+        ('file', 'File Attachment'),
         ('system', 'System Message')
     ]
 
@@ -4353,7 +4713,7 @@ class Message(models.Model):
         # Message must belong to either group or direct message
         if (self.group and self.direct_message) or (not self.group and not self.direct_message):
             raise ValidationError("Message must belong to either a group or direct message")
-        
+
         # Validate file attachment if message type is file
         if self.message_type == 'file' and not self.file_attachment:
             raise ValidationError("File attachment is required for file type messages")
@@ -4363,13 +4723,13 @@ class Message(models.Model):
         self.is_deleted = True
         self.deleted_at = timezone.now()
         self.save()
-        
+
     def get_file_name(self):
         """Get the name of the attached file"""
         if self.file_attachment and hasattr(self.file_attachment, 'name'):
             return self.file_attachment.name.split('/')[-1]
         return None
-        
+
     def get_file_url(self):
         """Get the URL of the attached file"""
         if self.file_attachment:
@@ -4380,15 +4740,15 @@ class Message(models.Model):
         try:
             # Format the timestamp in a user-friendly way
             formatted_time = self.sent_at.strftime("%b %d, %I:%M %p")
-            
+
             # Get a short preview of the message content (first 30 chars)
             content_preview = self.content[:30] + "..." if len(self.content) > 30 else self.content
-            
+
             if self.is_deleted:
                 return f"[Deleted message]"
-            
+
             attachment_info = f" [with attachment: {self.get_file_name()}]" if self.file_attachment else ""
-            
+
             if self.group:
                 return f"{self.sender.username} in {self.group.name}: {content_preview}{attachment_info} • {formatted_time}"
             elif self.direct_message:
@@ -4398,7 +4758,7 @@ class Message(models.Model):
         except Exception:
             # Fallback that still provides useful information
             return f"Message {self.id} from {getattr(self.sender, 'username', 'Unknown')}"
-        
+
 class MessageRead(models.Model):
     """Tracks message read status per user"""
     message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name='read_receipts')
@@ -4425,7 +4785,7 @@ from django.utils import timezone
 
 class Department(models.Model):
     name = models.CharField(max_length=100, unique=True)
-    
+
     def __str__(self):
         return self.name
 
@@ -4451,9 +4811,9 @@ class Presence(models.Model):
         default=PresenceStatus.ABSENT
     )
     marked_by = models.ForeignKey(
-        User, 
-        on_delete=models.SET_NULL, 
-        null=True, 
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
         related_name='presence_marked'
     )
     marked_at = models.DateTimeField(auto_now_add=True)
@@ -4483,7 +4843,7 @@ class FinancialParameter(models.Model):
     """
     Dynamic parameter model for financial values that can change over time
     such as tax rates, thresholds, and calculation constants.
-    
+
     Parameters can be global or associated with specific entities.
     """
     VALUE_TYPE_CHOICES = [
@@ -4495,7 +4855,7 @@ class FinancialParameter(models.Model):
         ('boolean', 'Boolean'),  # Flag values
         ('date', 'Date'),  # Date-based parameters
     ]
-    
+
     CATEGORY_CHOICES = [
         ('tax', 'Tax'),
         ('fee', 'Fee'),
@@ -4505,9 +4865,9 @@ class FinancialParameter(models.Model):
         ('rule', 'Rule'),
         ('other', 'Other'),
     ]
-    
+
     # Parameter identification
-    key = models.CharField(max_length=100, db_index=True, 
+    key = models.CharField(max_length=100, db_index=True,
                           help_text="Unique identifier for the parameter")
     name = models.CharField(max_length=255,
                           help_text="Human-readable name")
@@ -4515,37 +4875,37 @@ class FinancialParameter(models.Model):
                               help_text="Category for organizing parameters")
     description = models.TextField(blank=True, null=True,
                                  help_text="Detailed description of the parameter's purpose")
-    
+
     # Value storage and typing
     value = models.TextField(help_text="String representation of the parameter value")
     value_type = models.CharField(max_length=20, choices=VALUE_TYPE_CHOICES,
                                 help_text="Data type of the parameter")
-    
+
     # Entity association for flexible application
     is_global = models.BooleanField(default=True,
                                   help_text="If True, applies globally; if False, applies to specific entity")
     content_type = models.ForeignKey(
-        ContentType, 
+        ContentType,
         on_delete=models.CASCADE,
-        null=True, 
+        null=True,
         blank=True,
         help_text="Entity type this parameter is associated with"
     )
     object_id = models.PositiveIntegerField(null=True, blank=True,
                                           help_text="ID of the specific entity")
     entity = GenericForeignKey('content_type', 'object_id')
-    
+
     # Time validity
     valid_from = models.DateField(help_text="Date from which this parameter value is valid")
-    valid_to = models.DateField(null=True, blank=True, 
+    valid_to = models.DateField(null=True, blank=True,
                               help_text="Date until which this parameter value is valid (null = indefinite)")
-    
+
     # Financial period association
     fiscal_year = models.CharField(max_length=9, blank=True, null=True,
                                  help_text="Fiscal year in YYYY-YYYY format")
     fiscal_quarter = models.CharField(max_length=6, blank=True, null=True,
                                     help_text="Fiscal quarter in YYYY-Q# format")
-    
+
     # Audit fields
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -4560,7 +4920,7 @@ class FinancialParameter(models.Model):
         on_delete=models.PROTECT,
         related_name='updated_fin_parameters'
     )
-    
+
     # Approval tracking for financial governance
     is_approved = models.BooleanField(default=False,
                                     help_text="Whether this parameter has been approved for use")
@@ -4572,7 +4932,7 @@ class FinancialParameter(models.Model):
         on_delete=models.PROTECT,
         related_name='approved_fin_parameters'
     )
-    
+
     class Meta:
         indexes = [
             models.Index(fields=['key'], name='fin_param_key_idx'),
@@ -4584,7 +4944,7 @@ class FinancialParameter(models.Model):
         unique_together = ('key', 'content_type', 'object_id', 'valid_from')
         verbose_name = "Financial Parameter"
         verbose_name_plural = "Financial Parameters"
-    
+
     def __str__(self):
         base = f"{self.name} ({self.key})"
         if self.fiscal_year:
@@ -4592,12 +4952,12 @@ class FinancialParameter(models.Model):
         if not self.is_global:
             base += f" for {self.content_type.model}:{self.object_id}"
         return base
-    
+
     def get_typed_value(self):
         """Return the value converted to its appropriate type"""
         if not self.value:
             return None
-            
+
         if self.value_type == 'decimal':
             return Decimal(self.value)
         elif self.value_type == 'percentage':
@@ -4613,25 +4973,25 @@ class FinancialParameter(models.Model):
             return parse_date(self.value)
         # Default to text
         return self.value
-    
+
     @classmethod
     def get_param(cls, key, entity=None, date=None, category=None, fiscal_year=None):
         """
         Get parameter value for a given key and entity
-        
+
         Args:
             key (str): Parameter key
             entity (Model instance, optional): The entity to get specific parameters for
             date (date, optional): Date for which parameter should be valid (defaults to today)
             category (str, optional): Filter by category
             fiscal_year (str, optional): Filter by fiscal year
-            
+
         Returns:
             The typed parameter value or None if not found
         """
         if date is None:
             date = timezone.now().date()
-            
+
         query = cls.objects.filter(
             key=key,
             valid_from__lte=date,
@@ -4639,13 +4999,13 @@ class FinancialParameter(models.Model):
         ).filter(
             models.Q(valid_to__isnull=True) | models.Q(valid_to__gte=date)
         )
-        
+
         if category:
             query = query.filter(category=category)
-            
+
         if fiscal_year:
             query = query.filter(fiscal_year=fiscal_year)
-        
+
         # First try to get entity-specific parameter
         if entity is not None:
             content_type = ContentType.objects.get_for_model(entity)
@@ -4654,66 +5014,66 @@ class FinancialParameter(models.Model):
                 object_id=entity.pk,
                 is_global=False
             ).order_by('-valid_from').first()
-            
+
             if entity_param:
                 return entity_param.get_typed_value()
-        
+
         # Fall back to global parameter
         global_param = query.filter(is_global=True).order_by('-valid_from').first()
         if global_param:
             return global_param.get_typed_value()
-            
+
         return None
-    
+
     @classmethod
     def get_all_params(cls, category=None, entity=None, date=None, fiscal_year=None):
         """Get all parameters for a given category and/or entity"""
         if date is None:
             date = timezone.now().date()
-            
+
         query = cls.objects.filter(
             valid_from__lte=date,
             is_approved=True
         ).filter(
             models.Q(valid_to__isnull=True) | models.Q(valid_to__gte=date)
         )
-        
+
         if category:
             query = query.filter(category=category)
-            
+
         if fiscal_year:
             query = query.filter(fiscal_year=fiscal_year)
-            
+
         # Get all keys to check
         keys = query.values_list('key', flat=True).distinct()
         result = {}
-        
+
         # For each key, get the most specific value
         for key in keys:
             param_value = cls.get_param(
-                key=key, 
-                entity=entity, 
-                date=date, 
+                key=key,
+                entity=entity,
+                date=date,
                 category=category,
                 fiscal_year=fiscal_year
             )
             result[key] = param_value
-            
+
         return result
-        
+
     def approve(self, user):
         """Approve this parameter for use"""
         self.is_approved = True
         self.approved_at = timezone.now()
         self.approved_by = user
         self.save(update_fields=['is_approved', 'approved_at', 'approved_by'])
-        
+
     def set_value(self, value):
         """Set the value with appropriate type conversion"""
         if value is None:
             self.value = None
             return
-            
+
         if self.value_type == 'decimal':
             self.value = str(Decimal(str(value)))
         elif self.value_type == 'percentage':
@@ -4749,15 +5109,15 @@ class DailyExpense(models.Model):
         ('rejected', 'Rejected'),
         ('paid', 'Paid')
     )
-    
+
     EXPENSE_CATEGORIES = (
         ('travel', 'Travel'),
-        ('utility', 'Utility'), 
+        ('utility', 'Utility'),
         ('stationery', 'Stationery'),
         ('food', 'Food & Beverages'),
         ('other', 'Other')
     )
-    
+
     expense_id = models.CharField(max_length=50, unique=True)
     department = models.ForeignKey('Department', on_delete=models.PROTECT)
     date = models.DateField()
@@ -4793,7 +5153,7 @@ class Voucher(models.Model):
         ('rejected', 'Rejected'),
         ('posted', 'Posted to Accounts')
     )
-    
+
     voucher_number = models.CharField(max_length=50, unique=True)
     type = models.CharField(max_length=20, choices=VOUCHER_TYPES)
     date = models.DateField()
@@ -4844,7 +5204,7 @@ class BankPayment(models.Model):
         ('executed', 'Payment Executed'),
         ('failed', 'Failed')
     )
-    
+
     payment_id = models.CharField(max_length=50, unique=True)
     bank_account = models.ForeignKey(BankAccount, on_delete=models.PROTECT)
     party_name = models.CharField(max_length=255)
@@ -4874,7 +5234,7 @@ class Subscription(models.Model):
         ('cancelled', 'Cancelled'),
         ('expired', 'Expired')
     )
-    
+
     name = models.CharField(max_length=255)
     vendor = models.CharField(max_length=255)
     subscription_type = models.CharField(max_length=100)
@@ -4891,14 +5251,14 @@ class Subscription(models.Model):
     def __str__(self):
         return f"{self.name} - {self.vendor}"
 
-        
+
 class ClientInvoice(models.Model):
     BILLING_MODELS = (
         ('per_order', 'Per Order'),
-        ('per_fte', 'Per FTE'), 
+        ('per_fte', 'Per FTE'),
         ('hybrid', 'Hybrid')
     )
-    
+
     INVOICE_STATUS = (
         ('draft', 'Draft'),
         ('pending_approval', 'Pending Approval'),
@@ -4907,7 +5267,7 @@ class ClientInvoice(models.Model):
         ('paid', 'Paid'),
         ('overdue', 'Overdue')
     )
-    
+
     invoice_number = models.CharField(max_length=50, unique=True)
     client = models.ForeignKey(User, on_delete=models.PROTECT, limit_choices_to={'groups__name': 'Client'}, related_name='client_invoices')
     billing_model = models.CharField(max_length=20, choices=BILLING_MODELS)
@@ -4937,7 +5297,7 @@ class ChartOfAccount(models.Model):
         ('income', 'Income'),
         ('expense', 'Expense')
     )
-    
+
     name = models.CharField(max_length=255)
     code = models.CharField(max_length=20, unique=True)
     account_type = models.CharField(max_length=20, choices=ACCOUNT_TYPES)
@@ -4966,14 +5326,14 @@ class Appraisal(models.Model):
     """Model for employee appraisals with workflow states"""
     STATUS_CHOICES = (
         ('draft', 'Draft'),
-        ('submitted', 'Submitted'), 
+        ('submitted', 'Submitted'),
         ('manager_review', 'Manager Review'),
         ('hr_review', 'HR Review'),
         ('finance_review', 'Finance Review'),
         ('approved', 'Approved'),
         ('rejected', 'Rejected'),
     )
-    
+
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='appraisals')
     manager = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True,
                                related_name='managed_appraisals')
@@ -4984,15 +5344,15 @@ class Appraisal(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     # Additional fields for tracking
     submitted_at = models.DateTimeField(null=True, blank=True)
     approved_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.title} - {self.user}"
-    
-        
+
+
 
 
 class AppraisalWorkflow(models.Model):
@@ -5020,13 +5380,13 @@ class AppraisalItem(models.Model):
         ('training', 'Training Completed'),
         ('feedback', 'Feedback Received'),
     )
-    
+
     appraisal = models.ForeignKey('Appraisal', on_delete=models.CASCADE, related_name='items')
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
     title = models.CharField(max_length=255)
     description = models.TextField()
     date = models.DateField(null=True, blank=True)
-    
+
     # Additional evaluation fields
     employee_rating = models.PositiveSmallIntegerField(null=True, blank=True, choices=[(i, i) for i in range(1, 6)])
     manager_rating = models.PositiveSmallIntegerField(null=True, blank=True, choices=[(i, i) for i in range(1, 6)])
@@ -5059,7 +5419,7 @@ class GameIcon(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_icons')
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
     def __str__(self):
         return f"{self.name} ({self.symbol})"
 
@@ -5072,43 +5432,43 @@ class TicTacToeGame(models.Model):
         ('cancelled', 'Game Cancelled'),
         ('timeout', 'Game Timeout'),
     )
-    
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_games')
     opponent = models.ForeignKey(User, on_delete=models.CASCADE, related_name='invited_games')
-    
+
     # Game board stored as a string representation of 9 characters
     # Empty spaces are represented by spaces, other spaces by player symbols
     board = models.CharField(max_length=9, default=' ' * 9)
-    
+
     # Who's turn is it
     current_turn = models.ForeignKey(User, on_delete=models.CASCADE, related_name='games_turn', null=True)
-    
+
     # Game status
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-    
+
     # Winner of the game (null if draw or game not completed)
     winner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='won_games', null=True, blank=True)
-    
+
     # Custom icons for the game
     creator_icon = models.ForeignKey(GameIcon, on_delete=models.SET_NULL, related_name='creator_games', null=True)
     opponent_icon = models.ForeignKey(GameIcon, on_delete=models.SET_NULL, related_name='opponent_games', null=True)
-    
+
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     last_move_at = models.DateTimeField(auto_now_add=True)
-    
+
     # Spectator feature
     allow_spectators = models.BooleanField(default=True)
-    
+
     def __str__(self):
         return f"Game {self.id}: {self.creator.username} vs {self.opponent.username} ({self.status})"
-    
+
     def is_timeout(self):
         """Check if the game has timed out (no move in 10 minutes)"""
         return timezone.now() > self.last_move_at + timedelta(minutes=10)
-    
+
     def check_winner(self):
         """Check if there is a winner or if the game is a draw"""
         winning_combinations = [
@@ -5119,7 +5479,7 @@ class TicTacToeGame(models.Model):
             # Diagonals
             [0, 4, 8], [2, 4, 6]
         ]
-        
+
         for combo in winning_combinations:
             if (self.board[combo[0]] != ' ' and
                 self.board[combo[0]] == self.board[combo[1]] == self.board[combo[2]]):
@@ -5130,46 +5490,46 @@ class TicTacToeGame(models.Model):
                     self.winner = self.opponent
                 self.status = 'completed'
                 return True
-        
+
         # Check for a draw
         if ' ' not in self.board:
             self.status = 'completed'
             return True
-            
+
         return False
-    
+
     def make_move(self, user, position):
         """Make a move on the board"""
         if self.status != 'active':
             return False, "Game is not active"
-        
+
         if user != self.current_turn:
             return False, "Not your turn"
-        
+
         if not (0 <= position < 9):
             return False, "Invalid position"
-        
+
         if self.board[position] != ' ':
             return False, "Position already taken"
-        
+
         # Update the board
         board_list = list(self.board)
         symbol = self.creator_icon.symbol if user == self.creator else self.opponent_icon.symbol
         board_list[position] = symbol
         self.board = ''.join(board_list)
-        
+
         # Update last move timestamp
         self.last_move_at = timezone.now()
-        
+
         # Switch turns
         self.current_turn = self.opponent if user == self.creator else self.creator
-        
+
         # Check if the game is over
         self.check_winner()
-        
+
         # Save changes
         self.save()
-        
+
         # Create a notification for the other player
         if self.status == 'active':
             Notification.objects.create(
@@ -5187,18 +5547,18 @@ class TicTacToeGame(models.Model):
                 notification_type='game_over',
                 game=self
             )
-        
+
         return True, "Move successful"
-    
+
     def accept_game(self):
         """Accept a game invitation"""
         if self.status != 'pending':
             return False, "Game is not pending"
-        
+
         self.status = 'active'
         self.current_turn = self.creator  # Creator goes first
         self.save()
-        
+
         # Notify the creator that the game has been accepted
         Notification.objects.create(
             recipient=self.creator,
@@ -5206,17 +5566,17 @@ class TicTacToeGame(models.Model):
             notification_type='game_accepted',
             game=self
         )
-        
+
         return True, "Game accepted"
-    
+
     def decline_game(self):
         """Decline a game invitation"""
         if self.status != 'pending':
             return False, "Game is not pending"
-        
+
         self.status = 'cancelled'
         self.save()
-        
+
         # Notify the creator that the game has been declined
         Notification.objects.create(
             recipient=self.creator,
@@ -5224,18 +5584,18 @@ class TicTacToeGame(models.Model):
             notification_type='game_declined',
             game=self
         )
-        
+
         return True, "Game declined"
-    
+
     def forfeit_game(self, user):
         """Forfeit the game"""
         if self.status != 'active':
             return False, "Game is not active"
-        
+
         self.status = 'completed'
         self.winner = self.opponent if user == self.creator else self.creator
         self.save()
-        
+
         # Notify the winner
         Notification.objects.create(
             recipient=self.winner,
@@ -5243,7 +5603,7 @@ class TicTacToeGame(models.Model):
             notification_type='game_forfeit',
             game=self
         )
-        
+
         return True, "Game forfeited"
 
 
@@ -5252,10 +5612,10 @@ class GameSpectator(models.Model):
     game = models.ForeignKey(TicTacToeGame, on_delete=models.CASCADE, related_name='spectators')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='spectating_games')
     joined_at = models.DateTimeField(auto_now_add=True)
-    
+
     class Meta:
         unique_together = ('game', 'user')
-    
+
     def __str__(self):
         return f"{self.user.username} spectating game {self.game.id}"
 
@@ -5267,31 +5627,31 @@ class PlayerStats(models.Model):
     games_won = models.IntegerField(default=0)
     games_lost = models.IntegerField(default=0)
     games_drawn = models.IntegerField(default=0)
-    
+
     def __str__(self):
         return f"Stats for {self.user.username}"
-    
+
     @property
     def win_percentage(self):
         """Calculate win percentage"""
         if self.games_played == 0:
             return 0
         return (self.games_won / self.games_played) * 100
-    
+
     @classmethod
     def update_stats(cls, game):
         """Update player statistics after a game is completed"""
         if game.status != 'completed':
             return
-        
+
         # Get or create stats for both players
         creator_stats, _ = cls.objects.get_or_create(user=game.creator)
         opponent_stats, _ = cls.objects.get_or_create(user=game.opponent)
-        
+
         # Update games played count
         creator_stats.games_played += 1
         opponent_stats.games_played += 1
-        
+
         # Update win/loss/draw counts
         if game.winner:
             if game.winner == game.creator:
@@ -5304,7 +5664,7 @@ class PlayerStats(models.Model):
             # It's a draw
             creator_stats.games_drawn += 1
             opponent_stats.games_drawn += 1
-        
+
         # Save the updated stats
         creator_stats.save()
         opponent_stats.save()
@@ -5321,16 +5681,16 @@ class Notification(models.Model):
         ('game_forfeit', 'Game Forfeit'),
         ('game_timeout', 'Game Timeout'),
     )
-    
+
     recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
     message = models.CharField(max_length=255)
     notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES)
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     game = models.ForeignKey(TicTacToeGame, on_delete=models.CASCADE, related_name='notifications', null=True, blank=True)
-    
+
     def __str__(self):
         return f"Notification for {self.recipient.username}: {self.message[:30]}"
-    
+
     class Meta:
         ordering = ['-created_at']

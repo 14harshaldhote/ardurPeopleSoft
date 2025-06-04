@@ -6,6 +6,8 @@
         <meta name="csrf-token" content="{{ csrf_token }}" />
         <title>{% block title %}Tracking Web Application{% endblock %}</title>
         {% load static %}
+<link rel="icon" type="image/x-icon" href="{% static 'images/icon.png' %}">
+
         <script
             src="https://cdn.jsdelivr.net/npm/alpinejs@2.8.2/dist/alpine.min.js"
             defer

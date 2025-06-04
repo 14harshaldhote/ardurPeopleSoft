@@ -1,604 +1,839 @@
-"""
-Unit tests for Django attendance analytics views.
-Covers authentication, export, analytics, AJAX, and utility logic.
-Fixed version based on test failure logs.
-"""
-
-import sys
 from django.test import TestCase, Client
-from django.contrib.auth.models import User
-from django.utils.dateparse import parse_date
-from django.urls import reverse, NoReverseMatch
-from datetime import date
-from unittest.mock import patch, MagicMock
+from django.contrib.auth.models import User, Group
+from django.urls import reverse
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.utils import timezone
+from datetime import datetime, timedelta
+from unittest.mock import patch, Mock
 import json
+from .models import Support, TicketComment, TicketAttachment, TicketActivity, StatusLog, TicketFieldChange
+from .forms import TicketForm, CommentForm, TicketAttachmentForm
 
-class AttendanceAnalyticsTestCase(TestCase):
-    """Test suite for attendance analytics views."""
+
+class SupportViewsTestCase(TestCase):
+    """Comprehensive test cases for support views covering all possible scenarios"""
 
     def setUp(self):
-        # Create test users
+        """Set up test data and users with different roles"""
+        # Create groups
+        self.admin_group = Group.objects.create(name='Admin')
+        self.hr_group = Group.objects.create(name='HR')
+        self.manager_group = Group.objects.create(name='Manager')
+        self.employee_group = Group.objects.create(name='Employee')
+        self.it_group = Group.objects.create(name='IT')
+
+        # Create users with different roles
+        self.admin_user = User.objects.create_user(
+            username='admin', email='admin@test.com', password='testpass123',
+            first_name='Admin', last_name='User'
+        )
+        self.admin_user.groups.add(self.admin_group)
+        self.admin_user.is_superuser = True
+        self.admin_user.save()
+
         self.hr_user = User.objects.create_user(
-            username='hr_user', email='hr@test.com', password='testpass123'
+            username='hr', email='hr@test.com', password='testpass123',
+            first_name='HR', last_name='User'
         )
-        self.regular_user = User.objects.create_user(
-            username='regular_user', email='user@test.com', password='testpass123'
+        self.hr_user.groups.add(self.hr_group)
+
+        self.manager_user = User.objects.create_user(
+            username='manager', email='manager@test.com', password='testpass123',
+            first_name='Manager', last_name='User'
         )
+        self.manager_user.groups.add(self.manager_group)
+
+        self.employee_user = User.objects.create_user(
+            username='employee', email='employee@test.com', password='testpass123',
+            first_name='Employee', last_name='User'
+        )
+        self.employee_user.groups.add(self.employee_group)
+
+        self.it_user = User.objects.create_user(
+            username='it', email='it@test.com', password='testpass123',
+            first_name='IT', last_name='User'
+        )
+        self.it_user.groups.add(self.it_group)
+
+        # Create another employee for manager testing
+        self.managed_employee = User.objects.create_user(
+            username='managed_emp', email='managed@test.com', password='testpass123'
+        )
+        self.managed_employee.groups.add(self.employee_group)
+
+        # Create test tickets with various statuses and priorities
+        self.ticket1 = Support.objects.create(
+            user=self.employee_user,
+            subject='Test Ticket 1',
+            description='Test description 1',
+            priority=Support.Priority.HIGH,
+            status=Support.Status.NEW,
+            issue_type=Support.IssueType.ACCESS,
+            assigned_group=Support.AssignedGroup.HR,
+            assigned_to_user=self.hr_user
+        )
+
+        self.ticket2 = Support.objects.create(
+            user=self.managed_employee,
+            subject='Test Ticket 2',
+            description='Test description 2',
+            priority=Support.Priority.MEDIUM,
+            status=Support.Status.IN_PROGRESS,
+            issue_type=Support.IssueType.INTERNET,
+            assigned_group=Support.AssignedGroup.ADMIN,
+            assigned_to_user=self.it_user
+        )
+
+        self.closed_ticket = Support.objects.create(
+            user=self.employee_user,
+            subject='Closed Ticket',
+            description='Closed ticket description',
+            priority=Support.Priority.LOW,
+            status=Support.Status.CLOSED,
+            closed_at=timezone.now() - timedelta(days=35)
+        )
+
+        # Create ticket with SLA breach
+        self.sla_breached_ticket = Support.objects.create(
+            user=self.employee_user,
+            subject='SLA Breached Ticket',
+            description='This ticket has breached SLA',
+            priority=Support.Priority.CRITICAL,
+            status=Support.Status.OPEN,
+            sla_target_date=timezone.now() - timedelta(hours=2),
+            sla_status=Support.SLAStatus.BREACHED
+        )
+
         self.client = Client()
-        
-        # Patch HR check to only allow hr_user
-        self.hr_check_patcher = patch('trueAlign.views.is_hr_check')
-        self.mock_hr_check = self.hr_check_patcher.start()
-        self.mock_hr_check.return_value = lambda user: user.username == 'hr_user'
 
-        # Ensure hr_user has necessary permissions
-        from django.contrib.auth.models import Permission, Group
-        try:
-            user = User.objects.get(username='hr_user')
-            permission_codenames = [
-                'view_attendance',
-                'export_attendance',
-                'view_user',
-                'can_view_reports',  # Adjust based on your actual permissions
-            ]
-            permissions = Permission.objects.filter(codename__in=permission_codenames)
-            user.user_permissions.set(permissions)
-            hr_group, created = Group.objects.get_or_create(name='HR')
-            user.groups.add(hr_group)
-        except User.DoesNotExist:
-            self.fail("hr_user does not exist. Check your test data setup.")
 
-    def tearDown(self):
-        self.hr_check_patcher.stop()
+class TicketListViewTests(SupportViewsTestCase):
+    """Test cases for ticket_list view"""
 
-    def get_url_or_skip(self, url_name, *args, **kwargs):
-        """Helper method to get URL or skip test if URL doesn't exist"""
-        try:
-            # If url_name is a direct path, return as is
-            if url_name.startswith('/'):
-                return url_name
-            return reverse(url_name, *args, **kwargs)
-        except NoReverseMatch:
-            self.skipTest(f"URL '{url_name}' not found in URLconf. Check your urls.py configuration.")
+    def test_ticket_list_unauthenticated(self):
+        """Test that unauthenticated users are redirected to login"""
+        response = self.client.get(reverse('aps_support:ticket_list'))
+        self.assertRedirects(response, '/accounts/login/?next=' + reverse('aps_support:ticket_list'))
 
-    def test_export_status_users_authentication(self):
-        """Test authentication for export_status_users view"""
-        # Use Django reverse with namespace as in {% url 'aps_attendance:export_status_users' %}
-        url = self.get_url_or_skip('aps_attendance:export_status_users')
-        
-        # Test unauthenticated access
-        resp = self.client.get(url)
-        self.assertIn(resp.status_code, [302, 403, 404])
-        
-        if resp.status_code == 404:
-            self.skipTest("export_status_users URL not configured. Add to urls.py.")
-        
-        # Test non-HR user access
-        self.client.login(username='regular_user', password='testpass123')
-        resp = self.client.get(url)
-        self.assertIn(resp.status_code, [302, 403])
-        self.client.logout()
+    def test_admin_sees_all_tickets(self):
+        """Test that admin users can see all tickets"""
+        self.client.login(username='admin', password='testpass123')
+        response = self.client.get(reverse('aps_support:ticket_list'))
+        self.assertEqual(response.status_code, 200)
+        tickets = response.context['page_obj'].object_list
+        self.assertEqual(len(tickets), 4)  # All created tickets
 
-    @patch('trueAlign.views.UserService')  # Patch where it's used, not where it's defined
-    def test_export_status_users_functionality(self, mock_user_service_class):
-        """Test export_status_users functionality"""
-        url = self.get_url_or_skip('aps_attendance:export_status_users')
+    def test_hr_sees_hr_and_own_tickets(self):
+        """Test that HR users see HR assigned tickets and their own"""
+        self.client.login(username='hr', password='testpass123')
+        response = self.client.get(reverse('aps_support:ticket_list'))
+        self.assertEqual(response.status_code, 200)
+        tickets = response.context['page_obj'].object_list
+        # Should see ticket1 (assigned to HR)
+        ticket_ids = [t.id for t in tickets]
+        self.assertIn(self.ticket1.id, ticket_ids)
+        self.assertNotIn(self.ticket2.id, ticket_ids)
 
-        # Ensure proper login and permissions
-        login_success = self.client.login(username='hr_user', password='testpass123')
-        self.assertTrue(login_success, "Login failed - check user exists and password is correct")
+    def test_manager_sees_team_tickets(self):
+        """Test that managers see their team's tickets"""
+        # Set up manager relationship
+        self.managed_employee.department = type('Department', (), {'manager': self.manager_user})
+        self.managed_employee.save()
 
-        # Verify user permissions (add required permissions to your setUp method)
-        user = User.objects.get(username='hr_user')
-        print(f"User permissions: {list(user.get_all_permissions())}")
+        self.client.login(username='manager', password='testpass123')
+        response = self.client.get(reverse('aps_support:ticket_list'))
+        self.assertEqual(response.status_code, 200)
 
-        # Create mock service instance
-        mock_service = MagicMock()
-        mock_user_service_class.return_value = mock_service
+    def test_employee_sees_own_tickets_only(self):
+        """Test that employees see only their own tickets"""
+        self.client.login(username='employee', password='testpass123')
+        response = self.client.get(reverse('aps_support:ticket_list'))
+        self.assertEqual(response.status_code, 200)
+        tickets = response.context['page_obj'].object_list
+        for ticket in tickets:
+            self.assertEqual(ticket.user, self.employee_user)
 
-        test_cases = [
-            {
-                'status': 'Yet to Clock In',
-                'mock_data': [{'username': 'user1', 'name': 'User One', 'work_location': 'Office A', 'shift_name': 'Morning', 'shift_start_time': '09:00:00', 'late_by': 30}]
-            },
-            {
-                'status': 'Present',
-                'mock_data': [{'username': 'user2', 'name': 'User Two', 'work_location': 'Office B', 'clock_in_time': '09:15:00', 'clock_out_time': '18:00:00', 'total_hours': 8.5, 'late_minutes': 15, 'attendance_count': 22}]
-            },
-            {
-                'status': 'On Leave',
-                'mock_data': [{'username': 'user3', 'name': 'User Three', 'work_location': 'Office C', 'leave_type': 'Annual Leave', 'attendance_count': 5}]
-            }
-        ]
+    def test_status_filtering(self):
+        """Test ticket filtering by status"""
+        self.client.login(username='admin', password='testpass123')
+        response = self.client.get(reverse('aps_support:ticket_list'), {'status': 'New'})
+        self.assertEqual(response.status_code, 200)
+        tickets = response.context['page_obj'].object_list
+        for ticket in tickets:
+            self.assertEqual(ticket.status, Support.Status.NEW)
 
-        for case in test_cases:
-            mock_service.get_users_by_status.return_value = case['mock_data']
-            resp = self.client.get(url, {
-                'status': case['status'],
-                'start_date': '2024-01-01',
-                'end_date': '2024-01-31',
-                'location': 'all'
-            })
+    def test_priority_filtering(self):
+        """Test ticket filtering by priority"""
+        self.client.login(username='admin', password='testpass123')
+        response = self.client.get(reverse('aps_support:ticket_list'), {'priority': 'High'})
+        self.assertEqual(response.status_code, 200)
+        tickets = response.context['page_obj'].object_list
+        for ticket in tickets:
+            self.assertEqual(ticket.priority, Support.Priority.HIGH)
 
-            # Debug unexpected responses
-            if resp.status_code == 302:
-                print(f"Redirected to: {resp.get('Location', 'No location header')}")
-                print(f"User authenticated: {getattr(resp, 'wsgi_request', {}).user.is_authenticated if hasattr(resp, 'wsgi_request') else 'Unknown'}")
-                self.fail(f"Unexpected redirect (302) for status '{case['status']}'. Expected 200.")
+    def test_date_range_filtering(self):
+        """Test ticket filtering by date range"""
+        self.client.login(username='admin', password='testpass123')
+        yesterday = (timezone.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+        tomorrow = (timezone.now() + timedelta(days=1)).strftime('%Y-%m-%d')
 
-            if resp.status_code == 404:
-                self.skipTest("export_status_users view not found. Check view implementation.")
-
-            self.assertEqual(resp.status_code, 200, f"Expected 200, got {resp.status_code} for status '{case['status']}'")
-            self.assertEqual(resp['Content-Type'], 'text/csv')
-            self.assertIn('attachment', resp['Content-Disposition'])
-
-        # Test error handling - Reset the mock to raise exception
-        mock_service.reset_mock()
-        mock_service.get_users_by_status.side_effect = Exception("Test error")
-        
-        resp = self.client.get(url, {
-            'status': 'Present',
-            'start_date': '2024-01-01',
-            'end_date': '2024-01-31'
+        response = self.client.get(reverse('aps_support:ticket_list'), {
+            'date_from': yesterday,
+            'date_to': tomorrow
         })
-        
-        # The view should handle the exception and return an error response
-        # Check if your view has proper exception handling
-        if resp.status_code == 200:
-            # If the view doesn't handle exceptions properly, it might still return 200
-            # Check the response content to see if it's an error CSV or actual data
-            content = resp.content.decode('utf-8')
-            print(f"Response content: {content[:200]}...")  # Debug output
-            
-        # Accept various error status codes based on your view's error handling
-        self.assertIn(resp.status_code, [200, 400, 500, 404])  # Adjust based on your error handling
-        self.client.logout()
+        self.assertEqual(response.status_code, 200)
 
-    @patch('trueAlign.services.AttendanceService')
-    @patch('trueAlign.services.UserService')
-    @patch('trueAlign.services.DateService')
-    def test_attendance_analytics_functionality(self, mock_date_service, mock_user_service, mock_attendance_service):
-        """Test attendance_analytics view functionality"""
-        url = self.get_url_or_skip('aps_attendance:attendance_analytics')
-        
-        self.client.login(username='hr_user', password='testpass123')
-        mock_date = MagicMock()
-        mock_user = MagicMock()
-        mock_attendance = MagicMock()
-        mock_date_service.return_value = mock_date
-        mock_user_service.return_value = mock_user
-        mock_attendance_service.return_value = mock_attendance
-        
-        # Setup mock returns
-        mock_date.get_date_range.return_value = {'start_date': date(2024, 1, 1), 'end_date': date(2024, 1, 31)}
-        mock_date.get_current_date.return_value = date(2024, 1, 31)
-        mock_attendance.get_base_attendance_query.return_value = MagicMock()
-        mock_attendance.get_attendance_statistics.return_value = [{'period': date(2024, 1, 1), 'present_count': 50, 'absent_count': 10}]
-        mock_attendance.get_overall_statistics.return_value = {'total_users': 60, 'present_count': 50, 'absent_count': 10}
-        mock_attendance.get_location_statistics.return_value = [{'location': 'Office A', 'present_count': 30, 'absent_count': 5}]
-        mock_user.get_top_absent_users.return_value = []
-        mock_user.get_top_late_users.return_value = []
-        
-        # Test HTML request
-        resp = self.client.get(url, {'time_period': 'today', 'view_type': 'daily'})
-        
-        if resp.status_code == 404:
-            self.skipTest("attendance_analytics view not found. Check view implementation.")
-        
-        self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'attendance_analytics')
-        
-        # Test AJAX request
-        resp = self.client.get(url, 
-            {'time_period': 'this_month', 'view_type': 'weekly'}, 
-            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+    def test_invalid_date_filtering(self):
+        """Test handling of invalid date formats"""
+        self.client.login(username='admin', password='testpass123')
+        response = self.client.get(reverse('aps_support:ticket_list'), {
+            'date_from': 'invalid-date',
+            'date_to': 'also-invalid'
+        })
+        self.assertEqual(response.status_code, 200)
+        messages = list(response.context['messages'])
+        self.assertTrue(any('Invalid date format' in str(m) for m in messages))
+
+    def test_search_functionality(self):
+        """Test ticket search functionality"""
+        self.client.login(username='admin', password='testpass123')
+        response = self.client.get(reverse('aps_support:ticket_list'), {'search': 'Test Ticket 1'})
+        self.assertEqual(response.status_code, 200)
+        tickets = response.context['page_obj'].object_list
+        self.assertTrue(any('Test Ticket 1' in ticket.subject for ticket in tickets))
+
+    def test_sorting_functionality(self):
+        """Test ticket sorting"""
+        self.client.login(username='admin', password='testpass123')
+        response = self.client.get(reverse('aps_support:ticket_list'), {'sort': 'priority'})
+        self.assertEqual(response.status_code, 200)
+
+        # Test invalid sort field defaults to created_at
+        response = self.client.get(reverse('aps_support:ticket_list'), {'sort': 'invalid_field'})
+        self.assertEqual(response.status_code, 200)
+
+    def test_pagination(self):
+        """Test pagination functionality"""
+        self.client.login(username='admin', password='testpass123')
+        response = self.client.get(reverse('aps_support:ticket_list'), {'page_size': '2'})
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context['page_obj'].has_other_pages())
+
+
+class CreateTicketViewTests(SupportViewsTestCase):
+    """Test cases for create_ticket view"""
+
+    def test_create_ticket_get(self):
+        """Test GET request to create ticket"""
+        self.client.login(username='employee', password='testpass123')
+        response = self.client.get(reverse('aps_support:create_ticket'))
+        self.assertEqual(response.status_code, 200)
+        self.assertIsInstance(response.context['form'], TicketForm)
+
+    def test_employee_field_restrictions(self):
+        """Test that employees have restricted fields"""
+        self.client.login(username='employee', password='testpass123')
+        response = self.client.get(reverse('aps_support:create_ticket'))
+        form = response.context['form']
+        # Employee should not have access to priority, assigned_group, assigned_to_user
+        self.assertNotIn('priority', form.fields)
+        self.assertNotIn('assigned_group', form.fields)
+        self.assertNotIn('assigned_to_user', form.fields)
+
+    def test_admin_has_all_fields(self):
+        """Test that admin has access to all fields"""
+        self.client.login(username='admin', password='testpass123')
+        response = self.client.get(reverse('aps_support:create_ticket'))
+        form = response.context['form']
+        self.assertIn('priority', form.fields)
+        self.assertIn('assigned_group', form.fields)
+        self.assertIn('assigned_to_user', form.fields)
+
+    def test_create_ticket_successful(self):
+        """Test successful ticket creation"""
+        self.client.login(username='employee', password='testpass123')
+        data = {
+            'subject': 'New Test Ticket',
+            'description': 'New test description',
+            'issue_type': Support.IssueType.ACCESS
+        }
+        response = self.client.post(reverse('aps_support:create_ticket'), data)
+
+        # Should redirect to ticket detail
+        self.assertEqual(response.status_code, 302)
+
+        # Verify ticket was created
+        ticket = Support.objects.filter(subject='New Test Ticket').first()
+        self.assertIsNotNone(ticket)
+        self.assertEqual(ticket.user, self.employee_user)
+
+    def test_auto_assignment_hr_issue(self):
+        """Test auto-assignment for HR issues"""
+        self.client.login(username='employee', password='testpass123')
+        data = {
+            'subject': 'HR Issue',
+            'description': 'Need HR help',
+            'issue_type': Support.IssueType.HR
+        }
+        response = self.client.post(reverse('aps_support:create_ticket'), data)
+
+        ticket = Support.objects.filter(subject='HR Issue').first()
+        self.assertEqual(ticket.assigned_group, Support.AssignedGroup.HR)
+
+    def test_auto_assignment_it_issue(self):
+        """Test auto-assignment for IT issues"""
+        self.client.login(username='employee', password='testpass123')
+        data = {
+            'subject': 'IT Issue',
+            'description': 'Computer problem',
+            'issue_type': Support.IssueType.INTERNET
+        }
+        response = self.client.post(reverse('aps_support:create_ticket'), data)
+
+        ticket = Support.objects.filter(subject='IT Issue').first()
+        self.assertEqual(ticket.assigned_group, Support.AssignedGroup.ADMIN)
+
+    def test_file_upload_valid(self):
+        """Test valid file upload"""
+        self.client.login(username='employee', password='testpass123')
+
+        # Create a small test file
+        test_file = SimpleUploadedFile(
+            "test.txt",
+            b"file_content",
+            content_type="text/plain"
         )
-        self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp['Content-Type'], 'application/json')
-        data = json.loads(resp.content)
-        self.assertIn('overall_stats', data)
-        self.assertIn('attendance_stats', data)
-        
-        # Test custom date range
-        resp = self.client.get(url, {
-            'time_period': 'custom', 
-            'start_date': '2024-01-01', 
-            'end_date': '2024-01-31'
-        })
-        self.assertEqual(resp.status_code, 200)
-        
-        # Test error handling
-        mock_attendance.get_base_attendance_query.side_effect = Exception("Test error")
-        resp = self.client.get(url)
-        self.assertEqual(resp.status_code, 200)  # Should handle errors gracefully
-        self.client.logout()
 
-    @patch('trueAlign.views.UserService')  # Patch where it's used, not where it's defined
-    def test_get_status_users_functionality(self, mock_user_service_class):
-        """Test get_status_users view functionality"""
-        url = self.get_url_or_skip('aps_attendance:get_status_users')
-        
-        self.client.login(username='hr_user', password='testpass123')
-        
-        # Create mock service instance
-        mock_service = MagicMock()
-        mock_user_service_class.return_value = mock_service
-        
-        mock_users = [
-            {'username': 'user1', 'name': 'User One', 'work_location': 'Office A', 'status': 'Present', 'clock_in_time': '09:00:00', 'clock_out_time': '18:00:00'},
-            {'username': 'user2', 'name': 'User Two', 'work_location': 'Office B', 'status': 'Present', 'clock_in_time': '09:15:00', 'clock_out_time': '17:45:00'}
-        ]
-        mock_service.get_users_by_status.return_value = mock_users
-        
-        # Test AJAX request
-        resp = self.client.get(url, {
-            'status': 'Present',
-            'start_date': '2024-01-01',
-            'end_date': '2024-01-31',
-            'location': 'Office A',
-            'ajax': '1'
-        })
-        
-        if resp.status_code == 404:
-            self.skipTest("get_status_users view not found. Check view implementation.")
-        
-        self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp['Content-Type'], 'application/json')
-        data = json.loads(resp.content)
-        self.assertEqual(data['status'], 'success')
-        
-        # Debug the actual response structure
-        print(f"Response data structure: {data}")
-        
-        # Adjust assertion based on your actual response structure
-        # The debug output shows the response has 'data' -> 'users' structure
-        if 'data' in data and 'users' in data['data']:
-            self.assertEqual(len(data['data']['users']), 2)
-        else:
-            # Check if users are directly in data
-            if 'users' in data:
-                self.assertEqual(len(data['users']), 2)
-            else:
-                self.fail(f"Users not found in expected response structure. Response: {data}")
-        
-        # Test pagination
-        resp = self.client.get(url, {
-            'status': 'Present',
-            'start_date': '2024-01-01',
-            'end_date': '2024-01-31',
-            'page': '1',
-            'ajax': '1'
-        })
-        self.assertEqual(resp.status_code, 200)
-        data = json.loads(resp.content)
-        self.assertIn('current_page', data.get('data', data))  # Check in either location
-        self.assertIn('total_pages', data.get('data', data))
-        
-        # Test missing required parameters
-        resp = self.client.get(url, {
-            'status': 'Present',
-            'ajax': '1'
-        })
-        # Based on debug output, your view might return 200 even with missing params
-        # Adjust this based on your actual view behavior
-        if resp.status_code == 200:
-            data = json.loads(resp.content)
-            # Check if it returns an error in the JSON response
-            if data.get('status') != 'error':
-                print(f"Warning: View doesn't properly validate missing parameters. Response: {data}")
-        else:
-            self.assertEqual(resp.status_code, 400)
-            data = json.loads(resp.content)
-            self.assertEqual(data['status'], 'error')
-        
-        # Test search functionality
-        resp = self.client.get(url, {
-            'status': 'Present',
-            'start_date': '2024-01-01',
-            'end_date': '2024-01-31',
-            'search': 'User One',
-            'ajax': '1'
-        })
-        self.assertEqual(resp.status_code, 200)
-        
-        # Test error handling - Reset mock and set up exception
-        mock_service.reset_mock()
-        mock_service.get_users_by_status.side_effect = Exception("Test error")
-        
-        resp = self.client.get(url, {
-            'status': 'Present',
-            'start_date': '2024-01-01',
-            'end_date': '2024-01-31',
-            'ajax': '1'
-        })
-        
-        # Based on debug output, your view might not have proper exception handling
-        if resp.status_code == 200:
-            data = json.loads(resp.content)
-            print(f"Warning: View doesn't handle exceptions properly. Response: {data}")
-            # Check if error is indicated in the response
-            if data.get('status') == 'error':
-                print("Error properly indicated in JSON response")
-            else:
-                print("View needs better exception handling")
-        else:
-            self.assertEqual(resp.status_code, 500)
-            data = json.loads(resp.content)
-            self.assertEqual(data['status'], 'error')
-        
-        self.client.logout()
-
-    @patch('trueAlign.services.AttendanceService')
-    @patch('trueAlign.services.DateService')
-    def test_get_analytics_data_functionality(self, mock_date_service, mock_attendance_service):
-        """Test get_analytics_data view functionality"""
-        url = self.get_url_or_skip('aps_attendance:get_analytics_data')
-        
-        self.client.login(username='hr_user', password='testpass123')
-        mock_date = MagicMock()
-        mock_attendance = MagicMock()
-        mock_date_service.return_value = mock_date
-        mock_attendance_service.return_value = mock_attendance
-        
-        mock_date.get_date_range.return_value = {'start_date': date(2024, 1, 1), 'end_date': date(2024, 1, 31)}
-        mock_attendance.get_base_attendance_query.return_value = MagicMock()
-        
-        # Test overview data
-        mock_attendance.get_overall_statistics.return_value = {'total_users': 100, 'present_count': 80, 'absent_count': 20}
-        resp = self.client.get(url, {'data_type': 'overview', 'time_period': 'today'})
-        
-        if resp.status_code == 404:
-            self.skipTest("get_analytics_data view not found. Check view implementation.")
-        
-        self.assertEqual(resp.status_code, 200)
-        data = json.loads(resp.content)
-        self.assertTrue(data['success'])
-        self.assertIn('data', data)
-        
-        # Test trends data
-        mock_attendance.get_attendance_statistics.return_value = [{'period': date(2024, 1, 1), 'present_count': 50, 'absent_count': 10}]
-        resp = self.client.get(url, {'data_type': 'trends', 'view_type': 'daily'})
-        self.assertEqual(resp.status_code, 200)
-        data = json.loads(resp.content)
-        self.assertTrue(data['success'])
-        
-        # Test locations data
-        mock_attendance.get_location_statistics.return_value = [{'location': 'Office A', 'present_count': 30, 'absent_count': 5}]
-        resp = self.client.get(url, {'data_type': 'locations'})
-        self.assertEqual(resp.status_code, 200)
-        data = json.loads(resp.content)
-        self.assertTrue(data['success'])
-        
-        # Test invalid data type
-        resp = self.client.get(url, {'data_type': 'invalid_type'})
-        self.assertEqual(resp.status_code, 400)
-        data = json.loads(resp.content)
-        self.assertFalse(data['success'])
-        
-        # Test error handling
-        mock_attendance.get_overall_statistics.side_effect = Exception("Test error")
-        resp = self.client.get(url, {'data_type': 'overview'})
-        self.assertEqual(resp.status_code, 500)
-        data = json.loads(resp.content)
-        self.assertFalse(data['success'])
-        self.client.logout()
-
-    def test_date_parsing(self):
-        """Test date parsing with valid and invalid dates"""
-        # Test valid dates
-        valid_dates = ['2024-01-01', '2024-12-31', '2023-02-28', '2024-02-29']  # 2024 is leap year
-        for date_str in valid_dates:
-            result = parse_date(date_str)
-            self.assertIsNotNone(result, f"Valid date {date_str} should parse successfully")
-        
-        # Test invalid dates - these should return None, not raise exceptions
-        invalid_dates = ['invalid-date', '2024-13-01', '2024-02-30', '', '2024-00-01', '2024-01-32']
-        for date_str in invalid_dates:
-            try:
-                result = parse_date(date_str)
-                self.assertIsNone(result, f"Invalid date {date_str} should return None")
-            except ValueError:
-                # If parse_date raises ValueError, that's also acceptable behavior
-                # The test was expecting None, but ValueError is also valid
-                pass
-
-    def test_filter_processing(self):
-        """Test filter processing logic"""
-        raw_filters = {
-            'location': 'Office A', 
-            'search': '  test search  ', 
-            'status': '', 
-            'user_id': 'all',
-            'empty_field': None,
-            'valid_field': 'valid_value'
+        data = {
+            'subject': 'Ticket with file',
+            'description': 'Has attachment',
+            'issue_type': Support.IssueType.ACCESS,
+            'attachments': test_file
         }
-        
-        # Clean filters - remove empty, 'all', and None values, strip whitespace
-        cleaned = {}
-        for key, value in raw_filters.items():
-            if value and value != 'all' and str(value).strip():
-                cleaned[key] = str(value).strip()
-        
-        expected = {
-            'location': 'Office A', 
-            'search': 'test search',
-            'valid_field': 'valid_value'
+        response = self.client.post(reverse('aps_support:create_ticket'), data)
+
+        ticket = Support.objects.filter(subject='Ticket with file').first()
+        self.assertIsNotNone(ticket)
+        self.assertTrue(ticket.attachments.exists())
+
+    def test_file_upload_size_limit(self):
+        """Test file upload size limit enforcement"""
+        self.client.login(username='employee', password='testpass123')
+
+        # Create a file larger than 5MB
+        large_content = b'x' * (6 * 1024 * 1024)  # 6MB
+        test_file = SimpleUploadedFile(
+            "large.txt",
+            large_content,
+            content_type="text/plain"
+        )
+
+        data = {
+            'subject': 'Ticket with large file',
+            'description': 'Has large attachment',
+            'issue_type': Support.IssueType.ACCESS,
+            'attachments': test_file
         }
-        self.assertEqual(cleaned, expected)
+        response = self.client.post(reverse('aps_support:create_ticket'), data)
 
-    def test_pagination_logic(self):
-        """Test pagination calculations"""
-        test_cases = [
-            {'total': 0, 'per_page': 50, 'page': 1, 'expected_pages': 1},
-            {'total': 25, 'per_page': 50, 'page': 1, 'expected_pages': 1},
-            {'total': 100, 'per_page': 50, 'page': 1, 'expected_pages': 2},
-            {'total': 150, 'per_page': 50, 'page': 3, 'expected_pages': 3},
-        ]
-        
-        for case in test_cases:
-            total, per_page, page = case['total'], case['per_page'], case['page']
-            start = (page - 1) * per_page
-            end = min(start + per_page, total)
-            total_pages = max(1, (total + per_page - 1) // per_page)
-            
-            self.assertEqual(total_pages, case['expected_pages'])
-            self.assertGreaterEqual(start, 0)
-            self.assertLessEqual(end, total)
+        # Check that warning message was added
+        messages = list(response.context['messages'])
+        self.assertTrue(any('exceeds the 5MB size limit' in str(m) for m in messages))
 
-    def run_comprehensive_test(self):
-        """Run all tests and provide summary"""
-        test_methods = [
-            'test_export_status_users_authentication',
-            'test_export_status_users_functionality', 
-            'test_attendance_analytics_functionality',
-            'test_get_status_users_functionality',
-            'test_get_analytics_data_functionality',
-            'test_date_parsing',
-            'test_filter_processing',
-            'test_pagination_logic'
-        ]
-        
-        passed = 0
-        failed = 0
-        skipped = 0
-        
-        for method_name in test_methods:
-            try:
-                method = getattr(self, method_name)
-                method()
-                passed += 1
-                print(f"✓ {method_name}")
-            except Exception as e:
-                if "skipTest" in str(e):
-                    skipped += 1
-                    print(f"⚠ {method_name} SKIPPED: {e}")
-                else:
-                    failed += 1
-                    print(f"✗ {method_name} FAILED: {e}")
-        
-        print(f"\nSummary: {len(test_methods)} tests, {passed} passed, {failed} failed, {skipped} skipped")
-        return {'total': len(test_methods), 'passed': passed, 'failed': failed, 'skipped': skipped}
+    def test_file_upload_invalid_type(self):
+        """Test invalid file type rejection"""
+        self.client.login(username='employee', password='testpass123')
 
+        # Create an executable file (not allowed)
+        test_file = SimpleUploadedFile(
+            "test.exe",
+            b"executable_content",
+            content_type="application/x-executable"
+        )
 
-def run_manual_tests():
-    """Manual tests for CSV headers, pagination, and AJAX detection"""
-    print("Manual test: CSV headers, pagination, AJAX detection")
-    
-    # CSV header definitions
-    status_headers = {
-        'Yet to Clock In': ['Username', 'Name', 'Location', 'Shift', 'Start Time', 'Late By (minutes)'],
-        'Present': ['Username', 'Name', 'Location', 'Clock In', 'Clock Out', 'Total Hours', 'Late Minutes', 'Attendance Days'],
-        'Present & Late': ['Username', 'Name', 'Location', 'Clock In', 'Clock Out', 'Total Hours', 'Late Minutes', 'Attendance Days'],
-        'Work From Home': ['Username', 'Name', 'Location', 'Clock In', 'Clock Out', 'Total Hours', 'Late Minutes', 'Attendance Days'],
-        'On Leave': ['Username', 'Name', 'Location', 'Leave Type', 'Days on Leave'],
-        'Other': ['Username', 'Name', 'Location', 'Status', 'Count']
-    }
-    
-    for status, headers in status_headers.items():
-        print(f"{status}: {len(headers)} columns - {headers}")
-    
-    # Pagination logic verification
-    print("\nPagination Tests:")
-    pagination_cases = [
-        {'total': 0, 'per_page': 50, 'page': 1},
-        {'total': 25, 'per_page': 50, 'page': 1},
-        {'total': 100, 'per_page': 50, 'page': 1},
-        {'total': 100, 'per_page': 50, 'page': 2},
-        {'total': 150, 'per_page': 50, 'page': 3},
-    ]
-    
-    for case in pagination_cases:
-        total, per_page, page = case['total'], case['per_page'], case['page']
-        start = (page - 1) * per_page
-        end = min(start + per_page, total)
-        total_pages = max(1, (total + per_page - 1) // per_page)
-        print(f"Total: {total}, Per Page: {per_page}, Page: {page}, Start: {start}, End: {end}, Pages: {total_pages}")
-    
-    # AJAX detection tests
-    print("\nAJAX Detection Tests:")
-    test_headers = [
-        {'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html'},
-        {'X-Requested-With': None, 'Accept': 'application/json'},
-        {'X-Requested-With': None, 'Accept': 'text/html'},
-        {'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json'},
-    ]
-    
-    for i, headers in enumerate(test_headers):
-        xrw = headers.get('X-Requested-With')
-        accept = headers.get('Accept', '')
-        is_ajax = (xrw == 'XMLHttpRequest' or 'application/json' in accept)
-        print(f"Test {i+1}: X-Requested-With: {xrw}, Accept: {accept}, AJAX: {is_ajax}")
+        data = {
+            'subject': 'Ticket with invalid file',
+            'description': 'Has invalid attachment',
+            'issue_type': Support.IssueType.ACCESS,
+            'attachments': test_file
+        }
+        response = self.client.post(reverse('aps_support:create_ticket'), data)
+
+        # Check that warning message was added
+        messages = list(response.context['messages'])
+        self.assertTrue(any('type is not allowed' in str(m) for m in messages))
+
+    def test_parent_ticket_assignment(self):
+        """Test parent ticket assignment"""
+        self.client.login(username='employee', password='testpass123')
+
+        data = {
+            'subject': 'Child Ticket',
+            'description': 'Related to parent',
+            'issue_type': Support.IssueType.ACCESS,
+            'parent_ticket_id': self.ticket1.ticket_id
+        }
+        response = self.client.post(reverse('aps_support:create_ticket'), data)
+
+        ticket = Support.objects.filter(subject='Child Ticket').first()
+        self.assertEqual(ticket.parent_ticket, self.ticket1)
+
+    def test_parent_ticket_not_found(self):
+        """Test handling of non-existent parent ticket"""
+        self.client.login(username='employee', password='testpass123')
+
+        data = {
+            'subject': 'Child Ticket',
+            'description': 'Related to parent',
+            'issue_type': Support.IssueType.ACCESS,
+            'parent_ticket_id': 'NONEXISTENT'
+        }
+        response = self.client.post(reverse('aps_support:create_ticket'), data)
+
+        messages = list(response.context['messages'])
+        self.assertTrue(any('not found' in str(m) for m in messages))
+
+    def test_manager_priority_default(self):
+        """Test that managers get HIGH priority by default"""
+        self.client.login(username='manager', password='testpass123')
+
+        data = {
+            'subject': 'Manager Ticket',
+            'description': 'Manager issue',
+            'issue_type': Support.IssueType.ACCESS
+        }
+        response = self.client.post(reverse('aps_support:create_ticket'), data)
+
+        ticket = Support.objects.filter(subject='Manager Ticket').first()
+        self.assertEqual(ticket.priority, Support.Priority.HIGH)
+
+    @patch('trueAlign.utils.send_ticket_notification')
+    def test_notification_sent(self, mock_send_notification):
+        """Test that notification is sent after ticket creation"""
+        self.client.login(username='employee', password='testpass123')
+
+        data = {
+            'subject': 'Notification Test',
+            'description': 'Test notification',
+            'issue_type': Support.IssueType.ACCESS
+        }
+        response = self.client.post(reverse('aps_support:create_ticket'), data)
+
+        mock_send_notification.assert_called_once()
 
 
-def run_performance_tests():
-    """Performance tests for large datasets and memory usage"""
-    print("\nPerformance: large dataset and memory usage")
-    import time
-    import sys
-    
-    # Simulate large dataset processing
-    print("Dataset Processing Performance:")
-    for size in [100, 1000, 5000, 10000]:
-        start = time.time()
-        per_page = 50
-        total_pages = max(1, (size + per_page - 1) // per_page)
-        
-        # Simulate processing
-        processed = 0
-        for _ in range(min(size, 1000)):  # Cap simulation
-            processed += 1
-            
-        elapsed = time.time() - start
-        rate = processed / elapsed if elapsed > 0 else float('inf')
-        print(f"Size: {size}, Pages: {total_pages}, Time: {elapsed:.4f}s, Rate: {rate:.2f}/s")
-    
-    # Memory usage analysis
-    print("\nMemory Usage Analysis:")
-    user_structures = {
-        'dict': {'username': 'test', 'name': 'Test User', 'location': 'Office A'},
-        'list': ['test', 'Test User', 'Office A'],
-        'tuple': ('test', 'Test User', 'Office A')
-    }
-    
-    for struct_type, data in user_structures.items():
-        size_bytes = sys.getsizeof(data)
-        print(f"{struct_type}: {size_bytes} bytes")
-    
-    csv_row = ['username', 'name', 'location', 'status', 'clock_in', 'clock_out']
-    print(f"CSV row: {sys.getsizeof(csv_row)} bytes")
-    
-    # Memory projections
-    print("\nMemory Projections:")
-    dict_size = sys.getsizeof(user_structures['dict'])
-    for count in [100, 1000, 10000]:
-        kb = (count * dict_size) / 1024
-        mb = kb / 1024
-        print(f"{count} users: {kb:.2f} KB ({mb:.2f} MB)")
+class TicketDetailViewTests(SupportViewsTestCase):
+    """Test cases for ticket_detail view"""
 
+    def test_ticket_detail_unauthenticated(self):
+        """Test unauthenticated access is denied"""
+        response = self.client.get(reverse('aps_support:ticket_detail', kwargs={'pk': self.ticket1.pk}))
+        self.assertRedirects(response, f'/accounts/login/?next={reverse("aps_support:ticket_detail", kwargs={"pk": self.ticket1.pk})}')
 
-if __name__ == '__main__':
-    print("Django Attendance Analytics Test Suite - Fixed Version")
-    print("=" * 60)
-    print("This version handles URL routing issues and test failures.")
-    print("Make sure your Django settings and URL patterns are configured.")
-    print("=" * 60)
-    
-    # Note: Uncomment to run Django TestCase suite (requires proper Django setup)
-    # test_case = AttendanceAnalyticsTestCase()
-    # test_case.setUp()
-    # results = test_case.run_comprehensive_test()
-    # test_case.tearDown()
-    
-    run_manual_tests()
-    run_performance_tests()
-    
-    print("=" * 60)
-    print("TESTING COMPLETE")
-    print()
-    print("Common fixes needed based on your logs:")
-    print("1. Add URL patterns to urls.py for all views")
-    print("2. Ensure views are properly implemented and return correct responses")
-    print("3. Check authentication decorators and HR permission logic")
-    print("4. Verify date parsing handles edge cases properly")
-    print("5. Test with actual Django server to confirm routing")
+    def test_owner_can_view_ticket(self):
+        """Test ticket owner can view their ticket"""
+        self.client.login(username='employee', password='testpass123')
+        response = self.client.get(reverse('aps_support:ticket_detail', kwargs={'pk': self.ticket1.pk}))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['ticket'], self.ticket1)
+
+    def test_admin_can_view_any_ticket(self):
+        """Test admin can view any ticket"""
+        self.client.login(username='admin', password='testpass123')
+        response = self.client.get(reverse('aps_support:ticket_detail', kwargs={'pk': self.ticket1.pk}))
+        self.assertEqual(response.status_code, 200)
+
+    def test_hr_can_view_hr_tickets(self):
+        """Test HR can view HR assigned tickets"""
+        self.client.login(username='hr', password='testpass123')
+        response = self.client.get(reverse('aps_support:ticket_detail', kwargs={'pk': self.ticket1.pk}))
+        self.assertEqual(response.status_code, 200)
+
+    def test_assigned_user_can_view_ticket(self):
+        """Test assigned user can view their assigned ticket"""
+        self.client.login(username='hr', password='testpass123')
+        response = self.client.get(reverse('aps_support:ticket_detail', kwargs={'pk': self.ticket1.pk}))
+        self.assertEqual(response.status_code, 200)
+
+    def test_unauthorized_access_forbidden(self):
+        """Test unauthorized users get 403"""
+        # Employee trying to view ticket not owned by them
+        self.client.login(username='employee', password='testpass123')
+        response = self.client.get(reverse('aps_support:ticket_detail', kwargs={'pk': self.ticket2.pk}))
+        self.assertEqual(response.status_code, 403)
+
+    def test_sla_breach_detection(self):
+        """Test SLA breach detection and update"""
+        self.client.login(username='admin', password='testpass123')
+
+        # Create ticket with past SLA target
+        old_ticket = Support.objects.create(
+            user=self.employee_user,
+            subject='SLA Test',
+            description='Test SLA',
+            priority=Support.Priority.CRITICAL,
+            status=Support.Status.OPEN,
+            sla_target_date=timezone.now() - timedelta(hours=1)
+        )
+
+        response = self.client.get(reverse('aps_support:ticket_detail', kwargs={'pk': old_ticket.pk}))
+
+        # Refresh from database
+        old_ticket.refresh_from_db()
+        self.assertEqual(old_ticket.sla_status, Support.SLAStatus.BREACHED)
+        self.assertTrue(old_ticket.sla_breach)
+
+    def test_add_comment_successful(self):
+        """Test adding comment to ticket"""
+        self.client.login(username='employee', password='testpass123')
+
+        data = {
+            'comment': 'This is a test comment',
+            'is_internal': False
+        }
+        response = self.client.post(
+            reverse('aps_support:ticket_detail', kwargs={'pk': self.ticket1.pk}),
+            data
+        )
+
+        self.assertEqual(response.status_code, 302)  # Redirect after successful post
+
+        # Verify comment was created
+        comment = TicketComment.objects.filter(
+            ticket=self.ticket1,
+            content='This is a test comment'
+        ).first()
+        self.assertIsNotNone(comment)
+        self.assertEqual(comment.user, self.employee_user)
+
+    def test_employee_cannot_make_internal_comment(self):
+        """Test employees cannot make internal comments"""
+        self.client.login(username='employee', password='testpass123')
+
+        data = {
+            'comment': 'Trying internal comment',
+            'is_internal': True
+        }
+        response = self.client.post(
+            reverse('aps_support:ticket_detail', kwargs={'pk': self.ticket1.pk}),
+            data
+        )
+
+        comment = TicketComment.objects.filter(
+            ticket=self.ticket1,
+            content='Trying internal comment'
+        ).first()
+        self.assertFalse(comment.is_internal)  # Should be forced to False
+
+    def test_status_update_by_authorized_user(self):
+        """Test status update by authorized user"""
+        self.client.login(username='hr', password='testpass123')
+
+        data = {
+            'new_status': Support.Status.IN_PROGRESS
+        }
+        response = self.client.post(
+            reverse('aps_support:ticket_detail', kwargs={'pk': self.ticket1.pk}),
+            data
+        )
+
+        self.ticket1.refresh_from_db()
+        self.assertEqual(self.ticket1.status, Support.Status.IN_PROGRESS)
+
+    def test_status_update_unauthorized(self):
+        """Test status update by unauthorized user"""
+        # Regular employee trying to change status to something other than Closed
+        self.client.login(username='employee', password='testpass123')
+
+        data = {
+            'new_status': Support.Status.IN_PROGRESS
+        }
+        response = self.client.post(
+            reverse('aps_support:ticket_detail', kwargs={'pk': self.ticket1.pk}),
+            data
+        )
+
+        self.ticket1.refresh_from_db()
+        self.assertNotEqual(self.ticket1.status, Support.Status.IN_PROGRESS)
+
+    def test_owner_can_close_ticket(self):
+        """Test ticket owner can close their ticket"""
+        self.client.login(username='employee', password='testpass123')
+
+        data = {
+            'new_status': Support.Status.CLOSED
+        }
+        response = self.client.post(
+            reverse('aps_support:ticket_detail', kwargs={'pk': self.ticket1.pk}),
+            data
+        )
+
+        self.ticket1.refresh_from_db()
+        self.assertEqual(self.ticket1.status, Support.Status.CLOSED)
+
+    def test_comment_with_attachment(self):
+        """Test adding comment with file attachment"""
+        self.client.login(username='employee', password='testpass123')
+
+        test_file = SimpleUploadedFile(
+            "comment_attachment.txt",
+            b"comment file content",
+            content_type="text/plain"
+        )
+
+        data = {
+            'comment': 'Comment with attachment',
+            'comment_attachments': test_file
+        }
+        response = self.client.post(
+            reverse('aps_support:ticket_detail', kwargs={'pk': self.ticket1.pk}),
+            data
+        )
+
+        # Verify attachment was created
+        comment = TicketComment.objects.filter(
+            ticket=self.ticket1,
+            content='Comment with attachment'
+        ).first()
+        self.assertTrue(
+            TicketAttachment.objects.filter(
+                ticket=self.ticket1,
+                comment=comment
+            ).exists()
+        )
+
+    def test_escalate_ticket(self):
+        """Test ticket escalation"""
+        self.client.login(username='employee', password='testpass123')
+
+        data = {
+            'escalate_ticket': 'true',
+            'escalation_reason': 'Urgent issue'
+        }
+        response = self.client.post(
+            reverse('aps_support:ticket_detail', kwargs={'pk': self.ticket1.pk}),
+            data
+        )
+
+        self.ticket1.refresh_from_db()
+        self.assertGreater(self.ticket1.escalation_level, 0)
+
+    def test_cannot_escalate_closed_ticket(self):
+        """Test that closed tickets cannot be escalated"""
+        self.client.login(username='employee', password='testpass123')
+
+        data = {
+            'escalate_ticket': 'true',
+            'escalation_reason': 'Trying to escalate closed'
+        }
+        response = self.client.post(
+            reverse('aps_support:ticket_detail', kwargs={'pk': self.closed_ticket.pk}),
+            data
+        )
+
+        messages = list(response.context['messages'])
+        self.assertTrue(any('Cannot escalate' in str(m) for m in messages))
+
+    def test_add_cc_user(self):
+        """Test adding user to CC list"""
+        self.client.login(username='admin', password='testpass123')
+
+        data = {
+            'add_cc_user': self.manager_user.id
+        }
+        response = self.client.post(
+            reverse('aps_support:ticket_detail', kwargs={'pk': self.ticket1.pk}),
+            data
+        )
+
+        self.assertTrue(self.ticket1.cc_users.filter(id=self.manager_user.id).exists())
+
+    def test_add_nonexistent_cc_user(self):
+        """Test handling of adding non-existent CC user"""
+        self.client.login(username='admin', password='testpass123')
+
+        data = {
+            'add_cc_user': 99999  # Non-existent user ID
+        }
+        response = self.client.post(
+            reverse('aps_support:ticket_detail', kwargs={'pk': self.ticket1.pk}),
+            data
+        )
+
+        messages = list(response.context['messages'])
+        self.assertTrue(any('User not found' in str(m) for m in messages))
+
+    def test_internal_comments_visibility(self):
+        """Test internal comments are only visible to authorized users"""
+        # Create internal comment
+        internal_comment = TicketComment.objects.create(
+            ticket=self.ticket1,
+            user=self.hr_user,
+            content='Internal comment',
+            is_internal=True
+        )
+
+        # Employee should not see internal comments
+        self.client.login(username='employee', password='testpass123')
+        response = self.client.get(reverse('aps_support:ticket_detail', kwargs={'pk': self.ticket1.pk}))
+
+        # Check that internal comment is not in visible comments
+        visible_comments = response.context['comments']
+        self.assertNotIn(internal_comment, visible_comments)
+
+        # HR user should see internal comments
+        self.client.login(username='hr', password='testpass123')
+        response = self.client.get(reverse('aps_support:ticket_detail', kwargs={'pk': self.ticket1.pk}))
+
+        visible_comments = response.context['comments']
+        self.assertIn(internal_comment, visible_comments)
+        def test_remove_cc_user(self):
+            """Test removing user from CC list"""
+            # First add user to CC
+            self.ticket1.cc_users.add(self.manager_user)
+
+            self.client.login(username='admin', password='testpass123')
+            data = {
+                'remove_cc_user': self.manager_user.id
+            }
+            response = self.client.post(
+                reverse('aps_support:ticket_detail', kwargs={'pk': self.ticket1.pk}),
+                data
+            )
+
+            self.assertFalse(self.ticket1.cc_users.filter(id=self.manager_user.id).exists())
+
+        def test_ticket_activity_logging(self):
+            """Test that ticket activities are logged"""
+            self.client.login(username='hr', password='testpass123')
+
+            # Update status
+            data = {
+                'new_status': Support.Status.IN_PROGRESS
+            }
+            response = self.client.post(
+                reverse('aps_support:ticket_detail', kwargs={'pk': self.ticket1.pk}),
+                data
+            )
+
+            # Check that activity was logged
+            self.assertTrue(
+                TicketActivity.objects.filter(
+                    ticket=self.ticket1,
+                    activity_type='status_change'
+                ).exists()
+            )
+
+        def test_field_change_logging(self):
+            """Test that field changes are logged"""
+            self.client.login(username='admin', password='testpass123')
+
+            # Change priority
+            data = {
+                'new_priority': Support.Priority.CRITICAL
+            }
+            response = self.client.post(
+                reverse('aps_support:ticket_detail', kwargs={'pk': self.ticket1.pk}),
+                data
+            )
+
+            # Check that field change was logged
+            self.assertTrue(
+                TicketFieldChange.objects.filter(
+                    ticket=self.ticket1,
+                    field_name='priority'
+                ).exists()
+            )
+
+        def test_sla_status_calculation(self):
+            """Test SLA status calculation on ticket view"""
+            # Create ticket with approaching SLA
+            approaching_ticket = Support.objects.create(
+                user=self.employee_user,
+                subject='Approaching SLA',
+                description='SLA approaching deadline',
+                priority=Support.Priority.HIGH,
+                status=Support.Status.OPEN,
+                sla_target_date=timezone.now() + timedelta(hours=1)
+            )
+
+            self.client.login(username='admin', password='testpass123')
+            response = self.client.get(reverse('aps_support:ticket_detail', kwargs={'pk': approaching_ticket.pk}))
+            self.assertEqual(response.status_code, 200)
+
+            # Verify the SLA status is set to APPROACHING
+            approaching_ticket.refresh_from_db()
+            self.assertEqual(approaching_ticket.sla_status, Support.SLAStatus.APPROACHING)
+
+            # Create ticket with met SLA
+            met_ticket = Support.objects.create(
+                user=self.employee_user,
+                subject='Met SLA',
+                description='SLA is on track',
+                priority=Support.Priority.MEDIUM,
+                status=Support.Status.OPEN,
+                sla_target_date=timezone.now() + timedelta(days=2)
+            )
+
+            response = self.client.get(reverse('aps_support:ticket_detail', kwargs={'pk': met_ticket.pk}))
+            self.assertEqual(response.status_code, 200)
+
+            # Verify the SLA status is set to ON_TRACK
+            met_ticket.refresh_from_db()
+            self.assertEqual(met_ticket.sla_status, Support.SLAStatus.ON_TRACK)
+
+    class APIViewTests(SupportViewsTestCase):
+        """Test cases for the ticket API endpoints"""
+
+        def test_api_list_authenticated(self):
+            """Test authenticated access to ticket list API"""
+            self.client.login(username='admin', password='testpass123')
+            response = self.client.get(reverse('aps_support:api_ticket_list'))
+            self.assertEqual(response.status_code, 200)
+            self.assertIn('tickets', response.json())
+
+        def test_api_list_unauthenticated(self):
+            """Test unauthenticated access is denied for API"""
+            response = self.client.get(reverse('aps_support:api_ticket_list'))
+            self.assertEqual(response.status_code, 403)
+
+        def test_api_ticket_detail(self):
+            """Test ticket detail API endpoint"""
+            self.client.login(username='admin', password='testpass123')
+            response = self.client.get(reverse('aps_support:api_ticket_detail', kwargs={'pk': self.ticket1.pk}))
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            self.assertEqual(data['subject'], self.ticket1.subject)
+
+        def test_api_create_ticket(self):
+            """Test ticket creation via API"""
+            self.client.login(username='employee', password='testpass123')
+            data = {
+                'subject': 'API Created Ticket',
+                'description': 'Created via API',
+                'issue_type': Support.IssueType.ACCESS
+            }
+            response = self.client.post(
+                reverse('aps_support:api_create_ticket'),
+                data=json.dumps(data),
+                content_type='application/json'
+            )
+            self.assertEqual(response.status_code, 201)
+            self.assertTrue(Support.objects.filter(subject='API Created Ticket').exists())
+
+        def test_api_update_ticket(self):
+            """Test ticket update via API"""
+            self.client.login(username='admin', password='testpass123')
+            data = {
+                'status': Support.Status.IN_PROGRESS,
+                'priority': Support.Priority.CRITICAL
+            }
+            response = self.client.patch(
+                reverse('aps_support:api_ticket_detail', kwargs={'pk': self.ticket1.pk}),
+                data=json.dumps(data),
+                content_type='application/json'
+            )
+            self.assertEqual(response.status_code, 200)
+            self.ticket1.refresh_from_db()
+            self.assertEqual(self.ticket1.status, Support.Status.IN_PROGRESS)
+            self.assertEqual(self.ticket1.priority, Support.Priority.CRITICAL)

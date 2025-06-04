@@ -261,10 +261,10 @@
             >
                 <div class="flex items-center mb-6">
                     <div
-                        class="h-10 w-10 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg flex items-center justify-center mr-3"
+                        class="h-10 w-10 bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-lg flex items-center justify-center mr-3"
                     >
                         <svg
-                            class="h-5 w-5 text-blue-600"
+                            class="h-5 w-5 text-yellow-600"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -277,30 +277,30 @@
                             />
                         </svg>
                     </div>
-                    <h3 class="text-lg font-semibold text-gray-800">
+                    <h3 class="text-lg font-semibold text-yellow-800"></h3>
                         Activity Heatmap
                     </h3>
                 </div>
                 <div class="space-y-3">
                     {% for hour_data in activity_heatmap %}
                     <div
-                        class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 transition-colors duration-150"
+                        class="flex items-center space-x-3 p-2 rounded-lg hover:bg-yellow-50 transition-colors duration-150"
                     >
                         <span
-                            class="text-sm font-mono text-gray-600 w-12 font-medium"
+                            class="text-sm font-mono text-yellow-600 w-12 font-medium"
                             >{{ hour_data.hour|stringformat:"02d" }}:00</span
                         >
                         <div
-                            class="flex-1 bg-gray-100 rounded-full h-5 relative overflow-hidden"
+                            class="flex-1 bg-yellow-100 rounded-full h-5 relative overflow-hidden"
                         >
                             {% if hour_data.activity_level > 0 %}
                             <div
-                                class="h-5 rounded-full transition-all duration-300 {% if hour_data.activity_level > 80 %}bg-gradient-to-r from-yellow-300 to-yellow-400{% elif hour_data.activity_level > 60 %}bg-gradient-to-r from-red-300 to-red-400{% elif hour_data.activity_level > 40 %}bg-gradient-to-r from-amber-300 to-amber-400{% elif hour_data.activity_level > 20 %}bg-gradient-to-r from-orange-300 to-orange-400{% else %}bg-gradient-to-r from-rose-300 to-rose-400{% endif %}"
+                                class="h-5 rounded-full transition-all duration-300 {% if hour_data.activity_level > 80 %}bg-gradient-to-r from-blue-300 to-purple-300{% elif hour_data.activity_level > 60 %}bg-gradient-to-r from-blue-200 to-purple-200{% elif hour_data.activity_level > 40 %}bg-gradient-to-r from-blue-100 to-purple-100{% elif hour_data.activity_level > 20 %}bg-gradient-to-r from-blue-50 to-purple-50{% else %}bg-gradient-to-r from-slate-100 to-purple-50{% endif %}"
                                 style="width: {{ hour_data.activity_level }}%"
                             ></div>
                             {% endif %}
                         </div>
-                        <span class="text-sm text-slate-600 w-10 font-medium"
+                        <span class="text-sm text-yellow-600 w-10 font-medium"
                             >{{ hour_data.activity_level|floatformat:0 }}%</span
                         >
                     </div>

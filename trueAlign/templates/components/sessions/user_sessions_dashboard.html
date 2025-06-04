@@ -1,28 +1,41 @@
 {% extends 'base.html' %} {% load static %} {% block content %}
-<div class="min-h-screen bg-gray-50 p-8">
+<div
+    class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20 p-8"
+>
     <!-- Header -->
-    <div class="mb-8 bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+    <div
+        class="mb-8 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-8 hover:shadow-xl transition-all duration-500"
+    >
         <div class="flex justify-between items-center">
             <div>
-                <h1 class="text-3xl font-bold text-gray-900 mb-3">
+                <h1
+                    class="text-4xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent mb-3"
+                >
                     UserSession Dashboard
                 </h1>
-                <p class="text-gray-600 text-lg">
+                <p class="text-slate-600 text-lg font-medium">
                     Real-time monitoring and analytics for user sessions
                 </p>
-                <div class="text-sm text-gray-500 mt-3">
-                    Last updated:
-                    <span id="last-updated" class="font-medium text-gray-700"
+                <div
+                    class="text-sm text-slate-500 mt-4 flex items-center space-x-2"
+                >
+                    <div
+                        class="w-2 h-2 bg-green-400 rounded-full animate-pulse"
+                    ></div>
+                    <span>Last updated:</span>
+                    <span
+                        id="last-updated"
+                        class="font-medium text-slate-700 bg-slate-100 px-2 py-1 rounded-lg"
                         >{{ current_time_ist|date:"Y-m-d H:i:s T" }}</span
                     >
                 </div>
             </div>
             <div class="hidden md:block">
                 <div
-                    class="w-20 h-20 bg-blue-50 rounded-lg flex items-center justify-center"
+                    class="w-24 h-24 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-2xl flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                 >
                     <svg
-                        class="w-10 h-10 text-blue-600"
+                        class="w-12 h-12 text-blue-600"
                         fill="currentColor"
                         viewBox="0 0 20 20"
                     >
@@ -36,406 +49,36 @@
     </div>
 
     <!-- Filters Panel -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-8 mb-8">
-        <h2 class="text-xl font-semibold text-gray-900 mb-6">Filters</h2>
-        <form
-            id="filter-form"
-            method="GET"
-            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6"
-        >
-            <div class="space-y-3">
-                <label class="block text-sm font-medium text-gray-700"
-                    >Date Range</label
-                >
-                <select
-                    name="date_range"
-                    class="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
-                >
-                    {% for value, label in date_range_options %}
-                    <option
-                        value="{{ value }}"
-                        {%
-                        if
-                        filters.date_range=""
-                        ="value"
-                        %}selected{%
-                        endif
-                        %}
-                    >
-                        {{ label }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="space-y-3">
-                <label class="block text-sm font-medium text-gray-700">Users</label>
-
-                <!-- Selected Users Display -->
-                <div id="selected-users-display" class="min-h-[42px] w-full px-4 py-3 border border-gray-300 rounded-lg bg-white flex flex-wrap gap-2 items-center">
-                    <span id="no-users-selected" class="text-gray-500 text-sm">No users selected (All users will be shown)</span>
-                </div>
-
-                <!-- Hidden inputs for form submission -->
-                <div id="user-hidden-inputs"></div>
-
-                <!-- Open Modal Button -->
-                <button
-                    type="button"
-                    onclick="openUserSelectionModal()"
-                    class="w-full px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 hover:bg-blue-100 transition-colors duration-200 flex items-center justify-center space-x-2"
-                >
-                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z"></path>
-                    </svg>
-                    <span>Select Users</span>
-                </button>
-            </div>
-
-            <!-- User Selection Modal -->
-            <div id="userSelectionModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
-                <div class="bg-white rounded-xl shadow-2xl max-w-md w-full max-h-[80vh] flex flex-col">
-                    <!-- Modal Header -->
-                    <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-gray-50 rounded-t-xl">
-                        <h3 class="text-lg font-semibold text-gray-900">Select Users</h3>
-                        <button
-                            type="button"
-                            onclick="closeUserSelectionModal()"
-                            class="text-gray-400 hover:text-gray-600 transition-colors duration-200"
-                        >
-                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-                            </svg>
-                        </button>
-                    </div>
-
-                    <!-- Search Box -->
-                    <div class="px-6 py-4 border-b border-gray-200">
-                        <div class="relative">
-                            <input
-                                type="text"
-                                id="userSearchInput"
-                                placeholder="Search users..."
-                                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                oninput="filterUsers()"
-                            >
-                            <svg class="absolute left-3 top-2.5 w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"></path>
-                            </svg>
-                        </div>
-                    </div>
-
-                    <!-- Quick Actions -->
-                    <div class="px-6 py-3 border-b border-gray-200 bg-gray-50">
-                        <div class="flex space-x-2">
-                            <button
-                                type="button"
-                                onclick="selectAllUsers()"
-                                class="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 transition-colors duration-200"
-                            >
-                                Select All
-                            </button>
-                            <button
-                                type="button"
-                                onclick="clearAllUsers()"
-                                class="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition-colors duration-200"
-                            >
-                                Clear All
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Users List -->
-                    <div class="overflow-y-auto px-6 py-4 h-96">
-                        <div id="usersList" class="space-y-2">
-                            {% for user in users_list %}
-                            <label class="user-item flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors duration-200" data-username="{{ user.username|lower }}">
-                                <input
-                                    type="checkbox"
-                                    value="{{ user.id }}"
-                                    data-username="{{ user.username }}"
-                                    onchange="updateSelectedUsers()"
-                                    class="user-checkbox w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                                    {% if user.id|stringformat:"s" in filters.user %}checked{% endif %}
-                                >
-                                <div class="flex items-center space-x-2 flex-1">
-                                    <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
-                                        <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <div class="text-sm font-medium text-gray-900">{{ user.username }}</div>
-                                        {% if user.first_name or user.last_name %}
-                                        <div class="text-xs text-gray-500">{{ user.first_name }} {{ user.last_name }}</div>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            </label>
-                            {% endfor %}
-                        </div>
-                        <div id="noUsersFound" class="hidden text-center py-8 text-gray-500">
-                            <svg class="w-8 h-8 mx-auto mb-2 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"></path>
-                            </svg>
-                            <p>No users found</p>
-                        </div>
-                    </div>
-
-                    <!-- Modal Footer -->
-                    <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-xl">
-                        <div class="flex justify-between items-center">
-                            <span id="selectedCount" class="text-sm text-gray-600">0 users selected</span>
-                            <div class="flex space-x-3">
-                                <button
-                                    type="button"
-                                    onclick="closeUserSelectionModal()"
-                                    class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="button"
-                                    onclick="applyUserSelection()"
-                                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
-                                >
-                                    Apply Selection
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <script>
-                let selectedUsers = new Set();
-
-                // Initialize selected users on page load
-                document.addEventListener('DOMContentLoaded', function() {
-                    // Check for pre-selected users from filters
-                    const checkboxes = document.querySelectorAll('.user-checkbox');
-                    checkboxes.forEach(checkbox => {
-                        if (checkbox.checked) {
-                            selectedUsers.add({
-                                id: checkbox.value,
-                                username: checkbox.dataset.username
-                            });
-                        }
-                    });
-                    updateSelectedUsersDisplay();
-                    updateSelectedCount();
-                });
-
-                function openUserSelectionModal() {
-                    document.getElementById('userSelectionModal').classList.remove('hidden');
-                    document.body.style.overflow = 'hidden';
-                    document.getElementById('userSearchInput').focus();
-                }
-
-                function closeUserSelectionModal() {
-                    document.getElementById('userSelectionModal').classList.add('hidden');
-                    document.body.style.overflow = '';
-                    document.getElementById('userSearchInput').value = '';
-                    filterUsers();
-                }
-
-                function filterUsers() {
-                    const searchTerm = document.getElementById('userSearchInput').value.toLowerCase();
-                    const userItems = document.querySelectorAll('.user-item');
-                    let visibleCount = 0;
-
-                    userItems.forEach(item => {
-                        const username = item.dataset.username;
-                        if (username.includes(searchTerm)) {
-                            item.style.display = 'flex';
-                            visibleCount++;
-                        } else {
-                            item.style.display = 'none';
-                        }
-                    });
-
-                    document.getElementById('noUsersFound').classList.toggle('hidden', visibleCount > 0);
-                }
-
-                function updateSelectedUsers() {
-                    selectedUsers.clear();
-                    const checkboxes = document.querySelectorAll('.user-checkbox:checked');
-                    checkboxes.forEach(checkbox => {
-                        selectedUsers.add({
-                            id: checkbox.value,
-                            username: checkbox.dataset.username
-                        });
-                    });
-                    updateSelectedCount();
-                }
-
-                function updateSelectedCount() {
-                    const count = selectedUsers.size;
-                    document.getElementById('selectedCount').textContent = `${count} user${count !== 1 ? 's' : ''} selected`;
-                }
-
-                function selectAllUsers() {
-                    const visibleCheckboxes = document.querySelectorAll('.user-item:not([style*="display: none"]) .user-checkbox');
-                    visibleCheckboxes.forEach(checkbox => {
-                        checkbox.checked = true;
-                    });
-                    updateSelectedUsers();
-                }
-
-                function clearAllUsers() {
-                    const checkboxes = document.querySelectorAll('.user-checkbox');
-                    checkboxes.forEach(checkbox => {
-                        checkbox.checked = false;
-                    });
-                    updateSelectedUsers();
-                }
-
-                function applyUserSelection() {
-                    updateSelectedUsersDisplay();
-                    updateHiddenInputs();
-                    closeUserSelectionModal();
-                }
-
-                function updateSelectedUsersDisplay() {
-                    const displayContainer = document.getElementById('selected-users-display');
-                    const noUsersSpan = document.getElementById('no-users-selected');
-
-                    if (selectedUsers.size === 0) {
-                        displayContainer.innerHTML = '<span id="no-users-selected" class="text-gray-500 text-sm">No users selected (All users will be shown)</span>';
-                    } else {
-                        const userTags = Array.from(selectedUsers).map(user => {
-                            return `
-                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                    ${user.username}
-                                    <button type="button" onclick="removeUser('${user.id}')" class="ml-1 text-blue-600 hover:text-blue-800">
-                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-                                        </svg>
-                                    </button>
-                                </span>
-                            `;
-                        }).join('');
-                        displayContainer.innerHTML = userTags;
-                    }
-                }
-
-                function updateHiddenInputs() {
-                    const container = document.getElementById('user-hidden-inputs');
-                    container.innerHTML = '';
-
-                    selectedUsers.forEach(user => {
-                        const input = document.createElement('input');
-                        input.type = 'hidden';
-                        input.name = 'user';
-                        input.value = user.id;
-                        container.appendChild(input);
-                    });
-                }
-
-                function removeUser(userId) {
-                    selectedUsers = new Set(Array.from(selectedUsers).filter(user => user.id !== userId));
-
-                    // Uncheck the checkbox in the modal
-                    const checkbox = document.querySelector(`.user-checkbox[value="${userId}"]`);
-                    if (checkbox) {
-                        checkbox.checked = false;
-                    }
-
-                    updateSelectedUsersDisplay();
-                    updateHiddenInputs();
-                    updateSelectedCount();
-                }
-
-                // Close modal when clicking outside
-                document.getElementById('userSelectionModal').addEventListener('click', function(e) {
-                    if (e.target === this) {
-                        closeUserSelectionModal();
-                    }
-                });
-
-                // Close modal with Escape key
-                document.addEventListener('keydown', function(e) {
-                    if (e.key === 'Escape' && !document.getElementById('userSelectionModal').classList.contains('hidden')) {
-                        closeUserSelectionModal();
-                    }
-                });
-            </script>
-            <div class="space-y-3">
-                <label class="block text-sm font-medium text-gray-700"
-                    >Device Type</label
-                >
-                <select
-                    name="device_type"
-                    class="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
-                >
-                    <option value="">All Devices</option>
-                    <option value="desktop" {% if filters.device_type == "desktop" %}selected{% endif %}>Desktop</option>
-                    <option value="mobile" {% if filters.device_type == "mobile" %}selected{% endif %}>Mobile</option>
-                    <option value="tablet" {% if filters.device_type == "tablet" %}selected{% endif %}>Tablet</option>
-                </select>
-            </div>
-            <div class="space-y-3">
-                <label class="block text-sm font-medium text-gray-700"
-                    >Location</label
-                >
-                <select
-                    name="location"
-                    class="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
-                >
-                    <option value="">All Locations</option>
-                    {% for location in locations %}
-                    <option
-                        value="{{ location }}"
-                        {% if filters.location == location %}selected{% endif %}
-                    >
-                        {{ location }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="xl:col-span-2 flex items-end space-x-4">
-                <button
-                    type="submit"
-                    class="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                >
-                    Apply Filters
-                </button>
-                <button
-                    type="reset"
-                    class="px-6 py-3 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 bg-white transition-colors"
-                >
-                    Reset
-                </button>
-            </div>
-        </form>
-    </div>
 
     <!-- Overview Metrics -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <!-- Active Sessions Card -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div
+            class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6 hover:shadow-xl transition-all duration-500 transform hover:scale-[1.02] group"
+        >
             <div class="flex items-center justify-between">
                 <div class="flex-1">
-                    <p class="text-sm font-medium text-gray-600 mb-2">
+                    <p class="text-sm font-semibold text-slate-600 mb-2">
                         Active Sessions
                     </p>
                     <div class="flex items-baseline space-x-2">
                         <p
-                            class="text-3xl font-bold text-gray-900"
+                            class="text-3xl font-bold text-slate-800"
                             id="active-sessions"
                         >
                             {{ overview_metrics.active_sessions }}
                         </p>
                         <span
-                            class="text-sm font-medium text-green-600 bg-green-50 px-2 py-1 rounded"
+                            class="text-sm font-semibold text-emerald-600 bg-gradient-to-r from-emerald-50 to-emerald-100 px-3 py-1 rounded-full border border-emerald-200"
                             >+2.5%</span
                         >
                     </div>
                 </div>
                 <div
-                    class="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center"
+                    class="w-12 h-12 bg-gradient-to-br from-emerald-100 to-green-100 rounded-xl flex items-center justify-center shadow-md group-hover:shadow-lg transition-all duration-300 group-hover:scale-110"
                 >
                     <svg
-                        class="w-6 h-6 text-green-600"
+                        class="w-6 h-6 text-emerald-600"
                         fill="currentColor"
                         viewBox="0 0 20 20"
                     >
@@ -457,7 +100,8 @@
                         Avg Session Duration
                     </p>
                     <p class="text-3xl font-bold text-gray-900">
-                        {{ overview_metrics.avg_session_duration|floatformat:1}}h
+                        {{
+                        overview_metrics.avg_session_duration|floatformat:1}}h
                     </p>
                 </div>
                 <div
@@ -585,7 +229,8 @@
                                         {{ activity.user.username }}
                                     </p>
                                     <p class="text-xs text-gray-500 mt-1">
-                                        {{ activity.current_url|truncatechars:50}}
+                                        {{
+                                        activity.current_url|truncatechars:50}}
                                     </p>
                                 </div>
                             </div>
@@ -687,7 +332,8 @@
                             </div>
                             <div class="text-right">
                                 <p class="text-sm font-semibold text-slate-800">
-                                    {{ insight.avg_productivity|floatformat:0 }}%
+                                    {{ insight.avg_productivity|floatformat:0
+                                    }}%
                                 </p>
                                 <p class="text-xs text-slate-500 font-normal">
                                     {{ insight.total_hours|floatformat:1 }}h
@@ -753,7 +399,9 @@
                             <span
                                 class="text-sm font-semibold text-slate-800 bg-emerald-100 px-2 py-1 rounded-full"
                             >
-                                {{ security_insights.device_distribution.desktop|default:0 }}
+                                {{
+                                security_insights.device_distribution.desktop|default:0
+                                }}
                             </span>
                         </div>
                         <div
@@ -776,7 +424,9 @@
                             <span
                                 class="text-sm font-semibold text-slate-800 bg-emerald-100 px-2 py-1 rounded-full"
                             >
-                                {{ security_insights.device_distribution.mobile|default:0 }}
+                                {{
+                                security_insights.device_distribution.mobile|default:0
+                                }}
                             </span>
                         </div>
                         <div
@@ -801,7 +451,9 @@
                             <span
                                 class="text-sm font-semibold text-slate-800 bg-emerald-100 px-2 py-1 rounded-full"
                             >
-                                {{ security_insights.device_distribution.tablet|default:0 }}
+                                {{
+                                security_insights.device_distribution.tablet|default:0
+                                }}
                             </span>
                         </div>
                     </div>
@@ -1080,19 +732,24 @@
                                         <div
                                             class="text-sm font-medium text-slate-800"
                                         >
-                                            {{ session_data.session.user.username }}
+                                            {{
+                                            session_data.session.user.username
+                                            }}
                                         </div>
                                     </div>
                                 </td>
                                 <td
                                     class="px-6 py-4 whitespace-nowrap text-sm text-slate-700 font-medium"
                                 >
-                                    {{ session_data.login_time_ist|date:"M d, H:i" }}
+                                    {{ session_data.login_time_ist|date:"M d,
+                                    H:i" }}
                                 </td>
                                 <td
                                     class="px-6 py-4 whitespace-nowrap text-sm text-slate-700 font-medium"
                                 >
-                                    {{ session_data.current_duration_minutes|floatformat:0 }}m
+                                    {{
+                                    session_data.current_duration_minutes|floatformat:0
+                                    }}m
                                 </td>
                                 <td
                                     class="px-6 py-4 whitespace-nowrap text-sm text-slate-700 font-medium"
@@ -1103,19 +760,24 @@
                                     <span
                                         class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium {% if session_data.session.location == 'Office' %}bg-emerald-100 text-emerald-800{% else %}bg-amber-100 text-amber-800{% endif %}"
                                     >
-                                        {{ session_data.session.location|default:"Unknown" }}
+                                        {{
+                                        session_data.session.location|default:"Unknown"
+                                        }}
                                     </span>
                                 </td>
                                 <td
                                     class="px-6 py-4 whitespace-nowrap text-sm text-slate-700 font-semibold"
                                 >
-                                    {{ session_data.session.productivity_score|default:0|floatformat:0 }}%
+                                    {{
+                                    session_data.session.productivity_score|default:0|floatformat:0
+                                    }}%
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <span
                                         class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium {% if session_data.session.is_active %}bg-emerald-100 text-emerald-800{% else %}bg-slate-100 text-slate-700{% endif %}"
                                     >
                                         {% if session_data.session.is_active %}Active{% else %}Inactive{% endif %}
+                                        
                                     </span>
                                 </td>
                                 <td
@@ -1235,7 +897,8 @@
                                 >Avg Tab Switches:</span
                             >
                             <span class="text-sm font-medium"
-                                >{{ tab_analysis.avg_tab_switches|floatformat:1 }}</span
+                                >{{ tab_analysis.avg_tab_switches|floatformat:1
+                                }}</span
                             >
                         </div>
                         <div class="flex justify-between">
@@ -1243,7 +906,8 @@
                                 >Avg Focus Time:</span
                             >
                             <span class="text-sm font-medium"
-                                >{{ tab_analysis.avg_focus_time|floatformat:1 }}m</span
+                                >{{ tab_analysis.avg_focus_time|floatformat:1
+                                }}m</span
                             >
                         </div>
                         <div class="flex justify-between">

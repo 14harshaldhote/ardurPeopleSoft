@@ -14278,1564 +14278,1304 @@ def export_attendance_pdf(attendance_matrix, month, year):
     response['Content-Disposition'] = f'attachment; filename="attendance_{calendar.month_name[month]}_{year}.pdf"'
     return response
 
-'''------------------------------------------------ SUPPORT  AREA------------------------------------------------'''
+'''------------------------------------------------ SUPPORT AREA ------------------------------------------------'''
+import uuid
+import json
+from datetime import timedelta
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.http import HttpResponseForbidden
-from django.db.models import Q
+from django.http import JsonResponse, HttpResponse
+from django.db.models import Q, Count, Avg, F, Sum, Max, Min
 from django.utils import timezone
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from django.utils import timezone
-from django.http import HttpResponseForbidden
-from django.db.models import Q
 from django.core.paginator import Paginator
-from .models import Support, TicketComment, TicketAttachment, TicketActivity
-from .forms import TicketForm, CommentForm, TicketAttachmentForm
-from django.db.models.functions import Trunc
+from django.contrib.auth.models import User
 from django.db.models.functions import TruncDay, TruncMonth, TruncWeek, TruncHour
-from trueAlign.utils import send_ticket_notification
+from django.core.cache import cache
+from django.db import transaction
+from django.template.loader import render_to_string
+from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
+import logging
+
+from .models import (
+    Support, TicketComment, TicketAttachment, TicketActivity,
+    StatusLog, TicketFieldChange, TicketTag, TicketTagging, EscalationRule
+)
+
+logger = logging.getLogger(__name__)
+
+
+class SupportAnalytics:
+    """Advanced analytics engine for support system"""
+
+    @staticmethod
+    def analyze_ticket_patterns(tickets_queryset):
+        """Analyze patterns in ticket data for insights"""
+        try:
+            # Pattern analysis
+            patterns = {
+                'peak_hours': SupportAnalytics._get_peak_hours(tickets_queryset),
+                'recurring_issues': SupportAnalytics._get_recurring_issues(tickets_queryset),
+                'escalation_patterns': SupportAnalytics._get_escalation_patterns(tickets_queryset),
+                'resolution_trends': SupportAnalytics._get_resolution_trends(tickets_queryset)
+            }
+            return patterns
+        except Exception as e:
+            logger.error(f"Error analyzing ticket patterns: {str(e)}")
+            return {}
+
+    @staticmethod
+    def _get_peak_hours(tickets):
+        """Identify peak hours for ticket creation"""
+        hour_data = tickets.extra({
+            'hour': "EXTRACT(hour FROM created_at)"
+        }).values('hour').annotate(
+            count=Count('id')
+        ).order_by('-count')[:5]
+        return list(hour_data)
+
+    @staticmethod
+    def _get_recurring_issues(tickets):
+        """Identify recurring issues based on description similarity"""
+        issue_types = tickets.values('issue_type', 'subject').annotate(
+            count=Count('id'),
+            avg_resolution_time=Avg('resolution_time')
+        ).filter(count__gt=1).order_by('-count')[:10]
+        return list(issue_types)
+
+    @staticmethod
+    def _get_escalation_patterns(tickets):
+        """Analyze escalation patterns"""
+        escalated = tickets.filter(escalation_level__gt=0)
+        patterns = {
+            'total_escalated': escalated.count(),
+            'by_priority': list(escalated.values('priority').annotate(count=Count('id'))),
+            'by_issue_type': list(escalated.values('issue_type').annotate(count=Count('id'))),
+            'avg_escalation_time': escalated.aggregate(
+                avg_time=Avg('last_escalated_at') - Avg('created_at')
+            )['avg_time']
+        }
+        return patterns
+
+    @staticmethod
+    def _get_resolution_trends(tickets):
+        """Analyze resolution time trends"""
+        resolved_tickets = tickets.filter(resolution_time__isnull=False)
+        trends = {
+            'avg_resolution_by_priority': list(
+                resolved_tickets.values('priority').annotate(
+                    avg_time=Avg('resolution_time'),
+                    count=Count('id')
+                )
+            ),
+            'monthly_trends': list(
+                resolved_tickets.annotate(
+                    month=TruncMonth('created_at')
+                ).values('month').annotate(
+                    avg_time=Avg('resolution_time'),
+                    count=Count('id')
+                ).order_by('month')
+            )
+        }
+        return trends
+
+
+class SupportRecommendationEngine:
+    """AI-powered recommendation engine for support optimization"""
+
+    @staticmethod
+    def generate_recommendations(tickets, user_roles, analytics_data=None):
+        """Generate intelligent recommendations based on data analysis"""
+        recommendations = []
+
+        try:
+            # Basic metrics for recommendations
+            total_tickets = tickets.count()
+            if total_tickets == 0:
+                return recommendations
+
+            # SLA Analysis
+            sla_recommendations = SupportRecommendationEngine._analyze_sla_performance(tickets)
+            recommendations.extend(sla_recommendations)
+
+            # Workload Analysis
+            workload_recommendations = SupportRecommendationEngine._analyze_workload_distribution(tickets)
+            recommendations.extend(workload_recommendations)
+
+            # Issue Pattern Analysis
+            pattern_recommendations = SupportRecommendationEngine._analyze_issue_patterns(tickets)
+            recommendations.extend(pattern_recommendations)
+
+            # Performance Analysis
+            performance_recommendations = SupportRecommendationEngine._analyze_team_performance(tickets)
+            recommendations.extend(performance_recommendations)
+
+            # Resource Optimization
+            resource_recommendations = SupportRecommendationEngine._analyze_resource_needs(tickets)
+            recommendations.extend(resource_recommendations)
+
+            return sorted(recommendations, key=lambda x: x['priority_score'], reverse=True)[:10]
+
+        except Exception as e:
+            logger.error(f"Error generating recommendations: {str(e)}")
+            return []
+
+    @staticmethod
+    def _analyze_sla_performance(tickets):
+        """Analyze SLA performance and generate recommendations"""
+        recommendations = []
+
+        # Check SLA breach rate
+        total_with_sla = tickets.filter(sla_target_date__isnull=False).count()
+        breached = tickets.filter(sla_breach=True).count()
+
+        if total_with_sla > 0:
+            breach_rate = (breached / total_with_sla) * 100
+
+            if breach_rate > 15:
+                recommendations.append({
+                    'title': 'High SLA Breach Rate Detected',
+                    'description': f'SLA breach rate is {breach_rate:.1f}%. Immediate action required.',
+                    'category': 'SLA',
+                    'severity': 'critical',
+                    'priority_score': 95,
+                    'actions': [
+                        'Review and optimize SLA targets',
+                        'Increase staffing for high-priority tickets',
+                        'Implement automated escalation rules',
+                        'Provide additional training to support staff'
+                    ],
+                    'impact': 'Customer satisfaction and service quality'
+                })
+
+        return recommendations
+
+    @staticmethod
+    def _analyze_workload_distribution(tickets):
+        """Analyze workload distribution across team members"""
+        recommendations = []
+
+        # Check for unassigned tickets
+        unassigned_count = tickets.filter(assigned_to_user__isnull=True).count()
+        total_tickets = tickets.count()
+
+        if total_tickets > 0 and unassigned_count > 0:
+            unassigned_percentage = (unassigned_count / total_tickets) * 100
+
+            if unassigned_percentage > 20:
+                recommendations.append({
+                    'title': 'High Number of Unassigned Tickets',
+                    'description': f'{unassigned_count} tickets ({unassigned_percentage:.1f}%) are unassigned.',
+                    'category': 'Workload',
+                    'severity': 'high',
+                    'priority_score': 85,
+                    'actions': [
+                        'Implement automatic ticket assignment rules',
+                        'Set up assignment round-robin system',
+                        'Create skill-based routing',
+                        'Add more support staff if needed'
+                    ],
+                    'impact': 'Response time and customer satisfaction'
+                })
+
+        # Check workload balance
+        assigned_tickets = tickets.filter(assigned_to_user__isnull=False)
+        workload_distribution = assigned_tickets.values(
+            'assigned_to_user__username'
+        ).annotate(
+            ticket_count=Count('id')
+        ).order_by('-ticket_count')
+
+        if len(workload_distribution) > 1:
+            max_load = workload_distribution[0]['ticket_count']
+            min_load = workload_distribution.last()['ticket_count']
+
+            if max_load > min_load * 3:  # High imbalance
+                recommendations.append({
+                    'title': 'Workload Imbalance Detected',
+                    'description': 'Significant workload imbalance among team members.',
+                    'category': 'Workload',
+                    'severity': 'medium',
+                    'priority_score': 70,
+                    'actions': [
+                        'Redistribute existing tickets',
+                        'Implement load balancing in assignment',
+                        'Provide additional training to lower-performing members',
+                        'Consider specialization areas'
+                    ],
+                    'impact': 'Team efficiency and burnout prevention'
+                })
+
+        return recommendations
+
+    @staticmethod
+    def _analyze_issue_patterns(tickets):
+        """Analyze recurring issue patterns"""
+        recommendations = []
+
+        # Find most common issues
+        issue_frequency = tickets.values('issue_type').annotate(
+            count=Count('id')
+        ).order_by('-count')
+
+        if issue_frequency:
+            top_issue = issue_frequency[0]
+            total_tickets = tickets.count()
+
+            if total_tickets > 0:
+                percentage = (top_issue['count'] / total_tickets) * 100
+
+                if percentage > 30:  # One issue type dominates
+                    recommendations.append({
+                        'title': f'High Volume of {top_issue["issue_type"]} Issues',
+                        'description': f'{top_issue["issue_type"]} represents {percentage:.1f}% of all tickets.',
+                        'category': 'Pattern Analysis',
+                        'severity': 'medium',
+                        'priority_score': 75,
+                        'actions': [
+                            'Create specialized team for this issue type',
+                            'Develop knowledge base articles',
+                            'Implement preventive measures',
+                            'Provide user training to reduce occurrences'
+                        ],
+                        'impact': 'Ticket volume reduction and efficiency'
+                    })
+
+        return recommendations
+
+    @staticmethod
+    def _analyze_team_performance(tickets):
+        """Analyze team performance metrics"""
+        recommendations = []
+
+        # Check average resolution time
+        avg_resolution = tickets.filter(
+            resolution_time__isnull=False
+        ).aggregate(avg=Avg('resolution_time'))['avg']
+
+        if avg_resolution:
+            hours = avg_resolution.total_seconds() / 3600
+
+            if hours > 48:  # More than 2 days average
+                recommendations.append({
+                    'title': 'High Average Resolution Time',
+                    'description': f'Average resolution time is {hours:.1f} hours.',
+                    'category': 'Performance',
+                    'severity': 'high',
+                    'priority_score': 80,
+                    'actions': [
+                        'Identify bottlenecks in resolution process',
+                        'Provide advanced training to support team',
+                        'Implement better tools and automation',
+                        'Review and optimize workflows'
+                    ],
+                    'impact': 'Customer satisfaction and operational efficiency'
+                })
+
+        return recommendations
+
+    @staticmethod
+    def _analyze_resource_needs(tickets):
+        """Analyze resource allocation needs"""
+        recommendations = []
+
+        # Check ticket growth trend
+        current_month = timezone.now().replace(day=1)
+        last_month = (current_month - timedelta(days=1)).replace(day=1)
+
+        current_count = tickets.filter(created_at__gte=current_month).count()
+        last_count = tickets.filter(
+            created_at__gte=last_month,
+            created_at__lt=current_month
+        ).count()
+
+        if last_count > 0:
+            growth_rate = ((current_count - last_count) / last_count) * 100
+
+            if growth_rate > 25:  # High growth
+                recommendations.append({
+                    'title': 'Rapid Ticket Volume Growth',
+                    'description': f'Ticket volume has grown by {growth_rate:.1f}% this month.',
+                    'category': 'Resource Planning',
+                    'severity': 'high',
+                    'priority_score': 90,
+                    'actions': [
+                        'Plan for additional support staff',
+                        'Implement automation for common issues',
+                        'Scale infrastructure if needed',
+                        'Review capacity planning'
+                    ],
+                    'impact': 'Service level maintenance and scalability'
+                })
+
+        return recommendations
 
 
 def get_user_roles(user):
-    """Helper function to get user roles"""
-    return {
-        'is_admin': user.groups.filter(name='Admin').exists() or user.is_superuser,
-        'is_hr': user.groups.filter(name='HR').exists(),
-        'is_manager': user.groups.filter(name='Manager').exists(),
-        'is_employee': user.groups.filter(name='Employee').exists()
-    }
+    """Enhanced user role detection with caching"""
+    cache_key = f"user_roles_{user.id}"
+    roles = cache.get(cache_key)
+
+    if roles is None:
+        roles = {
+            'is_admin': user.groups.filter(name='Admin').exists() or user.is_superuser,
+            'is_hr': user.groups.filter(name='HR').exists(),
+            'is_manager': user.groups.filter(name='Manager').exists(),
+            'is_employee': user.groups.filter(name='Employee').exists(),
+            'is_it_support': user.groups.filter(name='IT Support').exists()
+        }
+        cache.set(cache_key, roles, 300)  # Cache for 5 minutes
+
+    return roles
 
 
 @login_required
 def ticket_list(request):
-    """View for listing tickets based on user role with enhanced filtering and sorting"""
-    user = request.user
-    user_roles = get_user_roles(user)
+    """Enhanced ticket listing with advanced filtering and analytics"""
+    try:
+        user_roles = get_user_roles(request.user)
 
-    # Determine which tickets to show based on user's role
-    if user_roles['is_admin']:
-        tickets = Support.objects.all()
-    elif user_roles['is_hr']:
-        tickets = Support.objects.filter(
-            Q(assigned_group='HR') | Q(user=user)
-        )
-    elif user_roles['is_manager']:
-        managed_users = User.objects.filter(department__manager=user)
-        tickets = Support.objects.filter(
-            Q(user=user) |
-            Q(user__in=managed_users) |
-            Q(assigned_to_user=user)
-        ).distinct()
-    else:
-        tickets = Support.objects.filter(user=user)
+        # Get base queryset based on user role
+        if user_roles['is_admin'] or user_roles['is_it_support']:
+            tickets = Support.objects.all()
+        elif user_roles['is_hr']:
+            tickets = Support.objects.filter(
+                Q(assigned_group='HR') | Q(user=request.user) | Q(cc_users=request.user)
+            ).distinct()
+        elif user_roles['is_manager']:
+            # Get tickets from managed users
+            managed_users = User.objects.filter(
+                Q(profile__manager=request.user) | Q(manager=request.user)
+            )
+            tickets = Support.objects.filter(
+                Q(user=request.user) |
+                Q(user__in=managed_users) |
+                Q(assigned_to_user=request.user) |
+                Q(cc_users=request.user)
+            ).distinct()
+        else:
+            tickets = Support.objects.filter(
+                Q(user=request.user) | Q(cc_users=request.user)
+            ).distinct()
 
-    # Advanced filtering options
-    status_filter = request.GET.get('status')
-    if status_filter:
-        tickets = tickets.filter(status=status_filter)
+        # Apply filters
+        status_filter = request.GET.get('status')
+        priority_filter = request.GET.get('priority')
+        issue_type_filter = request.GET.get('issue_type')
+        assigned_to_filter = request.GET.get('assigned_to')
+        search_query = request.GET.get('search')
 
-    priority_filter = request.GET.get('priority')
-    if priority_filter:
-        tickets = tickets.filter(priority=priority_filter)
+        if status_filter:
+            tickets = tickets.filter(status=status_filter)
+        if priority_filter:
+            tickets = tickets.filter(priority=priority_filter)
+        if issue_type_filter:
+            tickets = tickets.filter(issue_type=issue_type_filter)
+        if assigned_to_filter:
+            tickets = tickets.filter(assigned_to_user__id=assigned_to_filter)
+        if search_query:
+            tickets = tickets.filter(
+                Q(subject__icontains=search_query) |
+                Q(description__icontains=search_query) |
+                Q(ticket_id__icontains=search_query)
+            )
 
-    assigned_group_filter = request.GET.get('assigned_group')
-    if assigned_group_filter and (user_roles['is_admin'] or user_roles['is_hr']):
-        tickets = tickets.filter(assigned_group=assigned_group_filter)
-
-    # Date range filtering
-    date_from = request.GET.get('date_from')
-    if date_from:
-        try:
-            date_from = datetime.strptime(date_from, '%Y-%m-%d')
-            tickets = tickets.filter(created_at__gte=date_from)
-        except ValueError:
-            messages.error(request, 'Invalid date format for date_from. Use YYYY-MM-DD.')
-
-    date_to = request.GET.get('date_to')
-    if date_to:
-        try:
-            date_to = datetime.strptime(date_to, '%Y-%m-%d')
-            date_to = date_to + timedelta(days=1)
-            tickets = tickets.filter(created_at__lt=date_to)
-        except ValueError:
-            messages.error(request, 'Invalid date format for date_to. Use YYYY-MM-DD.')
-
-    # Search functionality
-    search_query = request.GET.get('search')
-    if search_query:
-        tickets = tickets.filter(
-            Q(title__icontains=search_query) |
-            Q(description__icontains=search_query) |
-            Q(ticket_id__icontains=search_query) |
-            Q(user__username__icontains=search_query) |
-            Q(user__email__icontains=search_query)
-        )
-
-    # Sorting
-    sort_by = request.GET.get('sort', '-created_at')
-    valid_sort_fields = ['created_at', '-created_at', 'priority', '-priority',
-                         'status', '-status', 'user__username', '-user__username']
-    if sort_by in valid_sort_fields:
+        # Sorting
+        sort_by = request.GET.get('sort_by', '-created_at')
         tickets = tickets.order_by(sort_by)
-    else:
-        tickets = tickets.order_by('-created_at')
 
-    # Pagination with configurable page size
-    page_size = int(request.GET.get('page_size', 10))
-    paginator = Paginator(tickets, page_size)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+        # Select related for performance
+        tickets = tickets.select_related(
+            'user', 'assigned_to_user', 'parent_ticket'
+        ).prefetch_related('cc_users', 'ticket_tags__tag')
 
-    context = {
-        'page_obj': page_obj,
-        'status_choices': Support.Status.choices,
-        'priority_choices': Support.Priority.choices,
-        'assigned_group_choices': Support.AssignedGroup.choices,
-        'current_filters': {
-            'status': status_filter,
-            'priority': priority_filter,
-            'assigned_group': assigned_group_filter,
-            'date_from': date_from,
-            'date_to': date_to,
-            'search': search_query,
-            'sort': sort_by,
-            'page_size': page_size,
-        },
-        **user_roles,
-    }
-    return render(request, 'components/support/ticket_list.html', context)
+        # Pagination
+        paginator = Paginator(tickets, 25)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+
+        # Get filter options
+        assignees = User.objects.filter(
+            Q(groups__name__in=['Admin', 'HR', 'IT Support']) | Q(is_staff=True)
+        ).distinct()
+
+        # Quick stats
+        stats = {
+            'total': tickets.count(),
+            'open': tickets.filter(status__in=['New', 'Open', 'In Progress']).count(),
+            'overdue': tickets.filter(is_overdue=True).count(),
+            'unassigned': tickets.filter(assigned_to_user__isnull=True).count()
+        }
+
+        context = {
+            'page_obj': page_obj,
+            'tickets': page_obj,
+            'user_roles': user_roles,
+            'status_choices': Support.Status.choices,
+            'priority_choices': Support.Priority.choices,
+            'issue_type_choices': Support.IssueType.choices,
+            'assignees': assignees,
+            'filters': {
+                'status': status_filter,
+                'priority': priority_filter,
+                'issue_type': issue_type_filter,
+                'assigned_to': assigned_to_filter,
+                'search': search_query,
+                'sort_by': sort_by
+            },
+            'stats': stats
+        }
+
+        return render(request, 'components/support/ticket_list.html', context)
+
+    except Exception as e:
+        logger.error(f"Error in ticket_list: {str(e)}")
+        messages.error(request, f"Error loading tickets: {str(e)}")
+        return redirect('dashboard')
 
 
 @login_required
 def create_ticket(request):
-    from .utils import send_ticket_notification
+    """Enhanced ticket creation with smart defaults and validation"""
+    try:
+        if request.method == 'POST':
+            # Extract form data
+            subject = request.POST.get('subject', '').strip()
+            description = request.POST.get('description', '').strip()
+            issue_type = request.POST.get('issue_type')
+            priority = request.POST.get('priority', Support.Priority.MEDIUM)
+            department = request.POST.get('department', '')
+            location = request.POST.get('location', '')
+            asset_id = request.POST.get('asset_id', '')
 
-    user = request.user
-    user_roles = get_user_roles(user)
+            # Validation
+            errors = []
+            if not subject:
+                errors.append("Subject is required")
+            if not description:
+                errors.append("Description is required")
+            if not issue_type:
+                errors.append("Issue type is required")
 
-    if request.method == 'POST':
-        form = TicketForm(request.POST, request.FILES)
-        if user_roles['is_employee'] and not any([user_roles['is_admin'], user_roles['is_hr'], user_roles['is_manager']]):
-            form.fields.pop('priority', None)
-            form.fields.pop('assigned_group', None)
-            form.fields.pop('assigned_to_user', None)
+            if errors:
+                for error in errors:
+                    messages.error(request, error)
+                return redirect('aps_support:create_ticket')
 
-        if form.is_valid():
-            ticket = form.save(commit=False)
-            ticket.user = request.user
-            if not ticket.priority:
-                if user_roles['is_manager']:
-                    ticket.priority = Support.Priority.HIGH
-                elif user_roles['is_employee']:
-                    ticket.priority = Support.Priority.MEDIUM
-            if not (user_roles['is_admin'] or user_roles['is_hr']) and not ticket.assigned_group:
-                user_region = get_user_region(user)
-                hr_issues = [Support.IssueType.HR, Support.IssueType.ACCESS]
-                if ticket.issue_type in hr_issues:
-                    ticket.assigned_group = Support.AssignedGroup.HR
-                    regional_hr = get_regional_hr_contact(user_region)
-                    if regional_hr:
-                        ticket.assigned_to_user = regional_hr
-                else:
-                    ticket.assigned_group = Support.AssignedGroup.ADMIN
-                    regional_it = get_regional_it_contact(user_region)
-                    if regional_it:
-                        ticket.assigned_to_user = regional_it
-            ticket.sla_target_date = calculate_sla_target(ticket.priority)
-            ticket.language = getattr(user, 'preferred_language', 'en')
-            parent_ticket_id = request.POST.get('parent_ticket_id')
-            if parent_ticket_id:
-                try:
-                    parent_ticket = Support.objects.get(ticket_id=parent_ticket_id)
-                    ticket.parent_ticket = parent_ticket
-                except Support.DoesNotExist:
-                    messages.warning(request, f'Parent ticket {parent_ticket_id} not found. Creating as standalone ticket.')
-            ticket.save(user=request.user)
-            files = request.FILES.getlist('attachments')
-            max_file_size = 5 * 1024 * 1024
-            allowed_types = ['application/pdf', 'image/jpeg', 'image/png', 'image/gif',
-                            'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                            'text/plain', 'application/zip']
-            for file in files:
-                if file.size > max_file_size:
-                    messages.warning(request, f'File {file.name} exceeds the 5MB size limit and was not attached.')
-                    continue
-                file_type_valid = file.content_type in allowed_types
-                if not file_type_valid:
-                    file_extension = os.path.splitext(file.name)[1].lower()
-                    allowed_extensions = ['.pdf', '.jpg', '.jpeg', '.png', '.gif', '.doc', '.docx', '.txt', '.zip']
-                    if file_extension not in allowed_extensions:
-                        messages.warning(request, f'File {file.name} type is not allowed and was not attached.')
-                        continue
-                TicketAttachment.objects.create(
-                    ticket=ticket,
-                    file=file,
-                    uploaded_by=request.user,
-                    file_size=file.size,
-                    file_type=file.content_type
+            # Create ticket with transaction
+            with transaction.atomic():
+                ticket = Support.objects.create(
+                    user=request.user,
+                    subject=subject,
+                    description=description,
+                    issue_type=issue_type,
+                    priority=priority,
+                    department=department,
+                    location=location,
+                    asset_id=asset_id
                 )
-            TicketActivity.objects.create(
-                ticket=ticket,
-                user=request.user,
-                action=TicketActivity.Action.CREATED,
-                details=f"Ticket created with priority {ticket.get_priority_display()}"
-            )
-            send_ticket_notification(ticket, 'created')
-            messages.success(request, f'Ticket {ticket.ticket_id} created successfully. Your request will be processed according to its priority.')
+
+                # Handle file attachments
+                attachments = request.FILES.getlist('attachments')
+                for attachment in attachments:
+                    TicketAttachment.objects.create(
+                        ticket=ticket,
+                        file=attachment,
+                        uploaded_by=request.user,
+                        description=f"Initial attachment: {attachment.name}"
+                    )
+
+                # Auto-assign based on issue type and rules
+                auto_assign_ticket(ticket)
+
+                # Create initial activity
+                TicketActivity.objects.create(
+                    ticket=ticket,
+                    action=TicketActivity.Action.CREATED,
+                    user=request.user,
+                    details=f"Ticket created with priority: {priority}",
+                    is_system_generated=True
+                )
+
+            messages.success(request, f"Ticket #{ticket.ticket_id} created successfully!")
             return redirect('aps_support:ticket_detail', pk=ticket.pk)
-    else:
-        form = TicketForm()
-        if user_roles['is_employee'] and not any([user_roles['is_admin'], user_roles['is_hr'], user_roles['is_manager']]):
-            form.fields.pop('priority', None)
-            form.fields.pop('assigned_group', None)
-            form.fields.pop('assigned_to_user', None)
 
-    context = {
-        'form': form,
-        'title': 'Create New Support Ticket',
-        'max_file_size': '5MB',
-        'allowed_file_types': 'PDF, Word, Images, Text, ZIP',
-        **user_roles,
-    }
-    return render(request, 'components/support/ticket_form.html', context)
+        # GET request - show form
+        user_profile = getattr(request.user, 'profile', None)
+        default_department = getattr(user_profile, 'department', '') if user_profile else ''
+        default_location = getattr(user_profile, 'location', '') if user_profile else ''
 
-def calculate_sla_target(priority):
-    from django.utils import timezone
-    now = timezone.now()
-    SLA_HOURS = {
-        'Critical': 4,
-        'High': 24,
-        'Medium': 72,
-        'Low': 120,
-    }
-    if hasattr(priority, 'value'):
-        priority_value = priority.value
-    else:
-        priority_value = str(priority)
-    hours = SLA_HOURS.get(priority_value, 72)
-    return now + timezone.timedelta(hours=hours)
+        context = {
+            'issue_type_choices': Support.IssueType.choices,
+            'priority_choices': Support.Priority.choices,
+            'default_department': default_department,
+            'default_location': default_location
+        }
 
-def get_user_region(user):
-    if hasattr(user, 'region') and user.region:
-        return user.region
-    if hasattr(user, 'profile') and hasattr(user.profile, 'region'):
-        return user.profile.region
-    return getattr(user, 'preferred_region', None) or 'default'
+        return render(request, 'components/support/ticket_form.html', context)
 
-def get_regional_hr_contact(region):
-    from django.contrib.auth import get_user_model
-    User = get_user_model()
+    except Exception as e:
+        logger.error(f"Error in create_ticket: {str(e)}")
+        messages.error(request, f"Error creating ticket: {str(e)}")
+        return redirect('aps_support:ticket_list')
+
+
+def auto_assign_ticket(ticket):
+    """Smart auto-assignment based on issue type and workload"""
     try:
-        return User.objects.filter(groups__name='HR', is_active=True, region=region).order_by('id').first()
-    except Exception:
-        return User.objects.filter(groups__name='HR', is_active=True).order_by('id').first()
+        # Get potential assignees based on issue type
+        if ticket.issue_type in [Support.IssueType.HR, Support.IssueType.ACCESS]:
+            potential_assignees = User.objects.filter(groups__name='HR', is_active=True)
+        else:
+            potential_assignees = User.objects.filter(
+                Q(groups__name='IT Support') | Q(groups__name='Admin'),
+                is_active=True
+            )
 
-def get_regional_it_contact(region):
-    from django.contrib.auth import get_user_model
-    User = get_user_model()
-    try:
-        return User.objects.filter(groups__name='IT', is_active=True, region=region).order_by('id').first()
-    except Exception:
-        return User.objects.filter(groups__name='IT', is_active=True).order_by('id').first()
+        if not potential_assignees.exists():
+            return
 
-def send_ticket_notification(ticket, *args, **kwargs):
-    """
-    Wrapper for send_ticket_notification that ignores unexpected keyword arguments.
-    This prevents TypeError when extra kwargs (like old_status) are passed.
-    """
-    from .utils import send_ticket_notification as utils_send_ticket_notification
+        # Find assignee with lowest current workload
+        workload_data = []
+        for user in potential_assignees:
+            current_load = Support.objects.filter(
+                assigned_to_user=user,
+                status__in=['New', 'Open', 'In Progress']
+            ).count()
+            workload_data.append((user, current_load))
 
-    # Only pass the arguments that utils_send_ticket_notification expects
-    # (ticket, action, performed_by, extra_message)
-    action = kwargs.get('action', None)
-    performed_by = kwargs.get('user', None) or kwargs.get('performed_by', None)
-    extra_message = kwargs.get('details', None) or kwargs.get('comment', None)
+        # Sort by workload and assign to least loaded
+        workload_data.sort(key=lambda x: x[1])
+        assignee = workload_data[0][0]
 
-    return utils_send_ticket_notification(
-        ticket,
-        action=action,
-        performed_by=performed_by,
-        extra_message=extra_message
-    )
+        ticket.assigned_to_user = assignee
+        ticket.save()
+
+        # Create activity log
+        TicketActivity.objects.create(
+            ticket=ticket,
+            action=TicketActivity.Action.ASSIGNED,
+            user=None,  # System assignment
+            details=f"Auto-assigned to {assignee.get_full_name() or assignee.username}",
+            is_system_generated=True
+        )
+
+    except Exception as e:
+        logger.error(f"Error in auto_assign_ticket: {str(e)}")
 
 
 @login_required
 def ticket_detail(request, pk):
-    """
-    View for viewing a ticket's details with enhanced permissions and business logic.
-    This version fixes status update issues by ensuring the status is always updated and saved.
-    """
-    ticket = get_object_or_404(Support, pk=pk)
-    user = request.user
-    user_roles = get_user_roles(user)
-    is_ticket_owner = ticket.user == user
+    """Enhanced ticket detail view with comprehensive information"""
+    try:
+        ticket = get_object_or_404(Support.objects.select_related(
+            'user', 'assigned_to_user', 'parent_ticket'
+        ).prefetch_related(
+            'comments__user',
+            'attachments__uploaded_by',
+            'activities__user',
+            'cc_users',
+            'sub_tickets'
+        ), pk=pk)
 
-    # Enhanced permission check logic
-    has_permission = (
-        user_roles['is_admin'] or
-        is_ticket_owner or
-        (user_roles['is_hr'] and ticket.assigned_group == 'HR') or
-        (ticket.assigned_to_user == user) or
-        (user in ticket.cc_users.all())
-    )
+        user_roles = get_user_roles(request.user)
 
-    # Add manager permission to view team tickets
-    managed_users = None
-    if user_roles['is_manager'] and not has_permission:
-        # Remove department logic, just allow managers to view tickets of users they manage if such logic exists elsewhere
-        # If you have a way to get managed users, use it; otherwise, skip this
-        # For now, skip managed_users logic since department is not present
-        pass
+        # Check permissions
+        can_view = (
+            user_roles['is_admin'] or
+            user_roles['is_it_support'] or
+            ticket.user == request.user or
+            ticket.assigned_to_user == request.user or
+            request.user in ticket.cc_users.all() or
+            (user_roles['is_hr'] and ticket.assigned_group == 'HR')
+        )
 
-    if not has_permission:
-        logger.warning(f"User {user.username} (ID: {user.id}) attempted unauthorized access to ticket {ticket.ticket_id}")
-        return HttpResponseForbidden("You don't have permission to view this ticket.")
+        if not can_view:
+            messages.error(request, "You don't have permission to view this ticket.")
+            return redirect('aps_support:ticket_list')
 
-    # Check SLA status and update if needed
-    current_time = timezone.now()
-    if ticket.sla_target_date and ticket.status not in ['Resolved', 'Closed']:
-        if current_time > ticket.sla_target_date:
-            if ticket.sla_status != 'Breached':
-                ticket.sla_status = 'Breached'
-                ticket.save(update_fields=['sla_status'])
-                if not TicketActivity.objects.filter(ticket=ticket, action='SLA_BREACHED').exists():
-                    TicketActivity.objects.create(
-                        ticket=ticket,
-                        user=None,
-                        action=TicketActivity.Action.SLA_BREACHED,
-                        details=f"SLA breached. Target was {ticket.sla_target_date.strftime('%Y-%m-%d %H:%M')}"
-                    )
+        # Handle POST requests (comments, status updates, etc.)
+        if request.method == 'POST':
+            action = request.POST.get('action')
 
-    # --- STATUS UPDATE LOGIC: Allow status update via POST, even without a comment ---
-    status_update_handled = False
-    if request.method == 'POST':
-        # Check if status update is requested
-        new_status = request.POST.get('new_status')
-        allowed_to_change_status = user_roles['is_admin'] or user_roles['is_hr']
-        # Remove managed_users/department logic
-        if user_roles['is_manager'] and is_ticket_owner:
-            allowed_to_change_status = True
-        if ticket.assigned_to_user == user:
-            allowed_to_change_status = True
-        if is_ticket_owner and new_status in ['Closed', 'Feedback']:
-            allowed_to_change_status = True
+            if action == 'add_comment':
+                content = request.POST.get('content', '').strip()
+                is_internal = request.POST.get('is_internal') == 'on'
 
-        if new_status and allowed_to_change_status:
-            old_status = ticket.status
-            if new_status != old_status:
-                ticket.status = new_status
-
-                # Update resolution timestamps
-                if new_status == 'Resolved' and not ticket.resolved_at:
-                    ticket.resolved_at = timezone.now()
-                    ticket.resolution_time = ticket.resolved_at - ticket.created_at
-                    TicketActivity.objects.create(
+                if content:
+                    comment = TicketComment.objects.create(
                         ticket=ticket,
                         user=request.user,
-                        action=TicketActivity.Action.RESOLVED,
-                        details=f"Ticket resolved after {humanize_timedelta(ticket.resolution_time)}"
+                        content=content,
+                        is_internal=is_internal
                     )
 
-                # Handle feedback state for CSAT collection
-                if new_status == 'Feedback' and old_status == 'Resolved':
-                    ticket.satisfaction_survey_token = generate_unique_token()
-
-                # Handle final closure
-                if new_status == 'Closed':
-                    ticket.closed_at = timezone.now()
-                    if ticket.resolved_at:
-                        ticket.time_to_close = ticket.closed_at - ticket.resolved_at
-                    else:
-                        ticket.resolved_at = ticket.closed_at
-                        ticket.resolution_time = ticket.resolved_at - ticket.created_at
-                    TicketActivity.objects.create(
-                        ticket=ticket,
-                        user=request.user,
-                        action=TicketActivity.Action.CLOSED,
-                        details=f"Ticket closed by {request.user.get_full_name() or request.user.username}"
-                    )
-
-                # Reset escalation level if status changes to In Progress
-                if new_status == 'In Progress' and getattr(ticket, 'escalation_level', 0) > 0:
-                    ticket.escalation_level = 0
-                    messages.info(request, 'Escalation level has been reset as ticket is now In Progress.')
-
-                # Always save the ticket after status change
-                ticket.save(user=request.user)
-
-                # Log status change activity
-                TicketActivity.objects.create(
-                    ticket=ticket,
-                    user=request.user,
-                    action='STATUS_CHANGED',
-                    details=f"Status changed from {old_status} to {new_status}"
-                )
-
-                messages.info(request, f'Ticket status updated from {old_status} to {new_status}')
-                send_ticket_notification(ticket, 'status_changed', old_status=old_status)
-                status_update_handled = True
-
-        # If only status was updated, redirect immediately
-        if status_update_handled and not request.POST.get('comment') and not request.FILES.getlist('comment_attachments'):
-            return redirect('aps_support:ticket_detail', pk=pk)
-
-        # --- END STATUS UPDATE LOGIC ---
-
-        # Comment form processing (if a comment is being added)
-        comment_form = CommentForm(request.POST, request.FILES)
-        if comment_form.is_valid():
-            comment = comment_form.save(commit=False)
-            comment.ticket = ticket
-            comment.user = request.user
-
-            # Only admins, HR and managers can make internal comments
-            if comment_form.cleaned_data.get('is_internal') and not (user_roles['is_admin'] or user_roles['is_hr'] or user_roles['is_manager']):
-                comment.is_internal = False
-
-            comment.save()
-
-            # Handle file attachments for comments
-            comment_files = request.FILES.getlist('comment_attachments')
-            for file in comment_files:
-                CommentAttachment.objects.create(
-                    comment=comment,
-                    file=file,
-                    uploaded_by=request.user
-                )
-
-            # If status was not already updated above, check again in case status is being changed with comment
-            if not status_update_handled:
-                new_status = request.POST.get('new_status')
-                allowed_to_change_status = user_roles['is_admin'] or user_roles['is_hr']
-                if user_roles['is_manager'] and is_ticket_owner:
-                    allowed_to_change_status = True
-                if ticket.assigned_to_user == user:
-                    allowed_to_change_status = True
-                if is_ticket_owner and new_status in ['Closed', 'Feedback']:
-                    allowed_to_change_status = True
-
-                if new_status and allowed_to_change_status:
-                    old_status = ticket.status
-                    if new_status != old_status:
-                        ticket.status = new_status
-
-                        # Update resolution timestamps
-                        if new_status == 'Resolved' and not ticket.resolved_at:
-                            ticket.resolved_at = timezone.now()
-                            ticket.resolution_time = ticket.resolved_at - ticket.created_at
-                            TicketActivity.objects.create(
-                                ticket=ticket,
-                                user=request.user,
-                                action=TicketActivity.Action.RESOLVED,
-                                details=f"Ticket resolved after {humanize_timedelta(ticket.resolution_time)}"
-                            )
-
-                        # Handle feedback state for CSAT collection
-                        if new_status == 'Feedback' and old_status == 'Resolved':
-                            ticket.satisfaction_survey_token = generate_unique_token()
-
-                        # Handle final closure
-                        if new_status == 'Closed':
-                            ticket.closed_at = timezone.now()
-                            if ticket.resolved_at:
-                                ticket.time_to_close = ticket.closed_at - ticket.resolved_at
-                            else:
-                                ticket.resolved_at = ticket.closed_at
-                                ticket.resolution_time = ticket.resolved_at - ticket.created_at
-                            TicketActivity.objects.create(
-                                ticket=ticket,
-                                user=request.user,
-                                action=TicketActivity.Action.CLOSED,
-                                details=f"Ticket closed by {request.user.get_full_name() or request.user.username}"
-                            )
-
-                        # Reset escalation level if status changes to In Progress
-                        if new_status == 'In Progress' and getattr(ticket, 'escalation_level', 0) > 0:
-                            ticket.escalation_level = 0
-                            messages.info(request, 'Escalation level has been reset as ticket is now In Progress.')
-
-                        # Always save the ticket after status change
-                        ticket.save(user=request.user)
-
-                        # Log status change activity
-                        TicketActivity.objects.create(
+                    # Handle comment attachments
+                    attachments = request.FILES.getlist('comment_attachments')
+                    for attachment in attachments:
+                        TicketAttachment.objects.create(
                             ticket=ticket,
-                            user=request.user,
-                            action='STATUS_CHANGED',
-                            details=f"Status changed from {old_status} to {new_status}"
+                            comment=comment,
+                            file=attachment,
+                            uploaded_by=request.user
                         )
 
-                        messages.info(request, f'Ticket status updated from {old_status} to {new_status}')
-                        send_ticket_notification(ticket, 'status_changed', old_status=old_status)
+                    messages.success(request, "Comment added successfully!")
+                else:
+                    messages.error(request, "Comment content is required.")
 
-            # Handle ticket escalation request
-            if 'escalate_ticket' in request.POST and (is_ticket_owner or user_roles['is_manager']):
-                if ticket.status not in ['Resolved', 'Closed']:
-                    old_escalation = getattr(ticket, 'escalation_level', 0)
-                    ticket.escalation_level = old_escalation + 1
-                    ticket.last_escalated_at = timezone.now()
-                    if ticket.escalation_level >= 2 and ticket.priority != 'Critical':
-                        old_priority = ticket.priority
-                        priority_order = ['Low', 'Medium', 'High', 'Critical']
-                        current_index = priority_order.index(ticket.priority)
-                        if current_index < len(priority_order) - 1:
-                            ticket.priority = priority_order[current_index + 1]
-                            messages.warning(request, f'Ticket priority automatically increased from {old_priority} to {ticket.priority} due to multiple escalations.')
-                    # Remove department escalation logic
+            elif action == 'update_status':
+                new_status = request.POST.get('status')
+                if new_status in dict(Support.Status.choices):
+                    old_status = ticket.status
+                    ticket.status = new_status
                     ticket.save(user=request.user)
+
+                    messages.success(request, f"Ticket status updated to {new_status}")
+                else:
+                    messages.error(request, "Invalid status selected.")
+
+            elif action == 'assign_ticket':
+                assignee_id = request.POST.get('assignee_id')
+                try:
+                    assignee = User.objects.get(id=assignee_id)
+                    old_assignee = ticket.assigned_to_user
+                    ticket.assigned_to_user = assignee
+                    ticket.save(user=request.user)
+
                     TicketActivity.objects.create(
                         ticket=ticket,
+                        action=TicketActivity.Action.ASSIGNED,
                         user=request.user,
-                        action=TicketActivity.Action.ESCALATED,
-                        details=f"Ticket escalated from level {old_escalation} to level {ticket.escalation_level}"
+                        details=f"Reassigned from {old_assignee} to {assignee}"
                     )
-                    send_ticket_notification(ticket, 'escalated')
-                    messages.warning(request, f'Ticket has been escalated to level {ticket.escalation_level}.')
-                else:
-                    messages.error(request, 'Cannot escalate a resolved or closed ticket.')
 
-            # Handle adding users to CC list
-            cc_user_id = request.POST.get('add_cc_user')
-            if cc_user_id and (user_roles['is_admin'] or user_roles['is_hr'] or user_roles['is_manager'] or is_ticket_owner):
-                try:
-                    cc_user = User.objects.get(id=cc_user_id)
-                    ticket.cc_users.add(cc_user)
-                    messages.success(request, f'{cc_user.get_full_name() or cc_user.username} added to CC list.')
-                    send_cc_notification(ticket, cc_user)
+                    messages.success(request, f"Ticket assigned to {assignee.get_full_name() or assignee.username}")
                 except User.DoesNotExist:
-                    messages.error(request, 'User not found.')
+                    messages.error(request, "Invalid assignee selected.")
 
-            messages.success(request, 'Comment added successfully.')
-            return redirect('aps_support:ticket_detail', pk=pk)
-        else:
-            # If comment form is invalid, fall through to render with errors
-            comment_form = CommentForm(request.POST, request.FILES)
-    else:
-        comment_form = CommentForm()
+            elif action == 'escalate':
+                reason = request.POST.get('escalation_reason', 'Manual escalation')
+                ticket.escalate(user=request.user, reason=reason)
+                messages.success(request, "Ticket escalated successfully!")
 
-    comments = ticket.comments.all()
-    if not (user_roles['is_admin'] or user_roles['is_hr'] or user_roles['is_manager'] or ticket.assigned_to_user == user):
-        comments = comments.filter(is_internal=False)
+            elif action == 'reopen':
+                if ticket.status in ['Resolved', 'Closed']:
+                    reason = request.POST.get('reopen_reason', 'Reopened by user')
+                    ticket.reopen(user=request.user, reason=reason)
+                    messages.success(request, "Ticket reopened successfully!")
+                else:
+                    messages.error(request, "Only resolved or closed tickets can be reopened.")
 
-    activity_log = TicketActivity.objects.filter(ticket=ticket).order_by('-timestamp')
+            return redirect('aps_support:ticket_detail', pk=ticket.pk)
 
-    sla_status = "N/A"
-    sla_remaining = None
-    if ticket.sla_target_date and ticket.status not in ['Resolved', 'Closed']:
-        time_diff = ticket.sla_target_date - timezone.now()
-        if time_diff.total_seconds() > 0:
-            sla_status = "Within SLA"
-            sla_remaining = humanize_timedelta(time_diff)
-        else:
-            sla_status = "SLA Breached"
-            sla_remaining = f"Overdue by {humanize_timedelta(abs(time_diff))}"
+        # Get related data
+        comments = ticket.comments.order_by('created_at')
+        activities = ticket.activities.order_by('-timestamp')[:20]
+        attachments = ticket.attachments.filter(comment__isnull=True)
 
-    potential_duplicates = []
-    if user_roles['is_admin'] or user_roles['is_hr'] or ticket.assigned_to_user == user:
-        potential_duplicates = Support.objects.filter(
-            Q(subject__icontains=ticket.subject[:30]) |
-            Q(description__icontains=ticket.subject[:30])
-        ).exclude(id=ticket.id)[:5]
+        # Get potential assignees
+        potential_assignees = User.objects.filter(
+            Q(groups__name__in=['Admin', 'HR', 'IT Support']) | Q(is_staff=True),
+            is_active=True
+        ).distinct()
 
-    # Remove all logic that references user.department or ticket.user.department
-    if user_roles['is_admin']:
-        available_cc_users = User.objects.filter(is_active=True).exclude(id__in=ticket.cc_users.values_list('id', flat=True))
-    elif user_roles['is_hr']:
-        available_cc_users = User.objects.filter(
-            Q(groups__name__in=['HR', 'Manager'])
-        ).filter(is_active=True).exclude(id__in=ticket.cc_users.values_list('id', flat=True)).distinct()
-    elif user_roles['is_manager'] or is_ticket_owner:
-        available_cc_users = User.objects.filter(
-            Q(id=ticket.assigned_to_user_id) if ticket.assigned_to_user_id else Q()
-        ).filter(is_active=True).exclude(id__in=ticket.cc_users.values_list('id', flat=True)).distinct()
-    else:
-        available_cc_users = User.objects.none()
+        # Calculate metrics
+        time_stats = {
+            'age': timezone.now() - ticket.created_at,
+            'time_to_first_response': ticket.response_time,
+            'resolution_time': ticket.resolution_time,
+            'sla_remaining': None
+        }
 
-    context = {
-        'ticket': ticket,
-        'comments': comments,
-        'comment_form': comment_form,
-        'status_choices': Support.Status.choices,
-        'activity_log': activity_log,
-        'sla_status': sla_status,
-        'sla_remaining': sla_remaining,
-        'potential_duplicates': potential_duplicates,
-        'available_cc_users': available_cc_users,
-        'cc_users': ticket.cc_users.all(),
-        **user_roles,
-        'is_ticket_owner': is_ticket_owner,
-        'is_assigned_to_user': ticket.assigned_to_user == user,
-    }
-    return render(request, 'components/support/ticket_detail.html', context )
+        if ticket.sla_target_date:
+            time_stats['sla_remaining'] = ticket.effective_sla_target - timezone.now()
+
+        context = {
+            'ticket': ticket,
+            'comments': comments,
+            'activities': activities,
+            'attachments': attachments,
+            'potential_assignees': potential_assignees,
+            'user_roles': user_roles,
+            'time_stats': time_stats,
+            'status_choices': Support.Status.choices,
+            'can_edit': can_view and (
+                user_roles['is_admin'] or
+                user_roles['is_it_support'] or
+                ticket.assigned_to_user == request.user
+            )
+        }
+
+        return render(request, 'components/support/ticket_detail.html', context)
+    except Exception as e:
+        logger.error(f"Error in ticket_detail: {str(e)}")
+        raise
 
 
 @login_required
 def update_ticket(request, pk):
-    ticket = get_object_or_404(Support, pk=pk)
-    user = request.user
-    user_roles = get_user_roles(user)
-    is_ticket_owner = ticket.user == user
-    is_assigned_to_user = ticket.assigned_to_user == user
+    """Update ticket details"""
+    try:
+        ticket = get_object_or_404(Support, pk=pk)
+        user_roles = get_user_roles(request.user)
 
-    has_permission = (
-        user_roles['is_admin'] or
-        is_ticket_owner or
-        (user_roles['is_hr'] and ticket.assigned_group == 'HR') or
-        is_assigned_to_user
-    )
+        # Check permissions
+        can_edit = (
+            user_roles['is_admin'] or
+            user_roles['is_it_support'] or
+            ticket.assigned_to_user == request.user or
+            (user_roles['is_hr'] and ticket.assigned_group == 'HR')
+        )
 
-    if user_roles['is_manager'] and not has_permission:
-        managed_users = User.objects.filter(department__manager=user)
-        if ticket.user in managed_users:
-            has_permission = True
+        if not can_edit:
+            messages.error(request, "You don't have permission to edit this ticket.")
+            return redirect('aps_support:ticket_detail', pk=pk)
 
-    if not has_permission:
-        logger.warning(f"User {user.username} (ID: {user.id}) attempted unauthorized ticket update for {ticket.ticket_id}")
-        return HttpResponseForbidden("You don't have permission to update this ticket.")
-
-    if ticket.status == 'Closed' and ticket.closed_at:
-        days_since_closure = (timezone.now() - ticket.closed_at).days
-        if days_since_closure > 30 and not user_roles['is_admin']:
-            messages.error(request, "This ticket has been closed for more than 30 days and cannot be modified. Please create a new ticket if needed.")
-            return redirect('aps_support:ticket_detail', pk=ticket.pk)
-
-    if request.method == 'POST':
-        form = TicketForm(request.POST, request.FILES, instance=ticket)
-        if not user_roles['is_admin']:
-            if not user_roles['is_hr'] or ticket.assigned_group != 'HR':
-                form.fields.pop('assigned_group', None)
-                form.fields.pop('assigned_to_user', None)
-            if not (user_roles['is_hr'] or user_roles['is_manager'] or is_assigned_to_user):
-                form.fields.pop('priority', None)
-            if user_roles['is_employee'] and not is_ticket_owner:
-                return HttpResponseForbidden("You don't have permission to update this ticket.")
-            if ticket.status not in ['New', 'Open'] and 'issue_type' in form.fields:
-                form.fields['issue_type'].disabled = True
-
-        if form.is_valid():
-            old_ticket = Support.objects.get(pk=ticket.pk)
-            ticket = form.save(commit=False)
-            changes = []
-            for field in form.changed_data:
-                if field not in ['attachments']:
-                    old_value = getattr(old_ticket, field)
-                    new_value = getattr(ticket, field)
-                    if field == 'assigned_to_user' and old_value:
-                        old_value = old_value.get_full_name() or old_value.username
-                    if field == 'assigned_to_user' and new_value:
-                        new_value = new_value.get_full_name() or new_value.username
-                    display_method = f'get_{field}_display'
-                    if hasattr(old_ticket, display_method):
-                        try:
-                            old_value = getattr(old_ticket, display_method)()
-                            new_value = getattr(ticket, display_method)()
-                        except:
-                            pass
-                    changes.append(f"{field.replace('_', ' ').title()}: {old_value} → {new_value}")
-
-            if 'issue_type' in form.changed_data and not (user_roles['is_admin'] or user_roles['is_hr']):
-                hr_issues = [Support.IssueType.HR, Support.IssueType.ACCESS]
-                ticket.assigned_group = Support.AssignedGroup.HR if ticket.issue_type in hr_issues else Support.AssignedGroup.ADMIN
-                changes.append(f"Assigned Group: Auto-assigned to {ticket.get_assigned_group_display()}")
-
-            if 'issue_type' in form.changed_data and ticket.issue_type == Support.IssueType.OUTAGE and ticket.priority != 'Critical':
-                old_priority = ticket.priority
-                ticket.priority = Support.Priority.CRITICAL
-                changes.append(f"Priority: {old_priority} → Critical (auto-updated for Outage)")
-
-            if 'priority' in form.changed_data and ticket.status not in ['Resolved', 'Closed']:
-                old_sla = ticket.sla_target_date
-                ticket.sla_target_date = calculate_sla_target(ticket.priority)
-                changes.append(f"SLA Target: {old_sla.strftime('%Y-%m-%d %H:%M') if old_sla else 'None'} → {ticket.sla_target_date.strftime('%Y-%m-%d %H:%M')}")
-
-            if 'assigned_to_user' in form.changed_data and ticket.assigned_to_user:
-                ticket.assigned_at = timezone.now()
-                ticket.is_stale = False
-
-            # --- STATUS UPDATE LOGIC FIX FOR UPDATE TICKET ---
-            if 'status' in form.changed_data:
-                old_status = old_ticket.status
-                new_status = ticket.status
-                if new_status == 'Resolved' and not ticket.resolved_at:
-                    ticket.resolved_at = timezone.now()
-                    ticket.resolution_time = ticket.resolved_at - ticket.created_at
-                    TicketActivity.objects.create(
-                        ticket=ticket,
-                        user=request.user,
-                        action=TicketActivity.Action.RESOLVED,
-                        details=f"Ticket resolved after {humanize_timedelta(ticket.resolution_time)}"
-                    )
-                if new_status == 'Feedback' and old_status == 'Resolved':
-                    ticket.satisfaction_survey_token = generate_unique_token()
-                if new_status == 'Closed':
-                    ticket.closed_at = timezone.now()
-                    if ticket.resolved_at:
-                        ticket.time_to_close = ticket.closed_at - ticket.resolved_at
-                    else:
-                        ticket.resolved_at = ticket.closed_at
-                        ticket.resolution_time = ticket.resolved_at - ticket.created_at
-                    TicketActivity.objects.create(
-                        ticket=ticket,
-                        user=request.user,
-                        action=TicketActivity.Action.CLOSED,
-                        details=f"Ticket closed by {request.user.get_full_name() or request.user.username}"
-                    )
-                if new_status == 'In Progress' and getattr(ticket, 'escalation_level', 0) > 0:
-                    ticket.escalation_level = 0
-                    messages.info(request, 'Escalation level has been reset as ticket is now In Progress.')
-                # FIX: Use string for action, not enum attribute
-                changes.append(f"Status: {old_status} → {new_status}")
-            # --- END STATUS UPDATE LOGIC FIX ---
+        if request.method == 'POST':
+            # Update ticket fields
+            ticket.subject = request.POST.get('subject', ticket.subject)
+            ticket.description = request.POST.get('description', ticket.description)
+            ticket.priority = request.POST.get('priority', ticket.priority)
+            ticket.issue_type = request.POST.get('issue_type', ticket.issue_type)
+            ticket.department = request.POST.get('department', ticket.department)
+            ticket.location = request.POST.get('location', ticket.location)
+            ticket.asset_id = request.POST.get('asset_id', ticket.asset_id)
 
             ticket.save(user=request.user)
 
-            if changes:
-                TicketActivity.objects.create(
-                    ticket=ticket,
-                    user=request.user,
-                    action=TicketActivity.Action.UPDATED,
-                    details="Updated ticket fields:\n• " + "\n• ".join(changes)
-                )
+            messages.success(request, "Ticket updated successfully!")
+            return redirect('aps_support:ticket_detail', pk=pk)
 
-            files = request.FILES.getlist('attachments')
-            for file in files:
-                max_file_size = 5 * 1024 * 1024
-                if file.size > max_file_size:
-                    messages.warning(request, f'File {file.name} exceeds the 5MB size limit and was not attached.')
-                    continue
-                TicketAttachment.objects.create(
-                    ticket=ticket,
-                    file=file,
-                    uploaded_by=request.user,
-                    file_size=file.size,
-                    file_type=file.content_type
-                )
+        context = {
+            'ticket': ticket,
+            'issue_type_choices': Support.IssueType.choices,
+            'priority_choices': Support.Priority.choices,
+            'user_roles': user_roles
+        }
 
-            significant_fields = ['status', 'priority', 'assigned_to_user', 'assigned_group']
-            if any(field in form.changed_data for field in significant_fields):
-                send_ticket_notification(ticket, 'updated', changed_fields=form.changed_data)
+        return render(request, 'components/support/ticket_form.html', context)
 
-            messages.success(request, 'Ticket updated successfully.')
-            return redirect('aps_support:ticket_detail', pk=ticket.pk)
-    else:
-        form = TicketForm(instance=ticket)
-        if not user_roles['is_admin']:
-            if not user_roles['is_hr'] or ticket.assigned_group != 'HR':
-                form.fields.pop('assigned_group', None)
-                form.fields.pop('assigned_to_user', None)
-            if not (user_roles['is_hr'] or user_roles['is_manager'] or is_assigned_to_user):
-                form.fields.pop('priority', None)
-            if ticket.status not in ['New', 'Open'] and 'issue_type' in form.fields:
-                form.fields['issue_type'].disabled = True
-
-    context = {
-        'form': form,
-        'ticket': ticket,
-        'title': f'Update Ticket {ticket.ticket_id}',
-        'max_file_size': '5MB',
-        'allowed_file_types': 'PDF, Word, Images, Text, ZIP',
-        **user_roles,
-        'is_ticket_owner': is_ticket_owner,
-    }
-    return render(request, 'components/support/ticket_form.html', context)
-
+    except Exception as e:
+        logger.error(f"Error in update_ticket: {str(e)}")
+        messages.error(request, f"Error updating ticket: {str(e)}")
+        return redirect('aps_support:ticket_detail', pk=pk)
 
 @login_required
 def assign_ticket(request, pk):
-    ticket = get_object_or_404(Support, pk=pk)
-    user = request.user
-    user_roles = get_user_roles(user)
-    has_permission = user_roles['is_admin'] or (user_roles['is_hr'] and ticket.assigned_group == 'HR')
-    if user_roles['is_manager'] and not has_permission:
-        managed_users = User.objects.filter(department__manager=user)
-        if ticket.user in managed_users:
-            has_permission = True
-    if not has_permission:
-        logger.warning(f"User {user.username} (ID: {user.id}) attempted unauthorized ticket assignment for {ticket.ticket_id}")
-        return HttpResponseForbidden("You don't have permission to assign this ticket.")
-    if ticket.status in ['Resolved', 'Closed']:
-        messages.warning(request, "This ticket is already resolved or closed. Reopening it for reassignment.")
-    old_status = ticket.status
-    old_assigned_to = ticket.assigned_to_user
-    old_assigned_group = ticket.assigned_group
-    if request.method == 'POST':
-        new_status = request.POST.get('status')
-        assigned_to_id = request.POST.get('assigned_to_user')
-        new_assigned_group = request.POST.get('assigned_group')
-        changes = []
-        # --- STATUS UPDATE LOGIC FIX FOR ASSIGN TICKET ---
-        if new_status and new_status != old_status:
-            ticket.status = new_status
-            changes.append(f"Status: {old_status} → {new_status}")
-            if new_status == 'In Progress' and not ticket.in_progress_at:
-                ticket.in_progress_at = timezone.now()
-                ticket.response_time = ticket.in_progress_at - ticket.created_at
-                changes.append(f"First response time: {humanize_timedelta(ticket.response_time)}")
-            if new_status == 'Resolved' and not ticket.resolved_at:
-                ticket.resolved_at = timezone.now()
-                ticket.resolution_time = ticket.resolved_at - ticket.created_at
-                TicketActivity.objects.create(
-                    ticket=ticket,
-                    user=request.user,
-                    action=TicketActivity.Action.RESOLVED,
-                    description=f"Ticket resolved after {humanize_timedelta(ticket.resolution_time)}"
-                )
-            if new_status == 'Closed':
-                ticket.closed_at = timezone.now()
-                if ticket.resolved_at:
-                    ticket.time_to_close = ticket.closed_at - ticket.resolved_at
-                else:
-                    ticket.resolved_at = ticket.closed_at
-                    ticket.resolution_time = ticket.resolved_at - ticket.created_at
-                TicketActivity.objects.create(
-                    ticket=ticket,
-                    user=request.user,
-                    action=TicketActivity.Action.CLOSED,
-                    description=f"Ticket closed by {request.user.get_full_name() or request.user.username}"
-                )
-            if new_status == 'In Progress' and getattr(ticket, 'escalation_level', 0) > 0:
-                ticket.escalation_level = 0
-                messages.info(request, 'Escalation level has been reset as ticket is now In Progress.')
-        # --- END STATUS UPDATE LOGIC FIX FOR ASSIGN TICKET ---
-        if assigned_to_id:
+    """Assign ticket to user"""
+    try:
+        ticket = get_object_or_404(Support, pk=pk)
+        user_roles = get_user_roles(request.user)
+
+        if not (user_roles['is_admin'] or user_roles['is_it_support'] or user_roles['is_manager']):
+            messages.error(request, "You don't have permission to assign tickets.")
+            return redirect('aps_support:ticket_detail', pk=pk)
+
+        if request.method == 'POST':
+            assignee_id = request.POST.get('assignee_id')
+
+            if not assignee_id:
+                messages.error(request, "Please select an assignee.")
+                return redirect('aps_support:ticket_detail', pk=pk)
+
             try:
-                new_assigned_user = User.objects.get(id=assigned_to_id)
-                if old_assigned_to != new_assigned_user:
-                    ticket.assigned_to_user = new_assigned_user
-                    ticket.assigned_at = timezone.now()
-                    ticket.is_stale = False
-                    old_assigned_name = old_assigned_to.get_full_name() if old_assigned_to else "None"
-                    new_assigned_name = new_assigned_user.get_full_name() or new_assigned_user.username
-                    changes.append(f"Assigned to: {old_assigned_name} → {new_assigned_name}")
+                assignee = User.objects.get(id=assignee_id, is_active=True)
+                old_assignee = ticket.assigned_to_user
+
+                # Update ticket assignment
+                ticket.assigned_to_user = assignee
+                ticket.save(user=request.user)
+
+                # Create activity log
+                TicketActivity.objects.create(
+                    ticket=ticket,
+                    action=TicketActivity.Action.ASSIGNED,
+                    user=request.user,
+                    details=f"Reassigned from {old_assignee.get_full_name() if old_assignee else 'Unassigned'} to {assignee.get_full_name() or assignee.username}"
+                )
+
+                messages.success(request, f"Ticket assigned to {assignee.get_full_name() or assignee.username}")
+
             except User.DoesNotExist:
-                messages.error(request, "Selected user does not exist.")
-        if (user_roles['is_admin'] and new_assigned_group) or \
-           (user_roles['is_hr'] and ticket.assigned_group == 'HR' and new_assigned_group == 'HR'):
-            if old_assigned_group != new_assigned_group:
-                ticket.assigned_group = new_assigned_group
-                changes.append(f"Assigned group: {old_assigned_group} → {new_assigned_group}")
-        new_priority = request.POST.get('priority')
-        if new_priority and user_roles['is_admin'] and ticket.priority != new_priority:
-            old_priority = ticket.priority
-            ticket.priority = new_priority
-            changes.append(f"Priority: {old_priority} → {new_priority}")
-            if ticket.status not in ['Resolved', 'Closed']:
-                old_sla = ticket.sla_target_date
-                ticket.sla_target_date = calculate_sla_target(new_priority)
-                changes.append(f"SLA Target: {old_sla.strftime('%Y-%m-%d %H:%M') if old_sla else 'None'} → {ticket.sla_target_date.strftime('%Y-%m-%d %H:%M')}")
-        assignment_note = request.POST.get('assignment_note', '').strip()
-        ticket.save(user=request.user)
-        if changes:
-            TicketActivity.objects.create(
-                ticket=ticket,
-                user=request.user,
-                action=TicketActivity.Action.ASSIGNED,
-                description="Updated ticket assignment:\n• " + "\n• ".join(changes)
-            )
-        if assignment_note:
-            comment = Comment.objects.create(
-                ticket=ticket,
-                user=request.user,
-                content=assignment_note,
-                is_internal=True
-            )
-            TicketActivity.objects.create(
-                ticket=ticket,
-                user=request.user,
-                action=TicketActivity.Action.COMMENTED,
-                description="Added assignment note"
-            )
-        send_ticket_notification(ticket, 'assigned', old_assigned_to=old_assigned_to, assignment_note=assignment_note if assignment_note else None)
-        messages.success(request, 'Ticket assignment updated successfully.')
+                messages.error(request, "Invalid assignee selected.")
+
+            return redirect('aps_support:ticket_detail', pk=pk)
+
+        # GET request - redirect to ticket detail
         return redirect('aps_support:ticket_detail', pk=pk)
-    if user_roles['is_admin']:
-        assignable_users = User.objects.filter(is_active=True)
-    elif user_roles['is_hr'] and ticket.assigned_group == 'HR':
-        assignable_users = User.objects.filter(groups__name='HR', is_active=True)
-    elif user_roles['is_manager']:
-        assignable_users = User.objects.filter(
-            Q(department__manager=user) | Q(id=user.id),
-            is_active=True
-        )
-    else:
-        assignable_users = User.objects.none()
-    recently_active_users = User.objects.filter(
-        last_login__gte=timezone.now() - timedelta(days=7),
-        is_active=True
-    ).intersection(assignable_users)[:5]
-    related_ticket_handlers = User.objects.filter(
-        assigned_tickets__issue_type=ticket.issue_type,
-        is_active=True
-    ).intersection(assignable_users).distinct()[:5]
-    context = {
-        'ticket': ticket,
-        'status_choices': Support.Status.choices,
-        'priority_choices': Support.Priority.choices,
-        'assigned_group_choices': Support.AssignedGroup.choices,
-        'assignable_users': assignable_users,
-        'recently_active_users': recently_active_users,
-        'related_ticket_handlers': related_ticket_handlers,
-        **user_roles,
-    }
-    return render(request, 'components/support/assign_ticket.html', context)
+
+    except Exception as e:
+        logger.error(f"Error in assign_ticket: {str(e)}")
+        messages.error(request, f"Error assigning ticket: {str(e)}")
+        return redirect('aps_support:ticket_list')
+
 
 @login_required
 def support_dashboard(request):
-    from datetime import timedelta, datetime
-    import pytz
-
-    def humanize_timedelta(td):
-        if td is None:
-            return None
-        if isinstance(td, (int, float)):
-            td = timedelta(seconds=td)
-        total_seconds = int(td.total_seconds())
-        if total_seconds < 60:
-            return f"{total_seconds}s"
-        minutes, seconds = divmod(total_seconds, 60)
-        if minutes < 60:
-            return f"{minutes}m {seconds}s"
-        hours, minutes = divmod(minutes, 60)
-        if hours < 24:
-            return f"{hours}h {minutes}m"
-        days, hours = divmod(hours, 24)
-        return f"{days}d {hours}h"
-
-    user = request.user
-    user_roles = get_user_roles(user)
-    from django.conf import settings
-    tz = pytz.timezone(getattr(settings, "TIME_ZONE", "UTC"))
-    date_range = request.GET.get('date_range', 'last_30_days')
-    from_date = None
-    to_date = timezone.now().astimezone(tz)
-
-    def make_aware_if_naive(dt):
-        if dt is not None:
-            if timezone.is_naive(dt):
-                return tz.localize(dt)
-            return dt.astimezone(tz)
-        return dt
-
-    if date_range == 'last_7_days':
-        from_date = to_date - timedelta(days=7)
-    elif date_range == 'last_30_days':
-        from_date = to_date - timedelta(days=30)
-    elif date_range == 'last_90_days':
-        from_date = to_date - timedelta(days=90)
-    elif date_range == 'year_to_date':
-        from_date = datetime(to_date.year, 1, 1, tzinfo=tz)
-    elif date_range == 'custom':
-        try:
-            from_date_str = request.GET.get('from_date')
-            to_date_str = request.GET.get('to_date')
-            if from_date_str:
-                from_date = datetime.strptime(from_date_str, '%Y-%m-%d')
-                from_date = make_aware_if_naive(from_date)
-            if to_date_str:
-                to_date = datetime.strptime(to_date_str, '%Y-%m-%d')
-                to_date = make_aware_if_naive(to_date)
-                to_date = to_date + timedelta(days=1)
-        except ValueError:
-            messages.error(request, 'Invalid date format. Using default 30 days range.')
-            from_date = to_date - timedelta(days=30)
-
-    from_date = make_aware_if_naive(from_date)
-    to_date = make_aware_if_naive(to_date)
-
-    if user_roles['is_admin']:
-        tickets = Support.objects.all()
-    elif user_roles['is_hr']:
-        tickets = Support.objects.filter(
-            Q(assigned_group='HR') | Q(user=user)
-        )
-    elif user_roles['is_manager']:
-        managed_users = User.objects.filter(department__manager=user)
-        tickets = Support.objects.filter(
-            Q(user=user) |
-            Q(user__in=managed_users) |
-            Q(assigned_to_user=user)
-        ).distinct()
-    else:
-        tickets = Support.objects.filter(user=user)
-
-    if from_date:
-        tickets_in_period = tickets.filter(created_at__gte=from_date, created_at__lt=to_date)
-    else:
-        tickets_in_period = tickets
-
-    total_tickets = tickets_in_period.count()
-    open_tickets = tickets_in_period.filter(status__in=['New', 'Open', 'In Progress']).count()
-    in_progress_tickets = tickets_in_period.filter(status='In Progress').count()
-    resolved_tickets = tickets_in_period.filter(status__in=['Resolved', 'Closed']).count()
-    closed_tickets = tickets_in_period.filter(status='Closed').count()
-
-    if from_date:
-        period_length = (to_date - from_date).days
-        previous_from_date = from_date - timedelta(days=period_length)
-        previous_to_date = from_date
-        previous_from_date = make_aware_if_naive(previous_from_date)
-        previous_to_date = make_aware_if_naive(previous_to_date)
-        previous_tickets = tickets.filter(created_at__gte=previous_from_date, created_at__lt=previous_to_date)
-        previous_total = previous_tickets.count()
-        if previous_total > 0:
-            ticket_growth_rate = ((total_tickets - previous_total) / previous_total) * 100
-        else:
-            ticket_growth_rate = 100 if total_tickets > 0 else 0
-    else:
-        ticket_growth_rate = 0
-
-    priority_distribution = tickets_in_period.values('priority').annotate(count=Count('id'))
-    priority_counts = {
-        'Critical': tickets_in_period.filter(priority='Critical').count(),
-        'High': tickets_in_period.filter(priority='High').count(),
-        'Medium': tickets_in_period.filter(priority='Medium').count(),
-        'Low': tickets_in_period.filter(priority='Low').count(),
-    }
-    issue_distribution = tickets_in_period.values('issue_type').annotate(count=Count('id'))
-    recent_tickets = tickets.prefetch_related(
-        'user', 'assigned_to_user', 'comments'
-    ).order_by('-created_at')[:10]
-    time_analytics = {
-        'avg_resolution_time': None,
-        'avg_response_time': None,
-        'sla_compliance': 0,
-        'avg_time_to_close': None,
-        'avg_resolution_time_human': None,
-        'avg_response_time_human': None,
-        'avg_time_to_close_human': None,
-    }
-    resolved_with_time = tickets_in_period.filter(resolution_time__isnull=False)
-    responded_tickets = tickets_in_period.filter(response_time__isnull=False)
-    closed_with_time = tickets_in_period.filter(
-        Q(time_to_close__isnull=False) |
-        Q(resolution_time__isnull=False, status__in=['Resolved', 'Closed'])
-    )
+    """Unified support dashboard that adapts based on user role"""
     try:
-        if resolved_with_time.exists():
-            avg_res_time = resolved_with_time.aggregate(avg_time=Avg('resolution_time'))['avg_time']
-            time_analytics['avg_resolution_time'] = avg_res_time
-            time_analytics['avg_resolution_time_human'] = humanize_timedelta(avg_res_time)
-    except ValueError:
-        time_analytics['avg_resolution_time'] = None
-        time_analytics['avg_resolution_time_human'] = "Invalid data"
-    try:
-        if responded_tickets.exists():
-            avg_resp_time = responded_tickets.aggregate(avg_time=Avg('response_time'))['avg_time']
-            time_analytics['avg_response_time'] = avg_resp_time
-            time_analytics['avg_response_time_human'] = humanize_timedelta(avg_resp_time)
-    except ValueError:
-        time_analytics['avg_response_time'] = None
-        time_analytics['avg_response_time_human'] = "Invalid data"
-    try:
-        if closed_with_time.exists():
-            if hasattr(closed_with_time.model, 'time_to_close'):
-                avg_close_time = closed_with_time.aggregate(avg_time=Avg('time_to_close'))['avg_time']
-            else:
-                avg_close_time = closed_with_time.aggregate(avg_time=Avg('resolution_time'))['avg_time']
-            time_analytics['avg_time_to_close'] = avg_close_time
-            time_analytics['avg_time_to_close_human'] = humanize_timedelta(avg_close_time)
-    except ValueError:
-        time_analytics['avg_time_to_close'] = None
-        time_analytics['avg_time_to_close_human'] = "Invalid data"
-    try:
-        tickets_with_sla = tickets_in_period.filter(sla_target_date__isnull=False)
-        if tickets_with_sla.exists():
-            compliant_tickets = tickets_with_sla.filter(
-                Q(
-                    Q(resolved_at__isnull=False) & Q(resolved_at__lte=F('sla_target_date'))
-                ) |
-                Q(
-                    Q(status__in=['New', 'Open', 'In Progress']) &
-                    Q(sla_target_date__gt=timezone.now().astimezone(tz))
-                )
-            ).count()
-            time_analytics['sla_compliance'] = (compliant_tickets / tickets_with_sla.count()) * 100 if tickets_with_sla.count() > 0 else 100
-    except ValueError:
-        time_analytics['sla_compliance'] = None
-    workload_distribution = None
-    bottleneck_analysis = None
-    performance_by_assignee = None
-    if user_roles['is_admin'] or user_roles['is_hr'] or user_roles['is_manager']:
-        try:
-            unassigned_tickets = tickets_in_period.filter(assigned_to_user__isnull=True).count()
-            assigned_tickets = total_tickets - unassigned_tickets
-        except ValueError:
-            unassigned_tickets = None
-            assigned_tickets = None
-        if assigned_tickets and assigned_tickets > 0:
+        user_roles = get_user_roles(request.user)
+
+        # Base context for all roles
+        context = {
+            'user_roles': user_roles,
+            'current_user': request.user,
+        }
+
+        # Role-based dashboard logic
+        if user_roles['is_admin']:
+            context.update(_get_admin_dashboard_context(request.user))
+        elif user_roles['is_manager']:
+            context.update(_get_manager_dashboard_context(request.user))
+        elif user_roles['is_hr']:
+            context.update(_get_hr_dashboard_context(request.user))
+        else:  # Employee or default
+            context.update(_get_employee_dashboard_context(request.user))
+
+        return render(request, 'components/support/dashboard.html', context)
+
+    except Exception as e:
+        logger.error(f"Error in support_dashboard: {str(e)}")
+        raise
+
+
+def _get_admin_dashboard_context(user):
+            """Get dashboard context for admin users"""
             try:
-                workload_distribution = tickets_in_period.filter(
-                    assigned_to_user__isnull=False
+                # Get all tickets for comprehensive overview
+                all_tickets = Support.objects.all()
+
+                # Get current time for overdue calculations
+                now = timezone.now()
+
+                # System-wide statistics
+                stats = {
+                    'total_tickets': all_tickets.count(),
+                    'open_tickets': all_tickets.filter(status__in=['New', 'Open', 'In Progress']).count(),
+                    'overdue_tickets': all_tickets.filter(
+                        Q(due_date__lt=now) | Q(sla_target_date__lt=now),
+                        status__in=['New', 'Open', 'In Progress']
+                    ).count(),
+                    'unassigned_tickets': all_tickets.filter(assigned_to_user__isnull=True).count(),
+                    'breached_sla': all_tickets.filter(sla_breach=True).count(),
+                    'escalated_tickets': all_tickets.filter(escalation_level__gt=0).count(),
+                }
+
+                # Recent tickets for quick access
+                recent_tickets = all_tickets.select_related('user', 'assigned_to_user').order_by('-created_at')[:10]
+
+                # Critical tickets requiring immediate attention
+                critical_tickets = all_tickets.filter(
+                    Q(priority='Critical') |
+                    Q(due_date__lt=now, status__in=['New', 'Open', 'In Progress']) |
+                    Q(sla_target_date__lt=now, status__in=['New', 'Open', 'In Progress']) |
+                    Q(sla_breach=True)
+                ).exclude(status__in=['Resolved', 'Closed']).order_by('-created_at')[:5]
+
+                # Analytics and patterns
+                analytics = SupportAnalytics.analyze_ticket_patterns(all_tickets)
+
+                # Generate system-wide recommendations
+                recommendations = SupportRecommendationEngine.generate_recommendations(
+                    all_tickets,
+                    {'is_admin': True}
+                )
+
+                # Workload distribution across all assignees
+                workload_data = all_tickets.filter(
+                    assigned_to_user__isnull=False,
+                    status__in=['New', 'Open', 'In Progress']
                 ).values(
                     'assigned_to_user__username',
                     'assigned_to_user__first_name',
                     'assigned_to_user__last_name'
                 ).annotate(
-                    open_count=Count('id', filter=Q(status__in=['New', 'Open', 'In Progress'])),
-                    total_count=Count('id'),
-                    avg_resolution=Avg('resolution_time', filter=Q(resolution_time__isnull=False))
-                ).order_by('-open_count')[:10]
-            except ValueError:
-                workload_distribution = None
-        current_time = timezone.now().astimezone(tz)
-        try:
-            bottleneck_tickets = tickets.filter(
-                Q(status='New', created_at__lt=current_time - timedelta(days=2)) |
-                Q(status='Open', created_at__lt=current_time - timedelta(days=3)) |
-                Q(status='In Progress', created_at__lt=current_time - timedelta(days=5))
-            )
-            bottleneck_analysis = bottleneck_tickets.values('status').annotate(count=Count('id'))
-        except ValueError:
-            bottleneck_analysis = None
-        try:
-            performance_by_assignee = tickets_in_period.filter(
-                assigned_to_user__isnull=False,
-                resolution_time__isnull=False
-            ).values(
-                'assigned_to_user__username',
-                'assigned_to_user__first_name',
-                'assigned_to_user__last_name'
-            ).annotate(
-                resolved_count=Count('id'),
-                avg_resolution_time=Avg('resolution_time'),
-                sla_breached=Count('id', filter=Q(sla_status='Breached')),
-                sla_met=Count('id', filter=Q(sla_status__in=['Within SLA', '']) | Q(sla_status__isnull=True))
-            ).filter(resolved_count__gt=0).order_by('avg_resolution_time')[:10]
-        except ValueError:
-            performance_by_assignee = None
-    if from_date and to_date:
-        try:
-            time_series_data = generate_time_series_data(tickets, from_date, to_date)
-        except ValueError:
-            fallback_from = timezone.now().astimezone(tz) - timedelta(days=30)
-            fallback_to = timezone.now().astimezone(tz)
+                    ticket_count=Count('id'),
+                    avg_priority=Avg(
+                        Case(
+                            When(priority='Critical', then=4),
+                            When(priority='High', then=3),
+                            When(priority='Medium', then=2),
+                            When(priority='Low', then=1),
+                            default=1,
+                            output_field=IntegerField(),
+                        )
+                    )
+                ).order_by('-ticket_count')[:10]
+
+                # Performance metrics
+                today = timezone.now().date()
+                week_start = today - timedelta(days=today.weekday())
+
+                performance_metrics = {
+                    'today_created': all_tickets.filter(created_at__date=today).count(),
+                    'today_resolved': all_tickets.filter(resolved_at__date=today).count(),
+                    'week_created': all_tickets.filter(created_at__date__gte=week_start).count(),
+                    'week_resolved': all_tickets.filter(resolved_at__date__gte=week_start).count(),
+                    'avg_resolution_time': all_tickets.filter(
+                        resolution_time__isnull=False
+                    ).aggregate(avg=Avg('resolution_time'))['avg'],
+                    'sla_compliance_rate': _calculate_sla_compliance_rate(all_tickets),
+                }
+
+                # Issue type distribution for insights
+                issue_distribution = all_tickets.values('issue_type').annotate(
+                    count=Count('id'),
+                    avg_resolution_time=Avg('resolution_time', filter=Q(resolution_time__isnull=False))
+                ).order_by('-count')
+
+                return {
+                    'role_type': 'admin',
+                    'dashboard_title': 'System Administration Dashboard',
+                    'stats': stats,
+                    'recent_tickets': recent_tickets,
+                    'recent_my_tickets': Support.objects.none(),
+                    'recent_team_tickets': Support.objects.none(),
+                    'recent_hr_tickets': Support.objects.none(),
+                    'critical_tickets': critical_tickets,
+                    'analytics': analytics,
+                    'recommendations': recommendations,
+                    'workload_data': workload_data,
+                    'performance_metrics': performance_metrics,
+                    'issue_distribution': issue_distribution,
+                    'quick_actions': [
+                        {'title': 'Create Escalation Rule', 'url': '#', 'icon': 'fas fa-arrow-up'},
+                        {'title': 'System Health Check', 'url': '#', 'icon': 'fas fa-heartbeat'},
+                        {'title': 'Export Reports', 'url': '#', 'icon': 'fas fa-download'},
+                        {'title': 'Manage SLA Settings', 'url': '#', 'icon': 'fas fa-clock'},
+                    ]
+                }
+
+            except Exception as e:
+                logger.error(f"Error in admin dashboard context: {str(e)}")
+                return {'role_type': 'admin', 'error': str(e)}
+
+def _get_manager_dashboard_context(user):
+            """Get dashboard context for manager users"""
             try:
-                time_series_data = generate_time_series_data(tickets, fallback_from, fallback_to)
-            except Exception:
-                time_series_data = []
-    else:
-        default_from = timezone.now().astimezone(tz) - timedelta(days=30)
-        default_to = timezone.now().astimezone(tz)
-        try:
-            time_series_data = generate_time_series_data(tickets, default_from, default_to)
-        except Exception:
-            time_series_data = []
-    recommendations = generate_recommendations(
-        tickets_in_period,
-        time_analytics,
-        bottleneck_analysis,
-        performance_by_assignee,
-        priority_counts,
-        user_roles
-    )
-    first_response_breaches = None
-    if user_roles['is_admin'] or user_roles['is_hr'] or user_roles['is_manager']:
-        try:
-            first_response_breaches = analyze_first_response_times(tickets_in_period)
-        except ValueError:
-            first_response_breaches = None
-    user_satisfaction = None
-    if hasattr(Support, 'satisfaction_rating') and (user_roles['is_admin'] or user_roles['is_hr']):
-        try:
-            tickets_with_ratings = tickets_in_period.exclude(
-                Q(satisfaction_rating__isnull=True) | Q(satisfaction_rating=0)
+                # Get managed users
+                managed_users = User.objects.filter(
+                    Q(profile__manager=user) | Q(manager=user)
+                ).distinct()
+
+                # Tickets relevant to manager (team tickets + assigned to manager)
+                team_tickets = Support.objects.filter(
+                    Q(user__in=managed_users) |
+                    Q(assigned_to_user=user) |
+                    Q(user=user)
+                ).distinct()
+
+                # Manager-specific statistics
+                stats = {
+                    'total_team_tickets': team_tickets.count(),
+                    'open_team_tickets': team_tickets.filter(status__in=['New', 'Open', 'In Progress']).count(),
+                    'overdue_team_tickets': team_tickets.filter(is_overdue=True).count(),
+                    'my_assignments': team_tickets.filter(assigned_to_user=user).count(),
+                    'team_members': managed_users.count(),
+                    'escalated_to_me': team_tickets.filter(escalation_level__gt=0, assigned_to_user=user).count(),
+                }
+
+                # Recent team activity
+                recent_team_tickets = team_tickets.select_related('user', 'assigned_to_user').order_by('-created_at')[:8]
+
+                # Tickets requiring manager attention
+                attention_tickets = team_tickets.filter(
+                    Q(escalation_level__gt=0) | Q(is_overdue=True) | Q(priority='Critical')
+                ).exclude(status__in=['Resolved', 'Closed']).order_by('-created_at')[:5]
+
+                # Team performance insights
+                team_performance = []
+                for member in managed_users:
+                    member_tickets = team_tickets.filter(user=member)
+                    assigned_tickets = team_tickets.filter(assigned_to_user=member)
+
+                    performance_data = {
+                        'user': member,
+                        'tickets_created': member_tickets.count(),
+                        'tickets_assigned': assigned_tickets.filter(status__in=['New', 'Open', 'In Progress']).count(),
+                        'tickets_resolved': assigned_tickets.filter(status='Resolved').count(),
+                        'avg_resolution_time': assigned_tickets.filter(
+                            resolution_time__isnull=False
+                        ).aggregate(avg=Avg('resolution_time'))['avg'],
+                    }
+                    team_performance.append(performance_data)
+
+                # Manager-specific recommendations
+                recommendations = SupportRecommendationEngine.generate_recommendations(
+                    team_tickets,
+                    {'is_manager': True}
+                )
+
+                # Assignment suggestions (unassigned tickets that could be assigned to team)
+                unassigned_tickets = team_tickets.filter(
+                    assigned_to_user__isnull=True,
+                    status__in=['New', 'Open']
+                ).order_by('-priority', '-created_at')[:5]
+
+                return {
+                    'role_type': 'manager',
+                    'dashboard_title': 'Team Management Dashboard',
+                    'stats': stats,
+                    'recent_tickets': Support.objects.none(),
+                    'recent_my_tickets': Support.objects.none(),
+                    'recent_team_tickets': recent_team_tickets,
+                    'recent_hr_tickets': Support.objects.none(),
+                    'attention_tickets': attention_tickets,
+                    'team_performance': team_performance,
+                    'recommendations': recommendations,
+                    'unassigned_tickets': unassigned_tickets,
+                    'managed_users': managed_users,
+                    'quick_actions': [
+                        {'title': 'Assign Tickets', 'url': '#', 'icon': 'fas fa-user-plus'},
+                        {'title': 'Review Team Performance', 'url': '#', 'icon': 'fas fa-chart-line'},
+                        {'title': 'Approve Escalations', 'url': '#', 'icon': 'fas fa-check-circle'},
+                        {'title': 'Team Reports', 'url': '#', 'icon': 'fas fa-users'},
+                    ]
+                }
+
+            except Exception as e:
+                logger.error(f"Error in manager dashboard context: {str(e)}")
+                return {'role_type': 'manager', 'error': str(e)}
+
+
+def _get_hr_dashboard_context(user):
+            """Get dashboard context for HR users"""
+            try:
+                # HR-specific tickets
+                hr_tickets = Support.objects.filter(
+                    Q(assigned_group='HR') |
+                    Q(issue_type='HR Related Issue') |
+                    Q(issue_type='Access Management') |
+                    Q(user=user) |
+                    Q(assigned_to_user=user)
+                ).distinct()
+
+                # HR-specific statistics
+                stats = {
+                    'total_hr_tickets': hr_tickets.count(),
+                    'open_hr_tickets': hr_tickets.filter(status__in=['New', 'Open', 'In Progress']).count(),
+                    'access_requests': hr_tickets.filter(issue_type='Access Management').count(),
+                    'hr_issues': hr_tickets.filter(issue_type='HR Related Issue').count(),
+                    'my_assignments': hr_tickets.filter(assigned_to_user=user).count(),
+                    'pending_approval': hr_tickets.filter(status='Pending User Response').count(),
+                }
+
+                # Recent HR tickets
+                recent_hr_tickets = hr_tickets.select_related('user', 'assigned_to_user').order_by('-created_at')[:8]
+
+                # High priority HR tickets
+                priority_tickets = hr_tickets.filter(
+                    priority__in=['High', 'Critical']
+                ).exclude(status__in=['Resolved', 'Closed']).order_by('-created_at')[:5]
+
+                # HR-specific analytics
+                hr_analytics = {
+                    'access_request_trends': hr_tickets.filter(
+                        issue_type='Access Management'
+                    ).extra({
+                        'month': "EXTRACT(month FROM created_at)"
+                    }).values('month').annotate(count=Count('id')),
+
+                    'common_hr_issues': hr_tickets.filter(
+                        issue_type='HR Related Issue'
+                    ).values('subject').annotate(count=Count('id')).order_by('-count')[:5],
+
+                    'avg_hr_resolution_time': hr_tickets.filter(
+                        resolution_time__isnull=False
+                    ).aggregate(avg=Avg('resolution_time'))['avg'],
+                }
+
+                # HR-specific recommendations
+                recommendations = SupportRecommendationEngine.generate_recommendations(
+                    hr_tickets,
+                    {'is_hr': True}
+                )
+
+                # Pending tasks for HR
+                pending_tasks = [
+                    {
+                        'title': f"{hr_tickets.filter(status='New').count()} New HR Tickets",
+                        'count': hr_tickets.filter(status='New').count(),
+                        'urgency': 'high' if hr_tickets.filter(status='New').count() > 5 else 'normal'
+                    },
+                    {
+                        'title': f"{hr_tickets.filter(issue_type='Access Management', status__in=['New', 'Open']).count()} Access Requests",
+                        'count': hr_tickets.filter(issue_type='Access Management', status__in=['New', 'Open']).count(),
+                        'urgency': 'high' if hr_tickets.filter(issue_type='Access Management', status__in=['New', 'Open']).count() > 3 else 'normal'
+                    }
+                ]
+
+                return {
+                    'role_type': 'hr',
+                    'dashboard_title': 'HR Support Dashboard',
+                    'stats': stats,
+                    'recent_tickets': Support.objects.none(),
+                    'recent_my_tickets': Support.objects.none(),
+                    'recent_team_tickets': Support.objects.none(),
+                    'recent_hr_tickets': recent_hr_tickets,
+                    'priority_tickets': priority_tickets,
+                    'hr_analytics': hr_analytics,
+                    'recommendations': recommendations,
+                    'pending_tasks': pending_tasks,
+                    'quick_actions': [
+                        {'title': 'Process Access Requests', 'url': '#', 'icon': 'fas fa-key'},
+                        {'title': 'HR Policy Updates', 'url': '#', 'icon': 'fas fa-file-alt'},
+                        {'title': 'Employee Onboarding', 'url': '#', 'icon': 'fas fa-user-plus'},
+                        {'title': 'HR Reports', 'url': '#', 'icon': 'fas fa-chart-bar'},
+                    ]
+                }
+
+            except Exception as e:
+                logger.error(f"Error in HR dashboard context: {str(e)}")
+                return {'role_type': 'hr', 'error': str(e)}
+
+
+def _get_employee_dashboard_context(user):
+            """Get dashboard context for employee users"""
+            try:
+                # Employee's own tickets
+                my_tickets = Support.objects.filter(user=user)
+
+                # Employee-specific statistics
+                stats = {
+                    'total_my_tickets': my_tickets.count(),
+                    'open_my_tickets': my_tickets.filter(status__in=['New', 'Open', 'In Progress']).count(),
+                    'resolved_my_tickets': my_tickets.filter(status='Resolved').count(),
+                    'pending_response': my_tickets.filter(status='Pending User Response').count(),
+                }
+
+                # Recent tickets for employee
+                recent_my_tickets = my_tickets.select_related('assigned_to_user').order_by('-created_at')[:5]
+
+                # Tickets requiring employee action
+                action_required = my_tickets.filter(
+                    status='Pending User Response'
+                ).order_by('-updated_at')[:3]
+
+                # Quick ticket creation suggestions based on common issues
+                common_issues = Support.objects.values('issue_type').annotate(
+                    count=Count('id')
+                ).order_by('-count')[:5]
+
+                # Personalized recommendations for employee
+                recommendations = [
+                    {
+                        'title': 'Quick Ticket Creation',
+                        'description': 'Create tickets faster using templates for common issues.',
+                        'category': 'Productivity',
+                        'priority_score': 80,
+                        'actions': ['Use quick templates', 'Save frequently used descriptions']
+                    },
+                    {
+                        'title': 'Track Your Tickets',
+                        'description': 'Stay updated on your ticket progress.',
+                        'category': 'Communication',
+                        'priority_score': 70,
+                        'actions': ['Enable email notifications', 'Check status regularly']
+                    }
+                ]
+
+                if stats['pending_response'] > 0:
+                    recommendations.insert(0, {
+                        'title': 'Response Required',
+                        'description': f'You have {stats["pending_response"]} tickets waiting for your response.',
+                        'category': 'Action Required',
+                        'priority_score': 95,
+                        'actions': ['Review pending tickets', 'Provide requested information']
+                    })
+
+                # Helpful resources for employees
+                helpful_resources = [
+                    {'title': 'IT Self-Service Guide', 'description': 'Common IT solutions you can try first'},
+                    {'title': 'HR Policies', 'description': 'Access to company HR policies and procedures'},
+                    {'title': 'Contact Directory', 'description': 'Find the right person for your query'},
+                ]
+
+                return {
+                    'role_type': 'employee',
+                    'dashboard_title': 'My Support Dashboard',
+                    'stats': stats,
+                    'recent_tickets': Support.objects.none(),
+                    'recent_my_tickets': recent_my_tickets,
+                    'recent_team_tickets': Support.objects.none(),
+                    'recent_hr_tickets': Support.objects.none(),
+                    'action_required': action_required,
+                    'common_issues': common_issues,
+                    'recommendations': recommendations,
+                    'helpful_resources': helpful_resources,
+                    'issue_type_choices': Support.IssueType.choices,
+                    'priority_choices': Support.Priority.choices,
+                    'quick_actions': [
+                        {'title': 'Create New Ticket', 'url': 'aps_support:create_ticket', 'icon': 'fas fa-plus-circle'},
+                        {'title': 'View My Tickets', 'url': 'aps_support:ticket_list', 'icon': 'fas fa-list'},
+                        {'title': 'Knowledge Base', 'url': '#', 'icon': 'fas fa-book'},
+                        {'title': 'Contact Support', 'url': '#', 'icon': 'fas fa-phone'},
+                    ]
+                }
+
+            except Exception as e:
+                logger.error(f"Error in employee dashboard context: {str(e)}")
+                return {'role_type': 'employee', 'error': str(e)}
+
+
+def _calculate_sla_compliance_rate(tickets_queryset):
+    """Calculate SLA compliance rate for given tickets"""
+    try:
+        total_with_sla = tickets_queryset.filter(sla_target_date__isnull=False).count()
+        if total_with_sla == 0:
+            return 100.0
+
+        breached = tickets_queryset.filter(sla_breach=True).count()
+        compliance_rate = ((total_with_sla - breached) / total_with_sla) * 100
+        return round(compliance_rate, 1)
+
+    except Exception:
+        return 0.0
+
+
+@login_required
+def support_analytics_api(request):
+    """API endpoint for real-time analytics data"""
+    try:
+        user_roles = get_user_roles(request.user)
+
+        # Get appropriate ticket queryset based on role
+        if user_roles['is_admin']:
+            tickets = Support.objects.all()
+        elif user_roles['is_hr']:
+            tickets = Support.objects.filter(
+                Q(assigned_group='HR') | Q(issue_type__in=['HR Related Issue', 'Access Management'])
             )
-            if tickets_with_ratings.exists():
-                user_satisfaction = {
-                    'avg_rating': tickets_with_ratings.aggregate(avg=Avg('satisfaction_rating'))['avg'],
-                    'rating_counts': tickets_with_ratings.values('satisfaction_rating').annotate(count=Count('id')),
-                    'total_rated': tickets_with_ratings.count(),
-                    'pct_of_total': (tickets_with_ratings.count() / total_tickets * 100) if total_tickets > 0 else 0
-                }
-        except ValueError:
-            user_satisfaction = None
-    escalation_data = None
-    if user_roles['is_admin'] or user_roles['is_hr'] or user_roles['is_manager']:
-        try:
-            escalated_tickets = tickets_in_period.filter(escalation_level__gt=0)
-            if escalated_tickets.exists():
-                escalation_data = {
-                    'total_escalated': escalated_tickets.count(),
-                    'pct_escalated': (escalated_tickets.count() / total_tickets * 100) if total_tickets > 0 else 0,
-                    'avg_escalation_level': escalated_tickets.aggregate(avg=Avg('escalation_level'))['avg'],
-                    'by_priority': escalated_tickets.values('priority').annotate(count=Count('id')),
-                    'by_issue_type': escalated_tickets.values('issue_type').annotate(count=Count('id')),
-                }
-        except ValueError:
-            escalation_data = None
-    context = {
-        'total_tickets': total_tickets,
-        'open_tickets': open_tickets,
-        'in_progress_tickets': in_progress_tickets,
-        'resolved_tickets': resolved_tickets,
-        'closed_tickets': closed_tickets,
-        'ticket_growth_rate': ticket_growth_rate,
-        'recent_tickets': recent_tickets,
-        'critical_tickets': priority_counts['Critical'],
-        'high_tickets': priority_counts['High'],
-        'medium_tickets': priority_counts['Medium'],
-        'low_tickets': priority_counts['Low'],
-        'priority_distribution': priority_distribution,
-        'issue_distribution': issue_distribution,
-        'time_analytics': time_analytics,
-        'time_series_data': time_series_data,
-        'workload_distribution': workload_distribution,
-        'bottleneck_analysis': bottleneck_analysis,
-        'performance_by_assignee': performance_by_assignee,
-        'first_response_breaches': first_response_breaches,
-        'user_satisfaction': user_satisfaction,
-        'escalation_data': escalation_data,
-        'recommendations': recommendations,
-        'unassigned_tickets': unassigned_tickets if 'unassigned_tickets' in locals() else None,
-        'assigned_tickets': assigned_tickets if 'assigned_tickets' in locals() else None,
-        'critical_percentage': (priority_counts['Critical'] / total_tickets * 100) if total_tickets > 0 else 0,
-        'high_percentage': (priority_counts['High'] / total_tickets * 100) if total_tickets > 0 else 0,
-        'medium_percentage': (priority_counts['Medium'] / total_tickets * 100) if total_tickets > 0 else 0,
-        'low_percentage': (priority_counts['Low'] / total_tickets * 100) if total_tickets > 0 else 0,
-        'date_range': date_range,
-        'from_date': from_date,
-        'to_date': to_date - timedelta(days=1) if to_date else None,
-        **user_roles,
-    }
-    return render(request, 'components/support/dashboard.html', context)
+        elif user_roles['is_manager']:
+            managed_users = User.objects.filter(
+                Q(profile__manager=request.user) | Q(manager=request.user)
+            )
+            tickets = Support.objects.filter(
+                Q(user__in=managed_users) | Q(assigned_to_user=request.user)
+            ).distinct()
+        else:
+            tickets = Support.objects.filter(user=request.user)
 
+        # Generate analytics data
+        analytics_data = {
+            'ticket_count_by_status': list(
+                tickets.values('status').annotate(count=Count('id'))
+            ),
+            'ticket_count_by_priority': list(
+                tickets.values('priority').annotate(count=Count('id'))
+            ),
+            'recent_activity_count': tickets.filter(
+                created_at__gte=timezone.now() - timedelta(days=7)
+            ).count(),
+            'sla_compliance': _calculate_sla_compliance_rate(tickets),
+        }
 
-def generate_time_series_data(tickets_queryset, from_date, to_date):
-    """Generate time series data for ticket trends"""
-    from datetime import timedelta
-    date_range = (to_date - from_date).days
+        return JsonResponse(analytics_data)
 
-    # Adjust grouping based on the date range
-    if date_range <= 7:
-        # Group by hour if range is very short
-        trunc_function = TruncHour('created_at')
-        date_format = '%Y-%m-%d %H:%M'
-    elif date_range <= 31:
-        # Group by day for up to a month
-        trunc_function = TruncDay('created_at')
-        date_format = '%Y-%m-%d'
-    elif date_range <= 90:
-        # Group by week for up to 3 months
-        trunc_function = TruncWeek('created_at')
-        date_format = 'Week %W, %Y'
-    else:
-        # Group by month for longer periods
-        trunc_function = TruncMonth('created_at')
-        date_format = '%b %Y'
-
-    # Defensive: handle ValueError from invalid datetimes in DB
-    try:
-        # Get created ticket counts
-        created_tickets = tickets_queryset.filter(
-            created_at__gte=from_date,
-            created_at__lt=to_date
-        ).annotate(
-            date=trunc_function
-        ).values('date').annotate(
-            count=Count('id')
-        ).order_by('date')
-    except ValueError:
-        created_tickets = []
-
-    try:
-        # Get resolved ticket counts
-        resolved_tickets = tickets_queryset.filter(
-            resolved_at__isnull=False,
-            resolved_at__gte=from_date,
-            resolved_at__lt=to_date
-        ).annotate(
-            date=Trunc('resolved_at', kind='day')  # Or 'month', 'year', etc. depending on your needs
-        ).values('date').annotate(
-            count=Count('id')
-        ).order_by('date')
-    except ValueError:
-        resolved_tickets = []
-
-    # Convert querysets to dictionaries for easier manipulation
-    created_dict = {}
-    for item in created_tickets:
-        try:
-            created_dict[item['date'].strftime(date_format)] = item['count']
-        except Exception:
-            continue
-    resolved_dict = {}
-    for item in resolved_tickets:
-        try:
-            resolved_dict[item['date'].strftime(date_format)] = item['count']
-        except Exception:
-            continue
-
-    # Generate a complete date series
-    current = from_date
-    all_dates = []
-
-    # Function to increment date based on grouping
-    def get_increment_function(trunc_function):
-        trunc_class_name = trunc_function.__class__.__name__
-        if trunc_class_name == 'TruncHour':
-            return lambda d: d + timedelta(hours=1)
-        elif trunc_class_name == 'TruncDay':
-            return lambda d: d + timedelta(days=1)
-        elif trunc_class_name == 'TruncWeek':
-            return lambda d: d + timedelta(weeks=1)
-        elif trunc_class_name == 'TruncMonth':
-            def increment_month(d):
-                month = d.month + 1
-                year = d.year
-                if month > 12:
-                    month = 1
-                    year += 1
-                return d.replace(year=year, month=month, day=1)
-            return increment_month
-        else:  # Default case
-            return lambda d: d + timedelta(days=1)
-
-    increment = get_increment_function(trunc_function)
-
-    while current < to_date:
-        try:
-            date_str = current.strftime(date_format)
-            all_dates.append(date_str)
-            current = increment(current)
-        except Exception:
-            break
-
-    # Combine the data
-    result = []
-    for date_str in all_dates:
-        result.append({
-            'date': date_str,
-            'created': created_dict.get(date_str, 0),
-            'resolved': resolved_dict.get(date_str, 0)
-        })
-
-    return result
-
-
-def analyze_first_response_times(tickets):
-    """Analyze first response times for tickets"""
-    from datetime import timedelta
-    # Consider tickets that have a recorded first response time
-    try:
-        tickets_with_response = tickets.filter(response_time__isnull=False)
-    except ValueError:
-        return None
-
-    if not tickets_with_response.exists():
-        return None
-
-    # Get SLA targets for first response based on priority
-    priority_sla_targets = {
-        'Critical': timedelta(hours=1),
-        'High': timedelta(hours=4),
-        'Medium': timedelta(hours=8),
-        'Low': timedelta(hours=24)
-    }
-
-    # Analyze breaches by priority
-    breaches_by_priority = {}
-    for priority, target in priority_sla_targets.items():
-        try:
-            priority_tickets = tickets_with_response.filter(priority=priority)
-            if priority_tickets.exists():
-                breached = priority_tickets.filter(response_time__gt=target).count()
-                total = priority_tickets.count()
-                breaches_by_priority[priority] = {
-                    'breached': breached,
-                    'total': total,
-                    'percentage': (breached / total * 100) if total > 0 else 0,
-                    'target_hours': target.total_seconds() / 3600
-                }
-        except ValueError:
-            breaches_by_priority[priority] = {
-                'breached': 0,
-                'total': 0,
-                'percentage': 0,
-                'target_hours': target.total_seconds() / 3600
-            }
-
-    try:
-        overall_avg = tickets_with_response.aggregate(avg=Avg('response_time'))['avg']
-    except ValueError:
-        overall_avg = None
-
-    return {
-        'overall_avg_response': overall_avg,
-        'breaches_by_priority': breaches_by_priority
-    }
-
-
-def generate_recommendations(tickets, time_analytics, bottleneck_analysis, performance_by_assignee, priority_counts, user_roles):
-    """Generate data-driven recommendations based on ticket analytics"""
-    recommendations = []
-
-    # Only generate recommendations for admins, HR, and managers
-    if not (user_roles['is_admin'] or user_roles['is_hr'] or user_roles['is_manager']):
-        return []
-
-    # Check total ticket volume
-    total_tickets = sum(priority_counts.values())
-
-    # Check SLA compliance
-    if time_analytics['sla_compliance'] is not None and time_analytics['sla_compliance'] < 80:
-        recommendations.append({
-            'title': 'SLA Compliance Needs Attention',
-            'description': f"Current SLA compliance rate is {time_analytics['sla_compliance']:.1f}%. Consider revising your SLA targets or optimizing response workflow.",
-            'severity': 'high',
-            'action_items': [
-                'Review SLA targets for different priorities',
-                'Consider adding more resources to high-priority tickets',
-                'Implement automated notifications for approaching SLA deadlines'
-            ]
-        })
-
-    # Check for bottlenecks
-    if bottleneck_analysis and len(bottleneck_analysis) > 0:
-        total_bottleneck_tickets = sum(item['count'] for item in bottleneck_analysis)
-        if total_bottleneck_tickets > 0:
-            status_list = ", ".join([f"{item['status']} ({item['count']})" for item in bottleneck_analysis])
-            recommendations.append({
-                'title': 'Workflow Bottlenecks Detected',
-                'description': f"Found {total_bottleneck_tickets} tickets stuck in the following statuses: {status_list}",
-                'severity': 'medium',
-                'action_items': [
-                    'Review tickets that have been in their current status for too long',
-                    'Consider implementing maximum time limits for each status',
-                    'Analyze if additional resources or process changes are needed'
-                ]
-            })
-
-    # Check high critical ticket volume
-    if priority_counts['Critical'] > 0 and (priority_counts['Critical'] / total_tickets) > 0.15:
-        recommendations.append({
-            'title': 'High Volume of Critical Tickets',
-            'description': f"Critical tickets make up {(priority_counts['Critical'] / total_tickets * 100):.1f}% of all tickets. Review priority assignment criteria.",
-            'severity': 'high',
-            'action_items': [
-                'Audit critical ticket classifications',
-                'Consider refining the criteria for critical priority',
-                'Create a dedicated team or process for handling critical issues'
-            ]
-        })
-
-    # Check unassigned tickets
-    try:
-        unassigned_count = tickets.filter(assigned_to_user__isnull=True).count()
-    except ValueError:
-        unassigned_count = 0
-    if unassigned_count > 10 or (total_tickets > 0 and unassigned_count / total_tickets > 0.2):
-        recommendations.append({
-            'title': 'High Number of Unassigned Tickets',
-            'description': f"{unassigned_count} tickets ({((unassigned_count / total_tickets) * 100):.1f}% of total) are currently unassigned.",
-            'severity': 'medium',
-            'action_items': [
-                'Implement auto-assignment based on ticket type and available resources',
-                'Review ticket triage process',
-                'Set up alerts for tickets unassigned after a certain period'
-            ]
-        })
-
-    # Check for workload imbalance
-    if performance_by_assignee and len(performance_by_assignee) >= 2:
-        assigned_counts = [item['resolved_count'] for item in performance_by_assignee]
-        min_assigned = min(assigned_counts)
-        max_assigned = max(assigned_counts)
-
-        if max_assigned > min_assigned * 3:  # Significant imbalance
-            recommendations.append({
-                'title': 'Workload Imbalance Detected',
-                'description': 'There is a significant imbalance in ticket assignments among team members.',
-                'severity': 'medium',
-                'action_items': [
-                    'Review ticket assignment process',
-                    'Consider load balancing techniques',
-                    'Evaluate team capacity and specialization'
-                ]
-            })
-
-    # Check for response time issues
-    if time_analytics['avg_response_time'] and hasattr(time_analytics['avg_response_time'], 'total_seconds') and time_analytics['avg_response_time'].total_seconds() > 24*3600:  # More than 24 hours
-        recommendations.append({
-            'title': 'Slow Initial Response Times',
-            'description': f"Average first response time is {humanize_timedelta(time_analytics['avg_response_time'])}. Consider improving initial triage.",
-            'severity': 'high',
-            'action_items': [
-                'Implement auto-acknowledgment for new tickets',
-                'Review ticket monitoring process',
-                'Train team on faster initial assessment techniques'
-            ]
-        })
-
-    # Check reopened tickets
-    try:
-        reopened_count = tickets.filter(
-            Q(status='Resolved') | Q(status='Closed'),
-            ticket_activity__action='REOPENED'
-        ).distinct().count()
-    except ValueError:
-        reopened_count = 0
-
-    if reopened_count > 0 and total_tickets > 0 and (reopened_count / total_tickets) > 0.1:
-        recommendations.append({
-            'title': 'High Rate of Reopened Tickets',
-            'description': f"{reopened_count} tickets ({((reopened_count / total_tickets) * 100):.1f}% of total) were reopened after resolution.",
-            'severity': 'medium',
-            'action_items': [
-                'Review resolution quality checks',
-                'Implement follow-up surveys after resolution',
-                'Analyze common reasons for ticket reopening'
-            ]
-        })
-
-    # Check ticket categorization
-    try:
-        uncategorized = tickets.filter(
-            Q(issue_type__isnull=True) | Q(issue_type='')
-        ).count()
-    except ValueError:
-        uncategorized = 0
-
-    if uncategorized > 0 and (uncategorized / total_tickets) > 0.05:
-        recommendations.append({
-            'title': 'Improve Ticket Categorization',
-            'description': f"{uncategorized} tickets ({((uncategorized / total_tickets) * 100):.1f}% of total) are not properly categorized.",
-            'severity': 'low',
-            'action_items': [
-                'Review and update ticket categorization guidelines',
-                'Implement mandatory categorization in the ticket form',
-                'Provide better category descriptions for submitters'
-            ]
-        })
-
-    # Limit to top 5 recommendations
-    return sorted(recommendations, key=lambda x: {'high': 0, 'medium': 1, 'low': 2}[x['severity']])[:5]
-
-
-def humanize_timedelta(td):
-    """Convert a timedelta into a human-readable format"""
-    if not td:
-        return "N/A"
-
-    total_seconds = int(td.total_seconds())
-    days, remainder = divmod(total_seconds, 86400)
-    hours, remainder = divmod(remainder, 3600)
-    minutes, seconds = divmod(remainder, 60)
-
-    result = ""
-    if days > 0:
-        result += f"{days} day{'s' if days != 1 else ''} "
-    if hours > 0 or days > 0:
-        result += f"{hours} hour{'s' if hours != 1 else ''} "
-    if minutes > 0 or hours > 0 or days > 0:
-        result += f"{minutes} minute{'s' if minutes != 1 else ''}"
-    else:
-        result += f"{seconds} second{'s' if seconds != 1 else ''}"
-
-    return result.strip()
-
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 
 '''---------------------------------------- HOLIDAY AREA ----------------------------------'''
 
