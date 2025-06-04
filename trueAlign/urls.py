@@ -369,8 +369,12 @@ urlpatterns = [
     path('', views.home_view, name='home'),
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
-    path('set-password/<str:username>/', views.set_password_view, name='set_password'),
+
     path('profile/<int:user_id>/', views.user_profile, name='user_profile'),
+
+    # Set password - using username (this is fine)
+    path('set-password/<str:username>/', views.set_password_view, name='set_password'),
+
     path('update-activity/', views.update_last_activity, name='update_last_activity'),
     path('session-status/', views.get_session_status, name='get_session_status'),
     path('end-session/', views.end_session, name='end_session'),
@@ -414,6 +418,7 @@ urlpatterns = [
     path('appraisal/', include((appraisal_patterns, 'appraisal'))),
 
     path('reset-password/', views.reset_user_password, name='reset_password'),
+
 
     # Entertainment URLs
     path('entertainment/', include((entertainment_patterns, 'aps'), namespace='aps_entertainment')),

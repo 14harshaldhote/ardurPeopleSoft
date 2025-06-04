@@ -726,7 +726,7 @@ from django import forms
 from django.contrib.auth.models import User, Group
 from django.core.exceptions import ValidationError
 from django.utils import timezone
-from .models import Support, TicketComment, TicketAttachment, TicketTag
+from .models import Support, TicketComment, TicketAttachment
 
 class TicketForm(forms.ModelForm):
             # Use regular FileField without the multiple attribute in the widget

@@ -855,46 +855,81 @@ def logout_view(request):
 
     return redirect('login')
 
-# Set Password View
+from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.models import User
+from django.shortcuts import redirect, get_object_or_404
+from django.contrib import messages
+
 def set_password_view(request, username):
     if request.method == "POST":
         try:
-            new_password = request.POST.get('new_password')
-            confirm_password = request.POST.get('confirm_password')
-            first_name = request.POST.get('first_name')
-            last_name = request.POST.get('last_name')
-            email = request.POST.get('email')
+            # Get form data
+            current_password = request.POST.get('current_pwd')
+            new_password = request.POST.get('new_pwd')
+            confirm_password = request.POST.get('confirm_pwd')
 
+            # Validate required fields
+            if not all([current_password, new_password, confirm_password]):
+                messages.error(request, 'All password fields are required.')
+                user = User.objects.get(username=username)
+                return redirect('user_profile', user_id=user.id)
+
+            # Check if passwords match
             if new_password != confirm_password:
-                return render(
-                    request,
-                    'set_password.html',
-                    {
-                        'error': 'Passwords do not match',
-                        'username': username,
-                        'first_name': first_name,
-                        'last_name': last_name,
-                        'email': email
-                    }
-                )
+                messages.error(request, 'New passwords do not match.')
+                user = User.objects.get(username=username)
+                return redirect('user_profile', user_id=user.id)
 
+            # Get the user
             user = User.objects.get(username=username)
+
+            # Verify current password
+            if not user.check_password(current_password):
+                messages.error(request, 'Current password is incorrect.')
+                return redirect('user_profile', user_id=user.id)
+
+            # Additional password validation
+            if len(new_password) < 8:
+                messages.error(request, 'Password must be at least 8 characters long.')
+                return redirect('user_profile', user_id=user.id)
+
+            # Set new password
             user.set_password(new_password)
-            user.first_name = first_name
-            user.last_name = last_name
-            user.email = email
             user.save()
 
-            return redirect('login')
+            # IMPORTANT: Update session hash to keep user logged in
+            update_session_auth_hash(request, user)
+
+            # Add success message
+            messages.success(request, 'Password updated successfully!')
+
+            # Redirect back to profile
+            return redirect('user_profile', user_id=user.id)
 
         except User.DoesNotExist:
-            return render(request, 'set_password.html', {'error': 'User does not exist', 'username': username})
+            messages.error(request, 'User does not exist.')
+            return redirect('dashboard')
         except Exception as e:
-            return render(request, 'set_password.html', {'error': f'An error occurred: {str(e)}'})
+            messages.error(request, f'An error occurred: {str(e)}')
+            return redirect('dashboard')
 
-    return render(request, 'set_password.html', {'username': username})
+    # If GET request, redirect to profile
+    try:
+        user = User.objects.get(username=username)
+        return redirect('user_profile', user_id=user.id)
+    except User.DoesNotExist:
+        return redirect('dashboard')
 
 
+@login_required
+def user_profile(request, user_id):
+    """View to display user profile accessible to all logged-in users"""
+    user_detail = get_object_or_404(UserDetails, user__id=user_id)
+    return render(request, 'basic/user_profile.html', {
+        'user_detail': user_detail,
+        'role': user_detail.user.groups.first().name if user_detail.user.groups.exists() else 'User',
+        'username': user_detail.user.username
+    })
 
 '''---------------------------------   DASHBOARD VIEW ----------------------------------'''
 from django.shortcuts import render
@@ -3105,16 +3140,7 @@ def employee_profile(request):
         'username': request.user.username
     })
 
-@login_required
-def user_profile(request, user_id):
-    """View to display user profile accessible to all logged-in users"""
-    user_detail = get_object_or_404(UserDetails, user__id=user_id)
 
-    return render(request, 'basic/user_profile.html', {
-        'user_detail': user_detail,
-        'role': user_detail.user.groups.first().name if user_detail.user.groups.exists() else 'User',
-        'username': user_detail.user.username
-    })
 
 # Alias for reset_user_password to maintain URL compatibility
 # @login_required
