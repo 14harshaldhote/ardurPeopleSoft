@@ -4,109 +4,199 @@
 {% block title %}Attendance Regularization{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8 bg-gray-50">
-    <div class="mb-8">
-        <h2 class="text-3xl font-bold text-gray-900">Attendance Regularization</h2>
-        <p class="text-gray-600 mt-2">Submit and manage your attendance regularization requests</p>
-    </div>
-    
-    <!-- Alerts for messages -->
-    {% if messages %}
-        {% for message in messages %}
-            <div class="mb-4 p-4 rounded-lg shadow-sm transition duration-300 ease-in-out transform hover:scale-[1.02] {% if message.tags == 'success' %}bg-green-50 text-green-800 border border-green-200{% elif message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200{% else %}bg-blue-50 text-blue-800 border border-blue-200{% endif %}">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        {% if message.tags == 'success' %}
-                            <svg class="h-5 w-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                            </svg>
-                        {% elif message.tags == 'error' %}
-                            <svg class="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-                            </svg>
-                        {% else %}
-                            <svg class="h-5 w-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9z" clip-rule="evenodd"/>
-                            </svg>
-                        {% endif %}
-                    </div>
-                    <div class="ml-3">
-                        <p class="text-sm font-medium">{{ message }}</p>
-                    </div>
+<div class="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-6">
+    <!-- Header with Enhanced Stats -->
+    <div class="bg-white rounded-2xl shadow-sm p-8 mb-8 transform hover:shadow-lg transition-all duration-300">
+        <div class="flex flex-wrap justify-between items-center">
+            <div class="space-y-3">
+                <h1 class="text-3xl font-bold text-gray-900">Attendance Regularization</h1>
+                <div class="flex items-center space-x-2 text-sm text-gray-500">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800">
+                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"/>
+                        </svg>
+                        Last Updated: {{ current_time_ist|date:"h:i A" }}
+                    </span>
                 </div>
             </div>
-        {% endfor %}
-    {% endif %}
-    
-    <!-- Regularization Request Form -->
-    <div class="bg-white shadow-lg rounded-xl overflow-hidden mb-8 transition duration-300 ease-in-out transform hover:shadow-xl">
-        <div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-5">
-            <h3 class="text-xl font-semibold text-white">Submit Regularization Request</h3>
-        </div>
-        <div class="p-8">
-            <form method="post" action="{% url 'aps_employee:attendance_regularization' %}" class="space-y-6">
-                {% csrf_token %}
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div class="space-y-2">
-                        <label for="date" class="block text-sm font-medium text-gray-700">Date</label>
-                        <input type="date" id="date" name="date" max="{{ current_date|date:'Y-m-d' }}" required
-                               class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200">
-                    </div>
-                    
-                    <div class="space-y-2">
-                        <label for="check_in_time" class="block text-sm font-medium text-gray-700">Check-in Time</label>
-                        <input type="time" id="check_in_time" name="check_in_time" 
-                               class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200">
-                        <p class="mt-1 text-sm text-gray-500">Optional</p>
-                    </div>
-                    
-                    <div class="space-y-2">
-                        <label for="check_out_time" class="block text-sm font-medium text-gray-700">Check-out Time</label>
-                        <input type="time" id="check_out_time" name="check_out_time"
-                               class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200">
-                        <p class="mt-1 text-sm text-gray-500">Optional</p>
-                    </div>
-                    <div class="form-group">
-                        <label for="requested_status">Request Status Change:</label>
-                        <select class="form-control" id="requested_status" name="requested_status">
-                          <option value="">-- No Change --</option>
-                          {% for status_code, status_name in status_choices %}
-                          <option value="{{ status_code }}">{{ status_name }}</option>
-                          {% endfor %}
-                        </select>
-                        <small class="form-text text-muted">
-                          Request a change to your attendance status if needed.
-                        </small>
-                      </div>
-                    
-                    <div class="md:col-span-2 space-y-2">
-                        <label for="reason" class="block text-sm font-medium text-gray-700">Reason for Regularization</label>
-                        <textarea id="reason" name="reason" rows="4" required
-                                  class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
-                                  placeholder="Please provide a detailed reason for this regularization request"></textarea>
-                    </div>
-                </div>
-                
-                <div class="flex justify-end">
-                    <button type="submit" class="inline-flex items-center px-6 py-3 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-200">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                        </svg>
-                        Submit Request
-                    </button>
-                </div>
-            </form>
+            
+           
         </div>
     </div>
-    
-    <!-- Records Needing Regularization -->
-    <div class="bg-white shadow-lg rounded-xl overflow-hidden mb-8 transition duration-300 ease-in-out transform hover:shadow-xl">
-        <div class="bg-gradient-to-r from-yellow-500 to-orange-500 px-6 py-5">
-            <h3 class="text-xl font-semibold text-white">Records That May Need Regularization</h3>
+
+    <!-- Enhanced Quick Actions Bar -->
+    <div class="bg-white rounded-2xl shadow-sm p-6 mb-8">
+        <div class="flex flex-wrap items-center gap-6">
+            <div class="flex-1 min-w-[250px]">
+                <div class="relative">
+                    <svg class="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input type="text" 
+                           id="searchInput" 
+                           placeholder="Search by date, status, or issue..." 
+                           class="w-full pl-10 pr-4 py-3 border-0 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 transition-all duration-200">
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <select id="statusFilter" 
+                        class="py-3 pl-4 pr-8 border-0 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 transition-all duration-200">
+                    <option value="">All Statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                </select>
+                
+                <button id="newRequest" 
+                        onclick="showNewRequestForm()" 
+                        class="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transform hover:scale-105 transition-all duration-200 shadow-sm hover:shadow">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                    </svg>
+                    New Request
+                </button>
+            </div>
         </div>
-        <div class="overflow-x-auto">
-            {% if records_needing_regularization %}
-                <table class="min-w-full divide-y divide-gray-200">
+    </div>
+
+    <!-- Enhanced Main Content Area -->
+    <div class="grid lg:grid-cols-3 gap-8">
+        <!-- Request Form Card -->
+        <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm overflow-hidden" id="requestFormCard">
+            <div class="bg-blue-600 text-white px-6 py-4 flex justify-between items-center">
+                <h2 class="text-xl font-semibold">New Regularization Request</h2>
+                <span class="text-sm bg-white/10 px-3 py-1 rounded-full">Today: {{ current_time_ist|date:"d M Y" }}</span>
+            </div>
+            <div class="p-6">
+                <form id="regularizationForm" method="post" action="{% url 'aps_employee:attendance_regularization' %}" class="space-y-6">
+                    {% csrf_token %}
+                    
+                    <!-- Form Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Date Picker -->
+                        <div class="col-span-2 md:col-span-1">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Date *</label>
+                            <div class="relative">
+                                <input type="date" 
+                                       id="date" 
+                                       name="date" 
+                                       max="{{ current_date|date:'Y-m-d' }}" 
+                                       required
+                                       class="w-full pl-10 pr-4 py-3 rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-0 transition-colors">
+                                <svg class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <!-- Time Inputs Container -->
+                        <div class="col-span-2 md:col-span-1 space-y-6">
+                            <!-- Check-in Time -->
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                    Check-in Time
+                                    <span class="text-xs font-normal text-gray-500 ml-2">(Optional)</span>
+                                </label>
+                                <div class="relative">
+                                    <input type="time" 
+                                           id="check_in_time" 
+                                           name="check_in_time"
+                                           class="w-full pl-10 pr-4 py-3 rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-0 transition-colors">
+                                    <svg class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                </div>
+                            </div>
+
+                            <!-- Check-out Time -->
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                    Check-out Time
+                                    <span class="text-xs font-normal text-gray-500 ml-2">(Optional)</span>
+                                </label>
+                                <div class="relative">
+                                    <input type="time" 
+                                           id="check_out_time" 
+                                           name="check_out_time"
+                                           class="w-full pl-10 pr-4 py-3 rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-0 transition-colors">
+                                    <svg class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Status Change -->
+                        <div class="col-span-2">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                Request Status Change
+                            </label>
+                            <select id="requested_status" 
+                                    name="requested_status"
+                                    class="w-full pl-4 pr-10 py-3 rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-0 transition-colors">
+                                <option value="">-- No Change --</option>
+                                {% for status_code, status_name in status_choices %}
+                                <option value="{{ status_code }}" 
+                                        class="py-2">{{ status_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Reason -->
+                        <div class="col-span-2">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                Reason for Regularization *
+                                <span class="text-xs font-normal text-gray-500 ml-2">(Required)</span>
+                            </label>
+                            <textarea id="reason" 
+                                      name="reason" 
+                                      rows="4" 
+                                      required
+                                      placeholder="Please provide a detailed explanation for your regularization request..."
+                                      class="w-full px-4 py-3 rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-0 transition-colors"></textarea>
+                            <div class="mt-2 flex items-center text-sm text-gray-500">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <span>Be specific and include relevant details</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="flex items-center justify-between pt-6 border-t">
+                        <button type="button"
+                                onclick="resetForm()"
+                                class="flex items-center px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                            </svg>
+                            Reset Form
+                        </button>
+                        <div class="flex items-center space-x-4">
+                            <span class="text-sm text-gray-500">* Required fields</span>
+                            <button type="submit"
+                                    class="flex items-center px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                Submit Request
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Records Table Card -->
+        <div class="lg:col-span-1 bg-white rounded-2xl shadow-sm overflow-hidden">
+            <div class="bg-blue-600 text-white px-6 py-4 flex justify-between items-center">
+                <h2 class="text-xl font-semibold">Regularization Records</h2>
+               
+            </div>
+            <div class="overflow-x-auto">
+                <table id="recordsTable" class="w-full">
                     <thead class="bg-gray-50">
                         <tr>
                             <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Date</th>
@@ -119,7 +209,7 @@
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         {% for record in records_needing_regularization %}
-                            <tr class="hover:bg-gray-50 transition duration-150">
+                            <tr class="hover:bg-gray-50 transition duration-150" data-date="{{ record.date|date:'Y-m-d' }}">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ record.date|date:"d M Y" }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
                                     <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
@@ -172,85 +262,358 @@
                         {% endfor %}
                     </tbody>
                 </table>
-            {% else %}
-                <div class="p-8 text-center text-gray-500">
-                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    <p class="mt-4 text-lg">No records found that need regularization.</p>
-                </div>
-            {% endif %}
-        </div>
-    </div>
-    
-    <!-- Pending Regularization Requests -->
-    <div class="bg-white shadow-lg rounded-xl overflow-hidden transition duration-300 ease-in-out transform hover:shadow-xl">
-        <div class="bg-gradient-to-r from-blue-600 to-cyan-600 px-6 py-5">
-            <h3 class="text-xl font-semibold text-white">Pending Regularization Requests</h3>
-        </div>
-        <div class="overflow-x-auto">
-            {% if pending_requests %}
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Date</th>
-                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Requested Check-in</th>
-                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Requested Check-out</th>
-                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Reason</th>
-                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        {% for request in pending_requests %}
-                            <tr class="hover:bg-gray-50 transition duration-150">
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ request.date|date:"d M Y" }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {% if request.requested_check_in %}
-                                        {{ request.requested_check_in|date:"H:i" }}
-                                    {% else %}
-                                        <span class="text-gray-500">-</span>
-                                    {% endif %}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {% if request.requested_check_out %}
-                                        {{ request.requested_check_out|date:"H:i" }}
-                                    {% else %}
-                                        <span class="text-gray-500">-</span>
-                                    {% endif %}
-                                </td>
-                                <td class="px-6 py-4 text-sm text-gray-900">
-                                    <div class="max-w-xs truncate">{{ request.regularization_reason }}</div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                        Pending
-                                    </span>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            {% else %}
-                <div class="p-8 text-center text-gray-500">
-                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    <p class="mt-4 text-lg">No pending regularization requests.</p>
-                </div>
-            {% endif %}
+            </div>
         </div>
     </div>
 </div>
 
+<!-- Enhanced Modal with Backdrop Blur -->
+<div id="confirmationModal" 
+     class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm hidden items-center justify-center z-50">
+    <div class="bg-white rounded-2xl shadow-xl max-w-md w-full mx-4 transform transition-all duration-300 scale-95 opacity-0" 
+         id="modalContent">
+        <div class="border-b px-6 py-4">
+            <h3 class="text-lg font-medium text-gray-900">Confirm Submission</h3>
+        </div>
+        <div class="px-6 py-4">
+            <p class="text-gray-700">Are you sure you want to submit this regularization request?</p>
+            <div id="requestSummary" class="mt-4 bg-gray-50 p-4 rounded-lg">
+                <!-- Dynamic content will be inserted here -->
+            </div>
+        </div>
+        <div class="bg-gray-50 px-6 py-4 flex justify-end space-x-4">
+            <button onclick="closeModal()" 
+                    class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                Cancel
+            </button>
+            <button onclick="submitForm()" 
+                    class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                Confirm
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Add Loading Indicator -->
+<div id="loadingIndicator" class="fixed inset-0 bg-white/80 backdrop-blur-sm hidden items-center justify-center z-50">
+    <div class="bg-white rounded-2xl shadow-xl p-8 flex items-center space-x-4">
+        <div class="animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent"></div>
+        <span class="text-lg font-medium text-gray-900">Processing...</span>
+    </div>
+</div>
+
 <script>
-    function prefillForm(date) {
-        document.getElementById('date').value = date;
-        document.getElementById('reason').focus();
-        // Smooth scroll to form with offset for header
-        document.querySelector('.bg-gradient-to-r').scrollIntoView({ 
-            behavior: 'smooth',
-            block: 'center'
-        });
+// Add smooth animations and transitions
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize filters
+    setupFilters();
+    
+    // Form handling
+    const form = document.getElementById('regularizationForm');
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        showConfirmationModal();
+    });
+});
+
+function setupFilters() {
+    const searchInput = document.getElementById('searchInput');
+    const statusFilter = document.getElementById('statusFilter');
+    const dateFilter = document.getElementById('dateFilter');
+
+    [searchInput, statusFilter, dateFilter].forEach(filter => {
+        filter.addEventListener('change', filterRecords);
+    });
+
+    searchInput.addEventListener('keyup', debounce(filterRecords, 300));
+}
+
+function filterRecords() {
+    const searchValue = document.getElementById('searchInput').value.toLowerCase();
+    const statusValue = document.getElementById('statusFilter').value;
+    const dateValue = parseInt(document.getElementById('dateFilter').value);
+
+    const rows = document.querySelectorAll('#recordsTable tbody tr');
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        const status = row.querySelector('[data-status]')?.dataset.status;
+        const date = new Date(row.querySelector('[data-date]')?.dataset.date);
+        const daysDiff = (new Date() - date) / (1000 * 60 * 60 * 24);
+
+        const matchesSearch = text.includes(searchValue);
+        const matchesStatus = !statusValue || status === statusValue;
+        const matchesDate = daysDiff <= dateValue;
+
+        if (matchesSearch && matchesStatus && matchesDate) {
+            row.classList.remove('hidden');
+            visibleCount++;
+        } else {
+            row.classList.add('hidden');
+        }
+    });
+
+    document.getElementById('recordCount').textContent = `${visibleCount} records`;
+}
+
+function showNewRequestForm() {
+    const form = document.getElementById('requestFormCard');
+    form.classList.add('animate-slideIn');
+    form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function showConfirmationModal() {
+    const modal = document.getElementById('confirmationModal');
+    const content = document.getElementById('modalContent');
+    
+    // Setup content first
+    updateModalContent();
+    
+    // Show modal with animation
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    
+    // Trigger animation after small delay
+    setTimeout(() => {
+        content.classList.remove('scale-95', 'opacity-0');
+        content.classList.add('scale-100', 'opacity-100');
+    }, 50);
+}
+
+function closeModal() {
+    const modal = document.getElementById('confirmationModal');
+    const content = document.getElementById('modalContent');
+    
+    // Reverse animation
+    content.classList.remove('scale-100', 'opacity-100');
+    content.classList.add('scale-95', 'opacity-0');
+    
+    // Hide modal after animation
+    setTimeout(() => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }, 200);
+}
+
+function submitForm() {
+    showLoading();
+    const form = document.getElementById('regularizationForm');
+    form.submit(); // Actually submit the form
+}
+
+function showLoading() {
+    const loader = document.getElementById('loadingIndicator');
+    loader.classList.remove('hidden');
+    loader.classList.add('flex', 'animate-fadeIn');
+}
+
+function hideLoading() {
+    const loader = document.getElementById('loadingIndicator');
+    loader.classList.add('hidden');
+    loader.classList.remove('flex', 'animate-fadeIn');
+}
+
+// Enhanced notification system
+function showNotification(message, type = 'success') {
+    const notification = document.createElement('div');
+    notification.className = `
+        fixed top-4 right-4 max-w-md p-4 rounded-xl shadow-lg transform transition-all duration-300
+        flex items-center space-x-3 translate-y-[-100%] opacity-0
+        ${type === 'success' ? 'bg-emerald-500' : 'bg-red-500'} text-white
+    `;
+    
+    const icon = document.createElement('div');
+    icon.className = 'flex-shrink-0';
+    icon.innerHTML = type === 'success' 
+        ? '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>'
+        : '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>';
+    
+    const text = document.createElement('p');
+    text.className = 'text-sm font-medium';
+    text.textContent = message;
+    
+    notification.appendChild(icon);
+    notification.appendChild(text);
+    document.body.appendChild(notification);
+    
+    requestAnimationFrame(() => {
+        notification.classList.remove('translate-y-[-100%]', 'opacity-0');
+    });
+    
+    setTimeout(() => {
+        notification.classList.add('translate-y-[-100%]', 'opacity-0');
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+function resetForm() {
+    document.getElementById('regularizationForm').reset();
+}
+
+function refreshTable() {
+    // Implement table refresh logic
+    location.reload();
+}
+
+// Add form validation
+document.getElementById('regularizationForm').addEventListener('submit', function(e) {
+    // Don't prevent default here
+    const checkIn = document.getElementById('check_in_time').value;
+    const checkOut = document.getElementById('check_out_time').value;
+    
+    if (checkIn && checkOut && checkIn >= checkOut) {
+        e.preventDefault(); // Only prevent if validation fails
+        showNotification('Check-out time must be after check-in time', 'error');
+        return;
     }
+    
+    // Show loading indicator
+    showLoading();
+});
+
+// Add input validation and formatting
+document.querySelectorAll('input[type="time"]').forEach(input => {
+    input.addEventListener('change', function() {
+        validateTimes();
+    });
+});
+
+function validateTimes() {
+    const checkIn = document.getElementById('check_in_time');
+    const checkOut = document.getElementById('check_out_time');
+    
+    if (checkIn.value && checkOut.value) {
+        if (checkIn.value >= checkOut.value) {
+            checkOut.setCustomValidity('Check-out time must be after check-in time');
+        } else {
+            checkOut.setCustomValidity('');
+        }
+    }
+}
+
+function prefillForm(date) {
+    // Find the record data from the table
+    const row = document.querySelector(`tr[data-date="${date}"]`) || 
+                Array.from(document.querySelectorAll('tr')).find(tr => 
+                    tr.querySelector('td')?.textContent.includes(date));
+    
+    if (row) {
+        // Get data from the row
+        const status = row.querySelector('td:nth-child(2) span')?.textContent.trim();
+        const checkIn = row.querySelector('td:nth-child(3)')?.textContent.trim();
+        const checkOut = row.querySelector('td:nth-child(4)')?.textContent.trim();
+
+        // Set form values
+        document.getElementById('date').value = date;
+        
+        // Set check-in time if it exists and isn't "Missing"
+        if (checkIn && checkIn !== 'Missing') {
+            document.getElementById('check_in_time').value = checkIn;
+        }
+        
+        // Set check-out time if it exists and isn't "Missing"
+        if (checkOut && checkOut !== 'Missing') {
+            document.getElementById('check_out_time').value = checkOut;
+        }
+
+        // Set status if available
+        const statusSelect = document.getElementById('requested_status');
+        if (status) {
+            Array.from(statusSelect.options).forEach(option => {
+                if (option.text.toLowerCase() === status.toLowerCase()) {
+                    statusSelect.value = option.value;
+                }
+            });
+        }
+
+        // Auto-generate reason based on issues
+        const issue = row.querySelector('td:nth-child(5)')?.textContent.trim();
+        const reasonField = document.getElementById('reason');
+        reasonField.value = `Regularization request for ${date}: ${issue}`;
+
+        // Scroll to form and highlight it
+        const form = document.getElementById('requestFormCard');
+        form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        form.classList.add('animate-pulse');
+        setTimeout(() => form.classList.remove('animate-pulse'), 1000);
+    }
+}
 </script>
+
+<style>
+/* Enhanced Animations */
+@keyframes slideIn {
+    from { transform: translateY(30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+}
+
+.animate-slideIn {
+    animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-fadeIn {
+    animation: fadeIn 0.3s ease-out forwards;
+}
+
+.animate-pulse {
+    animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #CBD5E1 transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #CBD5E1;
+    border-radius: 3px;
+}
+
+/* Table Enhancements */
+.table-hover tr:hover {
+    background-color: #F8FAFC;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+    transition: all 0.2s ease;
+}
+
+/* Form Focus States */
+.form-input:focus {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+</style>
 {% endblock %}

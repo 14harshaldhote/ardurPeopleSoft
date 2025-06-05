@@ -3825,6 +3825,26 @@ def to_utc(dt_ist):
 @login_required
 @user_passes_test(is_admin)
 def user_sessions_view(request):
+    # Handle export requests
+    if request.method == 'POST' and request.GET.get('export'):
+        export_format = request.GET.get('export')
+        filters = _parse_session_filters(request)
+        queryset = _get_filtered_sessions(filters)
+        
+        try:
+            if export_format == 'csv':
+                return _export_to_csv(queryset, filters)
+            elif export_format == 'xlsx':
+                return _export_to_excel(queryset, filters)
+        except Exception as e:
+            logger.error(f"Export error: {str(e)}")
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Failed to generate export file'
+                })
+            messages.error(request, 'Failed to generate export file')
+            return redirect(request.path)
     """
     Enhanced view to display user sessions with advanced filtering, analytics and insights
     for tracking employee productivity.

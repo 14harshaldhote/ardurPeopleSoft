@@ -1,4 +1,8 @@
-{% extends 'base.html' %} {% load static %} {% block title %}Session Details -
+{% extends 'base.html' %}
+{% load static %}
+{% load user_filters %}
+
+{% block title %}Session Details -
 {{ user.get_full_name|default:user.username }} - {{ target_date|date:"F d, Y"
 }}{% endblock %} {% block extra_css %}
 <link
@@ -55,6 +59,43 @@
                         Back to Dashboard
                     </a>
                 </div>
+            </div>
+        </div>
+
+        <!-- Date Navigation -->
+        <div class="mb-6 flex justify-between items-center">
+            <div class="flex space-x-4">
+                {% if previous_date %}
+                    <a href="{% url 'aps_admin:user_session_detail' user.id previous_date %}" class="inline-flex items-center px-4 py-2 bg-slate-100 rounded-lg hover:bg-slate-200">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                        Previous Day
+                    </a>
+                {% endif %}
+                
+                {% if next_date %}
+                    <a href="{% url 'aps_admin:user_session_detail' user.id next_date %}" class="inline-flex items-center px-4 py-2 bg-slate-100 rounded-lg hover:bg-slate-200">
+                        Next Day
+                        <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </a>
+                {% endif %}
+            </div>
+            <div class="flex space-x-3">
+                <button onclick="refreshData()" class="inline-flex items-center px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    Refresh
+                </button>
+                <button onclick="exportSessionData()" class="inline-flex items-center px-4 py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Export Detail
+                </button>
             </div>
         </div>
 
@@ -771,4 +812,53 @@
 <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+
+<script>
+function refreshData() {
+    const button = document.querySelector('button[onclick="refreshData()"]');
+    button.classList.add('animate-spin');
+    
+    fetch(window.location.href + '?refresh=true', {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Update page sections with new data
+        updateDashboardSections(data);
+        button.classList.remove('animate-spin');
+    })
+    .catch(error => {
+        console.error('Error refreshing data:', error);
+        button.classList.remove('animate-spin');
+    });
+}
+
+function exportSessionData() {
+    window.location.href = window.location.href + '?export=excel';
+}
+
+// Auto-refresh active sessions every 30 seconds
+let refreshInterval;
+const startAutoRefresh = () => {
+    refreshInterval = setInterval(() => {
+        if (document.visibilityState === 'visible') {
+            refreshData();
+        }
+    }, 30000);
+};
+
+// Start auto-refresh when page loads
+document.addEventListener('DOMContentLoaded', startAutoRefresh);
+
+// Handle page visibility changes
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        clearInterval(refreshInterval);
+    } else {
+        startAutoRefresh();
+    }
+});
+</script>
 {% endblock %}

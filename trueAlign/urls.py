@@ -41,8 +41,14 @@ session_patterns = [
 
 # Admin-specific URLs under 'admin/'
 admin_patterns = [
-path('usersessions/', views.user_sessions_view, name='user_sessions'),
-path('usersessions/<int:user_id>/<str:date_str>/', views.user_session_detail_view, name='user_session_detail'),
+    # User Sessions URLs
+    path('usersessions/', views.user_sessions_view, name='user_sessions'),
+    path('usersessions/<int:user_id>/<str:date_str>/', views.user_session_detail_view, name='user_session_detail'),
+    path('usersessions/analytics/', views.session_analytics_api, name='session_analytics_api'),
+    path('usersessions/<uuid:session_id>/terminate/', views.terminate_session, name='terminate_session'),
+    path('usersessions/bulk-actions/', views.bulk_session_actions, name='bulk_session_actions'),
+
+    # Other Admin URLs 
     path('report/', views.report_view, name='report'),
     path('reports/projects/', views.projects_report_view, name='projects_report'),
     path('reports/errors/', views.system_error_view, name='system_errors'),

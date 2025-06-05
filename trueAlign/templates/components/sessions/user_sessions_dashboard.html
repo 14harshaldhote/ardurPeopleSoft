@@ -1,1530 +1,1004 @@
-{% extends 'base.html' %} {% load static %} {% block content %}
-<div
-    class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20 p-8"
->
-    <!-- Header -->
-    <div
-        class="mb-8 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-8 hover:shadow-xl transition-all duration-500"
-    >
-        <div class="flex justify-between items-center">
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="min-h-screen ">
+  <!-- Header Section -->
+  <div class="bg-white shadow-sm border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="py-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <div class="flex-shrink-0">
+              <svg class="h-8 w-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+              </svg>
+            </div>
             <div>
-                <h1
-                    class="text-4xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent mb-3"
-                >
-                    UserSession Dashboard
-                </h1>
-                <p class="text-slate-600 text-lg font-medium">
-                    Real-time monitoring and analytics for user sessions
-                </p>
-                <div
-                    class="text-sm text-slate-500 mt-4 flex items-center space-x-2"
-                >
-                    <div
-                        class="w-2 h-2 bg-green-400 rounded-full animate-pulse"
-                    ></div>
-                    <span>Last updated:</span>
-                    <span
-                        id="last-updated"
-                        class="font-medium text-slate-700 bg-slate-100 px-2 py-1 rounded-lg"
-                        >{{ current_time_ist|date:"Y-m-d H:i:s T" }}</span
-                    >
-                </div>
+              <h1 class="text-2xl font-bold text-gray-900">User Sessions Dashboard</h1>
+              <p class="text-sm text-gray-500">Real-time monitoring and analytics</p>
             </div>
-            <div class="hidden md:block">
-                <div
-                    class="w-24 h-24 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-2xl flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
-                >
-                    <svg
-                        class="w-12 h-12 text-blue-600"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                    >
-                        <path
-                            d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"
-                        ></path>
-                    </svg>
-                </div>
+          </div>
+          <div class="flex items-center space-x-3">
+            <div class="text-sm text-gray-500">
+              <span class="font-medium">Last Updated:</span>
+              <span id="lastUpdated">{{ current_time_ist|date:"M d, Y H:i:s" }}</span>
             </div>
+            <button onclick="refreshDashboard()" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+              <svg class="h-4 w-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+              </svg>
+              Refresh
+            </button>
+          </div>
         </div>
+      </div>
     </div>
+  </div>
 
-    <!-- Filters Panel -->
-
-    <!-- Overview Metrics -->
+  <!-- Overview Metrics -->
+  <div class=" mx-auto px-4 sm:px-6 lg:px-8 py-2">
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <!-- Active Sessions Card -->
-        <div
-            class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6 hover:shadow-xl transition-all duration-500 transform hover:scale-[1.02] group"
-        >
-            <div class="flex items-center justify-between">
-                <div class="flex-1">
-                    <p class="text-sm font-semibold text-slate-600 mb-2">
-                        Active Sessions
-                    </p>
-                    <div class="flex items-baseline space-x-2">
-                        <p
-                            class="text-3xl font-bold text-slate-800"
-                            id="active-sessions"
-                        >
-                            {{ overview_metrics.active_sessions }}
-                        </p>
-                        <span
-                            class="text-sm font-semibold text-emerald-600 bg-gradient-to-r from-emerald-50 to-emerald-100 px-3 py-1 rounded-full border border-emerald-200"
-                            >+2.5%</span
-                        >
-                    </div>
-                </div>
-                <div
-                    class="w-12 h-12 bg-gradient-to-br from-emerald-100 to-green-100 rounded-xl flex items-center justify-center shadow-md group-hover:shadow-lg transition-all duration-300 group-hover:scale-110"
-                >
-                    <svg
-                        class="w-6 h-6 text-emerald-600"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                    >
-                        <path
-                            fill-rule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                            clip-rule="evenodd"
-                        ></path>
-                    </svg>
-                </div>
+      <!-- Active Sessions -->
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+              <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+              </svg>
             </div>
+          </div>
+          <div class="ml-4">
+            <h3 class="text-sm font-medium text-gray-500">Active Sessions</h3>
+            <p class="text-2xl font-semibold text-gray-900" id="activeSessionsCount">{{ overview_metrics.active_sessions }}</p>
+          </div>
         </div>
+      </div>
 
-        <!-- Avg Session Duration Card -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div class="flex items-center justify-between">
-                <div class="flex-1">
-                    <p class="text-sm font-medium text-gray-600 mb-2">
-                        Avg Session Duration
-                    </p>
-                    <p class="text-3xl font-bold text-gray-900">
-                        {{
-                        overview_metrics.avg_session_duration|floatformat:1}}h
-                    </p>
-                </div>
-                <div
-                    class="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center"
-                >
-                    <svg
-                        class="w-6 h-6 text-blue-600"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                    >
-                        <path
-                            fill-rule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
-                            clip-rule="evenodd"
-                        ></path>
-                    </svg>
-                </div>
+      <!-- Total Users -->
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+              <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+              </svg>
             </div>
+          </div>
+          <div class="ml-4">
+            <h3 class="text-sm font-medium text-gray-500">Total Users</h3>
+            <p class="text-2xl font-semibold text-gray-900">{{ overview_metrics.total_users }}</p>
+          </div>
         </div>
+      </div>
 
-        <!-- Avg Productivity Card -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div class="flex items-center justify-between">
-                <div class="flex-1">
-                    <p class="text-sm font-medium text-gray-600 mb-2">
-                        Avg Productivity
-                    </p>
-                    <p class="text-3xl font-bold text-gray-900">
-                        {{ overview_metrics.avg_productivity|floatformat:0 }}%
-                    </p>
-                </div>
-                <div
-                    class="w-12 h-12 bg-purple-50 rounded-lg flex items-center justify-center"
-                >
-                    <svg
-                        class="w-6 h-6 text-purple-600"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                    >
-                        <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"></path>
-                        <path
-                            d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"
-                        ></path>
-                    </svg>
-                </div>
+      <!-- Avg Session Duration -->
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
+              <svg class="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
             </div>
+          </div>
+          <div class="ml-4">
+            <h3 class="text-sm font-medium text-gray-500">Avg Duration</h3>
+            <p class="text-2xl font-semibold text-gray-900">{{ overview_metrics.avg_session_duration|floatformat:1 }}m</p>
+          </div>
         </div>
+      </div>
 
-        <!-- Security Incidents Card -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div class="flex items-center justify-between">
-                <div class="flex-1">
-                    <p class="text-sm font-medium text-gray-600 mb-2">
-                        Security Incidents
-                    </p>
-                    <p class="text-3xl font-bold text-gray-900">
-                        {{ security_insights.total_incidents }}
-                    </p>
-                </div>
-                <div
-                    class="w-12 h-12 bg-red-50 rounded-lg flex items-center justify-center"
-                >
-                    <svg
-                        class="w-6 h-6 text-red-600"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                    >
-                        <path
-                            fill-rule="evenodd"
-                            d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                            clip-rule="evenodd"
-                        ></path>
-                    </svg>
-                </div>
+      <!-- Productivity Score -->
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+              <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+              </svg>
             </div>
+          </div>
+          <div class="ml-4">
+            <h3 class="text-sm font-medium text-gray-500">Avg Productivity</h3>
+            <p class="text-2xl font-semibold text-gray-900">{{ overview_metrics.avg_productivity_score|floatformat:0 }}%</p>
+          </div>
         </div>
+      </div>
     </div>
 
-    <!-- Main Dashboard Grid -->
+    <!-- Filters Section -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-8">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h3 class="text-lg font-medium text-gray-900">Filters & Controls</h3>
+      </div>
+      <div class="p-6">
+        <form id="filtersForm" class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Date Range -->
+            <div>
+              <label for="dateRange" class="block text-sm font-medium text-gray-700 mb-1">Date Range</label>
+              <select id="dateRange" name="date_range" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                {% for value, label in date_range_options %}
+                <option value="{{ value }}" {% if filters.date_range == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <!-- User Filter -->
+            <div>
+              <label for="userFilter" class="block text-sm font-medium text-gray-700 mb-1">User</label>
+              <select id="userFilter" name="user_filter" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                <option value="">All Users</option>
+                {% for user in users_list %}
+                <option value="{{ user.id }}" {% if filters.user_filter == user.id|stringformat:"s" %}selected{% endif %}>{{ user.username }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <!-- Location Filter -->
+            <div>
+              <label for="locationFilter" class="block text-sm font-medium text-gray-700 mb-1">Location</label>
+              <select id="locationFilter" name="location_filter" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                <option value="">All Locations</option>
+                {% for location in locations %}
+                <option value="{{ location }}" {% if filters.location_filter == location %}selected{% endif %}>{{ location }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <!-- Device Filter -->
+            <div>
+              <label for="deviceFilter" class="block text-sm font-medium text-gray-700 mb-1">Device Type</label>
+              <select id="deviceFilter" name="device_filter" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                <option value="">All Devices</option>
+                {% for device in device_types %}
+                <option value="{{ device }}" {% if filters.device_filter == device %}selected{% endif %}>{{ device|title }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-4">
+            <div class="flex items-center space-x-4">
+              <button type="button" onclick="applyFilters()" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                Apply Filters
+              </button>
+              <button type="button" onclick="resetFilters()" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                Reset
+              </button>
+            </div>
+            <div class="flex items-center space-x-2">
+              <button type="button" onclick="exportData('xlsx')" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <svg class="h-4 w-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                Export Excel
+              </button>
+              <button type="button" onclick="exportData('csv')" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                Export CSV
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Main Content Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- Live Activity Feed -->
-        <div class="lg:col-span-2">
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-                <div
-                    class="px-6 py-4 border-b border-gray-200 flex items-center justify-between"
-                >
-                    <h2 class="text-xl font-semibold text-gray-900">
-                        Live Activity Feed
-                    </h2>
-                    <button
-                        onclick="refreshLiveActivity()"
-                        class="text-sm text-blue-600 hover:text-blue-800 font-medium px-3 py-2 rounded-lg hover:bg-blue-50 transition-colors"
-                    >
-                        <svg
-                            class="w-4 h-4 inline mr-1"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                        >
-                            <path
-                                fill-rule="evenodd"
-                                d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
-                                clip-rule="evenodd"
-                            ></path>
-                        </svg>
-                        Refresh
+      <!-- Live Activity Feed -->
+      <div class="lg:col-span-2">
+        <!-- Live Activity Header -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+          <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+            <h3 class="text-lg font-medium text-gray-900 flex items-center">
+              <span class="w-3 h-3 bg-green-400 rounded-full mr-2 animate-pulse"></span>
+              Live Activity
+            </h3>
+            <span class="text-sm text-gray-500">{{ live_activity_data|length }} active users</span>
+          </div>
+          <div class="p-6">
+            <div id="liveActivityFeed" class="space-y-4 max-h-96 overflow-y-auto">
+              {% for activity in live_activity_data %}
+              <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200">
+                <div class="flex items-center space-x-3">
+                  <div class="flex-shrink-0">
+                    <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                      <span class="text-sm font-medium text-blue-600">{{ activity.user.first_name.0|default:activity.user.username.0 }}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <p class="text-sm font-medium text-gray-900">{{ activity.user.username }}</p>
+                    <p class="text-xs text-gray-500">{{ activity.location }} • {{ activity.device_type|title }}</p>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <div class="flex items-center space-x-2">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                      {% if activity.activity_status == 'active' %}bg-green-100 text-green-800
+                      {% elif activity.activity_status == 'idle' %}bg-yellow-100 text-yellow-800
+                      {% else %}bg-red-100 text-red-800{% endif %}">
+                      {{ activity.activity_status|title }}
+                    </span>
+                  </div>
+                  <p class="text-xs text-gray-500 mt-1">{{ activity.session_duration_minutes }}m</p>
+                </div>
+              </div>
+              {% empty %}
+              <div class="text-center py-8">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">No active sessions</h3>
+                <p class="mt-1 text-sm text-gray-500">No users are currently active.</p>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Sessions Table -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+            <h3 class="text-lg font-medium text-gray-900">Session Details</h3>
+            <div class="flex items-center space-x-2">
+              <button onclick="selectAllSessions()" class="text-sm text-blue-600 hover:text-blue-800">Select All</button>
+              <button onclick="bulkAction('terminate')" class="inline-flex items-center px-3 py-1.5 border border-red-300 text-xs font-medium rounded text-red-700 bg-red-50 hover:bg-red-100">
+                Terminate Selected
+              </button>
+            </div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <input type="checkbox" id="selectAllCheckbox" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Device</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Productivity</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="sessionsTableBody" class="bg-white divide-y divide-gray-200">
+                {% for session_data in sessions_display %}
+                <tr class="hover:bg-gray-50">
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <input type="checkbox" name="session_ids" value="{{ session_data.session.id }}" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                      <div class="flex-shrink-0 h-8 w-8">
+                        <div class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+                          <span class="text-xs font-medium text-blue-600">{{ session_data.session.user.first_name.0|default:session_data.session.user.username.0 }}</span>
+                        </div>
+                      </div>
+                      <div class="ml-3">
+                        <p class="text-sm font-medium text-gray-900">{{ session_data.session.user.username }}</p>
+                        <p class="text-xs text-gray-500">{{ session_data.login_time_ist|date:"M d, H:i" }}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                      {% if session_data.session.is_active %}bg-green-100 text-green-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+                      {% if session_data.session.is_active %}Active{% else %}Inactive{% endif %}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {{ session_data.current_duration_minutes }}m
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                      {% if session_data.is_office_ip %}
+                      <svg class="h-4 w-4 text-green-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                      </svg>
+                      {% endif %}
+                      <span class="text-sm text-gray-900">{{ session_data.session.location|default:"Unknown" }}</span>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {{ session_data.session.device_type|title|default:"Unknown" }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                      <div class="w-16 bg-gray-200 rounded-full h-2 mr-2">
+                        <div class="h-2 rounded-full {% if session_data.session.productivity_score >= 80 %}bg-green-500{% elif session_data.session.productivity_score >= 60 %}bg-yellow-500{% else %}bg-red-500{% endif %}" style="width: {{ session_data.session.productivity_score|default:0 }}%"></div>
+                      </div>
+                      <span class="text-xs text-gray-600">{{ session_data.session.productivity_score|default:0 }}%</span>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <a href="{% url 'aps_admin:user_session_detail' session_data.session.user.id session_data.login_time_ist|date:'Y-m-d' %}" 
+                       class="text-blue-600 hover:text-blue-900 mr-2">
+                        View
+                    </a>
+                    {% if session_data.session.is_active %}
+                    <button onclick="terminateSession('{{ session_data.session.id }}')" class="text-red-600 hover:text-red-900">
+                        Terminate
                     </button>
-                </div>
-                <div class="p-6">
-                    <div
-                        id="live-activity-container"
-                        class="space-y-4 max-h-96 overflow-y-auto"
-                    >
-                        {% for activity in live_activity_data %}
-                        <div
-                            class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-100"
-                        >
-                            <div class="flex items-center space-x-4">
-                                <div
-                                    class="w-3 h-3 rounded-full {% if activity.activity_status == 'active' %}bg-green-500{% elif activity.activity_status == 'idle' %}bg-yellow-500{% else %}bg-red-500{% endif %}"
-                                ></div>
-                                <div>
-                                    <p
-                                        class="text-sm font-medium text-gray-900"
-                                    >
-                                        {{ activity.user.username }}
-                                    </p>
-                                    <p class="text-xs text-gray-500 mt-1">
-                                        {{
-                                        activity.current_url|truncatechars:50}}
-                                    </p>
-                                </div>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-sm font-medium text-gray-900">
-                                    {{ activity.session_duration_minutes }}m
-                                </p>
-                                <p class="text-xs text-gray-500 mt-1">
-                                    {{ activity.device_type }}
-                                </p>
-                            </div>
-                        </div>
-                        {% empty %}
-                        <div class="text-center py-12">
-                            <svg
-                                class="w-12 h-12 text-gray-300 mx-auto mb-4"
-                                fill="currentColor"
-                                viewBox="0 0 20 20"
-                            >
-                                <path
-                                    fill-rule="evenodd"
-                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                                    clip-rule="evenodd"
-                                ></path>
-                            </svg>
-                            <p class="text-gray-500 text-lg">
-                                No active sessions
-                            </p>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- Analytics Summary -->
-        <div class="space-y-8">
-            <!-- User Insights -->
-            <div
-                class="bg-gradient-to-br from-white to-blue-50/30 rounded-xl shadow-sm border border-blue-100/50 hover:shadow-md transition-all duration-300"
-            >
-                <div
-                    class="px-6 py-4 border-b border-blue-100/50 bg-white/50 rounded-t-xl"
-                >
-                    <div class="flex items-center space-x-3">
-                        <div
-                            class="w-8 h-8 bg-blue-500/10 rounded-lg flex items-center justify-center"
-                        >
-                            <svg
-                                class="w-4 h-4 text-blue-600"
-                                fill="currentColor"
-                                viewBox="0 0 20 20"
-                            >
-                                <path
-                                    d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"
-                                ></path>
-                            </svg>
-                        </div>
-                        <h3
-                            class="text-lg font-semibold text-slate-800 tracking-tight"
-                        >
-                            Top Users
-                        </h3>
-                    </div>
-                </div>
-                <div class="p-6">
-                    <div class="space-y-4">
-                        {% for insight in user_insights|slice:":5" %}
-                        <div
-                            class="flex items-center justify-between p-3 bg-white/60 rounded-lg border border-blue-50 hover:bg-white/80 transition-colors duration-200"
-                        >
-                            <div class="flex items-center space-x-3">
-                                <div
-                                    class="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center"
-                                >
-                                    <svg
-                                        class="w-4 h-4 text-white"
-                                        fill="currentColor"
-                                        viewBox="0 0 20 20"
-                                    >
-                                        <path
-                                            fill-rule="evenodd"
-                                            d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-                                            clip-rule="evenodd"
-                                        ></path>
-                                    </svg>
-                                </div>
-                                <div>
-                                    <p
-                                        class="text-sm font-medium text-slate-800"
-                                    >
-                                        {{ insight.username }}
-                                    </p>
-                                    <p
-                                        class="text-xs text-slate-500 font-normal"
-                                    >
-                                        {{ insight.total_sessions }} sessions
-                                    </p>
-                                </div>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-sm font-semibold text-slate-800">
-                                    {{ insight.avg_productivity|floatformat:0
-                                    }}%
-                                </p>
-                                <p class="text-xs text-slate-500 font-normal">
-                                    {{ insight.total_hours|floatformat:1 }}h
-                                </p>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-
-            <!-- Device Distribution -->
-            <div
-                class="bg-gradient-to-br from-white to-emerald-50/30 rounded-xl shadow-sm border border-emerald-100/50 hover:shadow-md transition-all duration-300"
-            >
-                <div
-                    class="px-6 py-4 border-b border-emerald-100/50 bg-white/50 rounded-t-xl"
-                >
-                    <div class="flex items-center space-x-3">
-                        <div
-                            class="w-8 h-8 bg-emerald-500/10 rounded-lg flex items-center justify-center"
-                        >
-                            <svg
-                                class="w-4 h-4 text-emerald-600"
-                                fill="currentColor"
-                                viewBox="0 0 20 20"
-                            >
-                                <path
-                                    fill-rule="evenodd"
-                                    d="M3 5a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2h-2.22l.123.489.804.804A1 1 0 0113 18H7a1 1 0 01-.707-1.707l.804-.804L7.22 15H5a2 2 0 01-2-2V5zm5.771 7H5V5h10v7H8.771z"
-                                    clip-rule="evenodd"
-                                ></path>
-                            </svg>
-                        </div>
-                        <h3
-                            class="text-lg font-semibold text-slate-800 tracking-tight"
-                        >
-                            Device Types
-                        </h3>
-                    </div>
-                </div>
-                <div class="p-6">
-                    <div class="space-y-3">
-                        <div
-                            class="flex items-center justify-between p-3 bg-white/60 rounded-lg border border-emerald-50 hover:bg-white/80 transition-colors duration-200"
-                        >
-                            <div class="flex items-center space-x-3">
-                                <svg
-                                    class="w-5 h-5 text-emerald-600"
-                                    fill="currentColor"
-                                    viewBox="0 0 20 20"
-                                >
-                                    <path
-                                        fill-rule="evenodd"
-                                        d="M3 5a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2h-2.22l.123.489.804.804A1 1 0 0113 18H7a1 1 0 01-.707-1.707l.804-.804L7.22 15H5a2 2 0 01-2-2V5zm5.771 7H5V5h10v7H8.771z"
-                                        clip-rule="evenodd"
-                                    ></path>
-                                </svg>
-                                <span class="text-sm font-medium text-slate-700"
-                                    >Desktop</span
-                                >
-                            </div>
-                            <span
-                                class="text-sm font-semibold text-slate-800 bg-emerald-100 px-2 py-1 rounded-full"
-                            >
-                                {{
-                                security_insights.device_distribution.desktop|default:0
-                                }}
-                            </span>
-                        </div>
-                        <div
-                            class="flex items-center justify-between p-3 bg-white/60 rounded-lg border border-emerald-50 hover:bg-white/80 transition-colors duration-200"
-                        >
-                            <div class="flex items-center space-x-3">
-                                <svg
-                                    class="w-5 h-5 text-emerald-600"
-                                    fill="currentColor"
-                                    viewBox="0 0 20 20"
-                                >
-                                    <path
-                                        d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1V7zM9 11a1 1 0 102 0 1 1 0 00-2 0z"
-                                    ></path>
-                                </svg>
-                                <span class="text-sm font-medium text-slate-700"
-                                    >Mobile</span
-                                >
-                            </div>
-                            <span
-                                class="text-sm font-semibold text-slate-800 bg-emerald-100 px-2 py-1 rounded-full"
-                            >
-                                {{
-                                security_insights.device_distribution.mobile|default:0
-                                }}
-                            </span>
-                        </div>
-                        <div
-                            class="flex items-center justify-between p-3 bg-white/60 rounded-lg border border-emerald-50 hover:bg-white/80 transition-colors duration-200"
-                        >
-                            <div class="flex items-center space-x-3">
-                                <svg
-                                    class="w-5 h-5 text-emerald-600"
-                                    fill="currentColor"
-                                    viewBox="0 0 20 20"
-                                >
-                                    <path
-                                        fill-rule="evenodd"
-                                        d="M5 2a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V4a2 2 0 00-2-2H5zm0 2h10v12H5V4z"
-                                        clip-rule="evenodd"
-                                    ></path>
-                                </svg>
-                                <span class="text-sm font-medium text-slate-700"
-                                    >Tablet</span
-                                >
-                            </div>
-                            <span
-                                class="text-sm font-semibold text-slate-800 bg-emerald-100 px-2 py-1 rounded-full"
-                            >
-                                {{
-                                security_insights.device_distribution.tablet|default:0
-                                }}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Location Distribution -->
-            <div
-                class="bg-gradient-to-br from-white to-purple-50/30 rounded-xl shadow-sm border border-purple-100/50 hover:shadow-md transition-all duration-300"
-            >
-                <div
-                    class="px-6 py-4 border-b border-purple-100/50 bg-white/50 rounded-t-xl"
-                >
-                    <div class="flex items-center space-x-3">
-                        <div
-                            class="w-8 h-8 bg-purple-500/10 rounded-lg flex items-center justify-center"
-                        >
-                            <svg
-                                class="w-4 h-4 text-purple-600"
-                                fill="currentColor"
-                                viewBox="0 0 20 20"
-                            >
-                                <path
-                                    fill-rule="evenodd"
-                                    d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
-                                    clip-rule="evenodd"
-                                ></path>
-                            </svg>
-                        </div>
-                        <h3
-                            class="text-lg font-semibold text-slate-800 tracking-tight"
-                        >
-                            Locations
-                        </h3>
-                    </div>
-                </div>
-                <div class="p-6">
-                    <div class="space-y-3">
-                        {% for location, count in location_insights.location_distribution.items %}
-                        <div
-                            class="flex items-center justify-between p-3 bg-white/60 rounded-lg border border-purple-50 hover:bg-white/80 transition-colors duration-200"
-                        >
-                            <div class="flex items-center space-x-3">
-                                <svg
-                                    class="w-5 h-5 text-purple-600"
-                                    fill="currentColor"
-                                    viewBox="0 0 20 20"
-                                >
-                                    <path
-                                        fill-rule="evenodd"
-                                        d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
-                                        clip-rule="evenodd"
-                                    ></path>
-                                </svg>
-                                <span class="text-sm font-medium text-slate-700"
-                                    >{{ location }}</span
-                                >
-                            </div>
-                            <span
-                                class="text-sm font-semibold text-slate-800 bg-purple-100 px-2 py-1 rounded-full"
-                                >{{ count }}</span
-                            >
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Detailed Analytics Tabs -->
-    <div class="mt-10">
-        <div class="border-b border-slate-200/60 bg-white/50 rounded-t-xl">
-            <nav class="-mb-px flex space-x-8 px-6">
-                <button
-                    onclick="showTab('sessions')"
-                    class="tab-button active py-4 px-1 border-b-2 border-blue-500 font-semibold text-sm text-blue-600 tracking-tight flex items-center space-x-2"
-                >
-                    <svg
-                        class="w-4 h-4"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                    >
-                        <path
-                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                        ></path>
-                    </svg>
-                    <span>Sessions</span>
-                </button>
-                <button
-                    onclick="showTab('analytics')"
-                    class="tab-button py-4 px-1 border-b-2 border-transparent font-medium text-sm text-slate-500 hover:text-slate-700 hover:border-slate-300 tracking-tight flex items-center space-x-2 transition-colors duration-200"
-                >
-                    <svg
-                        class="w-4 h-4"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                    >
-                        <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"></path>
-                        <path
-                            d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"
-                        ></path>
-                    </svg>
-                    <span>Analytics</span>
-                </button>
-                <button
-                    onclick="showTab('security')"
-                    class="tab-button py-4 px-1 border-b-2 border-transparent font-medium text-sm text-slate-500 hover:text-slate-700 hover:border-slate-300 tracking-tight flex items-center space-x-2 transition-colors duration-200"
-                >
-                    <svg
-                        class="w-4 h-4"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                    >
-                        <path
-                            fill-rule="evenodd"
-                            d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                            clip-rule="evenodd"
-                        ></path>
-                    </svg>
-                    <span>Security</span>
-                </button>
-                <button
-                    onclick="showTab('performance')"
-                    class="tab-button py-4 px-1 border-b-2 border-transparent font-medium text-sm text-slate-500 hover:text-slate-700 hover:border-slate-300 tracking-tight flex items-center space-x-2 transition-colors duration-200"
-                >
-                    <svg
-                        class="w-4 h-4"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                    >
-                        <path
-                            fill-rule="evenodd"
-                            d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"
-                            clip-rule="evenodd"
-                        ></path>
-                    </svg>
-                    <span>Performance</span>
-                </button>
-            </nav>
-        </div>
-
-        <!-- Sessions Tab -->
-        <div id="sessions-tab" class="tab-content mt-6">
-            <div
-                class="bg-white rounded-xl shadow-sm border border-slate-200/60"
-            >
-                <div
-                    class="px-6 py-4 border-b border-slate-200/60 flex items-center justify-between bg-slate-50/50 rounded-t-xl"
-                >
-                    <div class="flex items-center space-x-3">
-                        <div
-                            class="w-8 h-8 bg-blue-500/10 rounded-lg flex items-center justify-center"
-                        >
-                            <svg
-                                class="w-4 h-4 text-blue-600"
-                                fill="currentColor"
-                                viewBox="0 0 20 20"
-                            >
-                                <path
-                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                                ></path>
-                            </svg>
-                        </div>
-                        <h3
-                            class="text-lg font-semibold text-slate-800 tracking-tight"
-                        >
-                            Session Details
-                        </h3>
-                    </div>
-                    <div class="flex space-x-3">
-                        <button
-                            onclick="exportData('csv')"
-                            class="inline-flex items-center space-x-2 text-sm text-blue-600 hover:text-blue-800 font-medium px-3 py-2 rounded-lg hover:bg-blue-50 transition-colors duration-200"
-                        >
-                            <svg
-                                class="w-4 h-4"
-                                fill="currentColor"
-                                viewBox="0 0 20 20"
-                            >
-                                <path
-                                    fill-rule="evenodd"
-                                    d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
-                                    clip-rule="evenodd"
-                                ></path>
-                            </svg>
-                            <span>Export CSV</span>
-                        </button>
-                        <button
-                            onclick="exportData('excel')"
-                            class="inline-flex items-center space-x-2 text-sm text-emerald-600 hover:text-emerald-800 font-medium px-3 py-2 rounded-lg hover:bg-emerald-50 transition-colors duration-200"
-                        >
-                            <svg
-                                class="w-4 h-4"
-                                fill="currentColor"
-                                viewBox="0 0 20 20"
-                            >
-                                <path
-                                    fill-rule="evenodd"
-                                    d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z"
-                                    clip-rule="evenodd"
-                                ></path>
-                            </svg>
-                            <span>Export Excel</span>
-                        </button>
-                    </div>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-slate-200/60">
-                        <thead class="bg-slate-50/80">
-                            <tr>
-                                <th
-                                    class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider"
-                                >
-                                    User
-                                </th>
-                                <th
-                                    class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider"
-                                >
-                                    Login Time
-                                </th>
-                                <th
-                                    class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider"
-                                >
-                                    Duration
-                                </th>
-                                <th
-                                    class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider"
-                                >
-                                    Device
-                                </th>
-                                <th
-                                    class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider"
-                                >
-                                    Location
-                                </th>
-                                <th
-                                    class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider"
-                                >
-                                    Productivity
-                                </th>
-                                <th
-                                    class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider"
-                                >
-                                    Status
-                                </th>
-                                <th
-                                    class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider"
-                                >
-                                    Actions
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-slate-100">
-                            {% for session_data in sessions_display %}
-                            <tr
-                                class="hover:bg-slate-50/60 transition-colors duration-200"
-                            >
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center space-x-3">
-                                        <div
-                                            class="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center"
-                                        >
-                                            <svg
-                                                class="w-4 h-4 text-white"
-                                                fill="currentColor"
-                                                viewBox="0 0 20 20"
-                                            >
-                                                <path
-                                                    fill-rule="evenodd"
-                                                    d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-                                                    clip-rule="evenodd"
-                                                ></path>
-                                            </svg>
-                                        </div>
-                                        <div
-                                            class="text-sm font-medium text-slate-800"
-                                        >
-                                            {{
-                                            session_data.session.user.username
-                                            }}
-                                        </div>
-                                    </div>
-                                </td>
-                                <td
-                                    class="px-6 py-4 whitespace-nowrap text-sm text-slate-700 font-medium"
-                                >
-                                    {{ session_data.login_time_ist|date:"M d,
-                                    H:i" }}
-                                </td>
-                                <td
-                                    class="px-6 py-4 whitespace-nowrap text-sm text-slate-700 font-medium"
-                                >
-                                    {{
-                                    session_data.current_duration_minutes|floatformat:0
-                                    }}m
-                                </td>
-                                <td
-                                    class="px-6 py-4 whitespace-nowrap text-sm text-slate-700 font-medium"
-                                >
-                                    {{ session_data.session.device_type|title }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span
-                                        class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium {% if session_data.session.location == 'Office' %}bg-emerald-100 text-emerald-800{% else %}bg-amber-100 text-amber-800{% endif %}"
-                                    >
-                                        {{
-                                        session_data.session.location|default:"Unknown"
-                                        }}
-                                    </span>
-                                </td>
-                                <td
-                                    class="px-6 py-4 whitespace-nowrap text-sm text-slate-700 font-semibold"
-                                >
-                                    {{
-                                    session_data.session.productivity_score|default:0|floatformat:0
-                                    }}%
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span
-                                        class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium {% if session_data.session.is_active %}bg-emerald-100 text-emerald-800{% else %}bg-slate-100 text-slate-700{% endif %}"
-                                    >
-                                        {% if session_data.session.is_active %}Active{% else %}Inactive{% endif %}
-                                        
-                                    </span>
-                                </td>
-                                <td
-                                    class="px-6 py-4 whitespace-nowrap text-sm font-medium"
-                                >
-                                    <a
-                                        href="{% url 'aps_admin:user_session_detail' session_data.session.user.id session_data.login_time_ist.date %}"
-                                        class="inline-flex items-center space-x-1 text-blue-600 hover:text-blue-800 font-medium px-3 py-2 rounded-lg hover:bg-blue-50 transition-colors duration-200"
-                                    >
-                                        <svg
-                                            class="w-4 h-4"
-                                            fill="currentColor"
-                                            viewBox="0 0 20 20"
-                                        >
-                                            <path
-                                                d="M10 12a2 2 0 100-4 2 2 0 000 4z"
-                                            ></path>
-                                            <path
-                                                fill-rule="evenodd"
-                                                d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
-                                                clip-rule="evenodd"
-                                            ></path>
-                                        </svg>
-                                        <span>View Details</span>
-                                    </a>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                <!-- Pagination -->
-                {% if sessions_page.has_other_pages %}
-                <div
-                    class="px-6 py-4 border-t border-slate-200/60 flex items-center justify-between bg-slate-50/30"
-                >
-                    <div class="flex-1 flex justify-between sm:hidden">
-                        {% if sessions_page.has_previous %}
-                        <a
-                            href="?page={{ sessions_page.previous_page_number }}"
-                            class="relative inline-flex items-center px-4 py-2 border border-slate-300 text-sm font-medium rounded-lg text-slate-700 bg-white hover:bg-slate-50 transition-colors duration-200"
-                            >Previous</a
-                        >
-                        {% endif %} {% if sessions_page.has_next %}
-                        <a
-                            href="?page={{ sessions_page.next_page_number }}"
-                            class="ml-3 relative inline-flex items-center px-4 py-2 border border-slate-300 text-sm font-medium rounded-lg text-slate-700 bg-white hover:bg-slate-50 transition-colors duration-200"
-                            >Next</a
-                        >
-                        {% endif %}
-                    </div>
-                    <div
-                        class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between"
-                    >
-                        <div>
-                            <p class="text-sm text-slate-600 font-medium">
-                                Showing
-                                <span class="font-semibold text-slate-800"
-                                    >{{ sessions_page.start_index }}</span
-                                >
-                                to
-                                <span class="font-semibold text-slate-800"
-                                    >{{ sessions_page.end_index }}</span
-                                >
-                                of
-                                <span class="font-semibold text-slate-800"
-                                    >{{ sessions_page.paginator.count }}</span
-                                >
-                                results
-                            </p>
-                        </div>
-                        <div>
-                            <nav
-                                class="relative z-0 inline-flex rounded-lg shadow-sm -space-x-px"
-                            >
-                                {% if sessions_page.has_previous %}
-                                <a
-                                    href="?page={{ sessions_page.previous_page_number }}"
-                                    class="relative inline-flex items-center px-3 py-2 rounded-l-lg border border-slate-300 bg-white text-sm font-medium text-slate-500 hover:bg-slate-50 transition-colors duration-200"
-                                    >Previous</a
-                                >
-                                {% endif %} {% for num in sessions_page.paginator.page_range %} {% if sessions_page.number == num %}
-                                <span
-                                    class="relative inline-flex items-center px-4 py-2 border border-slate-300 bg-blue-50 text-sm font-semibold text-blue-600"
-                                    >{{ num }}</span
-                                >
-                                {% else %}
-                                <a
-                                    href="?page={{ num }}"
-                                    class="relative inline-flex items-center px-4 py-2 border border-slate-300 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors duration-200"
-                                    >{{ num }}</a
-                                >
-                                {% endif %} {% endfor %} {% if sessions_page.has_next %}
-                                <a
-                                    href="?page={{ sessions_page.next_page_number }}"
-                                    class="relative inline-flex items-center px-3 py-2 rounded-r-lg border border-slate-300 bg-white text-sm font-medium text-slate-500 hover:bg-slate-50 transition-colors duration-200"
-                                    >Next</a
-                                >
-                                {% endif %}
-                            </nav>
-                        </div>
-                    </div>
-                </div>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="8" class="px-6 py-4 text-center text-sm text-gray-500">
+                    No sessions found matching your criteria.
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          
+          <!-- Pagination -->
+          {% if sessions_page.has_other_pages %}
+          <div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
+            <div class="flex items-center justify-between">
+              <div class="flex-1 flex justify-between sm:hidden">
+                {% if sessions_page.has_previous %}
+                <a href="?page={{ sessions_page.previous_page_number }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">Previous</a>
                 {% endif %}
+                {% if sessions_page.has_next %}
+                <a href="?page={{ sessions_page.next_page_number }}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">Next</a>
+                {% endif %}
+              </div>
+              <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                  <p class="text-sm text-gray-700">
+                    Showing <span class="font-medium">{{ sessions_page.start_index }}</span> to <span class="font-medium">{{ sessions_page.end_index }}</span> of <span class="font-medium">{{ sessions_page.paginator.count }}</span> results
+                  </p>
+                </div>
+                <div>
+                  <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                    {% if sessions_page.has_previous %}
+                    <a href="?page={{ sessions_page.previous_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                      <span class="sr-only">Previous</span>
+                      <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                      </svg>
+                    </a>
+                    {% endif %}
+                    
+                    {% for num in sessions_page.paginator.page_range %}
+                    {% if num == sessions_page.number %}
+                    <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-blue-50 text-sm font-medium text-blue-600">{{ num }}</span>
+                    {% else %}
+                    <a href="?page={{ num }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">{{ num }}</a>
+                    {% endif %}
+                    {% endfor %}
+                    
+                    {% if sessions_page.has_next %}
+                    <a href="?page={{ sessions_page.next_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                      <span class="sr-only">Next</span>
+                      <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                      </svg>
+                    </a>
+                    {% endif %}
+                  </nav>
+                </div>
+              </div>
             </div>
+          </div>
+          {% endif %}
         </div>
-        <!-- Analytics Tab -->
-        <div id="analytics-tab" class="tab-content mt-6 hidden">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="bg-white rounded-lg shadow-sm border p-6">
-                    <h4 class="text-lg font-semibold text-gray-900 mb-4">
-                        Tab Behavior Analysis
-                    </h4>
-                    <div class="space-y-3">
-                        <div class="flex justify-between">
-                            <span class="text-sm text-gray-600"
-                                >Avg Tab Switches:</span
-                            >
-                            <span class="text-sm font-medium"
-                                >{{ tab_analysis.avg_tab_switches|floatformat:1
-                                }}</span
-                            >
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-sm text-gray-600"
-                                >Avg Focus Time:</span
-                            >
-                            <span class="text-sm font-medium"
-                                >{{ tab_analysis.avg_focus_time|floatformat:1
-                                }}m</span
-                            >
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-sm text-gray-600"
-                                >Multi-tab Sessions:</span
-                            >
-                            <span class="text-sm font-medium"
-                                >{{ tab_analysis.multi_tab_sessions }}</span
-                            >
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-white rounded-lg shadow-sm border p-6">
-                    <h4 class="text-lg font-semibold text-gray-900 mb-4">
-                        Engagement Metrics
-                    </h4>
-                    <div class="space-y-3">
-                        <div class="flex justify-between">
-                            <span class="text-sm text-gray-600"
-                                >Avg Engagement Score:</span
-                            >
-                            <span class="text-sm font-medium"
-                                >{{
-                                quality_insights.avg_engagement|floatformat:0
-                                }}%</span
-                            >
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-sm text-gray-600"
-                                >High Quality Sessions:</span
-                            >
-                            <span class="text-sm font-medium"
-                                >{{ quality_insights.high_quality_sessions
-                                }}</span
-                            >
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-sm text-gray-600"
-                                >Low Quality Sessions:</span
-                            >
-                            <span class="text-sm font-medium"
-                                >{{ quality_insights.low_quality_sessions
-                                }}</span
-                            >
-                        </div>
-                    </div>
-                </div>
+      </div>
+
+      <!-- Sidebar Analytics -->
+      <div class="space-y-6">
+        <!-- Quick Stats -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Quick Stats</h3>
+          <div class="space-y-4">
+<div class="flex items-center justify-between">
+              <span class="text-sm text-gray-600">Office Sessions</span>
+              <span class="text-sm font-semibold text-green-600">{{ security_insights.office_sessions }}</span>
             </div>
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-gray-600">Remote Sessions</span>
+              <span class="text-sm font-semibold text-blue-600">{{ security_insights.remote_sessions }}</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-gray-600">Mobile Users</span>
+              <span class="text-sm font-semibold text-yellow-600">{{ security_insights.mobile_users }}</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-gray-600">Avg Idle Time</span>
+              <span class="text-sm font-semibold text-red-600">{{ performance_insights.avg_idle_time|floatformat:1 }}m</span>
+            </div>
+          </div>
         </div>
 
-        <!-- Security Tab -->
-        <div id="security-tab" class="tab-content mt-6 hidden">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Security Overview -->
-                <div class="bg-white rounded-lg shadow-sm border p-6">
-                    <h4 class="text-lg font-semibold text-gray-900 mb-4">
-                        Security Overview
-                    </h4>
-                    <div class="space-y-3">
-                        <div class="flex justify-between">
-                            <span class="text-sm text-gray-600"
-                                >Unique IPs:</span
-                            >
-                            <span class="text-sm font-medium"
-                                >{{ security_insights.unique_ips }}</span
-                            >
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-sm text-gray-600"
-                                >Suspicious Activities:</span
-                            >
-                            <span class="text-sm font-medium text-red-600"
-                                >{{ security_insights.suspicious_activities
-                                }}</span
-                            >
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-sm text-gray-600"
-                                >Failed Logins:</span
-                            >
-                            <span class="text-sm font-medium"
-                                >{{ security_insights.failed_logins|default:0
-                                }}</span
-                            >
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-sm text-gray-600"
-                                >CSRF Incidents:</span
-                            >
-                            <span class="text-sm font-medium"
-                                >{{ security_insights.csrf_incidents|default:0
-                                }}</span
-                            >
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-sm text-gray-600"
-                                >Fingerprint Mismatches:</span
-                            >
-                            <span class="text-sm font-medium"
-                                >{{
-                                security_insights.fingerprint_mismatches|default:0
-                                }}</span
-                            >
-                        </div>
-                    </div>
-                </div>
+ 
 
-                <!-- Risk Assessment -->
-                <div class="bg-white rounded-lg shadow-sm border p-6">
-                    <h4 class="text-lg font-semibold text-gray-900 mb-4">
-                        Risk Assessment
-                    </h4>
-                    <div class="space-y-3">
-                        {% if security_insights.risk_level == 'high' %}
-                        <div class="flex items-center text-red-600">
-                            <svg
-                                class="w-5 h-5 mr-2"
-                                fill="currentColor"
-                                viewBox="0 0 20 20"
-                            >
-                                <path
-                                    fill-rule="evenodd"
-                                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                                    clip-rule="evenodd"
-                                ></path>
-                            </svg>
-                            High Risk
-                        </div>
-                        {% elif security_insights.risk_level == 'medium' %}
-                        <div class="flex items-center text-yellow-600">
-                            <svg
-                                class="w-5 h-5 mr-2"
-                                fill="currentColor"
-                                viewBox="0 0 20 20"
-                            >
-                                <path
-                                    fill-rule="evenodd"
-                                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                                    clip-rule="evenodd"
-                                ></path>
-                            </svg>
-                            Medium Risk
-                        </div>
-                        {% else %}
-                        <div class="flex items-center text-green-600">
-                            <svg
-                                class="w-5 h-5 mr-2"
-                                fill="currentColor"
-                                viewBox="0 0 20 20"
-                            >
-                                <path
-                                    fill-rule="evenodd"
-                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                    clip-rule="evenodd"
-                                ></path>
-                            </svg>
-                            Low Risk
-                        </div>
-                        {% endif %}
-                        <div class="mt-4">
-                            <div class="flex justify-between text-sm mb-1">
-                                <span class="text-gray-600"
-                                    >Security Score:</span
-                                >
-                                <span class="font-medium"
-                                    >{{
-                                    security_insights.security_score|default:85
-                                    }}%</span
-                                >
-                            </div>
-                            <div class="w-full bg-gray-200 rounded-full h-2">
-                                <div
-                                    class="h-2 rounded-full {% if security_insights.security_score >= 80 %}bg-green-600{% elif security_insights.security_score >= 60 %}bg-yellow-600{% else %}bg-red-600{% endif %}"
-                                    style="width: {{ security_insights.security_score|default:85 }}%"
-                                ></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- IP & Location Analysis -->
-                <div class="bg-white rounded-lg shadow-sm border p-6">
-                    <h4 class="text-lg font-semibold text-gray-900 mb-4">
-                        IP & Location Analysis
-                    </h4>
-                    <div class="space-y-3">
-                        <div class="flex justify-between">
-                            <span class="text-sm text-gray-600"
-                                >Office IPs:</span
-                            >
-                            <span class="text-sm font-medium"
-                                >{{ security_insights.office_ip_count|default:0
-                                }}</span
-                            >
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-sm text-gray-600"
-                                >External IPs:</span
-                            >
-                            <span class="text-sm font-medium"
-                                >{{
-                                security_insights.external_ip_count|default:0
-                                }}</span
-                            >
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-sm text-gray-600"
-                                >VPN Detected:</span
-                            >
-                            <span class="text-sm font-medium"
-                                >{{ security_insights.vpn_sessions|default:0
-                                }}</span
-                            >
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-sm text-gray-600"
-                                >Unknown Locations:</span
-                            >
-                            <span class="text-sm font-medium"
-                                >{{
-                                security_insights.unknown_locations|default:0
-                                }}</span
-                            >
-                        </div>
-                    </div>
-                </div>
+        <!-- Device Distribution -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Device Distribution</h3>
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
+                <span class="text-sm text-gray-600">Desktop</span>
+              </div>
+              <span class="text-sm font-semibold text-gray-900">{{ security_insights.desktop_users|default:0 }}</span>
             </div>
-
-            <!-- Security Incidents Table -->
-            <div class="mt-6 bg-white rounded-lg shadow-sm border">
-                <div
-                    class="px-4 py-3 border-b border-gray-200 flex items-center justify-between"
-                >
-                    <h4 class="text-lg font-semibold text-gray-900">
-                        Recent Security Incidents
-                    </h4>
-                    <button
-                        onclick="refreshSecurityIncidents()"
-                        class="text-sm text-blue-600 hover:text-blue-800"
-                    >
-                        Refresh
-                    </button>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                >
-                                    User
-                                </th>
-                                <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                >
-                                    Incident Type
-                                </th>
-                                <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                >
-                                    IP Address
-                                </th>
-                                <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                >
-                                    Time
-                                </th>
-                                <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                >
-                                    Severity
-                                </th>
-                                <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                >
-                                    Actions
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            {% for incident in security_insights.recent_incidents %}
-                            <tr class="hover:bg-gray-50">
-                                <td
-                                    class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
-                                >
-                                    {{ incident.user.username }}
-                                </td>
-                                <td
-                                    class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
-                                >
-                                    {{ incident.incident_type|title }}
-                                </td>
-                                <td
-                                    class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
-                                >
-                                    {{ incident.ip_address }}
-                                </td>
-                                <td
-                                    class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
-                                >
-                                    {{ incident.timestamp|date:"M d, H:i" }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span
-                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if incident.severity == 'high' %}bg-red-100 text-red-800{% elif incident.severity == 'medium' %}bg-yellow-100 text-yellow-800{% else %}bg-green-100 text-green-800{% endif %}"
-                                    >
-                                        {{ incident.severity|title }}
-                                    </span>
-                                </td>
-                                <td
-                                    class="px-6 py-4 whitespace-nowrap text-sm font-medium"
-                                >
-                                    <a
-                                        href="#"
-                                        onclick="investigateIncident('{{ incident.id }}')"
-                                        class="text-blue-600 hover:text-blue-900"
-                                        >Investigate</a
-                                    >
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td
-                                    colspan="6"
-                                    class="px-6 py-4 text-center text-sm text-gray-500"
-                                >
-                                    No security incidents found
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                <span class="text-sm text-gray-600">Mobile</span>
+              </div>
+              <span class="text-sm font-semibold text-gray-900">{{ security_insights.mobile_users|default:0 }}</span>
             </div>
-
-            <!-- Browser Fingerprint Analysis -->
-            <div class="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="bg-white rounded-lg shadow-sm border p-6">
-                    <h4 class="text-lg font-semibold text-gray-900 mb-4">
-                        Browser Fingerprint Analysis
-                    </h4>
-                    <div class="space-y-3">
-                        <div class="flex justify-between">
-                            <span class="text-sm text-gray-600"
-                                >Unique Fingerprints:</span
-                            >
-                            <span class="text-sm font-medium"
-                                >{{
-                                security_insights.unique_fingerprints|default:0
-                                }}</span
-                            >
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-sm text-gray-600"
-                                >Fingerprint Changes:</span
-                            >
-                            <span class="text-sm font-medium"
-                                >{{
-                                security_insights.fingerprint_changes|default:0
-                                }}</span
-                            >
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-sm text-gray-600"
-                                >Suspicious Changes:</span
-                            >
-                            <span class="text-sm font-medium text-red-600"
-                                >{{
-                                security_insights.suspicious_fingerprint_changes|default:0
-                                }}</span
-                            >
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Session Security Metrics -->
-                <div class="bg-white rounded-lg shadow-sm border p-6">
-                    <h4 class="text-lg font-semibold text-gray-900 mb-4">
-                        Session Security
-                    </h4>
-                    <div class="space-y-3">
-                        <div class="flex justify-between">
-                            <span class="text-sm text-gray-600"
-                                >Secure Sessions:</span
-                            >
-                            <span class="text-sm font-medium text-green-600"
-                                >{{ security_insights.secure_sessions|default:0
-                                }}</span
-                            >
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-sm text-gray-600"
-                                >Insecure Sessions:</span
-                            >
-                            <span class="text-sm font-medium text-red-600"
-                                >{{
-                                security_insights.insecure_sessions|default:0
-                                }}</span
-                            >
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-sm text-gray-600"
-                                >Multi-device Users:</span
-                            >
-                            <span class="text-sm font-medium"
-                                >{{
-                                security_insights.multi_device_users|default:0
-                                }}</span
-                            >
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-sm text-gray-600"
-                                >Concurrent Sessions:</span
-                            >
-                            <span class="text-sm font-medium"
-                                >{{
-                                security_insights.concurrent_sessions|default:0
-                                }}</span
-                            >
-                        </div>
-                    </div>
-                </div>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                <span class="text-sm text-gray-600">Tablet</span>
+              </div>
+              <span class="text-sm font-semibold text-gray-900">{{ security_insights.tablet_users|default:0 }}</span>
             </div>
+          </div>
         </div>
 
-        <!-- Performance Tab -->
-        <div id="performance-tab" class="tab-content mt-6 hidden">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="bg-white rounded-lg shadow-sm border p-6">
-                    <h4 class="text-lg font-semibold text-gray-900 mb-4">
-                        Response Times
-                    </h4>
-                    <div class="space-y-3">
-                        <div class="flex justify-between">
-                            <span class="text-sm text-gray-600"
-                                >Avg Load Time:</span
-                            >
-                            <span class="text-sm font-medium"
-                                >{{
-                                performance_insights.avg_load_time|floatformat:2
-                                }}s</span
-                            >
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-sm text-gray-600"
-                                >Slow Requests:</span
-                            >
-                            <span class="text-sm font-medium text-red-600"
-                                >{{ performance_insights.slow_requests|default:0
-                                }}</span
-                            >
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-sm text-gray-600"
-                                >Error Rate:</span
-                            >
-                            <span class="text-sm font-medium"
-                                >{{
-                                performance_insights.error_rate|floatformat:1
-                                }}%</span
-                            >
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-white rounded-lg shadow-sm border p-6">
-                    <h4 class="text-lg font-semibold text-gray-900 mb-4">
-                        Network Performance
-                    </h4>
-                    <div class="space-y-3">
-                        <div class="flex justify-between">
-                            <span class="text-sm text-gray-600"
-                                >Avg Network Latency:</span
-                            >
-                            <span class="text-sm font-medium"
-                                >{{
-                                performance_insights.avg_network_latency|default:0
-                                }}ms</span
-                            >
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-sm text-gray-600"
-                                >Connection Timeouts:</span
-                            >
-                            <span class="text-sm font-medium"
-                                >{{
-                                performance_insights.connection_timeouts|default:0
-                                }}</span
-                            >
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-sm text-gray-600"
-                                >Data Transfer (MB):</span
-                            >
-                            <span class="text-sm font-medium"
-                                >{{
-                                performance_insights.data_transfer|floatformat:1
-                                }}</span
-                            >
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-white rounded-lg shadow-sm border p-6">
-                    <h4 class="text-lg font-semibold text-gray-900 mb-4">
-                        System Health
-                    </h4>
-                    <div class="space-y-3">
-                        <div class="flex justify-between">
-                            <span class="text-sm text-gray-600"
-                                >Memory Usage:</span
-                            >
-                            <span class="text-sm font-medium"
-                                >{{ performance_insights.memory_usage|default:0
-                                }}%</span
-                            >
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-sm text-gray-600"
-                                >CPU Usage:</span
-                            >
-                            <span class="text-sm font-medium"
-                                >{{ performance_insights.cpu_usage|default:0
-                                }}%</span
-                            >
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-sm text-gray-600"
-                                >Active Connections:</span
-                            >
-                            <span class="text-sm font-medium"
-                                >{{
-                                performance_insights.active_connections|default:0
-                                }}</span
-                            >
-                        </div>
-                    </div>
-                </div>
+        <!-- Location Insights -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Location Overview</h3>
+          <div class="space-y-3">
+            {% for location in location_insights %}
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div class="flex items-center space-x-2">
+                {% if location.is_office %}
+                <svg class="h-4 w-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                </svg>
+                {% else %}
+                <svg class="h-4 w-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                </svg>
+                {% endif %}
+                <span class="text-sm text-gray-600">{{ location.name }}</span>
+              </div>
+              <div class="text-right">
+                <p class="text-sm font-semibold text-gray-900">{{ location.count }}</p>
+                <p class="text-xs text-gray-500">{{ location.percentage|floatformat:1 }}%</p>
+              </div>
             </div>
+            {% empty %}
+            <div class="text-center py-4">
+              <p class="text-sm text-gray-500">No location data available</p>
+            </div>
+            {% endfor %}
+          </div>
         </div>
+
+        <!-- Session Quality -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Session Quality</h3>
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                <span class="text-sm text-gray-600">High Quality</span>
+              </div>
+              <span class="text-sm font-semibold text-gray-900">{{ quality_insights.high_quality|default:0 }}</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                <span class="text-sm text-gray-600">Medium Quality</span>
+              </div>
+              <span class="text-sm font-semibold text-gray-900">{{ quality_insights.medium_quality|default:0 }}</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <div class="w-3 h-3 bg-red-500 rounded-full"></div>
+                <span class="text-sm text-gray-600">Low Quality</span>
+              </div>
+              <span class="text-sm font-semibold text-gray-900">{{ quality_insights.low_quality|default:0 }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
+</div>
+
+<!-- Session Detail Modal -->
+<div id="sessionDetailModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+  <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+    <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+      <div class="absolute inset-0 bg-gray-500 bg-opacity-75"></div>
+    </div>
+    <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+      <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg leading-6 font-medium text-gray-900" id="sessionDetailTitle">
+            Session Details
+          </h3>
+          <button onclick="closeSessionDetailModal()" class="text-gray-400 hover:text-gray-600">
+            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        <div id="sessionDetailContent" class="space-y-4">
+          <!-- Content will be loaded dynamically -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div id="confirmationModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+  <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+    <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+      <div class="absolute inset-0 bg-gray-500 bg-opacity-75"></div>
+    </div>
+    <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+      <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+        <div class="sm:flex sm:items-start">
+          <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+            <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+            </svg>
+          </div>
+          <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+            <h3 class="text-lg leading-6 font-medium text-gray-900" id="confirmationTitle">
+              Confirm Action
+            </h3>
+            <div class="mt-2">
+              <p class="text-sm text-gray-500" id="confirmationMessage">
+                Are you sure you want to proceed with this action?
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+        <button type="button" id="confirmationConfirm" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
+          Confirm
+        </button>
+        <button type="button" onclick="closeConfirmationModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="exportForms" class="hidden">
+    <form id="exportForm">
+        {% csrf_token %}
+    </form>
 </div>
 
 <script>
-    function showTab(tabName) {
-        // Hide all tab contents
-        document.querySelectorAll(".tab-content").forEach((tab) => {
-            tab.classList.add("hidden");
-        });
+// Global variables
+let refreshInterval;
+let currentSessionId = null;
+let selectedSessions = [];
 
-        // Remove active class from all tab buttons
-        document.querySelectorAll(".tab-button").forEach((button) => {
-            button.classList.remove(
-                "active",
-                "border-blue-500",
-                "text-blue-600",
-            );
-            button.classList.add("border-transparent", "text-gray-500");
-        });
+// Initialize dashboard
+document.addEventListener('DOMContentLoaded', function() {
+    initializeDashboard();
+    startAutoRefresh();
+    setupEventListeners();
+});
 
-        // Show selected tab
-        document.getElementById(tabName + "-tab").classList.remove("hidden");
+function initializeDashboard() {
+    console.log('Dashboard initialized');
+    updateLastUpdatedTime();
+    loadLiveActivity();
+}
 
-        // Add active class to clicked button
-        event.target.classList.add(
-            "active",
-            "border-blue-500",
-            "text-blue-600",
-        );
-        event.target.classList.remove("border-transparent", "text-gray-500");
+function setupEventListeners() {
+    // Filter form submission
+    document.getElementById('filtersForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        applyFilters();
+    });
+
+    // Select all checkbox
+    document.getElementById('selectAllCheckbox').addEventListener('change', function() {
+        selectAllSessions();
+    });
+
+    // Session checkboxes
+    document.addEventListener('change', function(e) {
+        if (e.target.name === 'session_ids') {
+            updateSelectedSessions();
+        }
+    });
+}
+
+function startAutoRefresh() {
+    refreshInterval = setInterval(function() {
+        refreshDashboard();
+    }, 30000); // Refresh every 30 seconds
+}
+
+function stopAutoRefresh() {
+    if (refreshInterval) {
+        clearInterval(refreshInterval);
+    }
+}
+
+function refreshDashboard() {
+    console.log('Refreshing dashboard...');
+    updateLastUpdatedTime();
+    loadOverviewMetrics();
+    loadLiveActivity();
+}
+
+function updateLastUpdatedTime() {
+    const now = new Date();
+    const timeString = now.toLocaleString('en-US', {
+        month: 'short',
+        day: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    });
+    document.getElementById('lastUpdated').textContent = timeString;
+}
+
+function loadOverviewMetrics() {
+    fetch(window.location.href, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.overview_metrics) {
+            updateOverviewMetrics(data.overview_metrics);
+        }
+    })
+    .catch(error => {
+        console.error('Error loading overview metrics:', error);
+    });
+}
+
+function updateOverviewMetrics(metrics) {
+    document.getElementById('activeSessionsCount').textContent = metrics.active_sessions || 0;
+    // Update other metrics as needed
+}
+
+function loadLiveActivity() {
+    const params = new URLSearchParams({
+        type: 'live_activity'
+    });
+
+    fetch(`${window.location.href}?${params}`, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        updateLiveActivityFeed(data.live_activity);
+    })
+    .catch(error => {
+        console.error('Error loading live activity:', error);
+    });
+}
+
+function updateLiveActivityFeed(activities) {
+    const feedContainer = document.getElementById('liveActivityFeed');
+    if (!activities || activities.length === 0) {
+        feedContainer.innerHTML = `
+            <div class="text-center py-8">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">No active sessions</h3>
+                <p class="mt-1 text-sm text-gray-500">No users are currently active.</p>
+            </div>
+        `;
+        return;
     }
 
-    function refreshLiveActivity() {
-        fetch(window.location.href + "?type=live_activity", {
-            headers: {
-                "X-Requested-With": "XMLHttpRequest",
-            },
-        })
-            .then((response) => response.json())
-            .then((data) => {
-                document.getElementById("live-activity-container").innerHTML =
-                    data.html;
-                document.getElementById("last-updated").textContent =
-                    new Date().toLocaleString();
-            })
-            .catch((error) =>
-                console.error("Error refreshing live activity:", error),
-            );
+    const activitiesHtml = activities.map(activity => `
+        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200">
+            <div class="flex items-center space-x-3">
+                <div class="flex-shrink-0">
+                    <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span class="text-sm font-medium text-blue-600">${activity.user_initial}</span>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-900">${activity.username}</p>
+                    <p class="text-xs text-gray-500">${activity.location} • ${activity.device_type}</p>
+                </div>
+            </div>
+            <div class="text-right">
+                <div class="flex items-center space-x-2">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getActivityStatusClass(activity.activity_status)}">
+                        ${activity.activity_status}
+                    </span>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">${activity.session_duration_minutes}m</p>
+            </div>
+        </div>
+    `).join('');
+
+    feedContainer.innerHTML = activitiesHtml;
+}
+
+function getActivityStatusClass(status) {
+    switch(status.toLowerCase()) {
+        case 'active':
+            return 'bg-green-100 text-green-800';
+        case 'idle':
+            return 'bg-yellow-100 text-yellow-800';
+        default:
+            return 'bg-red-100 text-red-800';
+    }
+}
+
+function applyFilters() {
+    const form = document.getElementById('filtersForm');
+    const formData = new FormData(form);
+    const params = new URLSearchParams(formData);
+    
+    // Redirect with filter parameters
+    window.location.href = `${window.location.pathname}?${params}`;
+}
+
+function resetFilters() {
+    document.getElementById('filtersForm').reset();
+    window.location.href = window.location.pathname;
+}
+
+function selectAllSessions() {
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    const sessionCheckboxes = document.querySelectorAll('input[name="session_ids"]');
+    
+    sessionCheckboxes.forEach(checkbox => {
+        checkbox.checked = selectAllCheckbox.checked;
+    });
+    
+    updateSelectedSessions();
+}
+
+function updateSelectedSessions() {
+    const sessionCheckboxes = document.querySelectorAll('input[name="session_ids"]:checked');
+    selectedSessions = Array.from(sessionCheckboxes).map(cb => cb.value);
+    
+    // Update select all checkbox state
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    const allCheckboxes = document.querySelectorAll('input[name="session_ids"]');
+    
+    if (selectedSessions.length === 0) {
+        selectAllCheckbox.indeterminate = false;
+        selectAllCheckbox.checked = false;
+    } else if (selectedSessions.length === allCheckboxes.length) {
+        selectAllCheckbox.indeterminate = false;
+        selectAllCheckbox.checked = true;
+    } else {
+        selectAllCheckbox.indeterminate = true;
+        selectAllCheckbox.checked = false;
+    }
+}
+
+function bulkAction(action) {
+    if (selectedSessions.length === 0) {
+        alert('Please select at least one session.');
+        return;
     }
 
-    function refreshSecurityIncidents() {
-        fetch(window.location.href + "?type=security_incidents", {
-            headers: {
-                "X-Requested-With": "XMLHttpRequest",
-            },
-        })
-            .then((response) => response.json())
-            .then((data) => {
-                location.reload(); // Simple refresh for now
-            })
-            .catch((error) =>
-                console.error("Error refreshing security incidents:", error),
-            );
-    }
+    let title = 'Confirm Bulk Action';
+    let message = `Are you sure you want to ${action} ${selectedSessions.length} selected session(s)?`;
+    
+    showConfirmationModal(title, message, function() {
+        performBulkAction(action, selectedSessions);
+    });
+}
 
-    function investigateIncident(incidentId) {
-        // Placeholder for incident investigation
-        alert("Investigating incident: " + incidentId);
-    }
+function performBulkAction(action, sessionIds) {
+    const formData = new FormData();
+    formData.append('action', action);
+    formData.append('session_ids', JSON.stringify(sessionIds));
+    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
 
-    function exportData(format) {
-        const params = new URLSearchParams(window.location.search);
-        params.set("export", format);
-        window.location.href =
-            window.location.pathname + "?" + params.toString();
-    }
+    fetch(window.location.href, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error performing bulk action: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error performing bulk action:', error);
+        alert('Error performing bulk action. Please try again.');
+    });
+}
 
-    // Auto-refresh live activity every 30 seconds
-    setInterval(refreshLiveActivity, 30000);
+function terminateSession(sessionId) {
+    showConfirmationModal(
+        'Terminate Session',
+        'Are you sure you want to terminate this session?',
+        function() {
+            performSessionAction('terminate', sessionId);
+        }
+    );
+}
+
+function performSessionAction(action, sessionId) {
+    const formData = new FormData();
+    formData.append('action', action);
+    formData.append('session_id', sessionId);
+    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+    fetch(window.location.href, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error performing action: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error performing session action:', error);
+        alert('Error performing action. Please try again.');
+    });
+}
+
+function showSessionDetailModal(data) {
+    document.getElementById('sessionDetailTitle').textContent = `Session Details - ${data.username}`;
+    document.getElementById('sessionDetailContent').innerHTML = generateSessionDetailHTML(data);
+    document.getElementById('sessionDetailModal').classList.remove('hidden');
+}
+
+function generateSessionDetailHTML(data) {
+    return `
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-4">
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500">Session Information</h4>
+                    <div class="mt-2 space-y-2">
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">User:</span>
+                            <span class="text-sm font-medium text-gray-900">${data.username}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">Login Time:</span>
+                            <span class="text-sm font-medium text-gray-900">${data.login_time}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">Duration:</span>
+                            <span class="text-sm font-medium text-gray-900">${data.duration}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">Location:</span>
+                            <span class="text-sm font-medium text-gray-900">${data.location}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">Device:</span>
+                            <span class="text-sm font-medium text-gray-900">${data.device_type}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500">Performance Metrics</h4>
+                    <div class="mt-2 space-y-2">
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">Productivity Score:</span>
+                            <span class="text-sm font-medium text-gray-900">${data.productivity_score}%</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">Engagement Score:</span>
+                            <span class="text-sm font-medium text-gray-900">${data.engagement_score}%</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">Tab Switches:</span>
+                            <span class="text-sm font-medium text-gray-900">${data.tab_switches}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">Page Views:</span>
+                            <span class="text-sm font-medium text-gray-900">${data.page_views}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function closeSessionDetailModal() {
+    document.getElementById('sessionDetailModal').classList.add('hidden');
+}
+
+function showConfirmationModal(title, message, onConfirm) {
+    document.getElementById('confirmationTitle').textContent = title;
+    document.getElementById('confirmationMessage').textContent = message;
+    
+    const confirmButton = document.getElementById('confirmationConfirm');
+    confirmButton.onclick = function() {
+        closeConfirmationModal();
+        onConfirm();
+    };
+    
+    document.getElementById('confirmationModal').classList.remove('hidden');
+}
+
+function closeConfirmationModal() {
+    document.getElementById('confirmationModal').classList.add('hidden');
+}
+
+function exportData(format) {
+    // Get all current filter values
+    const filterForm = document.getElementById('filtersForm');
+    const formData = new FormData(filterForm);
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    // Create form element
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = window.location.pathname + `?export=${format}`;
+    form.target = '_blank'; // Open in new tab
+    
+    // Add CSRF token
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'csrfmiddlewaretoken';
+    csrfInput.value = csrfToken;
+    form.appendChild(csrfInput);
+    
+    // Add all filter values
+    for (let pair of formData.entries()) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = pair[0];
+        input.value = pair[1];
+        form.appendChild(input);
+    }
+    
+    // Add export type
+    const exportInput = document.createElement('input');
+    exportInput.type = 'hidden';
+    exportInput.name = 'export_type';
+    exportInput.value = format;
+    form.appendChild(exportInput);
+    
+    // Submit form
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
+}
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', function() {
+    stopAutoRefresh();
+});
 </script>
 
 {% endblock %}

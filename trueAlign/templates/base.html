@@ -317,8 +317,7 @@
                                             clip-rule="evenodd"
                                         />
                                     </svg>
-                                    {% elif message.tags == 'warning' or
-                                    message.tags == 'info' %}
+                                    {% elif message.tags == 'warning' or message.tags == 'info' %}
                                     <svg
                                         class="w-4 h-4 sm:w-5 sm:h-5 {% if message.tags == 'warning' %}text-yellow-500{% else %}text-blue-500{% endif %}"
                                         fill="currentColor"
