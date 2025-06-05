@@ -19608,3 +19608,485 @@ INFO 2025-06-05 18:27:01,189 basehttp 10637 6206107648 "POST /update-activity/ H
 INFO 2025-06-05 18:27:01,220 basehttp 10637 6222934016 "GET /dashboard/ HTTP/1.1" 200 102512
 INFO 2025-06-05 18:27:01,250 basehttp 10637 6222934016 "POST /update-activity/ HTTP/1.1" 200 192
 INFO 2025-06-05 18:27:03,763 basehttp 10637 6206107648 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:27:25,981 autoreload 12158 8758140672 Watching for file changes with StatReloader
+INFO 2025-06-05 18:27:30,878 basehttp 12158 6176665600 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:27:30,955 basehttp 12158 6159839232 "GET /dashboard/?update_id=3 HTTP/1.1" 200 102555
+INFO 2025-06-05 18:27:30,983 basehttp 12158 6159839232 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:27:35,969 basehttp 12158 6159839232 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:28:00,212 basehttp 12158 6176665600 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:28:00,222 basehttp 12158 6159839232 "GET /logout/ HTTP/1.1" 302 0
+INFO 2025-06-05 18:28:00,225 basehttp 12158 6159839232 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-06-05 18:28:00,236 basehttp 12158 6159839232 "POST /update-activity/ HTTP/1.1" 302 0
+INFO 2025-06-05 18:28:05,600 basehttp 12158 6159839232 "POST /login/ HTTP/1.1" 302 0
+INFO 2025-06-05 18:28:05,650 basehttp 12158 6159839232 "GET /dashboard/ HTTP/1.1" 200 108093
+INFO 2025-06-05 18:28:09,767 basehttp 12158 6159839232 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:28:09,787 basehttp 12158 6176665600 "GET /employee/attendance/ HTTP/1.1" 200 88868
+INFO 2025-06-05 18:28:09,821 basehttp 12158 6176665600 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:28:11,831 basehttp 12158 6176665600 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:28:11,852 basehttp 12158 6159839232 "GET /employee/attendance/regularization/ HTTP/1.1" 200 108135
+INFO 2025-06-05 18:28:11,888 basehttp 12158 6159839232 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:28:20,783 basehttp 12158 6159839232 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:28:24,550 basehttp 12158 6193491968 "POST /login/ HTTP/1.1" 302 0
+INFO 2025-06-05 18:28:24,606 basehttp 12158 6193491968 "GET /dashboard/ HTTP/1.1" 200 107581
+INFO 2025-06-05 18:28:26,844 basehttp 12158 6210318336 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:28:26,881 basehttp 12158 6193491968 "GET /attendance/analytics/ HTTP/1.1" 200 148277
+INFO 2025-06-05 18:28:26,908 basehttp 12158 6193491968 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:28:28,869 basehttp 12158 6210318336 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:28:28,882 basehttp 12158 6193491968 "GET /attendance/regularization/requests/ HTTP/1.1" 200 78419
+INFO 2025-06-05 18:28:28,917 basehttp 12158 6193491968 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:28:32,734 basehttp 12158 6193491968 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:29:01,866 basehttp 12158 6176665600 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:29:01,887 basehttp 12158 6159839232 "POST /employee/attendance/regularization/ HTTP/1.1" 302 0
+INFO 2025-06-05 18:29:01,929 basehttp 12158 6159839232 "GET /employee/attendance/ HTTP/1.1" 200 93963
+INFO 2025-06-05 18:29:01,957 basehttp 12158 6159839232 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:29:05,718 basehttp 12158 6159839232 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:29:06,339 basehttp 12158 6210318336 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:29:06,353 basehttp 12158 6193491968 "GET /attendance/regularization/requests/ HTTP/1.1" 200 81037
+INFO 2025-06-05 18:29:12,131 basehttp 12158 6193491968 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:29:41,448 basehttp 12158 6193491968 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:30:02,625 basehttp 12158 6159839232 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:30:06,618 basehttp 12158 6193491968 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:31:02,638 basehttp 12158 6159839232 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:31:06,645 basehttp 12158 6193491968 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:31:17,021 basehttp 12158 6193491968 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:31:29,206 basehttp 12158 6193491968 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:32:02,614 basehttp 12158 6159839232 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:32:03,928 basehttp 12158 6193491968 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:32:06,618 basehttp 12158 6193491968 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:33:02,642 basehttp 12158 6159839232 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:33:06,629 basehttp 12158 6193491968 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:34:02,621 basehttp 12158 6159839232 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:34:06,615 basehttp 12158 6193491968 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:34:19,379 basehttp 12158 6159839232 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:35:02,629 basehttp 12158 6159839232 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:35:06,632 basehttp 12158 6193491968 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:36:40,648 basehttp 12158 6193491968 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:36:40,649 basehttp 12158 6159839232 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:38:12,920 autoreload 12158 8758140672 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py changed, reloading.
+INFO 2025-06-05 18:38:13,290 autoreload 17364 8758140672 Watching for file changes with StatReloader
+INFO 2025-06-05 18:38:25,476 basehttp 17364 12901707776 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:38:25,504 basehttp 17364 6159609856 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:39:25,423 basehttp 17364 12901707776 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:39:25,424 basehttp 17364 6159609856 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:40:25,433 basehttp 17364 6159609856 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:40:25,433 basehttp 17364 12901707776 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:41:25,429 basehttp 17364 12901707776 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:41:25,430 basehttp 17364 6159609856 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:54:29,878 basehttp 17364 12901707776 "POST /update-activity/ HTTP/1.1" 200 177
+INFO 2025-06-05 18:54:29,878 basehttp 17364 6159609856 "POST /update-activity/ HTTP/1.1" 200 177
+INFO 2025-06-05 18:54:29,941 basehttp 17364 12901707776 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:54:29,947 basehttp 17364 12918534144 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:54:29,996 basehttp 17364 12935360512 "GET /employee/attendance/ HTTP/1.1" 200 88868
+INFO 2025-06-05 18:54:30,003 basehttp 17364 6159609856 "GET /attendance/regularization/requests/ HTTP/1.1" 200 81037
+INFO 2025-06-05 18:55:30,880 basehttp 17364 6159609856 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:55:30,882 basehttp 17364 12935360512 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:56:30,853 basehttp 17364 12901707776 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:56:30,853 basehttp 17364 6159609856 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:57:30,856 basehttp 17364 6159609856 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:57:30,856 basehttp 17364 12901707776 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:58:30,856 basehttp 17364 12901707776 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:58:30,856 basehttp 17364 6159609856 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 19:16:47,845 basehttp 17364 12901707776 "POST /update-activity/ HTTP/1.1" 200 177
+INFO 2025-06-05 19:16:47,845 basehttp 17364 6159609856 "POST /update-activity/ HTTP/1.1" 200 177
+INFO 2025-06-05 19:16:48,047 basehttp 17364 12918534144 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 19:16:48,069 basehttp 17364 12935360512 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 19:16:48,117 basehttp 17364 6159609856 "GET /employee/attendance/ HTTP/1.1" 200 88868
+INFO 2025-06-05 19:16:48,311 basehttp 17364 12901707776 "GET /attendance/regularization/requests/ HTTP/1.1" 200 81037
+INFO 2025-06-05 19:22:07,793 basehttp 17364 6159609856 "POST /update-activity/ HTTP/1.1" 200 177
+INFO 2025-06-05 19:22:07,824 basehttp 17364 6159609856 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 19:22:07,842 basehttp 17364 12918534144 "GET /employee/attendance/ HTTP/1.1" 200 88868
+INFO 2025-06-05 19:22:09,765 basehttp 17364 12901707776 "POST /update-activity/ HTTP/1.1" 200 177
+INFO 2025-06-05 19:22:09,814 basehttp 17364 12901707776 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 19:22:09,830 basehttp 17364 12935360512 "GET /attendance/regularization/requests/ HTTP/1.1" 200 81037
+INFO 2025-06-05 19:23:08,797 basehttp 17364 12918534144 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 19:23:10,743 basehttp 17364 12935360512 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 19:24:08,759 basehttp 17364 12918534144 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 19:24:10,760 basehttp 17364 12935360512 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 19:25:44,336 basehttp 17364 6159609856 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 19:25:46,340 basehttp 17364 12901707776 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 19:26:44,333 basehttp 17364 6159609856 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 19:26:46,316 basehttp 17364 12901707776 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 19:27:44,330 basehttp 17364 6159609856 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 19:27:46,331 basehttp 17364 12901707776 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 19:28:44,335 basehttp 17364 6159609856 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 19:28:46,330 basehttp 17364 12901707776 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 19:30:41,329 basehttp 17364 6159609856 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 19:30:41,329 basehttp 17364 12901707776 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 19:31:41,318 basehttp 17364 6159609856 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 19:32:41,327 basehttp 17364 12901707776 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 19:32:41,327 basehttp 17364 6159609856 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 19:37:17,297 basehttp 17364 6159609856 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 19:38:17,293 basehttp 17364 6159609856 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 19:38:17,302 basehttp 17364 12901707776 "POST /update-activity/ HTTP/1.1" 200 177
+INFO 2025-06-05 19:38:17,388 basehttp 17364 12901707776 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 19:38:17,507 basehttp 17364 12918534144 "GET /employee/attendance/ HTTP/1.1" 200 88868
+INFO 2025-06-05 19:39:17,293 basehttp 17364 6159609856 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 19:39:18,285 basehttp 17364 12918534144 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 19:40:17,292 basehttp 17364 6159609856 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 19:40:18,289 basehttp 17364 12918534144 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 19:41:17,288 basehttp 17364 6159609856 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 19:43:10,735 basehttp 17364 12901707776 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 19:44:09,665 basehttp 17364 6159609856 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 19:44:10,668 basehttp 17364 12901707776 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 19:45:09,653 basehttp 17364 6159609856 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 19:45:10,667 basehttp 17364 12901707776 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 19:46:09,666 basehttp 17364 6159609856 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 19:46:10,656 basehttp 17364 12901707776 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 19:47:09,641 basehttp 17364 6159609856 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 19:47:17,785 basehttp 17364 6159609856 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 19:47:20,193 basehttp 17364 12918534144 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 19:47:20,274 basehttp 17364 6159609856 "GET /support/ HTTP/1.1" 200 99760
+INFO 2025-06-05 19:47:20,313 basehttp 17364 6159609856 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 19:47:22,008 basehttp 17364 12918534144 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-06-05 19:47:22,047 log 17364 6159609856 Internal Server Error: /support/create/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'endfor'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 14549, in create_ticket
+    return render(request, 'components/support/ticket_form.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 565, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 148: 'endfor'. Did you forget to register or load this tag?
+ERROR 2025-06-05 19:47:22,050 basehttp 17364 6159609856 "GET /support/create/ HTTP/1.1" 500 216648
+INFO 2025-06-05 19:47:22,079 basehttp 17364 6159609856 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-06-05 19:47:41,413 log 17364 6159609856 Internal Server Error: /support/create/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'endblock'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 14549, in create_ticket
+    return render(request, 'components/support/ticket_form.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 975, in do_if
+    nodelist = parser.parse(("endif",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 446: 'endblock', expected 'endif'. Did you forget to register or load this tag?
+ERROR 2025-06-05 19:47:41,415 basehttp 17364 6159609856 "GET /support/create/ HTTP/1.1" 500 191672
+ERROR 2025-06-05 19:47:54,038 log 17364 6159609856 Internal Server Error: /support/create/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'endblock'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 14549, in create_ticket
+    return render(request, 'components/support/ticket_form.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 975, in do_if
+    nodelist = parser.parse(("endif",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 446: 'endblock', expected 'endif'. Did you forget to register or load this tag?
+ERROR 2025-06-05 19:47:54,038 basehttp 17364 6159609856 "GET /support/create/ HTTP/1.1" 500 206035
+ERROR 2025-06-05 19:47:55,474 log 17364 6159609856 Internal Server Error: /support/create/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'endblock'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 14549, in create_ticket
+    return render(request, 'components/support/ticket_form.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 975, in do_if
+    nodelist = parser.parse(("endif",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 446: 'endblock', expected 'endif'. Did you forget to register or load this tag?
+ERROR 2025-06-05 19:47:55,475 basehttp 17364 6159609856 "GET /support/create/ HTTP/1.1" 500 206035
+ERROR 2025-06-05 19:47:56,288 log 17364 6159609856 Internal Server Error: /support/create/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'endblock'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 14549, in create_ticket
+    return render(request, 'components/support/ticket_form.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 975, in do_if
+    nodelist = parser.parse(("endif",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 446: 'endblock', expected 'endif'. Did you forget to register or load this tag?
+ERROR 2025-06-05 19:47:56,288 basehttp 17364 6159609856 "GET /support/create/ HTTP/1.1" 500 206035
+ERROR 2025-06-05 19:47:57,237 log 17364 6159609856 Internal Server Error: /support/create/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'endblock'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 14549, in create_ticket
+    return render(request, 'components/support/ticket_form.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 975, in do_if
+    nodelist = parser.parse(("endif",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 446: 'endblock', expected 'endif'. Did you forget to register or load this tag?
+ERROR 2025-06-05 19:47:57,238 basehttp 17364 6159609856 "GET /support/create/ HTTP/1.1" 500 206035
+INFO 2025-06-05 19:48:09,663 basehttp 17364 12901707776 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 19:48:34,282 basehttp 17364 6159609856 "GET /support/create/ HTTP/1.1" 200 81979
+INFO 2025-06-05 19:48:42,254 basehttp 17364 6159609856 "POST /update-activity/ HTTP/1.1" 200 192

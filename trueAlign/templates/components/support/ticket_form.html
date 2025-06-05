@@ -1,5 +1,5 @@
-{% extends 'base.html' %} {% block title %}{{ title }}{% endblock %} {% block
-content %}
+{% extends 'base.html' %} {% block title %}{{ title }}{% endblock %} 
+{% block content %}
 <div class="max-w-3xl mx-auto py-8 px-4">
     <div
         class="bg-white shadow-2xl rounded-2xl overflow-hidden border border-gray-100"
@@ -137,17 +137,10 @@ content %}
                             >
                                 Select issue type...
                             </option>
-                            {% for value, text in form.issue_type.field.choices
-                            %}
+                            {% for value, text in form.issue_type.field.choices  %}
                             <option
                                 value="{{ value }}"
-                                {%
-                                if
-                                form.issue_type.value=""
-                                ="value"
-                                %}selected{%
-                                endif
-                                %}
+                                {% if form.issue_type.value == value %}selected{% endif %}
                             >
                                 {{ text }}
                             </option>
@@ -173,20 +166,16 @@ content %}
                             {% for value, text in form.priority.field.choices %}
                             <option
                                 value="{{ value }}"
-                                {%
-                                if
-                                form.priority.value=""
-                                ="value"
-                                %}selected{%
-                                endif
-                                %}
+                                {% if form.priority.value == value %}selected{% endif %}
                             >
                                 {{ text }}
                             </option>
                             {% endfor %}
                         </select>
                     </div>
-                    {% endif %} {% if form.assigned_group %}
+                    {% endif %}
+
+                    {% if form.assigned_group %}
                     <!-- Assigned Group field (only visible to admins and HR) -->
                     <div
                         class="{% if not form.priority %}md:col-span-2{% endif %}"
@@ -203,17 +192,10 @@ content %}
                             id="{{ form.assigned_group.id_for_label }}"
                             class="w-full rounded-xl border-gray-300 shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-400 focus:ring-opacity-40 transition duration-200 px-3 py-2 text-gray-900"
                         >
-                            {% for value, text in
-                            form.assigned_group.field.choices %}
+                            {% for value, text in form.assigned_group.field.choices %}
                             <option
                                 value="{{ value }}"
-                                {%
-                                if
-                                form.assigned_group.value=""
-                                ="value"
-                                %}selected{%
-                                endif
-                                %}
+                                {% if form.assigned_group.value == value %}selected{% endif %}
                             >
                                 {{ text }}
                             </option>
@@ -236,17 +218,10 @@ content %}
                             class="w-full rounded-xl border-gray-300 shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-400 focus:ring-opacity-40 transition duration-200 px-3 py-2 text-gray-900"
                         >
                             <option value="">Select an assignee...</option>
-                            {% for value, text in
-                            form.assigned_to_user.field.choices %}
+                            {% for value, text in form.assigned_to_user.field.choices %}
                             <option
                                 value="{{ value }}"
-                                {%
-                                if
-                                form.assigned_to_user.value=""
-                                ="value"
-                                %}selected{%
-                                endif
-                                %}
+                                {% if form.assigned_to_user.value == value %}selected{% endif %}
                             >
                                 {{ text }}
                             </option>
@@ -460,8 +435,7 @@ content %}
                                 d="M5 13l4 4L19 7"
                             />
                         </svg>
-                        {% if ticket %}Update Ticket{% else %}Create Ticket{%
-                        endif %}
+                        {% if ticket %}Update Ticket{% else %}Create Ticket{% endif %}
                     </button>
                 </div>
             </form>
