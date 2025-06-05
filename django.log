@@ -18999,3 +18999,612 @@ INFO 2025-06-05 17:58:42,571 basehttp 95852 6196555776 "GET /employee/attendance
 INFO 2025-06-05 17:58:42,606 basehttp 95852 6196555776 "POST /update-activity/ HTTP/1.1" 200 192
 INFO 2025-06-05 17:58:46,517 basehttp 95852 6196555776 "POST /update-activity/ HTTP/1.1" 200 192
 INFO 2025-06-05 17:59:04,752 basehttp 95852 6196555776 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:01:24,145 autoreload 97802 8758140672 Watching for file changes with StatReloader
+INFO 2025-06-05 18:01:25,495 basehttp 97802 6199259136 "GET /logout/ HTTP/1.1" 302 0
+INFO 2025-06-05 18:01:25,510 basehttp 97802 6199259136 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-06-05 18:01:32,359 basehttp 97802 6199259136 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:01:32,482 basehttp 97802 6216085504 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:01:32,559 basehttp 97802 6199259136 "GET /attendance/analytics/ HTTP/1.1" 200 148277
+INFO 2025-06-05 18:01:32,589 basehttp 97802 6199259136 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:01:34,038 basehttp 97802 6216085504 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:01:34,075 basehttp 97802 6199259136 "GET /dashboard/ HTTP/1.1" 200 104820
+INFO 2025-06-05 18:01:34,102 basehttp 97802 6199259136 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:01:38,623 basehttp 97802 6216085504 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:01:38,669 basehttp 97802 6199259136 "GET /dashboard/?update_id=2 HTTP/1.1" 200 104845
+INFO 2025-06-05 18:01:38,705 basehttp 97802 6199259136 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:01:43,920 basehttp 97802 6216085504 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:01:43,951 basehttp 97802 6199259136 "GET /dashboard/?update_id=2 HTTP/1.1" 200 104845
+INFO 2025-06-05 18:01:48,599 basehttp 97802 6216085504 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:01:48,600 basehttp 97802 6199259136 "POST /hr/updates/2/edit/ HTTP/1.1" 302 0
+INFO 2025-06-05 18:01:48,667 basehttp 97802 6199259136 "GET /dashboard/ HTTP/1.1" 200 109892
+INFO 2025-06-05 18:01:48,696 basehttp 97802 6199259136 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:01:50,727 basehttp 97802 6199259136 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:01:50,734 basehttp 97802 6216085504 "POST /hr/updates/2/delete/ HTTP/1.1" 302 0
+INFO 2025-06-05 18:01:50,796 basehttp 97802 6216085504 "GET /dashboard/ HTTP/1.1" 200 106524
+INFO 2025-06-05 18:01:52,766 basehttp 97802 6216085504 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:01:52,774 basehttp 97802 6199259136 "POST /hr/updates/1/delete/ HTTP/1.1" 302 0
+INFO 2025-06-05 18:01:52,837 basehttp 97802 6199259136 "GET /dashboard/ HTTP/1.1" 200 103842
+INFO 2025-06-05 18:01:57,999 basehttp 97802 6199259136 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:02:44,637 basehttp 97802 6216085504 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:02:44,663 basehttp 97802 6199259136 "GET /dashboard/ HTTP/1.1" 200 92977
+INFO 2025-06-05 18:02:48,413 basehttp 97802 6199259136 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:02:54,327 basehttp 97802 6216085504 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:02:54,365 basehttp 97802 6199259136 "GET /dashboard/ HTTP/1.1" 200 98808
+INFO 2025-06-05 18:02:58,138 basehttp 97802 6216085504 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:02:58,177 basehttp 97802 6199259136 "GET /dashboard/ HTTP/1.1" 200 98808
+INFO 2025-06-05 18:03:01,117 basehttp 97802 6199259136 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:03:06,244 basehttp 97802 6216085504 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:03:06,277 basehttp 97802 6199259136 "GET /dashboard/ HTTP/1.1" 200 98769
+INFO 2025-06-05 18:03:09,258 basehttp 97802 6199259136 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:03:21,957 basehttp 97802 6216085504 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:03:21,986 basehttp 97802 6199259136 "GET /dashboard/ HTTP/1.1" 200 98758
+INFO 2025-06-05 18:03:25,967 basehttp 97802 6199259136 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:03:30,771 basehttp 97802 6216085504 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:03:30,803 basehttp 97802 6199259136 "GET /dashboard/ HTTP/1.1" 200 98770
+INFO 2025-06-05 18:03:36,639 basehttp 97802 6199259136 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:03:39,485 basehttp 97802 6199259136 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:03:41,541 basehttp 97802 6232911872 "POST /login/ HTTP/1.1" 302 0
+INFO 2025-06-05 18:03:41,601 basehttp 97802 6232911872 "GET /dashboard/ HTTP/1.1" 200 96879
+INFO 2025-06-05 18:03:46,887 basehttp 97802 6232911872 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:03:52,386 basehttp 97802 6232911872 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:03:52,412 basehttp 97802 6249738240 "GET /dashboard/ HTTP/1.1" 200 91813
+INFO 2025-06-05 18:03:55,029 basehttp 97802 6249738240 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:04:05,892 basehttp 97802 6249738240 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:04:05,918 basehttp 97802 6232911872 "GET /dashboard/ HTTP/1.1" 200 91790
+INFO 2025-06-05 18:04:08,940 basehttp 97802 6232911872 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:04:27,761 basehttp 97802 6216085504 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:04:27,791 basehttp 97802 6199259136 "GET /dashboard/ HTTP/1.1" 200 98759
+INFO 2025-06-05 18:04:29,903 basehttp 97802 6216085504 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:04:29,916 basehttp 97802 6199259136 "GET /logout/ HTTP/1.1" 302 0
+INFO 2025-06-05 18:04:29,922 basehttp 97802 6199259136 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-06-05 18:04:29,932 basehttp 97802 6199259136 "POST /update-activity/ HTTP/1.1" 302 0
+INFO 2025-06-05 18:04:32,895 basehttp 97802 6199259136 "POST /login/ HTTP/1.1" 302 0
+INFO 2025-06-05 18:04:32,971 basehttp 97802 6199259136 "GET /dashboard/ HTTP/1.1" 200 103869
+INFO 2025-06-05 18:04:36,261 basehttp 97802 6216085504 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:04:36,327 basehttp 97802 6199259136 "GET /leave/hr/ HTTP/1.1" 200 71188
+INFO 2025-06-05 18:04:36,361 basehttp 97802 6199259136 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:04:38,005 basehttp 97802 6216085504 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:04:38,029 basehttp 97802 6199259136 "GET /appraisal/list/ HTTP/1.1" 200 66960
+INFO 2025-06-05 18:04:38,065 basehttp 97802 6199259136 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:04:43,502 basehttp 97802 6199259136 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:04:48,706 basehttp 97802 6216085504 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:04:48,724 basehttp 97802 6199259136 "GET /logout/ HTTP/1.1" 302 0
+INFO 2025-06-05 18:04:48,727 basehttp 97802 6199259136 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-06-05 18:04:48,732 basehttp 97802 6199259136 "POST /update-activity/ HTTP/1.1" 302 0
+INFO 2025-06-05 18:04:57,509 basehttp 97802 6232911872 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:05:06,667 basehttp 97802 6232911872 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:05:36,363 basehttp 97802 6232911872 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:05:36,375 basehttp 97802 6249738240 "GET /logout/ HTTP/1.1" 302 0
+INFO 2025-06-05 18:05:36,379 basehttp 97802 6249738240 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-06-05 18:05:36,386 basehttp 97802 6249738240 "POST /update-activity/ HTTP/1.1" 302 0
+INFO 2025-06-05 18:08:52,953 basehttp 97802 6199259136 "POST /login/ HTTP/1.1" 302 0
+INFO 2025-06-05 18:08:53,021 basehttp 97802 6199259136 "GET /dashboard/ HTTP/1.1" 200 105352
+INFO 2025-06-05 18:09:08,112 basehttp 97802 6199259136 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:09:08,116 basehttp 97802 6216085504 "POST /hr/updates/create/ HTTP/1.1" 302 0
+INFO 2025-06-05 18:09:08,189 basehttp 97802 6216085504 "GET /dashboard/ HTTP/1.1" 200 107585
+INFO 2025-06-05 18:09:10,507 basehttp 97802 6216085504 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:09:10,545 basehttp 97802 6199259136 "GET /dashboard/?update_id=3 HTTP/1.1" 200 102555
+INFO 2025-06-05 18:09:10,581 basehttp 97802 6199259136 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:09:12,355 basehttp 97802 6199259136 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:09:12,393 basehttp 97802 6216085504 "GET /dashboard/?update_id=3 HTTP/1.1" 200 102555
+INFO 2025-06-05 18:09:14,084 basehttp 97802 6199259136 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:09:14,121 basehttp 97802 6216085504 "GET /dashboard/?update_id=3 HTTP/1.1" 200 102555
+INFO 2025-06-05 18:09:15,720 basehttp 97802 6216085504 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:09:15,756 basehttp 97802 6199259136 "GET /dashboard/?update_id=3 HTTP/1.1" 200 102555
+INFO 2025-06-05 18:09:17,329 basehttp 97802 6199259136 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:09:17,371 basehttp 97802 6216085504 "GET /dashboard/?update_id=3 HTTP/1.1" 200 102555
+INFO 2025-06-05 18:09:20,423 basehttp 97802 6199259136 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:10:17,656 basehttp 97802 6199259136 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:11:17,645 basehttp 97802 6199259136 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:12:14,792 basehttp 97802 6199259136 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:12:17,647 basehttp 97802 6199259136 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:13:17,648 basehttp 97802 6199259136 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:13:18,801 autoreload 97802 8758140672 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py changed, reloading.
+INFO 2025-06-05 18:13:19,137 autoreload 4339 8758140672 Watching for file changes with StatReloader
+INFO 2025-06-05 18:13:40,814 basehttp 4339 6218952704 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:13:40,872 basehttp 4339 6202126336 "GET /dashboard/?update_id=3 HTTP/1.1" 200 102555
+INFO 2025-06-05 18:13:48,673 basehttp 4339 6202126336 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:13:56,884 basehttp 4339 6202126336 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:14:41,629 basehttp 4339 6202126336 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:15:24,482 basehttp 4339 6218952704 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:15:24,506 basehttp 4339 6202126336 "GET /dashboard/?update_id=3 HTTP/1.1" 200 102555
+INFO 2025-06-05 18:15:26,542 basehttp 4339 6202126336 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:15:26,569 basehttp 4339 6218952704 "GET /dashboard/?update_id=3 HTTP/1.1" 200 102555
+INFO 2025-06-05 18:15:31,685 basehttp 4339 6218952704 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:15:31,723 basehttp 4339 6202126336 "GET /dashboard/?update_id=3 HTTP/1.1" 200 102555
+INFO 2025-06-05 18:15:35,872 basehttp 4339 6202126336 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:16:01,419 basehttp 4339 6202126336 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:16:11,204 basehttp 4339 6202126336 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:16:19,023 basehttp 4339 6218952704 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:16:19,089 basehttp 4339 6202126336 "GET /dashboard/?update_id=3 HTTP/1.1" 200 105161
+INFO 2025-06-05 18:16:21,450 basehttp 4339 6218952704 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:16:21,484 basehttp 4339 6202126336 "GET /dashboard/?update_id=3 HTTP/1.1" 200 105161
+INFO 2025-06-05 18:16:31,226 basehttp 4339 6202126336 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:16:35,036 basehttp 4339 6202126336 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:16:39,268 basehttp 4339 6202126336 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:16:39,328 basehttp 4339 6218952704 "GET /dashboard/?update_id=3 HTTP/1.1" 200 105161
+INFO 2025-06-05 18:16:44,791 basehttp 4339 6202126336 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:16:48,039 basehttp 4339 6202126336 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-06-05 18:16:48,118 log 4339 6218952704 Internal Server Error: /dashboard/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 1450, in dashboard_view
+    return render(request, 'dashboard.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 326, in render
+    return nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 199, in render
+    template = context.template.engine.select_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 208, in select_template
+    return self.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 961, in do_if
+    nodelist = parser.parse(("elif", "else", "endif"))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 515, in parse
+    self.unclosed_block_tag(parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 578, in unclosed_block_tag
+    raise self.error(token, msg)
+django.template.exceptions.TemplateSyntaxError: Unclosed tag on line 113: 'if'. Looking for one of: elif, else, endif.
+ERROR 2025-06-05 18:16:48,119 basehttp 4339 6218952704 "GET /dashboard/?update_id=3 HTTP/1.1" 500 317022
+INFO 2025-06-05 18:16:57,482 basehttp 4339 6202126336 "GET /dashboard/?update_id=3 HTTP/1.1" 200 101503
+INFO 2025-06-05 18:17:01,268 basehttp 4339 6202126336 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:17:09,044 basehttp 4339 6218952704 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:17:09,079 basehttp 4339 6202126336 "GET /dashboard/?update_id=3 HTTP/1.1" 200 105161
+INFO 2025-06-05 18:17:10,986 basehttp 4339 6218952704 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:17:11,024 basehttp 4339 6202126336 "GET /dashboard/?update_id=3 HTTP/1.1" 200 105161
+INFO 2025-06-05 18:17:16,061 basehttp 4339 6202126336 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:17:21,088 basehttp 4339 6218952704 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:17:21,116 basehttp 4339 6202126336 "GET /dashboard/?update_id=3 HTTP/1.1" 200 102555
+INFO 2025-06-05 18:17:25,823 basehttp 4339 6218952704 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:17:25,859 basehttp 4339 6202126336 "GET /dashboard/?update_id=3 HTTP/1.1" 200 102555
+INFO 2025-06-05 18:17:30,859 basehttp 4339 6202126336 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:17:36,137 basehttp 4339 6202126336 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:18:26,638 basehttp 4339 6202126336 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:19:03,869 autoreload 4339 8758140672 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py changed, reloading.
+INFO 2025-06-05 18:19:04,195 autoreload 7359 8758140672 Watching for file changes with StatReloader
+INFO 2025-06-05 18:20:41,746 autoreload 7359 8758140672 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py changed, reloading.
+INFO 2025-06-05 18:20:42,261 autoreload 8202 8758140672 Watching for file changes with StatReloader
+INFO 2025-06-05 18:20:48,949 autoreload 8202 8758140672 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py changed, reloading.
+INFO 2025-06-05 18:20:49,266 autoreload 8296 8758140672 Watching for file changes with StatReloader
+INFO 2025-06-05 18:21:19,629 autoreload 8296 8758140672 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/urls.py changed, reloading.
+INFO 2025-06-05 18:21:19,921 autoreload 8573 8758140672 Watching for file changes with StatReloader
+INFO 2025-06-05 18:21:23,104 basehttp 8573 12901707776 "POST /update-activity/ HTTP/1.1" 200 192
+ERROR 2025-06-05 18:21:23,199 log 8573 6171144192 Internal Server Error: /dashboard/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 1450, in dashboard_view
+    return render(request, 'dashboard.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 326, in render
+    return nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 210, in render
+    return template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 173, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 326, in render
+    return nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 326, in render
+    return nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/resolvers.py", line 851, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'hr_edit_update' not found. 'hr_edit_update' is not a valid view function or pattern name.
+ERROR 2025-06-05 18:21:23,201 basehttp 8573 6171144192 "GET /dashboard/?update_id=3 HTTP/1.1" 500 339341
+ERROR 2025-06-05 18:21:23,915 log 8573 6171144192 Internal Server Error: /dashboard/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 1450, in dashboard_view
+    return render(request, 'dashboard.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 326, in render
+    return nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 210, in render
+    return template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 173, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 326, in render
+    return nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 326, in render
+    return nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/resolvers.py", line 851, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'hr_edit_update' not found. 'hr_edit_update' is not a valid view function or pattern name.
+ERROR 2025-06-05 18:21:23,916 basehttp 8573 6171144192 "GET /dashboard/?update_id=3 HTTP/1.1" 500 339378
+INFO 2025-06-05 18:21:52,428 autoreload 8573 8758140672 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py changed, reloading.
+INFO 2025-06-05 18:21:52,816 autoreload 8837 8758140672 Watching for file changes with StatReloader
+ERROR 2025-06-05 18:23:10,048 log 8837 6206500864 Internal Server Error: /dashboard/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 1450, in dashboard_view
+    return render(request, 'dashboard.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 326, in render
+    return nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 210, in render
+    return template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 173, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 326, in render
+    return nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 326, in render
+    return nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/resolvers.py", line 851, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'hr_edit_update' not found. 'hr_edit_update' is not a valid view function or pattern name.
+ERROR 2025-06-05 18:23:10,049 basehttp 8837 6206500864 "GET /dashboard/?update_id=3 HTTP/1.1" 500 339290
+ERROR 2025-06-05 18:23:10,949 log 8837 6206500864 Internal Server Error: /dashboard/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py", line 1450, in dashboard_view
+    return render(request, 'dashboard.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 326, in render
+    return nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 210, in render
+    return template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 173, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 326, in render
+    return nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 326, in render
+    return nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/resolvers.py", line 851, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'hr_edit_update' not found. 'hr_edit_update' is not a valid view function or pattern name.
+ERROR 2025-06-05 18:23:10,950 basehttp 8837 6206500864 "GET /dashboard/?update_id=3 HTTP/1.1" 500 339367
+INFO 2025-06-05 18:24:43,097 autoreload 8837 8758140672 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/urls.py changed, reloading.
+INFO 2025-06-05 18:24:43,514 autoreload 10329 8758140672 Watching for file changes with StatReloader
+INFO 2025-06-05 18:24:49,328 autoreload 10329 8758140672 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/urls.py changed, reloading.
+INFO 2025-06-05 18:24:49,596 autoreload 10342 8758140672 Watching for file changes with StatReloader
+INFO 2025-06-05 18:24:56,361 autoreload 10342 8758140672 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/urls.py changed, reloading.
+INFO 2025-06-05 18:24:56,630 autoreload 10432 8758140672 Watching for file changes with StatReloader
+INFO 2025-06-05 18:24:58,285 autoreload 10432 8758140672 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/urls.py changed, reloading.
+INFO 2025-06-05 18:24:58,539 autoreload 10434 8758140672 Watching for file changes with StatReloader
+INFO 2025-06-05 18:25:04,169 autoreload 10434 8758140672 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py changed, reloading.
+INFO 2025-06-05 18:25:04,440 autoreload 10549 8758140672 Watching for file changes with StatReloader
+INFO 2025-06-05 18:25:18,219 autoreload 10549 8758140672 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py changed, reloading.
+INFO 2025-06-05 18:25:18,513 autoreload 10637 8758140672 Watching for file changes with StatReloader
+INFO 2025-06-05 18:25:23,309 basehttp 10637 6206107648 "GET /dashboard/?update_id=3 HTTP/1.1" 200 105451
+INFO 2025-06-05 18:25:37,760 basehttp 10637 6206107648 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:26:24,631 basehttp 10637 6206107648 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:26:37,503 basehttp 10637 6222934016 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:26:37,532 basehttp 10637 6206107648 "GET /dashboard/?update_id=3 HTTP/1.1" 200 106297
+INFO 2025-06-05 18:26:46,662 basehttp 10637 6206107648 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:26:51,977 basehttp 10637 6222934016 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:26:52,014 basehttp 10637 6206107648 "GET /dashboard/?update_id=3 HTTP/1.1" 200 102555
+INFO 2025-06-05 18:26:58,275 basehttp 10637 6222934016 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:26:58,311 basehttp 10637 6206107648 "GET /dashboard/?update_id=3 HTTP/1.1" 200 102555
+INFO 2025-06-05 18:27:01,189 basehttp 10637 6206107648 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:27:01,220 basehttp 10637 6222934016 "GET /dashboard/ HTTP/1.1" 200 102512
+INFO 2025-06-05 18:27:01,250 basehttp 10637 6222934016 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-05 18:27:03,763 basehttp 10637 6206107648 "POST /update-activity/ HTTP/1.1" 200 192
