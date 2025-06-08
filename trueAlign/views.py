@@ -6578,6 +6578,25 @@ def leave_request_approve(request, pk):
                 # Save leave request first
                 leave_request.save()
 
+                # Create or update attendance records for the leave duration
+                current_date = leave_request.start_date
+                while current_date <= leave_request.end_date:
+                    attendance, created = Attendance.objects.get_or_create(
+                        user=leave_request.user,
+                        date=current_date,
+                        defaults={
+                            'status': 'On Leave',
+                            'leave_type': leave_request.leave_type.name
+                        }
+                    )
+                    
+                    if not created:
+                        attendance.status = 'On Leave'
+                        attendance.leave_type = leave_request.leave_type.name
+                        attendance.save()
+                    
+                    current_date += timedelta(days=1)
+
                 # Explicitly update the leave balance to ensure it happens
                 if leave_request.leave_type.is_paid and (previous_status != 'Approved'):
                     # Force balance update

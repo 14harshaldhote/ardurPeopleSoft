@@ -1617,6 +1617,10 @@ class Attendance(models.Model):
     regularization_attempts = models.IntegerField(default=0)
     last_regularization_date = models.DateTimeField(null=True, blank=True)
     remarks = models.TextField(null=True, blank=True)
+    is_half_day = models.BooleanField(
+        default=False,
+        help_text="Indicates if this is a half-day attendance"
+    )
     class Meta:
         unique_together = ('user', 'date')
         indexes = [
