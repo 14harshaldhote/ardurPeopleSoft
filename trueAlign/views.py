@@ -13681,6 +13681,9 @@ def manager_attendance_view(request):
     return render(request, 'components/manager/manager_attendance.html', {
         'team_attendance': team_records
     })
+
+import calendar
+
 @login_required
 @user_passes_test(is_hr_check)
 def hr_attendance_view(request):
