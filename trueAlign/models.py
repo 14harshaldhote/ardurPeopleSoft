@@ -2569,59 +2569,7 @@ class TicketComment(models.Model):
         return f"Comment on {self.ticket.ticket_id} by {self.user.username}"
 
 
-class TicketAttachment(models.Model):
-    """Model for file attachments on tickets"""
-    ticket = models.ForeignKey(Support, on_delete=models.CASCADE, related_name='attachments')
-    file = models.FileField(upload_to='ticket_attachments/%Y/%m/%d/')
-    uploaded_by = models.ForeignKey(User, on_delete=models.CASCADE)
-    uploaded_at = models.DateTimeField(auto_now_add=True)
-    description = models.CharField(max_length=255, blank=True)
-    
-    # Store original filename
-    original_filename = models.CharField(max_length=255, blank=True)
-    file_size = models.PositiveIntegerField(default=0, help_text="File size in bytes")
-    file_type = models.CharField(max_length=100, blank=True, help_text="MIME type of the file")
-    is_deleted = models.BooleanField(default=False, help_text="Soft delete flag")
 
-    def save(self, *args, **kwargs):
-        # Store original filename and file info when saving
-        if self.file and hasattr(self.file, 'file'):
-            if not self.original_filename:
-                self.original_filename = self.file.name
-            if not self.file_size:
-                self.file_size = self.file.size
-            if not self.file_type and hasattr(self.file.file, 'content_type'):
-                self.file_type = self.file.file.content_type
-        
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f"Attachment for {self.ticket.ticket_id}: {self.original_filename}"
-
-    @property
-    def file_size_human(self):
-        """Return human readable file size"""
-        size = self.file_size
-        for unit in ['B', 'KB', 'MB', 'GB']:
-            if size < 1024.0:
-                return f"{size:.1f} {unit}"
-            size /= 1024.0
-        return f"{size:.1f} TB"
-
-        # Update the upload_to to use a function
-    def ticket_attachment_path(instance, filename):
-        # Get the ticket ID
-        ticket_id = instance.ticket.ticket_id
-        # Create a unique filename using UUID
-        ext = filename.split('.')[-1]
-        filename = f"{uuid.uuid4()}.{ext}"
-        # Return the complete path
-        return os.path.join(settings.TICKET_ATTACHMENTS_DIR, str(ticket_id), filename)
-
-    file = models.FileField(
-        upload_to=ticket_attachment_path,
-        max_length=255  # Increase max_length for longer paths
-    )
 
 
 class TicketActivity(models.Model):
@@ -2651,14 +2599,15 @@ class TicketActivity(models.Model):
 
 
 # Add this to your trueAlign/models.py file
-
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils.text import get_valid_filename
+import os
+import uuid
 
 class CommentAttachment(models.Model):
     """Model for storing attachments related to ticket comments"""
     
-    # Link to the comment or ticket activity
     ticket_activity = models.ForeignKey(
         'TicketActivity', 
         on_delete=models.CASCADE,
@@ -2666,25 +2615,27 @@ class CommentAttachment(models.Model):
         help_text="The ticket activity/comment this attachment belongs to"
     )
     
-    # File upload field
     file = models.FileField(
         upload_to='comment_attachments/%Y/%m/%d/',
         help_text="Upload attachment file"
     )
     
-    # Original filename
     original_filename = models.CharField(
         max_length=255,
         help_text="Original name of the uploaded file"
     )
     
-    # File size in bytes
+    formatted_filename = models.CharField(
+        max_length=255,
+        help_text="Formatted filename with ticket ID and number",
+        blank=True
+    )
+    
     file_size = models.PositiveIntegerField(
         default=0,
         help_text="Size of the file in bytes"
     )
     
-    # MIME type
     content_type = models.CharField(
         max_length=100,
         blank=True,
@@ -2692,27 +2643,23 @@ class CommentAttachment(models.Model):
         help_text="MIME type of the file"
     )
     
-    # Who uploaded it
     uploaded_by = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         help_text="User who uploaded this attachment"
     )
     
-    # When it was uploaded
     uploaded_at = models.DateTimeField(
         auto_now_add=True,
         help_text="When the attachment was uploaded"
     )
     
-    # Description or notes about the attachment
     description = models.TextField(
         blank=True,
         null=True,
         help_text="Optional description of the attachment"
     )
     
-    # Is the attachment active/visible
     is_active = models.BooleanField(
         default=True,
         help_text="Whether this attachment is active"
@@ -2727,14 +2674,55 @@ class CommentAttachment(models.Model):
     def __str__(self):
         return f"{self.original_filename} - {self.ticket_activity}"
 
-    def save(self, *args, **kwargs):
-        # Save original filename and file size when uploading
-        if self.file and not self.original_filename:
-            self.original_filename = self.file.name
+    def generate_formatted_filename(self, filename):
+        """Generate formatted filename based on ticket ID and comment number"""
+        # Get ticket id
+        ticket_id = self.ticket_activity.ticket.ticket_id
         
-        if self.file and not self.file_size:
-            self.file_size = self.file.size
+        # Get count of existing attachments
+        existing_count = CommentAttachment.objects.filter(
+            ticket_activity=self.ticket_activity,
+            is_active=True
+        ).count()
+        
+        # Next number for this comment
+        next_number = existing_count + 1
+        
+        # Get file extension
+        ext = filename.split('.')[-1].lower()
+        
+        # Build formatted filename
+        return f"{ticket_id}-comment-{next_number}.{ext}"
+
+    def comment_attachment_path(self, filename):
+        """Define the upload path and filename"""
+        ticket_id = self.ticket_activity.ticket.ticket_id
+        formatted_name = self.generate_formatted_filename(filename)
+        
+        # Store the formatted filename
+        self.formatted_filename = formatted_name
+        
+        # Return full path
+        return os.path.join('comment_attachments', str(ticket_id), formatted_name)
+
+    def save(self, *args, **kwargs):
+        if self.file:
+            # Store original filename
+            if not self.original_filename:
+                self.original_filename = get_valid_filename(self.file.name)
             
+            # Generate formatted filename and update file path
+            if not self.formatted_filename:
+                self.file.name = self.comment_attachment_path(self.file.name)
+            
+            # Update file size
+            if not self.file_size and hasattr(self.file, 'size'):
+                self.file_size = self.file.size
+            
+            # Update content type
+            if not self.content_type and hasattr(self.file, 'content_type'):
+                self.content_type = self.file.content_type
+                
         super().save(*args, **kwargs)
 
     @property
@@ -2747,20 +2735,106 @@ class CommentAttachment(models.Model):
             size /= 1024.0
         return f"{size:.1f} TB"
 
-     # Update the upload_to to use a function
-    def comment_attachment_path(instance, filename):
-        # Get the ticket ID from the activity
-        ticket_id = instance.ticket_activity.ticket.ticket_id
-        # Create a unique filename using UUID
-        ext = filename.split('.')[-1]
-        filename = f"{uuid.uuid4()}.{ext}"
-        # Return the complete path
-        return os.path.join(settings.COMMENT_ATTACHMENTS_DIR, str(ticket_id), filename)
 
-    file = models.FileField(
-        upload_to=comment_attachment_path,
-        max_length=255  # Increase max_length for longer paths
+class TicketAttachment(models.Model):
+    """Model for file attachments on tickets"""
+    ticket = models.ForeignKey(Support, on_delete=models.CASCADE, related_name='attachments')
+    file = models.FileField(upload_to='ticket_attachments/%Y/%m/%d/')
+    uploaded_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    description = models.CharField(max_length=255, blank=True)
+    
+    original_filename = models.CharField(
+        max_length=255,
+        help_text="Original name of the uploaded file"
     )
+    
+    formatted_filename = models.CharField(
+        max_length=255,
+        help_text="Formatted filename with ticket ID and number",
+        blank=True
+    )
+    
+    file_size = models.PositiveIntegerField(
+        default=0,
+        help_text="File size in bytes"
+    )
+    
+    file_type = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text="MIME type of the file"
+    )
+    
+    is_deleted = models.BooleanField(
+        default=False,
+        help_text="Soft delete flag"
+    )
+
+    def generate_formatted_filename(self, filename):
+        """Generate formatted filename based on ticket ID and attachment number"""
+        # Get ticket_id
+        ticket_id = self.ticket.ticket_id
+        
+        # Get count of existing attachments
+        existing_count = TicketAttachment.objects.filter(
+            ticket=self.ticket,
+            is_deleted=False
+        ).count()
+        
+        # Next number
+        next_number = existing_count + 1
+        
+        # Get file extension
+        ext = filename.split('.')[-1].lower()
+        
+        # Build formatted filename
+        return f"{ticket_id}-{next_number}.{ext}"
+
+    def ticket_attachment_path(self, filename):
+        """Define the upload path and filename"""
+        ticket_id = self.ticket.ticket_id
+        formatted_name = self.generate_formatted_filename(filename)
+        
+        # Store the formatted filename
+        self.formatted_filename = formatted_name
+        
+        # Return full path
+        return os.path.join('ticket_attachments', str(ticket_id), formatted_name)
+
+    def save(self, *args, **kwargs):
+        if self.file:
+            # Store original filename
+            if not self.original_filename:
+                self.original_filename = get_valid_filename(self.file.name)
+            
+            # Generate formatted filename and update file path
+            if not self.formatted_filename:
+                self.file.name = self.ticket_attachment_path(self.file.name)
+            
+            # Update file size
+            if not self.file_size and hasattr(self.file, 'size'):
+                self.file_size = self.file.size
+            
+            # Update file type
+            if not self.file_type and hasattr(self.file, 'content_type'):
+                self.file_type = self.file.content_type
+                
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Attachment for {self.ticket.ticket_id}: {self.original_filename}"
+
+    @property
+    def file_size_human(self):
+        """Return human readable file size"""
+        size = self.file_size
+        for unit in ['B', 'KB', 'MB', 'GB']:
+            if size < 1024.0:
+                return f"{size:.1f} {unit}"
+            size /= 1024.0
+        return f"{size:.1f} TB"
+
 
 
 ''' ------------------------------------------- PROFILE AREA ------------------------------------------- '''

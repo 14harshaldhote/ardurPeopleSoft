@@ -367,6 +367,8 @@ support_patterns = [
     path('api/tickets/stats/', views.get_ticket_stats, name='get_ticket_stats'),
     path('api/tickets/<int:pk>/reopen/', views.reopen_ticket, name='reopen_ticket'),
     path('api/tickets/<int:pk>/escalate/', views.escalate_ticket, name='escalate_ticket'),
+
+    path('api/users-by-group/<int:group_id>/', views.get_users_by_group, name='users_by_group'),
 ]
 
 holiday_pattern=[

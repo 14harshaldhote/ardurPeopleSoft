@@ -26099,3 +26099,112 @@ INFO 2025-06-08 11:26:18,783 basehttp 49926 6204764160 "POST /support/tickets/15
 INFO 2025-06-08 11:26:18,946 basehttp 49926 6204764160 "GET /support/tickets/15/ HTTP/1.1" 200 154996
 INFO 2025-06-08 11:26:26,166 basehttp 49926 6204764160 "POST /update-activity/ HTTP/1.1" 200 192
 INFO 2025-06-08 11:26:28,224 basehttp 49926 6204764160 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 11:27:21,636 autoreload 51560 8684789504 Watching for file changes with StatReloader
+INFO 2025-06-08 11:27:34,195 basehttp 51560 6169161728 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 11:27:40,529 basehttp 51560 6169161728 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 11:27:40,552 basehttp 51560 6325039104 "POST /support/tickets/15/ HTTP/1.1" 302 0
+INFO 2025-06-08 11:27:40,734 basehttp 51560 6325039104 "GET /support/tickets/15/ HTTP/1.1" 200 154898
+INFO 2025-06-08 11:27:46,152 basehttp 51560 6325039104 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 11:27:46,155 basehttp 51560 6169161728 "POST /support/tickets/15/ HTTP/1.1" 302 0
+INFO 2025-06-08 11:27:46,313 basehttp 51560 6169161728 "GET /support/tickets/15/ HTTP/1.1" 200 154967
+INFO 2025-06-08 11:27:54,071 basehttp 51560 6169161728 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 11:28:08,403 basehttp 51560 6169161728 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 11:28:46,739 basehttp 51560 6169161728 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 11:29:16,491 basehttp 51560 6169161728 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 11:29:46,755 basehttp 51560 6169161728 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 11:30:46,770 basehttp 51560 6169161728 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 11:31:46,733 basehttp 51560 6169161728 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 11:32:46,738 basehttp 51560 6169161728 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 11:33:46,742 basehttp 51560 6169161728 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 11:35:13,746 basehttp 51560 6169161728 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 11:36:13,733 basehttp 51560 6169161728 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 11:36:35,559 autoreload 51560 8684789504 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py changed, reloading.
+INFO 2025-06-08 11:36:35,876 autoreload 56310 8684789504 Watching for file changes with StatReloader
+INFO 2025-06-08 11:37:05,432 autoreload 56310 8684789504 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/urls.py changed, reloading.
+INFO 2025-06-08 11:37:05,716 autoreload 56584 8684789504 Watching for file changes with StatReloader
+INFO 2025-06-08 11:37:07,331 autoreload 56584 8684789504 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/urls.py changed, reloading.
+INFO 2025-06-08 11:37:07,583 autoreload 56588 8684789504 Watching for file changes with StatReloader
+INFO 2025-06-08 11:37:11,396 basehttp 56588 6166360064 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 11:37:13,569 basehttp 56588 6183186432 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 11:37:13,727 basehttp 56588 6166360064 "GET /support/tickets/15/ HTTP/1.1" 200 149380
+INFO 2025-06-08 11:37:20,625 basehttp 56588 6166360064 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 11:37:20,627 basehttp 56588 6183186432 "POST /support/tickets/15/ HTTP/1.1" 302 0
+INFO 2025-06-08 11:37:20,778 basehttp 56588 6183186432 "GET /support/tickets/15/ HTTP/1.1" 200 154547
+INFO 2025-06-08 11:37:24,351 basehttp 56588 6183186432 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 11:37:27,582 basehttp 56588 6183186432 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 11:38:06,437 basehttp 56588 6166360064 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 11:38:06,455 basehttp 56588 6183186432 "GET /logout/ HTTP/1.1" 302 0
+INFO 2025-06-08 11:38:06,460 basehttp 56588 6183186432 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-06-08 13:06:21,430 basehttp 56588 6166360064 "POST /login/ HTTP/1.1" 302 0
+INFO 2025-06-08 13:06:21,487 basehttp 56588 6166360064 "GET /dashboard/ HTTP/1.1" 200 89418
+INFO 2025-06-08 13:06:24,777 basehttp 56588 6166360064 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 13:07:22,102 basehttp 56588 6166360064 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 13:07:54,982 basehttp 56588 6166360064 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 13:08:22,111 basehttp 56588 6166360064 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 13:09:22,134 basehttp 56588 6166360064 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 13:10:22,113 basehttp 56588 6166360064 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 13:11:22,107 basehttp 56588 6166360064 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 13:11:44,118 autoreload 56588 8684789504 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/models.py changed, reloading.
+INFO 2025-06-08 13:11:44,503 autoreload 62445 8684789504 Watching for file changes with StatReloader
+INFO 2025-06-08 13:11:48,100 autoreload 62445 8684789504 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/models.py changed, reloading.
+INFO 2025-06-08 13:11:48,398 autoreload 62536 8684789504 Watching for file changes with StatReloader
+INFO 2025-06-08 13:12:01,341 autoreload 62536 8684789504 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/models.py changed, reloading.
+INFO 2025-06-08 13:12:01,641 autoreload 62640 8684789504 Watching for file changes with StatReloader
+INFO 2025-06-08 13:12:05,209 autoreload 62640 8684789504 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/models.py changed, reloading.
+INFO 2025-06-08 13:12:05,541 autoreload 62729 8684789504 Watching for file changes with StatReloader
+INFO 2025-06-08 13:12:21,567 basehttp 62729 6158692352 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 13:12:21,625 basehttp 62729 6141865984 "GET /support/dashboard/ HTTP/1.1" 200 91459
+INFO 2025-06-08 13:12:27,601 basehttp 62729 6158692352 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 13:12:27,610 basehttp 62729 6141865984 "GET /support/tickets/create/ HTTP/1.1" 200 71048
+INFO 2025-06-08 13:12:39,867 basehttp 62729 6158692352 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 13:12:39,879 basehttp 62729 6141865984 "GET /logout/ HTTP/1.1" 302 0
+INFO 2025-06-08 13:12:39,883 basehttp 62729 6141865984 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-06-08 13:12:51,818 basehttp 62729 6141865984 "POST /login/ HTTP/1.1" 302 0
+INFO 2025-06-08 13:12:51,870 basehttp 62729 6141865984 "GET /dashboard/ HTTP/1.1" 200 107132
+INFO 2025-06-08 13:12:54,411 basehttp 62729 6158692352 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 13:12:54,442 basehttp 62729 6141865984 "GET /support/dashboard/ HTTP/1.1" 200 83592
+INFO 2025-06-08 13:12:57,317 basehttp 62729 6158692352 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 13:12:57,327 basehttp 62729 6141865984 "GET /support/tickets/create/ HTTP/1.1" 200 78068
+INFO 2025-06-08 13:13:06,290 basehttp 62729 6141865984 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 13:13:53,393 basehttp 62729 6141865984 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 13:13:53,397 basehttp 62729 6158692352 "POST /support/tickets/create/ HTTP/1.1" 302 0
+INFO 2025-06-08 13:13:53,452 basehttp 62729 6158692352 "GET /support/tickets/16/ HTTP/1.1" 200 103470
+INFO 2025-06-08 13:13:57,085 basehttp 62729 6158692352 "GET /media/ticket_attachments/2025/06/08/svg.png HTTP/1.1" 200 62518
+INFO 2025-06-08 13:14:06,544 basehttp 62729 6158692352 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 13:14:48,604 basehttp 62729 6158692352 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 13:14:53,849 basehttp 62729 6158692352 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 13:14:54,824 basehttp 62729 6158692352 "GET /media/ticket_attachments/2025/06/08/svg.png HTTP/1.1" 200 62518
+INFO 2025-06-08 13:14:59,794 basehttp 62729 6158692352 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 13:15:14,613 basehttp 62729 6158692352 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 13:15:17,790 basehttp 62729 6158692352 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 13:15:17,811 basehttp 62729 6141865984 "GET /logout/ HTTP/1.1" 302 0
+INFO 2025-06-08 13:15:17,815 basehttp 62729 6141865984 "GET /login/ HTTP/1.1" 200 7284
+INFO 2025-06-08 13:15:21,812 basehttp 62729 6141865984 "POST /login/ HTTP/1.1" 302 0
+INFO 2025-06-08 13:15:21,859 basehttp 62729 6141865984 "GET /dashboard/ HTTP/1.1" 200 89418
+INFO 2025-06-08 13:15:23,953 basehttp 62729 6158692352 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 13:15:23,978 basehttp 62729 6141865984 "GET /support/dashboard/ HTTP/1.1" 200 91462
+INFO 2025-06-08 13:15:27,321 basehttp 62729 6158692352 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 13:15:27,450 basehttp 62729 6141865984 "GET /support/tickets/16/ HTTP/1.1" 200 149472
+INFO 2025-06-08 13:15:36,572 basehttp 62729 6158692352 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 13:15:36,597 basehttp 62729 6141865984 "GET /support/dashboard/ HTTP/1.1" 200 91462
+INFO 2025-06-08 13:15:41,913 basehttp 62729 6158692352 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 13:15:41,944 basehttp 62729 6141865984 "GET /support/tickets/ HTTP/1.1" 200 137178
+INFO 2025-06-08 13:15:48,205 basehttp 62729 6141865984 "POST /update-activity/ HTTP/1.1" 200 192
+WARNING 2025-06-08 13:15:48,206 log 62729 6158692352 Bad Request: /support/tickets/bulk-actions/
+WARNING 2025-06-08 13:15:48,207 basehttp 62729 6158692352 "POST /support/tickets/bulk-actions/ HTTP/1.1" 400 32
+INFO 2025-06-08 13:15:56,097 basehttp 62729 6158692352 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 13:16:09,486 basehttp 62729 6158692352 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 13:16:54,120 basehttp 62729 6158692352 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 13:17:54,135 basehttp 62729 6158692352 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 13:18:30,264 basehttp 62729 6158692352 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 13:18:47,194 basehttp 62729 6158692352 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 13:18:54,117 basehttp 62729 6158692352 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 13:19:54,101 basehttp 62729 6158692352 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 13:20:54,091 basehttp 62729 6158692352 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 13:21:54,115 basehttp 62729 6141865984 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 13:22:18,215 autoreload 62729 8684789504 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py changed, reloading.
+INFO 2025-06-08 13:22:18,609 autoreload 68034 8684789504 Watching for file changes with StatReloader
+INFO 2025-06-08 13:23:03,702 autoreload 68034 8684789504 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/views.py changed, reloading.
+INFO 2025-06-08 13:23:03,992 autoreload 68392 8684789504 Watching for file changes with StatReloader
+INFO 2025-06-08 13:23:14,113 basehttp 68392 6169604096 "POST /update-activity/ HTTP/1.1" 200 192
+INFO 2025-06-08 13:23:23,269 autoreload 68392 8684789504 /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/ardurTrueAlign/settings.py changed, reloading.

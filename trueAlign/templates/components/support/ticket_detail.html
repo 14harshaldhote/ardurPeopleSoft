@@ -387,43 +387,32 @@
                 <!-- Update Status Tab -->
                <!-- Update Status Tab -->
 {% if can_change_status %}
+<!-- Status Update Tab -->
 <div id="status" class="tab-content {% if active_tab == 'status' %}block{% else %}hidden{% endif %}">
-    <div class="bg-gradient-to-br from-yellow-50 to-amber-50 rounded-xl p-6 border border-yellow-200/50">
-        <form method="post" class="space-y-6">
+    <div class="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-xl p-6 border border-yellow-200/50">
+        <form method="post" id="status-form" class="space-y-6">
             {% csrf_token %}
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label for="new_status" class="block text-sm font-semibold text-gray-700 mb-2">New Status</label>
-                    <select class="w-full rounded-xl border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500 transition-all duration-200" id="new_status" name="new_status" required>
-                        <option value="">Select Status</option>
-                        {% for status_value, status_label in status_choices %}
-                        <option value="{{ status_value }}" {% if status_value == ticket.status %}selected{% endif %}>{{ status_label }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                
-                <div>
-                    <label for="priority" class="block text-sm font-semibold text-gray-700 mb-2">Priority</label>
-                    <select class="w-full rounded-xl border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500 transition-all duration-200" id="priority" name="priority">
-                        {% for priority_value, priority_label in priority_choices %}
-                        <option value="{{ priority_value }}" {% if priority_value == ticket.priority %}selected{% endif %}>{{ priority_label }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
+            <div>
+                <label for="new_status" class="block text-sm font-semibold text-gray-700 mb-2">New Status</label>
+                <select name="new_status" id="new_status" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500 transition-all duration-200">
+                    {% for status_value, status_label in status_choices %}
+                        <option value="{{ status_value }}">{{ status_label }}</option>
+                    {% endfor %}
+                </select>
             </div>
-            
-            <div id="resolution_section" class="{% if ticket.status != 'resolved' and ticket.status != 'closed' %}hidden{% endif %}">
-                <label for="resolution_summary" class="block text-sm font-semibold text-gray-700 mb-2">
-                    Resolution Summary <span class="text-red-500">*</span>
-                </label>
-                <textarea class="w-full rounded-xl border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500 transition-all duration-200 resize-none" id="resolution_summary" name="resolution_summary" rows="4" placeholder="Describe how this issue was resolved or closed...">{{ ticket.resolution_summary|default:"" }}</textarea>
-                <p class="text-sm text-gray-600 mt-1">Required when resolving or closing a ticket</p>
+
+            <div id="resolution-summary-container" class="hidden">
+                <label for="resolution_summary" class="block text-sm font-semibold text-gray-700 mb-2">Resolution Summary</label>
+                <textarea name="resolution_summary" id="resolution_summary" rows="4" 
+                    class="w-full rounded-xl border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500 transition-all duration-200"
+                    placeholder="Please provide a summary of how this ticket was resolved..."></textarea>
             </div>
-            
+
             <div class="flex justify-end">
-                <button type="submit" name="update_status" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-xl shadow-sm text-white bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-700 hover:to-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-all duration-200 transform hover:scale-105">
+                <button type="submit" name="action_update_status" 
+                    class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-xl shadow-sm text-white bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-all duration-200">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
                     Update Status
                 </button>
@@ -457,45 +446,40 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 <!-- Assignment Tab -->
                 {% if can_assign %}
-                <div id="assign" class="tab-content {% if active_tab == 'assign' %}block{% else %}hidden{% endif %}">
-                    <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 border border-green-200/50">
-                        <form method="post" class="space-y-6">
-                            {% csrf_token %}
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label for="assigned_to_user" class="block text-sm font-semibold text-gray-700 mb-2">Assign to User</label>
-                                    <select class="w-full rounded-xl border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 transition-all duration-200" id="assigned_to_user" name="assigned_to_user">
-                                        <option value="">Select User</option>
-                                        {% for user in assignable_users %}
-                                        <option value="{{ user.pk }}" {% if user == ticket.assigned_to_user %}selected{% endif %}>
-                                            {{ user.get_full_name|default:user.username }}
-                                        </option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                                
-                                <div>
-                                    <label for="assigned_group" class="block text-sm font-semibold text-gray-700 mb-2">Assign to Group</label>
-                                    <select class="w-full rounded-xl border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 transition-all duration-200" id="assigned_group" name="assigned_group">
-                                        <option value="">Select Group</option>
-                                        {% for group_value, group_label in assigned_group_choices %}
-                                        <option value="{{ group_value }}" {% if group_value == ticket.assigned_group %}selected{% endif %}>{{ group_label }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                            </div>
-                            
-                            <div class="flex justify-end">
-                                <button type="submit" name="assign_ticket" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-xl shadow-sm text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 transform hover:scale-105">
-                                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                        <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"></path>
-                                    </svg>
-                                    Update Assignment
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+              <!-- Assignment Tab -->
+<div id="assign" class="tab-content {% if active_tab == 'assign' %}block{% else %}hidden{% endif %}">
+    <div class="bg-gradient-to-br from-green-50 to-teal-50 rounded-xl p-6 border border-green-200/50">
+        <form method="post" id="assignment-form" class="space-y-6">
+            {% csrf_token %}
+            <div>
+                <label for="assigned_group" class="block text-sm font-semibold text-gray-700 mb-2">Assign to Group</label>
+                <select name="assigned_group" id="assigned_group" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 transition-all duration-200">
+                    <option value="">Select Group</option>
+                    {% for group_value, group_label in group_choices %}
+                        <option value="{{ group_value }}">{{ group_label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label for="assigned_to_user" class="block text-sm font-semibold text-gray-700 mb-2">Assign to User</label>
+                <select name="assigned_to_user" id="assigned_to_user" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 transition-all duration-200">
+                    <option value="">Select User</option>
+                </select>
+            </div>
+
+            <div class="flex justify-end">
+                <button type="submit" name="action_assign_ticket" 
+                    class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-xl shadow-sm text-white bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                    Assign Ticket
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
                 {% endif %}
 
                 <!-- Other Actions Tab -->
@@ -617,7 +601,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 </div>
                                 <div class="flex-1 min-w-0">
                                     <p class="text-sm font-medium text-gray-900 truncate">
-                                        {{ attachment.original_filename }}
+                                        {{ attachment.formatted_filename }}
                                     </p>
                                     <p class="text-xs text-gray-500">
                                         {% if attachment.file_size %}{{ attachment.file_size|filesizeformat }}{% endif %}
@@ -755,7 +739,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <div class="flex-1 min-w-0">
                     <p class="text-sm font-medium text-gray-900 truncate">
-                        {{ attachment.original_filename }}
+                        {{ attachment.formatted_filename }}
                     </p>
                     <p class="text-xs text-gray-500">
                         {% if attachment.file_size %}{{ attachment.file_size|filesizeformat }}{% endif %}
@@ -798,6 +782,49 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 
 <script>
+
+// Show/hide resolution summary based on status
+document.getElementById('new_status')?.addEventListener('change', function() {
+    const resolutionContainer = document.getElementById('resolution-summary-container');
+    if (this.value === 'RESOLVED') {
+        resolutionContainer.classList.remove('hidden');
+    } else {
+        resolutionContainer.classList.add('hidden');
+    }
+});
+
+// Dynamic user loading based on group selection
+document.getElementById('assigned_group')?.addEventListener('change', function() {
+    const userSelect = document.getElementById('assigned_to_user');
+    const groupId = this.value;
+    
+    // Clear current options
+    userSelect.innerHTML = '<option value="">Select User</option>';
+    
+    if (groupId) {
+        fetch(`/api/users-by-group/${groupId}/`)
+            .then(response => response.json())
+            .then(data => {
+                data.forEach(user => {
+                    const option = new Option(user.full_name || user.username, user.id);
+                    userSelect.add(option);
+                });
+            })
+            .catch(error => console.error('Error loading users:', error));
+    }
+});
+
+// Form validation
+document.getElementById('status-form')?.addEventListener('submit', function(e) {
+    const status = document.getElementById('new_status').value;
+    const summary = document.getElementById('resolution_summary').value;
+    
+    if (status === 'RESOLVED' && !summary.trim()) {
+        e.preventDefault();
+        alert('Please provide a resolution summary before resolving the ticket.');
+    }
+});
+
 function showTab(tabName) {
     // Hide all tab contents
     document.querySelectorAll('.tab-content').forEach(tab => {

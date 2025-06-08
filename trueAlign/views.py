@@ -14519,52 +14519,64 @@ def handle_add_comment(request, ticket, permissions):
         messages.error(request, 'Comment content is required.')
         return redirect('aps_support:ticket_detail', pk=ticket.pk)
     
-    # Create comment
-    comment = TicketComment.objects.create(
-        ticket=ticket,
-        user=request.user,
-        content=comment_content,
-        is_internal=is_internal
-    )
+    try:
+        with transaction.atomic():
+            # Create comment
+            comment = TicketComment.objects.create(
+                ticket=ticket,
+                user=request.user,
+                content=comment_content,
+                is_internal=is_internal
+            )
+            
+            # Create activity log for comment
+            comment_activity = TicketActivity.objects.create(
+                ticket=ticket,
+                action=TicketActivity.Action.COMMENTED,
+                user=request.user,
+                details=f"{'Internal' if is_internal else 'Public'} comment added"
+            )
+            
+            # Handle attachments
+            attachments = request.FILES.getlist('comment_attachments')
+            attachment_count = 0
+            
+            for file in attachments:
+                if file.size > 0:  # Only process non-empty files
+                    try:
+                        # Get file info
+                        content_type, _ = mimetypes.guess_type(file.name)
+                        
+                        # Create attachment with both original and formatted filename
+                        attachment = CommentAttachment(
+                            ticket_activity=comment_activity,
+                            file=file,
+                            uploaded_by=request.user,
+                            content_type=content_type or 'application/octet-stream'
+                        )
+                        
+                        # Save will handle filename formatting
+                        attachment.save()
+                        
+                        print(f"Comment attachment saved: Original={attachment.original_filename}, "
+                              f"Formatted={attachment.formatted_filename}")
+                        attachment_count += 1
+                        
+                    except Exception as e:
+                        messages.warning(request, f'Failed to upload {file.name}: {str(e)}')
+            
+            # Update ticket timestamp
+            ticket.save(user=request.user)
+            
+            success_msg = 'Comment added successfully!'
+            if attachment_count > 0:
+                success_msg += f' ({attachment_count} file(s) attached)'
+            
+            messages.success(request, success_msg)
+            
+    except Exception as e:
+        messages.error(request, f'An error occurred: {str(e)}')
     
-    # Create activity log for comment
-    comment_activity = TicketActivity.objects.create(
-        ticket=ticket,
-        action=TicketActivity.Action.COMMENTED,
-        user=request.user,
-        details=f"{'Internal' if is_internal else 'Public'} comment added"
-    )
-    
-    # Handle attachments
-    attachments = request.FILES.getlist('comment_attachments')
-    attachment_count = 0
-    
-    for file in attachments:
-        if file.size > 0:  # Only process non-empty files
-            try:
-                # Get file info
-                content_type, _ = mimetypes.guess_type(file.name)
-                
-                CommentAttachment.objects.create(
-                    ticket_activity=comment_activity,
-                    file=file,
-                    original_filename=file.name,
-                    file_size=file.size,
-                    content_type=content_type or 'application/octet-stream',
-                    uploaded_by=request.user,
-                )
-                attachment_count += 1
-            except Exception as e:
-                messages.warning(request, f'Failed to upload {file.name}: {str(e)}')
-    
-    # Update ticket timestamp
-    ticket.save(user=request.user)
-    
-    success_msg = 'Comment added successfully!'
-    if attachment_count > 0:
-        success_msg += f' ({attachment_count} file(s) attached)'
-    
-    messages.success(request, success_msg)
     return redirect('aps_support:ticket_detail', pk=ticket.pk)
 
 
@@ -14766,7 +14778,22 @@ def handle_due_date(request, ticket, permissions):
     
     return redirect('aps_support:ticket_detail', pk=ticket.pk)
 
+from django.http import JsonResponse
 
+@login_required
+def get_users_by_group(request, group_id):
+    """API endpoint to get users based on group"""
+    try:
+        users = User.objects.filter(groups__id=group_id).values('id', 'username', 'first_name', 'last_name')
+        user_list = [{
+            'id': user['id'],
+            'username': user['username'],
+            'full_name': f"{user['first_name']} {user['last_name']}".strip() or user['username']
+        } for user in users]
+        return JsonResponse(user_list, safe=False)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+        
 def is_valid_status_transitions(old_status, new_status, permissions):
     """
     Validate if the status transition is allowed based on business rules
@@ -14851,23 +14878,29 @@ def get_ticket_context_data(ticket, permissions, user_roles):
 
 
 def process_attachments(attachments):
-    """
-    Process attachments to add file type information and fix missing data
-    """
+    """Process attachments to add file type information and fix missing data"""
     for attachment in attachments:
         # Set file type category
-        attachment.file_category = get_file_type_category(getattr(attachment, 'file_type', None) or getattr(attachment, 'content_type', None))
+        content_type = getattr(attachment, 'content_type', None) or getattr(attachment, 'file_type', None)
+        attachment.file_category = get_file_type_category(content_type)
         attachment.is_image = is_image_attachment(attachment)
         
         # Fix missing original filename
         if not attachment.original_filename and attachment.file:
             attachment.original_filename = os.path.basename(attachment.file.name)
         
+        # Fix missing formatted filename
+        if not attachment.formatted_filename and attachment.file:
+            if isinstance(attachment, CommentAttachment):
+                attachment.file.name = attachment.comment_attachment_path(attachment.file.name)
+            else:
+                attachment.file.name = attachment.ticket_attachment_path(attachment.file.name)
+        
         # Fix missing file size
         if not attachment.file_size and attachment.file:
             try:
                 attachment.file_size = attachment.file.size
-                attachment.save(update_fields=['file_size'])
+                attachment.save(update_fields=['file_size', 'formatted_filename'])
             except (OSError, ValueError, AttributeError):
                 attachment.file_size = 0
 
@@ -15206,20 +15239,24 @@ def create_ticket(request):
                 for file in attachments:
                     if file.size > 0:  # Only process non-empty files
                         try:
-                            print(f"Processing attachment: {file.name} ({file.size} bytes)")
                             # Get file info
                             content_type, _ = mimetypes.guess_type(file.name)
                             
-                            TicketAttachment.objects.create(
+                            # Create attachment with both original and formatted filename
+                            attachment = TicketAttachment(
                                 ticket=ticket,
                                 file=file,
-                                original_filename=file.name,
-                                file_size=file.size,
-                                file_type=content_type or 'application/octet-stream',
                                 uploaded_by=request.user,
+                                file_type=content_type or 'application/octet-stream'
                             )
-                            print(f"Attachment saved: {file.name}")
+                            
+                            # Save will handle filename formatting
+                            attachment.save()
+                            
+                            print(f"Attachment saved: Original={attachment.original_filename}, "
+                                  f"Formatted={attachment.formatted_filename}")
                             attachment_count += 1
+                            
                         except Exception as e:
                             print(f"Error uploading attachment {file.name}: {str(e)}")
                             messages.warning(request, f'Failed to upload {file.name}: {str(e)}')
@@ -15228,10 +15265,12 @@ def create_ticket(request):
                 if attachment_count > 0:
                     success_msg += f' ({attachment_count} file(s) attached)'
                 
-                print(success_msg)
                 messages.success(request, success_msg)
                 return redirect('aps_support:ticket_detail', pk=ticket.pk)
                 
+        except Exception as e:
+            messages.error(request, f'An error occurred: {str(e)}')
+                  
         except ValidationError as e:
             print(f"ValidationError: {str(e)}")
             messages.error(request, f'Validation error: {str(e)}')
@@ -15276,7 +15315,7 @@ def ticket_detail(request, pk):
 @login_required
 @require_http_methods(["POST"])
 def delete_attachment(request, pk, attachment_id):
-    """Delete a ticket attachment"""
+    """Delete a ticket or comment attachment"""
     ticket = get_object_or_404(Support, pk=pk, is_deleted=False)
     user_roles = get_user_roles(request.user)
     permissions = get_ticket_permissions(request.user, ticket, user_roles)
@@ -15285,23 +15324,36 @@ def delete_attachment(request, pk, attachment_id):
         return JsonResponse({'error': 'Permission denied'}, status=403)
     
     try:
-        attachment = get_object_or_404(TicketAttachment, pk=attachment_id, ticket=ticket)
-        
-        # Soft delete the attachment
-        attachment.is_deleted = True
-        attachment.deleted_at = timezone.now()
-        attachment.deleted_by = request.user
-        attachment.save()
+        # Try to get either ticket attachment or comment attachment
+        attachment = None
+        try:
+            attachment = TicketAttachment.objects.get(pk=attachment_id, ticket=ticket)
+            attachment.is_deleted = True
+            attachment.save()
+            attachment_type = 'ticket'
+        except TicketAttachment.DoesNotExist:
+            attachment = get_object_or_404(
+                CommentAttachment,
+                pk=attachment_id,
+                ticket_activity__ticket=ticket
+            )
+            attachment.is_active = False
+            attachment.save()
+            attachment_type = 'comment'
         
         # Create activity log
         TicketActivity.objects.create(
             ticket=ticket,
             action=TicketActivity.Action.UPDATED,
             user=request.user,
-            details=f"Attachment '{attachment.original_filename}' deleted"
+            details=f"{attachment_type.title()} attachment '{attachment.original_filename}' deleted"
         )
         
-        return JsonResponse({'success': True, 'message': 'Attachment deleted successfully'})
+        return JsonResponse({
+            'success': True,
+            'message': 'Attachment deleted successfully',
+            'attachment_type': attachment_type
+        })
         
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
@@ -15309,7 +15361,7 @@ def delete_attachment(request, pk, attachment_id):
 
 @login_required
 def download_attachment(request, pk, attachment_id):
-    """Download a ticket attachment"""
+    """Download a ticket or comment attachment"""
     ticket = get_object_or_404(Support, pk=pk, is_deleted=False)
     user_roles = get_user_roles(request.user)
     permissions = get_ticket_permissions(request.user, ticket, user_roles)
@@ -15318,18 +15370,27 @@ def download_attachment(request, pk, attachment_id):
         messages.error(request, "You don't have permission to view this ticket.")
         return redirect('aps_support:ticket_list')
     
-    attachment = get_object_or_404(
-        TicketAttachment, 
-        pk=attachment_id, 
-        ticket=ticket, 
-        is_deleted=False
-    )
+    # Try to get either ticket attachment or comment attachment
+    attachment = None
+    try:
+        attachment = TicketAttachment.objects.get(
+            pk=attachment_id, 
+            ticket=ticket, 
+            is_deleted=False
+        )
+    except TicketAttachment.DoesNotExist:
+        attachment = get_object_or_404(
+            CommentAttachment,
+            pk=attachment_id,
+            ticket_activity__ticket=ticket,
+            is_active=True
+        )
     
     try:
         # Create response with file
         response = HttpResponse(
             attachment.file.read(),
-            content_type=attachment.file_type or 'application/octet-stream'
+            content_type=attachment.content_type or attachment.file_type or 'application/octet-stream'
         )
         response['Content-Disposition'] = f'attachment; filename="{attachment.original_filename}"'
         response['Content-Length'] = attachment.file_size
@@ -15353,11 +15414,24 @@ def bulk_ticket_actions(request):
     ticket_ids = request.POST.getlist('selected_tickets')
     action = request.POST.get('bulk_action')
     
+    # Validate required fields
     if not ticket_ids:
-        return JsonResponse({'error': 'No tickets selected'}, status=400)
+        return JsonResponse({
+            'error': 'Please select at least one ticket to perform bulk action'
+        }, status=400)
     
     if not action:
-        return JsonResponse({'error': 'No action specified'}, status=400)
+        return JsonResponse({
+            'error': 'Please select an action to perform'
+        }, status=400)
+    
+    # Validate ticket IDs are integers
+    try:
+        ticket_ids = [int(tid) for tid in ticket_ids]
+    except ValueError:
+        return JsonResponse({
+            'error': 'Invalid ticket selection'
+        }, status=400)
     
     # Get tickets user can modify
     if user_roles['is_admin']:
@@ -15378,7 +15452,13 @@ def bulk_ticket_actions(request):
         )
     
     if not tickets.exists():
-        return JsonResponse({'error': 'No valid tickets found'}, status=404)
+        return JsonResponse({
+            'error': 'No tickets found that you have permission to modify'
+        }, status=404)
+    
+    # Add logging for debugging
+    logger.info(f"Bulk action request - User: {request.user.username}, "
+                f"Action: {action}, Ticket IDs: {ticket_ids}")
     
     try:
         with transaction.atomic():
@@ -15458,6 +15538,11 @@ def bulk_ticket_actions(request):
                     )
                     success_count += 1
             
+            if success_count == 0:
+                return JsonResponse({
+                    'error': 'No tickets were modified. Check permissions or valid status transitions.'
+                }, status=400)
+                
             return JsonResponse({
                 'success': True,
                 'message': f'Successfully processed {success_count} ticket(s)',
@@ -15465,8 +15550,10 @@ def bulk_ticket_actions(request):
             })
             
     except Exception as e:
-        return JsonResponse({'error': f'Bulk action failed: {str(e)}'}, status=500)
-
+        logger.error(f"Bulk action failed: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'error': f'Bulk action failed: {str(e)}'
+        }, status=500)
 
 @login_required
 def ticket_export(request):

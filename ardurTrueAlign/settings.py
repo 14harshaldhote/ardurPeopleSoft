@@ -250,3 +250,21 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # Create directories for different types of uploads
 TICKET_ATTACHMENTS_DIR = 'ticket_attachments'
 COMMENT_ATTACHMENTS_DIR = 'comment_attachments'
+
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'django.request': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
