@@ -2286,722 +2286,6 @@ class Attendance(models.Model):
                 report['summary']['approved_leave_count'] += 1
         return report
 
-# class Attendance(models.Model):
-#     STATUS_CHOICES = [
-#         ('Present', 'Present'),
-#         ('Present & Late', 'Present & Late'),
-#         ('Absent', 'Absent'),
-#         ('Late', 'Late'),
-#         ('Half Day', 'Half Day'),
-#         ('On Leave', 'On Leave'),
-#         ('Work From Home', 'Work From Home'),
-#         ('Weekend', 'Weekend'),
-#         ('Holiday', 'Holiday'),
-#         ('Comp Off', 'Comp Off'),
-#         ('Not Marked', 'Not Marked')
-#     ]
-
-#     LOCATION_CHOICES = [
-#         ('Office', 'Office'),
-#         ('Home', 'Home'),
-#         ('Remote', 'Remote'),
-#         ('Other', 'Other')
-#     ]
-
-#     user = models.ForeignKey(User, on_delete=models.CASCADE)
-#     date = models.DateField()
-#     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Not Marked')
-#     is_half_day = models.BooleanField(default=False)
-#     leave_type = models.CharField(max_length=50, null=True, blank=True)
-#     clock_in_time = models.DateTimeField(null=True, blank=True)
-#     clock_out_time = models.DateTimeField(null=True, blank=True)
-#     breaks = models.JSONField(default=list)
-#     total_hours = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
-#     expected_hours = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
-#     is_weekend = models.BooleanField(default=False)
-#     is_holiday = models.BooleanField(default=False)
-#     location = models.CharField(max_length=50, choices=LOCATION_CHOICES, default='Office')
-#     ip_address = models.GenericIPAddressField(null=True, blank=True)
-#     device_info = models.JSONField(null=True, blank=True)
-#     shift = models.ForeignKey('ShiftMaster', on_delete=models.SET_NULL, null=True, blank=True)
-#     late_minutes = models.IntegerField(default=0)
-#     last_modified = models.DateTimeField(auto_now=True)
-#     modified_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='attendance_modifications')
-#     regularization_reason = models.TextField(null=True, blank=True)
-#     regularization_status = models.CharField(max_length=20, choices=[
-#         ('Pending', 'Pending'),
-#         ('Approved', 'Approved'),
-#         ('Rejected', 'Rejected')
-#     ], null=True, blank=True)
-#     user_session = models.ForeignKey('UserSession', on_delete=models.SET_NULL, null=True, blank=True)
-#     overtime_hours = models.DecimalField(max_digits=5, decimal_places=2, default=0)
-#     is_overtime_approved = models.BooleanField(default=False)
-#     remarks = models.TextField(null=True, blank=True)
-
-#     class Meta:
-#         unique_together = ['user', 'date']
-#         indexes = [
-#             models.Index(fields=['user', 'date', 'status']),
-#             models.Index(fields=['shift']),
-#             models.Index(fields=['date']),
-#             models.Index(fields=['user', 'status']),
-#         ]
-
-#     def __str__(self):
-#         return f"{self.user.username} - {self.date} - {self.status}"
-
-#     def check_late_arrival(self):
-#         """Check if user arrived late based on shift timing"""
-#         if not self.clock_in_time:
-#             self.status = 'Not Marked'
-#             return
-
-#         try:
-#             # Get user's shift if not set
-#             if not self.shift:
-#                 from .models import ShiftAssignment
-#                 self.shift = ShiftAssignment.get_user_current_shift(self.user, self.date)
-#                 if not self.shift:
-#                     self.status = 'Present'
-#                     return
-
-#             # Convert clock_in_time to local timezone (IST)
-#             user_clock_in = timezone.localtime(self.clock_in_time)
-
-#             # Get the date in local timezone to properly handle day boundaries
-#             local_date = timezone.localtime(timezone.make_aware(
-#                 datetime.combine(self.date, time(0, 0)),
-#                 timezone.get_current_timezone()
-#             )).date()
-
-#             # Create shift start time in local timezone
-#             local_shift_start = timezone.make_aware(
-#                 datetime.combine(local_date, self.shift.start_time),
-#                 timezone.get_current_timezone()
-#             )
-
-#             # Add grace period
-#             grace_period = getattr(self.shift, 'grace_period', timedelta(minutes=10))
-#             latest_allowed_time = local_shift_start + grace_period
-
-#             # Compare clock in time with allowed time - now both are in local timezone
-#             if user_clock_in > latest_allowed_time:
-#                 self.status = 'Present & Late'
-#                 # Calculate late minutes
-#                 late_duration = user_clock_in - latest_allowed_time
-#                 self.late_minutes = int(late_duration.total_seconds() // 60)
-#             else:
-#                 self.status = 'Present'
-
-#         except Exception as e:
-#             import traceback
-#             print(f"Error checking late arrival: {str(e)}")
-#             print(f"Traceback: {traceback.format_exc()}")
-#             self.status = 'Present'
-
-#     def check_early_departure(self):
-#         """Check if user left early based on shift timing"""
-#         if not (self.clock_in_time and self.clock_out_time) or not self.shift:
-#             return False
-
-#         try:
-#             # Convert clock_out_time to user's timezone
-#             user_clock_out = timezone.localtime(self.clock_out_time)
-
-#             # Get shift end time for the date in user's timezone
-#             shift_end = timezone.make_aware(
-#                 timezone.datetime.combine(self.date, self.shift.end_time),
-#                 timezone.get_current_timezone()
-#             )
-
-#             # Consider grace period for leaving early (10 minutes)
-#             early_leave_threshold = shift_end - timedelta(minutes=10)
-
-#             if user_clock_out < early_leave_threshold:
-#                 early_minutes = int((shift_end - user_clock_out).total_seconds() // 60)
-#                 self.remarks = f"{self.remarks or ''} Left early by {early_minutes} minutes."
-#                 return True
-#             return False
-#         except Exception as e:
-#             print(f"Error checking early departure: {str(e)}")
-#             return False
-
-#     def calculate_hours(self):
-#         """Calculate total working hours excluding breaks"""
-#         if not (self.clock_in_time and self.clock_out_time):
-#             return None
-
-#         try:
-#             # Convert times to user's timezone
-#             user_clock_in = timezone.localtime(self.clock_in_time)
-#             user_clock_out = timezone.localtime(self.clock_out_time)
-
-#             # Calculate total duration
-#             total_time = (user_clock_out - user_clock_in).total_seconds() / 3600
-
-#             # Subtract break time
-#             break_time = self.calculate_break_time()
-#             total_worked = total_time - break_time
-
-#             # Calculate overtime if applicable
-#             regular_hours = self.expected_hours or (self.shift.expected_hours() if self.shift else 8.0)
-#             if total_worked > float(regular_hours):
-#                 self.overtime_hours = round(total_worked - float(regular_hours), 2)
-#             else:
-#                 self.overtime_hours = 0
-
-#             return round(total_worked, 2)
-
-#         except Exception as e:
-#             import traceback
-#             print(f"Error calculating hours: {str(e)}")
-#             print(f"Traceback: {traceback.format_exc()}")
-#             return None
-
-#     def calculate_break_time(self):
-#         """Calculate total break time in hours"""
-#         break_time = 0
-#         if not self.breaks:
-#             return break_time
-
-#         try:
-#             if isinstance(self.breaks, list):
-#                 for break_data in self.breaks:
-#                     start = break_data.get('start')
-#                     end = break_data.get('end')
-
-#                     # Convert string times to datetime if needed
-#                     if isinstance(start, str):
-#                         try:
-#                             start = timezone.datetime.fromisoformat(start)
-#                         except ValueError:
-#                             continue
-#                     if isinstance(end, str):
-#                         try:
-#                             end = timezone.datetime.fromisoformat(end)
-#                         except ValueError:
-#                             continue
-
-#                     # Convert to user's timezone
-#                     start = timezone.localtime(start)
-#                     end = timezone.localtime(end)
-
-#                     if start and end and end > start:
-#                         break_time += (end - start).total_seconds() / 3600
-
-#         except Exception as e:
-#             print(f"Error calculating break time: {str(e)}")
-
-#         return break_time
-
-#     def ensure_timezone_aware(self, datetime_obj):
-#         """Ensure datetime is timezone aware"""
-#         if datetime_obj and timezone.is_naive(datetime_obj):
-#             return timezone.make_aware(datetime_obj)
-#         return datetime_obj
-
-#     def check_weekend_holiday(self):
-#         """Check if the date is a weekend or holiday"""
-#         try:
-#             # Check for holiday
-#             from .models import Holiday
-#             is_holiday = Holiday.is_holiday(self.date)
-#             if is_holiday:
-#                 self.status = 'Holiday'
-#                 self.is_holiday = True
-#                 return True
-
-#             # Check for weekend based on shift settings
-#             is_weekend = self.date.weekday() >= 5  # Saturday or Sunday
-
-#             if is_weekend and self.shift:
-#                 if self.shift.work_days == 'Custom':
-#                     weekday = calendar.day_name[self.date.weekday()]
-#                     if weekday not in self.shift.custom_work_days.split(','):
-#                         self.status = 'Weekend'
-#                         self.is_weekend = True
-#                         return True
-#                 elif self.shift.work_days == 'Weekdays':  # Monday to Friday
-#                     self.status = 'Weekend'
-#                     self.is_weekend = True
-#                     return True
-#                 # For 'All Days' work pattern, don't mark as weekend
-#             elif is_weekend:
-#                 self.status = 'Weekend'
-#                 self.is_weekend = True
-#                 return True
-
-#             return False
-#         except Exception as e:
-#             print(f"Error checking weekend/holiday: {str(e)}")
-#             return False
-
-#     def check_half_day(self):
-#         """Determine if attendance should be marked as half day"""
-#         if not (self.clock_in_time and self.clock_out_time) or self.total_hours is None:
-#             return False
-
-#         try:
-#             # Get expected hours from shift or default to 8 hours
-#             expected_hours = float(self.expected_hours or (self.shift.shift_duration if self.shift else 8.0))
-
-#             # Half day threshold is half of expected hours
-#             half_day_threshold = expected_hours / 2
-
-#             # If worked less than half of expected hours but more than 0, mark as half day
-#             if 0 < float(self.total_hours) < half_day_threshold:
-#                 self.status = 'Half Day'
-#                 self.is_half_day = True
-#                 return True
-#             return False
-#         except Exception as e:
-#             print(f"Error checking half day: {str(e)}")
-#             return False
-
-#     def handle_wfh(self):
-#         """Handle Work From Home attendance"""
-#         # If location is set to Home, mark as WFH
-#         if self.location == 'Home' and self.clock_in_time:
-#             self.status = 'Work From Home'
-#             return True
-#         return False
-
-#     def determine_attendance_status(self):
-#         """Determine final attendance status based on various factors"""
-#         # Priority order for status determination
-
-#         # 1. Check for approved leave
-#         from .models import Leave
-#         leave = Leave.objects.filter(
-#             user=self.user,
-#             start_date__lte=self.date,
-#             end_date__gte=self.date,
-#             status='Approved'
-#         ).first()
-
-#         if leave:
-#             self.status = 'On Leave'
-#             self.leave_type = leave.leave_type
-#             self.is_half_day = leave.half_day
-#             return
-
-#         # 2. Check for holiday/weekend
-#         if self.check_weekend_holiday():
-#             return
-
-#         # 3. If no clock in recorded, mark as Not Marked
-#         if not self.clock_in_time:
-#             self.status = 'Not Marked'
-#             return
-
-#         # 4. Handle Work From Home
-#         if self.handle_wfh():
-#             return
-
-#         # 5. Check for half day
-#         if self.check_half_day():
-#             return
-
-#         # 6. Check for late arrival
-#         self.check_late_arrival()
-
-#         # 7. Check for early departure (doesn't change status, just adds remarks)
-#         self.check_early_departure()
-
-#         # If we've made it here without setting a status, default to Present
-#         if not self.status or self.status == 'Not Marked':
-#             self.status = 'Present'
-
-#     def clean(self):
-#         """Validate attendance data"""
-#         if self.clock_in_time and self.clock_out_time:
-#             if self.clock_out_time < self.clock_in_time:
-#                 raise ValidationError("Clock out must be after clock in")
-
-#         if self.breaks:
-#             try:
-#                 for break_data in self.breaks:
-#                     start = break_data.get('start')
-#                     end = break_data.get('end')
-#                     if start and end:
-#                         if isinstance(start, str):
-#                             start = timezone.datetime.fromisoformat(start)
-#                         if isinstance(end, str):
-#                             end = timezone.datetime.fromisoformat(end)
-#                         if end <= start:
-#                             raise ValidationError("Break end time must be after start time")
-#             except Exception as e:
-#                 raise ValidationError(f"Invalid break data: {str(e)}")
-
-#     def mark_comp_off(self, approved_by=None, reason=None):
-#         """Mark attendance as Comp Off"""
-#         try:
-#             # Only allow marking comp off for non-holiday, non-weekend days
-#             if self.is_holiday or self.is_weekend:
-#                 return False, "Cannot mark Comp Off for weekends or holidays"
-
-#             # Check if user has comp off balance
-#             from .models import Leave
-#             comp_off_balance = float(Leave.get_comp_off_balance(self.user))
-
-#             if comp_off_balance <= 0:
-#                 return False, "Insufficient Comp Off balance"
-
-#             # Mark as Comp Off
-#             self.status = 'Comp Off'
-#             self.remarks = f"{self.remarks or ''} Comp Off used. Reason: {reason or 'Not specified'}. Approved by: {approved_by.get_full_name() if approved_by else 'System'}"
-
-#             self.save()
-#             return True, "Successfully marked as Comp Off"
-
-#         except Exception as e:
-#             return False, f"Error marking Comp Off: {str(e)}"
-
-#     def save(self, recalculate=False, *args, **kwargs):
-#         try:
-#             # Ensure timezone awareness
-#             self.clock_in_time = self.ensure_timezone_aware(self.clock_in_time)
-#             self.clock_out_time = self.ensure_timezone_aware(self.clock_out_time)
-
-#             # Handle breaks timezone awareness
-#             if self.breaks and isinstance(self.breaks, list):
-#                 for i, break_data in enumerate(self.breaks):
-#                     start = break_data.get('start')
-#                     end = break_data.get('end')
-#                     if isinstance(start, str):
-#                         try:
-#                             start = timezone.datetime.fromisoformat(start)
-#                             self.breaks[i]['start'] = self.ensure_timezone_aware(start)
-#                         except (ValueError, TypeError):
-#                             self.breaks[i]['start'] = None
-#                     if isinstance(end, str):
-#                         try:
-#                             end = timezone.datetime.fromisoformat(end)
-#                             self.breaks[i]['end'] = self.ensure_timezone_aware(end)
-#                         except (ValueError, TypeError):
-#                             self.breaks[i]['end'] = None
-
-#             # Set basic flags
-#             self.is_weekend = self.date.weekday() >= 5
-#             self.is_holiday = self.check_if_holiday()
-
-#             # Get shift if not set
-#             if not self.shift_id:
-#                 from .models import ShiftAssignment
-#                 self.shift = ShiftAssignment.get_user_current_shift(self.user, self.date)
-
-#             # Set expected hours from shift
-#             if self.shift:
-#                 self.expected_hours = self.shift.shift_duration
-
-#             # Calculate total hours if clock in/out times exist
-#             if self.clock_in_time and self.clock_out_time:
-#                 self.total_hours = self.calculate_hours()
-
-#             # Determine final attendance status
-#             if recalculate or not self.status or self.status == 'Not Marked':
-#                 self.determine_attendance_status()
-
-#             # Check for early departure (doesn't change status, just adds remarks)
-#             self.check_early_departure()
-
-#             super().save(*args, **kwargs)
-
-#         except Exception as e:
-#             import traceback
-#             print(f"Error saving attendance: {str(e)}")
-#             print(f"Traceback: {traceback.format_exc()}")
-#             # Still try to save basic data
-#             super().save(*args, **kwargs)
-
-#     def check_if_holiday(self):
-#         """Check if date is a holiday"""
-#         from .models import Holiday
-#         return Holiday.is_holiday(self.date)
-
-#     @classmethod
-#     def determine_shift_date(cls, user, clock_in_time):
-#         """Determine the shift date and get shift for clock in time"""
-#         try:
-#             # Convert clock_in_time to user's timezone
-#             user_clock_in = timezone.localtime(clock_in_time)
-#             attendance_date = user_clock_in.date()
-
-#             from .models import ShiftAssignment
-#             shift = ShiftAssignment.get_user_current_shift(user, attendance_date)
-
-#             # Handle overnight shifts
-#             if shift and shift.start_time > shift.end_time:
-#                 # If clock in is before midnight, use current date
-#                 # If clock in is after midnight, use previous date
-#                 if user_clock_in.time() < shift.end_time:
-#                     attendance_date = attendance_date - timedelta(days=1)
-
-#             return attendance_date, shift
-
-#         except Exception as e:
-#             print(f"Error in determine_shift_date: {str(e)}")
-#             return clock_in_time.date(), None
-
-#     @classmethod
-#     def create_attendance(cls, user, clock_in_time, location="Office", ip_address=None, device_info=None):
-#         """Create new attendance record"""
-#         try:
-#             # Get active user session
-#             from .models import UserSession
-#             user_session = UserSession.objects.filter(
-#                 user=user,
-#                 is_active=True,
-#                 login_time__date=clock_in_time.date()
-#             ).first()
-
-#             # Determine shift date and get shift
-#             shift_date, shift = cls.determine_shift_date(user, clock_in_time)
-
-#             # Check for existing leave
-#             from .models import Leave
-#             existing_leave = Leave.objects.filter(
-#                 user=user,
-#                 start_date__lte=shift_date,
-#                 end_date__gte=shift_date,
-#                 status='Approved'
-#             ).first()
-
-#             # Check holiday and weekend status
-#             from .models import Holiday
-#             is_holiday = Holiday.is_holiday(shift_date)
-#             is_weekend = shift_date.weekday() >= 5
-
-#             # Check if it's a working day based on shift
-#             is_working_day = True
-#             if shift:
-#                 if shift.work_days == 'Custom':
-#                     weekday = calendar.day_name[shift_date.weekday()]
-#                     is_working_day = weekday in shift.custom_work_days.split(',')
-#                 elif shift.work_days != 'All Days':
-#                     is_working_day = not is_weekend
-
-#             # Determine initial status
-#             if existing_leave:
-#                 initial_status = 'On Leave'
-#                 leave_type = existing_leave.leave_type
-#                 is_half_day = existing_leave.half_day
-#             elif is_holiday:
-#                 initial_status = 'Holiday'
-#                 leave_type = None
-#                 is_half_day = False
-#             elif is_weekend and not is_working_day:
-#                 initial_status = 'Weekend'
-#                 leave_type = None
-#                 is_half_day = False
-#             elif location == 'Home':
-#                 initial_status = 'Work From Home'
-#                 leave_type = None
-#                 is_half_day = False
-#             else:
-#                 initial_status = 'Present'
-#                 leave_type = None
-#                 is_half_day = False
-
-#             # Create or update attendance
-#             attendance, created = cls.objects.get_or_create(
-#                 user=user,
-#                 date=shift_date,
-#                 defaults={
-#                     'clock_in_time': clock_in_time,
-#                     'status': initial_status,
-#                     'location': location,
-#                     'ip_address': ip_address,
-#                     'device_info': device_info,
-#                     'shift': shift,
-#                     'expected_hours': shift.shift_duration if shift else 8.0,
-#                     'is_weekend': is_weekend,
-#                     'is_holiday': is_holiday,
-#                     'leave_type': leave_type,
-#                     'is_half_day': is_half_day,
-#                     'user_session': user_session
-#                 }
-#             )
-
-#             if not created and not attendance.clock_in_time:
-#                 attendance.clock_in_time = clock_in_time
-#                 attendance.location = location
-#                 attendance.ip_address = ip_address
-#                 attendance.device_info = device_info
-#                 attendance.shift = shift
-#                 attendance.user_session = user_session
-#                 if attendance.status not in ['On Leave', 'Holiday']:
-#                     attendance.status = initial_status
-#                 attendance.save(recalculate=True)
-
-#             return attendance
-
-#         except Exception as e:
-#             import traceback
-#             print(f"Error creating attendance: {str(e)}")
-#             print(f"Traceback: {traceback.format_exc()}")
-#             # Fallback to basic attendance creation
-#             return cls.objects.create(
-#                 user=user,
-#                 date=clock_in_time.date(),
-#                 clock_in_time=clock_in_time,
-#                 status='Present',
-#                 location=location,
-#                 ip_address=ip_address,
-#                 device_info=device_info
-#             )
-
-#     @classmethod
-#     def clock_out(cls, user, clock_out_time, breaks=None):
-#         """Record clock out time for user"""
-#         try:
-#             # Convert clock_out_time to user's timezone
-#             user_clock_out = timezone.localtime(clock_out_time)
-#             today = user_clock_out.date()
-
-#             # Get current date's attendance
-#             attendance = cls.objects.filter(
-#                 user=user,
-#                 date=today,
-#                 clock_in_time__isnull=False,
-#                 clock_out_time__isnull=True
-#             ).first()
-
-#             # For overnight shifts, also check previous day
-#             if not attendance:
-#                 yesterday = today - timedelta(days=1)
-#                 attendance = cls.objects.filter(
-#                     user=user,
-#                     date=yesterday,
-#                     clock_in_time__isnull=False,
-#                     clock_out_time__isnull=True
-#                 ).first()
-
-#             if attendance:
-#                 attendance.clock_out_time = clock_out_time
-#                 if breaks:
-#                     attendance.breaks = breaks
-#                 attendance.save(recalculate=True)
-#                 return attendance
-#             else:
-#                 print(f"No active attendance found for user {user} to clock out.")
-#                 return None
-
-#         except Exception as e:
-#             import traceback
-#             print(f"Error in clock_out: {str(e)}")
-#             print(f"Traceback: {traceback.format_exc()}")
-#             return None
-
-#     @classmethod
-#     def get_attendance_summary(cls, user, year=None, month=None):
-#         """Get monthly attendance summary"""
-#         if not year:
-#             year = timezone.now().year
-#         if not month:
-#             month = timezone.now().month
-
-#         start_date = timezone.datetime(year, month, 1).date()
-#         if month == 12:
-#             end_date = timezone.datetime(year + 1, 1, 1).date() - timedelta(days=1)
-#         else:
-#             end_date = timezone.datetime(year, month + 1, 1).date() - timedelta(days=1)
-
-#         from .models import ShiftAssignment
-#         shift = ShiftAssignment.get_user_current_shift(user)
-#         attendances = cls.objects.filter(
-#             user=user,
-#             date__range=(start_date, end_date)
-#         )
-
-#         working_days = 0
-#         current_date = start_date
-#         from .models import Holiday
-#         while current_date <= end_date:
-#             if shift:
-#                 if shift.work_days == 'Custom':
-#                     weekday = calendar.day_name[current_date.weekday()]
-#                     if weekday in shift.custom_work_days.split(',') and not Holiday.is_holiday(current_date):
-#                         working_days += 1
-#                 elif shift.work_days == 'All Days' or (shift.work_days != 'Custom' and current_date.weekday() < 5):
-#                     if not Holiday.is_holiday(current_date):
-#                         working_days += 1
-#             else:
-#                 if current_date.weekday() < 5 and not Holiday.is_holiday(current_date):
-#                     working_days += 1
-#             current_date += timedelta(days=1)
-
-#         summary = {
-#             'year': year,
-#             'month': month,
-#             'month_name': calendar.month_name[month],
-#             'working_days': working_days,
-#             'present_days': attendances.filter(status='Present').count(),
-#             'late_days': attendances.filter(status__in=['Late', 'Present & Late']).count(),
-#             'wfh_days': attendances.filter(status='Work From Home').count(),
-#             'absent_days': attendances.filter(status='Not Marked').count(),
-#             'half_days': attendances.filter(is_half_day=True).count(),
-#             'leave_days': attendances.filter(status='On Leave').count(),
-#             'comp_off_days': attendances.filter(status='Comp Off').count(),
-#             'total_hours': sum(att.total_hours or 0 for att in attendances),
-#             'overtime_hours': sum(att.overtime_hours or 0 for att in attendances),
-#             'avg_hours': attendances.filter(total_hours__isnull=False).aggregate(models.Avg('total_hours'))['total_hours__avg'] or 0,
-#             'max_hours': attendances.filter(total_hours__isnull=False).aggregate(models.Max('total_hours'))['total_hours__max'] or 0,
-#             'attendance_percentage': 0
-#         }
-
-#         if working_days > 0:
-#             present_equivalent = (
-#                 summary['present_days'] +
-#                 summary['late_days'] +
-#                 summary['wfh_days'] +
-#                 (summary['half_days'] * 0.5) +
-#                 summary['leave_days'] +
-#                 summary['comp_off_days']
-#             )
-#             summary['attendance_percentage'] = round((present_equivalent / working_days) * 100, 2)
-
-#         return summary
-
-#     @classmethod
-#     def get_annual_report(cls, user, year):
-#         """Get annual attendance report"""
-#         annual_data = []
-#         for month in range(1, 13):
-#             monthly_summary = cls.get_attendance_summary(user, year, month)
-#             annual_data.append(monthly_summary)
-
-#         yearly_totals = {
-#             'working_days': sum(month['working_days'] for month in annual_data),
-#             'present_days': sum(month['present_days'] for month in annual_data),
-#             'late_days': sum(month['late_days'] for month in annual_data),
-#             'wfh_days': sum(month['wfh_days'] for month in annual_data),
-#             'absent_days': sum(month['absent_days'] for month in annual_data),
-#             'half_days': sum(month['half_days'] for month in annual_data),
-#             'leave_days': sum(month['leave_days'] for month in annual_data),
-#             'comp_off_days': sum(month.get('comp_off_days', 0) for month in annual_data),
-#             'total_hours': sum(month['total_hours'] for month in annual_data),
-#             'overtime_hours': sum(month['overtime_hours'] for month in annual_data),
-#         }
-
-#         if yearly_totals['working_days'] > 0:
-#             present_equivalent = (
-#                 yearly_totals['present_days'] +
-#                 yearly_totals['late_days'] +
-#                 yearly_totals['wfh_days'] +
-#                 (yearly_totals['half_days'] * 0.5) +
-#                 yearly_totals['leave_days'] +
-#                 yearly_totals['comp_off_days']
-#             )
-#             yearly_totals['attendance_percentage'] = round((present_equivalent / yearly_totals['working_days']) * 100, 2)
-#         else:
-#             yearly_totals['attendance_percentage'] = 0
-
-#         return {
-#             'year': year,
-#             'monthly_data': annual_data,
-#             'yearly_totals': yearly_totals
-#         }
 
 
 '''-------------------------------------------- SUPPORT AREA ---------------------------------------'''
@@ -3009,11 +2293,13 @@ import uuid
 from django.db import models
 from django.utils.timezone import now
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 
 from django.db import models
 from django.utils.timezone import now
 import uuid
 from django.contrib.auth.models import User
+
 class Support(models.Model):
     class Status(models.TextChoices):
         NEW = 'New', 'New'
@@ -3052,7 +2338,7 @@ class Support(models.Model):
         BREACHED = 'Breached', 'Breached'
 
     # Core Fields
-    ticket_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    ticket_id = models.CharField(max_length=100, unique=True, blank=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tickets')
     issue_type = models.CharField(max_length=50, choices=IssueType.choices)
     subject = models.CharField(max_length=200)
@@ -3070,7 +2356,7 @@ class Support(models.Model):
         related_name='assigned_tickets'
     )
 
-    # CC Users (NEW FIELD)
+    # CC Users
     cc_users = models.ManyToManyField(
         User,
         blank=True,
@@ -3129,10 +2415,19 @@ class Support(models.Model):
         default=0,
         help_text="Current escalation level of the ticket"
     )
+    
+    # Add this field
+    reopen_count = models.PositiveSmallIntegerField(
+        default=0,
+        help_text="Number of times this ticket has been reopened"
+    )
 
     # User Satisfaction
     satisfaction_rating = models.IntegerField(null=True, blank=True, choices=[(i, i) for i in range(1, 6)])
     feedback = models.TextField(blank=True)
+
+    # Soft delete field - ADD DEFAULT VALUE
+    is_deleted = models.BooleanField(default=False, help_text="Soft delete flag")
 
     class Meta:
         ordering = ['-created_at']
@@ -3142,8 +2437,8 @@ class Support(models.Model):
             models.Index(fields=['created_at']),
             models.Index(fields=['user']),
             models.Index(fields=['due_date']),
-            models.Index(fields=['resolved_at']),  # Added index for resolved_at
-            models.Index(fields=['priority']),     # Added index for priority
+            models.Index(fields=['resolved_at']),
+            models.Index(fields=['priority']),
         ]
         verbose_name = "Support Ticket"
         verbose_name_plural = "Support Tickets"
@@ -3158,6 +2453,17 @@ class Support(models.Model):
     def save(self, *args, **kwargs):
         # Extract user from kwargs (if present) before passing to super().save()
         user = kwargs.pop('user', None)
+
+        # Auto-generate ticket_id if not set
+        if not self.ticket_id:
+            # Short code from IssueType value (convert to uppercase and replace spaces with _ or remove)
+            issue_type_code = self.issue_type.upper().replace(' ', '_')
+
+            # Count existing tickets with this issue_type
+            existing_count = Support.objects.filter(issue_type=self.issue_type).count() + 1
+
+            # Generate ticket_id
+            self.ticket_id = f"{issue_type_code}-{existing_count}"
 
         # Auto-assign tickets to HR or Admin based on issue type
         if not self.assigned_group:
@@ -3213,6 +2519,7 @@ class Support(models.Model):
                 changed_by=user
             )
 
+
     def set_sla_target_date(self):
         """Calculate SLA target date based on priority"""
         if not self.created_at:
@@ -3233,6 +2540,8 @@ class Support(models.Model):
         self.sla_target_date = self.created_at + timezone.timedelta(hours=target_hours)
 
 
+import os
+
 class StatusLog(models.Model):
     ticket = models.ForeignKey(Support, on_delete=models.CASCADE, related_name='status_logs')
     old_status = models.CharField(max_length=30, blank=True)
@@ -3251,6 +2560,7 @@ class TicketComment(models.Model):
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     is_internal = models.BooleanField(default=False, help_text="Internal notes only visible to staff")
+    
 
     class Meta:
         ordering = ['created_at']
@@ -3262,13 +2572,56 @@ class TicketComment(models.Model):
 class TicketAttachment(models.Model):
     """Model for file attachments on tickets"""
     ticket = models.ForeignKey(Support, on_delete=models.CASCADE, related_name='attachments')
-    file = models.FileField(upload_to='ticket_attachments/')
+    file = models.FileField(upload_to='ticket_attachments/%Y/%m/%d/')
     uploaded_by = models.ForeignKey(User, on_delete=models.CASCADE)
     uploaded_at = models.DateTimeField(auto_now_add=True)
     description = models.CharField(max_length=255, blank=True)
+    
+    # Store original filename
+    original_filename = models.CharField(max_length=255, blank=True)
+    file_size = models.PositiveIntegerField(default=0, help_text="File size in bytes")
+    file_type = models.CharField(max_length=100, blank=True, help_text="MIME type of the file")
+    is_deleted = models.BooleanField(default=False, help_text="Soft delete flag")
+
+    def save(self, *args, **kwargs):
+        # Store original filename and file info when saving
+        if self.file and hasattr(self.file, 'file'):
+            if not self.original_filename:
+                self.original_filename = self.file.name
+            if not self.file_size:
+                self.file_size = self.file.size
+            if not self.file_type and hasattr(self.file.file, 'content_type'):
+                self.file_type = self.file.file.content_type
+        
+        super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"Attachment for {self.ticket.ticket_id}"
+        return f"Attachment for {self.ticket.ticket_id}: {self.original_filename}"
+
+    @property
+    def file_size_human(self):
+        """Return human readable file size"""
+        size = self.file_size
+        for unit in ['B', 'KB', 'MB', 'GB']:
+            if size < 1024.0:
+                return f"{size:.1f} {unit}"
+            size /= 1024.0
+        return f"{size:.1f} TB"
+
+        # Update the upload_to to use a function
+    def ticket_attachment_path(instance, filename):
+        # Get the ticket ID
+        ticket_id = instance.ticket.ticket_id
+        # Create a unique filename using UUID
+        ext = filename.split('.')[-1]
+        filename = f"{uuid.uuid4()}.{ext}"
+        # Return the complete path
+        return os.path.join(settings.TICKET_ATTACHMENTS_DIR, str(ticket_id), filename)
+
+    file = models.FileField(
+        upload_to=ticket_attachment_path,
+        max_length=255  # Increase max_length for longer paths
+    )
 
 
 class TicketActivity(models.Model):
@@ -3295,20 +2648,120 @@ class TicketActivity(models.Model):
 
     def __str__(self):
         return f"{self.action} on {self.ticket.ticket_id} by {self.user.username if self.user else 'System'}"
-''' ------------------------------------------- REmove employee AREA ------------------------------------------- '''
 
-# Employee model to store employee-specific information
-class Employee(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)  # Reference to the User model
-    shift = models.CharField(max_length=10, choices=[('Day', 'Day'), ('Night', 'Night')])  # Shift the employee works
-    leave_balance = models.IntegerField(default=18)  # Number of leaves the employee has
-    attendance_record = models.PositiveIntegerField(default=0)  # Number of days the employee worked
-    late_arrivals = models.PositiveIntegerField(default=0)  # Number of times the employee was late
-    early_departures = models.PositiveIntegerField(default=0)  # Number of times the employee left early
+
+# Add this to your trueAlign/models.py file
+
+from django.db import models
+from django.contrib.auth.models import User
+
+class CommentAttachment(models.Model):
+    """Model for storing attachments related to ticket comments"""
+    
+    # Link to the comment or ticket activity
+    ticket_activity = models.ForeignKey(
+        'TicketActivity', 
+        on_delete=models.CASCADE,
+        related_name='comment_attachments',
+        help_text="The ticket activity/comment this attachment belongs to"
+    )
+    
+    # File upload field
+    file = models.FileField(
+        upload_to='comment_attachments/%Y/%m/%d/',
+        help_text="Upload attachment file"
+    )
+    
+    # Original filename
+    original_filename = models.CharField(
+        max_length=255,
+        help_text="Original name of the uploaded file"
+    )
+    
+    # File size in bytes
+    file_size = models.PositiveIntegerField(
+        default=0,
+        help_text="Size of the file in bytes"
+    )
+    
+    # MIME type
+    content_type = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text="MIME type of the file"
+    )
+    
+    # Who uploaded it
+    uploaded_by = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        help_text="User who uploaded this attachment"
+    )
+    
+    # When it was uploaded
+    uploaded_at = models.DateTimeField(
+        auto_now_add=True,
+        help_text="When the attachment was uploaded"
+    )
+    
+    # Description or notes about the attachment
+    description = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Optional description of the attachment"
+    )
+    
+    # Is the attachment active/visible
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Whether this attachment is active"
+    )
+
+    class Meta:
+        db_table = 'truealign_comment_attachment'
+        verbose_name = 'Comment Attachment'
+        verbose_name_plural = 'Comment Attachments'
+        ordering = ['-uploaded_at']
 
     def __str__(self):
-        """Return a string representation of the employee."""
-        return f"{self.user.username} - {', '.join([group.name for group in self.user.groups.all()])}"
+        return f"{self.original_filename} - {self.ticket_activity}"
+
+    def save(self, *args, **kwargs):
+        # Save original filename and file size when uploading
+        if self.file and not self.original_filename:
+            self.original_filename = self.file.name
+        
+        if self.file and not self.file_size:
+            self.file_size = self.file.size
+            
+        super().save(*args, **kwargs)
+
+    @property
+    def file_size_human(self):
+        """Return human readable file size"""
+        size = self.file_size
+        for unit in ['B', 'KB', 'MB', 'GB']:
+            if size < 1024.0:
+                return f"{size:.1f} {unit}"
+            size /= 1024.0
+        return f"{size:.1f} TB"
+
+     # Update the upload_to to use a function
+    def comment_attachment_path(instance, filename):
+        # Get the ticket ID from the activity
+        ticket_id = instance.ticket_activity.ticket.ticket_id
+        # Create a unique filename using UUID
+        ext = filename.split('.')[-1]
+        filename = f"{uuid.uuid4()}.{ext}"
+        # Return the complete path
+        return os.path.join(settings.COMMENT_ATTACHMENTS_DIR, str(ticket_id), filename)
+
+    file = models.FileField(
+        upload_to=comment_attachment_path,
+        max_length=255  # Increase max_length for longer paths
+    )
+
 
 ''' ------------------------------------------- PROFILE AREA ------------------------------------------- '''
 # models.py

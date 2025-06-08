@@ -728,14 +728,25 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from .models import Support, TicketComment, TicketAttachment
 
+from django import forms
+from django.contrib.auth.models import User, Group
+from django.core.exceptions import ValidationError
+from django.utils import timezone
+from .models import Support
+
 class TicketForm(forms.ModelForm):
-            # Use regular FileField without the multiple attribute in the widget
-            # We'll handle multiple files in the view instead
+    # Fix: Use multiple=True for file uploads
+
     attachments = forms.FileField(
-                required=False,
-                help_text="You can upload multiple files",
-                widget=forms.FileInput()
-            )
+    required=False,
+    help_text="You can upload multiple files (max 5MB each)",
+    widget=forms.FileInput(attrs={
+        'accept': '.pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.zip'
+        # Removed 'multiple': True from attrs
+    })
+)
+
+
 
     cc_users = forms.ModelMultipleChoiceField(
         queryset=User.objects.all(),
@@ -838,6 +849,30 @@ class TicketForm(forms.ModelForm):
             raise ValidationError('Due date must be in the future.')
         return due_date
 
+    def clean_attachments(self):
+        """Validate file uploads"""
+        files = self.files.getlist('attachments')
+        
+        if not files:
+            return None
+            
+        max_file_size = 5 * 1024 * 1024  # 5MB
+        allowed_types = [
+            'application/pdf', 'image/jpeg', 'image/png', 'image/gif',
+            'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'text/plain', 'application/zip'
+        ]
+        
+        for file in files:
+            if file.size > max_file_size:
+                raise ValidationError(f'File {file.name} exceeds the 5MB size limit.')
+            
+            if file.content_type not in allowed_types:
+                raise ValidationError(f'File type {file.content_type} is not allowed.')
+        
+        return files
+        return due_date
+
 class CommentForm(forms.ModelForm):
     is_internal = forms.BooleanField(
         required=False,
@@ -865,6 +900,72 @@ class CommentForm(forms.ModelForm):
         if user and not user.is_staff:
             self.fields['is_internal'].widget = forms.HiddenInput()
             self.fields['is_internal'].initial = False
+
+# Add this to your trueAlign/forms.py file
+
+from django import forms
+from .models import CommentAttachment
+
+class CommentAttachmentForm(forms.ModelForm):
+    """Form for uploading comment attachments"""
+    
+    class Meta:
+        model = CommentAttachment
+        fields = ['file', 'description']
+        widgets = {
+            'file': forms.FileInput(attrs={
+                'class': 'form-control',
+                'accept': '.pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.zip,.rar',
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Optional description of the attachment...'
+            }),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        self.ticket_activity = kwargs.pop('ticket_activity', None)
+        super().__init__(*args, **kwargs)
+    
+    def save(self, commit=True):
+        attachment = super().save(commit=False)
+        
+        if self.user:
+            attachment.uploaded_by = self.user
+            
+        if self.ticket_activity:
+            attachment.ticket_activity = self.ticket_activity
+            
+        # Set original filename and content type
+        if attachment.file:
+            attachment.original_filename = attachment.file.name
+            attachment.content_type = attachment.file.content_type if hasattr(attachment.file, 'content_type') else None
+            
+        if commit:
+            attachment.save()
+            
+        return attachment
+
+    def clean_file(self):
+        file = self.cleaned_data.get('file')
+        
+        if file:
+            # Check file size (limit to 10MB)
+            if file.size > 10 * 1024 * 1024:
+                raise forms.ValidationError("File size cannot exceed 10MB.")
+            
+            # Check file extension
+            allowed_extensions = ['.pdf', '.doc', '.docx', '.txt', '.jpg', '.jpeg', '.png', '.gif', '.zip', '.rar']
+            file_extension = '.' + file.name.split('.')[-1].lower()
+            
+            if file_extension not in allowed_extensions:
+                raise forms.ValidationError(
+                    f"File type not allowed. Allowed types: {', '.join(allowed_extensions)}"
+                )
+        
+        return file
 
 class TicketAttachmentForm(forms.ModelForm):
     class Meta:

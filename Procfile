@@ -1,1 +1,1 @@
-web: daphne ardurTrueAlign.asgi:application --port $PORT --bind 0.0.0.0
+web: gunicorn ardurTrueAlign.wsgi:application --bind 0.0.0.0:$PORT

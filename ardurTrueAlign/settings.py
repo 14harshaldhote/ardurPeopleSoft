@@ -235,3 +235,18 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'dhoteharshal16@gmail.com'  # Replace with your actual email
 EMAIL_HOST_PASSWORD = 'qtwc pdwp hwkp geij'  # Replace with your app password, not regular password
+
+
+import os
+from pathlib import Path
+
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Media files configuration
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# Create directories for different types of uploads
+TICKET_ATTACHMENTS_DIR = 'ticket_attachments'
+COMMENT_ATTACHMENTS_DIR = 'comment_attachments'

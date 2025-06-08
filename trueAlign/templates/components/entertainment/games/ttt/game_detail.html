@@ -297,34 +297,39 @@
     document.addEventListener('DOMContentLoaded', function() {
         // Create WebSocket connection
         const gameId = {{ game.id }};
-        const ws_scheme = window.location.protocol === "https:" ? "wss" : "ws";
-        const socket = new WebSocket(ws_scheme + '://' + window.location.host + '/ws/game/' + gameId + '/');
         
         // DOM Elements
         const chatMessages = document.getElementById('messageContainer');
         const chatForm = document.getElementById('chatForm');
         const messageInput = document.getElementById('messageInput');
         
-        // Connection opened
-        socket.onopen = function(e) {
-            console.log('WebSocket connection established');
-        };
+        // Poll for updates every 3 seconds
+        setInterval(pollGameUpdates, 3000);
         
-        // Listen for messages
-        socket.onmessage = function(e) {
-            const data = JSON.parse(e.data);
-            
-            // Handle different types of messages
-            if (data.type === 'game_update') {
-                // Reload the page to update the game state
-                location.reload();
-            } else if (data.type === 'game_message') {
-                // Add chat message to the chat window
-                addChatMessage(data.username, data.message, data.timestamp);
-            }
-        };
-        
-        // Handle WebSocket errors
+        // Function to poll for game updates
+        function pollGameUpdates() {
+            fetch(`/api/game/${gameId}/updates/`, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                },
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.hasUpdates) {
+                    // Reload the page to update the game state
+                    location.reload();
+                }
+                // Update chat messages if there are new ones
+                if (data.messages && data.messages.length > 0) {
+                    data.messages.forEach(msg => {
+                        addChatMessage(msg.username, msg.message, msg.timestamp);
+                    });
+                }
+            })
+            .catch(error => console.error('Error polling for updates:', error));
         socket.onerror = function(e) {
             console.error('WebSocket error:', e);
         };

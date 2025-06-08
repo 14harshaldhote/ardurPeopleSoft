@@ -1,9 +1,8 @@
 # utils.py
 from django.utils import timezone
 from django.core.exceptions import ValidationError
-from channels.layers import get_channel_layer
-from asgiref.sync import async_to_sync
-from .models import ChatGroup, GroupMember, DirectMessage, Message, MessageRead
+from django.http import JsonResponse
+from .models import ChatGroup, GroupMember, DirectMessage, Message, MessageRead, Notification
 
 def get_client_ip(request):
     """Get client IP address from request"""
@@ -119,9 +118,9 @@ def soft_delete_message(message_id, user):
 #         f'notifications_{user_id}',
 #         notification_data
 #     )
-def send_notification(user_id, message, notification_type, chat_id, sender_name=None):
+def send_notification(user_id, message, notification_type, chat_id=None, sender_name=None):
     """
-    Send a notification to a user
+    Create a notification in the database that will be polled by the client
     
     Args:
         user_id (int): The ID of the user to notify
@@ -131,41 +130,24 @@ def send_notification(user_id, message, notification_type, chat_id, sender_name=
         sender_name (str, optional): The name of the sender if applicable
         
     Returns:
-        bool: True if notification was sent successfully, False otherwise
+        bool: True if notification was stored successfully, False otherwise
     """
     try:
-        # Only send notifications to users other than the current user
-        from django.contrib.auth.models import User
-        user = User.objects.get(id=user_id)
-        
-        # Check if the user has notification preferences enabled for this type
-        # You might have a UserPreference model to check this
-        
-        # Implement your notification logic here
-        # This could be WebSocket, database record, email, etc.
-        
-        # Example WebSocket notification (using Django Channels)
-        from channels.layers import get_channel_layer
-        from asgiref.sync import async_to_sync
-        
-        channel_layer = get_channel_layer()
-        async_to_sync(channel_layer.group_send)(
-            f"user_{user_id}",
-            {
-                "type": "notification.message",
-                "message": message,
-                "notification_type": notification_type,
-                "chat_id": chat_id,
-                "sender_name": sender_name
-            }
+        # Create notification record in database
+        Notification.objects.create(
+            recipient_id=user_id,
+            message=message,
+            notification_type=notification_type,
+            chat_id=chat_id,
+            sender_name=sender_name,
+            is_read=False
         )
-        
         return True
     except Exception as e:
         # Log the error but don't crash
         import logging
         logger = logging.getLogger(__name__)
-        logger.error(f"Error sending notification to user {user_id}: {str(e)}")
+        logger.error(f"Error creating notification for user {user_id}: {str(e)}")
         return False
 
 
@@ -230,3 +212,43 @@ def send_ticket_notification(ticket, action, performed_by=None, extra_message=No
         logger = logging.getLogger(__name__)
         logger.error(f"Error sending ticket notification: {str(e)}")
         return False
+
+
+from django.core.management.base import BaseCommand
+from django.conf import settings
+import os
+from your_app.models import TicketAttachment, CommentAttachment
+
+def cleanup_orphaned_files():
+    """Clean up orphaned files in media directories"""
+    # Get all valid file paths from database
+    valid_ticket_files = set(TicketAttachment.objects.values_list('file', flat=True))
+    valid_comment_files = set(CommentAttachment.objects.values_list('file', flat=True))
+    
+    # Check ticket attachments directory
+    ticket_dir = os.path.join(settings.MEDIA_ROOT, settings.TICKET_ATTACHMENTS_DIR)
+    if os.path.exists(ticket_dir):
+        for root, dirs, files in os.walk(ticket_dir):
+            for file in files:
+                file_path = os.path.join(root, file)
+                relative_path = os.path.relpath(file_path, settings.MEDIA_ROOT)
+                if relative_path not in valid_ticket_files:
+                    try:
+                        os.remove(file_path)
+                        print(f"Removed orphaned file: {file_path}")
+                    except OSError as e:
+                        print(f"Error removing {file_path}: {e}")
+    
+    # Check comment attachments directory
+    comment_dir = os.path.join(settings.MEDIA_ROOT, settings.COMMENT_ATTACHMENTS_DIR)
+    if os.path.exists(comment_dir):
+        for root, dirs, files in os.walk(comment_dir):
+            for file in files:
+                file_path = os.path.join(root, file)
+                relative_path = os.path.relpath(file_path, settings.MEDIA_ROOT)
+                if relative_path not in valid_comment_files:
+                    try:
+                        os.remove(file_path)
+                        print(f"Removed orphaned file: {file_path}")
+                    except OSError as e:
+                        print(f"Error removing {file_path}: {e}")

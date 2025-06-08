@@ -1,768 +1,353 @@
-{% extends 'base.html' %} {% block content %}
-<div class="container mx-auto px-4 py-8 min-h-screen">
-    <!-- Page Header -->
-    <div
-        class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4"
-    >
-        <div class="flex items-center gap-3">
-            <h1
-                class="text-3xl font-extrabold text-gray-900 tracking-tight flex items-center gap-2"
-            >
-                <!-- Ticket icon with professional solid colors (no gradient) -->
+{% extends 'base.html' %}
 
-                Support Tickets
-            </h1>
-            {% if page_obj %}
-            <span
-                class="ml-2 px-3 h-auto w-auto py-3 rounded-full bg-blue-100 text-blue-700 text-md font-semibold shadow"
-                >{{ page_obj.paginator.count }}</span
-            >
-            {% endif %}
-        </div>
-        <div class="flex flex-col sm:flex-row items-center gap-3">
-            <a
-                href="{% url 'aps_support:create_ticket' %}"
-                class="w-full sm:w-auto bg-blue-100 hover:bg-blue-200 text-gray-900 font-semibold py-2.5 px-6 rounded-lg inline-flex items-center justify-center transition duration-150 ease-in-out shadow hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-100 group"
-            >
-                <!-- Plus in circle, blue -->
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-5 w-5 mr-2 group-hover:scale-110 transition-transform"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                >
-                    <circle
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        fill="#2563eb"
-                        fill-opacity="0.15"
-                    />
-                    <path
-                        d="M12 8v8M8 12h8"
-                        stroke="#2563eb"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                    />
-                </svg>
-                New Ticket
-            </a>
-            <a
-                href="{% url 'aps_support:support_dashboard' %}"
-                class="w-full sm:w-auto text-yellow-700 hover:text-yellow-900 transition flex items-center justify-center group border border-yellow-100 rounded-lg py-2.5 px-6 hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-100 bg-white"
-            >
-                <!-- Left arrow in circle, yellow -->
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-5 w-5 mr-2 group-hover:-translate-x-1 transition-transform duration-200"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                >
-                    <circle cx="12" cy="12" r="10" fill="#fde68a" />
-                    <path
-                        d="M15 12H9M11 10l-2 2 2 2"
-                        stroke="#f59e42"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                    />
-                </svg>
-                <span class="font-semibold">Back to Dashboard</span>
-            </a>
-        </div>
-    </div>
-
-    <!-- Role-specific banner -->
-    {% if is_admin %}
-    <div
-        class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6 rounded-lg shadow hover:shadow-md transition-shadow duration-200"
-    >
-        <div class="flex items-center">
-            <!-- Crown for admin, blue -->
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-6 w-6 text-blue-500 mr-3 flex-shrink-0"
-                fill="none"
-                viewBox="0 0 24 24"
-            >
-                <path
-                    d="M3 17l3-9 6 6 6-6 3 9"
-                    stroke="#2563eb"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    fill="#bfdbfe"
-                />
-                <rect
-                    x="5"
-                    y="17"
-                    width="14"
-                    height="2"
-                    rx="1"
-                    fill="#60a5fa"
-                />
-            </svg>
-            <p class="text-blue-800 font-semibold">
-                Admin view: You can see and manage
-                <span class="font-bold">all tickets</span> in the system.
-            </p>
-        </div>
-    </div>
-    {% elif is_hr %}
-    <div
-        class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 rounded-lg shadow hover:shadow-md transition-shadow duration-200"
-    >
-        <div class="flex items-center">
-            <!-- People for HR, yellow/green -->
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-6 w-6 text-yellow-400 mr-3 flex-shrink-0"
-                fill="none"
-                viewBox="0 0 24 24"
-            >
-                <circle
-                    cx="8"
-                    cy="10"
-                    r="3"
-                    fill="#fde68a"
-                    stroke="#f59e42"
-                    stroke-width="2"
-                />
-                <circle
-                    cx="16"
-                    cy="10"
-                    r="3"
-                    fill="#bbf7d0"
-                    stroke="#22c55e"
-                    stroke-width="2"
-                />
-                <rect
-                    x="4"
-                    y="16"
-                    width="16"
-                    height="4"
-                    rx="2"
-                    fill="#fef9c3"
-                />
-            </svg>
-            <p class="text-yellow-800 font-semibold">
-                HR view: You can see
-                <span class="font-bold">all HR-assigned tickets</span> and your
-                own tickets.
-            </p>
-        </div>
-    </div>
-    {% elif is_manager %}
-    <div
-        class="bg-green-50 border-l-4 border-green-400 p-4 mb-6 rounded-lg shadow hover:shadow-md transition-shadow duration-200"
-    >
-        <div class="flex items-center">
-            <!-- Star for manager, green -->
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-6 w-6 text-green-500 mr-3 flex-shrink-0"
-                fill="none"
-                viewBox="0 0 24 24"
-            >
-                <polygon
-                    points="12,4 14.09,9.26 20,9.27 15,13.14 16.18,19.02 12,15.77 7.82,19.02 9,13.14 4,9.27 9.91,9.26"
-                    fill="#bbf7d0"
-                    stroke="#22c55e"
-                    stroke-width="2"
-                />
-            </svg>
-            <p class="text-green-800 font-semibold">
-                Manager view: You can see your own tickets and
-                <span class="font-bold">tickets from your team members</span>.
-            </p>
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- Filters -->
-    <div
-        class="bg-white/80 rounded-xl shadow-lg p-6 mb-8 hover:shadow-xl transition-shadow duration-200 border border-blue-100"
-    >
-        <h2
-            class="text-xl font-semibold text-blue-700 mb-6 flex items-center gap-2"
-        >
-            <!-- Filter funnel, blue -->
-            <svg class="h-6 w-6 text-blue-400" fill="none" viewBox="0 0 24 24">
-                <path
-                    d="M3 5h18M6 9h12M9 13h6M11 17h2"
-                    stroke="#2563eb"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                />
-            </svg>
-            Filter Tickets
-        </h2>
-        <form
-            method="get"
-            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
-        >
-            <!-- Status filter -->
-            <div class="space-y-2">
-                <label
-                    for="status"
-                    class="block text-sm font-medium text-blue-700"
-                    >Status</label
-                >
-                <select
-                    id="status"
-                    name="status"
-                    class="w-full border border-blue-200 rounded-lg py-2.5 px-4 text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 shadow-sm bg-blue-50"
-                >
-                    <option value="">All Statuses</option>
-                    {% for status_value, status_label in status_choices %}
-                    <option
-                        value="{{ status_value }}"
-                        {%
-                        if
-                        request.GET.status=""
-                        ="status_value"
-                        %}selected{%
-                        endif
-                        %}
-                    >
-                        {{ status_label }}
-                    </option>
-                    {% endfor %}
-                </select>
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="md:flex md:items-center md:justify-between">
+            <div class="flex-1 min-w-0">
+                <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">Support Tickets</h2>
             </div>
-            <!-- Priority filter -->
-            <div class="space-y-2">
-                <label
-                    for="priority"
-                    class="block text-sm font-medium text-yellow-700"
-                    >Priority</label
-                >
-                <select
-                    id="priority"
-                    name="priority"
-                    class="w-full border border-yellow-200 rounded-lg py-2.5 px-4 text-yellow-800 focus:outline-none focus:ring-2 focus:ring-yellow-200 focus:border-yellow-400 shadow-sm bg-yellow-50"
-                >
-                    <option value="">All Priorities</option>
-                    {% for priority_value, priority_label in priority_choices %}
-                    <option
-                        value="{{ priority_value }}"
-                        {%
-                        if
-                        request.GET.priority=""
-                        ="priority_value"
-                        %}selected{%
-                        endif
-                        %}
-                    >
-                        {{ priority_label }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-            <!-- Search filter -->
-            <div class="space-y-2">
-                <label
-                    for="search"
-                    class="block text-sm font-medium text-green-700"
-                    >Search</label
-                >
-                <input
-                    type="text"
-                    id="search"
-                    name="search"
-                    value="{{ request.GET.search|default_if_none:'' }}"
-                    placeholder="Search by title or ID..."
-                    class="w-full border border-green-200 rounded-lg py-2.5 px-4 text-green-800 focus:outline-none focus:ring-2 focus:ring-green-200 focus:border-green-400 shadow-sm bg-green-50"
-                />
-            </div>
-            <!-- Filter buttons -->
-            <div class="flex items-end space-x-4">
-                <button
-                    type="submit"
-                    class="flex-1 bg-yellow-100 hover:bg-yellow-200 text-gray-900 font-semibold py-2.5 px-6 rounded-lg inline-flex items-center justify-center transition duration-150 ease-in-out shadow hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-100"
-                >
-                    <!-- Checkmark in circle, blue -->
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-5 w-5 mr-2"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                    >
-                        <circle
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            fill="#2563eb"
-                            fill-opacity="0.15"
-                        />
-                        <path
-                            d="M8 12l3 3 5-5"
-                            stroke="#2563eb"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                        />
+            <div class="mt-4 flex md:mt-0 md:ml-4 space-x-3">
+                <a href="{% url 'aps_support:create_ticket' %}" 
+                   class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                     </svg>
-                    Apply
-                </button>
-                {% if request.GET.status or request.GET.priority or
-                request.GET.search %}
-                <a
-                    href="{% url 'aps_support:ticket_list' %}"
-                    class="flex-1 border border-yellow-200 text-yellow-700 hover:bg-yellow-50 font-semibold py-2.5 px-6 rounded-lg inline-flex items-center justify-center transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-yellow-100 bg-white"
-                >
-                    <!-- X in circle, yellow -->
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-5 w-5 mr-2"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                    >
-                        <circle cx="12" cy="12" r="10" fill="#fde68a" />
-                        <path
-                            d="M15 9l-6 6M9 9l6 6"
-                            stroke="#f59e42"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                        />
-                    </svg>
-                    Clear
+                    Create New Ticket
                 </a>
-                {% endif %}
+                <a href="{% url 'aps_support:ticket_export' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}"
+                   class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                    <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                    Export
+                </a>
             </div>
-        </form>
-    </div>
+        </div>
 
-    <!-- Tickets list -->
-    {% if page_obj and page_obj.object_list %}
-    <div
-        class="bg-white/90 rounded-xl shadow-lg overflow-hidden animate-fade-in border border-blue-100"
-    >
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-blue-100">
-                <thead class="bg-blue-50">
-                    <tr>
-                        <th
-                            scope="col"
-                            class="px-6 py-4 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider"
-                        >
-                            ID
-                        </th>
-                        <th
-                            scope="col"
-                            class="px-6 py-4 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider"
-                        >
-                            Title
-                        </th>
-                        {% if is_admin or is_hr or is_manager %}
-                        <th
-                            scope="col"
-                            class="px-6 py-4 text-left text-xs font-semibold text-green-700 uppercase tracking-wider"
-                        >
-                            Created By
-                        </th>
-                        {% endif %}
-                        <th
-                            scope="col"
-                            class="px-6 py-4 text-left text-xs font-semibold text-green-700 uppercase tracking-wider"
-                        >
-                            Status
-                        </th>
-                        <th
-                            scope="col"
-                            class="px-6 py-4 text-left text-xs font-semibold text-yellow-700 uppercase tracking-wider"
-                        >
-                            Priority
-                        </th>
-                        <th
-                            scope="col"
-                            class="px-6 py-4 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider"
-                        >
-                            Created
-                        </th>
-                        <th
-                            scope="col"
-                            class="px-6 py-4 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider"
-                        >
-                            Assigned Group
-                        </th>
-                        <th
-                            scope="col"
-                            class="px-6 py-4 text-left text-xs font-semibold text-red-700 uppercase tracking-wider"
-                        >
-                            Actions
-                        </th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-100">
-                    {% for ticket in page_obj %}
-                    <tr
-                        class="hover:bg-yellow-50 transition duration-150 group"
-                    >
-                        <td
-                            class="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-700 group-hover:underline"
-                        >
-                            #{{ ticket.id }}
-                        </td>
-                        <td
-                            class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium max-w-xs truncate"
-                            title="{{ ticket.title }}"
-                        >
-                            {{ ticket.title }}
-                        </td>
-                        {% if is_admin or is_hr or is_manager %}
-                        <td
-                            class="px-6 py-4 whitespace-nowrap text-sm text-green-700"
-                        >
-                            {{ ticket.user.get_full_name }}
-                        </td>
-                        {% endif %}
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            {% if ticket.status == 'open' %}
-                            <span
-                                class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 shadow"
-                                >Open</span
-                            >
-                            {% elif ticket.status == 'in_progress' %}
-                            <span
-                                class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 shadow"
-                                >In Progress</span
-                            >
-                            {% elif ticket.status == 'pending' %}
-                            <span
-                                class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800 shadow"
-                                >Pending</span
-                            >
-                            {% elif ticket.status == 'resolved' %}
-                            <span
-                                class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-50 text-green-800 shadow"
-                                >Resolved</span
-                            >
-                            {% elif ticket.status == 'closed' %}
-                            <span
-                                class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800 shadow"
-                                >Closed</span
-                            >
-                            {% else %}
-                            <span
-                                class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-200 text-gray-700 shadow"
-                                >Unknown</span
-                            >
-                            {% endif %}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            {% if ticket.priority == 'low' %}
-                            <span
-                                class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-50 text-green-800 shadow"
-                                >Low</span
-                            >
-                            {% elif ticket.priority == 'medium' %}
-                            <span
-                                class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-50 text-yellow-800 shadow"
-                                >Medium</span
-                            >
-                            {% elif ticket.priority == 'high' %}
-                            <span
-                                class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 shadow"
-                                >High</span
-                            >
-                            {% elif ticket.priority == 'critical' %}
-                            <span
-                                class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800 shadow"
-                                >Critical</span
-                            >
-                            {% else %}
-                            <span
-                                class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-200 text-gray-700 shadow"
-                                >Unknown</span
-                            >
-                            {% endif %}
-                        </td>
-                        <td
-                            class="px-6 py-4 whitespace-nowrap text-sm text-blue-700"
-                        >
-                            {{ ticket.created_at|date:"M d, Y" }}
-                        </td>
-                        <td
-                            class="px-6 py-4 whitespace-nowrap text-sm text-blue-700"
-                        >
-                            {{ ticket.assigned_group|default:"—" }}
-                        </td>
-                        <td
-                            class="px-6 py-4 whitespace-nowrap text-sm font-medium"
-                        >
-                            <div class="flex space-x-2">
-                                <a
-                                    href="{% url 'aps_support:ticket_detail' ticket.id %}"
-                                    class="text-blue-600 hover:text-blue-900 transition-colors duration-150 group"
-                                    title="View Details"
-                                >
-                                    <!-- Improved Eye icon with better details and smoother transitions -->
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        class="h-5 w-5"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <!-- Background highlight with improved gradient -->
-                                        <ellipse
-                                            cx="12"
-                                            cy="12"
-                                            rx="9"
-                                            ry="6"
-                                            fill="url(#eyeGradient)"
-                                            class="transition-colors duration-200 ease-in-out group-hover:opacity-80"
-                                        />
-                                        <!-- Outline with improved stroke -->
-                                        <ellipse
-                                            cx="12"
-                                            cy="12"
-                                            rx="9"
-                                            ry="6"
-                                            fill="none"
-                                            stroke="#2563eb"
-                                            stroke-width="1.5"
-                                            class="transition-colors duration-200 ease-in-out group-hover:stroke-[#1e40af]"
-                                        />
-                                        <!-- Pupil with shadow effect -->
-                                        <circle
-                                            cx="12"
-                                            cy="12"
-                                            r="3"
-                                            fill="#2563eb"
-                                            class="transition-colors duration-200 ease-in-out group-hover:fill-[#1e40af]"
-                                        />
-                                        <!-- Highlight on pupil for realism -->
-                                        <circle
-                                            cx="11"
-                                            cy="11"
-                                            r="1"
-                                            fill="#ffffff"
-                                            fill-opacity="0.7"
-                                            class="transition-opacity duration-200 ease-in-out group-hover:fill-opacity-0.9"
-                                        />
-                                        <!-- Gradient definition -->
-                                        <defs>
-                                            <radialGradient
-                                                id="eyeGradient"
-                                                cx="12"
-                                                cy="12"
-                                                r="9"
-                                                gradientUnits="userSpaceOnUse"
-                                            >
-                                                <stop
-                                                    offset="0%"
-                                                    stop-color="#3b82f6"
-                                                    stop-opacity="0.3"
-                                                />
-                                                <stop
-                                                    offset="100%"
-                                                    stop-color="#2563eb"
-                                                    stop-opacity="0.1"
-                                                />
-                                            </radialGradient>
-                                        </defs>
-                                    </svg>
+        <!-- Filters Card -->
+        <div class="mt-8 bg-white rounded-lg shadow">
+            <div class="px-4 py-5 sm:p-6">
+                <form method="GET" class="space-y-8 divide-y divide-gray-200">
+                    <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                        <div class="sm:col-span-2">
+                            <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
+                            <select name="status" id="status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                <option value="">All Status</option>
+                                {% for value, display in status_choices %}
+                                <option value="{{ value }}" {% if current_filters.status == value %}selected{% endif %}>
+                                    {{ display }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="sm:col-span-2">
+                            <label for="priority" class="block text-sm font-medium text-gray-700">Priority</label>
+                            <select name="priority" id="priority" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                <option value="">All Priorities</option>
+                                {% for value, display in priority_choices %}
+                                <option value="{{ value }}" {% if current_filters.priority == value %}selected{% endif %}>
+                                    {{ display }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="sm:col-span-2">
+                            <label for="issue_type" class="block text-sm font-medium text-gray-700">Issue Type</label>
+                            <select name="issue_type" id="issue_type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                <option value="">All Types</option>
+                                {% for value, display in issue_type_choices %}
+                                <option value="{{ value }}" {% if current_filters.issue_type == value %}selected{% endif %}>
+                                    {{ display }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="sm:col-span-2">
+                            <label for="assigned_to" class="block text-sm font-medium text-gray-700">Assigned To</label>
+                            <select name="assigned_to" id="assigned_to" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                <option value="">All Users</option>
+                                <option value="me" {% if current_filters.assigned_to == 'me' %}selected{% endif %}>My Tickets</option>
+                                <option value="unassigned" {% if current_filters.assigned_to == 'unassigned' %}selected{% endif %}>Unassigned</option>
+                                {% for user in assignable_users %}
+                                <option value="{{ user.pk }}" {% if current_filters.assigned_to == user.pk|stringformat:"s" %}selected{% endif %}>
+                                    {{ user.get_full_name|default:user.username }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="sm:col-span-2">
+                            <label for="search" class="block text-sm font-medium text-gray-700">Search</label>
+                            <input type="text" name="search" id="search" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" 
+                                   placeholder="Search tickets..." value="{{ current_filters.search }}">
+                        </div>
+
+                        <div class="sm:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700">&nbsp;</label>
+                            <div class="flex space-x-3">
+                                <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                    Filter
+                                </button>
+                                <a href="{% url 'aps_support:ticket_list' %}" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                                    Clear
                                 </a>
-                                {% if is_admin or ticket.user == request.user %}
-                                <a
-                                    href="{% url 'aps_support:update_ticket' ticket.id %}"
-                                    class="text-green-600 hover:text-green-900 transition-colors duration-150 group"
-                                    title="Edit Ticket"
-                                >
-                                    <!-- Improved Pencil icon with better shading and details -->
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        class="h-5 w-5"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <!-- Paper/document with subtle gradient -->
-                                        <rect
-                                            x="4"
-                                            y="15"
-                                            width="16"
-                                            height="5"
-                                            rx="1"
-                                            fill="url(#paperGradient)"
-                                            class="transition-colors duration-200 ease-in-out group-hover:opacity-80"
-                                        />
-                                        <!-- Pencil body with gradient -->
-                                        <path
-                                            d="M15.232 5.232a2.5 2.5 0 013.536 3.536l-9.3 9.3-4.236.5.5-4.236 9.5-9.1z"
-                                            fill="url(#pencilGradient)"
-                                            stroke="#16a34a"
-                                            stroke-width="1.5"
-                                            stroke-linejoin="round"
-                                            class="transition-all duration-200 ease-in-out group-hover:stroke-[#166534] group-hover:stroke-width-1.75"
-                                        />
-                                        <!-- Pencil tip with shine effect -->
-                                        <path
-                                            d="M5.5 18l1.5-4 3 3-4 1.5z"
-                                            fill="#4ade80"
-                                            stroke="#22c55e"
-                                            stroke-width="0.5"
-                                            class="transition-colors duration-200 ease-in-out group-hover:fill-[#16a34a] group-hover:stroke-[#166534]"
-                                        />
-                                        <!-- Pencil eraser -->
-                                        <rect
-                                            x="17"
-                                            y="4"
-                                            width="2.5"
-                                            height="3"
-                                            rx="0.5"
-                                            transform="rotate(45, 17, 4)"
-                                            fill="#f97316"
-                                            stroke="#ea580c"
-                                            stroke-width="0.5"
-                                            class="transition-colors duration-200 ease-in-out group-hover:fill-[#c2410c] group-hover:stroke-[#9a3412]"
-                                        />
-                                        <!-- Gradient definitions -->
-                                        <defs>
-                                            <linearGradient
-                                                id="paperGradient"
-                                                x1="4"
-                                                y1="15"
-                                                x2="20"
-                                                y2="20"
-                                                gradientUnits="userSpaceOnUse"
-                                            >
-                                                <stop
-                                                    offset="0%"
-                                                    stop-color="#ffffff"
-                                                    stop-opacity="1"
-                                                />
-                                                <stop
-                                                    offset="100%"
-                                                    stop-color="#dcfce7"
-                                                    stop-opacity="0.9"
-                                                />
-                                            </linearGradient>
-                                            <linearGradient
-                                                id="pencilGradient"
-                                                x1="15"
-                                                y1="5"
-                                                x2="12"
-                                                y2="15"
-                                                gradientUnits="userSpaceOnUse"
-                                            >
-                                                <stop
-                                                    offset="0%"
-                                                    stop-color="#86efac"
-                                                    stop-opacity="0.9"
-                                                />
-                                                <stop
-                                                    offset="100%"
-                                                    stop-color="#4ade80"
-                                                    stop-opacity="0.7"
-                                                />
-                                            </linearGradient>
-                                        </defs>
-                                    </svg>
-                                </a>
-                                {% endif %}
                             </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Bulk Actions -->
+        {% if user_roles.is_admin or user_roles.is_hr %}
+        <div class="mt-8 bg-white rounded-lg shadow">
+            <div class="px-4 py-5 sm:p-6">
+                <form method="POST" action="{% url 'aps_support:bulk_ticket_actions' %}" id="bulkActionForm">
+                    {% csrf_token %}
+                    <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                        <div class="sm:col-span-2">
+                            <label for="bulk_action" class="block text-sm font-medium text-gray-700">Bulk Action</label>
+                            <select name="bulk_action" id="bulk_action" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                <option value="">Select Action</option>
+                                <option value="assign">Assign</option>
+                                <option value="status_change">Change Status</option>
+                                <option value="priority_change">Change Priority</option>
+                                {% if user_roles.is_admin %}
+                                <option value="delete">Delete</option>
+                                {% endif %}
+                            </select>
+                        </div>
+                        
+                        <div class="sm:col-span-2" id="bulk_assigned_to_field" style="display: none;">
+                            <label for="bulk_assigned_to" class="block text-sm font-medium text-gray-700">Assign To</label>
+                            <select name="bulk_assigned_to" id="bulk_assigned_to" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                <option value="">Select User</option>
+                                {% for user in assignable_users %}
+                                <option value="{{ user.pk }}">{{ user.get_full_name|default:user.username }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="sm:col-span-2" id="bulk_status_field" style="display: none;">
+                            <label for="bulk_status" class="block text-sm font-medium text-gray-700">New Status</label>
+                            <select name="bulk_status" id="bulk_status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                {% for value, display in status_choices %}
+                                <option value="{{ value }}">{{ display }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="sm:col-span-2" id="bulk_priority_field" style="display: none;">
+                            <label for="bulk_priority" class="block text-sm font-medium text-gray-700">New Priority</label>
+                            <select name="bulk_priority" id="bulk_priority" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                {% for value, display in priority_choices %}
+                                <option value="{{ value }}">{{ display }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="sm:col-span-2">
+                            <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" id="bulk_submit" disabled>
+                                Apply
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Tickets Table -->
+        <div class="mt-8 flex flex-col">
+            <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
+                    <div class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    {% if user_roles.is_admin or user_roles.is_hr %}
+                                    <th scope="col" class="relative px-6 py-3">
+                                        <input type="checkbox" id="select_all" 
+                                               class="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                    </th>
+                                    {% endif %}
+                                    <th scope="col" class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Subject</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Priority</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Issue Type</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Created By</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Assigned To</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">SLA</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% for ticket in tickets %}
+                                <tr class="hover:bg-gray-50">
+                                    {% if user_roles.is_admin or user_roles.is_hr %}
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <input type="checkbox" name="selected_tickets" value="{{ ticket.pk }}" 
+                                               class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 ticket-checkbox">
+                                    </td>
+                                    {% endif %}
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="text-sm font-medium text-gray-900">{{ ticket.ticket_id }}</span>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <a href="{% url 'aps_support:ticket_detail' ticket.pk %}" class="text-sm text-indigo-600 hover:text-indigo-900">
+                                            {{ ticket.subject|truncatechars:50 }}
+                                        </a>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                            {% if ticket.status == 'new' %}bg-blue-100 text-blue-800
+                                            {% elif ticket.status == 'open' %}bg-yellow-100 text-yellow-800
+                                            {% elif ticket.status == 'in_progress' %}bg-indigo-100 text-indigo-800
+                                            {% elif ticket.status == 'resolved' %}bg-green-100 text-green-800
+                                            {% elif ticket.status == 'closed' %}bg-gray-100 text-gray-800
+                                            {% elif ticket.status == 'pending_user' %}bg-orange-100 text-orange-800
+                                            {% elif ticket.status == 'on_hold' %}bg-purple-100 text-purple-800
+                                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                            {{ ticket.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                            {% if ticket.priority == 'critical' %}bg-red-100 text-red-800
+                                            {% elif ticket.priority == 'high' %}bg-yellow-100 text-yellow-800
+                                            {% elif ticket.priority == 'medium' %}bg-blue-100 text-blue-800
+                                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                            {{ ticket.get_priority_display }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">{{ ticket.get_issue_type_display }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">{{ ticket.user.get_full_name|default:ticket.user.username }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">{{ ticket.assigned_to_user.get_full_name|default:"Unassigned" }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">{{ ticket.created_at|date:"M d, Y H:i" }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        {% if ticket.sla_target_date %}
+                                            {% if ticket.resolved_at %}
+                                                {% if ticket.resolved_at <= ticket.sla_target_date %}
+                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Met</span>
+                                                {% else %}
+                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Breached</span>
+                                                {% endif %}
+                                            {% else %}
+                                                {% now "c" as now %}
+                                                {% if ticket.sla_target_date|date:'c' < now %}
+                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Breached</span>
+                                                {% else %}
+                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">On Track</span>
+                                                {% endif %}
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex space-x-2">
+                                            <a href="{% url 'aps_support:ticket_detail' ticket.pk %}" class="inline-flex items-center px-3 py-1.5 border border-transparent rounded-md shadow-sm text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                                View
+                                            </a>
+                                            {% if ticket.status in 'resolved,closed' and ticket.user == user %}
+                                            <button type="button" class="inline-flex items-center px-3 py-1.5 border border-transparent rounded-md shadow-sm text-xs font-medium text-white bg-warning-600 hover:bg-warning-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-warning-500" 
+                                                    onclick="reopenTicket({{ ticket.pk }})">
+                                                Reopen
+                                            </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="{% if user_roles.is_admin or user_roles.is_hr %}11{% else %}10{% endif %}" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
+                                        No tickets found matching your criteria.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Pagination -->
-        {% if page_obj.paginator.num_pages > 1 %}
-        <div
-            class="bg-white/80 px-6 py-4 flex items-center justify-between border-t border-yellow-100"
-        >
-            <div
-                class="flex-1 flex flex-col sm:flex-row justify-between items-center gap-4"
-            >
-                <p class="text-sm text-yellow-700">
-                    Showing
-                    <span class="font-bold">{{ page_obj.start_index }}</span>
-                    to
-                    <span class="font-bold">{{ page_obj.end_index }}</span>
-                    of
-                    <span class="font-bold"
-                        >{{ page_obj.paginator.count }}</span
-                    >
-                    results
-                </p>
+        {% if tickets.has_other_pages %}
+        <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6 rounded-b-lg">
+            <div class="flex-1 flex justify-between sm:hidden">
+                {% if tickets.has_previous %}
+                <a href="?page={{ tickets.previous_page_number }}" 
+                   class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    Previous
+                </a>
+                {% endif %}
+                {% if tickets.has_next %}
+                <a href="?page={{ tickets.next_page_number }}"
+                   class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    Next
+                </a>
+                {% endif %}
+            </div>
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                 <div>
-                    <nav
-                        class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
-                        aria-label="Pagination"
-                    >
-                        {% if page_obj.has_previous %}
-                        <a
-                            href="?page={{ page_obj.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.priority %}&priority={{ request.GET.priority }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}"
-                            class="relative inline-flex items-center px-3 py-2 rounded-l-md border border-blue-200 bg-white text-sm font-medium text-blue-600 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-100"
-                        >
-                            <span class="sr-only">Previous</span>
-                            <!-- Left chevron in circle, blue -->
-                            <svg
-                                class="h-5 w-5"
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                            >
-                                <circle
-                                    cx="12"
-                                    cy="12"
-                                    r="10"
-                                    fill="#2563eb"
-                                    fill-opacity="0.15"
-                                />
-                                <path
-                                    d="M14 16l-4-4 4-4"
-                                    stroke="#2563eb"
-                                    stroke-width="2"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                />
+                    <p class="text-sm text-gray-700">
+                        Showing page <span class="font-medium">{{ tickets.number }}</span> of 
+                        <span class="font-medium">{{ tickets.paginator.num_pages }}</span>
+                    </p>
+                </div>
+                <div>
+                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                        <!-- Pagination links -->
+                        {% if tickets.has_previous %}
+                        <a href="?page=1" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <span class="sr-only">First</span>
+                            <!-- Heroicon name: mini.chevron-left -->
+                            <svg class="-ml-0.5 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 6l-6 6 6 6" />
                             </svg>
                         </a>
-                        {% endif %} {% for i in page_obj.paginator.page_range %}
-                        {% if i == page_obj.number %}
-                        <span
-                            class="relative inline-flex items-center px-4 py-2 border border-yellow-400 bg-yellow-100 text-sm font-bold text-yellow-700 rounded-md shadow"
-                        >
-                            {{ i }}
-                        </span>
-                        {% elif i > page_obj.number|add:"-3" and i <
-                        page_obj.number|add:"3" %}
-                        <a
-                            href="?page={{ i }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.priority %}&priority={{ request.GET.priority }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}"
-                            class="relative inline-flex items-center px-4 py-2 border border-yellow-200 bg-white text-sm font-medium text-yellow-700 hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-100 rounded-md"
-                        >
-                            {{ i }}
+                        <a href="?page={{ tickets.previous_page_number }}" class="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <span class="sr-only">Previous</span>
+                            <!-- Heroicon name: mini.chevron-left -->
+                            <svg class="-ml-0.5 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 6l-6 6 6 6" />
+                            </svg>
                         </a>
-                        {% elif i == 1 or i == page_obj.paginator.num_pages %}
-                        {% if i < page_obj.number|add:"-3" or i >
-                        page_obj.number|add:"3" %}
-                        <span class="px-2 py-2 text-yellow-300">…</span>
-                        {% endif %} {% endif %} {% endfor %} {% if
-                        page_obj.has_next %}
-                        <a
-                            href="?page={{ page_obj.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.priority %}&priority={{ request.GET.priority }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}"
-                            class="relative inline-flex items-center px-3 py-2 rounded-r-md border border-pink-200 bg-white text-sm font-medium text-pink-500 hover:bg-pink-50 focus:outline-none focus:ring-2 focus:ring-pink-100"
-                        >
+                        {% endif %}
+                        <span class="hidden sm:block">
+                            {% for num in tickets.paginator.page_range %}
+                            {% if tickets.number == num %}
+                            <span aria-current="page" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-indigo-600 text-sm font-medium text-white">
+                                {{ num }}
+                            </span>
+                            {% else %}
+                            <a href="?page={{ num }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                {{ num }}
+                            </a>
+                            {% endif %}
+                            {% endfor %}
+                        </span>
+                        {% if tickets.has_next %}
+                        <a href="?page={{ tickets.next_page_number }}" class="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
                             <span class="sr-only">Next</span>
-                            <!-- Right chevron in circle, pastel pink -->
-                            <svg
-                                class="h-5 w-5"
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                            >
-                                <circle cx="12" cy="12" r="10" fill="#FBCFE8" />
-                                <path
-                                    d="M10 8l4 4-4 4"
-                                    stroke="#F472B6"
-                                    stroke-width="2"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                />
+                            <!-- Heroicon name: mini.chevron-right -->
+                            <svg class="-mr-0.5 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 6l6 6-6 6" />
+                            </svg>
+                        </a>
+                        <a href="?page={{ tickets.paginator.num_pages }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <span class="sr-only">Last</span>
+                            <!-- Heroicon name: mini.chevron-right -->
+                            <svg class="-mr-0.5 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 6l6 6-6 6" />
                             </svg>
                         </a>
                         {% endif %}
@@ -772,86 +357,101 @@
         </div>
         {% endif %}
     </div>
-    {% else %}
-    <div
-        class="bg-white/90 rounded-xl shadow-lg p-8 text-center animate-fade-in border border-pink-100"
-    >
-        <!-- Document with plus, pastel blue/pink -->
-        <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-20 w-20 mx-auto text-pink-200 mb-6"
-            fill="none"
-            viewBox="0 0 32 32"
-        >
-            <rect x="6" y="6" width="20" height="20" rx="4" fill="#FBCFE8" />
-            <path
-                d="M16 12v8M12 16h8"
-                stroke="#F472B6"
-                stroke-width="2"
-                stroke-linecap="round"
-            />
-        </svg>
-        <h3 class="text-xl font-semibold text-pink-900 mb-3">
-            No tickets found
-        </h3>
-        <p class="text-pink-600 mb-6">
-            There are no tickets matching your current filters.
-        </p>
-        <div
-            class="flex flex-col sm:flex-row items-center justify-center gap-4"
-        >
-            <a
-                href="{% url 'aps_support:create_ticket' %}"
-                class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-semibold rounded-lg shadow-sm text-white bg-gradient-to-r from-pink-200 via-yellow-100 to-green-200 hover:from-pink-300 hover:to-green-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-100"
-            >
-                <!-- Plus in circle, pastel -->
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-5 w-5 mr-2"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                >
-                    <circle
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        fill="#FBCFE8"
-                        fill-opacity="0.5"
-                    />
-                    <path
-                        d="M12 8v8M8 12h8"
-                        stroke="#F472B6"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                    />
-                </svg>
-                Create a new ticket
-            </a>
-            {% if request.GET %}
-            <a
-                href="{% url 'aps_support:ticket_list' %}"
-                class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border border-yellow-200 shadow-sm text-base font-semibold rounded-lg text-yellow-700 bg-white hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-100"
-            >
-                <!-- X in circle, pastel yellow -->
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-5 w-5 mr-2"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                >
-                    <circle cx="12" cy="12" r="10" fill="#FEF9C3" />
-                    <path
-                        d="M15 9l-6 6M9 9l6 6"
-                        stroke="#F59E42"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                    />
-                </svg>
-                Clear filters
-            </a>
-            {% endif %}
-        </div>
-    </div>
-    {% endif %}
 </div>
+
+<script>
+// Bulk action handling
+document.getElementById('bulk_action').addEventListener('change', function() {
+    const action = this.value;
+    const assignField = document.getElementById('bulk_assigned_to_field');
+    const statusField = document.getElementById('bulk_status_field');
+    const priorityField = document.getElementById('bulk_priority_field');
+    
+    // Hide all fields
+    assignField.style.display = 'none';
+    statusField.style.display = 'none';
+    priorityField.style.display = 'none';
+    
+    // Show relevant field
+    if (action === 'assign') {
+        assignField.style.display = 'block';
+    } else if (action === 'status_change') {
+        statusField.style.display = 'block';
+    } else if (action === 'priority_change') {
+        priorityField.style.display = 'block';
+    }
+    
+    updateBulkSubmitButton();
+});
+
+// Select all checkbox
+document.getElementById('select_all').addEventListener('change', function() {
+    const checkboxes = document.querySelectorAll('.ticket-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = this.checked;
+    });
+    updateBulkSubmitButton();
+});
+
+// Individual checkboxes
+document.querySelectorAll('.ticket-checkbox').forEach(checkbox => {
+    checkbox.addEventListener('change', updateBulkSubmitButton);
+});
+
+function updateBulkSubmitButton() {
+    const selectedTickets = document.querySelectorAll('.ticket-checkbox:checked').length;
+    const bulkAction = document.getElementById('bulk_action').value;
+    const bulkSubmit = document.getElementById('bulk_submit');
+    
+    bulkSubmit.disabled = selectedTickets === 0 || !bulkAction;
+}
+
+// Bulk form submission
+document.getElementById('bulkActionForm').addEventListener('submit', function(e) {
+    const selectedTickets = document.querySelectorAll('.ticket-checkbox:checked').length;
+    if (selectedTickets === 0) {
+        e.preventDefault();
+        alert('Please select at least one ticket.');
+        return;
+    }
+    
+    const action = document.getElementById('bulk_action').value;
+    if (!action) {
+        e.preventDefault();
+        alert('Please select a bulk action.');
+        return;
+    }
+    
+    if (!confirm(`Are you sure you want to apply "${action}" to ${selectedTickets} ticket(s)?`)) {
+        e.preventDefault();
+    }
+});
+
+// Reopen ticket function
+function reopenTicket(ticketId) {
+    if (confirm('Are you sure you want to reopen this ticket?')) {
+        fetch(`/support/tickets/${ticketId}/reopen/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Error reopening ticket: ' + error);
+        });
+    }
+}
+</script>
+<script src="https://cdn.tailwindcss.com"></script>
+
 {% endblock %}

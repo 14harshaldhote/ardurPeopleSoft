@@ -1,13 +1,12 @@
 // notifications.js
 class NotificationHandler {
     constructor() {
-        this.socket = null;
         this.notifications = [];
         this.unreadCount = 0;
         this.notificationButton = document.querySelector('.notification-btn');
         this.notificationContainer = document.createElement('div');
         this.setupNotificationContainer();
-        this.connectWebSocket();
+        this.startPolling();
     }
 
     setupNotificationContainer() {
@@ -22,20 +21,41 @@ class NotificationHandler {
         });
     }
 
-    connectWebSocket() {
-        this.socket = new WebSocket(`ws://${window.location.host}/ws/notifications/`);
+    startPolling() {
+        // Initial fetch
+        this.fetchNotifications();
         
-        this.socket.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            if (data.type === 'notification') {
-                this.handleNewNotification(data);
-            }
-        };
+        // Poll every 30 seconds
+        setInterval(() => this.fetchNotifications(), 30000);
+    }
 
-        this.socket.onclose = () => {
-            console.log('WebSocket closed. Trying to reconnect...');
-            setTimeout(() => this.connectWebSocket(), 1000);
-        };
+    async fetchNotifications() {
+        try {
+            const response = await fetch('/api/notifications/', {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                },
+                credentials: 'same-origin'
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                // Only process if we have new notifications
+                if (data.notifications && this.notifications.length !== data.notifications.length) {
+                    const newNotifications = data.notifications.filter(
+                        n => !this.notifications.find(existing => existing.id === n.id)
+                    );
+                    
+                    newNotifications.forEach(notification => {
+                        this.handleNewNotification(notification);
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching notifications:', error);
+        }
     }
 
     handleNewNotification(data) {

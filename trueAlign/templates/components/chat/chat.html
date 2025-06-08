@@ -268,10 +268,8 @@
 </div>
 
 <script>
-    // WebSocket Connection
-    const chatSocket = new WebSocket(
-        `${window.location.protocol === 'https:' ? 'wss:' : 'ws://'}${window.location.host}/ws/chat/{{ chat.id }}/`
-    );
+    // Initialize chat polling
+    startChatPolling();
 
     const messagesContainer = document.getElementById('messages-container');
     const messageForm = document.getElementById('message-form');
@@ -284,40 +282,71 @@
         }
     }
 
-    // WebSocket message handling
-    chatSocket.onmessage = function(e) {
-        const data = JSON.parse(e.data);
+    function startChatPolling() {
+        // Poll for new messages every 3 seconds
+        setInterval(pollChatUpdates, 3000);
+    }
+
+    function pollChatUpdates() {
+        fetch(`/api/chat/{{ chat.id }}/updates/`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.messages && data.messages.length > 0) {
+                data.messages.forEach(msg => {
+                    addMessage(msg);
+                });
+            }
+            // Update online status, typing indicators, etc.
+            if (data.onlineUsers) {
+                updateOnlineStatus(data.onlineUsers);
+            }
+            if (data.typingUsers) {
+                updateTypingIndicator(data.typingUsers);
+            }
+        })
+        .catch(error => console.error('Error polling for chat updates:', error));
+    }
+
+    // Add message to chat
+    function addMessage(msg) {
         const userId = {{ request.user.id }};
 
         // Create message element
         const messageDiv = document.createElement('div');
-        messageDiv.className = `flex ${data.user_id === userId ? 'justify-end' : ''}`;
+        messageDiv.className = `flex ${msg.sender_id === userId ? 'justify-end' : ''}`;
 
         const messageContent = document.createElement('div');
-        messageContent.className = `max-w-lg ${data.user_id === userId ? 'bg-blue-600 text-white' : 'bg-white text-gray-800'} rounded-2xl px-6 py-3 shadow-md`;
+        messageContent.className = `max-w-lg ${msg.sender_id === userId ? 'bg-blue-600 text-white' : 'bg-white text-gray-800'} rounded-2xl px-6 py-3 shadow-md`;
 
-        if (data.user_id !== userId) {
+        if (msg.sender_id !== userId) {
             const senderName = document.createElement('p');
             senderName.className = 'text-sm font-semibold text-blue-600 mb-1';
-            senderName.textContent = data.username;
+            senderName.textContent = msg.sender_name;
             messageContent.appendChild(senderName);
         }
 
         const messageText = document.createElement('p');
         messageText.className = 'text-base';
-        messageText.textContent = data.message;
+        messageText.textContent = msg.content;
         messageContent.appendChild(messageText);
 
         const timeStamp = document.createElement('p');
-        timeStamp.className = `text-xs ${data.user_id === userId ? 'text-blue-100' : 'text-gray-500'} mt-2`;
-        timeStamp.textContent = new Date().toLocaleTimeString([], {hour: 'numeric', minute:'2-digit'});
+        timeStamp.className = `text-xs ${msg.sender_id === userId ? 'text-blue-100' : 'text-gray-500'} mt-2`;
+        timeStamp.textContent = new Date(msg.timestamp).toLocaleTimeString([], {hour: 'numeric', minute:'2-digit'});
         messageContent.appendChild(timeStamp);
 
         messageDiv.appendChild(messageContent);
         messagesContainer.appendChild(messageDiv);
 
         scrollToBottom();
-    };
+    }
 
     // Send message
     messageForm.addEventListener('submit', function(e) {
@@ -325,11 +354,26 @@
         const message = messageInput.value.trim();
         
         if (message) {
-            chatSocket.send(JSON.stringify({
-                'message': message
-            }));
-            messageInput.value = '';
-            messageInput.focus();
+            fetch(`/api/chat/{{ chat.id }}/message/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    'content': message
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    messageInput.value = '';
+                    messageInput.focus();
+                } else {
+                    console.error('Error sending message:', data.error);
+                }
+            })
+            .catch(error => console.error('Error sending message:', error));
         }
     });
 

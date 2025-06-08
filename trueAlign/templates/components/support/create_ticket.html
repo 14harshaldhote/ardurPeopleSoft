@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="min-h-screen bg-gray-50/50 py-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Card with glass morphism effect -->
+        <div class="bg-white/70 backdrop-blur-sm rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <!-- Header with gradient -->
+            <div class="bg-gradient-to-r from-blue-600/10 to-blue-100/10 px-6 py-4 border-b border-gray-100">
+                <h2 class="text-xl font-semibold text-gray-800">Create New Support Ticket</h2>
+            </div>
+
+            <!-- Form Body -->
+            <div class="p-6 space-y-6">
+                <form method="POST" enctype="multipart/form-data" class="space-y-6">
+                    {% csrf_token %}
+
+                    <!-- Subject Field -->
+                    <div class="space-y-2">
+                        <label for="subject" class="block text-sm font-medium text-gray-700">
+                            Subject <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" id="subject" name="subject" 
+                               class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm transition-colors"
+                               required maxlength="200" value="{{ request.POST.subject }}">
+                        <p class="text-sm text-gray-500">Brief description of your issue</p>
+                    </div>
+
+                    <!-- Description Field -->
+                    <div class="space-y-2">
+                        <label for="description" class="block text-sm font-medium text-gray-700">
+                            Description <span class="text-red-500">*</span>
+                        </label>
+                        <textarea id="description" name="description" rows="5" 
+                                  class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm transition-colors"
+                                  required>{{ request.POST.description }}</textarea>
+                        <p class="text-sm text-gray-500">Detailed description of your issue. Please include steps to reproduce if applicable.</p>
+                    </div>
+
+                    <!-- Priority and Issue Type Grid -->
+                    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                        <!-- Priority Select -->
+                        <div class="space-y-2">
+                            <label for="priority" class="block text-sm font-medium text-gray-700">Priority</label>
+                            <select id="priority" name="priority" 
+                                    class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm transition-colors">
+                                {% for value, label in priority_choices %}
+                                    <option value="{{ value }}" {% if request.POST.priority == value %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Issue Type Select -->
+                        <div class="space-y-2">
+                            <label for="issue_type" class="block text-sm font-medium text-gray-700">Issue Type</label>
+                            <select id="issue_type" name="issue_type" 
+                                    class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm transition-colors">
+                                {% for value, label in issue_type_choices %}
+                                    <option value="{{ value }}" {% if request.POST.issue_type == value %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Assigned Group -->
+                    <div class="space-y-2">
+                        <label for="assigned_group" class="block text-sm font-medium text-gray-700">Assigned Group</label>
+                        <select id="assigned_group" name="assigned_group" 
+                                class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm transition-colors">
+                            <option value="">Select a group (optional)</option>
+                            {% for value, label in assigned_group_choices %}
+                                <option value="{{ value }}" {% if request.POST.assigned_group == value %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <p class="text-sm text-gray-500">Leave blank for automatic assignment</p>
+                    </div>
+
+                    <!-- File Attachments -->
+                    <div class="space-y-2">
+                        <label for="attachments" class="block text-sm font-medium text-gray-700">Attachments</label>
+                        <input type="file" id="attachments" name="attachments" multiple
+                               class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-colors">
+                        <p class="text-sm text-gray-500">You can attach multiple files to help explain your issue</p>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex justify-end space-x-4 pt-4">
+                        <a href="{% url 'aps_support:ticket_list' %}" 
+                           class="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
+                            Cancel
+                        </a>
+                        <button type="submit" 
+                                class="inline-flex justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
+                            Create Ticket
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

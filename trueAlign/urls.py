@@ -338,12 +338,35 @@ attendance_patterns = [
 ]
 
 support_patterns = [
-    path('', views.support_dashboard, name='support_dashboard'),
-    path('create/', views.create_ticket, name='create_ticket'),
-    path('<int:pk>/', views.ticket_detail, name='ticket_detail'),
-    path('<int:pk>/update/', views.update_ticket, name='update_ticket'),
-    path('<int:pk>/assign/', views.assign_ticket, name='assign_ticket'),
-    path('list/', views.ticket_list, name='ticket_list'),
+    path('dashboard/', views.support_dashboard, name='dashboard'),
+    
+    # Ticket Management
+    path('tickets/', views.ticket_list, name='ticket_list'),
+    path('tickets/create/', views.create_ticket, name='create_ticket'),
+    path('tickets/<int:pk>/', views.ticket_detail, name='ticket_detail'),
+    path('tickets/<int:pk>/edit/', views.ticket_detail, name='edit_ticket'),  # Same view handles both
+    
+    # Ticket Actions
+    path('tickets/<int:pk>/delete-attachment/<int:attachment_id>/', 
+         views.delete_attachment, name='delete_attachment'),
+    path('tickets/<int:pk>/download-attachment/<int:attachment_id>/', 
+         views.download_attachment, name='download_attachment'),
+    path('ticket_attachments/<path:file_path>', 
+         views.serve_ticket_attachment, name='serve_ticket_attachment'),
+    
+    # Bulk Operations
+    path('tickets/bulk-actions/', views.bulk_ticket_actions, name='bulk_ticket_actions'),
+    
+    # Export
+    path('tickets/export/', views.ticket_export, name='ticket_export'),
+    
+    # Additional utility URLs
+    path('tickets/my-tickets/', views.ticket_list, {'filter': 'my'}, name='my_tickets'),
+    path('tickets/assigned-to-me/', views.ticket_list, {'filter': 'assigned'}, name='assigned_tickets'),
+    path('tickets/unassigned/', views.ticket_list, {'filter': 'unassigned'}, name='unassigned_tickets'),
+    path('api/tickets/stats/', views.get_ticket_stats, name='get_ticket_stats'),
+    path('api/tickets/<int:pk>/reopen/', views.reopen_ticket, name='reopen_ticket'),
+    path('api/tickets/<int:pk>/escalate/', views.escalate_ticket, name='escalate_ticket'),
 ]
 
 holiday_pattern=[
