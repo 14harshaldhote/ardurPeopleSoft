@@ -15101,67 +15101,12 @@ def support_dashboard(request):
 
 @login_required
 def ticket_list(request):
-    """List tickets based on user role and permissions"""
+    """
+    Renders the initial ticket list page. The data will be loaded dynamically
+    by JavaScript calling the ticket_list_api view.
+    """
     user_roles = get_user_roles(request.user)
-    
-    # Base queryset based on user role
-    if user_roles['is_admin']:
-        tickets = Support.objects.filter(is_deleted=False)
-    elif user_roles['is_hr']:
-        tickets = Support.objects.filter(
-            Q(assigned_group=Support.AssignedGroup.HR) |
-            Q(assigned_to_user=request.user),
-            is_deleted=False
-        )
-    else:
-        tickets = Support.objects.filter(
-            Q(user=request.user) |
-            Q(assigned_to_user=request.user),
-            is_deleted=False
-        ).distinct()
-    
-    # Apply filters
-    status_filter = request.GET.get('status')
-    priority_filter = request.GET.get('priority')
-    issue_type_filter = request.GET.get('issue_type')
-    assigned_to_filter = request.GET.get('assigned_to')
-    search_query = request.GET.get('search')
-    
-    if status_filter:
-        tickets = tickets.filter(status=status_filter)
-    
-    if priority_filter:
-        tickets = tickets.filter(priority=priority_filter)
-    
-    if issue_type_filter:
-        tickets = tickets.filter(issue_type=issue_type_filter)
-    
-    if assigned_to_filter:
-        if assigned_to_filter == 'me':
-            tickets = tickets.filter(assigned_to_user=request.user)
-        elif assigned_to_filter == 'unassigned':
-            tickets = tickets.filter(assigned_to_user__isnull=True)
-        else:
-            tickets = tickets.filter(assigned_to_user_id=assigned_to_filter)
-    
-    if search_query:
-        tickets = tickets.filter(
-            Q(ticket_id__icontains=search_query) |
-            Q(subject__icontains=search_query) |
-            Q(description__icontains=search_query) |
-            Q(user__first_name__icontains=search_query) |
-            Q(user__last_name__icontains=search_query)
-        )
-    
-    # Optimize queries
-    tickets = tickets.select_related('user', 'assigned_to_user').order_by('-created_at')
-    
-    # Pagination
-    paginator = Paginator(tickets, 25)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    
-    # Get filter choices
+
     assignable_users = []
     if user_roles['is_admin']:
         assignable_users = User.objects.filter(is_staff=True).order_by('first_name', 'last_name')
@@ -15170,24 +15115,96 @@ def ticket_list(request):
             Q(is_staff=True) | Q(groups__name='HR')
         ).distinct().order_by('first_name', 'last_name')
 
-
     context = {
-        'tickets': page_obj,
         'status_choices': Support.Status.choices,
         'priority_choices': Support.Priority.choices,
         'issue_type_choices': Support.IssueType.choices,
         'assignable_users': assignable_users,
-        'current_filters': {
-            'status': status_filter,
-            'priority': priority_filter,
-            'issue_type': issue_type_filter,
-            'assigned_to': assigned_to_filter,
-            'search': search_query,
-        },
         'user_roles': user_roles,
     }
     
+    # Notice we no longer pass 'tickets' or 'current_filters'
+    # The JavaScript handles this state now.
     return render(request, 'components/support/ticket_list.html', context)
+
+@login_required
+def ticket_list_api(request):
+    """
+    API endpoint to fetch tickets as JSON for the dynamic front-end.
+    """
+    user_roles = get_user_roles(request.user)
+    
+    # Base queryset based on user role
+    if user_roles['is_admin']:
+        tickets = Support.objects.filter(is_deleted=False)
+    elif user_roles['is_hr']:
+        tickets = Support.objects.filter(
+            Q(assigned_group=Support.AssignedGroup.HR) | Q(assigned_to_user=request.user),
+            is_deleted=False
+        )
+    else:
+        tickets = Support.objects.filter(
+            Q(user=request.user) | Q(assigned_to_user=request.user),
+            is_deleted=False
+        ).distinct()
+
+    # --- Apply Filters from GET parameters ---
+    # Handle list-based filters like status[]=New&status[]=Open
+    status_filters = request.GET.getlist('status[]')
+    if status_filters:
+        tickets = tickets.filter(status__in=status_filters)
+
+    priority_filters = request.GET.getlist('priority[]')
+    if priority_filters:
+        tickets = tickets.filter(priority__in=priority_filters)
+    
+    # Handle single value filters
+    assigned_to_filter = request.GET.get('assigned_to')
+    if assigned_to_filter:
+        if assigned_to_filter == 'unassigned':
+            tickets = tickets.filter(assigned_to_user__isnull=True)
+        else:
+            tickets = tickets.filter(assigned_to_user_id=assigned_to_filter)
+
+    # Handle quick search
+    search_query = request.GET.get('quick_search')
+    if search_query:
+        tickets = tickets.filter(
+            Q(ticket_id__icontains=search_query) |
+            Q(subject__icontains=search_query) |
+            Q(description__icontains=search_query)
+        )
+
+    tickets = tickets.select_related('user', 'assigned_to_user').order_by('-created_at')
+    
+    # Pagination
+    paginator = Paginator(tickets, 50) # Match page size with JS if needed
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+
+    # Serialize the ticket data
+    serialized_tickets = []
+    for ticket in page_obj.object_list:
+        serialized_tickets.append({
+            'id': ticket.id,
+            'ticket_id': ticket.ticket_id,
+            'subject': ticket.subject,
+            'description': ticket.description,
+            'status_display': ticket.get_status_display(),
+            'status_class': f"status-{ticket.status.lower().replace('_', '-')}", # for CSS styling
+            'priority_display': ticket.get_priority_display(),
+            'priority_class': f"priority-{ticket.priority.lower()}", # for CSS styling
+            'user_full_name': ticket.user.get_full_name() or ticket.user.username,
+            'created_at': ticket.created_at.strftime("%b %d, %Y"),
+        })
+
+    return JsonResponse({
+        'tickets': serialized_tickets,
+        'page': page_obj.number,
+        'total_pages': paginator.num_pages,
+        'total_entries': paginator.count,
+    })
+
 
 
 @login_required
@@ -15683,6 +15700,26 @@ def get_ticket_stats(request):
     }
     
     return JsonResponse(stats)
+
+@require_GET
+def search_tickets(request):
+    query = request.GET.get('q', '')
+    tickets = Support_Ticket.objects.filter(
+        Q(subject__icontains=query) |
+        Q(ticket_id__icontains=query) |
+        Q(description__icontains=query)
+    ).select_related('user', 'assigned_to_user')[:50]
+    
+    return JsonResponse([{
+        'id': ticket.id,
+        'ticket_id': ticket.ticket_id,
+        'subject': ticket.subject,
+        'status': ticket.get_status_display(),
+        'priority': ticket.get_priority_display(),
+        'created_by': ticket.user.get_full_name() or ticket.user.username,
+        'assigned_to': ticket.assigned_to_user.get_full_name() if ticket.assigned_to_user else 'Unassigned',
+        'created_at': ticket.created_at.strftime('%Y-%m-%d %H:%M'),
+    } for ticket in tickets], safe=False)
 
 
 @login_required

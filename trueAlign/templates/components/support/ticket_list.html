@@ -1,694 +1,871 @@
 {% extends 'base.html' %}
-
 {% block content %}
-<!-- Add Alpine.js and necessary plugins -->
-<script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-<script defer src="https://unpkg.com/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
-<script defer src="https://unpkg.com/@alpinejs/intersect@3.x.x/dist/cdn.min.js"></script>
-
-<div class="min-h-screen py-8" x-data="{ 
-    showFilters: true,
-    selectedColumns: ['id', 'subject', 'status', 'priority', 'issue_type', 'created_by', 'assigned_to', 'created', 'sla', 'actions'],
-    isLoading: false,
-    isMobile: window.innerWidth < 768,
-    toggleColumn(column) {
-        const index = this.selectedColumns.indexOf(column);
-        if (index === -1) {
-            this.selectedColumns.push(column);
-        } else {
-            this.selectedColumns.splice(index, 1);
-        }
-        localStorage.setItem('selectedColumns', JSON.stringify(this.selectedColumns));
-    },
-    init() {
-        const savedColumns = localStorage.getItem('selectedColumns');
-        if (savedColumns) {
-            this.selectedColumns = JSON.parse(savedColumns);
-        }
-        window.addEventListener('resize', () => {
-            this.isMobile = window.innerWidth < 768;
-            if (this.isMobile) {
-                this.showFilters = false;
-            }
-        });
+<style>
+    /* Custom styles for better UX */
+    :root {
+        --primary-color: #4f46e5;
+        --secondary-color: #6b7280;
+        --success-color: #10b981;
+        --danger-color: #ef4444;
     }
-}" @keydown.escape="showFilters = false">
+
+    /* General Button Styling */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        font-size: 0.875rem;
+        transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out, opacity 0.2s ease-in-out;
+        border: 1px solid transparent;
+    }
+
+    .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .btn-primary {
+        background-color: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+
+    .btn-primary:not(:disabled):hover {
+        background-color: #4338ca;
+        box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.3);
+    }
+
+    .btn-secondary {
+        background-color: #f3f4f6;
+        color: var(--secondary-color);
+        border-color: #d1d5db;
+    }
+
+    .btn-secondary:not(:disabled):hover {
+        background-color: #e5e7eb;
+    }
+    
+    .btn-secondary.active {
+        background-color: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+
+    .btn-success {
+        background-color: var(--success-color);
+        color: white;
+        border-color: var(--success-color);
+    }
+    .btn-success:not(:disabled):hover {
+        background-color: #059669;
+    }
+
+    /* Transitions */
+    #filterSection, #bulkActionDropdown, .ticket-card, #tableViewContainer, #cardViewContainer {
+        transition: all 0.3s ease-in-out;
+    }
+
+    /* Z-index management */
+    #summaryModal { z-index: 60; }
+    #bulkActionDropdown { z-index: 50; }
+    #filterSection { z-index: 40; }
+    
+    /* Smooth transition for filter panel */
+    #filterSection.hidden {
+        transform: translateX(-100%);
+        width: 0;
+        opacity: 0;
+        pointer-events: none;
+    }
+    
+    /* View transition */
+    .view-container {
+        transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+    }
+    .view-container.hidden {
+        opacity: 0;
+        transform: scale(0.98);
+        display: none;
+    }
+
+    /* Loading overlay for smooth updates */
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(255, 255, 255, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 30;
+        transition: opacity 0.2s ease;
+    }
+    .loading-overlay.hidden {
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .prose {
+        color: #374151;
+        max-width: 65ch;
+    }
+    .prose h3 {
+        font-size: 1.25em;
+        font-weight: 600;
+        margin-top: 1.6em;
+        margin-bottom: 0.6em;
+    }
+    .prose p {
+        margin-top: 1.25em;
+        margin-bottom: 1.25em;
+    }
+    .prose ul {
+        margin-top: 1.25em;
+        margin-bottom: 1.25em;
+        padding-left: 1.75em;
+        list-style-type: disc;
+    }
+    .prose li {
+        margin-top: 0.5em;
+        margin-bottom: 0.5em;
+    }
+
+</style>
+
+<div class="min-h-screen  py-8" id="ticketListApp">
     <div class="max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
-        <div class="md:flex md:items-center md:justify-between">
-              <!-- Back Button -->
-                <div class="mb-4">
-                    <a href="{% url 'aps_support:dashboard' %}" 
-                       class="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-gray-700 bg-white/80 hover:bg-white/90 border border-gray-200 shadow-sm transition-all duration-200 hover:shadow-md">
-                        <svg class="w-5 h-5 mr-2 -ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-                        </svg>
-                        Back to Tickets
+        <div class="bg-white p-4 rounded-lg shadow-sm mb-6">
+            <div class="md:flex md:items-center md:justify-between">
+                <div class="flex items-center space-x-4">
+                    <a href="{% url 'aps_support:dashboard' %}" class="btn btn-secondary">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                        Back
                     </a>
+                    <h2 class="text-2xl font-bold text-gray-900">Support Tickets</h2>
                 </div>
-            <div class="flex-1 min-w-0">
-                <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">Support Tickets</h2>
-            </div>
-            <div class="mt-4 flex md:mt-0 md:ml-4 space-x-3">
-                <a href="{% url 'aps_support:create_ticket' %}"
-                    class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
-                    Create New Ticket
-                </a>
-                <a href="{% url 'aps_support:ticket_export' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}"
-                    class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                    <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                    </svg>
-                    Export
-                </a>
+                
+                <div class="flex items-center space-x-3 mt-4 md:mt-0">
+                    <button id="toggleFiltersBtn" class="btn btn-secondary">
+                        <svg class="w-5 h-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z"/></svg>
+                        Filters
+                    </button>
+                    
+                    <a href="{% url 'aps_support:create_ticket' %}" class="btn btn-primary">
+                        <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                        New Ticket
+                    </a>
+                    
+                    <a id="exportLink" href="{% url 'aps_support:ticket_export' %}" class="btn btn-success">
+                        <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                        Export
+                    </a>
+
+                    {% if user_roles.is_admin or user_roles.is_hr %}
+                    <button id="summarizeBtn" type="button" class="btn btn-secondary bg-indigo-100 text-indigo-700 border-indigo-200" disabled>
+                        ✨ Summarize
+                    </button>
+                    <div class="relative">
+                        <button id="bulkActionBtn" type="button" class="btn btn-secondary">
+                            <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/></svg>
+                            Bulk Actions
+                        </button>
+                        <div id="bulkActionDropdown" class="origin-top-right absolute right-0 mt-2 w-96 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 hidden">
+                            <form id="bulkActionForm" class="p-4 space-y-4">
+                                {% csrf_token %}
+                                <div>
+                                    <label for="bulk_action" class="block text-sm font-medium text-gray-700">Action</label>
+                                    <select id="bulk_action" name="bulk_action" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                        <option value="">Select action...</option>
+                                        <option value="status_change">Change Status</option>
+                                        <option value="priority_change">Change Priority</option>
+                                        <option value="assign">Assign Tickets</option>
+                                        {% if user_roles.is_admin %}
+                                        <option value="delete">Delete Tickets</option>
+                                        {% endif %}
+                                    </select>
+                                </div>
+                                <div id="bulk_status_field" class="hidden"><label class="block text-sm font-medium text-gray-700">New Status</label><select name="bulk_status" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 rounded-md">{% for value, display in status_choices %}<option value="{{ value }}">{{ display }}</option>{% endfor %}</select></div>
+                                <div id="bulk_priority_field" class="hidden"><label class="block text-sm font-medium text-gray-700">New Priority</label><select name="bulk_priority" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 rounded-md">{% for value, display in priority_choices %}<option value="{{ value }}">{{ display }}</option>{% endfor %}</select></div>
+                                <div id="bulk_assigned_to_field" class="hidden"><label class="block text-sm font-medium text-gray-700">Assign To</label><select name="bulk_assigned_to" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 rounded-md"><option value="">Select user...</option>{% for user in assignable_users %}<option value="{{ user.pk }}">{{ user.get_full_name|default:user.username }}</option>{% endfor %}</select></div>
+                                <div class="pt-4">
+                                    <button type="submit" id="bulk_submit" disabled class="w-full btn btn-primary bg-gray-400">
+                                        Apply to Selected <span id="selected_count">(0)</span>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
 
         <!-- Main Content Area -->
-        <div class="mt-8 flex gap-6">
-            <!-- Filters Sidebar -->
-            <div class="w-64 flex-shrink-0" 
-                 x-show="showFilters"
-                 x-transition:enter="transition ease-out duration-300"
-                 x-transition:enter-start="opacity-0 transform -translate-x-4"
-                 x-transition:enter-end="opacity-100 transform translate-x-0"
-                 x-transition:leave="transition ease-in duration-200"
-                 x-transition:leave-start="opacity-100 transform translate-x-0"
-                 x-transition:leave-end="opacity-0 transform -translate-x-4"
-                 :class="{ 'fixed inset-0 z-40 w-full md:w-64 md:relative bg-white': isMobile }">
-                <div class="sticky top-4 space-y-6 bg-white rounded-lg shadow-md border border-gray-200 p-4">
-                    <div class="flex justify-between items-center">
+        <div class="flex gap-6">
+            <!-- Filter Panel -->
+            <div id="filterSection" class="w-64 flex-shrink-0 hidden lg:block">
+                <div class="sticky top-4 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                    <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg font-medium text-gray-900">Filters</h3>
-                        <button @click="showFilters = !showFilters" 
-                                class="text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-md">
-                            <span class="sr-only">Toggle filters</span>
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
+                        <button id="closeFiltersBtn" class="text-gray-400 hover:text-gray-500 lg:hidden">
+                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                         </button>
                     </div>
-
-                    <form method="GET" class="space-y-4">
-                        <!-- Status Checkboxes -->
+                    <form id="filterForm" class="space-y-6">
+                        <!-- Filters with corrected name attributes -->
                         <div>
                             <h4 class="text-sm font-medium text-gray-900 mb-2">Status</h4>
-                            {% for value, display in status_choices %}
-                            <div class="flex items-center">
-                                <input type="checkbox" name="status[]" value="{{ value }}" 
-                                       class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                                       {% if value in current_filters.status %}checked{% endif %}>
-                                <label class="ml-2 text-sm text-gray-700">{{ display }}</label>
+                            <div class="space-y-1">
+                                {% for value, display in status_choices %}
+                                <label class="flex items-center"><input type="checkbox" name="status[]" value="{{ value }}" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-2"> <span class="text-sm text-gray-700">{{ display }}</span></label>
+                                {% endfor %}
                             </div>
-                            {% endfor %}
                         </div>
-
-                        <!-- Priority Checkboxes -->
                         <div>
                             <h4 class="text-sm font-medium text-gray-900 mb-2">Priority</h4>
-                            {% for value, display in priority_choices %}
-                            <div class="flex items-center">
-                                <input type="checkbox" name="priority[]" value="{{ value }}"
-                                       class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                                       {% if value in current_filters.priority %}checked{% endif %}>
-                                <label class="ml-2 text-sm text-gray-700">{{ display }}</label>
-                            </div>
-                            {% endfor %}
-                        </div>
-
-                        <!-- Issue Type Checkboxes -->
-                        <div>
-                            <h4 class="text-sm font-medium text-gray-900 mb-2">Issue Type</h4>
-                            {% for value, display in issue_type_choices %}
-                            <div class="flex items-center">
-                                <input type="checkbox" name="issue_type[]" value="{{ value }}"
-                                       class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                                       {% if value in current_filters.issue_type %}checked{% endif %}>
-                                <label class="ml-2 text-sm text-gray-700">{{ display }}</label>
-                            </div>
-                            {% endfor %}
-                        </div>
-
-                        <!-- Assigned To Dropdown -->
-                        <div>
-                            <h4 class="text-sm font-medium text-gray-900 mb-2">Assigned To</h4>
-                            <select name="assigned_to" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                                <option value="">All Users</option>
-                                <option value="unassigned" {% if current_filters.assigned_to == 'unassigned' %}selected{% endif %}>Unassigned</option>
-                                {% for user in assignable_users %}
-                                <option value="{{ user.pk }}" {% if current_filters.assigned_to == user.pk|stringformat:"s" %}selected{% endif %}>
-                                    {{ user.get_full_name|default:user.username }}
-                                </option>
+                            <div class="space-y-1">
+                                {% for value, display in priority_choices %}
+                                <label class="flex items-center"><input type="checkbox" name="priority[]" value="{{ value }}" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-2"> <span class="text-sm text-gray-700">{{ display }}</span></label>
                                 {% endfor %}
-                            </select>
-                        </div>
-
-                        <!-- Date Range -->
-                        <div>
-                            <h4 class="text-sm font-medium text-gray-900 mb-2">Date Range</h4>
-                            <div class="space-y-2">
-                                <input type="date" name="date_from" placeholder="From"
-                                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                                       value="{{ current_filters.date_from }}">
-                                <input type="date" name="date_to" placeholder="To"
-                                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                                       value="{{ current_filters.date_to }}">
                             </div>
                         </div>
-
-                        <!-- Filter Actions -->
-                        <div class="flex space-x-3">
-                            <button type="submit"
-                                    class="flex-1 inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                Apply
-                            </button>
-                            <a href="{% url 'aps_support:ticket_list' %}"
-                               class="flex-1 inline-flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                Clear
-                            </a>
+                         <!-- Add other filters similarly -->
+                        <div class="flex space-x-3 pt-4">
+                            <button type="submit" class="w-full btn btn-primary">Apply</button>
+                            <button type="reset" id="clearFiltersBtn" class="w-full btn btn-secondary">Clear</button>
                         </div>
                     </form>
                 </div>
             </div>
 
             <!-- Main Content -->
-            <div class="flex-1">
-                <!-- Quick Search -->
-                <div class="mb-4">
-                    <div class="relative rounded-md shadow-sm">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
+            <div class="flex-1 min-w-0">
+                <!-- Search and Controls -->
+                <div class="bg-white p-4 rounded-lg shadow-sm mb-4">
+                    <div class="md:flex justify-between items-center">
+                        <div class="relative flex-grow">
+                            <input type="text" id="quickSearch" class="block w-full pl-10 pr-12 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Search by ID, subject, or description..." autocomplete="off">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg></div>
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center space-x-2">
+                                <div id="searchSpinner" class="hidden"><svg class="animate-spin h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg></div>
+                                <span id="searchStatus" class="text-sm text-gray-500"></span>
+                            </div>
                         </div>
-                        <input type="text" name="quick_search" 
-                               class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 pr-12 sm:text-sm border-gray-300 rounded-md"
-                               placeholder="Quick search by ID, Subject, or Creator...">
+                        <div class="flex justify-end items-center space-x-2 mt-4 md:mt-0 md:ml-4">
+                            <button id="tableViewBtn" class="btn btn-secondary active">Table</button>
+                            <button id="cardViewBtn" class="btn btn-secondary">Card</button>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Column Visibility Toggle -->
-                <div class="mb-4 p-4 bg-white rounded-lg shadow border border-gray-200">
-                    <h3 class="text-sm font-medium text-gray-900 mb-2">Visible Columns</h3>
-                    <div class="flex flex-wrap gap-2">
-                        <template x-for="column in ['ID', 'Subject', 'Status', 'Priority', 'Issue Type', 'Created By', 'Assigned To', 'Created', 'SLA', 'Actions']">
-                            <button 
-                                @click="toggleColumn(column.toLowerCase().replace(' ', '_'))"
-                                :class="{ 
-                                    'bg-indigo-100 text-indigo-800': selectedColumns.includes(column.toLowerCase().replace(' ', '_')),
-                                    'bg-gray-100 text-gray-800': !selectedColumns.includes(column.toLowerCase().replace(' ', '_'))
-                                }"
-                                class="px-3 py-1 rounded-full text-sm font-medium transition-colors duration-150 ease-in-out">
-                                <span x-text="column"></span>
-                            </button>
-                        </template>
+                <!-- Content Area -->
+                <div id="contentArea" class="relative">
+                    <div id="loadingOverlay" class="loading-overlay hidden">
+                         <svg class="animate-spin h-8 w-8 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                     </div>
-                </div>
 
-                <!-- Sticky Bulk Actions -->
-                {% if user_roles.is_admin or user_roles.is_hr %}
-                <div class="sticky top-0 z-10 bg-white shadow-md border border-gray-200 rounded-t-lg mb-4">
-                    <div class="px-4 py-5 sm:p-6">
-                        <form method="POST" action="{% url 'aps_support:bulk_ticket_actions' %}" id="bulkActionForm">
-                            {% csrf_token %}
-                            <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-                                <div class="sm:col-span-2">
-                                    <label for="bulk_action" class="block text-sm font-medium text-gray-700">Bulk Action</label>
-                                    <select name="bulk_action" id="bulk_action"
-                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white">
-                                        <option value="">Select Action</option>
-                                        <option value="assign">Assign</option>
-                                        <option value="status_change">Change Status</option>
-                                        <option value="priority_change">Change Priority</option>
-                                        {% if user_roles.is_admin %}
-                                        <option value="delete">Delete</option>
-                                        {% endif %}
-                                    </select>
-                                </div>
-
-                                <div class="sm:col-span-2" id="bulk_assigned_to_field" style="display: none;">
-                                    <label for="bulk_assigned_to" class="block text-sm font-medium text-gray-700">Assign To</label>
-                                    <select name="bulk_assigned_to" id="bulk_assigned_to"
-                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white">
-                                        <option value="">Select User</option>
-                                        {% for user in assignable_users %}
-                                        <option value="{{ user.pk }}">{{ user.get_full_name|default:user.username }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-
-                                <div class="sm:col-span-2" id="bulk_status_field" style="display: none;">
-                                    <label for="bulk_status" class="block text-sm font-medium text-gray-700">New Status</label>
-                                    <select name="bulk_status" id="bulk_status"
-                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white">
-                                        {% for value, display in status_choices %}
-                                        <option value="{{ value }}">{{ display }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-
-                                <div class="sm:col-span-2" id="bulk_priority_field" style="display: none;">
-                                    <label for="bulk_priority" class="block text-sm font-medium text-gray-700">New Priority</label>
-                                    <select name="bulk_priority" id="bulk_priority"
-                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white">
-                                        {% for value, display in priority_choices %}
-                                        <option value="{{ value }}">{{ display }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-
-                                <div class="sm:col-span-2">
-                                    <label class="invisible block text-sm font-medium text-gray-700">Action</label>
-                                    <button type="submit"
-                                        class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150"
-                                        id="bulk_submit" disabled>
-                                        Apply
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-                {% endif %}
-
-                <!-- Tickets Table -->
-                <div class="mt-8 flex flex-col">
-                    <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-                        <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
-                            <div class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
-                                <!-- Table Section -->
-                                <div class="bg-white shadow-md rounded-lg overflow-hidden">
-                                    <table class="min-w-full divide-y divide-gray-200">
-                                        <thead class="bg-gray-50">
-                                            <tr>
-                                                {% if user_roles.is_admin or user_roles.is_hr %}
-                                                <th scope="col" class="relative px-6 py-3">
-                                                    <input type="checkbox" id="select_all"
-                                                        class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                                                </th>
-                                                {% endif %}
-                                                <th x-show="selectedColumns.includes('id')" scope="col"
-                                                    class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-                                                    ID
-                                                </th>
-                                                <th x-show="selectedColumns.includes('subject')" scope="col"
-                                                    class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-                                                    Subject
-                                                </th>
-                                                <th x-show="selectedColumns.includes('status')" scope="col"
-                                                    class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-                                                    Status
-                                                </th>
-                                                <th x-show="selectedColumns.includes('priority')" scope="col"
-                                                    class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-                                                    Priority
-                                                </th>
-                                                <th x-show="selectedColumns.includes('issue_type')" scope="col"
-                                                    class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-                                                    Issue Type
-                                                </th>
-                                                <th x-show="selectedColumns.includes('created_by')" scope="col"
-                                                    class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-                                                    Created By
-                                                </th>
-                                                <th x-show="selectedColumns.includes('assigned_to')" scope="col"
-                                                    class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-                                                    Assigned To
-                                                </th>
-                                                <th x-show="selectedColumns.includes('created')" scope="col"
-                                                    class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-                                                    Created
-                                                </th>
-                                                <th x-show="selectedColumns.includes('sla')" scope="col"
-                                                    class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-                                                    SLA
-                                                </th>
-                                                <th x-show="selectedColumns.includes('actions')" scope="col"
-                                                    class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-                                                    Actions
-                                                </th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="bg-white divide-y divide-gray-200">
-                                            {% for ticket in tickets %}
-                                            <tr class="border-b border-gray-200 hover:bg-indigo-50 transition duration-150">
-                                                {% if user_roles.is_admin or user_roles.is_hr %}
-                                                <td class="px-6 py-4 whitespace-nowrap">
-                                                    <input type="checkbox"
-                                                        class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 ticket-checkbox"
-                                                        name="selected_tickets[]" value="{{ ticket.pk }}">
-                                                </td>
-                                                {% endif %}
-                                                <td x-show="selectedColumns.includes('id')" class="px-6 py-4 whitespace-nowrap">
-                                                    <span class="text-sm font-medium text-gray-900">#{{ ticket.ticket_id }}</span>
-                                                </td>
-                                                <td x-show="selectedColumns.includes('subject')" class="px-6 py-4">
-                                                    <a href="{% url 'aps_support:ticket_detail' ticket.pk %}"
-                                                        class="text-sm text-indigo-600 hover:text-indigo-900 hover:underline">
-                                                        {{ ticket.subject|truncatechars:50 }}
-                                                    </a>
-                                                </td>
-                                                <td x-show="selectedColumns.includes('status')" class="px-6 py-4 whitespace-nowrap">
-                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                                        {% if ticket.status == 'new' %}bg-blue-100 text-blue-800
-                                                        {% elif ticket.status == 'open' %}bg-yellow-100 text-yellow-800
-                                                        {% elif ticket.status == 'in_progress' %}bg-indigo-100 text-indigo-800
-                                                        {% elif ticket.status == 'resolved' %}bg-green-100 text-green-800
-                                                        {% elif ticket.status == 'closed' %}bg-gray-100 text-gray-800
-                                                        {% elif ticket.status == 'pending_user' %}bg-orange-100 text-orange-800
-                                                        {% elif ticket.status == 'on_hold' %}bg-purple-100 text-purple-800
-                                                        {% else %}bg-gray-100 text-gray-800{% endif %}">
-                                                    {{ ticket.get_status_display }}
-                                                    </span>
-                                                </td>
-                                                <td x-show="selectedColumns.includes('priority')" class="px-6 py-4 whitespace-nowrap">
-                                                    <div class="flex items-center">
-                                                        <span class="h-2.5 w-2.5 rounded-full mr-2
-                                                            {% if ticket.priority == 'critical' %}bg-red-600
-                                                            {% elif ticket.priority == 'high' %}bg-yellow-500
-                                                            {% elif ticket.priority == 'medium' %}bg-blue-500
-                                                            {% else %}bg-gray-400{% endif %}"></span>
-                                                        <span class="text-sm text-gray-900">{{ ticket.get_priority_display }}</span>
-                                                    </div>
-                                                </td>
-                                                <td x-show="selectedColumns.includes('issue_type')" class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                    {{ ticket.get_issue_type_display }}
-                                                </td>
-                                                <td x-show="selectedColumns.includes('created_by')" class="px-6 py-4 whitespace-nowrap">
-                                                    <div class="flex items-center">
-                                                        <div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-                                                            <span class="text-sm font-medium text-gray-600">
-                                                                {{ ticket.user.get_full_name|default:ticket.user.username|make_list|first|upper }}
-                                                            </span>
-                                                        </div>
-                                                        <span class="ml-2 text-sm text-gray-900">{{ ticket.user.get_full_name|default:ticket.user.username }}</span>
-                                                    </div>
-                                                </td>
-                                                <td x-show="selectedColumns.includes('assigned_to')" class="px-6 py-4 whitespace-nowrap">
-                                                    <div class="flex items-center">
-                                                        {% if ticket.assigned_to_user %}
-                                                        <div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-                                                            <span class="text-sm font-medium text-gray-600">
-                                                                {{ ticket.assigned_to_user.get_full_name|default:ticket.assigned_to_user.username|make_list|first|upper }}
-                                                            </span>
-                                                        </div>
-                                                        <span class="ml-2 text-sm text-gray-900">{{ ticket.assigned_to_user.get_full_name|default:ticket.assigned_to_user.username }}</span>
-                                                        {% else %}
-                                                        <span class="text-sm text-gray-500">Unassigned</span>
-                                                        {% endif %}
-                                                    </div>
-                                                </td>
-                                                <td x-show="selectedColumns.includes('created')" class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                    {{ ticket.created_at|date:"M d, Y H:i" }}
-                                                </td>
-                                                <td x-show="selectedColumns.includes('sla')" class="px-6 py-4 whitespace-nowrap">
-                                                    {% if ticket.sla_target_date %}
-                                                    {% if ticket.resolved_at %}
-                                                    {% if ticket.resolved_at <= ticket.sla_target_date %}
-                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Met</span>
-                                                    {% else %}
-                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Breached</span>
-                                                    {% endif %}
-                                                    {% else %}
-                                                    {% now "c" as now %}
-                                                    {% if ticket.sla_target_date|date:'c' < now %}
-                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Breached</span>
-                                                    {% else %}
-                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">On Track</span>
-                                                    {% endif %}
-                                                    {% endif %}
-                                                    {% else %}
-                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">N/A</span>
-                                                    {% endif %}
-                                                </td>
-                                                <td x-show="selectedColumns.includes('actions')" class="px-6 py-4 whitespace-nowrap">
-                                                    <div class="flex items-center space-x-2">
-                                                        <div class="relative" x-data="{ open: false }">
-                                                            <button @click="open = !open" type="button" class="inline-flex items-center px-3 py-1.5 border border-transparent rounded-md shadow-sm text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                                                Actions
-                                                                <svg class="ml-2 -mr-0.5 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                                                                </svg>
-                                                            </button>
-                                                            <div x-show="open" @click.away="open = false" class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
-                                                                <div class="py-1">
-                                                                    <a href="{% url 'aps_support:ticket_detail' ticket.pk %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">View Details</a>
-                                                                    {% if ticket.status in 'resolved,closed' and ticket.user == user %}
-                                                                    <button @click="reopenTicket({{ ticket.pk }})" class="block w-full text-left px-4 py-2 text-sm text-yellow-700 hover:bg-gray-100">Reopen</button>
-                                                                    {% endif %}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                            {% empty %}
-                                            <tr>
-                                                <td colspan="11" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-                                                    No tickets found matching your criteria.
-                                                </td>
-                                            </tr>
-                                            {% endfor %}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
+                    <div id="tableViewContainer" class="view-container">
+                        <div class="bg-white rounded-lg shadow-sm overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50"><tr>
+                                    {% if user_roles.is_admin or user_roles.is_hr %}<th class="px-6 py-3 text-left"><input type="checkbox" id="selectAll" class="rounded"></th>{% endif %}
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created By</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                                </tr></thead>
+                                <tbody id="ticketTableBody" class="bg-white divide-y divide-gray-200">
+                                    <!-- Rows will be populated by JS -->
+                                </tbody>
+                            </table>
                         </div>
                     </div>
 
-                    <!-- Load More Button -->
-                    <div class="mt-4 flex justify-center">
-                        {% if tickets.has_next %}
-                        <a href="?page={{ tickets.next_page_number }}{% if request.GET %}&{{ request.GET.urlencode }}{% endif %}"
-                           class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            Load More Tickets
-                        </a>
-                        {% endif %}
+                    <div id="cardViewContainer" class="view-container hidden">
+                        <div id="ticketCardGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <!-- Cards will be populated by JS -->
+                        </div>
+                    </div>
+                     <div id="noResults" class="text-center py-16 hidden">
+                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" /></svg>
+                        <h3 class="mt-2 text-sm font-medium text-gray-900">No tickets found</h3>
+                        <p class="mt-1 text-sm text-gray-500">Try adjusting your search or filter criteria.</p>
                     </div>
                 </div>
+                 <!-- Pagination -->
+                <nav id="paginationContainer" class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6 mt-4 rounded-lg shadow-sm"></nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gemini Summary Modal -->
+<div id="summaryModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">✨ AI Summary of Selected Tickets</h3>
+                <button id="closeSummaryModalBtn" class="text-gray-400 hover:text-gray-500">
+                    <span class="sr-only">Close</span>
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div id="summaryContent" class="mt-2 px-4 py-3 text-left min-h-[200px]">
+                <div id="summaryLoading" class="text-center py-8">
+                    <svg class="animate-spin mx-auto h-8 w-8 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    <p class="mt-2 text-sm text-gray-500">Generating summary with Gemini...</p>
+                </div>
+                 <div id="summaryResult" class="prose max-w-none text-gray-600 whitespace-pre-wrap"></div>
+                 <div id="summaryError" class="hidden text-red-600 bg-red-50 p-4 rounded-md"></div>
+            </div>
+            <div class="items-center px-4 py-3">
+                <button id="copySummaryBtn" class="btn btn-success w-full" disabled>
+                    Copy to Clipboard
+                </button>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Debounce function for performance
-    function debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
-    }
+document.addEventListener('DOMContentLoaded', () => {
 
-    // Initialize form elements
-    const bulkActionForm = document.getElementById('bulkActionForm');
-    const bulkActionSelect = document.getElementById('bulk_action');
-    const selectAllCheckbox = document.getElementById('select_all');
-    const bulkSubmitButton = document.getElementById('bulk_submit');
-    const assignField = document.getElementById('bulk_assigned_to_field');
-    const statusField = document.getElementById('bulk_status_field');
-    const priorityField = document.getElementById('bulk_priority_field');
-    const quickSearchInput = document.querySelector('input[name="quick_search"]');
-    
-    // Quick search handler with debouncing
-    quickSearchInput?.addEventListener('input', debounce(function(e) {
-        const searchTerm = e.target.value.toLowerCase();
-        document.querySelectorAll('tbody tr').forEach(row => {
-            const text = row.textContent.toLowerCase();
-            row.style.display = text.includes(searchTerm) ? '' : 'none';
-        });
-    }, 300));
+    // --- STATE MANAGEMENT --- //
+    const appState = {
+        tickets: [],
+        view: 'table', // 'table' or 'card'
+        filters: {},
+        searchQuery: '',
+        selectedTickets: new Set(),
+        allTickets: new Map(), // To store full ticket data for summarization
+        currentPage: 1,
+        totalPages: 1,
+        totalTickets: 0,
+        isLoading: true,
+        initialLoad: true,
+    };
 
-    // Activity tracking with debouncing
-    const updateActivity = debounce(function() {
-        const currentTime = new Date();
-        fetch('/update-activity/', {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                last_active: currentTime.toISOString()
-            })
-        });
-    }, 30000);
-
-    // Initialize timestamp for activity tracking
-    let lastActivityTime = new Date('2025-06-08T07:56:44Z');
-    
-    // Set up activity tracking
-    document.addEventListener('mousemove', updateActivity);
-    document.addEventListener('keydown', updateActivity);
-    setInterval(updateActivity, 30000); // Backup checker every 30 seconds
-
-    // Enhanced bulk action handler
-    bulkActionSelect?.addEventListener('change', function() {
-        const action = this.value;
-        
-        // Smooth transitions for fields
-        [assignField, statusField, priorityField].forEach(field => {
-            if (field) {
-                field.style.transition = 'opacity 150ms ease-in-out';
-                field.style.opacity = '0';
-                setTimeout(() => {
-                    field.style.display = 'none';
-                }, 150);
-            }
-        });
-        
-        // Show relevant field with transition
-        if (action) {
-            let fieldToShow;
-            switch(action) {
-                case 'assign':
-                    fieldToShow = assignField;
-                    break;
-                case 'status_change':
-                    fieldToShow = statusField;
-                    break;
-                case 'priority_change':
-                    fieldToShow = priorityField;
-                    break;
-            }
-            
-            if (fieldToShow) {
-                fieldToShow.style.display = 'block';
-                setTimeout(() => {
-                    fieldToShow.style.opacity = '1';
-                }, 10);
-            }
-        }
-        
-        updateBulkSubmitButton();
-    });
-
-    // Select all checkbox handler
-    selectAllCheckbox?.addEventListener('change', function() {
-        const checkboxes = document.querySelectorAll('.ticket-checkbox');
-        checkboxes.forEach(checkbox => {
-            checkbox.checked = this.checked;
-        });
-        updateBulkSubmitButton();
-    });
-    
-    // Individual checkbox handlers
-    document.querySelectorAll('.ticket-checkbox').forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
-            const totalCheckboxes = document.querySelectorAll('.ticket-checkbox').length;
-            const checkedCheckboxes = document.querySelectorAll('.ticket-checkbox:checked').length;
-            if (selectAllCheckbox) {
-                selectAllCheckbox.checked = totalCheckboxes === checkedCheckboxes;
-                selectAllCheckbox.indeterminate = checkedCheckboxes > 0 && checkedCheckboxes < totalCheckboxes;
-            }
-            updateBulkSubmitButton();
-        });
-    });
-    
-    // Update submit button state
-    function updateBulkSubmitButton() {
-        const selectedTickets = document.querySelectorAll('.ticket-checkbox:checked').length;
-        const bulkAction = bulkActionSelect?.value;
-        
-        if (bulkSubmitButton) {
-            bulkSubmitButton.disabled = selectedTickets === 0 || !bulkAction;
-            
-            // Update button appearance based on state without using opacity
-            if (bulkSubmitButton.disabled) {
-                bulkSubmitButton.classList.remove('bg-blue-600', 'hover:bg-blue-700');
-                bulkSubmitButton.classList.add('bg-gray-400', 'cursor-not-allowed');
-            } else {
-                bulkSubmitButton.classList.remove('bg-gray-400', 'cursor-not-allowed');
-                bulkSubmitButton.classList.add('bg-blue-600', 'hover:bg-blue-700');
-            }
-        }
-    }
-    
-    // Form submission handler
-    bulkActionForm?.addEventListener('submit', function(e) {
-        e.preventDefault();
-        updateActivity();
-        
-        const selectedCheckboxes = document.querySelectorAll('.ticket-checkbox:checked');
-        if (selectedCheckboxes.length === 0) {
-            alert('Please select at least one ticket.');
-            return;
-        }
-        
-        const action = bulkActionSelect.value;
-        if (!action) {
-            alert('Please select a bulk action.');
-            return;
-        }
-        
-        // Confirm action
-        if (!confirm(`Are you sure you want to apply "${action}" to ${selectedCheckboxes.length} ticket(s)?`)) {
-            return;
-        }
-        
-        // Update button state while processing
-        const submitButton = this.querySelector('button[type="submit"]');
-        submitButton.disabled = true;
-        submitButton.classList.remove('bg-blue-600', 'hover:bg-blue-700');
-        submitButton.classList.add('bg-gray-400');
-        submitButton.innerHTML = 'Processing...';
-        
-        // Submit the form
-        this.submit();
-    });
-
-    // Reopen ticket function
-    window.reopenTicket = function(ticketId) {
-        if (confirm('Are you sure you want to reopen this ticket?')) {
-            updateActivity(); // Track this action
-            
-        fetch(`{% url 'aps_support:reopen_ticket' '0' %}`.replace('0', ticketId), {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    user: 'initator16',
-                    timestamp: new Date().toISOString()
-                })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    alert(data.message);
-                    location.reload();
-                } else {
-                    throw new Error(data.error || 'An error occurred');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert(error.message || 'Error reopening ticket');
-            });
-        }
+    // --- DOM ELEMENTS --- //
+    const dom = {
+        app: document.getElementById('ticketListApp'),
+        filterSection: document.getElementById('filterSection'),
+        toggleFiltersBtn: document.getElementById('toggleFiltersBtn'),
+        closeFiltersBtn: document.getElementById('closeFiltersBtn'),
+        filterForm: document.getElementById('filterForm'),
+        clearFiltersBtn: document.getElementById('clearFiltersBtn'),
+        quickSearch: document.getElementById('quickSearch'),
+        searchSpinner: document.getElementById('searchSpinner'),
+        searchStatus: document.getElementById('searchStatus'),
+        tableViewBtn: document.getElementById('tableViewBtn'),
+        cardViewBtn: document.getElementById('cardViewBtn'),
+        tableViewContainer: document.getElementById('tableViewContainer'),
+        cardViewContainer: document.getElementById('cardViewContainer'),
+        ticketTableBody: document.getElementById('ticketTableBody'),
+        ticketCardGrid: document.getElementById('ticketCardGrid'),
+        loadingOverlay: document.getElementById('loadingOverlay'),
+        noResults: document.getElementById('noResults'),
+        paginationContainer: document.getElementById('paginationContainer'),
+        exportLink: document.getElementById('exportLink'),
+        // Bulk Actions
+        bulkActionBtn: document.getElementById('bulkActionBtn'),
+        bulkActionDropdown: document.getElementById('bulkActionDropdown'),
+        bulkActionForm: document.getElementById('bulkActionForm'),
+        bulkActionSelect: document.getElementById('bulk_action'),
+        bulkSubmitBtn: document.getElementById('bulk_submit'),
+        selectedCountSpan: document.getElementById('selected_count'),
+        selectAllCheckbox: document.getElementById('selectAll'),
+        // Gemini Summary
+        summarizeBtn: document.getElementById('summarizeBtn'),
+        summaryModal: document.getElementById('summaryModal'),
+        closeSummaryModalBtn: document.getElementById('closeSummaryModalBtn'),
+        summaryLoading: document.getElementById('summaryLoading'),
+        summaryResult: document.getElementById('summaryResult'),
+        summaryError: document.getElementById('summaryError'),
+        copySummaryBtn: document.getElementById('copySummaryBtn'),
     };
     
-    // Initialize the submit button state
-    updateBulkSubmitButton();
+    const bulkActionFields = {
+        status: document.getElementById('bulk_status_field'),
+        priority: document.getElementById('bulk_priority_field'),
+        assign: document.getElementById('bulk_assigned_to_field'),
+    };
+
+    // --- API & DATA FETCHING --- //
+    
+    function getCsrfToken() {
+        return document.querySelector('[name=csrfmiddlewaretoken]').value;
+    }
+
+    async function fetchTickets() {
+        appState.isLoading = true;
+        render(); // Show loading state
+
+        const params = new URLSearchParams();
+        params.set('page', appState.currentPage);
+        if (appState.searchQuery) {
+            params.set('quick_search', appState.searchQuery);
+        }
+        // CORRECT: Build params from appState.filters
+        for (const key in appState.filters) {
+            const value = appState.filters[key];
+            if (Array.isArray(value)) {
+                value.forEach(v => params.append(`${key}[]`, v)); // Send as status[]=...
+            } else if (value) {
+                params.set(key, value);
+            }
+        }
+
+        const url = `{% url 'aps_support:ticket_list_api' %}?${params.toString()}`;
+        
+        try {
+            const response = await fetch(url, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                }
+            });
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const data = await response.json();
+            
+            appState.tickets = data.tickets;
+            appState.currentPage = data.page;
+            appState.totalPages = data.total_pages;
+            appState.totalTickets = data.total_entries;
+
+            // Store full ticket details for features like summarization
+            data.tickets.forEach(ticket => appState.allTickets.set(ticket.id.toString(), ticket));
+
+        } catch (error) {
+            console.error("Failed to fetch tickets:", error);
+            appState.tickets = [];
+        } finally {
+            appState.isLoading = false;
+            if (appState.initialLoad) appState.initialLoad = false;
+            render(); 
+            updateUrl();
+        }
+    }
+
+    // --- RENDERING --- //
+    
+    function render() {
+        dom.loadingOverlay.classList.toggle('hidden', !appState.isLoading);
+        dom.searchSpinner.classList.toggle('hidden', !appState.isLoading);
+        if(appState.isLoading && !appState.initialLoad) {
+            dom.searchStatus.textContent = 'Loading...';
+        } else if (!appState.isLoading && appState.searchQuery) {
+            dom.searchStatus.textContent = `${appState.totalTickets} results`;
+        } else {
+             dom.searchStatus.textContent = '';
+        }
+
+        dom.tableViewBtn.classList.toggle('active', appState.view === 'table');
+        dom.cardViewBtn.classList.toggle('active', appState.view === 'card');
+        dom.tableViewContainer.classList.toggle('hidden', appState.view !== 'table');
+        dom.cardViewContainer.classList.toggle('hidden', appState.view !== 'card');
+
+        dom.noResults.classList.toggle('hidden', appState.tickets.length > 0 || appState.isLoading);
+
+        if (!appState.isLoading) {
+            renderTable();
+            renderCards();
+            renderPagination();
+        }
+        
+        updateBulkActionState();
+    }
+    
+    function renderTable() {
+        dom.ticketTableBody.innerHTML = '';
+        appState.tickets.forEach(ticket => {
+            const row = document.createElement('tr');
+            row.className = 'table-row hover:bg-indigo-50 transition duration-150';
+            row.dataset.ticketId = ticket.id;
+            const isSelected = appState.selectedTickets.has(ticket.id.toString());
+            row.innerHTML = `
+                {% if user_roles.is_admin or user_roles.is_hr %}
+                <td class="px-6 py-4 whitespace-nowrap"><input type="checkbox" class="ticket-checkbox rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" value="${ticket.id}" ${isSelected ? 'checked' : ''}></td>
+                {% endif %}
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">#${ticket.ticket_id}</td>
+                <td class="px-6 py-4"><a href="/support/tickets/${ticket.id}/" class="text-sm text-indigo-600 hover:text-indigo-900 hover:underline">${ticket.subject}</a></td>
+                <td class="px-6 py-4 whitespace-nowrap"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${ticket.status_class}">${ticket.status_display}</span></td>
+                <td class="px-6 py-4 whitespace-nowrap"><div class="flex items-center"><span class="h-2.5 w-2.5 rounded-full mr-2 ${ticket.priority_class}"></span><span class="text-sm text-gray-900">${ticket.priority_display}</span></div></td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${ticket.user_full_name}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${ticket.created_at}</td>
+            `;
+            dom.ticketTableBody.appendChild(row);
+        });
+    }
+
+    function renderCards() {
+        dom.ticketCardGrid.innerHTML = '';
+        appState.tickets.forEach(ticket => {
+            const card = document.createElement('div');
+            card.className = 'ticket-card bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow duration-200';
+            card.dataset.ticketId = ticket.id;
+            const isSelected = appState.selectedTickets.has(ticket.id.toString());
+            card.innerHTML = `
+                <div class="flex justify-between items-start mb-4">
+                    <span class="text-sm font-medium text-gray-900">#${ticket.ticket_id}</span>
+                    {% if user_roles.is_admin or user_roles.is_hr %}
+                    <input type="checkbox" class="ticket-checkbox rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" value="${ticket.id}" ${isSelected ? 'checked' : ''}>
+                    {% endif %}
+                </div>
+                <h3 class="text-base font-medium text-gray-900 mb-2 line-clamp-2"><a href="/support/tickets/${ticket.id}/" class="hover:text-indigo-600">${ticket.subject}</a></h3>
+                <div class="space-y-2 text-sm text-gray-500">
+                    <p><span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${ticket.status_class}">${ticket.status_display}</span></p>
+                    <p><span class="h-2 w-2 rounded-full inline-block mr-2 ${ticket.priority_class}"></span> ${ticket.priority_display}</p>
+                    <p>By: ${ticket.user_full_name}</p>
+                    <p>Created: ${ticket.created_at}</p>
+                </div>
+            `;
+            dom.ticketCardGrid.appendChild(card);
+        });
+    }
+    
+    function renderPagination() {
+        dom.paginationContainer.innerHTML = '';
+        if (appState.totalPages <= 1) return;
+        
+        let html = `<div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div><p class="text-sm text-gray-700">Showing <span class="font-medium">${(appState.currentPage - 1) * 50 + 1}</span> to <span class="font-medium">${Math.min(appState.currentPage * 50, appState.totalTickets)}</span> of <span class="font-medium">${appState.totalTickets}</span> results</p></div>
+                <div><nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">`;
+
+        const pages = [];
+        const maxPages = 7;
+        if (appState.totalPages <= maxPages) {
+            for (let i = 1; i <= appState.totalPages; i++) pages.push(i);
+        } else {
+            pages.push(1);
+            if (appState.currentPage > 3) pages.push('...');
+            let start = Math.max(2, appState.currentPage - 1);
+            let end = Math.min(appState.totalPages - 1, appState.currentPage + 1);
+            for (let i = start; i <= end; i++) pages.push(i);
+            if (appState.currentPage < appState.totalPages - 2) pages.push('...');
+            pages.push(appState.totalPages);
+        }
+        
+        html += `<button data-page="${appState.currentPage - 1}" class="prev-btn relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50" ${appState.currentPage === 1 ? 'disabled' : ''}><svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"/></svg></button>`;
+        pages.forEach(p => {
+            if(p === '...') {
+                html += `<span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>`;
+            } else {
+                html += `<button data-page="${p}" class="page-btn relative inline-flex items-center px-4 py-2 border text-sm font-medium ${p === appState.currentPage ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600' : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'}">${p}</button>`;
+            }
+        });
+        html += `<button data-page="${appState.currentPage + 1}" class="next-btn relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50" ${appState.currentPage === appState.totalPages ? 'disabled' : ''}><svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4-4a1 1 0 01-1.414 0z"/></svg></button>`;
+        html += `</nav></div></div>`;
+        dom.paginationContainer.innerHTML = html;
+    }
+
+    // --- EVENT HANDLERS --- //
+    
+    dom.tableViewBtn.addEventListener('click', () => { appState.view = 'table'; render(); updateUrl(); });
+    dom.cardViewBtn.addEventListener('click', () => { appState.view = 'card'; render(); updateUrl(); });
+    dom.toggleFiltersBtn.addEventListener('click', () => dom.filterSection.classList.toggle('hidden'));
+    dom.closeFiltersBtn.addEventListener('click', () => dom.filterSection.classList.add('hidden'));
+
+    dom.filterForm.addEventListener('submit', (e) => { e.preventDefault(); updateFiltersAndFetch(); });
+    dom.clearFiltersBtn.addEventListener('click', () => { dom.filterForm.reset(); updateFiltersAndFetch(); });
+    
+    let searchTimeout;
+    dom.quickSearch.addEventListener('input', () => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            appState.searchQuery = dom.quickSearch.value;
+            appState.currentPage = 1;
+            fetchTickets();
+        }, 300);
+    });
+    
+    dom.paginationContainer.addEventListener('click', (e) => {
+        const button = e.target.closest('button');
+        if (button && !button.disabled) {
+            const page = parseInt(button.dataset.page);
+            if (page) {
+                appState.currentPage = page;
+                fetchTickets();
+            }
+        }
+    });
+
+    // --- BULK ACTIONS & SELECTION --- //
+    
+    function updateBulkActionState() {
+        const count = appState.selectedTickets.size;
+        const enabled = count > 0;
+        dom.selectedCountSpan.textContent = `(${count})`;
+        dom.bulkSubmitBtn.disabled = !enabled;
+        if(dom.summarizeBtn) dom.summarizeBtn.disabled = !enabled;
+        if (dom.selectAllCheckbox) {
+            const allVisibleTickets = appState.tickets.map(t => t.id.toString());
+            const allVisibleSelected = allVisibleTickets.length > 0 && allVisibleTickets.every(id => appState.selectedTickets.has(id));
+            dom.selectAllCheckbox.checked = allVisibleSelected;
+        }
+    }
+    
+    dom.app.addEventListener('change', (e) => {
+        if (e.target.matches('.ticket-checkbox')) {
+            const ticketId = e.target.value;
+            if (e.target.checked) appState.selectedTickets.add(ticketId);
+            else appState.selectedTickets.delete(ticketId);
+            updateBulkActionState();
+        }
+    });
+
+    if (dom.selectAllCheckbox) {
+        dom.selectAllCheckbox.addEventListener('change', (e) => {
+            const isChecked = e.target.checked;
+            appState.tickets.forEach(ticket => {
+                const ticketId = ticket.id.toString();
+                if (isChecked) appState.selectedTickets.add(ticketId);
+                else appState.selectedTickets.delete(ticketId);
+            });
+            
+            // ✅ FIX: Update the button state and count after selection changes.
+            updateBulkActionState(); 
+            
+            render(); // Re-render the UI if needed
+        });
+    }
+
+    // Listeners for the bulk action dropdown and form
+    if (dom.bulkActionBtn) {
+        // Toggle dropdown visibility
+        dom.bulkActionBtn.addEventListener('click', () => dom.bulkActionDropdown.classList.toggle('hidden'));
+        
+        // Hide dropdown if clicking outside
+        document.addEventListener('click', (e) => {
+            if (!dom.bulkActionBtn.contains(e.target) && !dom.bulkActionDropdown.contains(e.target)) {
+                dom.bulkActionDropdown.classList.add('hidden');
+            }
+        });
+        
+        // Show/hide fields based on selected action
+        dom.bulkActionSelect.addEventListener('change', (e) => {
+            const selectedAction = e.target.value;
+            Object.values(bulkActionFields).forEach(field => {
+                if(field) field.classList.add('hidden');
+            });
+            if (selectedAction === 'status_change' && bulkActionFields.status) bulkActionFields.status.classList.remove('hidden');
+            if (selectedAction === 'priority_change' && bulkActionFields.priority) bulkActionFields.priority.classList.remove('hidden');
+            if (selectedAction === 'assign' && bulkActionFields.assign) bulkActionFields.assign.classList.remove('hidden');
+        });
+        
+        // Handle form submission
+        dom.bulkActionForm.addEventListener('submit', handleBulkActionSubmit);
+    }
+    
+
+    async function handleBulkActionSubmit(e) {
+        e.preventDefault();
+        
+        // Client-side validation
+        if (appState.selectedTickets.size === 0) {
+            alert("Error: Please select at least one ticket to perform a bulk action.");
+            return;
+        }
+
+        const formData = new FormData(dom.bulkActionForm);
+        
+        // ✅ FIX: Append IDs with the 'selected_tickets' key that the backend expects.
+        appState.selectedTickets.forEach(id => {
+            formData.append('selected_tickets', id);
+        });
+
+        appState.isLoading = true;
+        render(); // Show loading state
+
+        try {
+            // Make sure the URL is correctly resolved by your template engine
+            const response = await fetch("{% url 'aps_support:bulk_ticket_actions' %}", {
+                method: 'POST',
+                headers: { 
+                    'X-CSRFToken': getCsrfToken(), 
+                    'X-Requested-With': 'XMLHttpRequest' 
+                },
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Bulk action failed due to a server error.');
+            }
+
+            const result = await response.json();
+            console.log(result.message); // Or show a success notification
+            
+            appState.selectedTickets.clear();
+            dom.bulkActionDropdown.classList.add('hidden');
+
+        } catch (error) {
+            console.error('Bulk action failed:', error);
+            alert(`Error: ${error.message}`);
+        } finally {
+            // Assuming fetchTickets() reloads data and calls render() and updateBulkActionState()
+            await fetchTickets(); 
+        }
+    }
+
+    // --- GEMINI AI SUMMARY --- //
+
+    if (dom.summarizeBtn) {
+        dom.summarizeBtn.addEventListener('click', handleSummarizeClick);
+        dom.closeSummaryModalBtn.addEventListener('click', () => dom.summaryModal.classList.add('hidden'));
+        dom.copySummaryBtn.addEventListener('click', () => {
+             const textToCopy = dom.summaryResult.innerText;
+             const textArea = document.createElement("textarea");
+             textArea.value = textToCopy;
+             document.body.appendChild(textArea);
+             textArea.select();
+             document.execCommand('copy');
+             document.body.removeChild(textArea);
+             alert('Summary copied to clipboard!');
+        });
+    }
+
+    async function handleSummarizeClick() {
+        dom.summaryModal.classList.remove('hidden');
+        dom.summaryLoading.classList.remove('hidden');
+        dom.summaryResult.innerHTML = '';
+        dom.summaryError.classList.add('hidden');
+        dom.copySummaryBtn.disabled = true;
+
+        const selectedTicketDetails = Array.from(appState.selectedTickets)
+            .map(id => appState.allTickets.get(id))
+            .filter(Boolean); 
+
+        if (selectedTicketDetails.length === 0) {
+            showSummaryError("No ticket details found for summarization.");
+            return;
+        }
+
+        const promptText = selectedTicketDetails.map((ticket, index) => 
+            `Ticket ${index + 1} (ID: #${ticket.ticket_id}, Priority: ${ticket.priority_display}):\nSubject: ${ticket.subject}\nDescription: ${ticket.description || 'No description provided.'}`
+        ).join('\n\n');
+
+        const fullPrompt = `You are a helpful assistant for an IT support team. Summarize the following support tickets into a single, cohesive overview. Structure your response with a main summary, identify any common themes or patterns, and list out the urgent issues. Format the output neatly using markdown. \n\nTickets:\n---\n${promptText}`;
+        
+        try {
+            const chatHistory = [{ role: "user", parts: [{ text: fullPrompt }] }];
+            const payload = { contents: chatHistory };
+            const apiKey = ""; 
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${AIzaSyC6dPRTHSnxo__WjsdT3lcXx5ka1R3jlw4}`;
+
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                 const errorBody = await response.json();
+                 throw new Error(`API Error: ${errorBody.error?.message || response.statusText}`);
+            }
+
+            const result = await response.json();
+
+            if (result.candidates && result.candidates[0]?.content?.parts?.[0]) {
+                const text = result.candidates[0].content.parts[0].text;
+                dom.summaryResult.innerHTML = text
+                    .replace(/### (.*)/g, '<h3>$1</h3>')
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/^- (.*)/gm, '<li>$1</li>')
+                    .replace(/(\r\n|\n|\r)/gm, '<br>')
+                    .replace(/<\/li><br><li>/g, '</li><li>');
+                dom.copySummaryBtn.disabled = false;
+            } else {
+                throw new Error("Received an empty or invalid response from the AI.");
+            }
+        } catch(error) {
+            console.error("Gemini API call failed:", error);
+            showSummaryError(`Failed to generate summary. ${error.message}`);
+        } finally {
+            dom.summaryLoading.classList.add('hidden');
+        }
+    }
+    
+    function showSummaryError(message) {
+        dom.summaryLoading.classList.add('hidden');
+        dom.summaryError.textContent = message;
+        dom.summaryError.classList.remove('hidden');
+    }
+
+    // --- URL MANAGEMENT & INITIALIZATION --- //
+    
+    function updateUrl() {
+        const params = new URLSearchParams();
+        if (appState.searchQuery) params.set('quick_search', appState.searchQuery);
+        if (appState.currentPage > 1) params.set('page', appState.currentPage);
+        if (appState.view !== 'table') params.set('view', appState.view);
+        for (const key in appState.filters) {
+            const value = appState.filters[key];
+            if(Array.isArray(value)) value.forEach(v => params.append(`${key}[]`, v));
+            else if (value) params.set(key, value);
+        }
+        const newUrl = `${window.location.pathname}?${params.toString()}`;
+        history.pushState({}, '', newUrl);
+        dom.exportLink.href = `{% url 'aps_support:ticket_export' %}?${params.toString()}`;
+    }
+
+    function readUrlAndInitialize() {
+        const params = new URLSearchParams(window.location.search);
+        appState.view = params.get('view') || 'table';
+        appState.searchQuery = params.get('quick_search') || '';
+        appState.currentPage = parseInt(params.get('page')) || 1;
+        dom.quickSearch.value = appState.searchQuery;
+        updateFiltersFromUrl(params);
+        fetchTickets();
+    }
+    
+    // FIX: Correctly read from form and update state
+    function updateFiltersAndFetch() {
+        const formData = new FormData(dom.filterForm);
+        appState.filters = {};
+
+        const statusFilters = formData.getAll('status[]');
+        if (statusFilters.length > 0) appState.filters.status = statusFilters;
+
+        const priorityFilters = formData.getAll('priority[]');
+        if (priorityFilters.length > 0) appState.filters.priority = priorityFilters;
+        
+        // Add other filters here if needed
+        
+        appState.currentPage = 1;
+        fetchTickets();
+    }
+    
+    function updateFiltersFromUrl(params) {
+        appState.filters = {};
+        for (let key of params.keys()) {
+            if (key.endsWith('[]')) {
+                const cleanKey = key.slice(0, -2);
+                appState.filters[cleanKey] = params.getAll(key);
+            } else if (!['quick_search', 'page', 'view'].includes(key)) {
+                appState.filters[key] = params.get(key);
+            }
+        }
+        dom.filterForm.reset();
+        Object.entries(appState.filters).forEach(([key, value]) => {
+            if (Array.isArray(value)) {
+                value.forEach(v => {
+                    const el = dom.filterForm.querySelector(`[name="${key}[]"][value="${v}"]`);
+                    if (el) el.checked = true;
+                });
+            }
+        });
+    }
+    
+    readUrlAndInitialize();
+
 });
 </script>
-<script src="https://cdn.tailwindcss.com"></script>
 
 {% endblock %}

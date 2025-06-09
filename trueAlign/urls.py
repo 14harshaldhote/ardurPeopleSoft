@@ -342,10 +342,11 @@ support_patterns = [
     
     # Ticket Management
     path('tickets/', views.ticket_list, name='ticket_list'),
+    path('api/tickets/', views.ticket_list_api, name='ticket_list_api'), # Add this line
     path('tickets/create/', views.create_ticket, name='create_ticket'),
     path('tickets/<int:pk>/', views.ticket_detail, name='ticket_detail'),
     path('tickets/<int:pk>/edit/', views.ticket_detail, name='edit_ticket'),  # Same view handles both
-    
+    path('api/tickets/search', views.search_tickets, name='ticket_search'),
     # Ticket Actions
     path('tickets/<int:pk>/delete-attachment/<int:attachment_id>/', 
          views.delete_attachment, name='delete_attachment'),
