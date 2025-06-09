@@ -14525,80 +14525,55 @@ def handle_ticket_actions(request, ticket, permissions, user_roles):
     return redirect('aps_support:ticket_detail', pk=ticket.pk)
 
 
+
 def handle_add_comment(request, ticket, permissions):
-    """Handle adding comments with attachments"""
-    if not permissions['can_comment']:
-        messages.error(request, "You don't have permission to add comments.")
-        return redirect('aps_support:ticket_detail', pk=ticket.pk)
-    
+    """Handle adding comments with attachments based on the corrected model structure."""
     comment_content = request.POST.get('comment_content', '').strip()
-    is_internal = (
-        request.POST.get('is_internal') == 'on' and 
-        permissions['can_add_internal_comment']
-    )
-    
     if not comment_content:
-        messages.error(request, 'Comment content is required.')
+        messages.error(request, 'Comment content cannot be empty.')
         return redirect('aps_support:ticket_detail', pk=ticket.pk)
-    
+
+    is_internal = (request.POST.get('is_internal') == 'on' and permissions['can_add_internal_comment'])
+
     try:
         with transaction.atomic():
-            # Create comment
+            # 1. Create the comment object
             comment = TicketComment.objects.create(
                 ticket=ticket,
                 user=request.user,
                 content=comment_content,
                 is_internal=is_internal
             )
-            
-            # Create activity log for comment
-            comment_activity = TicketActivity.objects.create(
-                ticket=ticket,
-                action=TicketActivity.Action.COMMENTED,
-                user=request.user,
-                details=f"{'Internal' if is_internal else 'Public'} comment added"
-            )
-            
-            # Handle attachments
+
+            # 2. Handle attachments and link them directly to the new comment
             attachments = request.FILES.getlist('comment_attachments')
-            attachment_count = 0
-            
             for file in attachments:
-                if file.size > 0:  # Only process non-empty files
-                    try:
-                        # Get file info
-                        content_type, _ = mimetypes.guess_type(file.name)
-                        
-                        # Create attachment with both original and formatted filename
-                        attachment = CommentAttachment(
-                            ticket_activity=comment_activity,
-                            file=file,
-                            uploaded_by=request.user,
-                            content_type=content_type or 'application/octet-stream'
-                        )
-                        
-                        # Save will handle filename formatting
-                        attachment.save()
-                        
-                        print(f"Comment attachment saved: Original={attachment.original_filename}, "
-                              f"Formatted={attachment.formatted_filename}")
-                        attachment_count += 1
-                        
-                    except Exception as e:
-                        messages.warning(request, f'Failed to upload {file.name}: {str(e)}')
+                CommentAttachment.objects.create(
+                    comment=comment,
+                    ticket=ticket, # Also link to ticket for convenience
+                    file=file,
+                    uploaded_by=request.user
+                )
+
+            # 3. Create a separate activity log for the action
+            details_message = f"{'Internal' if is_internal else 'Public'} comment added."
+            if attachments:
+                details_message += f" {len(attachments)} attachment(s) were uploaded."
             
+            TicketActivity.objects.create(
+                ticket=ticket,
+                user=request.user,
+                action='COMMENTED',
+                details=details_message
+            )
+
             # Update ticket timestamp
-            ticket.save(user=request.user)
-            
-            success_msg = 'Comment added successfully!'
-            if attachment_count > 0:
-                success_msg += f' ({attachment_count} file(s) attached)'
-            
-            messages.success(request, success_msg)
-            
+            ticket.save() 
+            messages.success(request, 'Your comment was added successfully.')
+
     except Exception as e:
-        messages.error(request, f'An error occurred: {str(e)}')
-    
+        messages.error(request, f'An error occurred while adding your comment: {e}')
+
     return redirect('aps_support:ticket_detail', pk=ticket.pk)
 
 
@@ -14607,64 +14582,56 @@ def handle_status_update(request, ticket, permissions):
     if not permissions['can_change_status']:
         messages.error(request, "You don't have permission to change ticket status.")
         return redirect('aps_support:ticket_detail', pk=ticket.pk)
-    
+
     new_status = request.POST.get('new_status')
     resolution_summary = request.POST.get('resolution_summary', '').strip()
-    
+
     if not new_status or new_status not in dict(Support.Status.choices):
         messages.error(request, 'Invalid status selected.')
         return redirect('aps_support:ticket_detail', pk=ticket.pk)
-    
+
     old_status = ticket.status
-    
-    # Validate status transition
+
     if not is_valid_status_transitions(old_status, new_status, permissions):
         messages.error(request, f'Invalid status transition from {old_status} to {new_status}.')
         return redirect('aps_support:ticket_detail', pk=ticket.pk)
-    
-    # Update ticket status
+
     ticket.status = new_status
-    
-    # Handle resolution
+
     if new_status == Support.Status.RESOLVED:
         if not resolution_summary:
             messages.error(request, 'Resolution summary is required when resolving a ticket.')
             return redirect('aps_support:ticket_detail', pk=ticket.pk)
-        
         ticket.resolution_summary = resolution_summary
         ticket.resolved_at = timezone.now()
         if ticket.created_at:
             ticket.resolution_time = ticket.resolved_at - ticket.created_at
-    
-    # Handle closure
+
     elif new_status == Support.Status.CLOSED:
         if not ticket.resolved_at:
             ticket.resolved_at = timezone.now()
         if ticket.created_at and not ticket.time_to_close:
             ticket.time_to_close = timezone.now() - ticket.created_at
-    
-    # Handle reopening
+        if not ticket.resolution_summary and resolution_summary:
+            ticket.resolution_summary = resolution_summary
+
     elif (old_status in [Support.Status.RESOLVED, Support.Status.CLOSED] and 
           new_status in [Support.Status.OPEN, Support.Status.IN_PROGRESS]):
         ticket.reopen_count += 1
-        
-        # Create specific activity for reopening
         TicketActivity.objects.create(
             ticket=ticket,
             action=TicketActivity.Action.REOPENED,
             user=request.user,
             details=f"Ticket reopened from {old_status} status (Reopen #{ticket.reopen_count})"
         )
-        
-        # Clear resolution data if reopening
         if old_status == Support.Status.RESOLVED:
             ticket.resolved_at = None
             ticket.resolution_time = None
-    
+
     ticket.save(user=request.user)
-    
-    messages.success(request, f'Ticket status updated to {new_status}!')
+    messages.success(request, f'Ticket status updated to {new_status.replace("_", " ").title()}!')
     return redirect('aps_support:ticket_detail', pk=ticket.pk)
+
 
 
 def handle_assignment(request, ticket, permissions):
@@ -15429,9 +15396,9 @@ def download_attachment(request, pk, attachment_id):
         # Create response with file
         response = HttpResponse(
             attachment.file.read(),
-            content_type=attachment.content_type or attachment.file_type or 'application/octet-stream'
+            content_type=attachment.file_type or attachment.file_type or 'application/octet-stream'
         )
-        response['Content-Disposition'] = f'attachment; filename="{attachment.original_filename}"'
+        response['Content-Disposition'] = f'attachment; filename="{attachment.formatted_filename}"'
         response['Content-Length'] = attachment.file_size
         
         return response

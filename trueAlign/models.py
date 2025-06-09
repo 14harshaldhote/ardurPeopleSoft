@@ -2611,7 +2611,13 @@ import uuid
 
 class CommentAttachment(models.Model):
     """Model for storing attachments related to ticket comments"""
-    
+    comment = models.ForeignKey(
+        TicketComment, 
+        on_delete=models.CASCADE, 
+        related_name='attachments',  # Use 'attachments' for easy access from a comment object
+        help_text="The comment this attachment belongs to"
+    )
+
     ticket_activity = models.ForeignKey(
         'TicketActivity', 
         on_delete=models.CASCADE,
@@ -2668,6 +2674,7 @@ class CommentAttachment(models.Model):
         default=True,
         help_text="Whether this attachment is active"
     )
+
 
     class Meta:
         db_table = 'truealign_comment_attachment'
