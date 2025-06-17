@@ -12,10 +12,12 @@
             src="https://cdn.jsdelivr.net/npm/alpinejs@2.8.2/dist/alpine.min.js"
             defer
         ></script>
-        <link
-            href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
-            rel="stylesheet"
-        />
+
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
         <link
             href="https://fonts.googleapis.com/css2?family=Linlegrey:wght@400;700&display=swap"
             rel="stylesheet"
@@ -197,6 +199,19 @@
 
             /* Remove the old content-container classes since we're handling this differently */
         </style>
+        <style>
+        /* Add any custom CSS or overrides here if needed */
+        /* For the subtle background gradient on the main card */
+        .card-bg-gradient {
+            background: linear-gradient(135deg, rgba(173, 216, 230, 0.3), rgba(255, 255, 255, 0.05), rgba(255, 160, 122, 0.2));
+            filter: blur(50px);
+        }
+        /* Custom gradients for SVG icons */
+        .icon-gradient-sky stop:first-child { stop-color:#87CEEB; }
+        .icon-gradient-sky stop:last-child { stop-color:#4682B4; }
+        .icon-gradient-rose stop:first-child { stop-color:#FDA4AF; }
+        .icon-gradient-rose stop:last-child { stop-color:#E11D48; }
+    </style>
     </head>
 
     <body class="min-h-screen flex flex-col">

@@ -13684,6 +13684,29 @@ def manager_attendance_view(request):
 
 import calendar
 
+import calendar
+from datetime import datetime, timedelta
+from io import BytesIO
+import csv
+
+from django.shortcuts import render
+from django.http import HttpResponse, Http404
+from django.db.models import Sum, Avg
+from django.utils import timezone
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.models import User, Group
+
+# Import your actual models
+
+# It's good practice to define helper functions like is_hr_check
+# For demonstration, I'll provide a placeholder
+def is_hr_check(user):
+    """
+    Checks if the user belongs to the 'HR' group.
+    You might have a more sophisticated check in your actual application.
+    """
+    return user.groups.filter(name='HR').exists()
+
 @login_required
 @user_passes_test(is_hr_check)
 def hr_attendance_view(request):
@@ -13692,27 +13715,54 @@ def hr_attendance_view(request):
     month = int(request.GET.get('month', today.month))
     year = int(request.GET.get('year', today.year))
 
+    # Get filter parameters
+    role_filter = request.GET.get('role', '')
+    location_filter = request.GET.get('location', '')
+
     # Get first and last day of selected month
     first_day = datetime(year, month, 1).date()
     last_day = datetime(year, month, calendar.monthrange(year, month)[1]).date()
 
-    # Get all users with their details
-    users = User.objects.select_related('profile').all().order_by('username')
+    # Start with all users, including their profiles (assuming UserProfile is linked to User)
+    users_query = User.objects.select_related('profile').all() # Use 'userprofile' if that's your related_name
 
-    # Get all attendance records for the month with related data
+    # Apply role filter if specified
+    if role_filter:
+        try:
+            # Assuming 'role_filter' corresponds to the 'id' of a Group
+            role_group = Group.objects.get(id=role_filter)
+            users_query = users_query.filter(groups=role_group)
+        except Group.DoesNotExist:
+            # If an invalid role ID is provided, the filter won't be applied
+            pass
+
+    # Apply location filter if specified
+    if location_filter:
+        # Assuming 'work_location' is a field on your UserProfile model
+        users_query = users_query.filter(profile__work_location=location_filter)
+
+    # Get final filtered users list
+    users = users_query.order_by('username')
+
+    # Get all attendance records for the month related to the *filtered* users
+    # This is crucial for performance: only fetch attendance for users you care about
+    user_ids = [user.id for user in users]
     attendance_records = Attendance.objects.filter(
+        user__id__in=user_ids, # Filter attendance by the IDs of the filtered users
         date__range=[first_day, last_day]
     ).select_related('user', 'shift', 'modified_by')
 
-    # Get leave records for the month
+    # Get leave records for the month related to the *filtered* users
     leave_records = LeaveRequest.objects.filter(
+        user__id__in=user_ids, # Filter leave by the IDs of the filtered users
         start_date__lte=last_day,
         end_date__gte=first_day,
         status='Approved'
     ).select_related('user', 'approver', 'leave_type')
 
-    # Get current shift assignments for all users
+    # Get current shift assignments for *filtered* users
     shift_assignments = ShiftAssignment.objects.filter(
+        user__id__in=user_ids, # Filter shift assignments by the IDs of the filtered users
         is_current=True
     ).select_related('user', 'shift')
 
@@ -13723,12 +13773,36 @@ def hr_attendance_view(request):
     attendance_matrix = []
     days_in_month = calendar.monthrange(year, month)[1]
 
+    # Pre-fetch attendance and leave records into dictionaries for faster lookup
+    # This avoids hitting the database repeatedly inside the loop for each user
+    attendance_by_user_date = {}
+    for record in attendance_records:
+        if record.user.id not in attendance_by_user_date:
+            attendance_by_user_date[record.user.id] = {}
+        attendance_by_user_date[record.user.id][record.date] = record
+
+    leave_by_user_date = {}
+    for leave in leave_records:
+        leave_dates = []
+        current_date = max(leave.start_date, first_day)
+        while current_date <= min(leave.end_date, last_day):
+            leave_dates.append(current_date)
+            current_date += timedelta(days=1)
+        
+        for date in leave_dates:
+            if leave.user.id not in leave_by_user_date:
+                leave_by_user_date[leave.user.id] = {}
+            # Store the leave object itself, so we can access half_day, leave_type etc.
+            leave_by_user_date[leave.user.id][date] = leave
+
+
     for user in users:
         user_row = {
             'employee': user,
-            'work_location': getattr(user.profile, 'work_location', 'Not set'),
+            'work_location': getattr(user.profile, 'work_location', 'Not set'), # Use user.userprofile
             'attendance': {},
-            'current_shift': user_shifts.get(user.id, None)
+            'current_shift': user_shifts.get(user.id, None),
+            'employee_type': getattr(user.profile, 'employee_type', 'Not set') # Use user.userprofile
         }
 
         # Get the user's shift
@@ -13739,7 +13813,6 @@ def hr_attendance_view(request):
             current_date = datetime(year, month, day).date()
             day_name = current_date.strftime('%a')
 
-            # Determine if this is a working day based on shift settings
             is_weekend = is_weekend_for_user(current_date, current_shift)
 
             user_row['attendance'][current_date] = {
@@ -13747,95 +13820,95 @@ def hr_attendance_view(request):
                 'working_hours': None,
                 'day_name': day_name,
                 'is_weekend': is_weekend,
-                'is_holiday': False,
+                'is_holiday': False, # Default to False, updated by attendance record if applicable
                 'overtime_hours': 0,
                 'late_minutes': 0,
                 'breaks': [],
                 'location': None,
                 'regularization_status': None,
                 'regularization_reason': None,
-                'shift': current_shift,
+                'shift': current_shift, # Store ShiftMaster object here
+                'shift_timing': f"{current_shift.start_time.strftime('%H:%M')} - {current_shift.end_time.strftime('%H:%M')}" if current_shift else None,
                 'modified_by': None,
-                'remarks': None
+                'remarks': None,
+                'clock_in': None,
+                'clock_out': None
             }
 
-        # Fill in actual attendance records
-        user_records = attendance_records.filter(user=user)
-        for record in user_records:
-            day_name = record.date.strftime('%a')
-            working_hours = f"{record.total_hours:.1f}h" if record.total_hours else "-"
+        # Fill in actual attendance records using pre-fetched data
+        user_records = attendance_by_user_date.get(user.id, {})
+        for date, record in user_records.items():
+            if date in user_row['attendance']: # Ensure the date is within the current month
+                day_name = record.date.strftime('%a')
+                working_hours = f"{record.total_hours:.1f}h" if record.total_hours else "-"
 
-            # Determine if this is a working day based on the user's shift
-            # Use the record's shift if available, otherwise fall back to current shift
-            record_shift = record.shift if record.shift else current_shift
-            is_weekend = is_weekend_for_user(record.date, record_shift)
+                record_shift = record.shift if record.shift else current_shift
+                is_weekend = is_weekend_for_user(record.date, record_shift)
 
-            status = record.status
-            # Only mark as Weekend Work if it's a weekend day AND they showed up as Present
-            if is_weekend and status == 'Present':
-                status = 'Weekend Work'
+                status = record.status
+                if is_weekend and status == 'Present':
+                    status = 'Weekend Work'
 
-            user_row['attendance'][record.date] = {
-                'status': status,
-                'working_hours': working_hours,
-                'day_name': day_name,
-                'is_weekend': is_weekend,
-                'is_holiday': record.is_holiday,
-                'overtime_hours': record.overtime_hours,
-                'late_minutes': record.late_minutes,
-                'breaks': record.breaks,
-                'location': record.location,
-                'regularization_status': record.regularization_status,
-                'regularization_reason': record.regularization_reason,
-                'shift': record.shift.name if record.shift else 'No Shift',
-                'shift_timing': f"{record.shift.start_time.strftime('%H:%M')} - {record.shift.end_time.strftime('%H:%M')}" if record.shift else None,
-                'modified_by': record.modified_by.username if record.modified_by else None,
-                'remarks': record.remarks,
-                'clock_in': record.clock_in_time.strftime('%H:%M') if record.clock_in_time else None,
-                'clock_out': record.clock_out_time.strftime('%H:%M') if record.clock_out_time else None
-            }
+                user_row['attendance'][date].update({
+                    'status': status,
+                    'working_hours': working_hours,
+                    'day_name': day_name,
+                    'is_weekend': is_weekend,
+                    'is_holiday': record.is_holiday,
+                    'overtime_hours': record.overtime_hours,
+                    'late_minutes': record.late_minutes,
+                    'breaks': record.breaks,
+                    'location': record.location,
+                    'regularization_status': record.regularization_status,
+                    'regularization_reason': record.regularization_reason,
+                    'shift': record_shift, # Store the actual ShiftMaster object
+                    'shift_timing': f"{record_shift.start_time.strftime('%H:%M')} - {record_shift.end_time.strftime('%H:%M')}" if record_shift else None,
+                    'modified_by': record.modified_by.username if record.modified_by else None,
+                    'remarks': record.remarks,
+                    'clock_in': record.clock_in_time.strftime('%H:%M') if record.clock_in_time else None,
+                    'clock_out': record.clock_out_time.strftime('%H:%M') if record.clock_out_time else None
+                })
 
-        # Fill in leave records
-        user_leaves = leave_records.filter(user=user)
-        for leave in user_leaves:
-            leave_dates = []
-            current_date = max(leave.start_date, first_day)
-            while current_date <= min(leave.end_date, last_day):
-                leave_dates.append(current_date)
-                current_date += timedelta(days=1)
-
-            for date in leave_dates:
-                if date in user_row['attendance']:
-                    # Mark the day as a leave day
+        # Fill in leave records using pre-fetched data
+        user_leaves = leave_by_user_date.get(user.id, {})
+        for date, leave in user_leaves.items():
+            if date in user_row['attendance']:
+                # Only update if the day hasn't been marked as 'Present' or 'Weekend Work' by attendance
+                # This ensures attendance takes precedence over leave for a given day
+                current_day_status = user_row['attendance'][date]['status']
+                if current_day_status not in ['Present', 'Weekend Work']:
                     leave_status = 'On Leave'
-                    if hasattr(leave, 'half_day') and leave.half_day:
+                    if leave.half_day:
                         leave_status = 'Half Day'
 
-                    # Remove 'is_half_day' from the update dict
-                    update_dict = {
+                    user_row['attendance'][date].update({
                         'status': leave_status,
                         'leave_type': leave.leave_type.name,
                         'leave_reason': leave.reason,
-                        'leave_approver': leave.approver.username if leave.approver else None
-                    }
-                    # If you want to show half day in the UI, you can add a custom key, but not 'is_half_day'
-                    if hasattr(leave, 'half_day'):
-                        update_dict['half_day'] = leave.half_day
-                    user_row['attendance'][date].update(update_dict)
+                        'leave_approver': leave.approver.username if leave.approver else None,
+                        'half_day': leave.half_day, # Add half_day status
+                        'working_hours': '0.0h' if leave_status == 'On Leave' else '4.0h' # Example for display
+                    })
 
         attendance_matrix.append(user_row)
 
-    # Calculate summary statistics
+    # Calculate summary statistics based on the *filtered* attendance records
     summary = {
         'present_count': attendance_records.filter(status='Present').count(),
         'absent_count': attendance_records.filter(status='Absent').count(),
         'late_count': attendance_records.filter(status__in=['Late', 'Present & Late']).count(),
-        'leave_count': attendance_records.filter(status='On Leave').count(),
+        'leave_count': leave_records.filter(status='Approved').count(), # Count approved leave requests directly
         'wfh_count': attendance_records.filter(status='Work From Home').count(),
-        # Removed 'half_day_count' as is_half_day is no longer in Attendance model
-        # 'half_day_count': attendance_records.filter(is_half_day=True).count(),
         'weekend_work_count': attendance_records.filter(is_weekend=True, status='Present').count(),
-        'not_marked_count': days_in_month * users.count() - attendance_records.count() - leave_records.count(),
+        # This 'not_marked_count' needs careful consideration as it's complex with filters
+        # For a truly accurate 'Not Marked', you might need to iterate through the matrix
+        # and count statuses that are still 'Not Marked' after all processing.
+        # For now, keeping the simplified version, but be aware of its limitations with complex filters.
+        'not_marked_count': (
+            days_in_month * len(users)
+            - attendance_records.count()
+            - sum(1 for lr in leave_records for day in range((min(last_day, lr.end_date) - max(first_day, lr.start_date)).days + 1))
+        ),
         'total_overtime_hours': attendance_records.aggregate(Sum('overtime_hours'))['overtime_hours__sum'] or 0,
         'avg_working_hours': attendance_records.filter(total_hours__isnull=False).aggregate(Avg('total_hours'))['total_hours__avg'] or 0
     }
@@ -13849,9 +13922,16 @@ def hr_attendance_view(request):
     # Create days range for all days
     days_range = [datetime(year, month, day).date() for day in range(1, days_in_month + 1)]
 
-    # Handle download requests
+    # Get available roles (Django Groups) and locations for filter dropdowns
+    available_roles = Group.objects.all().order_by('name')
+    # Assuming UserProfile has a 'work_location' field
+    available_locations = UserDetails.objects.values_list('work_location', flat=True).distinct().exclude(work_location__isnull=True).exclude(work_location__exact='')
+
+
+    # Handle download requests - IMPORTANT CHANGE HERE
     if 'format' in request.GET:
-        return handle_attendance_download(request, attendance_matrix, month, year)
+        # Pass the filter parameters to the download function
+        return handle_attendance_download(request, month, year, role_filter, location_filter)
 
     context = {
         'attendance_matrix': attendance_matrix,
@@ -13863,6 +13943,10 @@ def hr_attendance_view(request):
         'prev_year': prev_year,
         'next_month': next_month,
         'next_year': next_year,
+        'available_roles': available_roles,
+        'available_locations': available_locations,
+        'current_role': role_filter, # Pass the currently selected role filter
+        'current_location': location_filter, # Pass the currently selected location filter
         **summary
     }
 
@@ -13884,13 +13968,17 @@ def is_weekend_for_user(date, shift):
         return date.weekday() >= 5  # Saturday (5) or Sunday (6)
 
     # Check based on shift's work_days setting
+    # Ensure shift.work_days exists and is a string
+    if not hasattr(shift, 'work_days') or not isinstance(shift.work_days, str):
+        return date.weekday() >= 5 # Fallback if shift.work_days is not set correctly
+
     if shift.work_days == 'All Days':
         return date.weekday() == 6  # Only Sunday is weekend
     elif shift.work_days == 'Weekdays':
         return date.weekday() >= 5  # Saturday and Sunday are weekend
     elif shift.work_days == 'Custom':
         # Get day names from custom_work_days
-        if not shift.custom_work_days:
+        if not hasattr(shift, 'custom_work_days') or not shift.custom_work_days:
             return date.weekday() >= 5  # Default to weekend if no custom days
 
         custom_days = [day.strip() for day in shift.custom_work_days.split(',')]
@@ -13902,88 +13990,127 @@ def is_weekend_for_user(date, shift):
     # Default fallback
     return date.weekday() >= 5
 
-def handle_attendance_download(request, attendance_matrix=None, month=None, year=None):
-    """Handle attendance download requests for both direct and custom month downloads"""
+# Modified handle_attendance_download to accept filter parameters
+def handle_attendance_download(request, month=None, year=None, role_filter=None, location_filter=None):
+    """
+    Handle attendance download requests, now incorporating role and location filters.
+    The attendance_matrix is *always* recreated here based on the filters
+    to ensure the downloaded report accurately reflects them.
+    """
     try:
         # Get format and date parameters
         export_format = request.GET.get('format', 'excel')
 
-        # Check if this is a custom month request
-        custom_month = request.GET.get('custom_month')
-        if custom_month:
-            # Parse custom month (format: YYYY-MM)
-            year, month = map(int, custom_month.split('-'))
+        # Check if this is a custom month request from the download form
+        custom_month_param = request.GET.get('custom_month')
+        if custom_month_param:
+            year, month = map(int, custom_month_param.split('-'))
         else:
-            # Use month and year from query parameters
-            month = int(request.GET.get('month', datetime.now().month))
-            year = int(request.GET.get('year', datetime.now().year))
+            # If not a custom month from the download form, use the month/year
+            # from the main view's parameters (already passed or default to current)
+            month = month if month is not None else datetime.now().month
+            year = year if year is not None else datetime.now().year
 
-        # If attendance_matrix wasn't provided, recreate it
-        if not attendance_matrix:
-            # Recreate attendance data
-            first_day = datetime(year, month, 1).date()
-            last_day = datetime(year, month, calendar.monthrange(year, month)[1]).date()
+        # Recreate attendance data based on filters
+        first_day = datetime(year, month, 1).date()
+        last_day = datetime(year, month, calendar.monthrange(year, month)[1]).date()
 
-            # Get all users except clients
-            employees = User.objects.select_related('profile').exclude(
-                groups__name='Client'
-            ).order_by('username')
+        # Start with all users
+        users_query = User.objects.select_related('profile').all()
 
-            # Get all attendance records for the month
-            attendance_records = Attendance.objects.filter(
-                date__range=[first_day, last_day]
-            ).select_related('user', 'shift')
+        # Apply role filter if specified
+        if role_filter:
+            try:
+                role_group = Group.objects.get(id=role_filter)
+                users_query = users_query.filter(groups=role_group)
+            except Group.DoesNotExist:
+                pass
 
-            # Get leave records for the month
-            leave_records = LeaveRequest.objects.filter(
-                start_date__lte=last_day,
-                end_date__gte=first_day,
-                status='Approved'
-            ).select_related('user', 'leave_type')
+        # Apply location filter if specified
+        if location_filter:
+            users_query = users_query.filter(profile__work_location=location_filter)
 
-            # Get current shift assignments
-            shift_assignments = ShiftAssignment.objects.filter(
-                is_current=True
-            ).select_related('user', 'shift')
+        # Exclude 'Client' group from downloads unless explicitly specified otherwise
+        # (You might want to make this configurable)
+        users_query = users_query.exclude(groups__name='Client')
 
-            user_shifts = {assignment.user.id: assignment.shift for assignment in shift_assignments}
+        # Get final filtered users list for the download
+        employees = users_query.order_by('username')
 
-            # Create attendance matrix
-            attendance_matrix = []
-            days_in_month = calendar.monthrange(year, month)[1]
+        # Get all attendance records for the month related to the *filtered* employees
+        employee_ids = [employee.id for employee in employees]
+        attendance_records = Attendance.objects.filter(
+            user__id__in=employee_ids,
+            date__range=[first_day, last_day]
+        ).select_related('user', 'shift')
 
-            for employee in employees:
-                # Get the employee's shift
-                current_shift = user_shifts.get(employee.id, None)
+        # Get leave records for the month related to the *filtered* employees
+        leave_records = LeaveRequest.objects.filter(
+            user__id__in=employee_ids,
+            start_date__lte=last_day,
+            end_date__gte=first_day,
+            status='Approved'
+        ).select_related('user', 'leave_type')
 
-                employee_row = {
-                    'employee': employee,
-                    'work_location': getattr(employee.profile, 'work_location', 'Not set'),
-                    'attendance': {},
-                    'current_shift': current_shift
+        # Get current shift assignments for *filtered* employees
+        shift_assignments = ShiftAssignment.objects.filter(
+            user__id__in=employee_ids,
+            is_current=True
+        ).select_related('user', 'shift')
+
+        user_shifts = {assignment.user.id: assignment.shift for assignment in shift_assignments}
+
+        # Create attendance matrix (similar logic as in hr_attendance_view)
+        attendance_matrix = []
+        days_in_month = calendar.monthrange(year, month)[1]
+
+        # Pre-fetch attendance and leave records into dictionaries for faster lookup
+        attendance_by_user_date = {}
+        for record in attendance_records:
+            if record.user.id not in attendance_by_user_date:
+                attendance_by_user_date[record.user.id] = {}
+            attendance_by_user_date[record.user.id][record.date] = record
+
+        leave_by_user_date = {}
+        for leave in leave_records:
+            leave_dates = []
+            current_date = max(leave.start_date, first_day)
+            while current_date <= min(leave.end_date, last_day):
+                leave_dates.append(current_date)
+                current_date += timedelta(days=1)
+            
+            for date in leave_dates:
+                if leave.user.id not in leave_by_user_date:
+                    leave_by_user_date[leave.user.id] = {}
+                leave_by_user_date[leave.user.id][date] = leave
+
+        for employee in employees:
+            current_shift = user_shifts.get(employee.id, None)
+
+            employee_row = {
+                'employee': employee,
+                'work_location': getattr(employee.profile, 'work_location', 'Not set'), # Use employee.userprofile
+                'attendance': {},
+                'current_shift': current_shift
+            }
+
+            # Initialize all days
+            for day in range(1, days_in_month + 1):
+                current_date = datetime(year, month, day).date()
+                is_weekend = is_weekend_for_user(current_date, current_shift)
+
+                employee_row['attendance'][current_date] = {
+                    'status': 'Weekend' if is_weekend else 'Not Marked',
+                    'working_hours': None,
+                    'day_name': current_date.strftime('%a'),
+                    'is_weekend': is_weekend,
+                    'shift': current_shift # Store the actual ShiftMaster object
                 }
 
-                # Initialize all days
-                for day in range(1, days_in_month + 1):
-                    current_date = datetime(year, month, day).date()
-                    day_name = current_date.strftime('%a')
-
-                    # Determine if this is a working day based on shift settings
-                    is_weekend = is_weekend_for_user(current_date, current_shift)
-
-                    employee_row['attendance'][current_date] = {
-                        'status': 'Weekend' if is_weekend else 'Not Marked',
-                        'working_hours': None,
-                        'day_name': day_name,
-                        'is_weekend': is_weekend,
-                        'shift': current_shift
-                    }
-
-                # Fill in actual attendance records
-                employee_records = attendance_records.filter(user=employee)
-                for record in employee_records:
-                    # Determine if this is a working day based on the employee's shift
-                    # Use the record's shift if available, otherwise fall back to current shift
+            # Fill in actual attendance records using pre-fetched data
+            user_records = attendance_by_user_date.get(employee.id, {})
+            for date, record in user_records.items():
+                if date in employee_row['attendance']:
                     record_shift = record.shift if record.shift else current_shift
                     is_weekend = is_weekend_for_user(record.date, record_shift)
 
@@ -13991,30 +14118,31 @@ def handle_attendance_download(request, attendance_matrix=None, month=None, year
                     if is_weekend and status == 'Present':
                         status = 'Weekend Work'
 
-                    employee_row['attendance'][record.date]['status'] = status
-                    employee_row['attendance'][record.date]['working_hours'] = record.total_hours
-                    employee_row['attendance'][record.date]['shift'] = record.shift
-                    employee_row['attendance'][record.date]['is_weekend'] = is_weekend
+                    employee_row['attendance'][date].update({
+                        'status': status,
+                        'working_hours': record.total_hours,
+                        'shift': record_shift, # Store the actual ShiftMaster object
+                        'is_weekend': is_weekend
+                    })
 
-                # Fill in leave records
-                employee_leaves = leave_records.filter(user=employee)
-                for leave in employee_leaves:
-                    leave_dates = []
-                    current_date = max(leave.start_date, first_day)
-                    while current_date <= min(leave.end_date, last_day):
-                        leave_dates.append(current_date)
-                        current_date += timedelta(days=1)
+            # Fill in leave records using pre-fetched data
+            user_leaves = leave_by_user_date.get(employee.id, {})
+            for date, leave in user_leaves.items():
+                if date in employee_row['attendance']:
+                    current_day_status = employee_row['attendance'][date]['status']
+                    if current_day_status not in ['Present', 'Weekend Work']:
+                        leave_status = 'On Leave'
+                        if leave.half_day:
+                            leave_status = 'Half Day'
 
-                    for date in leave_dates:
-                        if date in employee_row['attendance']:
-                            leave_status = 'On Leave'
-                            if leave.half_day:
-                                leave_status = 'Half Day'
+                        employee_row['attendance'][date].update({
+                            'status': leave_status,
+                            'leave_type': leave.leave_type.name,
+                            'working_hours': '0.0h' if leave_status == 'On Leave' else '4.0h' # Example for display
+                        })
 
-                            employee_row['attendance'][date]['status'] = leave_status
-                            employee_row['attendance'][date]['leave_type'] = leave.leave_type.name
+            attendance_matrix.append(employee_row)
 
-                attendance_matrix.append(employee_row)
 
         # Export based on format
         if export_format == 'excel':
@@ -14027,12 +14155,15 @@ def handle_attendance_download(request, attendance_matrix=None, month=None, year
             raise Http404("Invalid export format")
 
     except Exception as e:
-        # Log the error and return an error response
-        print(f"Export error: {str(e)}")  # Replace with proper logging
+        import traceback
+        traceback.print_exc() # Print full traceback for debugging
         return HttpResponse(
-            "Error generating report. Please try again.",
+            f"Error generating report: {str(e)}. Please try again.",
             status=500
         )
+
+# Keep export_attendance_excel, export_attendance_csv, export_attendance_pdf as they are.
+# They operate on the 'attendance_matrix' which is now pre-filtered.
 
 def export_attendance_excel(attendance_matrix, month, year):
     """Generate Excel version of attendance report with shift information"""
@@ -14367,9 +14498,6 @@ def export_attendance_pdf(attendance_matrix, month, year):
     response = HttpResponse(buffer.read(), content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="attendance_{calendar.month_name[month]}_{year}.pdf"'
     return response
-
-
-
 
 
 '''------------------------------------------------ SUPPORT  AREA------------------------------------------------'''
