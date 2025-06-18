@@ -1,61 +1,48 @@
 {% extends 'base.html' %}
 {% load custom_tags %}
 {% block content %}
-
 {# Add Tailwind CSS CDN to your base.html if not already present #}
 {# <script src="https://cdn.tailwindcss.com"></script> #}
-
 {# Custom style for scrollbar and sticky positioning #}
 <style>
-    /* Webkit-based browsers (Chrome, Safari) */
     .custom-scrollbar::-webkit-scrollbar {
-        height: 8px;
+        height: 6px;
     }
-
     .custom-scrollbar::-webkit-scrollbar-track {
-        background: #f1f5f9; /* slate-100 */
+        background: #f8fafc;
     }
-
     .custom-scrollbar::-webkit-scrollbar-thumb {
-        background: #94a3b8; /* slate-400 */
-        border-radius: 10px;
+        background: #cbd5e1;
+        border-radius: 8px;
     }
-
     .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-        background: #64748b; /* slate-500 */
+        background: #94a3b8;
     }
-
-    /* A class to make the first two columns sticky */
     .sticky-col {
-        position: -webkit-sticky; /* For Safari */
+        position: -webkit-sticky;
         position: sticky;
         left: 0;
         z-index: 10;
-        background-color: white; /* Match the row background */
+        background-color: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(8px);
     }
     .sticky-col-header {
-        position: -webkit-sticky; /* For Safari */
+        position: -webkit-sticky;
         position: sticky;
         left: 0;
-        z-index: 20; /* Higher z-index for the header */
+        z-index: 20;
+        background-color: rgba(248, 250, 252, 0.95);
+        backdrop-filter: blur(8px);
     }
-
-    /* To ensure sticky columns have the right background on hover */
     .group-row:hover .sticky-col {
-        background-color: #f8fafc; /* slate-50 */
+        background-color: rgba(248, 250, 252, 0.95);
     }
 </style>
-
-<div class="bg-slate-50 min-h-screen p-4 sm:p-6 lg:p-8 font-sans">
-    <div class="max-w-full mx-auto">
-
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+<div class="""bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen p-4 sm:p-6 lg:p-8 font-sans">
+    <div class="max-w-[1920px] mx-auto">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
             <div>
-                <h1 class="text-3xl font-bold text-slate-800">HR Attendance</h1>
-                <p class="text-slate-500 mt-1">View and manage team attendance records.</p>
-            </div>
-            <div class="flex items-center space-x-4 mt-4 sm:mt-0">
-                <a href="?month={{ prev_month }}&year={{ prev_year }}&role={{ current_role }}&location={{ current_location }}" class="p-2 rounded-md bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 transition">
+                <h1 class="text-4xl font-bold bg-clip-
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
                 </a>
                 <span class="text-lg font-semibold text-indigo-600 w-32 text-center">{{ month_name }} {{ year }}</span>
