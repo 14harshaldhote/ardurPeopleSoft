@@ -76,7 +76,7 @@
         >
             <!-- Full Logo -->
             <a
-                href="{% url 'dashboard' %}"
+                href="{% url 'core:dashboard' %}"
                 class="absolute inset-0 flex items-center justify-center transition-opacity duration-300 ease-in-out"
                 :class="(isExpanded || isMobile) ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'"
             >
@@ -89,7 +89,7 @@
 
             <!-- Cropped Logo -->
             <a
-                href="{% url 'dashboard' %}"
+                href="{% url 'core:dashboard' %}"
                 class="absolute inset-0 flex items-center justify-center transition-opacity duration-300 ease-in-out"
                 :class="(!isExpanded && !isMobile) ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'"
             >
@@ -107,7 +107,7 @@
                 <!-- Dashboard -->
                 <li>
                     <a
-                        href="{% url 'dashboard' %}"
+                        href="{% url 'core:dashboard' %}"
                         class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-green-50 hover:text-green-700 transition-all"
                     >
                         <svg
@@ -130,7 +130,7 @@
                 {% if not is_admin %}
                 <li>
                     <a
-                        href="{% url 'user_profile' request.user.id %}"
+                        href="#"
                         class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-green-50 hover:text-green-700 transition-all"
                     >
                         <svg
@@ -159,7 +159,7 @@
                 </li>
                 <li>
                     <a
-                        href="{% url 'aps_support:dashboard' %}"
+                        href="#"
                         class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
@@ -180,7 +180,7 @@
                 </li>
                 <li>
                     <a
-                        href="{% url 'aps_employee:attendance_dashboard' %}"
+                        href="#"
                         class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
@@ -201,7 +201,7 @@
                 </li>
                 <li>
                     <a
-                        href="{% url 'aps_employee:timesheet' %}"
+                        href="#}"
                         class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
@@ -222,7 +222,7 @@
                 </li>
                 <li>
                     <a
-                        href="{% url 'aps_leave:employee_leave_view' %}"
+                        href="#"
                         class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
@@ -243,7 +243,7 @@
                 </li>
                 <li>
                     <a
-                        href="{% url 'aps_employee:application_for_user' %}"
+                        href="#"
                         class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
@@ -264,7 +264,7 @@
                 </li>
                 <li>
                     <a
-                        href="{% url 'appraisal:appraisal_list' %}"
+                        href="#"
                         class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
@@ -285,7 +285,7 @@
                 </li>
                 <li>
                     <a
-                        href="{% url 'aps_entertainment:entertainment' %}"
+                        href="#"
                         class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
@@ -320,7 +320,7 @@
                 </li>
                 <li>
                     <a
-                        href="{% url 'aps_leave:hr_leave_view' %}"
+                        href="#"
                         class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
@@ -341,7 +341,7 @@
                 </li>
                 <li>
                     <a
-                        href="{% url 'aps_attendance:analytics' %}"
+                        href="#"
                         class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
@@ -362,7 +362,7 @@
                 </li>
                 <li>
                     <a
-                        href="{% url 'aps_hr:hr_dashboard' %}"
+                        href="#"
                         class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
@@ -383,7 +383,7 @@
                 </li>
                 <li>
                     <a
-                        href="{% url 'aps_support:dashboard' %}"
+                        href="#"
                         class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
@@ -404,7 +404,7 @@
                 </li>
                 <li>
                     <a
-                        href="{% url 'appraisal:appraisal_list' %}"
+                        href="#"
                         class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
@@ -433,7 +433,7 @@
                 </li>
                 <li>
                     <a
-                        href="{% url 'aps_attendance:analytics' %}"
+                        href="#"
                         class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
@@ -454,7 +454,7 @@
                 </li>
                 <li>
                     <a
-                        href="{% url 'aps_manager:shift_dashboard' %}"
+                        href="#"
                         class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
@@ -475,7 +475,7 @@
                 </li>
                 <li>
                     <a
-                        href="{% url 'aps_manager:report' %}"
+                        href="#"
                         class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
@@ -496,7 +496,7 @@
                 </li>
                 <li>
                     <a
-                        href="{% url 'aps_manager:project_list'%}"
+                        href="#"
                         class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
@@ -517,7 +517,7 @@
                 </li>
                 <li>
                     <a
-                        href="{% url 'aps_manager:view_timesheets' %}"
+                        href="#"
                         class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
@@ -547,7 +547,7 @@
                 </li>
                 <li>
                     <a
-                        href="{% url 'appraisal:appraisal_list' %}"
+                        href="#"
                         class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
@@ -588,7 +588,7 @@
                 </li>
                 <li>
                     <a
-                        href="{% url 'aps_admin:user_sessions' %}"
+                        href="#"
                         class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
@@ -609,7 +609,7 @@
                 </li>
                 <li>
                     <a
-                        href="{% url 'aps_admin:view_leave_requests_admin' %}"
+                        href="#"
                         class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
@@ -630,7 +630,7 @@
                 </li>
                 <li>
                     <a
-                        href="{% url 'aps_admin:report' %}"
+                        href="#"
                         class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
@@ -651,7 +651,7 @@
                 </li>
                 <li>
                     <a
-                        href="{% url 'aps_admin:project_dashboard' %}"
+                        href="#"
                         class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
@@ -672,7 +672,7 @@
                 </li>
                 <li>
                     <a
-                        href="{% url 'aps_support:dashboard' %}"
+                        href="#"
                         class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
@@ -727,7 +727,7 @@
                 </li>
                 <li>
                     <a
-                        href="{% url 'aps_finance:dashboard' %}"
+                        href="#"
                         class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
@@ -748,7 +748,7 @@
                 </li>
                 <li>
                     <a
-                        href="{% url 'aps_finance:expense_entry' %}"
+                        href="#"
                         class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
@@ -769,7 +769,7 @@
                 </li>
                 <li>
                     <a
-                        href="{% url 'aps_finance:voucher_entry' %}"
+                        href="#"
                         class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
@@ -790,7 +790,7 @@
                 </li>
                 <li>
                     <a
-                        href="{% url 'aps_finance:invoice_generation' %}"
+                        href="#"
                         class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
@@ -811,7 +811,7 @@
                 </li>
                 <li>
                     <a
-                        href="{% url 'aps_finance:bank_payment_dashboard' %}"
+                        href="#"
                         class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
@@ -832,7 +832,7 @@
                 </li>
                 <li>
                     <a
-                        href="{% url 'aps_finance:subscription_payment_entry' %}"
+                        href="#"
                         class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
@@ -853,7 +853,7 @@
                 </li>
                 <li>
                     <a
-                        href="{% url 'aps_finance:financial_parameter_list' %}"
+                        href="#"
                         class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
@@ -914,7 +914,7 @@
         >
             <!-- Full Logo -->
             <a
-                href="{% url 'dashboard' %}"
+                href="{% url 'core:dashboard' %}"
                 class="absolute inset-0 flex items-center justify-center transition-opacity duration-300 ease-in-out"
                 :class="(isExpanded || isMobile) ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'"
             >
@@ -927,7 +927,7 @@
 
             <!-- Cropped Logo -->
             <a
-                href="{% url 'dashboard' %}"
+                href="{% url 'core:dashboard' %}"
                 class="absolute inset-0 flex items-center justify-center transition-opacity duration-300 ease-in-out"
                 :class="(!isExpanded && !isMobile) ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'"
             >
@@ -948,7 +948,7 @@
                 <!-- Dashboard -->
                 <li>
                     <a
-                        href="{% url 'dashboard' %}"
+                        href="{% url 'core:dashboard' %}"
                         class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-green-50 hover:text-green-700"
                         :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
                         title="Dashboard"
@@ -984,7 +984,7 @@
                 <!-- Profile -->
                 <li>
                     <a
-                        href="{% url 'user_profile' request.user.id %}"
+                        href="#"
                         class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-green-50 hover:text-green-700"
                         :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
                         title="Profile"
@@ -1029,7 +1029,7 @@
                 <!-- Support -->
                 <li>
                     <a
-                        href="{% url 'aps_support:dashboard' %}"
+                        href="#"
                         class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
                         :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
                         title="Support"
@@ -1065,7 +1065,7 @@
                 <!-- Attendance -->
                 <li>
                     <a
-                        href="{% url 'aps_employee:attendance_dashboard' %}"
+                        href="#"
                         class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
                         :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
                         title="Attendance"
@@ -1101,7 +1101,7 @@
                 <!-- Time Sheet -->
                 <li>
                     <a
-                        href="{% url 'aps_employee:timesheet' %}"
+                        href="#"
                         class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
                         :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
                         title="Time Sheet"
@@ -1137,7 +1137,7 @@
                 <!-- Leave Management -->
                 <li>
                     <a
-                        href="{% url 'aps_leave:employee_leave_view' %}"
+                        href="#"
                         class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
                         :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
                         title="Leave Management"
@@ -1173,7 +1173,7 @@
                 <!-- Applications -->
                 <li>
                     <a
-                        href="{% url 'aps_employee:application_for_user' %}"
+                        href="#"
                         class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
                         :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
                         title="Applications"
@@ -1209,7 +1209,7 @@
                 <!-- My Appraisals -->
                 <li>
                     <a
-                        href="{% url 'appraisal:appraisal_list' %}"
+                        href="#"
                         class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
                         :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
                         title="My Appraisals"
@@ -1245,7 +1245,7 @@
                 <!-- Entertainment -->
                 <li>
                     <a
-                        href="{% url 'aps_entertainment:entertainment' %}"
+                        href="#"
                         class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
                         :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
                         title="Entertainment"
@@ -1296,7 +1296,7 @@
                 </li>
                 <li>
                     <a
-                        href="{% url 'aps_leave:hr_leave_view' %}"
+                        href="#"
                         class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
                         :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
                         title="Leave Management"
@@ -1331,7 +1331,7 @@
 
                 <li>
                     <a
-                        href="{% url 'aps_attendance:analytics' %}"
+                        href="#"
                         class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
                         :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
                         title="Attendance"
@@ -1366,7 +1366,7 @@
 
                 <li>
                     <a
-                        href="{% url 'aps_hr:hr_dashboard' %}"
+                        href="#"
                         class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
                         :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
                         title="Employee Info"
@@ -1401,7 +1401,7 @@
 
                 <li>
                     <a
-                        href="{% url 'aps_support:dashboard' %}"
+                        href="#"
                         class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
                         :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
                         title="Support"
@@ -1436,7 +1436,7 @@
 
                 <li>
                     <a
-                        href="{% url 'appraisal:appraisal_list' %}"
+                        href=""
                         class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
                         :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
                         title="Employee Appraisals"
@@ -1479,7 +1479,7 @@
 
                 <li>
                     <a
-                        href="{% url 'aps_attendance:analytics' %}"
+                        href=""
                         class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
                         :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
                         title="Attendance"
@@ -1514,7 +1514,7 @@
 
                 <li>
                     <a
-                        href="{% url 'aps_manager:shift_dashboard' %}"
+                        href="#"
                         class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
                         :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
                         title="Shift Management"
@@ -1549,7 +1549,7 @@
 
                 <li>
                     <a
-                        href="{% url 'aps_manager:report' %}"
+                        href="#"
                         class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
                         :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
                         title="Report"
@@ -1584,7 +1584,7 @@
 
                 <li>
                     <a
-                        href="{% url 'aps_manager:project_list'%}"
+                        href="#"
                         class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
                         :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
                         title="Projects"
@@ -1619,7 +1619,7 @@
 
                 <li>
                     <a
-                        href="{% url 'aps_manager:view_timesheets' %}"
+                        href="#"
                         class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
                         :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
                         title="Employee Timesheets"
@@ -1663,7 +1663,7 @@
 
                 <li>
                     <a
-                        href="{% url 'appraisal:appraisal_list' %}"
+                        href="#"
                         class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
                         :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
                         title="Review Appraisals"
@@ -1718,7 +1718,7 @@
 
                 <li>
                     <a
-                        href="{% url 'aps_admin:user_sessions' %}"
+                        href="#"
                         class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
                         :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
                         title="User Sessions"
@@ -1753,7 +1753,7 @@
 
                 <li>
                     <a
-                        href="{% url 'aps_admin:view_leave_requests_admin' %}"
+                        href="#"
                         class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
                         :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
                         title="Leave Requests"
@@ -1788,7 +1788,7 @@
 
                 <li>
                     <a
-                        href="{% url 'aps_admin:report' %}"
+                        href="#"
                         class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
                         :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
                         title="Report"
@@ -1823,7 +1823,7 @@
 
                 <li>
                     <a
-                        href="{% url 'aps_admin:project_dashboard' %}"
+                        href="#"
                         class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
                         :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
                         title="Projects"
@@ -1858,7 +1858,7 @@
 
                 <li>
                     <a
-                        href="{% url 'aps_support:dashboard' %}"
+                        href="#"
                         class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
                         :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
                         title="Support"

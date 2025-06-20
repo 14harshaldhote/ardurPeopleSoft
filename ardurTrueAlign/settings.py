@@ -85,8 +85,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'trueAlign.middleware.EnhancedSessionTrackingMiddleware',
-    'trueAlign.middleware.SessionAnalyticsMiddleware',
+    'trueAlign.core.middleware.SessionAnalyticsMiddleware',
 ]
 
 
@@ -182,16 +181,12 @@ LOGGING = {
         },
     },
     'loggers': {
-        'trueAlign.middleware': {
+        'trueAlign.core.middleware': {
             'handlers': ['console', 'file'],
             'level': 'INFO',
             'propagate': True,
         },
-        'trueAlign.views.session_views': {
-            'handlers': ['console', 'file'],
-            'level': 'INFO',
-            'propagate': True,
-        },
+       
         'django': {
             'handlers': ['console', 'file'],
             'level': 'INFO',
@@ -265,6 +260,10 @@ LOGGING = {
             'handlers': ['console'],
             'level': 'DEBUG',
             'propagate': True,
+        },
+        'django.db.backends': { 
+            'handlers': ['console'],
+            'level': 'DEBUG',
         },
     },
 }

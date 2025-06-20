@@ -1,0 +1,275 @@
+{% extends "components/manager/shifts/dashboard.html" %} {% block
+shift_content%}
+<section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <section
+        class="bg-white rounded-2xl shadow-lg border border-gray-100 transition-all duration-300 hover:shadow-xl"
+    >
+        <header
+            class="flex items-center justify-between px-8 py-5 border-b border-gray-100"
+        >
+            <h5 class="text-2xl font-bold text-gray-900 tracking-tight">
+                {{ title }}
+            </h5>
+            <a
+                href="{% url 'shift:list' %}"
+                class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all duration-300 text-sm font-semibold shadow-sm hover:shadow"
+            >
+                <span class="material-symbols-rounded text-base mr-1.5"
+                    >arrow_back</span
+                >
+                Back to List
+            </a>
+        </header>
+        <section class="px-8 py-8">
+            <form method="POST" class="space-y-7">
+                {% csrf_token %} {% if form.errors %}
+                <div
+                    class="p-4 mb-6 bg-red-50 border-l-4 border-red-500 rounded-md shadow-sm animate-pulse"
+                >
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <span
+                                class="material-symbols-rounded text-red-500 text-xl"
+                                >error</span
+                            >
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-red-800">
+                                Please correct the following errors:
+                            </h3>
+                            <div class="mt-2 text-sm text-red-700">
+                                <ul class="list-disc pl-5 space-y-1">
+                                    {% for field in form %} {% for error in
+                                    field.errors %}
+                                    <li class="opacity-90 hover:opacity-100">
+                                        {{ field.label }}: {{ error }}
+                                    </li>
+                                    {% endfor %} {% endfor %} {% for error in
+                                    form.non_field_errors %}
+                                    <li class="opacity-90 hover:opacity-100">
+                                        {{ error }}
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                    <!-- Shift Name -->
+                    <div class="space-y-2 group">
+                        <label
+                            for="{{ form.name.id_for_label }}"
+                            class="block text-sm font-semibold text-gray-700 group-hover:text-gray-900 transition-colors"
+                            >Shift Name</label
+                        >
+                        <div class="relative rounded-md shadow-sm">
+                            {{ form.name|safe }}
+                        </div>
+                        {% if form.name.help_text %}
+                        <p
+                            class="text-xs text-gray-500 mt-1 group-hover:text-gray-600"
+                        >
+                            {{ form.name.help_text }}
+                        </p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Work Days -->
+                    <div class="space-y-2 group">
+                        <label
+                            for="{{ form.work_days.id_for_label }}"
+                            class="block text-sm font-semibold text-gray-700 group-hover:text-gray-900 transition-colors"
+                            >Work Schedule</label
+                        >
+                        <div class="relative rounded-md shadow-sm">
+                            {{ form.work_days|safe }}
+                        </div>
+                        {% if form.work_days.help_text %}
+                        <p
+                            class="text-xs text-gray-500 mt-1 group-hover:text-gray-600"
+                        >
+                            {{ form.work_days.help_text }}
+                        </p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Custom Work Days (initially hidden) -->
+                    <div
+                        id="customWorkDaysDiv"
+                        class="{% if form.instance.work_days != 'Custom' %}hidden{% endif %} space-y-2 group transition-all duration-300 ease-in-out"
+                    >
+                        <label
+                            for="{{ form.custom_work_days.id_for_label }}"
+                            class="block text-sm font-semibold text-gray-700 group-hover:text-gray-900 transition-colors"
+                            >Custom Work Days</label
+                        >
+                        <div class="relative rounded-md shadow-sm">
+                            {{ form.custom_work_days|safe }}
+                        </div>
+                        {% if form.custom_work_days.help_text %}
+                        <p
+                            class="text-xs text-gray-500 mt-1 group-hover:text-gray-600"
+                        >
+                            {{ form.custom_work_days.help_text }}
+                        </p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Start Time -->
+                    <div class="space-y-2 group">
+                        <label
+                            for="{{ form.start_time.id_for_label }}"
+                            class="block text-sm font-semibold text-gray-700 group-hover:text-gray-900 transition-colors"
+                            >Start Time</label
+                        >
+                        <div class="relative rounded-md shadow-sm">
+                            {{ form.start_time|safe }}
+                        </div>
+                        {% if form.start_time.help_text %}
+                        <p
+                            class="text-xs text-gray-500 mt-1 group-hover:text-gray-600"
+                        >
+                            {{ form.start_time.help_text }}
+                        </p>
+                        {% endif %}
+                    </div>
+
+                    <!-- End Time -->
+                    <div class="space-y-2 group">
+                        <label
+                            for="{{ form.end_time.id_for_label }}"
+                            class="block text-sm font-semibold text-gray-700 group-hover:text-gray-900 transition-colors"
+                            >End Time</label
+                        >
+                        <div class="relative rounded-md shadow-sm">
+                            {{ form.end_time|safe }}
+                        </div>
+                        {% if form.end_time.help_text %}
+                        <p
+                            class="text-xs text-gray-500 mt-1 group-hover:text-gray-600"
+                        >
+                            {{ form.end_time.help_text }}
+                        </p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Shift Duration -->
+                    <div class="space-y-2 group">
+                        <label
+                            for="{{ form.shift_duration.id_for_label }}"
+                            class="block text-sm font-semibold text-gray-700 group-hover:text-gray-900 transition-colors"
+                            >Shift Duration (hours)</label
+                        >
+                        <div class="relative rounded-md shadow-sm">
+                            {{ form.shift_duration|safe }}
+                        </div>
+                        {% if form.shift_duration.help_text %}
+                        <p
+                            class="text-xs text-gray-500 mt-1 group-hover:text-gray-600"
+                        >
+                            {{ form.shift_duration.help_text }}
+                        </p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Break Duration -->
+                    <div class="space-y-2 group">
+                        <label
+                            for="{{ form.break_duration.id_for_label }}"
+                            class="block text-sm font-semibold text-gray-700 group-hover:text-gray-900 transition-colors"
+                            >Break Duration</label
+                        >
+                        <div class="relative rounded-md shadow-sm">
+                            {{ form.break_duration|safe }}
+                        </div>
+                        {% if form.break_duration.help_text %}
+                        <p
+                            class="text-xs text-gray-500 mt-1 group-hover:text-gray-600"
+                        >
+                            {{ form.break_duration.help_text }}
+                        </p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Grace Period -->
+                    <div class="space-y-2 group">
+                        <label
+                            for="{{ form.grace_period.id_for_label }}"
+                            class="block text-sm font-semibold text-gray-700 group-hover:text-gray-900 transition-colors"
+                            >Grace Period</label
+                        >
+                        <div class="relative rounded-md shadow-sm">
+                            {{ form.grace_period|safe }}
+                        </div>
+                        {% if form.grace_period.help_text %}
+                        <p
+                            class="text-xs text-gray-500 mt-1 group-hover:text-gray-600"
+                        >
+                            {{ form.grace_period.help_text }}
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Active Status -->
+                <div class="pt-5 border-t border-gray-100 mt-6">
+                    <label
+                        class="inline-flex items-center hover:bg-gray-50 p-3 rounded-lg transition duration-200 cursor-pointer"
+                    >
+                        {{ form.is_active }}
+                        <span
+                            class="ml-2 text-sm font-medium text-gray-700 hover:text-gray-900"
+                            >Active</span
+                        >
+                    </label>
+                </div>
+
+                <div class="pt-6 flex gap-4 border-t border-gray-100 mt-4">
+                    <button
+                        type="submit"
+                        class="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-200 flex items-center gap-2 shadow-sm hover:shadow"
+                    >
+                        <span class="material-symbols-rounded text-base"
+                            >save</span
+                        >
+                        {% if is_update %}Update{% else %}Create{% endif %}
+                        Shift
+                    </button>
+                    <a
+                        href="{% url 'shift:list' %}"
+                        class="px-6 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition duration-200 flex items-center gap-2 shadow-sm hover:shadow"
+                    >
+                        <span class="material-symbols-rounded text-base"
+                            >close</span
+                        >
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </section>
+    </section>
+</section>
+
+<script>
+    // Show/hide custom work days field based on selection
+    document.addEventListener("DOMContentLoaded", function () {
+        const workDaysSelect = document.getElementById(
+            "{{ form.work_days.id_for_label }}",
+        );
+        const customWorkDaysDiv = document.getElementById("customWorkDaysDiv");
+
+        workDaysSelect.addEventListener("change", function () {
+            if (this.value === "Custom") {
+                customWorkDaysDiv.classList.remove("hidden");
+                customWorkDaysDiv.classList.add("animate-fadeIn");
+            } else {
+                customWorkDaysDiv.classList.add("hidden");
+                customWorkDaysDiv.classList.remove("animate-fadeIn");
+            }
+        });
+    });
+</script>
+{% endblock %}

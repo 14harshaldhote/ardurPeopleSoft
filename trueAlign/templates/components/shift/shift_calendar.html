@@ -1,0 +1,75 @@
+{% extends "components/manager/shifts/dashboard.html" %}
+
+{% block shift_content %}
+<section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <section class="bg-white rounded-2xl shadow-lg border border-gray-100 taliewind-card">
+        <section class="flex flex-col sm:flex-row sm:items-center sm:justify-between px-8 py-6 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-white">
+            <h2 class="text-3xl font-bold text-indigo-800 mb-4 sm:mb-0 flex items-center">
+                <i class="fas fa-calendar-alt text-indigo-500 mr-3"></i>
+                Shift Calendar
+            </h2>
+            <div class="flex space-x-3">
+                <a href="?start_date={{ prev_month|date:'Y-m-d' }}"
+                   class="taliewind-btn taliewind-btn-outline flex items-center">
+                    <i class="fas fa-chevron-left mr-2"></i> Previous Month
+                </a>
+                <a href="?start_date={{ next_month|date:'Y-m-d' }}"
+                   class="taliewind-btn taliewind-btn-outline flex items-center">
+                    Next Month <i class="fas fa-chevron-right ml-2"></i>
+                </a>
+            </div>
+        </section>
+        <section class="px-8 py-8">
+            <section class="overflow-x-auto rounded-lg border border-gray-100">
+                <table class="min-w-full divide-y divide-gray-200 taliewind-table">
+                    <thead class="bg-indigo-50">
+                        <tr>
+                            <th class="taliewind-th text-indigo-700">Date</th>
+                            <th class="taliewind-th text-indigo-700">Day</th>
+                            <th class="taliewind-th text-indigo-700">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-100 taliewind-table-body">
+                        {% for day in calendar_data %}
+                        <tr class="
+                            {% if day.is_holiday %}
+                                taliewind-row-holiday bg-yellow-50
+                            {% elif day.is_weekend %}
+                                taliewind-row-weekend bg-indigo-50
+                            {% else %}
+                                hover:bg-gray-50
+                            {% endif %}
+                        ">
+                            <td class="taliewind-td font-medium text-gray-900">{{ day.date|date:"M d, Y" }}</td>
+                            <td class="taliewind-td text-gray-700">{{ day.day_name }}</td>
+                            <td class="taliewind-td">
+                                {% if day.is_holiday %}
+                                    <span class="taliewind-badge taliewind-badge-holiday bg-yellow-100 text-yellow-800">
+                                        <i class="fas fa-umbrella-beach mr-1"></i> Holiday: {{ day.holiday_name }}
+                                    </span>
+                                {% elif day.is_weekend %}
+                                    <span class="taliewind-badge taliewind-badge-weekend bg-indigo-100 text-indigo-800">
+                                        <i class="fas fa-calendar-week mr-1"></i> Weekend
+                                    </span>
+                                {% else %}
+                                    <span class="taliewind-badge taliewind-badge-working bg-green-100 text-green-800">
+                                        <i class="fas fa-briefcase mr-1"></i> Working Day
+                                    </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="taliewind-empty text-center py-10 text-gray-400">
+                                <i class="fas fa-calendar-times text-4xl mb-3"></i>
+                                <p>No calendar data available for this month.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </section>
+        </section>
+    </section>
+</section>
+{% endblock %}

@@ -47,101 +47,132 @@ class ClientProfile(models.Model):
         return self.company_name
 
 '''------------------------- USERSESSION --------------------'''
+from django.db import models
+from django.contrib.auth.models import User
+from django.utils import timezone
+import json
+import uuid
+import math
+from datetime import timedelta
+import ipaddress
+import geoip2.database
+import os
+
 class UserSession(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    # Session identification
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sessions')
+    parent_session_id = models.UUIDField(null=True, blank=True)
+    tab_id = models.CharField(max_length=100, null=True, blank=True)
+    is_primary_tab = models.BooleanField(default=False)
+    session_fingerprint = models.CharField(max_length=255, null=True, blank=True)
     session_key = models.CharField(max_length=40)
+
+
+    # Session timing
+    created_at = models.DateTimeField(auto_now_add=True)
+    login_time = models.DateTimeField(default=timezone.now)
+    logout_time = models.DateTimeField(default=timezone.now)
+    last_activity = models.DateTimeField(default=timezone.now)
+    ended_at = models.DateTimeField(null=True, blank=True)
+    tab_opened_time = models.DateTimeField(null=True, blank=True)
+    tab_last_focus = models.DateTimeField(null=True, blank=True)
+
+    # Session status
+    is_active = models.BooleanField(default=True)
+    is_idle = models.BooleanField(default=False)
+    idle_start_time = models.DateTimeField(null=True, blank=True)
+    total_idle_time = models.DurationField(default=timedelta)
+    working_time = models.DurationField(default=timedelta)
+    focus_time = models.DurationField(default=timedelta)
+    session_duration = models.FloatField(null=True, blank=True)
+
+    # Client information
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     user_agent = models.TextField(null=True, blank=True)
-
-    # Store all times in UTC in the DB, but always convert to IST for display and logic
-    login_time = models.DateTimeField(default=timezone.now)  # Stored in UTC
-    logout_time = models.DateTimeField(null=True, blank=True)
-    working_hours = models.DurationField(null=True, blank=True)
-    idle_time = models.DurationField(default=timedelta(0))
-    last_activity = models.DateTimeField(default=timezone.now)  # Stored in UTC
-    location = models.CharField(max_length=50, null=True, blank=True)
-    session_duration = models.FloatField(null=True, blank=True)
-    is_active = models.BooleanField(default=True)
-
-    # Multi-tab tracking
-    tab_id = models.CharField(max_length=50, null=True, blank=True)  # Unique identifier for each tab
-    tab_title = models.CharField(max_length=255, null=True, blank=True)  # Page title when tab was created
-    tab_url = models.URLField(null=True, blank=True)  # Current URL of the tab
-    tab_opened_time = models.DateTimeField(null=True, blank=True)  # When this specific tab was opened
-    tab_last_focus = models.DateTimeField(null=True, blank=True)  # Last time this tab was focused
-    tab_total_focus_time = models.DurationField(default=timedelta(0))  # Total time spent focused on this tab
-    is_primary_tab = models.BooleanField(default=False)  # Is this the main/primary tab
-    parent_session_id = models.CharField(max_length=50, null=True, blank=True)  # Links tabs to same browser session
-
-    # Security and fingerprinting
-    session_fingerprint = models.CharField(max_length=255, null=True, blank=True)
-    browser_fingerprint = models.TextField(null=True, blank=True)  # Detailed browser fingerprint
+    browser_fingerprint = models.TextField(null=True, blank=True)
     csrf_token = models.CharField(max_length=64, null=True, blank=True)
     csrf_token_created = models.DateTimeField(null=True, blank=True)
-    security_incidents = models.JSONField(default=dict, blank=True)
-
-    # Device and environment data
-    device_type = models.CharField(max_length=20, null=True, blank=True)  # mobile, desktop, tablet
+    device_type = models.CharField(max_length=20, null=True, blank=True)
     screen_resolution = models.CharField(max_length=20, null=True, blank=True)
-    timezone_offset = models.IntegerField(null=True, blank=True)  # User's timezone offset
+    timezone_offset = models.IntegerField(null=True, blank=True)
     language = models.CharField(max_length=10, null=True, blank=True)
-    connection_type = models.CharField(max_length=20, null=True, blank=True)  # wifi, cellular, etc.
-    battery_level = models.FloatField(null=True, blank=True)  # 0 to 1
+    battery_level = models.FloatField(null=True, blank=True)
+    connection_type = models.CharField(max_length=20, null=True, blank=True)
 
-    # Enhanced activity tracking
-    page_views = models.JSONField(default=list, blank=True)  # Array of page visits with timestamps
-    click_events = models.JSONField(default=list, blank=True)  # Track user interactions
-    scroll_events = models.JSONField(default=list, blank=True)  # Scroll behavior
-    keyboard_events = models.JSONField(default=list, blank=True)  # Typing activity
-    mouse_movements = models.IntegerField(default=0)  # Count of mouse movements
+    # Location information
+    location_country = models.CharField(max_length=100, null=True, blank=True)
+    location_region = models.CharField(max_length=100, null=True, blank=True)
+    location_city = models.CharField(max_length=100, null=True, blank=True)
+    location_latitude = models.FloatField(null=True, blank=True)
+    location_longitude = models.FloatField(null=True, blank=True)
+    location_accuracy = models.FloatField(null=True, blank=True)
+    location_type = models.CharField(max_length=20, null=True, blank=True)
 
-    # Tab visibility and focus tracking
-    tab_visibility_log = models.JSONField(default=list, blank=True)  # Track when tab gains/loses focus
-    tab_switches = models.IntegerField(default=0)  # Number of times user switched to/from this tab
-    background_time = models.DurationField(default=timedelta(0))  # Time spent in background
+    # Page and tab (stored as JSON for multiple tabs)
+    tab_title = models.JSONField(default=list, blank=True)
+    tab_url = models.JSONField(default=list, blank=True)
+    url = models.JSONField(default=list, blank=True)
+    title = models.JSONField(default=list, blank=True)
+    referrer = models.JSONField(default=list, blank=True)
 
-    # Performance and analytics
-    performance_metrics = models.JSONField(default=dict, blank=True)  # Page load times, memory usage
-    network_events = models.JSONField(default=list, blank=True)  # Connection issues, reconnects
-    error_events = models.JSONField(default=list, blank=True)  # JavaScript errors, failed requests
+    # Activity tracking
+    page_views = models.JSONField(default=list, blank=True)
+    clicks = models.JSONField(default=list, blank=True)
+    scrolls = models.JSONField(default=list, blank=True)
+    keyboard_events = models.JSONField(default=list, blank=True)
+    mouse_movements = models.IntegerField(default=0)
+    tab_visibility_log = models.JSONField(default=list, blank=True)
+    tab_switches = models.IntegerField(default=0)
+    background_time = models.DurationField(default=timedelta(0))
+    idle_state_changes = models.JSONField(default=list, blank=True)
+
+    # Performance and errors
+    performance_metrics = models.JSONField(default=dict, blank=True)
+    network_events = models.JSONField(default=list, blank=True)
+    error_events = models.JSONField(default=list, blank=True)
 
     # Progressive session management
-    custom_timeout = models.PositiveIntegerField(null=True, blank=True)  # Custom timeout in minutes
-    inactivity_warnings_sent = models.IntegerField(default=0)  # Number of warnings shown
+    custom_timeout = models.PositiveIntegerField(null=True, blank=True)
+    inactivity_warnings_sent = models.IntegerField(default=0)
     last_warning_time = models.DateTimeField(null=True, blank=True)
     auto_logout_enabled = models.BooleanField(default=True)
 
     # Offline support
-    offline_data = models.JSONField(default=dict, blank=True)  # Store offline actions
-    last_sync_time = models.DateTimeField(null=True, blank=True)  # Last successful server sync
-    pending_sync_count = models.IntegerField(default=0)  # Number of actions waiting to sync
+    offline_data = models.JSONField(default=dict, blank=True)
+    last_sync_time = models.DateTimeField(null=True, blank=True)
+    pending_sync_count = models.IntegerField(default=0)
 
-    # Cross-tab communication tracking
+    # Cross-tab communication
+    related_tabs = models.JSONField(default=list, blank=True)
     broadcast_messages_sent = models.IntegerField(default=0)
     broadcast_messages_received = models.IntegerField(default=0)
     cross_tab_activity_syncs = models.IntegerField(default=0)
 
-    # Session quality metrics
-    productivity_score = models.FloatField(null=True, blank=True)  # Calculated productivity score
-    engagement_score = models.FloatField(null=True, blank=True)  # User engagement level
-    session_quality = models.CharField(max_length=20, null=True, blank=True)  # high, medium, low
+    # URL frequency tracking
+    visited_urls = models.JSONField(default=dict, blank=True)
+    most_visited_url = models.URLField(max_length=2000, null=True, blank=True)
+    most_visited_count = models.IntegerField(default=0)
 
-    # Define constants at the model level
-    IDLE_THRESHOLD_MINUTES = 5
-    SESSION_TIMEOUT_MINUTES = 30
-    AUTO_LOGOUT_MINUTES = 30
-    WARNING_THRESHOLD_MINUTES = 25  # Show warning 5 minutes before auto-logout
-    OFFICE_IPS = ['116.75.62.90']
-
+    # Metrics and scores
+    productivity_score = models.FloatField(null=True, blank=True)
+    engagement_score = models.FloatField(null=True, blank=True)
+    session_quality = models.CharField(max_length=20, null=True, blank=True)
+    security_score = models.FloatField(null=True, blank=True)
+    security_anomalies = models.JSONField(default=list, blank=True)
+    
     class Meta:
+        ordering = ['-created_at']
         indexes = [
-            models.Index(fields=['user', 'login_time']),
-            models.Index(fields=['is_active']),
-            models.Index(fields=['tab_id']),
-            models.Index(fields=['parent_session_id']),
-            models.Index(fields=['last_activity']),
-            models.Index(fields=['user', 'is_active', 'parent_session_id']),
+            models.Index(fields=['user', 'is_active'], name='user_is_active_idx'),
+            models.Index(fields=['tab_id'], name='tab_id_idx'),
+            models.Index(fields=['parent_session_id'], name='parent_session_id_idx'),
+            models.Index(fields=['created_at'], name='created_at_idx'),
+            models.Index(fields=['last_activity'], name='last_activity_idx'),
         ]
+    
+    def __str__(self):
+        return f"{self.user.username}'s session ({self.id})"
 
     @staticmethod
     def generate_session_key():
@@ -149,614 +180,943 @@ class UserSession(models.Model):
         import random
         import string
         return ''.join(random.choices(string.ascii_letters + string.digits, k=40))
-
-    @staticmethod
-    def get_current_time_ist():
-        """Get current time in IST timezone"""
-        ist = pytz.timezone('Asia/Kolkata')
-        return timezone.now().astimezone(ist)
-        return timezone.now().astimezone(IST_TIMEZONE)
-
-    @staticmethod
-    def convert_to_ist(utc_time):
-        """Convert UTC time to IST timezone"""
-        if utc_time is None:
-            return None
-        ist = pytz.timezone('Asia/Kolkata')
-        return utc_time.astimezone(ist)
-        return utc_time.astimezone(IST_TIMEZONE)
-
-    @staticmethod
-    def convert_to_utc(ist_time):
-        """Convert IST time to UTC for database storage"""
-        if ist_time is None:
-            return None
-        if timezone.is_naive(ist_time):
-            ist_time = IST_TIMEZONE.localize(ist_time)
-        return ist_time.astimezone(timezone.utc)
-
-    @staticmethod
-    def now_ist():
-        """Get current time in IST timezone"""
-        return timezone.now().astimezone(IST_TIMEZONE)
-
-    @staticmethod
-    def now_utc():
-        """Get current time in UTC for database storage"""
-        return timezone.now()
-
-    def get_login_time_ist(self):
-        """Get login time in IST timezone"""
-        return self.convert_to_ist(self.login_time)
-
-    def get_last_activity_ist(self):
-        """Get last activity time in IST timezone"""
-        return self.convert_to_ist(self.last_activity)
-
-    def get_logout_time_ist(self):
-        """Get logout time in IST timezone"""
-        return self.convert_to_ist(self.logout_time)
-
+    
     @classmethod
-    def get_or_create_session(cls, user, session_key=None, ip_address=None, user_agent=None):
-        """Get existing active session or create new one"""
-        from django.db import transaction
-
-        with transaction.atomic():
-            current_time = timezone.now()  # Store in UTC
-
-            # Look for an active session
-            existing_session = cls.objects.filter(
+    def get_or_create_session(cls, user, tab_id=None, parent_session_id=None, client_data=None, session_key=None):
+        """
+        Get an existing session or create a new one based on tab_id and parent_session_id
+        """
+        # Try to find an existing active session by tab_id
+        if tab_id:
+            try:
+                session = cls.objects.get(user=user, tab_id=tab_id, is_active=True)
+                return session, False
+            except cls.DoesNotExist:
+                pass
+        
+        # Try to find an existing active session by parent_session_id
+        if parent_session_id:
+            try:
+                session = cls.objects.get(user=user, parent_session_id=parent_session_id, is_active=True)
+                return session, False
+            except cls.DoesNotExist:
+                pass
+        
+        # Create a new session with detailed client data if available
+        if client_data:
+            session = cls(
                 user=user,
-                is_active=True
-            ).select_for_update().first()
-
-            if existing_session:
-                # If the user has been inactive for more than 30 minutes, end the session and create a new one
-                if (current_time - existing_session.last_activity) > timedelta(minutes=cls.SESSION_TIMEOUT_MINUTES):
-                    existing_session.end_session()
-                    session_key = session_key or cls.generate_session_key()
-                    return cls.objects.create(
-                        user=user,
-                        session_key=session_key,
-                        ip_address=ip_address,
-                        user_agent=user_agent,
-                        login_time=current_time,
-                        last_activity=current_time,
-                        is_active=True
-                    )
-                else:
-                    # Update last activity and continue with the same session
-                    existing_session.update_activity(current_time)
-                    return existing_session
-
-            # If no active session, create a new session
-            if not session_key:
-                session_key = cls.generate_session_key()
-
-            new_session = cls.objects.create(
-                user=user,
-                session_key=session_key,
-                ip_address=ip_address,
-                user_agent=user_agent,
-                login_time=current_time,
-                last_activity=current_time,
-                is_active=True
+                tab_id=tab_id,
+                parent_session_id=parent_session_id,
+                session_key=session_key or cls.generate_session_key(),
+                ip_address=client_data.get('ip_address'),
+                user_agent=client_data.get('user_agent'),
+                browser_fingerprint=client_data.get('browser_fingerprint'),
+                device_type=client_data.get('device_type'),
+                screen_resolution=client_data.get('screen_resolution'),
+                timezone_offset=client_data.get('timezone_offset'),
+                language=client_data.get('language'),
+                url=client_data.get('url'),
+                title=client_data.get('title'),
+                referrer=client_data.get('referrer')
             )
+            
+            # Process location data if available
+            if client_data.get('ip_address'):
+                session.update_location_from_ip(client_data.get('ip_address'))
+            
+            # Process geolocation data if available
+            location_data = client_data.get('location_data')
+            if location_data and isinstance(location_data, dict):
+                session.location_latitude = location_data.get('latitude')
+                session.location_longitude = location_data.get('longitude')
+                session.location_accuracy = location_data.get('accuracy')
+                
+                # Determine location type (home/office) based on time and previous sessions
+                if hasattr(session, 'determine_location_type'):
+                    session.determine_location_type()
+        else:
+            # Create a basic session if no client data is available
+            session = cls(user=user, tab_id=tab_id, parent_session_id=parent_session_id, session_key=session_key or cls.generate_session_key())
+        
+        session.save()
+        return session, True
+    
+    def update_location_from_ip(self, ip_address=None):
+        """
+        Update location information based on IP address using GeoIP2
+        """
+        if not ip_address:
+            ip_address = self.ip_address
+            
+        if not ip_address:
+            return
+            
+        # Skip private IP addresses
+        try:
+            if ipaddress.ip_address(ip_address).is_private:
+                return
+        except ValueError:
+            return
+            
+        # Path to GeoIP2 database
+        geoip_db_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'geoip', 'GeoLite2-City.mmdb')
+        
+        # Check if database exists
+        if not os.path.exists(geoip_db_path):
+            return
+            
+        try:
+            # Open GeoIP2 database
+            with geoip2.database.Reader(geoip_db_path) as reader:
+                response = reader.city(ip_address)
+                
+                # Update location information
+                self.location_country = response.country.name
+                self.location_region = response.subdivisions.most_specific.name if response.subdivisions else None
+                self.location_city = response.city.name
+                self.location_latitude = response.location.latitude
+                self.location_longitude = response.location.longitude
+                
+                self.save(update_fields=[
+                    'location_country', 'location_region', 'location_city',
+                    'location_latitude', 'location_longitude'
+                ])
+        except Exception as e:
+            print(f"Error updating location from IP: {e}")
+    
+    def determine_location_type(self):
+        """
+        Determine if the location is home, office, or other based on time and previous sessions
+        """
+        if not self.location_latitude or not self.location_longitude:
+            return
+            
+        # Get current hour in user's timezone
+        current_time = timezone.now()
+        if self.timezone_offset is not None:
+            # Convert timezone offset from minutes to hours
+            offset_hours = -self.timezone_offset / 60
+            current_time = current_time + timedelta(hours=offset_hours)
+            
+        current_hour = current_time.hour
+        
+        # Check if it's within typical office hours (9 AM to 6 PM on weekdays)
+        is_weekday = current_time.weekday() < 5  # Monday to Friday
+        is_office_hours = 9 <= current_hour <= 18
+        
+        # Get previous sessions with location data
+        previous_sessions = UserSession.objects.filter(
+            user=self.user,
+            location_latitude__isnull=False,
+            location_longitude__isnull=False
+        ).exclude(id=self.id).order_by('-created_at')[:50]
+        
+        # Group locations by frequency
+        location_groups = {}
+        for session in previous_sessions:
+            # Round coordinates to reduce precision for grouping
+            lat_rounded = round(session.location_latitude, 3)
+            lng_rounded = round(session.location_longitude, 3)
+            location_key = f"{lat_rounded},{lng_rounded}"
+            
+            if location_key not in location_groups:
+                location_groups[location_key] = {
+                    'count': 0,
+                    'type': session.location_type,
+                    'lat': session.location_latitude,
+                    'lng': session.location_longitude,
+                    'sessions': []
+                }
+                
+            location_groups[location_key]['count'] += 1
+            location_groups[location_key]['sessions'].append(session.id)
+        
+        # Find the closest location group to current location
+        closest_group = None
+        min_distance = 0.01  # Approximately 1km
+        
+        for key, group in location_groups.items():
+            distance = self.calculate_distance(
+                self.location_latitude, self.location_longitude,
+                group['lat'], group['lng']
+            )
+            
+            if distance < min_distance:
+                closest_group = group
+                min_distance = distance
+        
+        # Determine location type
+        if closest_group and closest_group['type']:
+            # Use the type from the closest known location
+            self.location_type = closest_group['type']
+        elif is_weekday and is_office_hours:
+            # Assume office during weekday office hours
+            self.location_type = 'office'
+        else:
+            # Assume home outside office hours or on weekends
+            self.location_type = 'home'
+            
+        self.save(update_fields=['location_type'])
+    
+    def calculate_distance(self, lat1, lon1, lat2, lon2):
+        """
+        Calculate distance between two points using Haversine formula
+        """
+        # Convert decimal degrees to radians
+        lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
+        
+        # Haversine formula
+        dlon = lon2 - lon1
+        dlat = lat2 - lat1
+        a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
+        c = 2 * math.asin(math.sqrt(a))
+        r = 6371  # Radius of earth in kilometers
+        return c * r
+    
+    def end_session(self):
+        """
+        End the session and calculate final metrics
+        """
+        if not self.is_active:
+            return
+            
+        # Set end time and mark as inactive
+        self.ended_at = timezone.now()
+        self.is_active = False
+        
+        # Calculate final metrics
+        self.calculate_working_time()
+        self.calculate_productivity_score()
+        self.calculate_engagement_score()
+        
+        # Process visited URLs
+        self.process_visited_urls()
+        
+        self.save()
+        
+        # End related tab sessions if this is a parent session
+        if not self.parent_session_id:
+            UserSession.objects.filter(
+                user=self.user,
+                parent_session_id=self.id,
+                is_active=True
+            ).update(
+                is_active=False,
+                ended_at=timezone.now()
+            )
+    
+    def update_last_activity(self):
+        """
+        Update the last activity timestamp
+        """
+        self.last_activity = timezone.now()
+        self.save(update_fields=['last_activity'])
+    
+    def update_idle_status(self, is_idle):
+        """
+        Update the idle status and calculate idle time
+        """
+        # No change in idle status
+        if self.is_idle == is_idle:
+            return
+            
+        now = timezone.now()
+        
+        if is_idle:
+            # Becoming idle
+            self.is_idle = True
+            self.idle_start_time = now
+        else:
+            # Becoming active again
+            self.is_idle = False
+            
+            # Calculate and add to total idle time if we have a start time
+            if self.idle_start_time:
+                idle_duration = now - self.idle_start_time
+                if not self.total_idle_time:
+                    self.total_idle_time = idle_duration
+                else:
+                    self.total_idle_time += idle_duration
+                self.idle_start_time = None
+        
+        self.save(update_fields=['is_idle', 'idle_start_time', 'total_idle_time'])
+    
+    def update_click(self, click_data):
+        """
+        Add a click event to the session
+        """
+        if not isinstance(self.clicks, list):
+            self.clicks = []
+            
+        self.clicks.append(click_data)
+        
+        # Keep only the last 1000 clicks to prevent excessive data
+        if len(self.clicks) > 1000:
+            self.clicks = self.clicks[-1000:]
+            
+        self.save(update_fields=['clicks'])
+    
+    def update_scroll(self, scroll_data):
+        """
+        Add a scroll event to the session
+        """
+        if not isinstance(self.scrolls, list):
+            self.scrolls = []
+            
+        self.scrolls.append(scroll_data)
+        
+        # Keep only the last 500 scrolls to prevent excessive data
+        if len(self.scrolls) > 500:
+            self.scrolls = self.scrolls[-500:]
+            
+        self.save(update_fields=['scrolls'])
+    
+    def update_keyboard(self, keyboard_data):
+        """
+        Add a keyboard event to the session
+        """
+        if not isinstance(self.keyboard_events, list):
+            self.keyboard_events = []
+            
+        self.keyboard_events.append(keyboard_data)
+        
+        # Keep only the last 500 keyboard events to prevent excessive data
+        if len(self.keyboard_events) > 500:
+            self.keyboard_events = self.keyboard_events[-500:]
+            
+        self.save(update_fields=['keyboard_events'])
+    
+    def update_mouse_move(self, mouse_data):
+        """
+        Add a mouse movement event to the session
+        """
+        # mouse_movements is an IntegerField, not a JSONField
+        # Just increment the counter instead of storing the data
+        self.mouse_movements += 1
+        self.save(update_fields=['mouse_movements'])
+    
+    def update_tab_visibility(self, visibility_data):
+        """
+        Add a tab visibility change event to the session
+        """
+        if not isinstance(self.tab_visibility_log, list):
+            self.tab_visibility_log = []
+            
+        self.tab_visibility_log.append(visibility_data)
+        
+        # Keep only the last 100 visibility changes to prevent excessive data
+        if len(self.tab_visibility_log) > 100:
+            self.tab_visibility_log = self.tab_visibility_log[-100:]
+            
+        self.save(update_fields=['tab_visibility_log'])
+    
+    def update_idle_state(self, idle_data):
+        """
+        Add an idle state change event to the session
+        """
+        if not isinstance(self.idle_state_changes, list):
+            self.idle_state_changes = []
+            
+        self.idle_state_changes.append(idle_data)
+        
+        # Keep only the last 50 idle state changes to prevent excessive data
+        if len(self.idle_state_changes) > 50:
+            self.idle_state_changes = self.idle_state_changes[-50:]
+            
+        self.save(update_fields=['idle_state_changes'])
+    
+    def update_page_view(self, page_data):
+        """
+        Add a page view event to the session
+        """
+        if not isinstance(self.page_views, list):
+            self.page_views = []
+            
+        self.page_views.append(page_data)
+        
+        # Update current URL and title
+        self.url = page_data.get('url')
+        self.title = page_data.get('title')
+        self.referrer = page_data.get('referrer')
+        
+        # Keep only the last 100 page views to prevent excessive data
+        if len(self.page_views) > 100:
+            self.page_views = self.page_views[-100:]
+            
+        self.save(update_fields=['page_views', 'url', 'title', 'referrer'])
+    
+    def update_performance_metrics(self, metrics_data):
+        """
+        Update performance metrics for the session
+        """
+        if not isinstance(self.performance_metrics, dict):
+            self.performance_metrics = {}
+            
+        # Merge new metrics with existing ones
+        self.performance_metrics.update(metrics_data)
+        
+        self.save(update_fields=['performance_metrics'])
+    
+    def update_device_info(self, device_data):
+        """
+        Update device information for the session
+        """
+        updated_fields = []
+        
+        if 'battery_level' in device_data and device_data['battery_level'] is not None:
+            self.battery_level = device_data['battery_level']
+            updated_fields.append('battery_level')
+            
+        if 'connection_type' in device_data and device_data['connection_type']:
+            self.connection_type = device_data['connection_type']
+            updated_fields.append('connection_type')
+            
+        if 'screen_resolution' in device_data and device_data['screen_resolution']:
+            self.screen_resolution = device_data['screen_resolution']
+            updated_fields.append('screen_resolution')
+            
+        if 'device_type' in device_data and device_data['device_type']:
+            self.device_type = device_data['device_type']
+            updated_fields.append('device_type')
+            
+        if updated_fields:
+            self.save(update_fields=updated_fields)
+    
+    def update_cross_tab_event(self, event_data):
+        """
+        Update cross-tab communication events
+        """
+        if not isinstance(self.related_tabs, list):
+            self.related_tabs = []
+            
+        # Add the tab to related tabs if not already present
+        tab_id = event_data.get('source_tab_id')
+        if tab_id and tab_id not in [tab.get('tab_id') for tab in self.related_tabs]:
+            self.related_tabs.append({
+                'tab_id': tab_id,
+                'first_seen': timezone.now().isoformat(),
+                'events': []
+            })
+            
+        # Add the event to the tab's events
+        for tab in self.related_tabs:
+            if tab.get('tab_id') == tab_id:
+                if 'events' not in tab:
+                    tab['events'] = []
+                    
+                tab['events'].append(event_data)
+                tab['last_seen'] = timezone.now().isoformat()
+                
+                # Keep only the last 20 events per tab
+                if len(tab['events']) > 20:
+                    tab['events'] = tab['events'][-20:]
+                break
+                
+        self.save(update_fields=['related_tabs'])
+    
+    def update_visited_urls(self, visited_urls_data):
+        """
+        Update visited URLs frequency data
+        """
+        if not isinstance(self.visited_urls, dict):
+            self.visited_urls = {}
+            
+        # Merge new URLs with existing ones
+        for url, data in visited_urls_data.items():
+            if url in self.visited_urls:
+                # Update existing URL data
+                self.visited_urls[url]['count'] += data.get('count', 1)
+                self.visited_urls[url]['last_visit'] = data.get('last_visit', timezone.now().isoformat())
+            else:
+                # Add new URL data
+                self.visited_urls[url] = {
+                    'count': data.get('count', 1),
+                    'first_visit': data.get('first_visit', timezone.now().isoformat()),
+                    'last_visit': data.get('last_visit', timezone.now().isoformat()),
+                    'title': data.get('title', '')
+                }
+                
+        # Process visited URLs to find most visited
+        self.process_visited_urls()
+        
+        self.save(update_fields=['visited_urls', 'most_visited_url', 'most_visited_count'])
+    
+    def process_visited_urls(self):
+        """
+        Process visited URLs to find most visited and clean up old data
+        """
+        if not isinstance(self.visited_urls, dict) or not self.visited_urls:
+            return
+            
+        # Find most visited URL
+        most_visited = max(self.visited_urls.items(), key=lambda x: x[1].get('count', 0))
+        self.most_visited_url = most_visited[0]
+        self.most_visited_count = most_visited[1].get('count', 0)
+        
+        # Keep only the top 100 most visited URLs to prevent excessive data
+        if len(self.visited_urls) > 100:
+            sorted_urls = sorted(
+                self.visited_urls.items(),
+                key=lambda x: x[1].get('count', 0),
+                reverse=True
+            )
+            self.visited_urls = dict(sorted_urls[:100])
+    
+    def calculate_working_time(self):
+        """
+        Calculate total working time (session duration minus idle time)
+        """
+        end_time = self.ended_at or timezone.now()
+        session_duration = end_time - self.created_at
+        
+        # Add current idle time if session is still idle
+        total_idle = self.total_idle_time
+        if self.is_idle and self.idle_start_time:
+            current_idle = end_time - self.idle_start_time
+            if not total_idle:
+                total_idle = current_idle
+            else:
+                total_idle += current_idle
+        
+        # Working time is session duration minus idle time
+        self.working_time = max(timedelta(0), session_duration - (total_idle or timedelta(0)))
+        
+        # Calculate focus time (time spent actively engaging with the page)
+        focus_time = timedelta(0)
+        
+        # Use tab visibility log to calculate focus time
+        if isinstance(self.tab_visibility_log, list) and self.tab_visibility_log:
+            focus_periods = []
+            focus_start = None
+            
+            for event in sorted(self.tab_visibility_log, key=lambda x: x.get('timestamp', '')):
+                if event.get('action') == 'focus_gained' and not focus_start:
+                    focus_start = event.get('timestamp')
+                elif event.get('action') in ['focus_lost', 'focus_lost_to_other_tab'] and focus_start:
+                    try:
+                        focus_end = event.get('timestamp')
+                        focus_periods.append((focus_start, focus_end))
+                        focus_start = None
+                    except (ValueError, TypeError):
+                        focus_start = None
+            
+            # Add the last focus period if still in focus
+            if focus_start:
+                focus_periods.append((focus_start, end_time.isoformat()))
+            
+            # Calculate total focus time
+            for start, end in focus_periods:
+                try:
+                    start_dt = timezone.datetime.fromisoformat(start.replace('Z', '+00:00'))
+                    
+                    if isinstance(end, str):
+                        end_dt = timezone.datetime.fromisoformat(end.replace('Z', '+00:00'))
+                    else:
+                        end_dt = end
+                        
+                    period_duration = end_dt - start_dt
+                    focus_time += period_duration
+                except (ValueError, TypeError):
+                    continue
+        
+        self.focus_time = focus_time
+        self.save(update_fields=['working_time', 'focus_time'])
+    
+    def calculate_productivity_score(self):
+        """
+        Calculate productivity score based on working time, idle time, and interaction frequency
+        """
+        # Ensure working time is calculated
+        if not self.working_time:
+            self.calculate_working_time()
+        
+        # Get session duration
+        end_time = self.ended_at or timezone.now()
+        session_duration = end_time - self.created_at
+        
+        # Avoid division by zero
+        if session_duration.total_seconds() == 0:
+            self.productivity_score = 0
+            return
+        
+        # Calculate base score from working time ratio
+        working_ratio = self.working_time.total_seconds() / session_duration.total_seconds()
+        base_score = working_ratio * 100
+        
+        # Calculate interaction frequency score
+        interaction_count = (
+            len(self.clicks or []) +
+            len(self.keyboard_events or []) +
+            len(self.scrolls or []) +
+            len(self.page_views or [])
+        )
+        
+        # Normalize interaction count by working time (per hour)
+        working_hours = self.working_time.total_seconds() / 3600
+        if working_hours > 0:
+            interactions_per_hour = interaction_count / working_hours
+            
+            # Score based on interactions per hour (diminishing returns after 300)
+            interaction_score = min(100, interactions_per_hour / 3)
+        else:
+            interaction_score = 0
+        
+        # Final productivity score is weighted average
+        self.productivity_score = (base_score * 0.7) + (interaction_score * 0.3)
+        
+        # Clamp to 0-100 range
+        self.productivity_score = max(0, min(100, self.productivity_score))
+        
+        self.save(update_fields=['productivity_score'])
+    
+    def calculate_engagement_score(self):
+        """
+        Calculate engagement score based on focus time, interaction rate, page view rate, and session length
+        """
+        # Ensure working time and focus time are calculated
+        if not self.working_time or not self.focus_time:
+            self.calculate_working_time()
+        
+        # Get session duration
+        end_time = self.ended_at or timezone.now()
+        session_duration = end_time - self.created_at
+        
+        # Avoid division by zero
+        if session_duration.total_seconds() == 0:
+            self.engagement_score = 0
+            return
+        
+        # Calculate focus ratio (focus time / working time)
+        if self.working_time.total_seconds() > 0:
+            focus_ratio = self.focus_time.total_seconds() / self.working_time.total_seconds()
+        else:
+            focus_ratio = 0
+        
+        # Calculate interaction rate (interactions per minute of working time)
+        interaction_count = (
+            len(self.clicks or []) +
+            len(self.keyboard_events or []) +
+            len(self.scrolls or [])
+        )
+        
+        working_minutes = self.working_time.total_seconds() / 60
+        if working_minutes > 0:
+            interaction_rate = interaction_count / working_minutes
+        else:
+            interaction_rate = 0
+        
+        # Calculate page view rate (page views per hour)
+        page_view_count = len(self.page_views or [])
+        working_hours = self.working_time.total_seconds() / 3600
+        if working_hours > 0:
+            page_view_rate = page_view_count / working_hours
+        else:
+            page_view_rate = 0
+        
+        # Calculate session length score (diminishing returns after 2 hours)
+        session_hours = session_duration.total_seconds() / 3600
+        session_length_score = min(100, session_hours * 50)
+        
+        # Calculate component scores (0-100 scale)
+        focus_score = focus_ratio * 100
+        interaction_score = min(100, interaction_rate * 10)  # Cap at 10 interactions per minute
+        page_view_score = min(100, page_view_rate * 5)  # Cap at 20 page views per hour
+        
+        # Final engagement score is weighted average
+        self.engagement_score = (
+            (focus_score * 0.4) +
+            (interaction_score * 0.3) +
+            (page_view_score * 0.2) +
+            (session_length_score * 0.1)
+        )
+        
+        # Clamp to 0-100 range
+        self.engagement_score = max(0, min(100, self.engagement_score))
+        
+        self.save(update_fields=['engagement_score'])
+    
+    def check_security_anomalies(self):
+        """
+        Check for security anomalies in the session
+        """
+        anomalies = []
+        
+        # Check for fingerprint mismatch
+        if self.browser_fingerprint:
+            # Get other active sessions for this user
+            other_sessions = UserSession.objects.filter(
+                user=self.user,
+                is_active=True
+            ).exclude(id=self.id)
+            
+            for session in other_sessions:
+                if session.browser_fingerprint and session.browser_fingerprint != self.browser_fingerprint:
+                    anomalies.append({
+                        'type': 'fingerprint_mismatch',
+                        'severity': 'high',
+                        'details': {
+                            'session_id': str(session.id),
+                            'timestamp': timezone.now().isoformat()
+                        }
+                    })
+        
+        # Check for excessive clicking (potential bot/automation)
+        if isinstance(self.clicks, list) and len(self.clicks) > 0:
+            # Calculate clicks per minute
+            end_time = self.ended_at or timezone.now()
+            session_minutes = (end_time - self.created_at).total_seconds() / 60
+            
+            if session_minutes > 0:
+                clicks_per_minute = len(self.clicks) / session_minutes
+                
+                if clicks_per_minute > 30:  # More than 30 clicks per minute is suspicious
+                    anomalies.append({
+                        'type': 'excessive_clicking',
+                        'severity': 'medium',
+                        'details': {
+                            'clicks_per_minute': clicks_per_minute,
+                            'timestamp': timezone.now().isoformat()
+                        }
+                    })
+        
+        # Check for rapid tab switching
+        if isinstance(self.tab_visibility_log, list) and len(self.tab_visibility_log) > 10:
+            # Calculate tab switches per minute
+            end_time = self.ended_at or timezone.now()
+            session_minutes = (end_time - self.created_at).total_seconds() / 60
+            
+            if session_minutes > 0:
+                switches_per_minute = len(self.tab_visibility_log) / session_minutes / 2  # Divide by 2 because each switch is 2 events
+                
+                if switches_per_minute > 10:  # More than 10 switches per minute is suspicious
+                    anomalies.append({
+                        'type': 'rapid_tab_switching',
+                        'severity': 'low',
+                        'details': {
+                            'switches_per_minute': switches_per_minute,
+                            'timestamp': timezone.now().isoformat()
+                        }
+                    })
+        
+        # Update security anomalies if new ones found
+        if anomalies:
+            if not isinstance(self.security_anomalies, list):
+                self.security_anomalies = []
+                
+            self.security_anomalies.extend(anomalies)
+            self.security_score = self.calculate_security_score()
+            
+            self.save(update_fields=['security_anomalies', 'security_score'])
+            
+        return anomalies
+    
+    def calculate_security_score(self):
+        """
+        Calculate security score based on anomalies
+        """
+        if not isinstance(self.security_anomalies, list):
+            return 100
+            
+        # Count anomalies by severity
+        high_count = sum(1 for a in self.security_anomalies if a.get('severity') == 'high')
+        medium_count = sum(1 for a in self.security_anomalies if a.get('severity') == 'medium')
+        low_count = sum(1 for a in self.security_anomalies if a.get('severity') == 'low')
+        
+        # Calculate score (100 is best, 0 is worst)
+        score = 100 - (high_count * 20) - (medium_count * 10) - (low_count * 5)
+        
+        # Clamp to 0-100 range
+        return max(0, min(100, score))
+    
+    def should_show_warning(self, warning_threshold_minutes=25):
+        """
+        Determine if an inactivity warning should be shown
+        """
+        if not self.is_active or not self.is_idle:
+            return False
+            
+        # Calculate idle time
+        now = timezone.now()
+        if not self.idle_start_time:
+            return False
+            
+        idle_minutes = (now - self.idle_start_time).total_seconds() / 60
+        
+        # Show warning if idle time is greater than warning threshold
+        # but less than auto-logout threshold
+        return idle_minutes >= warning_threshold_minutes and idle_minutes < 30
+    
+    def get_remaining_time(self):
+        """
+        Get remaining time until auto-logout in minutes
+        """
+        if not self.is_active or not self.is_idle or not self.idle_start_time:
+            return 30  # Default auto-logout threshold
+            
+        # Calculate idle time
+        now = timezone.now()
+        idle_minutes = (now - self.idle_start_time).total_seconds() / 60
+        
+        # Calculate remaining time
+        remaining = max(0, 30 - idle_minutes)  # 30 minutes is the auto-logout threshold
+        
+        return round(remaining)
+    
+    def get_idle_time(self):
+        """
+        Get current idle time in minutes
+        """
+        if not self.is_idle or not self.idle_start_time:
+            return 0
+            
+        # Calculate idle time
+        now = timezone.now()
+        idle_minutes = (now - self.idle_start_time).total_seconds() / 60
+        
+        return round(idle_minutes)
+    
+    def get_session_duration(self):
+        """
+        Get session duration in minutes
+        """
+        end_time = self.ended_at or timezone.now()
+        duration = (end_time - self.created_at).total_seconds() / 60
+        
+        return round(duration)
+    
+    def get_working_time_minutes(self):
+        """
+        Get working time in minutes
+        """
+        self.calculate_working_time()  # Ensure working time is up to date
+        return round(self.working_time.total_seconds() / 60)
+    
+    def get_focus_time_minutes(self):
+        """
+        Get focus time in minutes
+        """
+        self.calculate_working_time()  # Ensure focus time is up to date
+        return round(self.focus_time.total_seconds() / 60)
+    
+    def get_session_summary(self):
+        """
+        Get a summary of the session
+        """
+        # Ensure metrics are up to date
+        if self.is_active:
+            self.calculate_working_time()
+            self.calculate_productivity_score()
+            self.calculate_engagement_score()
+            self.check_security_anomalies()
+        
+        # Get page view count by URL
+        page_views_by_url = {}
+        if isinstance(self.page_views, list):
+            for view in self.page_views:
+                url = view.get('url')
+                if url:
+                    if url not in page_views_by_url:
+                        page_views_by_url[url] = {
+                            'count': 0,
+                            'title': view.get('title', '')
+                        }
+                    page_views_by_url[url]['count'] += 1
+        
+        # Get most visited URLs
+        most_visited = []
+        if isinstance(self.visited_urls, dict):
+            sorted_urls = sorted(
+                self.visited_urls.items(),
+                key=lambda x: x[1].get('count', 0),
+                reverse=True
+            )[:5]  # Top 5 most visited
+            
+            most_visited = [
+                {
+                    'url': url,
+                    'count': data.get('count', 0),
+                    'title': data.get('title', '')
+                }
+                for url, data in sorted_urls
+            ]
+        
+        # Get related tabs
+        related_tabs = []
+        if isinstance(self.related_tabs, list):
+            for tab in self.related_tabs:
+                related_tabs.append({
+                    'tab_id': tab.get('tab_id'),
+                    'first_seen': tab.get('first_seen'),
+                    'last_seen': tab.get('last_seen'),
+                    'event_count': len(tab.get('events', []))
+                })
+        
+        return {
+            'session_id': str(self.id),
+            'user': self.user.username,
+            'created_at': self.created_at.isoformat(),
+            'last_activity': self.last_activity.isoformat(),
+            'ended_at': self.ended_at.isoformat() if self.ended_at else None,
+            'is_active': self.is_active,
+            'is_idle': self.is_idle,
+            'idle_time_minutes': self.get_idle_time(),
+            'session_duration_minutes': self.get_session_duration(),
+            'working_time_minutes': self.get_working_time_minutes(),
+            'focus_time_minutes': self.get_focus_time_minutes(),
+            'productivity_score': round(self.productivity_score) if self.productivity_score is not None else None,
+            'engagement_score': round(self.engagement_score) if self.engagement_score is not None else None,
+            'security_score': round(self.security_score) if self.security_score is not None else None,
+            'device_type': self.device_type,
+            'location': {
+                'country': self.location_country,
+                'region': self.location_region,
+                'city': self.location_city,
+                'type': self.location_type
+            },
+            'activity_counts': {
+                'page_views': len(self.page_views or []),
+                'clicks': len(self.clicks or []),
+                'scrolls': len(self.scrolls or []),
+                'keyboard_events': len(self.keyboard_events or []),
+                'mouse_movements': self.mouse_movements
+            },
+            'most_visited_urls': most_visited,
+            'related_tabs': related_tabs,
+            'security_anomalies': self.security_anomalies if isinstance(self.security_anomalies, list) else []
+        }
 
-            # Set location
-            new_session.location = new_session.determine_location()
-            new_session.save(update_fields=['location'])
-
-            return new_session
 
     def determine_location(self):
-        """Determine if the user is working from home or office based on IP address."""
-        if not self.ip_address:
-            return 'Unknown'
-
-        ip = self.ip_address.strip()
-        return 'Office' if ip in self.OFFICE_IPS else 'Home'
-
-    def update_activity(self, current_time=None, is_idle=False):
-        """Update the last activity timestamp and calculate idle time"""
-        from django.db import transaction
-
-        with transaction.atomic():
-            current_time = current_time or timezone.now()  # Store in UTC
-
-            # Calculate time since last activity
-            time_since_last_activity = current_time - self.last_activity
-
-            # Only update idle time if the frontend reports user as idle
-            if is_idle:
-                from django.db.models import F
-                UserSession.objects.filter(pk=self.pk).update(
-                    idle_time=F('idle_time') + time_since_last_activity,
-                    last_activity=current_time
-                )
-                self.refresh_from_db()
-            else:
-                # If not idle, just update last_activity
-                self.last_activity = current_time
-                self.save(update_fields=['last_activity'])
-
-            return self
-
-    def end_session(self, logout_time=None, is_idle=False):
-        """End the current session"""
-        if not self.is_active:
-            return self
-
-        with transaction.atomic():
-            logout_time = logout_time or timezone.now()  # Store in UTC
-
-            # Calculate final idle time
-            time_since_last_activity = logout_time - self.last_activity
-
-            # Only add to idle time if the user was reported as idle
-            if is_idle:
-                from django.db.models import F
-                UserSession.objects.filter(pk=self.pk).update(
-                    idle_time=F('idle_time') + time_since_last_activity
-                )
-                self.refresh_from_db(fields=['idle_time'])
-
-            # Set logout time
-            self.logout_time = logout_time
-            self.is_active = False
-
-            # Calculate working hours
-            total_duration = logout_time - self.login_time
-            self.working_hours = total_duration - self.idle_time
-
-            # Calculate session duration in minutes
-            self.session_duration = (logout_time - self.login_time).total_seconds() / 60
-
-            self.save(update_fields=['logout_time', 'is_active', 'working_hours', 'session_duration'])
-
-            return self
-
-    def get_session_duration_display(self):
-        """Get formatted session duration"""
-        if self.session_duration is None:
-            return "Session active"
-
-        hours = int(self.session_duration // 60)
-        minutes = int(self.session_duration % 60)
-
-        if hours > 0:
-            return f"{hours}h {minutes}m"
-        return f"{minutes}m"
-
-    def get_total_working_hours_display(self):
-        """Get formatted working hours"""
-        if self.working_hours is None:
-            if self.is_active:
-                # Calculate working hours for active session
-                current_time = timezone.now()  # Use UTC
-                total_duration = current_time - self.login_time
-                working_hours = total_duration - self.idle_time
-                total_seconds = working_hours.total_seconds()
-            else:
-                return "N/A"
-        else:
-            total_seconds = self.working_hours.total_seconds()
-
-        # Ensure we don't show negative time
-        total_seconds = max(0, total_seconds)
-
-        hours = int(total_seconds // 3600)
-        minutes = int((total_seconds % 3600) // 60)
-
-        return f"{hours}h {minutes}m"
-
-    # ========== ENHANCED MULTI-TAB TRACKING METHODS ==========
-
-    @classmethod
-    def create_tab_session(cls, user, tab_data, parent_session_id=None):
-        """Create a new tab session linked to a parent session"""
-        import uuid
-
-        current_time = timezone.now()
-        tab_id = tab_data.get('tab_id') or str(uuid.uuid4())
-
-        # If no parent session provided, generate one
-        if not parent_session_id:
-            parent_session_id = f"{user.id}_{current_time.strftime('%Y%m%d_%H%M%S')}"
-
-        # Check if this is the first tab (primary tab)
-        existing_tabs = cls.objects.filter(
-            user=user,
-            parent_session_id=parent_session_id,
-            is_active=True
-        ).count()
-
-        is_primary = existing_tabs == 0
-
-        tab_session = cls.objects.create(
-            user=user,
-            session_key=tab_data.get('session_key', cls.generate_session_key()),
-            ip_address=tab_data.get('ip_address'),
-            user_agent=tab_data.get('user_agent'),
-            login_time=current_time,
-            last_activity=current_time,
-            tab_id=tab_id,
-            tab_title=tab_data.get('title', '')[:255],
-            tab_url=tab_data.get('url', ''),
-            tab_opened_time=current_time,
-            tab_last_focus=current_time,
-            is_primary_tab=is_primary,
-            parent_session_id=parent_session_id,
-            session_fingerprint=tab_data.get('fingerprint'),
-            device_type=tab_data.get('device_type'),
-            screen_resolution=tab_data.get('screen_resolution'),
-            timezone_offset=tab_data.get('timezone_offset'),
-            language=tab_data.get('language'),
-            is_active=True
-        )
-
-        # Set location
-        tab_session.location = tab_session.determine_location()
-        tab_session.save(update_fields=['location'])
-
-        return tab_session
-
-    def update_tab_activity(self, activity_data):
-        """Update tab-specific activity and tracking"""
-        current_time = timezone.now()
-
-        # Update basic activity
-        self.last_activity = current_time
-
-        # Track tab focus changes
-        if activity_data.get('gained_focus'):
-            if self.tab_last_focus:
-                # Add to background time
-                background_duration = current_time - self.tab_last_focus
-                self.background_time += background_duration
-
-            self.tab_last_focus = current_time
-            self.tab_switches += 1
-
-            # Log visibility change
-            if not self.tab_visibility_log:
-                self.tab_visibility_log = []
-            self.tab_visibility_log.append({
-                'timestamp': current_time.isoformat(),
-                'action': 'focus_gained',
-                'url': activity_data.get('url', self.tab_url)
-            })
-
-        # Track page views
-        if activity_data.get('page_change'):
-            self.tab_url = activity_data.get('url', self.tab_url)
-            self.tab_title = activity_data.get('title', self.tab_title)[:255]
-
-            if not self.page_views:
-                self.page_views = []
-            self.page_views.append({
-                'url': self.tab_url,
-                'title': self.tab_title,
-                'timestamp': current_time.isoformat(),
-                'referrer': activity_data.get('referrer', '')
-            })
-
-        # Track interactions
-        interaction_type = activity_data.get('interaction_type')
-        if interaction_type == 'click':
-            if not self.click_events:
-                self.click_events = []
-            self.click_events.append({
-                'timestamp': current_time.isoformat(),
-                'element': activity_data.get('element_info', {}),
-                'coordinates': activity_data.get('coordinates', {})
-            })
-
-        elif interaction_type == 'scroll':
-            if not self.scroll_events:
-                self.scroll_events = []
-            self.scroll_events.append({
-                'timestamp': current_time.isoformat(),
-                'scroll_position': activity_data.get('scroll_position', 0),
-                'direction': activity_data.get('scroll_direction', 'down')
-            })
-
-        elif interaction_type == 'keyboard':
-            if not self.keyboard_events:
-                self.keyboard_events = []
-            self.keyboard_events.append({
-                'timestamp': current_time.isoformat(),
-                'key_count': activity_data.get('key_count', 1),
-                'input_type': activity_data.get('input_type', 'typing')
-            })
-
-        elif interaction_type == 'mouse_move':
-            self.mouse_movements += 1
-
-        # Update performance metrics
-        if activity_data.get('performance_data'):
-            if not self.performance_metrics:
-                self.performance_metrics = {}
-            self.performance_metrics.update(activity_data['performance_data'])
-
-        # Update device info
-        if activity_data.get('battery_level') is not None:
-            self.battery_level = activity_data['battery_level']
-
-        if activity_data.get('connection_type'):
-            self.connection_type = activity_data['connection_type']
-
-        # Record cross-tab communication
-        if activity_data.get('broadcast_sent'):
-            self.broadcast_messages_sent += 1
-
-        if activity_data.get('broadcast_received'):
-            self.broadcast_messages_received += 1
-            self.cross_tab_activity_syncs += 1
-
-        self.save()
-
-        return self
-
-    def calculate_productivity_score(self):
-        """Calculate productivity score based on activity patterns"""
-        if not self.is_active or not self.last_activity:
-            return 0
-
-        current_time = timezone.now()
-        session_duration = (current_time - self.login_time).total_seconds()
-
-        if session_duration < 300:  # Less than 5 minutes
-            return 0
-
-        # Base score from working hours vs idle time
-        idle_seconds = self.idle_time.total_seconds() if self.idle_time else 0
-        working_ratio = max(0, (session_duration - idle_seconds) / session_duration)
-        base_score = working_ratio * 70  # 70% weight for time-based productivity
-
-        # Interaction score (30% weight)
-        interaction_score = 0
-        if self.click_events:
-            interaction_score += min(len(self.click_events) * 2, 15)
-        if self.keyboard_events:
-            interaction_score += min(len(self.keyboard_events) * 1, 10)
-        if self.scroll_events:
-            interaction_score += min(len(self.scroll_events) * 0.5, 5)
-
-        # Page view diversity bonus
-        if self.page_views:
-            unique_pages = len(set(pv.get('url', '') for pv in self.page_views))
-            if unique_pages > 1:
-                interaction_score += min(unique_pages, 5)
-
-        # Penalty for excessive tab switching
-        if self.tab_switches > 20:
-            interaction_score -= min(self.tab_switches - 20, 10)
-
-        total_score = min(base_score + interaction_score, 100)
-        self.productivity_score = total_score
-
-        # Determine session quality
-        if total_score >= 80:
-            self.session_quality = 'high'
-        elif total_score >= 50:
-            self.session_quality = 'medium'
-        else:
-            self.session_quality = 'low'
-
-        return total_score
-
-    def calculate_engagement_score(self):
-        """Calculate user engagement score"""
-        if not self.is_active:
-            return 0
-
-        current_time = timezone.now()
-        session_duration = (current_time - self.login_time).total_seconds() / 60  # in minutes
-
-        if session_duration < 5:
-            return 0
-
-        # Focus time ratio
-        focus_time = self.tab_total_focus_time.total_seconds() if self.tab_total_focus_time else 0
-        background_time = self.background_time.total_seconds() if self.background_time else 0
-        total_tab_time = focus_time + background_time
-
-        focus_ratio = focus_time / total_tab_time if total_tab_time > 0 else 0
-
-        # Interaction frequency
-        total_interactions = (
-            len(self.click_events or []) +
-            len(self.keyboard_events or []) +
-            len(self.scroll_events or [])
-        )
-        interaction_rate = total_interactions / session_duration
-
-        # Page view engagement
-        page_view_rate = len(self.page_views or []) / session_duration
-
-        # Calculate engagement score
-        engagement = (
-            focus_ratio * 40 +  # 40% weight for focus time
-            min(interaction_rate * 20, 30) +  # 30% weight for interactions
-            min(page_view_rate * 10, 20) +  # 20% weight for page views
-            min(session_duration / 60 * 5, 10)  # 10% weight for session length
-        )
-
-        self.engagement_score = min(engagement, 100)
-        return self.engagement_score
-
-    def check_security_anomalies(self, new_fingerprint=None):
-        """Check for potential security issues"""
-        anomalies = []
-
-        # Fingerprint mismatch
-        if new_fingerprint and self.session_fingerprint:
-            if new_fingerprint != self.session_fingerprint:
-                anomalies.append({
-                    'type': 'fingerprint_mismatch',
-                    'severity': 'medium',
-                    'old_fingerprint': self.session_fingerprint,
-                    'new_fingerprint': new_fingerprint,
-                    'timestamp': timezone.now().isoformat()
-                })
-
-        # Unusual activity patterns
-        if self.click_events and len(self.click_events) > 1000:  # Excessive clicking
-            anomalies.append({
-                'type': 'excessive_clicking',
-                'severity': 'low',
-                'click_count': len(self.click_events),
-                'timestamp': timezone.now().isoformat()
-            })
-
-        # Rapid tab switching (potential bot behavior)
-        if self.tab_switches > 100:
-            anomalies.append({
-                'type': 'excessive_tab_switching',
-                'severity': 'medium',
-                'switch_count': self.tab_switches,
-                'timestamp': timezone.now().isoformat()
-            })
-
-        # Update security incidents
-        if anomalies:
-            if not self.security_incidents:
-                self.security_incidents = {}
-
-            incident_key = f"incident_{timezone.now().strftime('%Y%m%d_%H%M%S')}"
-            self.security_incidents[incident_key] = anomalies
-            self.save(update_fields=['security_incidents'])
-
-        return anomalies
-
-    def should_show_inactivity_warning(self):
-        """Check if inactivity warning should be shown"""
-        if not self.auto_logout_enabled or not self.is_active:
-            return False
-
-        current_time = timezone.now()
-        inactive_duration = (current_time - self.last_activity).total_seconds() / 60
-        warning_threshold = self.WARNING_THRESHOLD_MINUTES
-
-        # Don't show if already shown recently
-        if self.last_warning_time:
-            time_since_warning = (current_time - self.last_warning_time).total_seconds() / 60
-            if time_since_warning < 2:  # Don't show again within 2 minutes
-                return False
-
-        return inactive_duration >= warning_threshold
-
-    def should_auto_logout(self):
-        """Check if session should be automatically logged out"""
-        if not self.auto_logout_enabled or not self.is_active:
-            return False
-
-        current_time = timezone.now()
-        inactive_duration = (current_time - self.last_activity).total_seconds() / 60
-        timeout_threshold = self.custom_timeout or self.AUTO_LOGOUT_MINUTES
-
-        return inactive_duration >= timeout_threshold
-
-    def record_inactivity_warning(self):
-        """Record that an inactivity warning was shown"""
-        self.inactivity_warnings_sent += 1
-        self.last_warning_time = timezone.now()
-        self.save(update_fields=['inactivity_warnings_sent', 'last_warning_time'])
-
-    def get_related_tabs(self):
-        """Get all tabs from the same browser session"""
-        if not self.parent_session_id:
-            return UserSession.objects.filter(id=self.id)
-
-        return UserSession.objects.filter(
-            parent_session_id=self.parent_session_id,
-            user=self.user,
-            is_active=True
-        ).order_by('tab_opened_time')
-
-    def get_session_summary(self):
-        """Get comprehensive session summary"""
-        current_time = timezone.now()
-        session_duration = (current_time - self.login_time).total_seconds() / 60
-
-        related_tabs = self.get_related_tabs()
-
+        """
+        Determine location based on IP address
+        """
+        if self.ip_address:
+            self.update_location_from_ip()
         return {
-            'session_id': self.parent_session_id or self.tab_id,
-            'tab_id': self.tab_id,
-            'is_primary_tab': self.is_primary_tab,
-            'total_tabs': related_tabs.count(),
-            'session_duration_minutes': session_duration,
-            'idle_time_minutes': self.idle_time.total_seconds() / 60 if self.idle_time else 0,
-            'productivity_score': self.calculate_productivity_score(),
-            'engagement_score': self.calculate_engagement_score(),
-            'total_page_views': len(self.page_views or []),
-            'total_interactions': (
-                len(self.click_events or []) +
-                len(self.keyboard_events or []) +
-                len(self.scroll_events or [])
-            ),
-            'tab_switches': self.tab_switches,
-            'security_incidents': len(self.security_incidents or {}),
-            'device_info': {
-                'type': self.device_type,
-                'screen_resolution': self.screen_resolution,
-                'connection_type': self.connection_type,
-                'battery_level': self.battery_level
-            }
+            'country': self.location_country or 'Unknown',
+            'region': self.location_region or 'Unknown',
+            'city': self.location_city or 'Unknown',
+            'type': self.location_type or 'unknown'
         }
-
-    @classmethod
-    def cleanup_expired_sessions(cls, hours=24):
-        """Clean up old expired sessions"""
-        cutoff_time = timezone.now() - timedelta(hours=hours)
-
-        expired_sessions = cls.objects.filter(
-            is_active=False,
-            logout_time__lt=cutoff_time
-        )
-
-        count = expired_sessions.count()
-        expired_sessions.delete()
-
-        return count
-
-    @classmethod
-    def get_multi_tab_analytics(cls, user=None, days=7):
-        """Get analytics for multi-tab usage"""
-        start_date = timezone.now() - timedelta(days=days)
-
-        queryset = cls.objects.filter(login_time__gte=start_date)
-        if user:
-            queryset = queryset.filter(user=user)
-
-        # Group by parent session
-        sessions_by_parent = {}
-        for session in queryset:
-            parent_id = session.parent_session_id or session.tab_id
-            if parent_id not in sessions_by_parent:
-                sessions_by_parent[parent_id] = []
-            sessions_by_parent[parent_id].append(session)
-
-        # Calculate analytics
-        total_sessions = len(sessions_by_parent)
-        multi_tab_sessions = sum(1 for tabs in sessions_by_parent.values() if len(tabs) > 1)
-        avg_tabs_per_session = sum(len(tabs) for tabs in sessions_by_parent.values()) / total_sessions if total_sessions > 0 else 0
-
-        return {
-            'total_sessions': total_sessions,
-            'multi_tab_sessions': multi_tab_sessions,
-            'multi_tab_percentage': (multi_tab_sessions / total_sessions * 100) if total_sessions > 0 else 0,
-            'avg_tabs_per_session': avg_tabs_per_session,
-            'max_tabs_in_session': max(len(tabs) for tabs in sessions_by_parent.values()) if sessions_by_parent else 0
-        }
-
+        
     def save(self, *args, **kwargs):
+        # Initialize JSON fields with proper defaults if they are None
+        json_fields = ['tab_title', 'tab_url', 'url', 'title', 'referrer', 'page_views', 
+                      'clicks', 'scrolls', 'keyboard_events', 'tab_visibility_log', 
+                      'idle_state_changes', 'visited_urls', 'related_tabs', 'security_anomalies']
+        
+        for field in json_fields:
+            if getattr(self, field) is None:
+                if field in ['page_views', 'clicks', 'scrolls', 'keyboard_events', 
+                            'tab_visibility_log', 'idle_state_changes', 'visited_urls', 'security_anomalies']:
+                    setattr(self, field, [])
+                else:
+                    setattr(self, field, {})
+        
         # Set location if not already set for new sessions
-        if not self.pk and not self.location:
-            self.location = self.determine_location()
+        if not self.pk and not self.location_city and self.ip_address:
+            self.update_location_from_ip()
 
         # Generate tab_id if not set
         if not self.tab_id:
@@ -1437,7 +1797,6 @@ class Holiday(models.Model):
 
         return False
 
-# Now, let's enhance the shift assignment model to assign shifts to employees
 class ShiftAssignment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     shift = models.ForeignKey(ShiftMaster, on_delete=models.CASCADE)
@@ -1459,25 +1818,47 @@ class ShiftAssignment(models.Model):
         return f"{self.user.username} - {self.shift.name} (from {self.effective_from})"
 
     def save(self, *args, **kwargs):
-        # Convert effective_from to a proper date object if it's a string
         if isinstance(self.effective_from, str):
             self.effective_from = timezone.datetime.strptime(self.effective_from, '%Y-%m-%d').date()
 
-        # If this is a new current assignment, make all other assignments for this user not current
         if self.is_current:
-            # Get other current assignments for this user
             other_assignments = ShiftAssignment.objects.filter(
                 user=self.user,
                 is_current=True
             ).exclude(id=self.id if self.id else None)
 
-            # Update each assignment individually to prevent type errors
             for assignment in other_assignments:
                 assignment.is_current = False
                 assignment.effective_to = self.effective_from - timedelta(days=1)
                 assignment.save(update_fields=['is_current', 'effective_to'])
 
         super().save(*args, **kwargs)
+
+    def is_active_on(self, date):
+        """Check if this shift assignment is active on a given date"""
+        if self.effective_from <= date and (not self.effective_to or date <= self.effective_to):
+            return True
+        return False
+
+    def days_remaining(self):
+        """Return number of days left in this shift assignment"""
+        today = timezone.now().date()
+        if self.effective_to:
+            remaining = (self.effective_to - today).days
+            return max(remaining, 0)
+        return None  # Open-ended shift
+
+    def total_duration(self):
+        """Return total duration in days of the shift assignment"""
+        if self.effective_to:
+            return (self.effective_to - self.effective_from).days + 1
+        return None
+
+    def has_ended(self):
+        """Check if this shift assignment has ended"""
+        if self.effective_to and self.effective_to < timezone.now().date():
+            return True
+        return False
 
     @classmethod
     def get_user_current_shift(cls, user, date=None):
@@ -1511,7 +1892,6 @@ class ShiftAssignment(models.Model):
         if not assignment:
             day_shift = ShiftMaster.objects.filter(name='Day Shift').first()
             if not day_shift:
-                # Create default Day Shift if it doesn't exist
                 day_shift = ShiftMaster.objects.create(
                     name='Day Shift',
                     start_time=time(9, 0),
@@ -1523,6 +1903,37 @@ class ShiftAssignment(models.Model):
 
         return assignment.shift
 
+    @classmethod
+    def current_assignment_for_user(cls, user):
+        """Get current active assignment for user"""
+        today = timezone.now().date()
+        return cls.objects.filter(
+            user=user,
+            effective_from__lte=today
+        ).filter(
+            models.Q(effective_to__gte=today) | models.Q(effective_to__isnull=True)
+        ).order_by('-effective_from').first()
+
+    @classmethod
+    def upcoming_shift_endings(cls, days=7):
+        """Find shift assignments ending in next N days"""
+        today = timezone.now().date()
+        end_limit = today + timedelta(days=days)
+        return cls.objects.filter(
+            effective_to__range=(today, end_limit)
+        ).select_related('user', 'shift')
+
+    @classmethod
+    def get_shift_history(cls, user, start_date=None, end_date=None):
+        """Get shift assignment history for a user within date range"""
+        query = cls.objects.filter(user=user)
+        if start_date:
+            query = query.filter(effective_from__gte=start_date)
+        if end_date:
+            query = query.filter(effective_to__lte=end_date)
+        return query.order_by('-effective_from')
+
+        
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone

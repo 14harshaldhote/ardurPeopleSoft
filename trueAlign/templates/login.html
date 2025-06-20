@@ -4,168 +4,235 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TrueAlign - Login</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <title>Ardur Home - Enterprise Management</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            200: '#c7d2fe',
+                            300: '#a5b4fc',
+                            400: '#818cf8',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            800: '#3730a3',
+                            900: '#312e81',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
-        .watermark-container {
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(-45deg, rgba(99, 101, 241, 0.779), rgba(229, 70, 205, 0.59), rgba(124, 58, 237, 0.4), rgba(68, 56, 202, 0.864));
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+            min-height: 100vh;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .floating-shape {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .shape-1 {
+            width: 300px;
+            height: 300px;
+            top: -100px;
+            left: -50px;
+        }
+
+        .shape-2 {
+            width: 200px;
+            height: 200px;
+            bottom: -50px;
+            right: -50px;
+            animation-delay: -3s;
+        }
+
+        .login-container {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+            max-width: 450px;
+            width: 100%;
+            padding: 2.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .logo-container {
+            transition: transform 0.3s ease;
             position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 50;
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(8px);
-            padding: 12px 16px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            top: 2rem;
+            left: 2rem;
+        }
+
+        .logo-container:hover {
+            transform: scale(1.05);
+            filter: drop-shadow(0 0 10px rgba(99, 102, 241, 0.5));
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 1rem 1rem 1rem 3rem;
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid transparent;
+            border-radius: 1rem;
+            font-size: 0.95rem;
             transition: all 0.3s ease;
         }
 
-        .watermark-container:hover {
+        .input-group input:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+            outline: none;
+        }
+
+        .input-group i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6366f1;
+            transition: all 0.3s ease;
+        }
+
+        .input-group input:focus + i {
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            color: white;
+            border-radius: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .submit-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3);
         }
 
-        .watermark-image {
-            width: 128px;
-            height: auto;
-            object-fit: contain;
-            display: block;
-        }
-        .logo-container {
-            transition: all 0.3s ease-in-out;
-            transform-origin: center;
+        .submit-btn:active {
+            transform: translateY(0);
         }
 
-        .login-logo {
-            opacity: 0.8;
-            transform: scale(0.9);
+        .submit-btn::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: -100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: 0.5s;
         }
 
-        .login-logo:hover {
-            opacity: 1;
-            transform: scale(1);
+        .submit-btn:hover::after {
+            left: 100%;
         }
 
-        @media (max-width: 640px) {
-            .watermark-container {
-                position: static;
-                margin: 24px auto 0 auto;
-                box-shadow: none;
-                background: rgba(255,255,255,0.95);
-                border-radius: 10px;
-                justify-content: center;
-                width: 90vw;
-                max-width: 350px;
-                padding: 10px 8px;
-            }
-            .logo-container {
-                position: static !important;
-                display: flex;
-                justify-content: center;
-                margin-bottom: 24px;
-            }
-            .login-logo img {
-                height: 48px !important;
-            }
+        .watermark {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 1rem;
+            backdrop-filter: blur(5px);
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-blue-50 to-indigo-200 min-h-screen flex flex-col items-center justify-center px-2 sm:px-0">
-    <div class="logo-container login-logo sm:absolute sm:top-8 sm:left-8 flex justify-center w-full sm:w-auto mb-6 sm:mb-0">
-        <img src="{% static 'images/logo.png' %}" alt="TrueAlign Logo" class="h-16 w-auto sm:h-16 h-12 mx-auto">
+<body class="flex items-center justify-center p-4">
+    <div class="floating-shape shape-1"></div>
+    <div class="floating-shape shape-2"></div>
+    
+    <!-- Logo -->
+    <div class="logo-container">
+        <img src="{% static 'images/logo.png' %}" alt="TrueAlign Logo" class="h-14">
     </div>
-    <div class="w-full max-w-md sm:max-w-md md:max-w-lg lg:max-w-md">
-        <div class="bg-white shadow-2xl rounded-3xl overflow-hidden transform hover:scale-105 transition-transform duration-300">
-            <div class="p-6 sm:p-8">
-                <h2 class="text-2xl sm:text-3xl font-bold text-center text-gray-800 mb-6">Welcome</h2>
-                
-                <form method="POST" class="space-y-6">
-                    {% csrf_token %}
-                    
-                    <div>
-                        <label for="username" class="block text-sm font-medium text-gray-700 mb-2">
-                            <i data-feather="user" class="inline-block mr-2 w-5 h-5 text-blue-500"></i>
-                            Employee ID
-                        </label>
-                        <div class="relative">
-                            <input 
-                                type="text" 
-                                name="username" 
-                                id="username" 
-                                required 
-                                class="w-full px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-300 text-base"
-                                placeholder="Enter your ID (e.g. AT1234)"
-                            >
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
-                            <i data-feather="lock" class="inline-block mr-2 w-5 h-5 text-blue-500"></i>
-                            Password
-                        </label>
-                        <div class="relative">
-                            <input 
-                                type="password" 
-                                name="password" 
-                                id="password" 
-                                required 
-                                class="w-full px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-300 text-base"
-                                placeholder="Enter your secure password"
-                            >
-                        </div>
-                    </div>
-                    
-                    {% if error %}
-                    <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-                        <p class="text-sm">{{ error }}</p>
-                    </div>
-                    {% endif %}
-                    
-                    <div class="flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-0">
-                        <div class="flex items-center">
-                            <input 
-                                id="remember" 
-                                name="remember" 
-                                type="checkbox" 
-                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                            >
-                            <label for="remember" class="ml-2 block text-sm text-gray-900">
-                                Keep me signed in
-                            </label>
-                        </div>
-                        <a href="#" class="text-sm text-blue-600 hover:text-blue-800 transition duration-300 mt-2 sm:mt-0">Forgot password?</a>
-                    </div>
-                    
-                    <div>
-                        <button 
-                            type="submit" 
-                            class="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-300"
-                        >
-                            <i data-feather="log-in" class="w-5 h-5 mr-2"></i>
-                            Sign in to your account
-                        </button>
-                    </div>
-                </form>
+    
+    <div class="relative w-full max-w-screen-xl">
+        <div class="login-container mx-auto">
+            <div class="mb-8 text-center">
+                <h2 class="text-4xl font-semibold text-gray-900 mb-2">Welcome Back!</h2>
+                <p class="text-gray-600 text-sm">Please sign in to continue</p>
             </div>
+
+            <form method="POST" class="space-y-6">
+                {% csrf_token %}
+                
+                <div class="input-group">
+                    <input type="text" name="username" placeholder="Employee ID" required>
+                    <i class="ri-user-line"></i>
+                </div>
+
+                <div class="input-group">
+                    <input type="password" name="password" placeholder="Password" required>
+                    <i class="ri-lock-line"></i>
+                </div>
+
+                {% if error %}
+                <div class="bg-red-50 text-red-600 p-4 rounded-xl mb-4">
+                    {{ error }}
+                </div>
+                {% endif %}
+
+               
+
+                <button type="submit" class="submit-btn">
+                    Sign In
+                </button>
+            </form>
+        </div>
+
+        <!-- Watermark -->
+        <div class="watermark">
+            <span class="text-sm text-white mr-2">Powered by</span>
+            <img src="{% static 'images/ardurtech.png' %}" alt="Ardur Technology" class="h-8">
         </div>
     </div>
-    <div class="watermark-container mt-8 sm:mt-0 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3">
-        <p class="text-gray-800 font-semibold whitespace-nowrap text-xs sm:text-base text-center sm:text-left">Powered by</p>
-        <img 
-            src="{% static 'images/ardurtech.png' %}" 
-            alt="Ardur Technology" 
-            class="watermark-image h-6 sm:h-8 w-auto object-contain"
-            style="max-width:120px;"
-        >
-    </div>
-    <script>
-        feather.replace();
-    </script>
 </body>
 </html>
