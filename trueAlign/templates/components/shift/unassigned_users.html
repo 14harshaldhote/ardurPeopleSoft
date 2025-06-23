@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}Users Without Shifts{% endblock %}
+
+{% block page_title %}{{ title }} on {{ date|date:"F d, Y" }}{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-4">
+    <form method="get" class="flex items-center space-x-4">
+        <div>
+            <label for="date" class="text-sm font-medium text-slate-700">Select Date:</label>
+            <input type="date" name="date" id="date" value="{{ date|date:'Y-m-d' }}" class="p-2 border rounded-md">
+        </div>
+        <button type="submit" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg shadow-md">View</button>
+    </form>
+</div>
+
+<div class="bg-white p-6 rounded-lg shadow-md">
+    <div class="overflow-x-auto">
+        <table class="min-w-full bg-white">
+            <thead class="bg-slate-100">
+                <tr>
+                    <th class="py-2 px-4 border-b text-left text-sm font-semibold text-slate-600">User</th>
+                    <th class="py-2 px-4 border-b text-left text-sm font-semibold text-slate-600">Email</th>
+                    <th class="py-2 px-4 border-b text-left text-sm font-semibold text-slate-600">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr class="hover:bg-slate-50">
+                    <td class="py-2 px-4 border-b text-sm text-slate-700">{{ user.get_full_name|default:user.username }}</td>
+                    <td class="py-2 px-4 border-b text-sm text-slate-700">{{ user.email }}</td>
+                    <td class="py-2 px-4 border-b text-sm">
+                        <a href="{% url 'shift:assign' %}?user_id={{ user.id }}" class="text-blue-500 hover:text-blue-700">Assign Shift</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3" class="py-4 px-4 text-center text-slate-500">All users have a shift assigned for this date.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

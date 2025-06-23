@@ -1,169 +1,82 @@
-{% extends "components/manager/shifts/dashboard.html" %}
+{% extends 'base.html' %}
+{% load static %}
 
-{% block shift_content %}
-<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <section class="bg-white rounded-2xl shadow-lg border border-gray-100">
-        <header class="flex items-center justify-between px-8 py-5 border-b">
-            <h5 class="text-2xl font-bold text-gray-900">User Shift Details</h5>
-            <a href="{% url 'aps_manager:assignment_list' %}" class="taliewind-btn taliewind-btn-outline flex items-center">
-                <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                Back to List
-            </a>
-        </header>
-        <section class="px-8 py-8">
-            <section class="grid grid-cols-1 md:grid-cols-2 gap-10">
-                <section>
-                    <dl class="grid grid-cols-3 gap-4">
-                        <dt class="text-sm font-medium text-gray-500">User Name</dt>
-                        <dd class="col-span-2 text-sm text-gray-900">{{ user.get_full_name|default:user.username }}</dd>
+{% block title %}Shift History for {{ user.get_full_name|default:user.username }}{% endblock %}
 
-                        <dt class="text-sm font-medium text-gray-500">Shift Name</dt>
-                        <dd class="col-span-2 text-sm text-gray-900">{{ shift.name }}</dd>
+{% block content %}
+<div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
 
-                        <dt class="text-sm font-medium text-gray-500">Start Time</dt>
-                        <dd class="col-span-2 text-sm text-gray-900">
-                            {% if shift.start_time %}{{ shift.start_time|time:"H:i" }}{% else %}-{% endif %}
-                        </dd>
-
-                        <dt class="text-sm font-medium text-gray-500">End Time</dt>
-                        <dd class="col-span-2 text-sm text-gray-900">
-                            {% if shift.end_time %}{{ shift.end_time|time:"H:i" }}{% else %}-{% endif %}
-                        </dd>
-                    </dl>
-                </section>
-                <section>
-                    <dl class="grid grid-cols-3 gap-4">
-                        <dt class="text-sm font-medium text-gray-500">Today</dt>
-                        <dd class="col-span-2">
-                            {% if is_holiday %}
-                                <span class="taliewind-badge taliewind-badge-holiday">Holiday</span>
-                            {% elif is_working_day %}
-                                <span class="taliewind-badge taliewind-badge-working">Working Day</span>
-                            {% else %}
-                                <span class="taliewind-badge taliewind-badge-off">Off</span>
-                            {% endif %}
-                        </dd>
-                        <dt class="text-sm font-medium text-gray-500">Working Days</dt>
-                        <dd class="col-span-2 flex flex-wrap gap-2">
-                            {% if shift.monday %}<span class="taliewind-badge taliewind-badge-day">Mon</span>{% endif %}
-                            {% if shift.tuesday %}<span class="taliewind-badge taliewind-badge-day">Tue</span>{% endif %}
-                            {% if shift.wednesday %}<span class="taliewind-badge taliewind-badge-day">Wed</span>{% endif %}
-                            {% if shift.thursday %}<span class="taliewind-badge taliewind-badge-day">Thu</span>{% endif %}
-                            {% if shift.friday %}<span class="taliewind-badge taliewind-badge-day">Fri</span>{% endif %}
-                            {% if shift.saturday %}<span class="taliewind-badge taliewind-badge-day">Sat</span>{% endif %}
-                            {% if shift.sunday %}<span class="taliewind-badge taliewind-badge-day">Sun</span>{% endif %}
-                        </dd>
-                    </dl>
-                </section>
-            </section>
-
-            <section class="mt-12">
-                <h6 class="text-lg font-semibold text-gray-800 mb-4">Upcoming Schedule</h6>
-                <div class="overflow-x-auto rounded-lg border border-gray-100">
-                    <table class="min-w-full divide-y divide-gray-200 taliewind-table">
-                        <thead class="bg-indigo-50">
-                            <tr>
-                                <th class="taliewind-th">Date</th>
-                                <th class="taliewind-th">Day</th>
-                                <th class="taliewind-th">Status</th>
-                                <th class="taliewind-th">Shift Start</th>
-                                <th class="taliewind-th">Shift End</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-100">
-                            {% for day in page_obj %}
-                            <tr>
-                                <td class="taliewind-td">{{ day.date }}</td>
-                                <td class="taliewind-td">{{ day.day_name }}</td>
-                                <td class="taliewind-td">
-                                    {% if day.is_holiday %}
-                                        <span class="taliewind-badge taliewind-badge-holiday">Holiday</span>
-                                    {% elif day.is_working_day %}
-                                        <span class="taliewind-badge taliewind-badge-working">Working Day</span>
-                                    {% else %}
-                                        <span class="taliewind-badge taliewind-badge-off">Off</span>
-                                    {% endif %}
-                                </td>
-                                <td class="taliewind-td">{{ day.shift_start }}</td>
-                                <td class="taliewind-td">{{ day.shift_end }}</td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="5" class="px-6 py-10 text-center text-gray-400">
-                                    <i class="fas fa-inbox text-4xl mb-3"></i>
-                                    <p>No schedule data available.</p>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                <!-- Pagination Controls -->
-                {% if page_obj.has_other_pages %}
-                <div class="flex justify-between items-center mt-6">
-                    <div>
-                        <p class="text-sm text-gray-500">
-                            Showing
-                            <span class="font-medium">{{ page_obj.start_index }}</span>
-                            to
-                            <span class="font-medium">{{ page_obj.end_index }}</span>
-                            of
-                            <span class="font-medium">{{ page_obj.paginator.count }}</span>
-                            days
-                        </p>
+    <header class="mb-8">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
+            <div>
+                <div class="flex items-center">
+                    <div class="h-16 w-16 flex-shrink-0 rounded-full bg-indigo-200 text-indigo-700 flex items-center justify-center text-2xl font-bold">
+                        {{ user.get_full_name|default:user.username|first|upper }}
                     </div>
-                    <nav class="inline-flex rounded-md shadow-sm" aria-label="Pagination">
-                        {% if page_obj.has_previous %}
-                            <a href="?page={{ page_obj.previous_page_number }}" class="relative inline-flex items-center px-3 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 focus:z-10">
-                                <i class="fas fa-chevron-left mr-1"></i> Previous
-                            </a>
-                        {% else %}
-                            <span class="relative inline-flex items-center px-3 py-2 rounded-l-md border border-gray-200 bg-gray-50 text-sm font-medium text-gray-300 cursor-not-allowed">
-                                <i class="fas fa-chevron-left mr-1"></i> Previous
-                            </span>
-                        {% endif %}
-                        {% for num in page_obj.paginator.page_range %}
-                            {% if page_obj.number == num %}
-                                <span class="relative inline-flex items-center px-3 py-2 border border-indigo-500 bg-indigo-50 text-sm font-bold text-indigo-700 focus:z-10">{{ num }}</span>
-                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                                <a href="?page={{ num }}" class="relative inline-flex items-center px-3 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 focus:z-10">{{ num }}</a>
-                            {% endif %}
-                        {% endfor %}
-                        {% if page_obj.has_next %}
-                            <a href="?page={{ page_obj.next_page_number }}" class="relative inline-flex items-center px-3 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 focus:z-10">
-                                Next <i class="fas fa-chevron-right ml-1"></i>
-                            </a>
-                        {% else %}
-                            <span class="relative inline-flex items-center px-3 py-2 rounded-r-md border border-gray-200 bg-gray-50 text-sm font-medium text-gray-300 cursor-not-allowed">
-                                Next <i class="fas fa-chevron-right ml-1"></i>
-                            </span>
-                        {% endif %}
-                    </nav>
+                    <div class="ml-4">
+                        <h1 class="text-4xl font-bold text-slate-800">{{ user.get_full_name|default:user.username }}</h1>
+                        <p class="mt-1 text-lg text-slate-500">{{ user.email }}</p>
+                    </div>
                 </div>
-                {% endif %}
-            </section>
+            </div>
+            <div class="mt-4 md:mt-0">
+                <a href="{% url 'shift:assignments' %}" class="inline-flex items-center bg-white hover:bg-slate-50 text-slate-700 font-semibold py-2 px-4 border border-slate-300 rounded-lg shadow-sm transition duration-300">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Back to Assignments
+                </a>
+            </div>
+        </div>
+    </header>
 
-            <section class="flex flex-col sm:flex-row justify-between items-center mt-10 gap-4">
-                <div class="flex space-x-4">
-                    {% if shift.pk %}
-                        <a href="{% url 'aps_manager:assignment_update' shift.pk %}" class="taliewind-btn taliewind-btn-warning flex items-center">
-                            <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                            Edit Assignment
-                        </a>
-                        <a href="{% url 'aps_manager:assignment_delete' shift.pk %}" class="taliewind-btn taliewind-btn-danger flex items-center">
-                            <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                            Delete Assignment
-                        </a>
-                    {% endif %}
-                </div>
-            </section>
-        </section>
-    </section>
-</section>
+    <div class="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
+        <div class="p-6">
+            <h2 class="text-2xl font-semibold text-slate-800">Shift Assignment History</h2>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full">
+                <thead class="bg-slate-50 border-b border-slate-200">
+                    <tr>
+                        <th scope="col" class="py-3 px-6 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Shift Name</th>
+                        <th scope="col" class="py-3 px-6 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Effective From</th>
+                        <th scope="col" class="py-3 px-6 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Effective To</th>
+                        <th scope="col" class="py-3 px-6 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200">
+                    {% for assignment in shift_history %}
+                    <tr class="hover:bg-slate-50 transition duration-150">
+                        <td class="py-4 px-6 whitespace-nowrap">
+                            <span class="font-medium text-slate-800">{{ assignment.shift.name }}</span>
+                        </td>
+                        <td class="py-4 px-6 whitespace-nowrap text-slate-600">{{ assignment.effective_from|date:"M d, Y" }}</td>
+                        <td class="py-4 px-6 whitespace-nowrap text-slate-600">{{ assignment.effective_to|date:"M d, Y"|default:"<span class='text-slate-400'>-</span>"|safe }}</td>
+                        <td class="py-4 px-6 whitespace-nowrap">
+                            {% if assignment.is_current %}
+                                <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                    <i class="fas fa-check-circle mr-1.5 mt-0.5"></i>Current
+                                </span>
+                            {% else %}
+                                <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-slate-100 text-slate-800">
+                                    Past
+                                </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center py-12 px-6">
+                            <div class="text-center">
+                                <i class="fas fa-history fa-3x text-slate-300 mb-3"></i>
+                                <h3 class="text-lg font-medium text-slate-700">No History Found</h3>
+                                <p class="mt-1 text-sm text-slate-500">This user does not have any previous or current shift assignments.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 {% endblock %}

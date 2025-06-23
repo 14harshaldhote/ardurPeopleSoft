@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-md">
+    <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="space-y-4">
+            {% for field in form %}
+            <div>
+                <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-slate-700">{{ field.label }}</label>
+                {{ field }}
+                {% if field.help_text %}
+                <p class="mt-2 text-sm text-slate-500">{{ field.help_text }}</p>
+                {% endif %}
+                {% for error in field.errors %}
+                <p class="mt-2 text-sm text-red-600">{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+        <div class="mt-6 flex justify-end">
+            <a href="{% url 'shift:holidays' %}" class="bg-slate-500 hover:bg-slate-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 mr-2">
+                Cancel
+            </a>
+            <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300">
+                {% if is_update %}Update Holiday{% else %}Create Holiday{% endif %}
+            </button>
+        </div>
+    </form>
+</div>
+
+<style>
+    /* Custom styling for form fields to match Tailwind theme */
+    input[type="text"], input[type="date"], textarea {
+        width: 100%;
+        padding: 0.5rem;
+        border-radius: 0.375rem;
+        border: 1px solid #d1d5db;
+        margin-top: 0.25rem;
+    }
+    input[type="checkbox"] {
+        width: 1rem;
+        height: 1rem;
+        margin-right: 0.5rem;
+    }
+</style>
+{% endblock %}
