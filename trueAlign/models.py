@@ -10,12 +10,15 @@ from datetime import datetime
 from django.db import transaction
 from django.utils.timezone import localtime
 import logging
-
+from decimal import Decimal
+from django.db import models
+import datetime
 # Set up logging
 logger = logging.getLogger(__name__)
 
 # Asia/Kolkata timezone
 IST_TIMEZONE = pytz.timezone('Asia/Kolkata')
+from decimal import Decimal
 
 
 
@@ -1674,6 +1677,10 @@ class CompOffRequest(models.Model):
 
 
 '''---------- ATTENDANCE AREA ----------'''
+from datetime import time, timedelta
+from decimal import Decimal
+from django.db import models
+from django.utils import timezone
 
 # First, let's create a ShiftMaster model to define different shifts
 class ShiftMaster(models.Model):
@@ -1695,8 +1702,7 @@ class ShiftMaster(models.Model):
     grace_period = models.DurationField(default=timedelta(minutes=15))
     work_days = models.CharField(max_length=20, choices=WORK_DAYS_CHOICES, default='Weekdays')
     # Increased max_length to 255 to handle longer custom day lists
-    custom_work_days = models.CharField(max_length=255, null=True, blank=True,
-                                      help_text="Comma-separated day names (Monday,Tuesday,etc.)")
+    custom_work_days = models.CharField(max_length=255, null=True, blank=True, help_text="Comma-separated day names (Monday,Tuesday,etc.)")
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -1753,44 +1759,66 @@ class ShiftMaster(models.Model):
 
         return start_datetime <= datetime_obj <= end_datetime
 
-    def expected_hours(self):
-        """Calculate expected working hours for this shift"""
-        # Convert break duration from timedelta to hours as decimal
-        break_hours = self.break_duration.total_seconds() / 3600
+    from decimal import Decimal
+
+    # Inside your Django model class
+
+    def expected_hours(self) -> Decimal:
+        """
+        Calculates the expected work hours by subtracting the break duration
+        from the total shift duration.
+        """
+        # self.break_duration is a timedelta object on a model instance
+        break_seconds = self.break_duration.total_seconds()
+
+        # Convert break_seconds to hours as a Decimal
+        break_hours = Decimal(break_seconds) / Decimal(3600)
+
+        # self.shift_duration is already a Decimal object
+        # No need to cast it again with Decimal()
         return self.shift_duration - break_hours
+
 
     def __str__(self):
         return f"{self.name} ({self.start_time.strftime('%H:%M')} - {self.end_time.strftime('%H:%M')})"
 
     def save(self, *args, **kwargs):
-        # Set default times and durations based on shift type
-        if self.name == 'Day Shift' and not self.start_time and not self.end_time:
-            self.start_time = time(9, 0)  # 9:00 AM
-            self.end_time = time(17, 30)  # 5:30 PM (8.5 hours)
-            self.shift_duration = 8.5
-            self.work_days = 'All Days'  # Monday to Saturday
-        elif self.name == 'Night Shift' and not self.start_time and not self.end_time:
-            self.start_time = time(18, 30)  # 6:30 PM
-            self.end_time = time(3, 30)    # 3:30 AM (9 hours)
-            self.shift_duration = 9.0
-            self.work_days = 'Weekdays'  # Monday to Friday
+        # Check if this is a new object (not yet saved to database)
+        is_new = self.pk is None
+
+        # Set default times and durations based on shift type for new objects
+        if is_new:
+            if self.name == 'Day Shift' and not hasattr(self, '_start_time_set'):
+                self.start_time = time(9, 0)  # 9:00 AM
+                self.end_time = time(17, 30)  # 5:30 PM (8.5 hours)
+                self.shift_duration = Decimal('8.5')
+                self.work_days = 'All Days'  # Monday to Saturday
+                self._start_time_set = True
+            elif self.name == 'Night Shift' and not hasattr(self, '_start_time_set'):
+                self.start_time = time(18, 30)  # 6:30 PM
+                self.end_time = time(3, 30)    # 3:30 AM (9 hours)
+                self.shift_duration = Decimal('9.0')
+                self.work_days = 'Weekdays'  # Monday to Friday
+                self._start_time_set = True
 
         # Calculate shift duration if not provided
-        if not self.shift_duration:
-            # Calculate hours between start and end time
-            if self.crosses_midnight:
-                # For shifts crossing midnight
-                midnight = time(0, 0)
-                hours_before_midnight = (24 - self.start_time.hour - self.start_time.minute/60)
-                hours_after_midnight = self.end_time.hour + self.end_time.minute/60
-                self.shift_duration = round(hours_before_midnight + hours_after_midnight, 2)
-            else:
-                # For regular shifts
-                hours = self.end_time.hour - self.start_time.hour
-                minutes = self.end_time.minute - self.start_time.minute
-                self.shift_duration = round(hours + minutes/60, 2)
+        if not self.shift_duration or self.shift_duration == Decimal('0.0'):
+            # Check if we have valid start and end times
+            if self.start_time and self.end_time:
+                # Calculate hours between start and end time
+                if self.crosses_midnight:
+                    # For shifts crossing midnight
+                    hours_before_midnight = Decimal(str(24 - self.start_time.hour - self.start_time.minute/60))
+                    hours_after_midnight = Decimal(str(self.end_time.hour + self.end_time.minute/60))
+                    self.shift_duration = round(hours_before_midnight + hours_after_midnight, 2)
+                else:
+                    # For regular shifts
+                    hours = Decimal(str(self.end_time.hour - self.start_time.hour))
+                    minutes = Decimal(str(self.end_time.minute - self.start_time.minute)) / Decimal('60')
+                    self.shift_duration = round(hours + minutes, 2)
 
         super().save(*args, **kwargs)
+
 
 # Now, let's add a holiday model to properly track holidays
 class Holiday(models.Model):
@@ -5309,3 +5337,992 @@ class Notification(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+
+
+
+'''----------------------------- Conference Room Booking -----------------------------'''
+
+
+class Room(models.Model):
+    """
+    Represents a conference room available for booking.
+    """
+    class RoomStatus(models.TextChoices):
+        ACTIVE = 'ACTIVE', 'Active'
+        MAINTENANCE = 'MAINTENANCE', 'Under Maintenance'
+        INACTIVE = 'INACTIVE', 'Inactive'
+
+    class RoomType(models.TextChoices):
+        CONFERENCE = 'CONFERENCE', 'Conference Room'
+        HUDDLE = 'HUDDLE', 'Huddle Room'
+        MEETING = 'MEETING', 'Meeting Room'
+        BOARD = 'BOARD', 'Board Room'
+
+    name = models.CharField(max_length=100, unique=True, help_text="Room name")
+    room_type = models.CharField(
+        max_length=15,
+        choices=RoomType.choices,
+        default=RoomType.CONFERENCE
+    )
+    capacity = models.PositiveIntegerField(default=8, help_text="Maximum seating capacity")
+    location = models.CharField(max_length=100, blank=True, help_text="Room location/floor")
+    facilities = models.TextField(
+        blank=True,
+        help_text="Available facilities (e.g., Projector, Whiteboard, Video Conferencing)"
+    )
+    status = models.CharField(
+        max_length=12,
+        choices=RoomStatus.choices,
+        default=RoomStatus.ACTIVE
+    )
+    hourly_rate = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        default=0.00,
+        help_text="Cost per hour (if applicable)"
+    )
+    description = models.TextField(blank=True, help_text="Room description")
+    image = models.ImageField(
+        upload_to='room_images/',
+        blank=True,
+        null=True,
+        help_text="Room photo"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    # Analytics fields
+    total_bookings = models.PositiveIntegerField(default=0, help_text="Total bookings made")
+    total_hours_booked = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0.00,
+        help_text="Total hours booked"
+    )
+
+    class Meta:
+        ordering = ['name']
+        verbose_name = "Conference Room"
+        verbose_name_plural = "Conference Rooms"
+
+    def __str__(self):
+        return f"{self.name} ({self.get_room_type_display()}) - {self.get_status_display()}"
+
+    @property
+    def is_available(self):
+        """Returns True if room is active and available for booking."""
+        return self.status == self.RoomStatus.ACTIVE
+
+    @property
+    def current_booking(self):
+        """Returns current active booking if any."""
+        now = timezone.now()
+        return self.bookings.filter(
+            status=ConferenceBooking.BookingStatus.CONFIRMED,
+            start_time__lte=now,
+            end_time__gt=now
+        ).first()
+
+    @property
+    def next_booking(self):
+        """Returns the next upcoming booking."""
+        now = timezone.now()
+        return self.bookings.filter(
+            status=ConferenceBooking.BookingStatus.CONFIRMED,
+            start_time__gt=now
+        ).order_by('start_time').first()
+
+    @property
+    def is_occupied(self):
+        """Returns True if room is currently occupied."""
+        return self.current_booking is not None
+
+    def get_bookings_today(self):
+        """Get all bookings for today."""
+        today = timezone.now().date()
+        return self.bookings.filter(
+            start_time__date=today,
+            status=ConferenceBooking.BookingStatus.CONFIRMED
+        ).order_by('start_time')
+
+    def get_availability_today(self):
+        """Get available time slots for today."""
+        from datetime import datetime, time, timedelta
+        from pytz import timezone as pytz_timezone
+        import pytz
+
+        IST = pytz_timezone('Asia/Kolkata')
+        today = timezone.now().date()
+
+        # Working hours: 9 AM to 6 PM
+        day_start = IST.localize(datetime.combine(today, time(9, 0)))
+        day_end = IST.localize(datetime.combine(today, time(18, 0)))
+
+        bookings = self.get_bookings_today()
+        available_slots = []
+
+        current_time = max(timezone.now(), day_start.astimezone(pytz.UTC))
+
+        for booking in bookings:
+            if booking.start_time > current_time:
+                # Gap between current time and next booking
+                available_slots.append({
+                    'start': current_time,
+                    'end': booking.start_time
+                })
+            current_time = max(current_time, booking.end_time)
+
+        # Check if there's time after the last booking
+        if current_time < day_end.astimezone(pytz.UTC):
+            available_slots.append({
+                'start': current_time,
+                'end': day_end.astimezone(pytz.UTC)
+            })
+
+        return available_slots
+
+    def update_analytics(self):
+        """Update room analytics based on confirmed bookings."""
+        from django.db.models import Count, Sum, F
+
+        stats = self.bookings.filter(
+            status=ConferenceBooking.BookingStatus.CONFIRMED
+        ).aggregate(
+            total_bookings=Count('id'),
+            total_duration=Sum(
+                F('end_time') - F('start_time'),
+                output_field=models.DurationField()
+            )
+        )
+
+        self.total_bookings = stats['total_bookings'] or 0
+        if stats['total_duration']:
+            # Convert duration to hours
+            total_seconds = stats['total_duration'].total_seconds()
+            self.total_hours_booked = round(total_seconds / 3600, 2)
+        else:
+            self.total_hours_booked = 0.00
+
+        self.save(update_fields=['total_bookings', 'total_hours_booked'])
+
+    @classmethod
+    def get_most_booked_rooms(cls, limit=5):
+        """Get the most frequently booked rooms."""
+        return cls.objects.filter(
+            status=cls.RoomStatus.ACTIVE
+        ).order_by('-total_bookings')[:limit]
+
+    @classmethod
+    def get_available_rooms(cls):
+        """Get all available rooms for booking."""
+        return cls.objects.filter(status=cls.RoomStatus.ACTIVE)
+
+
+class ConferenceBooking(models.Model):
+    """
+    Represents a booking for a conference room.
+    """
+    class BookingStatus(models.TextChoices):
+        CONFIRMED = 'CONFIRMED', 'Confirmed'
+        CANCELLED = 'CANCELLED', 'Cancelled'
+        PENDING = 'PENDING', 'Pending Approval'
+        REJECTED = 'REJECTED', 'Rejected'
+
+    class Priority(models.TextChoices):
+        LOW = 'LOW', 'Low'
+        MEDIUM = 'MEDIUM', 'Medium'
+        HIGH = 'HIGH', 'High'
+        URGENT = 'URGENT', 'Urgent'
+
+    # Core booking fields
+    room = models.ForeignKey(
+        Room,
+        on_delete=models.CASCADE,
+        related_name='bookings',
+        help_text="Conference room being booked"
+    )
+    booked_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='conference_bookings'
+    )
+    purpose = models.CharField(max_length=255, help_text="Purpose of the meeting")
+    description = models.TextField(blank=True, help_text="Additional meeting details")
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField()
+
+    # Meeting details
+    attendees_count = models.PositiveIntegerField(
+        default=1,
+        help_text="Expected number of attendees"
+    )
+    external_attendees = models.PositiveIntegerField(
+        default=0,
+        help_text="Number of external/guest attendees"
+    )
+    meeting_type = models.CharField(
+        max_length=50,
+        choices=[
+            ('INTERNAL', 'Internal Meeting'),
+            ('CLIENT', 'Client Meeting'),
+            ('INTERVIEW', 'Interview'),
+            ('TRAINING', 'Training'),
+            ('PRESENTATION', 'Presentation'),
+            ('OTHER', 'Other')
+        ],
+        default='INTERNAL'
+    )
+    priority = models.CharField(
+        max_length=10,
+        choices=Priority.choices,
+        default=Priority.MEDIUM
+    )
+
+    # Status and tracking
+    status = models.CharField(
+        max_length=10,
+        choices=BookingStatus.choices,
+        default=BookingStatus.CONFIRMED
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    # Cancellation tracking
+    cancelled_at = models.DateTimeField(null=True, blank=True)
+    cancelled_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='cancelled_bookings'
+    )
+    cancellation_reason = models.TextField(blank=True, help_text="Reason for cancellation")
+
+    # Approval workflow (if needed)
+    approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='approved_bookings'
+    )
+    approved_at = models.DateTimeField(null=True, blank=True)
+
+    # Additional features
+    recurring_pattern = models.CharField(
+        max_length=20,
+        choices=[
+            ('NONE', 'No Recurrence'),
+            ('DAILY', 'Daily'),
+            ('WEEKLY', 'Weekly'),
+            ('MONTHLY', 'Monthly')
+        ],
+        default='NONE'
+    )
+    parent_booking = models.ForeignKey(
+        'self',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='recurring_bookings',
+        help_text="Original booking for recurring series"
+    )
+
+    # Check-in feature
+    checked_in = models.BooleanField(default=False)
+    checked_in_at = models.DateTimeField(null=True, blank=True)
+    no_show = models.BooleanField(default=False, help_text="Meeting didn't happen")
+
+    # Cost tracking
+    hourly_rate = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        default=0.00,
+        help_text="Rate per hour for this booking"
+    )
+    total_cost = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0.00,
+        help_text="Total cost of booking"
+    )
+
+    class Meta:
+        ordering = ['-created_at', 'start_time']
+        verbose_name = "Conference Room Booking"
+        verbose_name_plural = "Conference Room Bookings"
+
+        # Ensure no overlapping confirmed bookings for the same room
+        constraints = [
+            models.UniqueConstraint(
+                fields=['room', 'start_time', 'end_time'],
+                condition=models.Q(status='CONFIRMED'),
+                name='unique_confirmed_booking_slot'
+            ),
+            models.CheckConstraint(
+                check=models.Q(end_time__gt=models.F('start_time')),
+                name='end_time_after_start_time'
+            ),
+            models.CheckConstraint(
+                check=models.Q(attendees_count__gte=1),
+                name='minimum_one_attendee'
+            )
+        ]
+
+        indexes = [
+            models.Index(fields=['room', 'start_time', 'status']),
+            models.Index(fields=['booked_by', 'status']),
+            models.Index(fields=['start_time', 'end_time']),
+            models.Index(fields=['status', 'created_at']),
+        ]
+
+    def __str__(self):
+        return (
+            f"{self.room.name} for '{self.purpose}' "
+            f"({self.start_time.strftime('%b %d, %I:%M %p')} - "
+            f"{self.end_time.strftime('%I:%M %p')}) "
+            f"[{self.status}]"
+        )
+
+    @property
+    def room_name(self):
+        """Backward compatibility property."""
+        return self.room.name
+
+    @property
+    def is_active(self):
+        """Returns True if the booking is confirmed and in the future."""
+        return self.status == self.BookingStatus.CONFIRMED and self.end_time > timezone.now()
+
+    @property
+    def is_current(self):
+        """Returns True if the booking is currently active."""
+        now = timezone.now()
+        return (
+            self.status == self.BookingStatus.CONFIRMED and
+            self.start_time <= now <= self.end_time
+        )
+
+    @property
+    def is_past(self):
+        """Returns True if the booking has ended."""
+        return self.end_time < timezone.now()
+
+    @property
+    def duration(self):
+        """Returns booking duration as timedelta."""
+        return self.end_time - self.start_time
+
+    @property
+    def duration_hours(self):
+        """Returns booking duration in hours."""
+        return round(self.duration.total_seconds() / 3600, 2)
+
+    @property
+    def can_be_cancelled(self):
+        """Check if booking can be cancelled."""
+        if self.status != self.BookingStatus.CONFIRMED:
+            return False
+
+        # Can't cancel if meeting has already started
+        if self.start_time <= timezone.now():
+            return False
+
+        return True
+
+    @property
+    def can_check_in(self):
+        """Check if user can check in to the meeting."""
+        now = timezone.now()
+        # Allow check-in 15 minutes before and 15 minutes after start time
+        check_in_window_start = self.start_time - timedelta(minutes=15)
+        check_in_window_end = self.start_time + timedelta(minutes=15)
+
+        return (
+            self.status == self.BookingStatus.CONFIRMED and
+            not self.checked_in and
+            not self.no_show and
+            check_in_window_start <= now <= check_in_window_end
+        )
+
+    def clean(self):
+        """Validate booking data."""
+        from django.core.exceptions import ValidationError
+
+        # Validate end time is after start time
+        if self.start_time and self.end_time and self.start_time >= self.end_time:
+            raise ValidationError("End time must be after start time.")
+
+        # Validate booking is not in the past
+        if self.start_time and self.start_time < timezone.now():
+            raise ValidationError("Booking cannot be in the past.")
+
+        # Validate attendees don't exceed room capacity
+        if self.room and self.attendees_count > self.room.capacity:
+            raise ValidationError(
+                f"Number of attendees ({self.attendees_count}) exceeds room capacity ({self.room.capacity})."
+            )
+
+        # Validate room is available
+        if self.room and not self.room.is_available:
+            raise ValidationError(f"Room '{self.room.name}' is not available for booking.")
+
+    def save(self, *args, **kwargs):
+        """Override save to calculate costs and update room analytics."""
+        from decimal import Decimal
+
+        # Calculate total cost
+        if self.hourly_rate == 0 and self.room:
+            self.hourly_rate = self.room.hourly_rate
+
+        # Convert duration_hours to Decimal to avoid float * Decimal error
+        duration_decimal = Decimal(str(self.duration_hours))
+        self.total_cost = duration_decimal * self.hourly_rate
+
+        # Call parent save
+        super().save(*args, **kwargs)
+
+        # Update room analytics if this is a confirmed booking
+        if self.status == self.BookingStatus.CONFIRMED and self.room:
+            self.room.update_analytics()
+
+    def cancel(self, cancelled_by, reason=""):
+        """Cancel the booking."""
+        if not self.can_be_cancelled:
+            raise ValueError("This booking cannot be cancelled.")
+
+        self.status = self.BookingStatus.CANCELLED
+        self.cancelled_at = timezone.now()
+        self.cancelled_by = cancelled_by
+        self.cancellation_reason = reason
+        self.save()
+
+        # Update room analytics
+        if self.room:
+            self.room.update_analytics()
+
+    def check_in(self):
+        """Check in to the meeting."""
+        if not self.can_check_in:
+            raise ValueError("Cannot check in at this time.")
+
+        self.checked_in = True
+        self.checked_in_at = timezone.now()
+        self.save(update_fields=['checked_in', 'checked_in_at'])
+
+    def mark_no_show(self):
+        """Mark booking as no-show."""
+        if self.is_past and not self.checked_in:
+            self.no_show = True
+            self.save(update_fields=['no_show'])
+
+    @classmethod
+    def get_conflicting_bookings(cls, room, start_time, end_time, exclude_id=None):
+        """Get bookings that conflict with the given time range."""
+        queryset = cls.objects.filter(
+            room=room,
+            status=cls.BookingStatus.CONFIRMED,
+            start_time__lt=end_time,
+            end_time__gt=start_time
+        )
+
+        if exclude_id:
+            queryset = queryset.exclude(id=exclude_id)
+
+        return queryset
+
+    @classmethod
+    def get_room_utilization(cls, room, start_date=None, end_date=None):
+        """Calculate room utilization percentage for a given period."""
+        from django.db.models import Sum, F
+
+        if not start_date:
+            start_date = timezone.now().date()
+        if not end_date:
+            end_date = start_date
+
+        # Calculate total booked hours
+        bookings = cls.objects.filter(
+            room=room,
+            status=cls.BookingStatus.CONFIRMED,
+            start_time__date__range=[start_date, end_date]
+        )
+
+        total_booked_seconds = bookings.aggregate(
+            total=Sum(F('end_time') - F('start_time'))
+        )['total']
+
+        if not total_booked_seconds:
+            return 0.0
+
+        total_booked_hours = total_booked_seconds.total_seconds() / 3600
+
+        # Calculate available hours (9 AM to 6 PM = 9 hours per day)
+        days_count = (end_date - start_date).days + 1
+        total_available_hours = days_count * 9  # 9 working hours per day
+
+        utilization = (total_booked_hours / total_available_hours) * 100
+        return round(utilization, 2)
+
+    @classmethod
+    def get_user_booking_stats(cls, user, start_date=None, end_date=None):
+        """Get booking statistics for a user."""
+        queryset = cls.objects.filter(booked_by=user)
+
+        if start_date and end_date:
+            queryset = queryset.filter(start_time__date__range=[start_date, end_date])
+
+        stats = {
+            'total_bookings': queryset.count(),
+            'confirmed_bookings': queryset.filter(status=cls.BookingStatus.CONFIRMED).count(),
+            'cancelled_bookings': queryset.filter(status=cls.BookingStatus.CANCELLED).count(),
+            'no_shows': queryset.filter(no_show=True).count(),
+            'total_hours': 0
+        }
+
+        # Calculate total hours
+        confirmed_bookings = queryset.filter(status=cls.BookingStatus.CONFIRMED)
+        total_duration = sum([booking.duration for booking in confirmed_bookings], timedelta())
+        stats['total_hours'] = round(total_duration.total_seconds() / 3600, 2)
+
+        return stats
+
+
+class BookingAnalytics:
+    """
+    Utility class for generating booking analytics and reports.
+    """
+
+    @staticmethod
+    def get_daily_utilization(date=None):
+        """Get room utilization for a specific date."""
+        if not date:
+            date = timezone.now().date()
+
+        rooms = Room.objects.filter(status=Room.RoomStatus.ACTIVE)
+        utilization_data = []
+
+        for room in rooms:
+            utilization = ConferenceBooking.get_room_utilization(room, date, date)
+            bookings_count = ConferenceBooking.objects.filter(
+                room=room,
+                start_time__date=date,
+                status=ConferenceBooking.BookingStatus.CONFIRMED
+            ).count()
+
+            utilization_data.append({
+                'room': room,
+                'utilization_percentage': utilization,
+                'bookings_count': bookings_count,
+                'current_booking': room.current_booking,
+                'next_booking': room.next_booking
+            })
+
+        return utilization_data
+
+    @staticmethod
+    def get_weekly_report(start_date=None):
+        """Generate weekly booking report."""
+        if not start_date:
+            start_date = timezone.now().date()
+
+        end_date = start_date + timedelta(days=6)
+
+        # Get all bookings for the week
+        bookings = ConferenceBooking.objects.filter(
+            start_time__date__range=[start_date, end_date],
+            status=ConferenceBooking.BookingStatus.CONFIRMED
+        ).select_related('room', 'booked_by')
+
+        # Group by room and day
+        report_data = {}
+        for room in Room.objects.filter(status=Room.RoomStatus.ACTIVE):
+            room_bookings = bookings.filter(room=room)
+            daily_data = []
+
+            for i in range(7):
+                day = start_date + timedelta(days=i)
+                day_bookings = room_bookings.filter(start_time__date=day)
+
+                daily_data.append({
+                    'date': day,
+                    'bookings_count': day_bookings.count(),
+                    'total_hours': sum([b.duration_hours for b in day_bookings], 0),
+                    'utilization': ConferenceBooking.get_room_utilization(room, day, day)
+                })
+
+            report_data[room] = {
+                'total_bookings': room_bookings.count(),
+                'total_hours': sum([b.duration_hours for b in room_bookings], 0),
+                'average_utilization': sum([d['utilization'] for d in daily_data]) / 7,
+                'daily_data': daily_data
+            }
+
+        return report_data
+
+    @staticmethod
+    def get_popular_time_slots():
+        """Get most popular booking time slots."""
+        from django.db.models import Count
+
+        # Group by hour of day
+        bookings = ConferenceBooking.objects.filter(
+            status=ConferenceBooking.BookingStatus.CONFIRMED,
+            start_time__gte=timezone.now() - timedelta(days=30)  # Last 30 days
+        ).extra(
+            select={'hour': 'EXTRACT(hour FROM start_time)'}
+        ).values('hour').annotate(
+            count=Count('id')
+        ).order_by('-count')
+
+        return bookings[:10]  # Top 10 popular hours
+
+    @staticmethod
+    def get_user_analytics(user, days=30):
+        """Get comprehensive analytics for a specific user."""
+        start_date = timezone.now().date() - timedelta(days=days)
+        end_date = timezone.now().date()
+
+        bookings = ConferenceBooking.objects.filter(
+            booked_by=user,
+            start_time__date__range=[start_date, end_date]
+        )
+
+        analytics = {
+            'total_bookings': bookings.count(),
+            'confirmed_bookings': bookings.filter(status=ConferenceBooking.BookingStatus.CONFIRMED).count(),
+            'cancelled_bookings': bookings.filter(status=ConferenceBooking.BookingStatus.CANCELLED).count(),
+            'no_shows': bookings.filter(no_show=True).count(),
+            'total_hours': sum([b.duration_hours for b in bookings.filter(status=ConferenceBooking.BookingStatus.CONFIRMED)], 0),
+            'favorite_rooms': bookings.values('room__name').annotate(
+                count=Count('id')
+            ).order_by('-count')[:3],
+            'meeting_types': bookings.values('meeting_type').annotate(
+                count=Count('id')
+            ).order_by('-count'),
+            'average_meeting_duration': 0,
+            'peak_hours': bookings.extra(
+                select={'hour': 'EXTRACT(hour FROM start_time)'}
+            ).values('hour').annotate(
+                count=Count('id')
+            ).order_by('-count')[:3]
+        }
+
+        # Calculate average meeting duration
+        confirmed_bookings = bookings.filter(status=ConferenceBooking.BookingStatus.CONFIRMED)
+        if confirmed_bookings.exists():
+            total_duration = sum([b.duration for b in confirmed_bookings], timedelta())
+            analytics['average_meeting_duration'] = round(
+                total_duration.total_seconds() / 3600 / confirmed_bookings.count(), 2
+            )
+
+        return analytics
+
+
+class RoomManager:
+    """
+    Utility class for room management operations.
+    """
+
+    @staticmethod
+    def get_available_rooms_for_slot(start_time, end_time, min_capacity=1):
+        """Get available rooms for a specific time slot."""
+        # Get all active rooms with sufficient capacity
+        rooms = Room.objects.filter(
+            status=Room.RoomStatus.ACTIVE,
+            capacity__gte=min_capacity
+        )
+
+        available_rooms = []
+
+        for room in rooms:
+            # Check if room has any conflicting bookings
+            conflicts = ConferenceBooking.get_conflicting_bookings(
+                room, start_time, end_time
+            )
+
+            if not conflicts.exists():
+                available_rooms.append({
+                    'room': room,
+                    'current_booking': room.current_booking,
+                    'next_booking': room.next_booking,
+                    'availability_slots': room.get_availability_today()
+                })
+
+        return available_rooms
+
+    @staticmethod
+    def suggest_alternative_slots(room, start_time, end_time, duration_minutes=60):
+        """Suggest alternative time slots for a room."""
+        from datetime import timedelta
+
+        duration = timedelta(minutes=duration_minutes)
+
+        # Look for slots in the next 7 days
+        suggestions = []
+        search_date = start_time.date()
+
+        for i in range(7):
+            current_date = search_date + timedelta(days=i)
+
+            # Skip weekends
+            if current_date.weekday() >= 5:
+                continue
+
+            # Working hours: 9 AM to 6 PM
+            from datetime import time
+            from pytz import timezone as pytz_timezone
+
+            IST = pytz_timezone('Asia/Kolkata')
+            day_start = IST.localize(datetime.combine(current_date, time(9, 0)))
+            day_end = IST.localize(datetime.combine(current_date, time(18, 0)))
+
+            # Get bookings for this day
+            day_bookings = ConferenceBooking.objects.filter(
+                room=room,
+                start_time__date=current_date,
+                status=ConferenceBooking.BookingStatus.CONFIRMED
+            ).order_by('start_time')
+
+            # Find gaps
+            import pytz
+            current_time = max(timezone.now(), day_start.astimezone(pytz.UTC))
+
+            for booking in day_bookings:
+                if booking.start_time > current_time:
+                    gap_duration = booking.start_time - current_time
+                    if gap_duration >= duration:
+                        suggestions.append({
+                            'start_time': current_time,
+                            'end_time': current_time + duration,
+                            'date': current_date
+                        })
+                        break
+                current_time = max(current_time, booking.end_time)
+
+            # Check if there's time after the last booking
+            day_end_utc = day_end.astimezone(pytz.UTC)
+            if current_time + duration <= day_end_utc:
+                suggestions.append({
+                    'start_time': current_time,
+                    'end_time': current_time + duration,
+                    'date': current_date
+                })
+
+            # Stop after finding 5 suggestions
+            if len(suggestions) >= 5:
+                break
+
+        return suggestions
+
+    @staticmethod
+    def get_room_status_dashboard():
+        """Get real-time status of all rooms."""
+        rooms = Room.objects.filter(status=Room.RoomStatus.ACTIVE)
+        dashboard_data = []
+
+        for room in rooms:
+            current_booking = room.current_booking
+            next_booking = room.next_booking
+
+            status = 'available'
+            if current_booking:
+                status = 'occupied'
+            elif next_booking and next_booking.start_time <= timezone.now() + timedelta(minutes=30):
+                status = 'soon_occupied'
+
+            dashboard_data.append({
+                'room': room,
+                'status': status,
+                'current_booking': current_booking,
+                'next_booking': next_booking,
+                'available_until': next_booking.start_time if next_booking else None,
+                'occupancy_percentage': ConferenceBooking.get_room_utilization(
+                    room, timezone.now().date(), timezone.now().date()
+                )
+            })
+
+        return dashboard_data
+
+
+class BookingValidator:
+    """
+    Utility class for booking validation logic.
+    """
+
+    @staticmethod
+    def validate_booking_time(start_time, end_time):
+        """Validate booking time constraints."""
+        errors = []
+
+        # Check if end time is after start time
+        if start_time >= end_time:
+            errors.append("End time must be after start time.")
+
+        # Check if booking is not in the past
+        if start_time < timezone.now():
+            errors.append("Booking cannot be in the past.")
+
+        # Check if booking is within working hours (9 AM - 6 PM IST)
+        from pytz import timezone as pytz_timezone
+
+        IST = pytz_timezone('Asia/Kolkata')
+        start_ist = start_time.astimezone(IST)
+        end_ist = end_time.astimezone(IST)
+
+        if start_ist.hour < 9 or start_ist.hour >= 18:
+            errors.append("Booking must be within working hours (9 AM - 6 PM).")
+
+        if end_ist.hour > 18 or (end_ist.hour == 18 and end_ist.minute > 0):
+            errors.append("Booking must end by 6 PM.")
+
+        # Check if booking is on a weekday
+        if start_time.weekday() >= 5:  # Saturday = 5, Sunday = 6
+            errors.append("Bookings are only allowed on weekdays.")
+
+        # Check maximum booking duration (8 hours)
+        duration = end_time - start_time
+        if duration > timedelta(hours=8):
+            errors.append("Booking duration cannot exceed 8 hours.")
+
+        # Check minimum booking duration (15 minutes)
+        if duration < timedelta(minutes=15):
+            errors.append("Booking duration must be at least 15 minutes.")
+
+        return errors
+
+    @staticmethod
+    def validate_room_capacity(room, attendees_count):
+        """Validate room capacity against number of attendees."""
+        if attendees_count > room.capacity:
+            return f"Number of attendees ({attendees_count}) exceeds room capacity ({room.capacity})."
+        return None
+
+    @staticmethod
+    def validate_user_booking_limits(user, start_time, end_time):
+        """Validate user booking limits."""
+        errors = []
+
+        # Check daily booking limit (max 3 bookings per day)
+        day_bookings = ConferenceBooking.objects.filter(
+            booked_by=user,
+            start_time__date=start_time.date(),
+            status=ConferenceBooking.BookingStatus.CONFIRMED
+        )
+
+        if day_bookings.count() >= 3:
+            errors.append("You can only book a maximum of 3 rooms per day.")
+
+        # Check weekly booking hours (max 20 hours per week)
+        week_start = start_time.date() - timedelta(days=start_time.weekday())
+        week_end = week_start + timedelta(days=6)
+
+        week_bookings = ConferenceBooking.objects.filter(
+            booked_by=user,
+            start_time__date__range=[week_start, week_end],
+            status=ConferenceBooking.BookingStatus.CONFIRMED
+        )
+
+        total_hours = sum([b.duration_hours for b in week_bookings], 0)
+        booking_hours = (end_time - start_time).total_seconds() / 3600
+
+        if total_hours + booking_hours > 20:
+            errors.append("Weekly booking limit of 20 hours would be exceeded.")
+
+        # Check for overlapping bookings by the same user
+        overlapping = ConferenceBooking.objects.filter(
+            booked_by=user,
+            start_time__lt=end_time,
+            end_time__gt=start_time,
+            status=ConferenceBooking.BookingStatus.CONFIRMED
+        )
+
+        if overlapping.exists():
+            errors.append("You already have a booking during this time.")
+
+        return errors
+
+    @staticmethod
+    def validate_advance_booking(start_time, max_days_advance=30):
+        """Validate advance booking limits."""
+        max_advance_date = timezone.now() + timedelta(days=max_days_advance)
+
+        if start_time > max_advance_date:
+            return f"Bookings can only be made up to {max_days_advance} days in advance."
+
+        return None
+
+
+class BookingNotification:
+    """
+    Utility class for managing booking notifications.
+    """
+
+    @staticmethod
+    def get_reminder_bookings(minutes_before=15):
+        """Get bookings that need reminders."""
+        reminder_time = timezone.now() + timedelta(minutes=minutes_before)
+
+        return ConferenceBooking.objects.filter(
+            status=ConferenceBooking.BookingStatus.CONFIRMED,
+            start_time__lte=reminder_time,
+            start_time__gt=timezone.now(),
+            checked_in=False
+        ).select_related('room', 'booked_by')
+
+    @staticmethod
+    def get_overdue_checkins():
+        """Get bookings where check-in is overdue."""
+        overdue_time = timezone.now() - timedelta(minutes=15)
+
+        return ConferenceBooking.objects.filter(
+            status=ConferenceBooking.BookingStatus.CONFIRMED,
+            start_time__lte=overdue_time,
+            start_time__gt=timezone.now() - timedelta(hours=2),  # Within 2 hours of start
+            checked_in=False,
+            no_show=False
+        ).select_related('room', 'booked_by')
+
+    @staticmethod
+    def get_no_show_candidates():
+        """Get bookings that are candidates for no-show marking."""
+        no_show_threshold = timezone.now() - timedelta(minutes=30)
+
+        return ConferenceBooking.objects.filter(
+            status=ConferenceBooking.BookingStatus.CONFIRMED,
+            start_time__lte=no_show_threshold,
+            checked_in=False,
+            no_show=False
+        ).select_related('room', 'booked_by')
+
+    @staticmethod
+    def send_booking_confirmation(booking):
+        """Generate booking confirmation data."""
+        return {
+            'booking': booking,
+            'message': f"Your booking for {booking.room.name} has been confirmed.",
+            'details': {
+                'room': booking.room.name,
+                'date': booking.start_time.strftime('%B %d, %Y'),
+                'time': f"{booking.start_time.strftime('%I:%M %p')} - {booking.end_time.strftime('%I:%M %p')}",
+                'duration': f"{booking.duration_hours} hours",
+                'purpose': booking.purpose,
+                'attendees': booking.attendees_count
+            }
+        }
+
+    @staticmethod
+    def send_cancellation_notice(booking):
+        """Generate cancellation notice data."""
+        return {
+            'booking': booking,
+            'message': f"Your booking for {booking.room.name} has been cancelled.",
+            'details': {
+                'room': booking.room.name,
+                'date': booking.start_time.strftime('%B %d, %Y'),
+                'time': f"{booking.start_time.strftime('%I:%M %p')} - {booking.end_time.strftime('%I:%M %p')}",
+                'reason': booking.cancellation_reason or 'No reason provided',
+                'cancelled_by': booking.cancelled_by.get_full_name() if booking.cancelled_by else 'System',
+                'cancelled_at': booking.cancelled_at.strftime('%B %d, %Y at %I:%M %p') if booking.cancelled_at else ''
+            }
+        }

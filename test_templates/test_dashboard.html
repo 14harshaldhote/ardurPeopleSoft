@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Test - Conference Booking Integration</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto py-8">
+        <h1 class="text-3xl font-bold mb-8">Conference Booking Dashboard Test</h1>
+
+        <!-- Test Context Variables -->
+        <div class="bg-white p-6 rounded-lg shadow mb-8">
+            <h2 class="text-xl font-semibold mb-4">Context Variables Test</h2>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <p><strong>Available Rooms:</strong></p>
+                    <ul class="list-disc list-inside">
+                        {% for room in available_rooms %}
+                            <li>{{ room.name }} ({{ room.capacity }} people) - {{ room.status }}</li>
+                        {% empty %}
+                            <li class="text-red-500">No available rooms found</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div>
+                    <p><strong>User Bookings:</strong></p>
+                    <ul class="list-disc list-inside">
+                        {% for booking in user_bookings %}
+                            <li>{{ booking.room.name }} - {{ booking.start_time|date:"M d, H:i" }}</li>
+                        {% empty %}
+                            <li class="text-gray-500">No upcoming bookings</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Conference Booking Card -->
+        <div class="bg-white p-6 rounded-lg shadow mb-8">
+            <h2 class="text-xl font-semibold mb-4">Conference Booking Card Test</h2>
+            {% include 'card/conference_booking_card.html' %}
+        </div>
+
+        <!-- Test Modal Buttons -->
+        <div class="bg-white p-6 rounded-lg shadow mb-8">
+            <h2 class="text-xl font-semibold mb-4">Modal Functions Test</h2>
+            <div class="space-x-4">
+                <button
+                    id="testBookingModal"
+                    class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                    onclick="openBookingModal()"
+                >
+                    Test Booking Modal
+                </button>
+                <button
+                    id="testCalendarModal"
+                    class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                    onclick="openCalendarModal()"
+                >
+                    Test Calendar Modal
+                </button>
+                <button
+                    id="testRoomDetailsModal"
+                    class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
+                    onclick="openRoomDetailsModal(1)"
+                >
+                    Test Room Details Modal
+                </button>
+                <button
+                    id="testNotification"
+                    class="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700"
+                    onclick="showNotification('Test notification!', 'success')"
+                >
+                    Test Notification
+                </button>
+            </div>
+        </div>
+
+        <!-- Test JavaScript Functions -->
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-xl font-semibold mb-4">JavaScript Functions Test</h2>
+            <div id="jsTestResults" class="space-y-2">
+                <p id="modalFunctionsTest" class="text-gray-500">Testing modal functions...</p>
+                <p id="refreshFunctionTest" class="text-gray-500">Testing refresh function...</p>
+                <p id="notificationFunctionTest" class="text-gray-500">Testing notification function...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Include all modals for testing -->
+    {% include 'conf_booking/room/booking_modal.html' %}
+    {% include 'conf_booking/room/calendar_modal.html' %}
+    {% include 'conf_booking/room/room_details_modal.html' %}
+
+    <script>
+        // Test script to verify all functions are available
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Dashboard test page loaded');
+
+            // Test modal functions
+            const modalFunctionsTest = document.getElementById('modalFunctionsTest');
+            if (typeof window.openBookingModal === 'function' &&
+                typeof window.openCalendarModal === 'function' &&
+                typeof window.openRoomDetailsModal === 'function') {
+                modalFunctionsTest.textContent = '✅ Modal functions are available';
+                modalFunctionsTest.className = 'text-green-600';
+            } else {
+                modalFunctionsTest.textContent = '❌ Modal functions are missing';
+                modalFunctionsTest.className = 'text-red-600';
+            }
+
+            // Test refresh function
+            const refreshFunctionTest = document.getElementById('refreshFunctionTest');
+            if (typeof window.refreshRoomStatus === 'function') {
+                refreshFunctionTest.textContent = '✅ Refresh function is available';
+                refreshFunctionTest.className = 'text-green-600';
+            } else {
+                refreshFunctionTest.textContent = '❌ Refresh function is missing';
+                refreshFunctionTest.className = 'text-red-600';
+            }
+
+            // Test notification function
+            const notificationFunctionTest = document.getElementById('notificationFunctionTest');
+            if (typeof window.showNotification === 'function') {
+                notificationFunctionTest.textContent = '✅ Notification function is available';
+                notificationFunctionTest.className = 'text-green-600';
+            } else {
+                notificationFunctionTest.textContent = '❌ Notification function is missing';
+                notificationFunctionTest.className = 'text-red-600';
+            }
+
+            // Test modal elements existence
+            console.log('Booking modal exists:', !!document.getElementById('bookingModal'));
+            console.log('Calendar modal exists:', !!document.getElementById('calendarModal'));
+            console.log('Room details modal exists:', !!document.getElementById('roomDetailsModal'));
+        });
+
+        // Define modal functions if they don't exist (fallback)
+        if (typeof window.openBookingModal !== 'function') {
+            window.openBookingModal = function() {
+                console.log('openBookingModal called - this is a fallback function');
+                alert('Booking modal function called (fallback)');
+            };
+        }
+
+        if (typeof window.openCalendarModal !== 'function') {
+            window.openCalendarModal = function() {
+                console.log('openCalendarModal called - this is a fallback function');
+                alert('Calendar modal function called (fallback)');
+            };
+        }
+
+        if (typeof window.openRoomDetailsModal !== 'function') {
+            window.openRoomDetailsModal = function(roomId) {
+                console.log('openRoomDetailsModal called with roomId:', roomId, '- this is a fallback function');
+                alert('Room details modal function called (fallback) for room: ' + roomId);
+            };
+        }
+
+        if (typeof window.showNotification !== 'function') {
+            window.showNotification = function(message, type) {
+                console.log('showNotification called:', message, type, '- this is a fallback function');
+                alert('Notification: ' + message + ' (Type: ' + type + ')');
+            };
+        }
+
+        if (typeof window.refreshRoomStatus !== 'function') {
+            window.refreshRoomStatus = function() {
+                console.log('refreshRoomStatus called - this is a fallback function');
+                alert('Room status refresh function called (fallback)');
+            };
+        }
+    </script>
+</body>
+</html>

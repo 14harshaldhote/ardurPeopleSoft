@@ -1,168 +1,161 @@
- {% extends 'base.html' %}
+{% extends 'base.html' %}
 {% block title %}Dashboard - APS Portal{% endblock %}
 {% block content %}
 
 <div class="min-h-screen py-2 sm:py-4 lg:py-6 px-2 sm:px-4 lg:px-8 overflow-y-auto">
-   
     <div class="max-w-7xl mx-auto">
-        <!-- Header Section with Role-Based Content -->
-<!-- Enhanced Header Section with iOS 17+ Glassmorphism -->
-<div class="relative overflow-hidden mb-4 sm:mb-6 lg:mb-8 rounded-[28px] transition-all duration-500 
-           bg-white/10 border border-white/40 shadow-[0_10px_30px_rgba(0,0,0,0.15)] hover:scale-[1.015]">
+        
+        <!-- Header Section with iOS 17+ Glassmorphism -->
+        <div class="relative overflow-hidden mb-4 sm:mb-6 lg:mb-8 rounded-[28px] transition-all duration-500 bg-white/10 border border-white/40 shadow-[0_10px_30px_rgba(0,0,0,0.15)] hover:scale-[1.015]">
+            
+            <!-- Gradient Background -->
+            <div class="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-white/10 rounded-[28px]"></div>
 
-    <!-- Dynamic Gradient Background -->
-    <div class="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-white/10 rounded-[28px]"></div>
-
-    <!-- Soft Orbs -->
-    <div class="absolute top-0 left-0 w-full h-full overflow-hidden transition-transform duration-500 hover:scale-[1.02]">
-        <!-- Teal Orb -->
-        <div class="absolute -top-16 -left-16 w-56 h-56 bg-gradient-to-br from-teal-300/30 to-teal-400/10 rounded-full filter"></div>
-        <!-- Rose Orb -->
-        <div class="absolute -bottom-16 -right-16 w-56 h-56 bg-gradient-to-tr from-rose-400/30 to-rose-500/10 rounded-full filter "></div>
-        <!-- Sky Orb -->
-        <div class="absolute top-1/2 left-1/2 w-48 h-48 bg-gradient-to-br from-sky-300/30 to-sky-400/10 rounded-full filter -translate-x-1/2 -translate-y-1/2"></div>
-    </div>
-
-    <!-- Content -->
-    <div class="relative p-4 sm:p-8 lg:p-12 z-10">
-
-        <!-- Top Navigation Bar -->
-        <nav class="backdrop-blur-xl bg-white/20 rounded-[20px] border border-white/10 shadow-md p-3 mb-4 
-                    flex flex-wrap sm:flex-nowrap justify-between items-center transition-all duration-300">
-
-            <!-- Time -->
-            <div class="flex items-center space-x-4">
-                <div class="px-5 py-3 backdrop-blur-sm bg-white/20 rounded-xl border border-white/10">
-                    <span class="text-zinc-900 font-semibold text-sm sm:text-md tracking-wide" id="time">12:34:56</span>
-                    <span class="text-zinc-600 font-medium text-sm sm:text-md" id="time-ampm">AM</span>
-                </div>
+            <!-- Soft Orbs -->
+            <div class="absolute top-0 left-0 w-full h-full overflow-hidden transition-transform duration-500 hover:scale-[1.02]">
+                <div class="absolute -top-16 -left-16 w-56 h-56 bg-gradient-to-br from-teal-300/30 to-teal-400/10 rounded-full filter"></div>
+                <div class="absolute -bottom-16 -right-16 w-56 h-56 bg-gradient-to-tr from-rose-400/30 to-rose-500/10 rounded-full filter"></div>
+                <div class="absolute top-1/2 left-1/2 w-48 h-48 bg-gradient-to-br from-sky-300/30 to-sky-400/10 rounded-full filter -translate-x-1/2 -translate-y-1/2"></div>
             </div>
 
-            <!-- Status & Notification -->
-            <div class="flex items-center space-x-4">
-                <span class="flex items-center space-x-2 px-4 py-2 backdrop-blur-sm bg-white/20 rounded-xl border border-white/10">
-                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span class="text-sm text-zinc-700">Active</span>
-                </span>
+            <!-- Header Content -->
+            <div class="relative p-4 sm:p-8 lg:p-12 z-10">
+                
+                <!-- Top Navigation Bar -->
+                <nav class="backdrop-blur-xl bg-white/20 rounded-[20px] border border-white/10 shadow-md p-3 mb-4 flex flex-wrap sm:flex-nowrap justify-between items-center transition-all duration-300">
+                    <!-- Time Display -->
+                    <div class="flex items-center space-x-4">
+                        <div class="px-5 py-3 backdrop-blur-sm bg-white/20 rounded-xl border border-white/10">
+                            <span class="text-zinc-900 font-semibold text-sm sm:text-md tracking-wide" id="time">12:34:56</span>
+                            <span class="text-zinc-600 font-medium text-sm sm:text-md" id="time-ampm">AM</span>
+                        </div>
+                    </div>
 
-                <button class="p-3 backdrop-blur-sm bg-white/20 rounded-xl border border-white/10 
-                             transition-all duration-300 hover:bg-white/30 hover:scale-105">
-                    <svg class="w-5 h-5 text-zinc-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-                    </svg>
-                </button>
-            </div>
-        </nav>
+                    <!-- Status & Notification -->
+                    <div class="flex items-center space-x-4">
+                        <span class="flex items-center space-x-2 px-4 py-2 backdrop-blur-sm bg-white/20 rounded-xl border border-white/10">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span class="text-sm text-zinc-700">Active</span>
+                        </span>
 
-        <!-- Main Grid Layout -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+                        <button class="p-3 backdrop-blur-sm bg-white/20 rounded-xl border border-white/10 transition-all duration-300 hover:bg-white/30 hover:scale-105">
+                            <svg class="w-5 h-5 text-zinc-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                            </svg>
+                        </button>
+                    </div>
+                </nav>
 
-            <!-- Main Content -->
-            <div class="lg:col-span-2 space-y-6">
+                <!-- Main Grid Layout -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+                    
+                    <!-- Main Content Column -->
+                    <div class="lg:col-span-2 space-y-6">
+                        
+                        <!-- Welcome Card -->
+                        <div class="backdrop-blur-xl bg-white/20 p-6 rounded-[20px] border border-white/10 transition-all duration-300 hover:bg-white/25 shadow-inner">
+                            <h1 class="text-xl lg:text-3xl font-bold text-zinc-900 mb-2 tracking-tight">
+                                Welcome, {{ user.first_name }} {{ user.last_name }}!
+                            </h1>
+                            <p class="text-zinc-600 text-sm sm:text-base">
+                                Last login: {{ user.last_login|date:"F j, Y, g:i a" }}
+                            </p>
+                        </div>
 
-                <!-- Welcome Card -->
-                <div class="backdrop-blur-xl bg-white/20 p-6 rounded-[20px] border border-white/10 
-                            transition-all duration-300 hover:bg-white/25 shadow-inner">
-                    <h1 class="text-xl lg:text-3xl font-bold text-zinc-900 mb-2 tracking-tight">
-                        Welcome, {{ user.first_name }} {{ user.last_name }}!
-                    </h1>
-                    <p class="text-zinc-600 text-sm sm:text-base">Last login: {{ user.last_login|date:"F j, Y, g:i a" }}</p>
-                </div>
+                        <!-- Projects Section -->
+                        <div class="backdrop-blur-xl bg-white/20 p-6 rounded-[20px] border border-white/10 hover:bg-white/25 transition-all duration-300 hover:scale-[1.01] shadow-inner">
+                            {% if projects %}
+                            <div class="space-y-3 overflow-y-auto max-h-[400px] pr-2 scrollbar-thin scrollbar-thumb-white/50 scrollbar-track-transparent">
+                                {% for project in projects %}
+                                <div class="backdrop-blur-sm bg-white/10 rounded-xl p-5 border border-white/10 transition-all duration-300 hover:bg-white/20 hover:scale-[1.02]">
+                                    <div class="flex items-center justify-between">
+                                        <h3 class="text-zinc-900 font-medium">{{ project.name }}</h3>
+                                        <span class="px-3 py-1 text-xs rounded-full {% if project.status == 'active' %}bg-emerald-400/20 text-emerald-700{% else %}bg-zinc-400/20 text-zinc-700{% endif %}">
+                                            {{ project.status }}
+                                        </span>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
 
-                <!-- Projects Section -->
-                <div class="backdrop-blur-xl bg-white/20 p-6 rounded-[20px] border border-white/10 hover:bg-white/25 
-                            transition-all duration-300 hover:scale-[1.01] shadow-inner">
-                    {% if projects %}
-                    <div class="space-y-3 overflow-y-auto max-h-[400px] pr-2 
-                                scrollbar-thin scrollbar-thumb-white/50 scrollbar-track-transparent">
-                        {% for project in projects %}
-                        <div class="backdrop-blur-sm bg-white/10 rounded-xl p-5 border border-white/10 
-                                  transition-all duration-300 hover:bg-white/20 hover:scale-[1.02]">
-                            <div class="flex items-center justify-between">
-                                <h3 class="text-zinc-900 font-medium">{{ project.name }}</h3>
-                                <span class="px-3 py-1 text-xs rounded-full 
-                                           {% if project.status == 'active' %}bg-emerald-400/20 text-emerald-700
-                                           {% else %}bg-zinc-400/20 text-zinc-700{% endif %}">
-                                    {{ project.status }}
-                                </span>
+                    <!-- Stats Column -->
+                    <div class="space-y-6">
+                        {% if not is_admin %}
+                        <div class="backdrop-blur-xl bg-white/20 p-6 rounded-[20px] border border-white/10 shadow-inner">
+                            <h3 class="text-zinc-900 font-bold mb-4 text-lg">Quick Stats</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="backdrop-blur-sm bg-gradient-to-tr from-teal-300/20 to-teal-400/10 p-5 rounded-xl border border-white/10 transition-all duration-300 hover:bg-teal-400/20 shadow">
+                                    <p class="text-teal-900 text-sm mb-1">Active Projects</p>
+                                    <p class="text-3xl font-bold text-teal-700">{{ projects|length }}</p>
+                                </div>
+                                <div class="backdrop-blur-sm bg-gradient-to-tr from-rose-300/20 to-rose-400/10 p-5 rounded-xl border border-white/10 transition-all duration-300 hover:bg-rose-400/20 shadow">
+                                    <p class="text-rose-900 text-sm mb-1">Present Today</p>
+                                    <p class="text-3xl font-bold text-rose-700">{{ present_employees_count }}</p>
+                                </div>
                             </div>
                         </div>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Stats -->
-            <div class="space-y-6">
-                {% if not is_admin %}
-                <div class="backdrop-blur-xl bg-white/20 p-6 rounded-[20px] border border-white/10 shadow-inner">
-                    <h3 class="text-zinc-900 font-bold mb-4 text-lg">Quick Stats</h3>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="backdrop-blur-sm bg-gradient-to-tr from-teal-300/20 to-teal-400/10 p-5 rounded-xl border border-white/10 
-                                  transition-all duration-300 hover:bg-teal-400/20 shadow">
-                            <p class="text-teal-900 text-sm mb-1">Active Projects</p>
-                            <p class="text-3xl font-bold text-teal-700">{{ projects|length }}</p>
-                        </div>
-                        <div class="backdrop-blur-sm bg-gradient-to-tr from-rose-300/20 to-rose-400/10 p-5 rounded-xl border border-white/10 
-                                  transition-all duration-300 hover:bg-rose-400/20 shadow">
-                            <p class="text-rose-900 text-sm mb-1">Present Today</p>
-                            <p class="text-3xl font-bold text-rose-700">{{ present_employees_count }}</p>
-                        </div>
+                        {% endif %}
                     </div>
                 </div>
-                {% endif %}
             </div>
         </div>
-    </div>
-</div>
 
         <!-- Role-Based Quick Stats Section -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-8">
             {% if is_admin or is_manager %}
-            {% include 'card/project_stats_card.html' %}
-            {% include 'card/attendance_card.html' %}
+                {% include 'card/project_stats_card.html' %}
+                {% include 'card/attendance_card.html' %}
+                {% include 'card/conference_booking_card.html' %}
             {% elif is_hr %}
-            {% include 'card/attendance_card.html' %}
-            {% include 'card/performance.html' %}
-            {% include 'card/holiday.html' %}
+                {% include 'card/conference_booking_card.html' %}
+                {% include 'card/attendance_card.html' %}
+                {% include 'card/performance.html' %}
+                {% include 'card/holiday.html' %}
             {% elif is_employee %}
-            {% include 'card/tasks_card.html' %}
-            {% include 'card/attendance_card.html' %}
-            {% include 'card/performance.html' %}
+                {% include 'card/conference_booking_card.html' %}
+                {% include 'card/attendance_card.html' %}
+                {% include 'card/performance.html' %}
             {% elif is_client %}
-            {% include 'card/project_progress_card.html' %}
-            {% include 'card/support_tickets_card.html' %}
-            {% include 'card/billing_summary_card.html' %}
+                {% include 'card/project_progress_card.html' %}
+                {% include 'card/support_tickets_card.html' %}
+                {% include 'card/billing_summary_card.html' %}
             {% endif %}
         </div>
 
         <!-- Role-Based Updates Section -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
             {% if is_admin or is_manager %}
-            {% include 'card/team_update_card.html' %}
-            {% include 'card/global_update_card.html' %}
+                {% include 'card/team_update_card.html' %}
+                {% include 'card/global_update_card.html' %}
             {% elif is_hr %}
-            {% include 'card/global_update_card.html' %}
+                {% include 'card/global_update_card.html' %}
             {% elif is_employee %}
-            {% include 'card/team_update_card.html' %}
-            {% include 'card/global_update_card.html' %}
+                {% include 'card/team_update_card.html' %}
+                {% include 'card/global_update_card.html' %}
             {% elif is_client %}
-            {% include 'card/project_updates_card.html' %}
-            {% include 'card/support_status_card.html' %}
+                {% include 'card/project_updates_card.html' %}
+                {% include 'card/support_status_card.html' %}
             {% endif %}
         </div>
     </div>
-
 </div>
+
+<!-- Include all booking modals -->
+{% include 'conf_booking/room/booking_modal.html' %}
+{% include 'conf_booking/room/calendar_modal.html' %}
+{% include 'conf_booking/room/room_details_modal.html' %}
+
 
 <!-- CSS for buttons and smooth scrolling -->
 <style>
     html {
         scroll-behavior: smooth;
     }
-    
+
     .btn-primary {
         @apply px-2 py-1 sm:px-3 sm:py-1.5 lg:px-4 lg:py-2 bg-indigo-600 text-white rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-300 transform hover:-translate-y-1 text-xs sm:text-sm lg:text-base;
     }
@@ -170,75 +163,251 @@
     .btn-secondary {
         @apply px-2 py-1 sm:px-3 sm:py-1.5 lg:px-4 lg:py-2 bg-white text-gray-700 border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-300 text-xs sm:text-sm lg:text-base;
     }
-    
+
     .card {
         @apply bg-white p-3 sm:p-4 lg:p-6 rounded-xl shadow transition-all duration-300;
     }
-    
+
     /* Custom scrollbar */
     .scrollbar-thin::-webkit-scrollbar {
         width: 4px;
     }
-    
+
     .scrollbar-thin::-webkit-scrollbar-track {
         background: #f1f1f1;
         border-radius: 10px;
     }
-    
+
     .scrollbar-thin::-webkit-scrollbar-thumb {
         background: #888;
         border-radius: 10px;
     }
-    
+
     .scrollbar-thin::-webkit-scrollbar-thumb:hover {
         background: #555;
     }
-    
+
     /* Animation for elements */
     @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
-    
-    .card, .btn-primary, .btn-secondary {
+
+    .card,
+    .btn-primary,
+    .btn-secondary {
         animation: fadeIn 0.5s ease-out;
     }
-    
+
     /* Pulse animation for notifications */
     @keyframes pulse {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.05); }
-        100% { transform: scale(1); }
+        0% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.05);
+        }
+        100% {
+            transform: scale(1);
+        }
     }
-    
+
     .animate-pulse {
         animation: pulse 2s infinite;
     }
 </style>
 
-                                <script>
-                                    function updateTime() {
-                                        const timeElement = document.getElementById("time");
-                                        const ampmElement = document.getElementById("time-ampm");
-                                        const now = new Date();
-                                        let hours = now.getHours();
-                                        let minutes = now.getMinutes();
-                                        let seconds = now.getSeconds();
-                                        let ampm = hours >= 12 ? 'PM' : 'AM';
+<script>
+    function updateTime() {
+        const timeElement = document.getElementById("time");
+        const ampmElement = document.getElementById("time-ampm");
+        const now = new Date();
+        let hours = now.getHours();
+        let minutes = now.getMinutes();
+        let seconds = now.getSeconds();
+        let ampm = hours >= 12 ? "PM" : "AM";
 
-                                        // Convert to 12-hour format
-                                        hours = hours % 12;
-                                        hours = hours ? hours : 12; // 0 becomes 12
-                                        minutes = minutes < 10 ? '0' + minutes : minutes;
-                                        seconds = seconds < 10 ? '0' + seconds : seconds;
+        // Convert to 12-hour format
+        hours = hours % 12;
+        hours = hours ? hours : 12; // 0 becomes 12
+        minutes = minutes < 10 ? "0" + minutes : minutes;
+        seconds = seconds < 10 ? "0" + seconds : seconds;
 
-                                        const formattedTime = `${hours}:${minutes}:${seconds}`;
-                                        timeElement.textContent = formattedTime;
-                                        ampmElement.textContent = ampm;
-                                    }
+        const formattedTime = `${hours}:${minutes}:${seconds}`;
+        timeElement.textContent = formattedTime;
+        ampmElement.textContent = ampm;
+    }
 
-                                    // Update time immediately and every second
-                                    updateTime();
-                                    setInterval(updateTime, 1000);
-                                </script>
+    // Update time immediately and every second
+    updateTime();
+    setInterval(updateTime, 1000);
+
+    // Initialize conference booking functionality
+    window.openBookingModal = function () {
+        const bookingModal = document.getElementById("bookingModal");
+        if (bookingModal) {
+            bookingModal.classList.remove("hidden");
+            setTimeout(() => {
+                bookingModal.classList.remove("bg-opacity-0");
+                bookingModal.classList.add("bg-opacity-50");
+                const modalDialog = bookingModal.querySelector(".modal-dialog");
+                if (modalDialog) {
+                    modalDialog.classList.remove(
+                        "-translate-y-10",
+                        "opacity-0",
+                    );
+                    modalDialog.classList.add("translate-y-0", "opacity-100");
+                }
+            }, 10);
+        }
+    };
+
+    window.openCalendarModal = function () {
+        const calendarModal = document.getElementById("calendarModal");
+        if (calendarModal) {
+            calendarModal.classList.remove("hidden");
+            setTimeout(() => {
+                calendarModal.classList.remove("bg-opacity-0");
+                calendarModal.classList.add("bg-opacity-50");
+                const modalDialog =
+                    calendarModal.querySelector(".modal-dialog");
+                if (modalDialog) {
+                    modalDialog.classList.remove(
+                        "-translate-y-10",
+                        "opacity-0",
+                    );
+                    modalDialog.classList.add("translate-y-0", "opacity-100");
+                }
+                // Initialize calendar if function exists
+                if (typeof window.initCalendar === "function") {
+                    window.initCalendar();
+                }
+            }, 10);
+        }
+    };
+
+    window.openRoomDetailsModal = function (roomId) {
+        const roomDetailsModal = document.getElementById("roomDetailsModal");
+        if (roomDetailsModal && roomId) {
+            roomDetailsModal.classList.remove("hidden");
+            setTimeout(() => {
+                roomDetailsModal.classList.remove("bg-opacity-0");
+                roomDetailsModal.classList.add("bg-opacity-50");
+                const modalDialog =
+                    roomDetailsModal.querySelector(".modal-dialog");
+                if (modalDialog) {
+                    modalDialog.classList.remove(
+                        "-translate-y-10",
+                        "opacity-0",
+                    );
+                    modalDialog.classList.add("translate-y-0", "opacity-100");
+                }
+                // Load room details if function exists
+                if (typeof window.loadRoomDetails === "function") {
+                    window.loadRoomDetails(roomId);
+                }
+            }, 10);
+        }
+    };
+
+    // Event listeners for modal triggers
+    document.addEventListener("click", function (e) {
+        if (
+            e.target.id === "openBookingModalBtn" ||
+            e.target.closest("#openBookingModalBtn")
+        ) {
+            openBookingModal();
+        }
+        if (
+            e.target.id === "roomCalendarBtn" ||
+            e.target.closest("#roomCalendarBtn")
+        ) {
+            openCalendarModal();
+        }
+        if (e.target.classList.contains("room-details-btn")) {
+            const roomId = e.target.dataset.roomId;
+            openRoomDetailsModal(roomId);
+        }
+    });
+
+    // Refresh room status function
+    window.refreshRoomStatus = function () {
+        const roomStatusElements =
+            document.querySelectorAll("[data-room-status]");
+        roomStatusElements.forEach((element) => {
+            const roomId = element.dataset.roomId;
+            if (roomId) {
+                fetch(`/conf_booking/api/room/${roomId}/`)
+                    .then((response) => response.json())
+                    .then((data) => {
+                        updateRoomStatusDisplay(element, data);
+                    })
+                    .catch((error) => {
+                        console.error("Error refreshing room status:", error);
+                    });
+            }
+        });
+    };
+
+    // Update room status display
+    function updateRoomStatusDisplay(element, roomData) {
+        const statusElement = element.querySelector(".room-status");
+        const nextBookingElement = element.querySelector(".next-booking");
+
+        if (statusElement) {
+            if (roomData.is_occupied) {
+                statusElement.className =
+                    "room-status text-red-600 font-semibold";
+                statusElement.textContent = "Occupied";
+            } else {
+                statusElement.className =
+                    "room-status text-green-600 font-semibold";
+                statusElement.textContent = "Available";
+            }
+        }
+
+        if (nextBookingElement && roomData.next_booking) {
+            const nextStart = new Date(roomData.next_booking.start_time);
+            nextBookingElement.textContent = `Next: ${nextStart.toLocaleTimeString()} - ${roomData.next_booking.purpose}`;
+        } else if (nextBookingElement) {
+            nextBookingElement.textContent = "No upcoming bookings";
+        }
+    }
+
+    // Auto-refresh room status every 30 seconds
+    setInterval(refreshRoomStatus, 30000);
+
+    // Initialize room status on page load
+    refreshRoomStatus();
+
+    // Show notification function
+    window.showNotification = function (message, type = "info") {
+        const notification = document.createElement("div");
+        notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+            type === "success"
+                ? "bg-green-100 text-green-800 border-green-400"
+                : type === "error"
+                  ? "bg-red-100 text-red-800 border-red-400"
+                  : "bg-blue-100 text-blue-800 border-blue-400"
+        } border-l-4`;
+        notification.textContent = message;
+
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            notification.remove();
+        }, 5000);
+    };
+
+    function formatAsLocalDateTime(date) {
+        const pad = (num) => num.toString().padStart(2, "0");
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    }
+</script>
 {% endblock %}

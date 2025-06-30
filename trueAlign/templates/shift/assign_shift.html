@@ -1,0 +1,375 @@
+{% extends 'base.html' %} {% block title %}{{ page_title }}{% endblock %} {%
+block content %}
+<div class="min-h-screen bg-gray-50">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header Section -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">
+                        Assign Shift
+                    </h1>
+                    <p class="text-gray-600 mt-2">
+                        Assign a shift to a user for a specific time period
+                    </p>
+                </div>
+                <div class="flex space-x-3">
+                    <a
+                        href="{% url 'shift:assignments' %}"
+                        class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                    >
+                        <svg
+                            class="w-4 h-4 mr-2"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                            ></path>
+                        </svg>
+                        Back to Assignments
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Section -->
+        <div class="bg-white shadow rounded-lg">
+            <form method="POST" class="p-6 space-y-6">
+                {% csrf_token %}
+
+                <!-- Display form errors -->
+                {% if form.non_field_errors %}
+                <div class="rounded-md bg-red-50 p-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg
+                                class="h-5 w-5 text-red-400"
+                                viewBox="0 0 20 20"
+                                fill="currentColor"
+                            >
+                                <path
+                                    fill-rule="evenodd"
+                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                    clip-rule="evenodd"
+                                />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-red-800">
+                                There were errors with your submission:
+                            </h3>
+                            <div class="mt-2 text-sm text-red-700">
+                                <ul class="list-disc list-inside space-y-1">
+                                    {% for error in form.non_field_errors %}
+                                    <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- User Selection -->
+                <div>
+                    <label
+                        for="{{ form.user.id_for_label }}"
+                        class="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                        User <span class="text-red-500">*</span>
+                    </label>
+                    <div class="mt-1">
+                        <select
+                            name="{{ form.user.name }}"
+                            id="{{ form.user.id_for_label }}"
+                            required
+                            class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                        >
+                            <option value="">Select a user</option>
+                            {% for choice in form.user.field.choices %} {% if
+                            choice.0 %}
+                            <option
+                                value="{{ choice.0 }}"
+                                {%
+                                if
+                                form.user.value=""
+                                ="choice.0"
+                                %}selected{%
+                                endif
+                                %}
+                            >
+                                {{ choice.1 }}
+                            </option>
+                            {% endif %} {% endfor %}
+                        </select>
+                    </div>
+                    {% if form.user.errors %}
+                    <p class="mt-1 text-sm text-red-600">
+                        {{ form.user.errors.0 }}
+                    </p>
+                    {% endif %}
+                    <p class="mt-1 text-sm text-gray-500">
+                        Select the user to assign the shift to
+                    </p>
+                </div>
+
+                <!-- Shift Selection -->
+                <div>
+                    <label
+                        for="{{ form.shift.id_for_label }}"
+                        class="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                        Shift <span class="text-red-500">*</span>
+                    </label>
+                    <div class="mt-1">
+                        <select
+                            name="{{ form.shift.name }}"
+                            id="{{ form.shift.id_for_label }}"
+                            required
+                            class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                        >
+                            <option value="">Select a shift</option>
+                            {% for choice in form.shift.field.choices %} {% if
+                            choice.0 %}
+                            <option
+                                value="{{ choice.0 }}"
+                                {%
+                                if
+                                form.shift.value=""
+                                ="choice.0"
+                                %}selected{%
+                                endif
+                                %}
+                            >
+                                {{ choice.1 }}
+                            </option>
+                            {% endif %} {% endfor %}
+                        </select>
+                    </div>
+                    {% if form.shift.errors %}
+                    <p class="mt-1 text-sm text-red-600">
+                        {{ form.shift.errors.0 }}
+                    </p>
+                    {% endif %}
+                    <p class="mt-1 text-sm text-gray-500">
+                        Choose the shift pattern to assign
+                    </p>
+                </div>
+
+                <!-- Date Range -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label
+                            for="{{ form.effective_from.id_for_label }}"
+                            class="block text-sm font-medium text-gray-700 mb-2"
+                        >
+                            Effective From <span class="text-red-500">*</span>
+                        </label>
+                        <div class="mt-1">
+                            <input
+                                type="date"
+                                name="{{ form.effective_from.name }}"
+                                id="{{ form.effective_from.id_for_label }}"
+                                value="{{ form.effective_from.value|default:'' }}"
+                                required
+                                class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                            />
+                        </div>
+                        {% if form.effective_from.errors %}
+                        <p class="mt-1 text-sm text-red-600">
+                            {{ form.effective_from.errors.0 }}
+                        </p>
+                        {% endif %}
+                        <p class="mt-1 text-sm text-gray-500">
+                            Start date for this shift assignment
+                        </p>
+                    </div>
+
+                    <div>
+                        <label
+                            for="{{ form.effective_to.id_for_label }}"
+                            class="block text-sm font-medium text-gray-700 mb-2"
+                        >
+                            Effective To
+                        </label>
+                        <div class="mt-1">
+                            <input
+                                type="date"
+                                name="{{ form.effective_to.name }}"
+                                id="{{ form.effective_to.id_for_label }}"
+                                value="{{ form.effective_to.value|default:'' }}"
+                                class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                            />
+                        </div>
+                        {% if form.effective_to.errors %}
+                        <p class="mt-1 text-sm text-red-600">
+                            {{ form.effective_to.errors.0 }}
+                        </p>
+                        {% endif %}
+                        <p class="mt-1 text-sm text-gray-500">
+                            End date (leave blank for indefinite assignment)
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div
+                    class="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200"
+                >
+                    <a
+                        href="{% url 'shift:assignments' %}"
+                        class="px-6 py-2 text-gray-600 hover:text-gray-800 border border-gray-300 hover:border-gray-400 rounded-md transition-colors"
+                    >
+                        Cancel
+                    </a>
+                    <button
+                        type="submit"
+                        class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors font-medium"
+                    >
+                        Assign Shift
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Assignment Preview -->
+        <div
+            id="assignmentPreview"
+            class="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6 hidden"
+        >
+            <h3 class="text-lg font-medium text-blue-900 mb-3">
+                Assignment Preview
+            </h3>
+            <div class="text-sm text-blue-800">
+                <p class="mb-2">
+                    <strong>User:</strong> <span id="previewUser">-</span>
+                </p>
+                <p class="mb-2">
+                    <strong>Shift:</strong> <span id="previewShift">-</span>
+                </p>
+                <p class="mb-2">
+                    <strong>Time:</strong> <span id="previewTime">-</span>
+                </p>
+                <p class="mb-2">
+                    <strong>Effective From:</strong>
+                    <span id="previewFromDate">-</span>
+                </p>
+                <p>
+                    <strong>Effective To:</strong>
+                    <span id="previewToDate">Indefinite</span>
+                </p>
+            </div>
+        </div>
+
+        <!-- Help Section -->
+        <div class="mt-8 bg-gray-50 border border-gray-200 rounded-lg p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-3">
+                Assignment Guidelines
+            </h3>
+            <div class="grid md:grid-cols-2 gap-4 text-sm text-gray-700">
+                <ul class="space-y-2">
+                    <li class="flex items-start">
+                        <span class="text-blue-500 mr-2">•</span>
+                        Ensure the user doesn't have conflicting assignments
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-blue-500 mr-2">•</span>
+                        Effective from date cannot be in the past
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-blue-500 mr-2">•</span>
+                        End date must be after start date if specified
+                    </li>
+                </ul>
+                <ul class="space-y-2">
+                    <li class="flex items-start">
+                        <span class="text-blue-500 mr-2">•</span>
+                        Leave end date blank for permanent assignments
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-blue-500 mr-2">•</span>
+                        Only active shifts can be assigned
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-blue-500 mr-2">•</span>
+                        Users will be notified of new assignments
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const userSelect = document.getElementById(
+            "{{ form.user.id_for_label }}",
+        );
+        const shiftSelect = document.getElementById(
+            "{{ form.shift.id_for_label }}",
+        );
+        const fromDateInput = document.getElementById(
+            "{{ form.effective_from.id_for_label }}",
+        );
+        const toDateInput = document.getElementById(
+            "{{ form.effective_to.id_for_label }}",
+        );
+        const previewDiv = document.getElementById("assignmentPreview");
+
+        // Set minimum date to today
+        const today = new Date().toISOString().split("T")[0];
+        fromDateInput.setAttribute("min", today);
+
+        // Update preview when form changes
+        function updatePreview() {
+            const userText =
+                userSelect.options[userSelect.selectedIndex]?.text || "-";
+            const shiftText =
+                shiftSelect.options[shiftSelect.selectedIndex]?.text || "-";
+            const fromDate = fromDateInput.value || "-";
+            const toDate = toDateInput.value || "Indefinite";
+
+            document.getElementById("previewUser").textContent = userText;
+            document.getElementById("previewShift").textContent = shiftText;
+            document.getElementById("previewFromDate").textContent = fromDate;
+            document.getElementById("previewToDate").textContent = toDate;
+
+            // Show/hide preview based on selections
+            if (userSelect.value && shiftSelect.value && fromDateInput.value) {
+                previewDiv.classList.remove("hidden");
+            } else {
+                previewDiv.classList.add("hidden");
+            }
+        }
+
+        // Add event listeners
+        userSelect.addEventListener("change", updatePreview);
+        shiftSelect.addEventListener("change", updatePreview);
+        fromDateInput.addEventListener("change", function () {
+            // Update minimum date for end date
+            if (this.value) {
+                toDateInput.setAttribute("min", this.value);
+            }
+            updatePreview();
+        });
+        toDateInput.addEventListener("change", updatePreview);
+
+        // Pre-populate shift if passed in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const shiftParam = urlParams.get("shift");
+        if (shiftParam && shiftSelect) {
+            shiftSelect.value = shiftParam;
+            updatePreview();
+        }
+
+        // Initial preview update
+        updatePreview();
+    });
+</script>
+
+{% endblock %}

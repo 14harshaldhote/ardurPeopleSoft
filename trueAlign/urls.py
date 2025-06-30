@@ -28,7 +28,8 @@ register_converter(UUIDConverter, 'uuid')
 urlpatterns = [
     # Include core app URLs without the 'core/' prefix
     path('', include('trueAlign.core.urls')),
-    path('shifts/', include('trueAlign.shift.urls')),
+    path('shift/', include('trueAlign.shift.urls')),
+    path('book/', include('trueAlign.conf_booking.urls')),
 
 
 

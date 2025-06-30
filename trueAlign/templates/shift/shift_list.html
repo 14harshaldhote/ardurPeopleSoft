@@ -1,0 +1,769 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Shifts - TrueAlign{% endblock %}
+
+{% block extra_css %}
+<style>
+    .modal-backdrop {
+        backdrop-filter: blur(4px);
+    }
+
+    .form-input {
+        @apply w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors;
+    }
+
+    .form-input:focus {
+        @apply border-primary-500 ring-2 ring-primary-500 ring-opacity-50;
+    }
+
+    .btn-primary {
+        @apply bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-all duration-200 font-medium;
+    }
+
+    .btn-secondary {
+        @apply bg-neutral-200 text-neutral-700 px-4 py-2 rounded-md hover:bg-neutral-300 focus:outline-none focus:ring-2 focus:ring-neutral-500 focus:ring-offset-2 transition-all duration-200 font-medium;
+    }
+
+    .btn-danger {
+        @apply bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 font-medium;
+    }
+
+    .badge-active {
+        @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800;
+    }
+
+    .badge-inactive {
+        @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800;
+    }
+
+    .form-error {
+        @apply text-red-600 text-sm mt-1;
+    }
+
+    .loading-spinner {
+        @apply inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white;
+    }
+
+    .table-hover-row {
+        @apply hover:bg-neutral-50 transition-colors duration-150;
+    }
+
+    .action-btn {
+        @apply p-2 text-neutral-500 hover:text-primary-600 transition-colors duration-150 rounded-md hover:bg-neutral-100;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-neutral-50 py-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        <!-- Messages -->
+        {% if messages %}
+        <div class="mb-6 space-y-3">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} flex items-center p-4 rounded-lg shadow-sm
+                        {% if message.tags == 'success' %}bg-green-50 border border-green-200 text-green-800
+                        {% elif message.tags == 'error' %}bg-red-50 border border-red-200 text-red-800
+                        {% elif message.tags == 'warning' %}bg-yellow-50 border border-yellow-200 text-yellow-800
+                        {% else %}bg-blue-50 border border-blue-200 text-blue-800{% endif %}">
+                <div class="flex-shrink-0">
+                    {% if message.tags == 'success' %}
+                    <svg class="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                    </svg>
+                    {% elif message.tags == 'error' %}
+                    <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                    </svg>
+                    {% else %}
+                    <svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                    </svg>
+                    {% endif %}
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium">{{ message }}</p>
+                </div>
+                <button type="button" class="ml-auto -mx-1.5 -my-1.5 rounded-lg p-1.5 hover:bg-neutral-100 focus:ring-2 focus:ring-neutral-600" onclick="this.parentElement.remove()">
+                    <span class="sr-only">Dismiss</span>
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Page Header -->
+        <div class="bg-white shadow-sm rounded-2xl mb-8">
+            <div class="px-6 py-6 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 leading-tight tracking-tight">
+                        Shift Management
+                    </h1>
+                    <p class="text-sm text-gray-500 mt-1">
+                        View, create, and manage all shift schedules and assignments.
+                    </p>
+                </div>
+                <!-- Action Button -->
+                {% if can_manage %}
+                <div>
+                    <button onclick="openCreateModal()" class="inline-flex items-center gap-2 bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:outline-none font-medium px-5 py-2.5 rounded-xl transition-all duration-150 shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        New Shift
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="bg-white shadow-sm rounded-xl mb-6">
+            <div class="px-6 py-4">
+                <form method="GET" class="space-y-4 md:space-y-0 md:flex md:items-end md:space-x-4">
+                    <div class="flex-1">
+                        <label for="id_name" class="block text-sm font-medium text-neutral-700 mb-1">
+                            Search Name
+                        </label>
+                        <input type="text" name="name" id="id_name" value="{{ request.GET.name|default:'' }}" placeholder="Search by shift name" class="form-input">
+                    </div>
+                    <div class="flex-1">
+                        <label for="id_work_days" class="block text-sm font-medium text-neutral-700 mb-1">
+                            Work Days
+                        </label>
+                        <select name="work_days" id="id_work_days" class="form-input">
+                            <option value="">All Work Days</option>
+                            <option value="Weekdays" {% if request.GET.work_days == 'Weekdays' %}selected{% endif %}>Monday to Friday</option>
+                            <option value="All Days" {% if request.GET.work_days == 'All Days' %}selected{% endif %}>Monday to Saturday</option>
+                            <option value="Custom" {% if request.GET.work_days == 'Custom' %}selected{% endif %}>Custom Days</option>
+                        </select>
+                    </div>
+                    <div class="flex-1">
+                        <label for="id_is_active" class="block text-sm font-medium text-neutral-700 mb-1">
+                            Status
+                        </label>
+                        <select name="is_active" id="id_is_active" class="form-input">
+                            <option value="">All Statuses</option>
+                            <option value="true" {% if request.GET.is_active == 'true' %}selected{% endif %}>Active</option>
+                            <option value="false" {% if request.GET.is_active == 'false' %}selected{% endif %}>Inactive</option>
+                        </select>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button type="submit" class="btn-primary inline-flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                            Filter
+                        </button>
+                        <a href="{% url 'shift:list' %}" class="btn-secondary inline-flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                            Clear
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Shifts Table -->
+        <div class="bg-white shadow-sm rounded-xl overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-neutral-200">
+                    <thead class="bg-neutral-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Name</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Time</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Duration</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Work Days</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-neutral-200">
+                        {% for shift in shifts %}
+                        <tr class="table-hover-row">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div>
+                                        <div class="text-sm font-medium text-neutral-900">{{ shift.name }}</div>
+                                        {% if shift.description %}
+                                        <div class="text-sm text-neutral-500">{{ shift.description|truncatechars:50 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-neutral-900">{{ shift.start_time|time:"H:i" }} - {{ shift.end_time|time:"H:i" }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-neutral-900">{{ shift.shift_duration }} hrs</div>
+                                {% if shift.break_duration %}
+                                <div class="text-xs text-neutral-500">Break: {{ shift.break_duration.total_seconds|floatformat:0|add:"0"|floatformat:0 }}min</div>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-neutral-900">
+                                    {% if shift.work_days == 'Custom' and shift.custom_work_days %}
+                                    {{ shift.custom_work_days }}
+                                    {% else %}
+                                    {{ shift.get_work_days_display|default:shift.work_days }}
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {% if shift.is_active %}
+                                <span class="badge-active">
+                                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    Active
+                                </span>
+                                {% else %}
+                                <span class="badge-inactive">
+                                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    Inactive
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <div class="flex space-x-1">
+                                    <a href="{% url 'shift:detail' shift.id %}" class="action-btn" title="View Details">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                        </svg>
+                                    </a>
+                                    {% if can_manage %}
+                                    <button onclick="openEditModal({{ shift.id }}, '{{ shift.name|escapejs }}', '{{ shift.start_time|time:"H:i" }}', '{{ shift.end_time|time:"H:i" }}', '{{ shift.shift_duration }}', '{{ shift.work_days }}', '{{ shift.custom_work_days|default:""|escapejs }}', {{ shift.is_active|yesno:"true,false" }}, {{ shift.break_duration.total_seconds|default:1800|floatformat:0 }}, {{ shift.grace_period.total_seconds|default:900|floatformat:0 }}, '{{ shift.description|default:""|escapejs }}')" class="action-btn text-blue-600 hover:text-blue-900" title="Edit Shift">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                    </button>
+                                    <button onclick="openDeleteModal({{ shift.id }}, '{{ shift.name|escapejs }}')" class="action-btn text-red-600 hover:text-red-900" title="Delete Shift">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="px-6 py-12 text-center">
+                                <div class="flex flex-col items-center">
+                                    <svg class="w-12 h-12 text-neutral-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    <h3 class="text-sm font-medium text-neutral-900 mb-1">No shifts found</h3>
+                                    <p class="text-sm text-neutral-500">
+                                        {% if can_manage %}
+                                        <button onclick="openCreateModal()" class="text-primary-600 hover:text-primary-900 font-medium">Create your first shift</button>
+                                        {% else %}
+                                        No shifts have been created yet.
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        {% if shifts.has_other_pages %}
+        <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-neutral-200 sm:px-6 mt-6 rounded-lg shadow-sm">
+            <div class="flex-1 flex justify-between sm:hidden">
+                {% if shifts.has_previous %}
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ shifts.previous_page_number }}" class="relative inline-flex items-center px-4 py-2 border border-neutral-300 text-sm font-medium rounded-md text-neutral-700 bg-white hover:bg-neutral-50 transition-colors">Previous</a>
+                {% endif %}
+                {% if shifts.has_next %}
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ shifts.next_page_number }}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-neutral-300 text-sm font-medium rounded-md text-neutral-700 bg-white hover:bg-neutral-50 transition-colors">Next</a>
+                {% endif %}
+            </div>
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm text-neutral-700">
+                        Showing <span class="font-medium">{{ shifts.start_index }}</span> to <span class="font-medium">{{ shifts.end_index }}</span> of <span class="font-medium">{{ shifts.paginator.count }}</span> results
+                    </p>
+                </div>
+                <div>
+                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                        {% if shifts.has_previous %}
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ shifts.previous_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-neutral-300 bg-white text-sm font-medium text-neutral-500 hover:bg-neutral-50 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                            </svg>
+                        </a>
+                        {% endif %}
+                        {% for num in shifts.paginator.page_range %}
+                        {% if num == shifts.number %}
+                        <span class="relative inline-flex items-center px-4 py-2 border border-primary-500 bg-primary-50 text-sm font-medium text-primary-600">{{ num }}</span>
+                        {% else %}
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ num }}" class="relative inline-flex items-center px-4 py-2 border border-neutral-300 bg-white text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition-colors">{{ num }}</a>
+                        {% endif %}
+                        {% endfor %}
+                        {% if shifts.has_next %}
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ shifts.next_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-neutral-300 bg-white text-sm font-medium text-neutral-500 hover:bg-neutral-50 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </a>
+                        {% endif %}
+                    </nav>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Create Modal -->
+{% if can_manage %}
+<div id="createModal" class="fixed inset-0 z-50 overflow-y-auto hidden">
+    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-neutral-500 bg-opacity-75 transition-opacity modal-backdrop"></div>
+        <div class="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <form method="POST" action="{% url 'shift:create' %}" id="createForm">
+                {% csrf_token %}
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="w-full">
+                            <div class="flex items-center mb-4">
+                                <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-indigo-100 sm:mx-0 sm:h-10 sm:w-10">
+                                    <svg class="h-6 w-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                    </svg>
+                                </div>
+                                <h3 class="ml-4 text-lg leading-6 font-medium text-neutral-900">Create New Shift</h3>
+                            </div>
+                            <div class="space-y-4">
+                                <div>
+                                    <label for="create_name" class="block text-sm font-medium text-neutral-700 mb-1">
+                                        Shift Name <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="text" name="name" id="create_name" class="form-input" placeholder="Enter shift name" required>
+                                </div>
+                                <div>
+                                    <label for="create_description" class="block text-sm font-medium text-neutral-700 mb-1">Description</label>
+                                    <textarea name="description" id="create_description" rows="2" class="form-input" placeholder="Optional description"></textarea>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="create_start_time" class="block text-sm font-medium text-neutral-700 mb-1">
+                                            Start Time <span class="text-red-500">*</span>
+                                        </label>
+                                        <input type="time" name="start_time" id="create_start_time" class="form-input" required>
+                                    </div>
+                                    <div>
+                                        <label for="create_end_time" class="block text-sm font-medium text-neutral-700 mb-1">
+                                            End Time <span class="text-red-500">*</span>
+                                        </label>
+                                        <input type="time" name="end_time" id="create_end_time" class="form-input" required>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="create_shift_duration" class="block text-sm font-medium text-neutral-700 mb-1">
+                                        Duration (hours) <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="number" name="shift_duration" id="create_shift_duration" step="0.5" min="0.5" max="24" class="form-input" placeholder="8.0" required>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="create_break_duration_minutes" class="block text-sm font-medium text-neutral-700 mb-1">Break Duration (mins)</label>
+                                        <input type="number" name="break_duration_minutes" id="create_break_duration_minutes" min="0" max="480" value="30" class="form-input">
+                                    </div>
+                                    <div>
+                                        <label for="create_grace_period_minutes" class="block text-sm font-medium text-neutral-700 mb-1">Grace Period (mins)</label>
+                                        <input type="number" name="grace_period_minutes" id="create_grace_period_minutes" min="0" max="120" value="15" class="form-input">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="create_work_days" class="block text-sm font-medium text-neutral-700 mb-1">
+                                        Work Days <span class="text-red-500">*</span>
+                                    </label>
+                                    <select name="work_days" id="create_work_days" class="form-input" onchange="toggleCustomWorkDays('create')" required>
+                                        <option value="Weekdays">Monday to Friday</option>
+                                        <option value="All Days">Monday to Saturday</option>
+                                        <option value="Custom">Custom Days</option>
+                                    </select>
+                                </div>
+                                <div id="customWorkDaysCreate" class="hidden">
+                                    <label for="create_custom_work_days" class="block text-sm font-medium text-neutral-700 mb-1">
+                                        Custom Work Days <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="text" name="custom_work_days" id="create_custom_work_days" class="form-input" placeholder="Monday,Tuesday,Wednesday,Thursday,Friday">
+                                    <div class="text-xs text-neutral-500 mt-1">Enter comma-separated day names</div>
+                                </div>
+                                <div class="flex items-center">
+                                    <input type="checkbox" name="is_active" id="create_is_active" value="true" checked class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-neutral-300 rounded">
+                                    <label for="create_is_active" class="ml-2 text-sm text-neutral-700">Active</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-neutral-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="submit" class="btn-primary sm:ml-3 inline-flex items-center" id="createSubmitBtn">
+                        <span class="submit-text">Create Shift</span>
+                        <span class="loading-spinner hidden ml-2"></span>
+                    </button>
+                    <button type="button" onclick="closeCreateModal()" class="btn-secondary mt-3 sm:mt-0">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Edit Modal -->
+{% if can_manage %}
+<div id="editModal" class="fixed inset-0 z-50 overflow-y-auto hidden">
+    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-neutral-500 bg-opacity-75 transition-opacity modal-backdrop"></div>
+        <div class="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <form id="editForm" method="POST">
+                {% csrf_token %}
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="w-full">
+                            <div class="flex items-center mb-4">
+                                <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
+                                    <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                    </svg>
+                                </div>
+                                <h3 class="ml-4 text-lg leading-6 font-medium text-neutral-900">Edit Shift</h3>
+                            </div>
+                            <div class="space-y-4">
+                                <div>
+                                    <label for="edit_name" class="block text-sm font-medium text-neutral-700 mb-1">
+                                        Shift Name <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="text" id="edit_name" name="name" class="form-input" required>
+                                </div>
+                                <div>
+                                    <label for="edit_description" class="block text-sm font-medium text-neutral-700 mb-1">Description</label>
+                                    <textarea id="edit_description" name="description" rows="2" class="form-input" placeholder="Optional description"></textarea>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="edit_start_time" class="block text-sm font-medium text-neutral-700 mb-1">
+                                            Start Time <span class="text-red-500">*</span>
+                                        </label>
+                                        <input type="time" id="edit_start_time" name="start_time" class="form-input" required>
+                                    </div>
+                                    <div>
+                                        <label for="edit_end_time" class="block text-sm font-medium text-neutral-700 mb-1">
+                                            End Time <span class="text-red-500">*</span>
+                                        </label>
+                                        <input type="time" id="edit_end_time" name="end_time" class="form-input" required>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="edit_shift_duration" class="block text-sm font-medium text-neutral-700 mb-1">
+                                        Duration (hours) <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="number" id="edit_shift_duration" name="shift_duration" step="0.5" min="0.5" max="24" class="form-input" required>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="edit_break_duration_minutes" class="block text-sm font-medium text-neutral-700 mb-1">Break Duration (mins)</label>
+                                        <input type="number" id="edit_break_duration_minutes" name="break_duration_minutes" min="0" max="480" class="form-input">
+                                    </div>
+                                    <div>
+                                        <label for="edit_grace_period_minutes" class="block text-sm font-medium text-neutral-700 mb-1">Grace Period (mins)</label>
+                                        <input type="number" id="edit_grace_period_minutes" name="grace_period_minutes" min="0" max="120" class="form-input">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="edit_work_days" class="block text-sm font-medium text-neutral-700 mb-1">
+                                        Work Days <span class="text-red-500">*</span>
+                                    </label>
+                                    <select id="edit_work_days" name="work_days" class="form-input" onchange="toggleCustomWorkDays('edit')" required>
+                                        <option value="Weekdays">Monday to Friday</option>
+                                        <option value="All Days">Monday to Saturday</option>
+                                        <option value="Custom">Custom Days</option>
+                                    </select>
+                                </div>
+                                <div id="customWorkDaysEdit" class="hidden">
+                                    <label for="edit_custom_work_days" class="block text-sm font-medium text-neutral-700 mb-1">
+                                        Custom Work Days <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="text" id="edit_custom_work_days" name="custom_work_days" class="form-input" placeholder="Monday,Tuesday,Wednesday,Thursday,Friday">
+                                    <div class="text-xs text-neutral-500 mt-1">Enter comma-separated day names</div>
+                                </div>
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="edit_is_active" name="is_active" value="true" class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-neutral-300 rounded">
+                                    <label for="edit_is_active" class="ml-2 text-sm text-neutral-700">Active</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-neutral-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="submit" class="btn-primary sm:ml-3 inline-flex items-center" id="editSubmitBtn">
+                        <span class="submit-text">Update Shift</span>
+                        <span class="loading-spinner hidden ml-2"></span>
+                    </button>
+                    <button type="button" onclick="closeEditModal()" class="btn-secondary mt-3 sm:mt-0">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Delete Modal -->
+{% if can_manage %}
+<div id="deleteModal" class="fixed inset-0 z-50 overflow-y-auto hidden">
+    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-neutral-500 bg-opacity-75 transition-opacity modal-backdrop"></div>
+        <div class="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <form id="deleteForm" method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="force" value="true">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                            <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                            </svg>
+                        </div>
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                            <h3 class="text-lg leading-6 font-medium text-neutral-900">Delete Shift</h3>
+                            <div class="mt-2">
+                                <p class="text-sm text-neutral-500">
+                                    Are you sure you want to delete <strong><span id="deleteShiftName" class="text-neutral-900"></span></strong>? This action cannot be undone and will affect all related schedules and assignments.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-neutral-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="submit" class="btn-danger sm:ml-3 inline-flex items-center" id="deleteSubmitBtn">
+                        <span class="submit-text">Delete Shift</span>
+                        <span class="loading-spinner hidden ml-2"></span>
+                    </button>
+                    <button type="button" onclick="closeDeleteModal()" class="btn-secondary mt-3 sm:mt-0">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+// Global variables
+let isSubmitting = false;
+
+// Create Modal Functions
+function openCreateModal() {
+    document.getElementById('createModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    
+    // Reset form
+    document.getElementById('createForm').reset();
+    document.getElementById('create_is_active').checked = true;
+    document.getElementById('customWorkDaysCreate').classList.add('hidden');
+    
+    // Focus on first input
+    setTimeout(() => {
+        document.getElementById('create_name').focus();
+    }, 100);
+}
+
+function closeCreateModal() {
+    if (isSubmitting) return;
+    
+    document.getElementById('createModal').classList.add('hidden');
+    document.body.style.overflow = '';
+}
+
+function openEditModal(shiftId, name, startTime, endTime, duration, workDays, customWorkDays, isActive, breakDuration, gracePeriod, description) {
+    document.getElementById('editForm').action = `/shift/shifts/${shiftId}/update/`;
+    document.getElementById('edit_name').value = name;
+    document.getElementById('edit_description').value = description || '';
+    document.getElementById('edit_start_time').value = startTime;
+    document.getElementById('edit_end_time').value = endTime;
+    document.getElementById('edit_shift_duration').value = duration;
+    document.getElementById('edit_work_days').value = workDays;
+    document.getElementById('edit_custom_work_days').value = customWorkDays || '';
+    document.getElementById('edit_is_active').checked = isActive;
+    document.getElementById('edit_break_duration_minutes').value = Math.floor(breakDuration / 60);
+    document.getElementById('edit_grace_period_minutes').value = Math.floor(gracePeriod / 60);
+
+    // Show/hide custom work days field
+    if (workDays === 'Custom') {
+        document.getElementById('customWorkDaysEdit').classList.remove('hidden');
+    } else {
+        document.getElementById('customWorkDaysEdit').classList.add('hidden');
+    }
+
+    document.getElementById('editModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    
+    // Focus on first input
+    setTimeout(() => {
+        document.getElementById('edit_name').focus();
+    }, 100);
+}
+
+function closeEditModal() {
+    if (isSubmitting) return;
+    
+    document.getElementById('editModal').classList.add('hidden');
+    document.body.style.overflow = '';
+}
+
+function openDeleteModal(shiftId, shiftName) {
+    document.getElementById('deleteForm').action = `/shift/shifts/${shiftId}/delete/`;
+    document.getElementById('deleteShiftName').textContent = shiftName;
+    document.getElementById('deleteModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeDeleteModal() {
+    if (isSubmitting) return;
+    
+    document.getElementById('deleteModal').classList.add('hidden');
+    document.body.style.overflow = '';
+}
+
+function toggleCustomWorkDays(prefix) {
+    const workDaysSelect = document.getElementById(prefix + '_work_days');
+    const customWorkDaysDiv = document.getElementById('customWorkDays' + (prefix === 'edit' ? 'Edit' : 'Create'));
+    const customWorkDaysInput = document.getElementById(prefix + '_custom_work_days');
+
+    if (workDaysSelect.value === 'Custom') {
+        customWorkDaysDiv.classList.remove('hidden');
+        customWorkDaysInput.required = true;
+    } else {
+        customWorkDaysDiv.classList.add('hidden');
+        customWorkDaysInput.required = false;
+        customWorkDaysInput.value = '';
+    }
+}
+
+function setLoadingState(buttonId, isLoading) {
+    const button = document.getElementById(buttonId);
+    if (!button) return;
+    
+    const submitText = button.querySelector('.submit-text');
+    const spinner = button.querySelector('.loading-spinner');
+    
+    if (isLoading) {
+        button.disabled = true;
+        submitText.textContent = 'Processing...';
+        spinner.classList.remove('hidden');
+        button.classList.add('opacity-75');
+    } else {
+        button.disabled = false;
+        spinner.classList.add('hidden');
+        button.classList.remove('opacity-75');
+    }
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Create form submission
+    const createForm = document.getElementById('createForm');
+    if (createForm) {
+        createForm.addEventListener('submit', function(e) {
+            if (isSubmitting) {
+                e.preventDefault();
+                return;
+            }
+            
+            isSubmitting = true;
+            setLoadingState('createSubmitBtn', true);
+            
+            // Reset submit button text
+            const submitText = document.querySelector('#createSubmitBtn .submit-text');
+            if (submitText) submitText.textContent = 'Creating...';
+        });
+    }
+    
+    // Edit form submission
+    const editForm = document.getElementById('editForm');
+    if (editForm) {
+        editForm.addEventListener('submit', function(e) {
+            if (isSubmitting) {
+                e.preventDefault();
+                return;
+            }
+            
+            isSubmitting = true;
+            setLoadingState('editSubmitBtn', true);
+            
+            // Reset submit button text
+            const submitText = document.querySelector('#editSubmitBtn .submit-text');
+            if (submitText) submitText.textContent = 'Updating...';
+        });
+    }
+    
+    // Delete form submission
+    const deleteForm = document.getElementById('deleteForm');
+    if (deleteForm) {
+        deleteForm.addEventListener('submit', function(e) {
+            if (isSubmitting) {
+                e.preventDefault();
+                return;
+            }
+            
+            isSubmitting = true;
+            setLoadingState('deleteSubmitBtn', true);
+            
+            // Reset submit button text
+            const submitText = document.querySelector('#deleteSubmitBtn .submit-text');
+            if (submitText) submitText.textContent = 'Deleting...';
+        });
+    }
+});
+
+// Close modals on escape key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeCreateModal();
+        closeEditModal();
+        closeDeleteModal();
+    }
+});
+
+// Close modals when clicking backdrop
+document.addEventListener('click', function(event) {
+    if (event.target.classList.contains('modal-backdrop')) {
+        closeCreateModal();
+        closeEditModal();
+        closeDeleteModal();
+    }
+});
+
+// Reset form loading states on page load
+window.addEventListener('load', function() {
+    isSubmitting = false;
+    setLoadingState('createSubmitBtn', false);
+    setLoadingState('editSubmitBtn', false);
+    setLoadingState('deleteSubmitBtn', false);
+    
+    // Reset submit button texts
+    const createSubmitText = document.querySelector('#createSubmitBtn .submit-text');
+    const editSubmitText = document.querySelector('#editSubmitBtn .submit-text');
+    const deleteSubmitText = document.querySelector('#deleteSubmitBtn .submit-text');
+    
+    if (createSubmitText) createSubmitText.textContent = 'Create Shift';
+    if (editSubmitText) editSubmitText.textContent = 'Update Shift';
+    if (deleteSubmitText) deleteSubmitText.textContent = 'Delete Shift';
+});
+</script>
+{% endblock %}

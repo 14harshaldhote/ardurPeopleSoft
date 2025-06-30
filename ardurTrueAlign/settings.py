@@ -72,6 +72,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'trueAlign',
+    'trueAlign.shift',
+    'trueAlign.conf_booking',
     'rest_framework',
     'widget_tweaks',
 ]
@@ -155,10 +157,11 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# Logging Configuration
+# Enhanced Logging Configuration for TrueAlign Shift Management
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+
     'formatters': {
         'verbose': {
             'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
@@ -168,26 +171,121 @@ LOGGING = {
             'format': '{levelname} {message}',
             'style': '{',
         },
+        'json': {
+            'format': '{levelname}|{asctime}|{module}|{process}|{thread}|{message}',
+            'style': '{',
+        },
+        'action_based': {
+            'format': '[{asctime}] {levelname} - {name} - {message}',
+            'style': '{',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
+        },
+        'detailed': {
+            'format': '[{asctime}] {levelname} - {name} - {funcName}:{lineno} - {message}',
+            'style': '{',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
+        },
     },
+
+    'filters': {
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse',
+        },
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
+    },
+
     'handlers': {
         'console': {
+            'level': 'INFO',
             'class': 'logging.StreamHandler',
-            'formatter': 'verbose',
+            'formatter': 'action_based'
         },
         'file': {
-            'class': 'logging.FileHandler',
-            'filename': os.path.join(BASE_DIR, 'django.log'),
-            'formatter': 'verbose',
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'shift_app.log'),
+            'maxBytes': 1024*1024*15,  # 15MB
+            'backupCount': 10,
+            'formatter': 'detailed',
+        },
+        'error_file': {
+            'level': 'ERROR',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'shift_errors.log'),
+            'maxBytes': 1024*1024*15,  # 15MB
+            'backupCount': 10,
+            'formatter': 'detailed',
+        },
+        'action_file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'shift_actions.log'),
+            'maxBytes': 1024*1024*15,  # 15MB
+            'backupCount': 10,
+            'formatter': 'json',
+        },
+        'security_file': {
+            'level': 'WARNING',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'shift_security.log'),
+            'maxBytes': 1024*1024*15,  # 15MB
+            'backupCount': 10,
+            'formatter': 'detailed',
+        },
+        'api_file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'shift_api.log'),
+            'maxBytes': 1024*1024*15,  # 15MB
+            'backupCount': 10,
+            'formatter': 'json',
+        },
+        'mail_admins': {
+            'level': 'ERROR',
+            'filters': ['require_debug_false'],
+            'class': 'django.utils.log.AdminEmailHandler',
+            'formatter': 'verbose'
         },
     },
+
     'loggers': {
-        'trueAlign.core.middleware': {
+        'django': {
             'handlers': ['console', 'file'],
             'level': 'INFO',
+        },
+        'django.request': {
+            'handlers': ['error_file', 'mail_admins'],
+            'level': 'ERROR',
             'propagate': True,
         },
-
-        'django': {
+        'trueAlign.shift': {
+            'handlers': ['console', 'file', 'action_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'trueAlign.shift.actions': {
+            'handlers': ['action_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'trueAlign.shift.security': {
+            'handlers': ['security_file', 'error_file'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'trueAlign.shift.api': {
+            'handlers': ['api_file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'trueAlign.shift.performance': {
+            'handlers': ['file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'trueAlign.core.middleware': {
             'handlers': ['console', 'file'],
             'level': 'INFO',
             'propagate': True,
@@ -247,20 +345,10 @@ TICKET_ATTACHMENTS_DIR = 'ticket_attachments'
 COMMENT_ATTACHMENTS_DIR = 'comment_attachments'
 
 
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-        },
-    },
-    'loggers': {
-        'django.request': {
-            'handlers': ['console'],
-            'level': 'DEBUG',
-            'propagate': True,
-        },
+import os
+from pathlib import Path
 
-    },
-}
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Ensure logs directory exists
+os.makedirs(os.path.join(BASE_DIR, 'logs'), exist_ok=True)

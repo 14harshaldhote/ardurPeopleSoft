@@ -1,0 +1,529 @@
+<!-- Room Details Modal -->
+<div id="roomDetailsModal" class="hidden fixed inset-0 bg-black bg-opacity-0 backdrop-blur-sm z-50 transition-all duration-300">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div id="roomDetailsModalDialog" class="modal-dialog bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden transform -translate-y-10 opacity-0 transition-all duration-300">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-indigo-50">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900 room-title">Room Details</h2>
+                        <p class="text-sm text-gray-600">Current status and information</p>
+                    </div>
+                </div>
+                <button type="button" id="closeRoomDetailsModal" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="flex-1 overflow-y-auto">
+                <div class="p-6">
+                    <!-- Room Status Banner -->
+                    <div id="roomStatusBanner" class="mb-6 p-4 rounded-lg border-l-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="font-semibold room-status">Loading...</h3>
+                                <p class="text-sm text-gray-600" id="roomStatusMessage">Checking room status...</p>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-3 h-3 rounded-full" id="roomStatusIndicator"></div>
+                                <span class="text-sm font-medium" id="roomStatusText">Loading</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Room Information -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <!-- Basic Info -->
+                        <div class="space-y-4">
+                            <div>
+                                <h4 class="text-lg font-semibold text-gray-900 mb-3">Room Information</h4>
+                                <div class="space-y-3">
+                                    <div class="flex justify-between">
+                                        <span class="text-sm font-medium text-gray-500">Capacity:</span>
+                                        <span class="text-sm text-gray-900 room-capacity">-</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-sm font-medium text-gray-500">Location:</span>
+                                        <span class="text-sm text-gray-900 room-location">-</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-sm font-medium text-gray-500">Room Type:</span>
+                                        <span class="text-sm text-gray-900 room-type">-</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-sm font-medium text-gray-500">Hourly Rate:</span>
+                                        <span class="text-sm text-gray-900 room-rate">-</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Current Booking -->
+                        <div class="space-y-4">
+                            <h4 class="text-lg font-semibold text-gray-900 mb-3">Current Status</h4>
+                            <div id="currentBookingInfo" class="p-4 bg-gray-50 rounded-lg">
+                                <div class="text-center text-gray-500 text-sm">
+                                    Loading current booking information...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Facilities -->
+                    <div class="mb-6">
+                        <h4 class="text-lg font-semibold text-gray-900 mb-3">Facilities & Amenities</h4>
+                        <div class="p-4 bg-gray-50 rounded-lg">
+                            <div class="room-facilities text-sm text-gray-700">
+                                Loading facilities information...
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Today's Schedule -->
+                    <div class="mb-6">
+                        <div class="flex justify-between items-center mb-3">
+                            <h4 class="text-lg font-semibold text-gray-900">Today's Schedule</h4>
+                            <span class="text-sm text-gray-500" id="todayDate"></span>
+                        </div>
+                        <div id="todaySchedule" class="space-y-2">
+                            <div class="text-center text-gray-500 text-sm py-4">
+                                Loading today's schedule...
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Utilization Stats -->
+                    <div class="mb-6">
+                        <h4 class="text-lg font-semibold text-gray-900 mb-3">Utilization</h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div class="bg-blue-50 rounded-lg p-4 text-center">
+                                <div class="text-2xl font-bold text-blue-600" id="todayUtilization">-</div>
+                                <div class="text-sm text-blue-800">Today</div>
+                            </div>
+                            <div class="bg-green-50 rounded-lg p-4 text-center">
+                                <div class="text-2xl font-bold text-green-600" id="weekUtilization">-</div>
+                                <div class="text-sm text-green-800">This Week</div>
+                            </div>
+                            <div class="bg-purple-50 rounded-lg p-4 text-center">
+                                <div class="text-2xl font-bold text-purple-600" id="monthUtilization">-</div>
+                                <div class="text-sm text-purple-800">This Month</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Available Time Slots -->
+                    <div class="mb-6">
+                        <h4 class="text-lg font-semibold text-gray-900 mb-3">Available Time Slots Today</h4>
+                        <div id="availableSlots" class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            <div class="text-center text-gray-500 text-sm py-4 col-span-full">
+                                Loading available slots...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="flex justify-between items-center px-6 py-4 border-t border-gray-200 bg-gray-50">
+                <div class="text-sm text-gray-500">
+                    Last updated: <span id="lastUpdateTime"></span>
+                </div>
+                <div class="flex space-x-3">
+                    <button type="button" id="bookThisRoom" class="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors">
+                        Book This Room
+                    </button>
+                    <button type="button" id="refreshRoomDetails" class="px-4 py-2 text-sm font-medium text-purple-600 bg-white border border-purple-300 rounded-lg hover:bg-purple-50 transition-colors">
+                        Refresh
+                    </button>
+                    <button type="button" id="closeRoomDetailsBtn" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const roomDetailsModal = document.getElementById('roomDetailsModal');
+    const closeRoomDetailsBtns = document.querySelectorAll('#closeRoomDetailsModal, #closeRoomDetailsBtn');
+    const refreshBtn = document.getElementById('refreshRoomDetails');
+    const bookBtn = document.getElementById('bookThisRoom');
+
+    let currentRoomId = null;
+    let currentRoomData = null;
+
+    // Close modal handlers
+    closeRoomDetailsBtns.forEach(btn => {
+        btn.addEventListener('click', closeRoomDetailsModal);
+    });
+
+    // Close modal when clicking outside
+    roomDetailsModal.addEventListener('click', function(e) {
+        if (e.target === roomDetailsModal) {
+            closeRoomDetailsModal();
+        }
+    });
+
+    // Refresh room details
+    refreshBtn.addEventListener('click', function() {
+        if (currentRoomId) {
+            loadRoomDetails(currentRoomId);
+        }
+    });
+
+    // Book this room
+    bookBtn.addEventListener('click', function() {
+        if (currentRoomId) {
+            closeRoomDetailsModal();
+            // Open booking modal with this room pre-selected
+            const bookingModal = document.getElementById('bookingModal');
+            const roomSelect = bookingModal.querySelector('select[name="room"]');
+            if (roomSelect) {
+                roomSelect.value = currentRoomId;
+                roomSelect.dispatchEvent(new Event('change'));
+            }
+
+            // Show booking modal
+            const showBookingModal = window.openBookingModal || function() {
+                bookingModal.classList.remove('hidden');
+                setTimeout(() => {
+                    bookingModal.classList.remove('bg-opacity-0');
+                    bookingModal.classList.add('bg-opacity-50');
+                    const modalDialog = bookingModal.querySelector('.modal-dialog');
+                    if (modalDialog) {
+                        modalDialog.classList.remove('-translate-y-10', 'opacity-0');
+                        modalDialog.classList.add('translate-y-0', 'opacity-100');
+                    }
+                }, 10);
+            };
+            showBookingModal();
+        }
+    });
+
+    // Load room details function
+    window.loadRoomDetails = function(roomId) {
+        currentRoomId = roomId;
+
+        // Show loading state
+        showLoadingState();
+
+        // Make API call to get room details
+        fetch(`/conf_booking/api/room/${roomId}/`)
+            .then(response => response.json())
+            .then(data => {
+                currentRoomData = data;
+                updateRoomDetailsModal(data);
+            })
+            .catch(error => {
+                console.error('Error loading room details:', error);
+                showErrorState();
+            });
+    };
+
+    // Show loading state
+    function showLoadingState() {
+        document.querySelector('.room-title').textContent = 'Loading...';
+        document.querySelector('.room-status').textContent = 'Loading...';
+        document.getElementById('roomStatusMessage').textContent = 'Checking room status...';
+        document.getElementById('roomStatusIndicator').className = 'w-3 h-3 rounded-full bg-gray-400 animate-pulse';
+        document.getElementById('roomStatusText').textContent = 'Loading';
+
+        // Show loading in content areas
+        document.getElementById('currentBookingInfo').innerHTML = '<div class="text-center text-gray-500 text-sm">Loading current booking information...</div>';
+        document.getElementById('todaySchedule').innerHTML = '<div class="text-center text-gray-500 text-sm py-4">Loading today\'s schedule...</div>';
+        document.getElementById('availableSlots').innerHTML = '<div class="text-center text-gray-500 text-sm py-4 col-span-full">Loading available slots...</div>';
+    }
+
+    // Show error state
+    function showErrorState() {
+        document.querySelector('.room-title').textContent = 'Error Loading Room';
+        document.querySelector('.room-status').textContent = 'Error';
+        document.getElementById('roomStatusMessage').textContent = 'Failed to load room information';
+        document.getElementById('roomStatusIndicator').className = 'w-3 h-3 rounded-full bg-red-400';
+        document.getElementById('roomStatusText').textContent = 'Error';
+
+        document.getElementById('currentBookingInfo').innerHTML = '<div class="text-center text-red-500 text-sm">Failed to load booking information</div>';
+    }
+
+    // Update room details modal with data
+    function updateRoomDetailsModal(roomData) {
+        // Update header
+        document.querySelector('.room-title').textContent = roomData.name;
+
+        // Update status banner
+        updateStatusBanner(roomData);
+
+        // Update basic info
+        document.querySelector('.room-capacity').textContent = `${roomData.capacity} people`;
+        document.querySelector('.room-location').textContent = roomData.location || 'Not specified';
+        document.querySelector('.room-type').textContent = roomData.type || 'Conference Room';
+        document.querySelector('.room-rate').textContent = roomData.hourly_rate ? `$${roomData.hourly_rate}/hour` : 'Free';
+
+        // Update facilities
+        const facilitiesEl = document.querySelector('.room-facilities');
+        if (roomData.facilities) {
+            facilitiesEl.innerHTML = roomData.facilities.replace(/\n/g, '<br>');
+        } else {
+            facilitiesEl.textContent = 'No facilities information available';
+        }
+
+        // Update current booking info
+        updateCurrentBookingInfo(roomData);
+
+        // Update today's schedule
+        updateTodaySchedule(roomData.today_bookings || []);
+
+        // Update utilization
+        document.getElementById('todayUtilization').textContent = `${Math.round(roomData.utilization_today || 0)}%`;
+        document.getElementById('weekUtilization').textContent = `${Math.round(roomData.utilization_week || 0)}%`;
+        document.getElementById('monthUtilization').textContent = `${Math.round(roomData.utilization_month || 0)}%`;
+
+        // Update available slots
+        updateAvailableSlots(roomData.availability_slots || []);
+
+        // Update last update time
+        document.getElementById('lastUpdateTime').textContent = new Date().toLocaleTimeString();
+
+        // Update today's date
+        document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    }
+
+    // Update status banner
+    function updateStatusBanner(roomData) {
+        const statusBanner = document.getElementById('roomStatusBanner');
+        const statusEl = document.querySelector('.room-status');
+        const messageEl = document.getElementById('roomStatusMessage');
+        const indicatorEl = document.getElementById('roomStatusIndicator');
+        const textEl = document.getElementById('roomStatusText');
+
+        if (roomData.is_occupied && roomData.current_booking) {
+            // Currently occupied
+            statusBanner.className = 'mb-6 p-4 rounded-lg border-l-4 bg-red-50 border-red-400';
+            statusEl.textContent = 'Currently Occupied';
+            statusEl.className = 'font-semibold text-red-800';
+            messageEl.textContent = `Meeting: "${roomData.current_booking.purpose}" until ${new Date(roomData.current_booking.end_time).toLocaleTimeString()}`;
+            indicatorEl.className = 'w-3 h-3 rounded-full bg-red-400';
+            textEl.textContent = 'Occupied';
+            textEl.className = 'text-sm font-medium text-red-600';
+        } else if (roomData.next_booking) {
+            // Available but has upcoming booking
+            statusBanner.className = 'mb-6 p-4 rounded-lg border-l-4 bg-yellow-50 border-yellow-400';
+            statusEl.textContent = 'Available';
+            statusEl.className = 'font-semibold text-yellow-800';
+            messageEl.textContent = `Next booking: "${roomData.next_booking.purpose}" at ${new Date(roomData.next_booking.start_time).toLocaleTimeString()}`;
+            indicatorEl.className = 'w-3 h-3 rounded-full bg-yellow-400';
+            textEl.textContent = 'Available';
+            textEl.className = 'text-sm font-medium text-yellow-600';
+        } else {
+            // Fully available
+            statusBanner.className = 'mb-6 p-4 rounded-lg border-l-4 bg-green-50 border-green-400';
+            statusEl.textContent = 'Available';
+            statusEl.className = 'font-semibold text-green-800';
+            messageEl.textContent = 'Room is available for booking';
+            indicatorEl.className = 'w-3 h-3 rounded-full bg-green-400';
+            textEl.textContent = 'Available';
+            textEl.className = 'text-sm font-medium text-green-600';
+        }
+    }
+
+    // Update current booking info
+    function updateCurrentBookingInfo(roomData) {
+        const container = document.getElementById('currentBookingInfo');
+
+        if (roomData.current_booking) {
+            const booking = roomData.current_booking;
+            const endTime = new Date(booking.end_time);
+
+            container.innerHTML = `
+                <div class="flex items-start justify-between">
+                    <div>
+                        <h5 class="font-medium text-gray-900">${booking.purpose}</h5>
+                        <p class="text-sm text-gray-600">Booked by: ${booking.booked_by}</p>
+                        <p class="text-sm text-gray-600">Ends at: ${endTime.toLocaleTimeString()}</p>
+                        <p class="text-sm text-gray-600">Attendees: ${booking.attendees_count}</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            In Use
+                        </span>
+                    </div>
+                </div>
+            `;
+        } else if (roomData.next_booking) {
+            const booking = roomData.next_booking;
+            const startTime = new Date(booking.start_time);
+
+            container.innerHTML = `
+                <div class="flex items-start justify-between">
+                    <div>
+                        <h5 class="font-medium text-gray-900">Next: ${booking.purpose}</h5>
+                        <p class="text-sm text-gray-600">Booked by: ${booking.booked_by}</p>
+                        <p class="text-sm text-gray-600">Starts at: ${startTime.toLocaleTimeString()}</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                            Upcoming
+                        </span>
+                    </div>
+                </div>
+            `;
+        } else {
+            container.innerHTML = `
+                <div class="text-center">
+                    <div class="text-green-600 font-medium">Room is available</div>
+                    <p class="text-sm text-gray-600 mt-1">No current or upcoming bookings</p>
+                </div>
+            `;
+        }
+    }
+
+    // Update today's schedule
+    function updateTodaySchedule(bookings) {
+        const container = document.getElementById('todaySchedule');
+
+        if (bookings.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-4 text-gray-500">
+                    <svg class="mx-auto h-8 w-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    <div class="text-sm">No bookings scheduled for today</div>
+                </div>
+            `;
+            return;
+        }
+
+        const bookingElements = bookings.map(booking => {
+            const startTime = new Date(booking.start_time);
+            const endTime = new Date(booking.end_time);
+            const isCurrentBooking = roomData.current_booking && roomData.current_booking.id === booking.id;
+
+            return `
+                <div class="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg ${isCurrentBooking ? 'ring-2 ring-blue-500' : ''}">
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-2">
+                            <h6 class="font-medium text-gray-900">${booking.purpose}</h6>
+                            ${isCurrentBooking ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">Current</span>' : ''}
+                        </div>
+                        <p class="text-sm text-gray-600">${startTime.toLocaleTimeString()} - ${endTime.toLocaleTimeString()}</p>
+                        <p class="text-sm text-gray-500">by ${booking.booked_by} • ${booking.attendees_count} attendees</p>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm font-medium text-gray-900">
+                            ${Math.round((endTime - startTime) / (1000 * 60))} min
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        container.innerHTML = bookingElements;
+    }
+
+    // Update available slots
+    function updateAvailableSlots(slots) {
+        const container = document.getElementById('availableSlots');
+
+        if (slots.length === 0) {
+            container.innerHTML = `
+                <div class="text-center text-gray-500 text-sm py-4 col-span-full">
+                    No available slots remaining today
+                </div>
+            `;
+            return;
+        }
+
+        const slotElements = slots.slice(0, 6).map(slot => {
+            const startTime = new Date(slot.start);
+            const endTime = new Date(slot.end);
+
+            return `
+                <button type="button" class="available-slot-btn p-2 text-sm bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors"
+                        data-start="${slot.start}" data-end="${slot.end}">
+                    <div class="font-medium text-green-800">${startTime.toLocaleTimeString()}</div>
+                    <div class="text-xs text-green-600">${Math.round((endTime - startTime) / (1000 * 60))}min</div>
+                </button>
+            `;
+        }).join('');
+
+        container.innerHTML = slotElements;
+
+        // Add click handlers for available slots
+        container.querySelectorAll('.available-slot-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const startTime = this.dataset.start;
+                const endTime = this.dataset.end;
+
+                // Close room details modal and open booking modal with pre-filled times
+                closeRoomDetailsModal();
+
+                setTimeout(() => {
+                    const bookingModal = document.getElementById('bookingModal');
+                    const roomSelect = bookingModal.querySelector('select[name="room"]');
+                    const startInput = bookingModal.querySelector('input[name="start_time"]');
+                    const endInput = bookingModal.querySelector('input[name="end_time"]');
+
+                    if (roomSelect && startInput && endInput) {
+                        roomSelect.value = currentRoomId;
+                        roomSelect.dispatchEvent(new Event('change'));
+
+                        const start = new Date(startTime);
+                        const end = new Date(endTime);
+
+                        startInput.value = start.toISOString().slice(0, 16);
+                        endInput.value = end.toISOString().slice(0, 16);
+                    }
+
+                    // Show booking modal
+                    const showBookingModal = window.openBookingModal || function() {
+                        bookingModal.classList.remove('hidden');
+                        setTimeout(() => {
+                            bookingModal.classList.remove('bg-opacity-0');
+                            bookingModal.classList.add('bg-opacity-50');
+                            const modalDialog = bookingModal.querySelector('.modal-dialog');
+                            if (modalDialog) {
+                                modalDialog.classList.remove('-translate-y-10', 'opacity-0');
+                                modalDialog.classList.add('translate-y-0', 'opacity-100');
+                            }
+                        }, 10);
+                    };
+                    showBookingModal();
+                }, 300);
+            });
+        });
+    }
+
+    // Close room details modal
+    function closeRoomDetailsModal() {
+        const modalDialog = document.getElementById('roomDetailsModalDialog');
+        roomDetailsModal.classList.remove('bg-opacity-50');
+        roomDetailsModal.classList.add('bg-opacity-0');
+        modalDialog.classList.remove('translate-y-0', 'opacity-100');
+        modalDialog.classList.add('-translate-y-10', 'opacity-0');
+
+        setTimeout(() => {
+            roomDetailsModal.classList.add('hidden');
+            currentRoomId = null;
+            currentRoomData = null;
+        }, 300);
+    }
+
+    // Make functions available globally
+    window.closeRoomDetailsModal = closeRoomDetailsModal;
+});
+</script>

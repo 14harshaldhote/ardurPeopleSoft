@@ -1,0 +1,1002 @@
+<!-- Booking Modal -->
+<div
+    id="bookingModal"
+    class="hidden fixed inset-0 bg-black bg-opacity-0 backdrop-blur-sm z-50 transition-all duration-300"
+>
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div
+            id="bookingModalDialog"
+            class="modal-dialog bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden transform -translate-y-10 opacity-0 transition-all duration-300"
+        >
+            <!-- Modal Header -->
+            <div
+                class="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50"
+            >
+                <div class="flex items-center space-x-3">
+                    <div
+                        class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center"
+                    >
+                        <svg
+                            class="w-6 h-6 text-blue-600"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                            />
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">
+                            Book Conference Room
+                        </h2>
+                        <p class="text-sm text-gray-600">
+                            Reserve a room for your meeting
+                        </p>
+                    </div>
+                </div>
+                <button
+                    type="button"
+                    id="closeBookingModal"
+                    class="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                    <svg
+                        class="w-6 h-6"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12"
+                        />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="flex-1 overflow-y-auto">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
+                    <!-- Booking Form -->
+                    <div class="lg:col-span-2">
+                        <form
+                            id="bookingForm"
+                            method="POST"
+                            action="{% url 'conf_booking:booking_room' %}"
+                            class="space-y-6"
+                        >
+                            {% csrf_token %}
+
+                            <!-- Room Selection -->
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <label
+                                    for="id_room"
+                                    class="block text-sm font-medium text-gray-700 mb-2"
+                                >
+                                    Select Room
+                                    <span class="text-red-500">*</span>
+                                </label>
+                                <select
+                                    name="room"
+                                    id="id_room"
+                                    required
+                                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                >
+                                    <option value="">Choose a room...</option>
+                                </select>
+                                <div
+                                    id="roomInfo"
+                                    class="mt-2 text-sm text-gray-600 hidden"
+                                >
+                                    <div class="flex items-center space-x-4">
+                                        <span id="roomCapacity"></span>
+                                        <span id="roomLocation"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Meeting Details -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label
+                                        for="id_purpose"
+                                        class="block text-sm font-medium text-gray-700 mb-2"
+                                    >
+                                        Meeting Purpose
+                                        <span class="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="purpose"
+                                        id="id_purpose"
+                                        required
+                                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                        placeholder="e.g., Team Meeting, Client Presentation"
+                                    />
+                                </div>
+                                <div>
+                                    <label
+                                        for="id_meeting_type"
+                                        class="block text-sm font-medium text-gray-700 mb-2"
+                                    >
+                                        Meeting Type
+                                    </label>
+                                    <select
+                                        name="meeting_type"
+                                        id="id_meeting_type"
+                                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                    >
+                                        <option value="INTERNAL">
+                                            Internal Meeting
+                                        </option>
+                                        <option value="CLIENT">
+                                            Client Meeting
+                                        </option>
+                                        <option value="INTERVIEW">
+                                            Interview
+                                        </option>
+                                        <option value="TRAINING">
+                                            Training
+                                        </option>
+                                        <option value="PRESENTATION">
+                                            Presentation
+                                        </option>
+                                        <option value="OTHER">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Date and Time -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label
+                                        for="id_start_time"
+                                        class="block text-sm font-medium text-gray-700 mb-2"
+                                    >
+                                        Start Time
+                                        <span class="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="datetime-local"
+                                        name="start_time"
+                                        id="id_start_time"
+                                        required
+                                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                    />
+                                </div>
+                                <div>
+                                    <label
+                                        for="id_end_time"
+                                        class="block text-sm font-medium text-gray-700 mb-2"
+                                    >
+                                        End Time
+                                        <span class="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="datetime-local"
+                                        name="end_time"
+                                        id="id_end_time"
+                                        required
+                                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                    />
+                                </div>
+                            </div>
+
+                            <!-- Quick Duration Buttons -->
+                            <div class="bg-blue-50 rounded-lg p-4">
+                                <label
+                                    class="block text-sm font-medium text-gray-700 mb-3"
+                                    >Quick Duration</label
+                                >
+                                <div class="flex flex-wrap gap-2">
+                                    <button
+                                        type="button"
+                                        class="duration-btn px-3 py-2 text-sm bg-white border border-blue-200 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
+                                        data-minutes="30"
+                                    >
+                                        30 min
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="duration-btn px-3 py-2 text-sm bg-white border border-blue-200 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
+                                        data-minutes="60"
+                                    >
+                                        1 hour
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="duration-btn px-3 py-2 text-sm bg-white border border-blue-200 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
+                                        data-minutes="90"
+                                    >
+                                        1.5 hours
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="duration-btn px-3 py-2 text-sm bg-white border border-blue-200 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
+                                        data-minutes="120"
+                                    >
+                                        2 hours
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="duration-btn px-3 py-2 text-sm bg-white border border-blue-200 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
+                                        data-minutes="180"
+                                    >
+                                        3 hours
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Attendees -->
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label
+                                        for="id_attendees_count"
+                                        class="block text-sm font-medium text-gray-700 mb-2"
+                                    >
+                                        Internal Attendees
+                                        <span class="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        name="attendees_count"
+                                        id="id_attendees_count"
+                                        min="1"
+                                        max="50"
+                                        value="1"
+                                        required
+                                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                    />
+                                </div>
+                                <div>
+                                    <label
+                                        for="id_external_attendees"
+                                        class="block text-sm font-medium text-gray-700 mb-2"
+                                    >
+                                        External Attendees
+                                    </label>
+                                    <input
+                                        type="number"
+                                        name="external_attendees"
+                                        id="id_external_attendees"
+                                        min="0"
+                                        max="20"
+                                        value="0"
+                                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                    />
+                                </div>
+                                <div>
+                                    <label
+                                        for="id_priority"
+                                        class="block text-sm font-medium text-gray-700 mb-2"
+                                    >
+                                        Priority
+                                    </label>
+                                    <select
+                                        name="priority"
+                                        id="id_priority"
+                                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                    >
+                                        <option value="NORMAL">Normal</option>
+                                        <option value="LOW">Low</option>
+                                        <option value="HIGH">High</option>
+                                        <option value="URGENT">Urgent</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Description -->
+                            <div>
+                                <label
+                                    for="id_description"
+                                    class="block text-sm font-medium text-gray-700 mb-2"
+                                >
+                                    Description (Optional)
+                                </label>
+                                <textarea
+                                    name="description"
+                                    id="id_description"
+                                    rows="3"
+                                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                    placeholder="Additional details about the meeting..."
+                                ></textarea>
+                            </div>
+
+                            <!-- Availability Check -->
+                            <div id="availabilityCheck" class="hidden">
+                                <div
+                                    class="bg-yellow-50 border border-yellow-200 rounded-lg p-4"
+                                >
+                                    <div class="flex items-center">
+                                        <svg
+                                            class="w-5 h-5 text-yellow-600 mr-2"
+                                            fill="currentColor"
+                                            viewBox="0 0 20 20"
+                                        >
+                                            <path
+                                                fill-rule="evenodd"
+                                                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                                clip-rule="evenodd"
+                                            />
+                                        </svg>
+                                        <div>
+                                            <h4
+                                                class="text-sm font-medium text-yellow-800"
+                                            >
+                                                Room Conflict Detected
+                                            </h4>
+                                            <p
+                                                class="text-sm text-yellow-700"
+                                                id="conflictMessage"
+                                            ></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div
+                                class="flex justify-between items-center pt-4 border-t border-gray-200"
+                            >
+                                <button
+                                    type="button"
+                                    id="checkAvailabilityBtn"
+                                    class="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
+                                >
+                                    Check Availability
+                                </button>
+                                <div class="flex space-x-3">
+                                    <button
+                                        type="button"
+                                        id="cancelBookingBtn"
+                                        class="px-6 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        id="submitBookingBtn"
+                                        class="px-6 py-3 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                                    >
+                                        Book Room
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Available Slots Panel -->
+                    <div class="lg:col-span-1">
+                        <div class="bg-gray-50 rounded-lg p-4 h-full">
+                            <h3
+                                class="text-lg font-semibold text-gray-900 mb-4"
+                            >
+                                Available Slots
+                            </h3>
+
+                            <!-- Room Selection for Slots -->
+                            <div class="mb-4">
+                                <label
+                                    class="block text-sm font-medium text-gray-700 mb-2"
+                                    >Room</label
+                                >
+                                <select
+                                    id="slotRoomSelect"
+                                    class="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                                >
+                                    <option value="">All Rooms</option>
+                                </select>
+                            </div>
+
+                            <!-- Date Selection for Slots -->
+                            <div class="mb-4">
+                                <label
+                                    class="block text-sm font-medium text-gray-700 mb-2"
+                                    >Date</label
+                                >
+                                <input
+                                    type="date"
+                                    id="slotDateSelect"
+                                    class="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                                />
+                            </div>
+
+                            <!-- Duration for Slots -->
+                            <div class="mb-4">
+                                <label
+                                    class="block text-sm font-medium text-gray-700 mb-2"
+                                    >Duration</label
+                                >
+                                <select
+                                    id="slotDurationSelect"
+                                    class="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                                >
+                                    <option value="30">30 minutes</option>
+                                    <option value="60" selected>1 hour</option>
+                                    <option value="90">1.5 hours</option>
+                                    <option value="120">2 hours</option>
+                                    <option value="180">3 hours</option>
+                                </select>
+                            </div>
+
+                            <button
+                                id="searchSlotsBtn"
+                                class="w-full mb-4 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
+                            >
+                                Search Available Slots
+                            </button>
+
+                            <!-- Available Slots List -->
+                            <div
+                                id="availableSlotsList"
+                                class="space-y-2 max-h-64 overflow-y-auto"
+                            >
+                                <div
+                                    class="text-center text-gray-500 text-sm py-4"
+                                >
+                                    Select search criteria and click "Search
+                                    Available Slots"
+                                </div>
+                            </div>
+
+                            <!-- Loading State -->
+                            <div
+                                id="slotsLoading"
+                                class="hidden text-center py-4"
+                            >
+                                <div class="inline-flex items-center">
+                                    <svg
+                                        class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <circle
+                                            class="opacity-25"
+                                            cx="12"
+                                            cy="12"
+                                            r="10"
+                                            stroke="currentColor"
+                                            stroke-width="4"
+                                        ></circle>
+                                        <path
+                                            class="opacity-75"
+                                            fill="currentColor"
+                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                        ></path>
+                                    </svg>
+                                    <span class="text-sm text-gray-600"
+                                        >Searching...</span
+                                    >
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const bookingModal = document.getElementById("bookingModal");
+        const bookingForm = document.getElementById("bookingForm");
+        const roomSelect = document.getElementById("id_room");
+        const startTimeInput = document.getElementById("id_start_time");
+        const endTimeInput = document.getElementById("id_end_time");
+        const attendeesInput = document.getElementById("id_attendees_count");
+        const externalAttendeesInput = document.getElementById(
+            "id_external_attendees",
+        );
+
+        // Modal controls
+        const closeModalBtn = document.getElementById("closeBookingModal");
+        const cancelBookingBtn = document.getElementById("cancelBookingBtn");
+
+        // Available slots
+        const searchSlotsBtn = document.getElementById("searchSlotsBtn");
+        const slotsList = document.getElementById("availableSlotsList");
+        const slotsLoading = document.getElementById("slotsLoading");
+
+        // Duration buttons
+        const durationBtns = document.querySelectorAll(".duration-btn");
+
+        // Availability check
+        const checkAvailabilityBtn = document.getElementById(
+            "checkAvailabilityBtn",
+        );
+        const availabilityCheck = document.getElementById("availabilityCheck");
+
+        // Set minimum date to today
+        const now = new Date();
+        const today = now.toISOString().slice(0, 16);
+        startTimeInput.min = today;
+        endTimeInput.min = today;
+
+        // Set default start time to next hour during working hours
+        let nextHour = new Date(now.getTime() + 60 * 60 * 1000);
+        nextHour.setMinutes(0, 0, 0);
+
+        // Ensure it's within working hours (9 AM - 6 PM) and weekdays
+        const currentHour = nextHour.getHours();
+        const currentDay = nextHour.getDay();
+
+        // If it's weekend or after hours, set to next working day 9 AM
+        if (currentDay === 0 || currentDay === 6 || currentHour >= 18) {
+            // Find next Monday if it's weekend
+            const daysUntilMonday =
+                currentDay === 0 ? 1 : currentDay === 6 ? 2 : 1;
+            nextHour = new Date(
+                nextHour.getTime() + daysUntilMonday * 24 * 60 * 60 * 1000,
+            );
+            nextHour.setHours(9, 0, 0, 0);
+        } else if (currentHour < 9) {
+            // If it's before 9 AM, set to 9 AM
+            nextHour.setHours(9, 0, 0, 0);
+        }
+
+        startTimeInput.value = nextHour.toISOString().slice(0, 16);
+
+        // Set default end time to 1 hour later
+        const endTime = new Date(nextHour.getTime() + 60 * 60 * 1000);
+        endTimeInput.value = endTime.toISOString().slice(0, 16);
+
+        // Populate rooms
+        loadAvailableRooms();
+
+        // Set default date for slot search
+        const slotDateSelect = document.getElementById("slotDateSelect");
+        slotDateSelect.value = now.toISOString().slice(0, 10);
+
+        // Room selection handler
+        roomSelect.addEventListener("change", function () {
+            const selectedOption = this.options[this.selectedIndex];
+            const roomInfo = document.getElementById("roomInfo");
+
+            if (selectedOption.value) {
+                const capacity = selectedOption.dataset.capacity;
+                const location = selectedOption.dataset.location;
+
+                document.getElementById("roomCapacity").textContent =
+                    `Capacity: ${capacity}`;
+                document.getElementById("roomLocation").textContent =
+                    `Location: ${location}`;
+                roomInfo.classList.remove("hidden");
+
+                // Update slot room select
+                const slotRoomSelect =
+                    document.getElementById("slotRoomSelect");
+                slotRoomSelect.value = selectedOption.value;
+            } else {
+                roomInfo.classList.add("hidden");
+            }
+        });
+
+        // Duration button handlers
+        durationBtns.forEach((btn) => {
+            btn.addEventListener("click", function () {
+                const minutes = parseInt(this.dataset.minutes);
+                const startTime = new Date(startTimeInput.value);
+
+                if (startTime) {
+                    const endTime = new Date(
+                        startTime.getTime() + minutes * 60 * 1000,
+                    );
+                    endTimeInput.value = endTime.toISOString().slice(0, 16);
+                }
+
+                // Update visual state
+                durationBtns.forEach((b) =>
+                    b.classList.remove("bg-blue-100", "border-blue-400"),
+                );
+                this.classList.add("bg-blue-100", "border-blue-400");
+            });
+        });
+
+        // Start time change handler
+        startTimeInput.addEventListener("change", function () {
+            const startTime = new Date(this.value);
+            const currentEndTime = new Date(endTimeInput.value);
+
+            // If end time is before start time, adjust it
+            if (currentEndTime <= startTime) {
+                const newEndTime = new Date(
+                    startTime.getTime() + 60 * 60 * 1000,
+                );
+                endTimeInput.value = newEndTime.toISOString().slice(0, 16);
+            }
+
+            // Set minimum end time
+            endTimeInput.min = this.value;
+        });
+
+        // Attendees validation
+        function validateAttendees() {
+            const selectedOption = roomSelect.options[roomSelect.selectedIndex];
+            if (selectedOption && selectedOption.value) {
+                const capacity = parseInt(selectedOption.dataset.capacity);
+                const totalAttendees =
+                    parseInt(attendeesInput.value) +
+                    parseInt(externalAttendeesInput.value || 0);
+
+                if (totalAttendees > capacity) {
+                    showValidationError(
+                        `Total attendees (${totalAttendees}) exceeds room capacity (${capacity})`,
+                    );
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        attendeesInput.addEventListener("change", validateAttendees);
+        externalAttendeesInput.addEventListener("change", validateAttendees);
+
+        // Check availability
+        checkAvailabilityBtn.addEventListener("click", function () {
+            if (
+                !roomSelect.value ||
+                !startTimeInput.value ||
+                !endTimeInput.value
+            ) {
+                showValidationError(
+                    "Please fill in room, start time, and end time",
+                );
+                return;
+            }
+
+            const startTime = new Date(startTimeInput.value);
+            const endTime = new Date(endTimeInput.value);
+
+            // Check for conflicts with existing bookings
+            checkAvailabilityBtn.disabled = true;
+            checkAvailabilityBtn.textContent = "Checking...";
+
+            // Make API call to check availability
+            const params = new URLSearchParams({
+                room_id: roomSelect.value,
+                start_time: startTime.toISOString(),
+                end_time: endTime.toISOString(),
+            });
+
+            fetch(`/conf_booking/api/available-slots/?${params}`)
+                .then((response) => response.json())
+                .then((data) => {
+                    if (
+                        data.available_slots &&
+                        data.available_slots.length > 0
+                    ) {
+                        availabilityCheck.classList.add("hidden");
+                        showNotification(
+                            "Room is available for the selected time",
+                            "success",
+                        );
+                    } else {
+                        availabilityCheck.classList.remove("hidden");
+                        document.getElementById("conflictMessage").textContent =
+                            "Room is not available for the selected time. Please choose a different time or room.";
+                    }
+                })
+                .catch((error) => {
+                    console.error("Error checking availability:", error);
+                    showValidationError(
+                        "Error checking availability. Please try again.",
+                    );
+                })
+                .finally(() => {
+                    checkAvailabilityBtn.disabled = false;
+                    checkAvailabilityBtn.textContent = "Check Availability";
+                });
+        });
+
+        // Search available slots
+        searchSlotsBtn.addEventListener("click", function () {
+            const roomId = document.getElementById("slotRoomSelect").value;
+            const date = document.getElementById("slotDateSelect").value;
+            const duration =
+                document.getElementById("slotDurationSelect").value;
+
+            if (!date) {
+                showValidationError("Please select a date");
+                return;
+            }
+
+            slotsLoading.classList.remove("hidden");
+            slotsList.innerHTML = "";
+
+            // API call to get available slots
+            const params = new URLSearchParams({
+                duration: duration,
+                start_date: date,
+            });
+
+            if (roomId) {
+                params.append("room_id", roomId);
+            }
+
+            fetch(`/conf_booking/api/available-slots/?${params}`)
+                .then((response) => response.json())
+                .then((data) => {
+                    slotsLoading.classList.add("hidden");
+                    displayAvailableSlots(data.available_slots || []);
+                })
+                .catch((error) => {
+                    console.error("Error fetching slots:", error);
+                    slotsLoading.classList.add("hidden");
+                    slotsList.innerHTML =
+                        '<div class="text-red-500 text-sm text-center py-4">Error loading slots</div>';
+                });
+        });
+
+        // Display available slots
+        function displayAvailableSlots(slots) {
+            if (slots.length === 0) {
+                slotsList.innerHTML =
+                    '<div class="text-gray-500 text-sm text-center py-4">No available slots found</div>';
+                return;
+            }
+
+            slotsList.innerHTML = slots
+                .map((slot) => {
+                    const startTime = new Date(slot.start);
+                    const endTime = new Date(slot.end);
+
+                    return `
+                <div class="slot-item p-3 border border-gray-200 rounded-lg hover:bg-white hover:shadow-sm cursor-pointer transition-all"
+                     data-room-id="${slot.room_id}"
+                     data-room-name="${slot.room_name}"
+                     data-start="${slot.start}"
+                     data-end="${slot.end}">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <div class="font-medium text-sm text-gray-900">${slot.room_name}</div>
+                            <div class="text-xs text-gray-600">${startTime.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })} - ${endTime.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}</div>
+                            <div class="text-xs text-gray-500">Capacity: ${slot.capacity}</div>
+                        </div>
+                        <button class="text-xs text-blue-600 hover:text-blue-800 font-medium">Select</button>
+                    </div>
+                </div>
+            `;
+                })
+                .join("");
+
+            // Add click handlers for slot items
+            document.querySelectorAll(".slot-item").forEach((item) => {
+                item.addEventListener("click", function () {
+                    const roomId = this.dataset.roomId;
+                    const roomName = this.dataset.roomName;
+                    const startTime = this.dataset.start;
+                    const endTime = this.dataset.end;
+
+                    // Fill form with selected slot
+                    roomSelect.value = roomId;
+                    roomSelect.dispatchEvent(new Event("change"));
+
+                    const start = new Date(startTime);
+                    const end = new Date(endTime);
+
+                    startTimeInput.value = start.toISOString().slice(0, 16);
+                    endTimeInput.value = end.toISOString().slice(0, 16);
+
+                    // Visual feedback
+                    document
+                        .querySelectorAll(".slot-item")
+                        .forEach((s) =>
+                            s.classList.remove("bg-blue-50", "border-blue-300"),
+                        );
+                    this.classList.add("bg-blue-50", "border-blue-300");
+
+                    showNotification(
+                        `Selected ${roomName} from ${start.toLocaleTimeString()} to ${end.toLocaleTimeString()}`,
+                        "success",
+                    );
+                });
+            });
+        }
+
+        // Form validation
+        function validateBookingForm() {
+            const requiredFields = [
+                { field: roomSelect, message: "Please select a room" },
+                {
+                    field: document.getElementById("id_purpose"),
+                    message: "Please enter meeting purpose",
+                },
+                { field: startTimeInput, message: "Please select start time" },
+                { field: endTimeInput, message: "Please select end time" },
+            ];
+
+            for (const item of requiredFields) {
+                if (!item.field.value.trim()) {
+                    showValidationError(item.message);
+                    item.field.focus();
+                    return false;
+                }
+            }
+
+            // Time validation
+            const startTime = new Date(startTimeInput.value);
+            const endTime = new Date(endTimeInput.value);
+            const now = new Date();
+
+            if (startTime >= endTime) {
+                showValidationError("End time must be after start time");
+                return false;
+            }
+
+            if (startTime < now) {
+                showValidationError("Start time cannot be in the past");
+                return false;
+            }
+
+            // Working hours validation (9 AM to 6 PM, Monday to Friday)
+            const startHour = startTime.getHours();
+            const endHour = endTime.getHours();
+            const startDay = startTime.getDay();
+            const endDay = endTime.getDay();
+
+            if (
+                startDay === 0 ||
+                startDay === 6 ||
+                endDay === 0 ||
+                endDay === 6
+            ) {
+                showValidationError("Bookings are only allowed on weekdays");
+                return false;
+            }
+
+            if (startHour < 9 || startHour >= 18) {
+                showValidationError(
+                    "Start time must be between 9:00 AM and 6:00 PM",
+                );
+                return false;
+            }
+
+            if (endHour < 9 || endHour > 18) {
+                showValidationError(
+                    "End time must be between 9:00 AM and 6:00 PM",
+                );
+                return false;
+            }
+
+            // Duration validation (15 minutes to 8 hours)
+            const duration = (endTime - startTime) / (1000 * 60); // minutes
+            if (duration < 15) {
+                showValidationError("Minimum booking duration is 15 minutes");
+                return false;
+            }
+
+            if (duration > 480) {
+                // 8 hours
+                showValidationError("Maximum booking duration is 8 hours");
+                return false;
+            }
+
+            return validateAttendees();
+        }
+
+        // Form submission
+        bookingForm.addEventListener("submit", function (e) {
+            if (!validateBookingForm()) {
+                e.preventDefault();
+                return false;
+            }
+
+            // Show loading state
+            const submitBtn = document.getElementById("submitBookingBtn");
+            const originalText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML =
+                '<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Booking...';
+
+            // Reset button after 5 seconds if form doesn't redirect
+            setTimeout(() => {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }, 5000);
+        });
+
+        // Modal close handlers
+        function closeModal() {
+            const modalDialog = document.getElementById("bookingModalDialog");
+            bookingModal.classList.remove("bg-opacity-50");
+            bookingModal.classList.add("bg-opacity-0");
+            modalDialog.classList.remove("translate-y-0", "opacity-100");
+            modalDialog.classList.add("-translate-y-10", "opacity-0");
+
+            setTimeout(() => {
+                bookingModal.classList.add("hidden");
+                // Reset form
+                bookingForm.reset();
+                availabilityCheck.classList.add("hidden");
+                document.getElementById("roomInfo").classList.add("hidden");
+            }, 300);
+        }
+
+        closeModalBtn.addEventListener("click", closeModal);
+        cancelBookingBtn.addEventListener("click", closeModal);
+
+        // Close modal when clicking outside
+        bookingModal.addEventListener("click", function (e) {
+            if (e.target === bookingModal) {
+                closeModal();
+            }
+        });
+
+        // Utility functions
+        function showValidationError(message) {
+            showNotification(message, "error");
+        }
+
+        function showNotification(message, type = "info") {
+            // Create and show notification
+            const notification = document.createElement("div");
+            notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+                type === "success"
+                    ? "bg-green-100 text-green-800 border-green-400"
+                    : type === "error"
+                      ? "bg-red-100 text-red-800 border-red-400"
+                      : "bg-blue-100 text-blue-800 border-blue-400"
+            } border-l-4`;
+            notification.textContent = message;
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
+        }
+
+        // Load available rooms function
+        function loadAvailableRooms() {
+            fetch("/conf_booking/api/rooms/")
+                .then((response) => response.json())
+                .then((data) => {
+                    const roomSelect = document.getElementById("id_room");
+                    const slotRoomSelect =
+                        document.getElementById("slotRoomSelect");
+
+                    roomSelect.innerHTML =
+                        '<option value="">Choose a room...</option>';
+                    slotRoomSelect.innerHTML =
+                        '<option value="">All Rooms</option>';
+
+                    if (data.rooms) {
+                        data.rooms.forEach((room) => {
+                            // Main room select
+                            const option = document.createElement("option");
+                            option.value = room.id;
+                            option.textContent = `${room.name} (Capacity: ${room.capacity})`;
+                            option.dataset.capacity = room.capacity;
+                            option.dataset.location = room.location;
+                            roomSelect.appendChild(option);
+
+                            // Slot room select
+                            const slotOption = document.createElement("option");
+                            slotOption.value = room.id;
+                            slotOption.textContent = room.name;
+                            slotRoomSelect.appendChild(slotOption);
+                        });
+                    }
+                })
+                .catch((error) => {
+                    console.error("Error loading rooms:", error);
+                    showNotification("Error loading rooms", "error");
+                });
+        }
+
+        // Auto-search slots when modal opens
+        setTimeout(() => {
+            if (bookingModal && !bookingModal.classList.contains("hidden")) {
+                searchSlotsBtn.click();
+            }
+        }, 500);
+    });
+</script>

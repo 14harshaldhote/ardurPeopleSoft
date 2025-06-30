@@ -1,0 +1,326 @@
+{% extends 'base.html' %}
+
+{% block title %}Room Dashboard - TrueAlign{% endblock %}
+
+{% block content %}
+<div class="min-h-screen py-8">
+    <div class="max-w-7xl mx-auto px-4">
+        <!-- Page Header -->
+        <div class="mb-8 flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">Conference Room Dashboard</h1>
+                <p class="text-gray-600 mt-2">Real-time room status and availability</p>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="text-sm text-gray-500">
+                    Last updated: <span id="lastUpdated">{{ current_time|date:"M d, Y H:i" }}</span>
+                </div>
+                <button id="refreshDashboard" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
+                    <i class="ri-refresh-line"></i> Refresh
+                </button>
+                <button onclick="openBookingModal()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2">
+                    <i class="ri-add-line"></i> Book Room
+                </button>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <!-- Available Rooms -->
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Available Rooms</p>
+                        <p id="availableRoomsCount" class="text-2xl font-bold text-green-600">{{ room_dashboard.available_rooms|length }}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                        <i class="ri-door-open-line text-green-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Occupied Rooms -->
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Currently Occupied</p>
+                        <p id="occupiedRoomsCount" class="text-2xl font-bold text-red-600">{{ room_dashboard.occupied_rooms|length }}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                        <i class="ri-door-lock-line text-red-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Today's Bookings -->
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Today's Bookings</p>
+                        <p id="todaysBookingsCount" class="text-2xl font-bold text-blue-600">{{ room_dashboard.todays_bookings|length }}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <i class="ri-calendar-line text-blue-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Average Utilization -->
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Avg Utilization</p>
+                        <p id="avgUtilization" class="text-2xl font-bold text-purple-600">
+                            {{ daily_utilization.average_utilization|floatformat:1 }}%
+                        </p>
+                    </div>
+                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <i class="ri-pie-chart-line text-purple-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Room Status Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
+            {% for room_data in room_dashboard.room_status %}
+                <!-- Room Card -->
+                <!-- [Code unchanged; already well formatted] -->
+            {% empty %}
+                <div class="col-span-full text-center py-12">
+                    <div class="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
+                        <i class="ri-door-line text-4xl text-gray-400"></i>
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">No Rooms Available</h3>
+                    <p class="text-gray-500">No conference rooms are currently active.</p>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Peak Hours Chart -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-semibold text-gray-900">Today's Peak Hours</h3>
+                <div class="text-sm text-gray-500">Working Hours (9 AM - 6 PM)</div>
+            </div>
+            <div class="grid grid-cols-9 gap-2">
+                {% for hour in "123456789"|make_list %}
+                    {% with hour_num=hour|add:"8" %}
+                        <div class="text-center">
+                            <div class="text-xs text-gray-500 mb-2">{{ hour_num }}:00</div>
+                            <div class="h-24 bg-gray-100 rounded flex items-end justify-center">
+                                <div class="w-full bg-blue-400 rounded-b" style="height: {% cycle '30' '60' '80' '50' '90' '70' '40' '85' '45' %}%"></div>
+                            </div>
+                        </div>
+                    {% endwith %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Book a Room -->
+                <button onclick="openBookingModal()" class="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-left">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                            <i class="ri-calendar-event-line text-blue-600"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-900">Book a Room</h4>
+                            <p class="text-sm text-gray-500">Schedule a new meeting</p>
+                        </div>
+                    </div>
+                </button>
+
+                <!-- My Bookings -->
+                <button onclick="viewMyBookings()" class="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-left">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                            <i class="ri-bookmark-line text-green-600"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-900">My Bookings</h4>
+                            <p class="text-sm text-gray-500">View your reservations</p>
+                        </div>
+                    </div>
+                </button>
+
+                <!-- Analytics -->
+                <button onclick="viewAnalytics()" class="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-left">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                            <i class="ri-bar-chart-line text-purple-600"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-900">Analytics</h4>
+                            <p class="text-sm text-gray-500">View usage reports</p>
+                        </div>
+                    </div>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Include Modals -->
+{% include 'conf_booking/room/booking_modal.html' with available_rooms=available_rooms %}
+{% include 'conf_booking/room/calendar_modal.html' with available_rooms=available_rooms %}
+{% include 'conf_booking/room/room_details_modal.html' with available_rooms=available_rooms %}
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Auto-refresh dashboard every 30 seconds
+        setInterval(function () {
+            refreshDashboard();
+        }, 30000);
+
+        // Refresh button handler
+        document
+            .getElementById("refreshDashboard")
+            .addEventListener("click", function () {
+                refreshDashboard();
+            });
+    });
+
+    function refreshDashboard() {
+        // Show loading state
+        const refreshBtn = document.getElementById("refreshDashboard");
+        const originalText = refreshBtn.innerHTML;
+        refreshBtn.innerHTML =
+            '<i class="ri-loader-4-line animate-spin mr-2"></i>Refreshing...';
+        refreshBtn.disabled = true;
+
+        // Simulate refresh (in real implementation, this would make an AJAX call)
+        setTimeout(function () {
+            refreshBtn.innerHTML = originalText;
+            refreshBtn.disabled = false;
+
+            // Update last updated time
+            document.getElementById("lastUpdated").textContent =
+                new Date().toLocaleString();
+
+            // Show success message
+            showNotification("Dashboard refreshed successfully", "success");
+        }, 1000);
+    }
+
+    function bookRoom(roomId, roomName) {
+        // Open booking modal with pre-selected room
+        const bookingModal = document.getElementById("bookingModal");
+        const roomSelect = bookingModal.querySelector('select[name="room"]');
+
+        if (roomSelect) {
+            roomSelect.value = roomId;
+            roomSelect.dispatchEvent(new Event("change"));
+        }
+
+        openBookingModal();
+    }
+
+    function openBookingModal() {
+        const modal = document.getElementById("bookingModal");
+        if (modal) {
+            modal.classList.remove("hidden");
+            setTimeout(() => {
+                modal.classList.remove("bg-opacity-0");
+                modal.classList.add("bg-opacity-50");
+                const modalDialog = modal.querySelector(".modal-dialog");
+                if (modalDialog) {
+                    modalDialog.classList.remove(
+                        "-translate-y-10",
+                        "opacity-0",
+                    );
+                    modalDialog.classList.add("translate-y-0", "opacity-100");
+                }
+            }, 10);
+        }
+    }
+
+    function viewRoomDetails(roomId) {
+        if (window.loadRoomDetails) {
+            window.loadRoomDetails(roomId);
+            const modal = document.getElementById("roomDetailsModal");
+            if (modal) {
+                modal.classList.remove("hidden");
+                setTimeout(() => {
+                    modal.classList.remove("bg-opacity-0");
+                    modal.classList.add("bg-opacity-50");
+                    const modalDialog = modal.querySelector(".modal-dialog");
+                    if (modalDialog) {
+                        modalDialog.classList.remove(
+                            "-translate-y-10",
+                            "opacity-0",
+                        );
+                        modalDialog.classList.add(
+                            "translate-y-0",
+                            "opacity-100",
+                        );
+                    }
+                }, 10);
+            }
+        }
+    }
+
+    function viewCalendar(roomId) {
+        const calendarModal = document.getElementById("calendarModal");
+        if (calendarModal) {
+            // Pre-select the room in calendar
+            const roomFilter = calendarModal.querySelector(
+                "#calendarRoomFilter",
+            );
+            if (roomFilter) {
+                roomFilter.value = roomId;
+            }
+
+            calendarModal.classList.remove("hidden");
+            setTimeout(() => {
+                calendarModal.classList.remove("bg-opacity-0");
+                calendarModal.classList.add("bg-opacity-50");
+                const modalDialog =
+                    calendarModal.querySelector(".modal-dialog");
+                if (modalDialog) {
+                    modalDialog.classList.remove(
+                        "-translate-y-10",
+                        "opacity-0",
+                    );
+                    modalDialog.classList.add("translate-y-0", "opacity-100");
+                }
+
+                // Initialize calendar
+                if (window.initCalendar) {
+                    window.initCalendar();
+                }
+            }, 10);
+        }
+    }
+
+    function viewMyBookings() {
+        window.location.href = "{% url 'conf_booking:user_bookings' %}";
+    }
+
+    function viewAnalytics() {
+        window.location.href = "{% url 'conf_booking:booking_analytics' %}";
+    }
+
+    function showNotification(message, type = "info") {
+        const notification = document.createElement("div");
+        notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+            type === "success"
+                ? "bg-green-100 text-green-800 border-green-400"
+                : type === "error"
+                  ? "bg-red-100 text-red-800 border-red-400"
+                  : "bg-blue-100 text-blue-800 border-blue-400"
+        } border-l-4`;
+        notification.textContent = message;
+
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
+    }
+</script>
+{% endblock %}

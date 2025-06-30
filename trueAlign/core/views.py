@@ -20,6 +20,7 @@ import uuid
 from trueAlign.models import UserSession
 from django.contrib.auth.forms import PasswordResetForm, SetPasswordForm
 from .utils import get_client_ip, parse_user_agent, get_location_from_ip, detect_suspicious_activity, calculate_productivity_score, to_ist, to_utc, get_current_time_ist
+from trueAlign.conf_booking.views import get_upcoming_booking_for_room,conference_booking_context
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -827,11 +828,21 @@ def dashboard_view(request):
         if user_status['idle_time']:
             user_status['formatted_idle_time'] = format_timedelta(user_status['idle_time'])
 
+
+    upcoming_booking = get_upcoming_booking_for_room("Conference Room A")
+    conf_context = conference_booking_context(user)
+
+
+
     context = {
         'user': user,
         'user_status': user_status,
         'current_time': time,
-        'today': today
+        'today': today,
+        'upcoming_booking': upcoming_booking,
+        **conf_context # Unpack the conference context here
+
+
     }
 
     return render(request, 'dashboard.html', context)

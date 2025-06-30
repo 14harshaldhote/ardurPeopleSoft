@@ -1,0 +1,513 @@
+<!-- Simple Conference Room Booking Modal -->
+<div
+    id="simpleBookingModal"
+    class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 z-50"
+>
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">
+                    Book Conference Room
+                </h3>
+                <button
+                    type="button"
+                    id="closeSimpleBookingModal"
+                    class="text-gray-400 hover:text-gray-600"
+                >
+                    <svg
+                        class="w-6 h-6"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12"
+                        ></path>
+                    </svg>
+                </button>
+            </div>
+
+            <form
+                id="simpleBookingForm"
+                method="post"
+                action="{% url 'conf_booking:booking_room' %}"
+            >
+                {% csrf_token %}
+
+                <!-- Room Selection -->
+                <div class="mb-4">
+                    <label
+                        for="room"
+                        class="block text-sm font-medium text-gray-700 mb-2"
+                        >Select Room</label
+                    >
+                    <select
+                        name="room"
+                        id="room"
+                        required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                        <option value="">Choose a room...</option>
+                        <!-- Rooms will be loaded dynamically -->
+                    </select>
+                    <div
+                        id="roomInfo"
+                        class="mt-2 text-sm text-gray-600 hidden"
+                    >
+                        <div class="flex items-center space-x-4">
+                            <span id="roomCapacity"></span>
+                            <span id="roomLocation"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Purpose -->
+                <div class="mb-4">
+                    <label
+                        for="purpose"
+                        class="block text-sm font-medium text-gray-700 mb-2"
+                        >Meeting Purpose</label
+                    >
+                    <input
+                        type="text"
+                        name="purpose"
+                        id="purpose"
+                        required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="e.g., Team Meeting, Client Presentation"
+                    />
+                </div>
+
+                <!-- Date and Time -->
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label
+                            for="start_time"
+                            class="block text-sm font-medium text-gray-700 mb-2"
+                            >Start Time</label
+                        >
+                        <input
+                            type="datetime-local"
+                            name="start_time"
+                            id="start_time"
+                            required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                    </div>
+                    <div>
+                        <label
+                            for="end_time"
+                            class="block text-sm font-medium text-gray-700 mb-2"
+                            >End Time</label
+                        >
+                        <input
+                            type="datetime-local"
+                            name="end_time"
+                            id="end_time"
+                            required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                    </div>
+                </div>
+
+                <!-- Attendees -->
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label
+                            for="attendees_count"
+                            class="block text-sm font-medium text-gray-700 mb-2"
+                            >Internal Attendees</label
+                        >
+                        <input
+                            type="number"
+                            name="attendees_count"
+                            id="attendees_count"
+                            min="1"
+                            max="50"
+                            value="1"
+                            required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                    </div>
+                    <div>
+                        <label
+                            for="external_attendees"
+                            class="block text-sm font-medium text-gray-700 mb-2"
+                            >External Attendees</label
+                        >
+                        <input
+                            type="number"
+                            name="external_attendees"
+                            id="external_attendees"
+                            min="0"
+                            max="20"
+                            value="0"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                    </div>
+                </div>
+
+                <!-- Meeting Type -->
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label
+                            for="meeting_type"
+                            class="block text-sm font-medium text-gray-700 mb-2"
+                            >Meeting Type</label
+                        >
+                        <select
+                            name="meeting_type"
+                            id="meeting_type"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                            <option value="INTERNAL">Internal Meeting</option>
+                            <option value="CLIENT">Client Meeting</option>
+                            <option value="INTERVIEW">Interview</option>
+                            <option value="TRAINING">Training</option>
+                            <option value="PRESENTATION">Presentation</option>
+                            <option value="OTHER">Other</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label
+                            for="priority"
+                            class="block text-sm font-medium text-gray-700 mb-2"
+                            >Priority</label
+                        >
+                        <select
+                            name="priority"
+                            id="priority"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                            <option value="NORMAL">Normal</option>
+                            <option value="LOW">Low</option>
+                            <option value="HIGH">High</option>
+                            <option value="URGENT">Urgent</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="mb-6">
+                    <label
+                        for="description"
+                        class="block text-sm font-medium text-gray-700 mb-2"
+                        >Description (Optional)</label
+                    >
+                    <textarea
+                        name="description"
+                        id="description"
+                        rows="3"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Additional details about the meeting..."
+                    ></textarea>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex justify-end space-x-3">
+                    <button
+                        type="button"
+                        id="cancelSimpleBooking"
+                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="submit"
+                        id="submitSimpleBooking"
+                        class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                        Book Room
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const modal = document.getElementById("simpleBookingModal");
+        const form = document.getElementById("simpleBookingForm");
+        const closeBtn = document.getElementById("closeSimpleBookingModal");
+        const cancelBtn = document.getElementById("cancelSimpleBooking");
+        const submitBtn = document.getElementById("submitSimpleBooking");
+
+        const startTimeInput = document.getElementById("start_time");
+        const endTimeInput = document.getElementById("end_time");
+        const roomSelect = document.getElementById("room");
+        const attendeesInput = document.getElementById("attendees_count");
+        const externalAttendeesInput =
+            document.getElementById("external_attendees");
+
+        // Set minimum time to current time
+        function setMinimumTimes() {
+            const now = new Date();
+
+            // Set minimum time to current time
+            const minDateTime = now.toISOString().slice(0, 16);
+            startTimeInput.min = minDateTime;
+            endTimeInput.min = minDateTime;
+
+            // Set default start time to next hour during working hours
+            let nextHour = new Date(now.getTime() + 60 * 60 * 1000);
+            nextHour.setMinutes(0, 0, 0);
+
+            // Ensure it's within working hours (9 AM - 6 PM) and weekdays
+            const currentHour = nextHour.getHours();
+            const currentDay = nextHour.getDay();
+
+            // If it's weekend or after hours, set to next working day 9 AM
+            if (currentDay === 0 || currentDay === 6 || currentHour >= 18) {
+                // Find next Monday if it's weekend
+                const daysUntilMonday =
+                    currentDay === 0 ? 1 : currentDay === 6 ? 2 : 1;
+                nextHour = new Date(
+                    nextHour.getTime() + daysUntilMonday * 24 * 60 * 60 * 1000,
+                );
+                nextHour.setHours(9, 0, 0, 0);
+            } else if (currentHour < 9) {
+                // If it's before 9 AM, set to 9 AM
+                nextHour.setHours(9, 0, 0, 0);
+            }
+
+            const defaultStart = nextHour.toISOString().slice(0, 16);
+            startTimeInput.value = defaultStart;
+
+            // Set default end time to 1 hour later
+            const defaultEnd = new Date(nextHour.getTime() + 60 * 60 * 1000)
+                .toISOString()
+                .slice(0, 16);
+            endTimeInput.value = defaultEnd;
+        }
+
+        // Load available rooms
+        function loadRooms() {
+            fetch("/conf_booking/api/rooms/")
+                .then((response) => response.json())
+                .then((data) => {
+                    const roomSelect = document.getElementById("room");
+                    roomSelect.innerHTML =
+                        '<option value="">Choose a room...</option>';
+
+                    if (data.rooms) {
+                        data.rooms.forEach((room) => {
+                            const option = document.createElement("option");
+                            option.value = room.id;
+                            option.textContent = `${room.name} (Capacity: ${room.capacity})`;
+                            option.dataset.capacity = room.capacity;
+                            option.dataset.location = room.location;
+                            roomSelect.appendChild(option);
+                        });
+                    }
+                })
+                .catch((error) => {
+                    console.error("Error loading rooms:", error);
+                });
+        }
+
+        // Open modal function
+        function openSimpleBookingModal(roomId = null) {
+            loadRooms();
+            modal.classList.remove("hidden");
+            form.reset();
+            setMinimumTimes();
+
+            // Set room if specified
+            if (roomId) {
+                setTimeout(() => {
+                    roomSelect.value = roomId;
+                    roomSelect.dispatchEvent(new Event("change"));
+                }, 100);
+            }
+        }
+
+        // Close modal function
+        function closeSimpleBookingModal() {
+            modal.classList.add("hidden");
+            form.reset();
+        }
+
+        // Event listeners
+        closeBtn.addEventListener("click", closeSimpleBookingModal);
+        cancelBtn.addEventListener("click", closeSimpleBookingModal);
+
+        // Close modal when clicking outside
+        modal.addEventListener("click", function (e) {
+            if (e.target === modal) {
+                closeSimpleBookingModal();
+            }
+        });
+
+        // Start time change handler
+        startTimeInput.addEventListener("change", function () {
+            const startTime = new Date(this.value);
+            const endTime = new Date(endTimeInput.value);
+
+            // If end time is before or equal to start time, set it to 1 hour after start
+            if (endTime <= startTime) {
+                const newEndTime = new Date(
+                    startTime.getTime() + 60 * 60 * 1000,
+                );
+                endTimeInput.value = newEndTime.toISOString().slice(0, 16);
+            }
+
+            // Set minimum end time
+            endTimeInput.min = this.value;
+        });
+
+        // Room selection handler - validate capacity and show info
+        roomSelect.addEventListener("change", function () {
+            const selectedOption = this.options[this.selectedIndex];
+            const roomInfo = document.getElementById("roomInfo");
+
+            if (selectedOption.value) {
+                const capacity = parseInt(selectedOption.dataset.capacity);
+                const location = selectedOption.dataset.location;
+
+                // Show room info
+                document.getElementById("roomCapacity").textContent =
+                    `Capacity: ${capacity}`;
+                document.getElementById("roomLocation").textContent =
+                    `Location: ${location}`;
+                roomInfo.classList.remove("hidden");
+
+                // Set capacity limits
+                const maxAttendees = Math.max(1, capacity);
+                attendeesInput.max = maxAttendees;
+                externalAttendeesInput.max = Math.floor(capacity / 2);
+            } else {
+                roomInfo.classList.add("hidden");
+            }
+        });
+
+        // Form validation
+        function validateForm() {
+            const startTime = new Date(startTimeInput.value);
+            const endTime = new Date(endTimeInput.value);
+            const now = new Date();
+
+            // Check if required fields are filled
+            if (!roomSelect.value) {
+                alert("Please select a room");
+                return false;
+            }
+
+            if (!document.getElementById("purpose").value.trim()) {
+                alert("Please enter a meeting purpose");
+                return false;
+            }
+
+            // Check if times are valid
+            if (startTime <= now) {
+                alert("Start time must be in the future");
+                return false;
+            }
+
+            if (endTime <= startTime) {
+                alert("End time must be after start time");
+                return false;
+            }
+
+            // Working hours validation (9 AM to 6 PM, Monday to Friday)
+            const startHour = startTime.getHours();
+            const endHour = endTime.getHours();
+            const startDay = startTime.getDay();
+            const endDay = endTime.getDay();
+
+            if (
+                startDay === 0 ||
+                startDay === 6 ||
+                endDay === 0 ||
+                endDay === 6
+            ) {
+                alert(
+                    "Bookings are only allowed on weekdays (Monday to Friday)",
+                );
+                return false;
+            }
+
+            if (startHour < 9 || startHour >= 18) {
+                alert("Start time must be between 9:00 AM and 6:00 PM");
+                return false;
+            }
+
+            if (endHour < 9 || endHour > 18) {
+                alert("End time must be between 9:00 AM and 6:00 PM");
+                return false;
+            }
+
+            // Check duration (minimum 15 minutes, maximum 8 hours)
+            const duration = (endTime - startTime) / (1000 * 60); // minutes
+            if (duration < 15) {
+                alert("Meeting duration must be at least 15 minutes");
+                return false;
+            }
+
+            if (duration > 480) {
+                // 8 hours
+                alert("Meeting duration cannot exceed 8 hours");
+                return false;
+            }
+
+            // Check capacity
+            const selectedRoom = roomSelect.options[roomSelect.selectedIndex];
+            if (selectedRoom.value) {
+                const capacity = parseInt(selectedRoom.dataset.capacity);
+                const totalAttendees =
+                    parseInt(attendeesInput.value) +
+                    parseInt(externalAttendeesInput.value || 0);
+
+                if (totalAttendees > capacity) {
+                    alert(
+                        `Total attendees (${totalAttendees}) exceeds room capacity (${capacity})`,
+                    );
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        // Form submission
+        form.addEventListener("submit", function (e) {
+            if (!validateForm()) {
+                e.preventDefault();
+                return;
+            }
+
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Booking...";
+
+            // Reset button after 5 seconds if form doesn't redirect
+            setTimeout(() => {
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Book Room";
+            }, 5000);
+
+            // The form will submit normally to the Django view
+        });
+
+        // Initialize rooms on page load
+        loadRooms();
+
+        // Make the function available globally
+        window.openSimpleBookingModal = openSimpleBookingModal;
+
+        // Handle opening modal with specific room
+        document.addEventListener("click", function (e) {
+            if (
+                e.target.matches("#openBookingModalBtn, #openBookingModalBtn2")
+            ) {
+                openSimpleBookingModal();
+            } else if (e.target.matches(".quick-book-btn")) {
+                const roomId = e.target.getAttribute("data-room-id");
+                openSimpleBookingModal(roomId);
+            }
+        });
+    });
+</script>

@@ -105,7 +105,6 @@ function calculateProductivityScore(state) {
     else if (score >= 20) state.session_quality = 'poor';
     else state.session_quality = 'very_poor';
     
-    console.log(`Productivity score: ${score}, Quality: ${state.session_quality}`);
     return score;
 }
 
@@ -113,7 +112,6 @@ function calculateProductivityScore(state) {
  * Calculate engagement score based on user interaction patterns
  */
 function calculateEngagementScore(state) {
-    console.log('Calculating engagement score...');
     
     // Initialize base score
     let score = 50; // Start with neutral score

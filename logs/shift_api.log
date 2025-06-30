@@ -1,0 +1,4 @@
+[2025-06-29 01:10:25] INFO - trueAlign.shift.api - test_api_logging:280 - API GET /api/shifts/ - 200 (150ms)
+[2025-06-29 01:10:25] INFO - trueAlign.shift.api - test_api_logging:280 - API POST /api/shifts/ - 201 (250ms)
+[2025-06-29 01:10:25] ERROR - trueAlign.shift.api - test_api_logging:278 - API GET /api/shifts/nonexistent/ - 404 (50ms)
+[2025-06-29 01:10:25] ERROR - trueAlign.shift.api - test_api_logging:278 - API POST /api/assignments/ - 500 (1200ms)
