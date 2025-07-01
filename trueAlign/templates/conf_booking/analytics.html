@@ -256,7 +256,7 @@ function exportUtilizationReport() {
     const startDate = document.querySelector('input[name="start_date"]').value;
     const endDate = document.querySelector('input[name="end_date"]').value;
 
-    let url = '/conf_booking/export/utilization/?';
+    let url = '/book/export/utilization/?';  // Fixed URL
     if (startDate) url += `start_date=${startDate}&`;
     if (endDate) url += `end_date=${endDate}&`;
 
@@ -267,7 +267,7 @@ function exportBookingData() {
     const startDate = document.querySelector('input[name="start_date"]').value;
     const endDate = document.querySelector('input[name="end_date"]').value;
 
-    let url = '/conf_booking/export/bookings/?';
+    let url = '/book/export/bookings/?';  // Fixed URL
     if (startDate) url += `start_date=${startDate}&`;
     if (endDate) url += `end_date=${endDate}&`;
 

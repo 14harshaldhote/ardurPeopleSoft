@@ -403,7 +403,21 @@ class UserSession(models.Model):
         r = 6371  # Radius of earth in kilometers
         return c * r
 
-    def end_session(self):
+    def update_activity(self, activity_time, is_idle=False):
+        """Update the last activity timestamp and idle status"""
+        self.last_activity = activity_time
+        self.is_idle = is_idle
+
+        if not is_idle:
+            # Reset idle start time when user becomes active
+            self.idle_start_time = None
+        elif is_idle and not self.idle_start_time:
+            # Set idle start time when user becomes idle
+            self.idle_start_time = activity_time
+
+        self.save(update_fields=['last_activity', 'is_idle', 'idle_start_time'])
+
+    def end_session(self, is_idle=False):
         """
         End the session and calculate final metrics
         """
@@ -412,7 +426,14 @@ class UserSession(models.Model):
 
         # Set end time and mark as inactive
         self.ended_at = timezone.now()
+        self.logout_time = timezone.now()  # Add logout time
         self.is_active = False
+
+        # If ending due to idle, make sure idle status is set
+        if is_idle:
+            self.is_idle = True
+            if not self.idle_start_time:
+                self.idle_start_time = self.ended_at
 
         # Calculate final metrics
         self.calculate_working_time()
@@ -434,6 +455,44 @@ class UserSession(models.Model):
                 is_active=False,
                 ended_at=timezone.now()
             )
+
+    def update_tab_activity(self, activity_data):
+        """Update tab-specific activity data"""
+        # Update basic activity
+        self.last_activity = timezone.now()
+
+        # Update tab information if provided
+        if activity_data.get('url'):
+            if not isinstance(self.tab_url, list):
+                self.tab_url = []
+            if activity_data['url'] not in self.tab_url:
+                self.tab_url.append(activity_data['url'])
+
+        if activity_data.get('title'):
+            if not isinstance(self.tab_title, list):
+                self.tab_title = []
+            if activity_data['title'] not in self.tab_title:
+                self.tab_title.append(activity_data['title'])
+
+        # Update device info if provided
+        if activity_data.get('battery_level') is not None:
+            self.battery_level = activity_data['battery_level']
+
+        if activity_data.get('connection_type'):
+            self.connection_type = activity_data['connection_type']
+
+        # Save changes
+        update_fields = ['last_activity']
+        if activity_data.get('url'):
+            update_fields.append('tab_url')
+        if activity_data.get('title'):
+            update_fields.append('tab_title')
+        if activity_data.get('battery_level') is not None:
+            update_fields.append('battery_level')
+        if activity_data.get('connection_type'):
+            update_fields.append('connection_type')
+
+        self.save(update_fields=update_fields)
 
     def update_last_activity(self):
         """
@@ -2003,11 +2062,25 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Configure logger
+
+from django.db import models
+from django.contrib.auth.models import User
+from django.utils import timezone
+from django.core.exceptions import ValidationError
+from datetime import datetime, timedelta, time, date
+from decimal import Decimal
+import pytz
+import logging
+from django.db.models import Q
+from trueAlign.attendance.managers import AttendanceManager
+from django.core.validators import MinValueValidator, MaxValueValidator
+
+
 logger = logging.getLogger(__name__)
 
 class Attendance(models.Model):
     """
-    Attendance tracking model integrated with user sessions, leave and shift systems
+    Comprehensive Attendance model with better organization and separation of concerns
     """
     STATUS_CHOICES = [
         ('Present', 'Present'),
@@ -2020,43 +2093,109 @@ class Attendance(models.Model):
         ('Holiday', 'Holiday'),
         ('Comp Off', 'Comp Off'),
         ('Not Marked', 'Not Marked'),
-        ('Yet to Clock In', 'Yet to Clock In')
+        ('Yet to Clock In', 'Yet to Clock In'),
+        ('Half Day', 'Half Day')
     ]
 
     LOCATION_CHOICES = [
         ('Office', 'Office'),
         ('Home', 'Home'),
         ('Remote', 'Remote'),
+        ('Client Site', 'Client Site'),
         ('Other', 'Other')
     ]
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    date = models.DateField()
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Not Marked')
-    leave_type = models.CharField(max_length=50, null=True, blank=True)
-    clock_in_time = models.DateTimeField(null=True, blank=True)
-    clock_out_time = models.DateTimeField(null=True, blank=True)
-    breaks = models.JSONField(default=list)
-    total_hours = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
-    expected_hours = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
-    is_weekend = models.BooleanField(default=False)
-    is_holiday = models.BooleanField(default=False)
-    holiday_name = models.CharField(max_length=100, blank=True, null=True)
-    location = models.CharField(max_length=50, choices=LOCATION_CHOICES, default='Office')
-    ip_address = models.GenericIPAddressField(null=True, blank=True)
-    device_info = models.JSONField(null=True, blank=True)
-    shift = models.ForeignKey('ShiftMaster', on_delete=models.SET_NULL, null=True, blank=True)
-    late_minutes = models.IntegerField(default=0)
-    early_departure_minutes = models.IntegerField(default=0)
-    left_early = models.BooleanField(default=False)
-    last_modified = models.DateTimeField(auto_now=True)
-    modified_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='attendance_modifications')
-    regularization_reason = models.TextField(null=True, blank=True)
-    regularization_status = models.CharField(max_length=20, choices=[
+    REGULARIZATION_STATUS_CHOICES = [
         ('Pending', 'Pending'),
         ('Approved', 'Approved'),
         ('Rejected', 'Rejected')
-    ], null=True, blank=True)
+    ]
+
+    # Basic fields
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='attendance_records')
+    date = models.DateField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Not Marked')
+
+    # Time tracking fields
+    clock_in_time = models.DateTimeField(null=True, blank=True)
+    clock_out_time = models.DateTimeField(null=True, blank=True)
+    total_hours = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal('0.00'))]
+    )
+    expected_hours = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal('0.00'))]
+    )
+
+    # Leave and shift information
+    leave_type = models.CharField(max_length=50, null=True, blank=True)
+    shift = models.ForeignKey(ShiftMaster, on_delete=models.SET_NULL, null=True, blank=True)
+
+    # Location and device tracking
+    location = models.CharField(max_length=50, choices=LOCATION_CHOICES, default='Office')
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    device_info = models.JSONField(null=True, blank=True)
+
+    # Break and time calculations
+    breaks = models.JSONField(default=list, blank=True)
+    late_minutes = models.IntegerField(
+        default=0,
+        validators=[MinValueValidator(0)]
+    )
+    early_departure_minutes = models.IntegerField(
+        default=0,
+        validators=[MinValueValidator(0)]
+    )
+    overtime_hours = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=0,
+        validators=[MinValueValidator(Decimal('0.00'))]
+    )
+
+    # Boolean flags
+    is_weekend = models.BooleanField(default=False)
+    is_holiday = models.BooleanField(default=False)
+    is_half_day = models.BooleanField(default=False)
+    left_early = models.BooleanField(default=False)
+    is_overtime_approved = models.BooleanField(default=False)
+
+    # Holiday information
+    holiday_name = models.CharField(max_length=100, blank=True, null=True)
+
+    # Session tracking
+    first_session = models.ForeignKey(
+        UserSession,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='first_session_attendance'
+    )
+    last_session = models.ForeignKey(
+        UserSession,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='last_session_attendance'
+    )
+    total_sessions = models.IntegerField(default=0)
+    idle_time = models.DurationField(default=timedelta(0))
+
+    # Regularization fields
+    regularization_reason = models.TextField(null=True, blank=True)
+    regularization_status = models.CharField(
+        max_length=20,
+        choices=REGULARIZATION_STATUS_CHOICES,
+        null=True,
+        blank=True
+    )
     requested_status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
@@ -2064,697 +2203,578 @@ class Attendance(models.Model):
         blank=True,
         help_text="Status requested by employee during regularization"
     )
+    regularization_attempts = models.IntegerField(
+        default=0,
+        validators=[MinValueValidator(0), MaxValueValidator(5)]
+    )
+    last_regularization_date = models.DateTimeField(null=True, blank=True)
 
-    # Session tracking
-    first_session = models.ForeignKey('UserSession', on_delete=models.SET_NULL, null=True, blank=True, related_name='first_session_attendance')
-    last_session = models.ForeignKey('UserSession', on_delete=models.SET_NULL, null=True, blank=True, related_name='last_session_attendance')
-    total_sessions = models.IntegerField(default=0)
-    idle_time = models.DurationField(default=timedelta(0))
-
-    overtime_hours = models.DecimalField(max_digits=5, decimal_places=2, default=0)
-    is_overtime_approved = models.BooleanField(default=False)
-    # Additional fields for the Attendance model:
+    # Original values for audit trail
     original_clock_in_time = models.DateTimeField(null=True, blank=True)
     original_clock_out_time = models.DateTimeField(null=True, blank=True)
     original_status = models.CharField(max_length=20, null=True, blank=True)
+
+    # Notification flags
     is_employee_notified = models.BooleanField(default=False)
     is_hr_notified = models.BooleanField(default=False)
-    regularization_attempts = models.IntegerField(default=0)
-    last_regularization_date = models.DateTimeField(null=True, blank=True)
-    remarks = models.TextField(null=True, blank=True)
-    is_half_day = models.BooleanField(
-        default=False,
-        help_text="Indicates if this is a half-day attendance"
+
+    # Audit fields
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_modified = models.DateTimeField(auto_now=True)
+    modified_by = models.ForeignKey(
+        User,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='attendance_modifications'
     )
+    remarks = models.TextField(null=True, blank=True)
+
+    # Use custom manager
+    objects = AttendanceManager()
+
     class Meta:
         unique_together = ('user', 'date')
         indexes = [
             models.Index(fields=['user', 'date']),
             models.Index(fields=['date', 'status']),
+            models.Index(fields=['regularization_status']),
+            models.Index(fields=['clock_in_time']),
+            models.Index(fields=['clock_out_time']),
+            models.Index(fields=['is_weekend', 'is_holiday']),
         ]
-        ordering = ['-date', 'user']
+        ordering = ['-date', 'user__username']
 
     def __str__(self):
         return f"{self.user.username} - {self.date} - {self.status}"
 
-    def is_on_leave(self):
-        """
-        Check if the user is on leave for this attendance date
+    def clean(self):
+        """Validate attendance data"""
+        errors = {}
 
-        Returns:
-            bool: True if the user is on leave, False otherwise
-        """
-        # Check if status is already set to a leave-related status
-        if self.status == 'On Leave' or (hasattr(self, 'leave_type') and self.leave_type):
-            return True
+        # Validate clock times
+        if self.clock_in_time and self.clock_out_time:
+            if self.clock_out_time <= self.clock_in_time:
+                errors['clock_out_time'] = "Clock out time must be after clock in time"
 
-        # Check for approved leave requests that cover this date
-        try:
-            leave_request = LeaveRequest.objects.filter(
-                user=self.user,
-                status='Approved',
-                start_date__lte=self.date,
-                end_date__gte=self.date
-            ).exists()
-            return leave_request
-        except Exception as e:
-            logger.error(f"Error checking leave status for {self.user.username}: {e}")
-            return False
+        # Validate dates
+        if self.date and self.date > timezone.now().date():
+            errors['date'] = "Cannot create attendance for future dates"
+
+        # Validate total hours
+        if self.total_hours and self.total_hours > 24:
+            errors['total_hours'] = "Total hours cannot exceed 24 hours"
+
+        if errors:
+            raise ValidationError(errors)
 
     def save(self, *args, **kwargs):
-        logger.debug(f"save() called for {self.user.username} - {self.date}")
+        """
+        Simplified save method - main business logic moved to separate methods
+        """
+        # Store original values for audit trail
+        if self.pk:
+            try:
+                original = Attendance.objects.get(pk=self.pk)
+                if not self.original_status:
+                    self.original_status = original.status
+                if not self.original_clock_in_time:
+                    self.original_clock_in_time = original.clock_in_time
+                if not self.original_clock_out_time:
+                    self.original_clock_out_time = original.clock_out_time
+            except Attendance.DoesNotExist:
+                pass
 
-        # Auto-calculate total hours if clock-in and clock-out are provided
-        if self.clock_in_time and self.clock_out_time and self.clock_out_time > self.clock_in_time:
-            logger.debug(f"Calculating total hours for {self.user.username}")
-            duration = self.clock_out_time - self.clock_in_time
-            hours = duration.total_seconds() / 3600
-            self.total_hours = round(Decimal(str(hours)), 2)
-            if self.idle_time:
-                logger.debug(f"Subtracting idle time: {self.idle_time}")
-                idle_hours = self.idle_time.total_seconds() / 3600
-                self.total_hours = max(0, self.total_hours - round(Decimal(str(idle_hours)), 2))
+        # Run validations
+        self.full_clean()
 
-        # Calculate overtime based on shift if present
-        if self.shift and self.total_hours and self.total_hours > self.shift.shift_duration:
-            logger.debug(f"Calculating overtime for {self.user.username}")
-            self.overtime_hours = self.total_hours - Decimal(str(self.shift.shift_duration))
+        # Initialize data for new records
+        if not self.pk:
+            self._initialize_attendance_defaults()
 
-        # Mark weekend based on date
-        weekday = self.date.weekday()
-        is_weekend = False
-        if self.shift:
-            logger.debug(f"Checking shift weekend rules for {self.user.username}")
-            day_names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-            current_day = day_names[weekday]
-            if self.shift.work_days == 'Weekdays':
-                is_weekend = weekday >= 5  # Saturday/Sunday
-            elif self.shift.work_days == 'All Days':
-                is_weekend = False  # All days are working
-            elif self.shift.work_days == 'Custom' and self.shift.custom_work_days:
-                custom_days = [day.strip() for day in self.shift.custom_work_days.split(',')]
-                is_weekend = current_day not in custom_days
-        else:
-            logger.debug("No shift assigned, using default weekend rules")
-            is_weekend = weekday >= 5
-        self.is_weekend = is_weekend
+        # Calculate time-related fields
+        self._calculate_time_fields()
 
-        # Check for holidays
-        try:
-            logger.debug("Checking for holidays")
-            holiday = Holiday.objects.filter(
-                Q(date=self.date) |
-                (Q(recurring_yearly=True) &
-                Q(date__day=self.date.day, date__month=self.date.month))
-            ).first()
-            if holiday:
-                logger.debug(f"Holiday found: {holiday.name}")
-                self.is_holiday = True
-                self.holiday_name = holiday.name
-                if not self.is_on_leave():
-                    self.status = 'Holiday'
-        except Exception as e:
-            logger.error(f"Error checking holidays: {e}")
-
-        # Set weekend status if not on leave and is a weekend
-        if not self.is_on_leave() and self.is_weekend and self.status not in ['Present', 'Present & Late', 'Work From Home', 'Comp Off']:
-            logger.debug("Setting weekend status")
-            self.status = 'Weekend'
-
-        # Handle "Yet to Clock In" status using IST timezone
-        IST = pytz.timezone('Asia/Kolkata')
-        current_time_ist = timezone.localtime(timezone.now(), IST).time()
-        today_ist = timezone.localtime(timezone.now(), IST).date()
-
-        if self.status == 'Yet to Clock In' and not self.clock_in_time:
-            if self.shift and self.date == today_ist:
-                if self.is_shift_ended(current_time_ist, self.shift.start_time, self.shift.end_time):
-                    logger.debug(f"Shift has ended, updating 'Yet to Clock In' to 'Absent'")
-                    self.status = 'Absent'
-                    self.regularization_reason = "Auto-marked as absent (no activity, shift ended)"
-        elif self.clock_in_time and self.shift and self.status not in ['On Leave', 'Holiday', 'Weekend', 'Absent']:
-            logger.debug("Checking late status")
-            clock_in_time = self.clock_in_time.time()
-            shift_start = self.shift.start_time
-            grace_minutes = 10
-            if hasattr(self.shift, 'grace_period'):
-                grace_period = self.shift.grace_period
-                grace_minutes = grace_period.total_seconds() // 60
-            shift_start_minutes = shift_start.hour * 60 + shift_start.minute
-            grace_end_minutes = shift_start_minutes + grace_minutes
-            clock_in_minutes = clock_in_time.hour * 60 + clock_in_time.minute
-            if clock_in_minutes > grace_end_minutes:
-                logger.debug(f"Late by {clock_in_minutes - shift_start_minutes} minutes")
-                self.late_minutes = clock_in_minutes - shift_start_minutes
-                self.status = 'Present & Late'
-            elif not self.is_on_leave() and not self.is_holiday and not self.is_weekend:
-                logger.debug("On-time attendance, marking as present")
-                self.status = 'Present'
-
-        # Set early departure status if clock-out time is before shift end time
-        if self.clock_out_time and self.shift:
-            logger.debug("Checking early departure")
-            clock_out_time = self.clock_out_time.time()
-            shift_end = self.shift.end_time
-            shift_end_minutes = shift_end.hour * 60 + shift_end.minute
-            clock_out_minutes = clock_out_time.hour * 60 + clock_out_time.minute
-            if clock_out_minutes < shift_end_minutes:
-                logger.debug(f"Left early by {shift_end_minutes - clock_out_minutes} minutes")
-                self.left_early = True
-                self.early_departure_minutes = shift_end_minutes - clock_out_minutes
-
-        # Set present status if total hours meet minimum threshold and not marked otherwise
-        if (self.total_hours and self.total_hours >= Decimal('4.0') and
-            self.status not in ['Present & Late', 'On Leave', 'Holiday', 'Weekend', 'Comp Off', 'Absent'] and
-            not self.is_on_leave()):
-            logger.debug("Marking as present based on total hours")
-            self.status = 'Present'
+        # Update status based on calculated data
+        self._update_status_logic()
 
         super().save(*args, **kwargs)
-        logger.debug(f"save() completed for {self.user.username} - {self.date}")
 
-    @classmethod
-    def create_attendance(cls, user, clock_in_time, location='Office', ip_address=None, device_info=None):
-        """
-        Create a new attendance record when a user logs in
-        """
-        logger.info(f"Creating attendance for {user.username} at {clock_in_time}")
-        if timezone.is_naive(clock_in_time):
-            clock_in_time = timezone.make_aware(clock_in_time)
-        attendance_date = clock_in_time.date()
-        attendance, created = cls.objects.get_or_create(
-            user=user,
-            date=attendance_date,
-            defaults={
-                'clock_in_time': clock_in_time,
-                'location': location,
-                'ip_address': ip_address,
-                'device_info': device_info,
-            }
-        )
-        if not created:
-            logger.debug(f"Attendance record already exists for {user.username} on {attendance_date}")
-            if attendance.clock_in_time is None or clock_in_time < attendance.clock_in_time:
-                attendance.clock_in_time = clock_in_time
-                attendance.save(update_fields=['clock_in_time'])
+    def _initialize_attendance_defaults(self):
+        """Initialize default values for new attendance records"""
         try:
-            current_shift = ShiftAssignment.get_user_current_shift(user, attendance_date)
-            if current_shift:
-                attendance.shift = current_shift
-                attendance.expected_hours = Decimal(str(current_shift.shift_duration))
-                clock_in_time_obj = clock_in_time.time()
-                shift_start = current_shift.start_time
-                grace_minutes = 10
-                if hasattr(current_shift, 'grace_period'):
-                    grace_period = current_shift.grace_period
-                    grace_minutes = grace_period.total_seconds() // 60
-                shift_start_minutes = shift_start.hour * 60 + shift_start.minute
-                grace_end_minutes = shift_start_minutes + grace_minutes
-                clock_in_minutes = clock_in_time_obj.hour * 60 + clock_in_time_obj.minute
-                if clock_in_minutes > grace_end_minutes:
-                    logger.info(f"User {user.username} is late by {clock_in_minutes - shift_start_minutes} minutes")
-                    attendance.late_minutes = clock_in_minutes - shift_start_minutes
-                    attendance.status = 'Present & Late'
-                else:
-                    logger.info(f"User {user.username} is present on time")
-                    attendance.status = 'Present'
-                is_leave = False
-                is_holiday = False
-                try:
-                    leave_request = LeaveRequest.objects.filter(
-                        user=user,
-                        status='Approved',
-                        start_date__lte=attendance_date,
-                        end_date__gte=attendance_date
-                    ).first()
-                    if leave_request:
-                        logger.info(f"User {user.username} is on {leave_request.leave_type.name} leave")
-                        attendance.leave_type = leave_request.leave_type.name
-                        attendance.status = 'On Leave'
-                        is_leave = True
-                except Exception as e:
-                    logger.error(f"Error checking leave status: {e}")
-                if not is_leave:
-                    try:
-                        holiday = Holiday.objects.filter(
-                            Q(date=attendance_date) |
-                            (Q(recurring_yearly=True) &
-                            Q(date__day=attendance_date.day, date__month=attendance_date.month))
-                        ).first()
-                        if holiday:
-                            logger.info(f"Today is a holiday: {holiday.name}")
-                            attendance.is_holiday = True
-                            attendance.holiday_name = holiday.name
-                            attendance.status = 'Holiday'
-                            is_holiday = True
-                    except Exception as e:
-                        logger.error(f"Error checking holidays: {e}")
-                if not is_leave and not is_holiday:
-                    weekday = attendance_date.weekday()
-                    is_weekend = False
-                    if current_shift.work_days == 'Weekdays':
-                        is_weekend = weekday >= 5  # Saturday/Sunday
-                    elif current_shift.work_days == 'All Days':
-                        is_weekend = False  # All days are working
-                    elif current_shift.work_days == 'Custom' and current_shift.custom_work_days:
-                        day_names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-                        current_day = day_names[weekday]
-                        custom_days = [day.strip() for day in current_shift.custom_work_days.split(',')]
-                        is_weekend = current_day not in custom_days
-                    if is_weekend:
-                        logger.info(f"Today is a weekend for user {user.username}")
-                        attendance.is_weekend = True
-                        attendance.status = 'Weekend'
-                attendance.save()
-            else:
-                logger.warning(f"No shift assigned for user {user.username}")
-                attendance.status = 'Present'
-                attendance.save()
+            # Set shift information
+            if not self.shift:
+                self.shift = ShiftAssignment.get_user_current_shift(self.user, self.date)
+
+            if self.shift:
+                self.expected_hours = Decimal(str(self.shift.shift_duration))
+
+            # Check for leave status
+            if self._is_user_on_leave():
+                self._set_leave_status()
+                return
+
+            # Check for holiday
+            if self._is_date_holiday():
+                self._set_holiday_status()
+                return
+
+            # Check for weekend
+            if self._is_date_weekend():
+                self._set_weekend_status()
+                return
+
         except Exception as e:
-            logger.error(f"Error getting shift for user {user.username}: {e}")
-            attendance.status = 'Present'
-            attendance.save()
-        return attendance
+            logger.error(f"Error initializing attendance defaults for {self.user.username}: {e}")
 
-    @classmethod
-    def record_clock_out(cls, user, clock_out_time, location='Office', ip_address=None, device_info=None):
-        """
-        Update an existing attendance record when a user logs out
-        """
-        logger.info(f"Recording clock out for {user.username} at {clock_out_time}")
-        if timezone.is_naive(clock_out_time):
-            clock_out_time = timezone.make_aware(clock_out_time)
-        attendance_date = clock_out_time.date()
-        try:
-            attendance = cls.objects.get(
-                user=user,
-                date=attendance_date
-            )
-            if attendance.clock_out_time is None or clock_out_time > attendance.clock_out_time:
-                attendance.clock_out_time = clock_out_time
-                if location:
-                    attendance.location = location
-                if ip_address:
-                    attendance.ip_address = ip_address
-                if device_info:
-                    attendance.device_info = device_info
-                if attendance.clock_in_time:
-                    duration = clock_out_time - attendance.clock_in_time
-                    hours = duration.total_seconds() / 3600
-                    attendance.total_hours = round(Decimal(str(hours)), 2)
-                    if attendance.idle_time:
-                        idle_hours = attendance.idle_time.total_seconds() / 3600
-                        attendance.total_hours = max(0, attendance.total_hours - round(Decimal(str(idle_hours)), 2))
-                attendance.save()
-                logger.info(f"Updated clock out time for {user.username} to {clock_out_time}")
-                return attendance
-            else:
-                logger.debug(f"New clock out time ({clock_out_time}) is earlier than existing one ({attendance.clock_out_time})")
-                return attendance
-        except cls.DoesNotExist:
-            logger.warning(f"No attendance record found for {user.username} on {attendance_date}")
-            attendance = cls.create_attendance(
-                user=user,
-                clock_in_time=clock_out_time - timedelta(minutes=1),
-                location=location,
-                ip_address=ip_address,
-                device_info=device_info
-            )
-            attendance.clock_out_time = clock_out_time
-            attendance.save()
-            return attendance
-        except Exception as e:
-            logger.error(f"Error recording clock out for {user.username}: {e}")
-            return None
+    def _calculate_time_fields(self):
+        """Calculate time-related fields like total hours and overtime"""
+        if self.clock_in_time and self.clock_out_time and self.clock_out_time > self.clock_in_time:
+            # Calculate total duration
+            duration = self.clock_out_time - self.clock_in_time
+            hours = Decimal(str(duration.total_seconds() / 3600))
 
-    @classmethod
-    def record_session_activity(cls, session):
-        """
-        Record session activity for attendance
-        """
-        user = session.user
-        login_time = session.login_time
-        if timezone.is_naive(login_time):
-            login_time = timezone.make_aware(login_time)
-        attendance_date = login_time.date()
-        attendance = cls.create_attendance(
-            user=user,
-            clock_in_time=login_time,
-            location=getattr(session, 'location', 'Office'),
-            ip_address=getattr(session, 'ip_address', None),
-            device_info=getattr(session, 'device_info', None)
-        )
-        attendance.first_session = session
-        attendance.last_session = session
-        attendance.total_sessions = UserSession.objects.filter(
-            user=user,
-            login_time__date=attendance_date
-        ).count()
-        if session.logout_time:
-            logout_time = session.logout_time
-            if timezone.is_naive(logout_time):
-                logout_time = timezone.make_aware(logout_time)
-            cls.record_clock_out(
-                user=user,
-                clock_out_time=logout_time,
-                location=getattr(session, 'location', 'Office'),
-                ip_address=getattr(session, 'ip_address', None),
-                device_info=getattr(session, 'device_info', None)
-            )
-        attendance.save()
-        return attendance
+            # Subtract break time if applicable
+            if self.shift and self.shift.break_duration:
+                break_hours = Decimal(str(self.shift.break_duration.total_seconds() / 3600))
+                hours = max(Decimal('0'), hours - break_hours)
 
-    @classmethod
-    def is_shift_ended(cls, current_time, shift_start_time, shift_end_time):
-        """
-        Utility function to check if a shift has ended, handling night shifts correctly
-        """
+            # Subtract idle time
+            if self.idle_time:
+                idle_hours = Decimal(str(self.idle_time.total_seconds() / 3600))
+                hours = max(Decimal('0'), hours - idle_hours)
+
+            self.total_hours = round(hours, 2)
+
+            # Calculate overtime
+            if self.shift and self.total_hours > Decimal(str(self.shift.shift_duration)):
+                self.overtime_hours = self.total_hours - Decimal(str(self.shift.shift_duration))
+
+            # Calculate late minutes
+            if self.shift and self.clock_in_time:
+                self._calculate_late_minutes()
+
+            # Calculate early departure
+            if self.shift and self.clock_out_time:
+                self._calculate_early_departure()
+
+    def _update_status_logic(self):
+        """Update attendance status based on calculated data and business rules"""
+        # Skip status update for certain fixed statuses
+        if self.status in ['On Leave', 'Holiday', 'Weekend']:
+            return
+
+        # Update status based on clock times and shift
+        if self.clock_in_time and self.shift:
+            if self.late_minutes > 0:
+                self.status = 'Present & Late'
+            elif self.total_hours and self.total_hours >= Decimal('4.0'):
+                self.status = 'Present'
+
+        # Handle "Yet to Clock In" to "Absent" conversion
+        if self.status == 'Yet to Clock In' and not self.clock_in_time:
+            if self._is_shift_ended():
+                self.status = 'Absent'
+                if not self.regularization_reason:
+                    self.regularization_reason = "Auto-marked as absent (no activity, shift ended)"
+
+    def _calculate_late_minutes(self):
+        """Calculate how many minutes late the user is"""
+        if not self.clock_in_time or not self.shift:
+            return
+
+        clock_in_time = self.clock_in_time.time()
+        shift_start = self.shift.start_time
+
+        # Get grace period
+        grace_minutes = 10  # default
+        if self.shift.grace_period:
+            grace_minutes = int(self.shift.grace_period.total_seconds() / 60)
+
+        shift_start_minutes = shift_start.hour * 60 + shift_start.minute
+        grace_end_minutes = shift_start_minutes + grace_minutes
+        clock_in_minutes = clock_in_time.hour * 60 + clock_in_time.minute
+
+        if clock_in_minutes > grace_end_minutes:
+            self.late_minutes = clock_in_minutes - shift_start_minutes
+
+    def _calculate_early_departure(self):
+        """Calculate early departure minutes"""
+        if not self.clock_out_time or not self.shift:
+            return
+
+        clock_out_time = self.clock_out_time.time()
+        shift_end = self.shift.end_time
+
+        shift_end_minutes = shift_end.hour * 60 + shift_end.minute
+        clock_out_minutes = clock_out_time.hour * 60 + clock_out_time.minute
+
+        # Handle night shifts
+        if self.shift.is_night_shift() and clock_out_minutes > shift_end_minutes:
+            # Next day clock out
+            clock_out_minutes += 24 * 60
+
+        if clock_out_minutes < shift_end_minutes:
+            self.left_early = True
+            self.early_departure_minutes = shift_end_minutes - clock_out_minutes
+
+    def _is_user_on_leave(self):
+        """Check if user is on approved leave for this date"""
+        return LeaveRequest.objects.filter(
+            user=self.user,
+            status='Approved',
+            start_date__lte=self.date,
+            end_date__gte=self.date
+        ).exists()
+
+    def _is_date_holiday(self):
+        """Check if date is a holiday"""
+        return Holiday.is_holiday(self.date)
+
+    def _is_date_weekend(self):
+        """Check if date is weekend based on shift or default logic"""
+        weekday = self.date.weekday()
+
+        if self.shift:
+            working_days = self.shift.get_working_days()
+            day_names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+            current_day = day_names[weekday]
+            return current_day not in working_days
+
+        # Default weekend logic (Saturday, Sunday)
+        return weekday >= 5
+
+    def _set_leave_status(self):
+        """Set leave status and related information"""
+        leave_request = LeaveRequest.objects.filter(
+            user=self.user,
+            status='Approved',
+            start_date__lte=self.date,
+            end_date__gte=self.date
+        ).select_related('leave_type').first()
+
+        if leave_request:
+            self.status = 'On Leave'
+            self.leave_type = leave_request.leave_type.name
+            if not self.regularization_reason:
+                self.regularization_reason = f"On {leave_request.leave_type.name} leave"
+
+    def _set_holiday_status(self):
+        """Set holiday status and related information"""
+        holiday = Holiday.get_holiday(self.date)
+        if holiday:
+            self.status = 'Holiday'
+            self.is_holiday = True
+            self.holiday_name = holiday.name
+            if not self.regularization_reason:
+                self.regularization_reason = f"Holiday: {holiday.name}"
+
+    def _set_weekend_status(self):
+        """Set weekend status"""
+        self.status = 'Weekend'
+        self.is_weekend = True
+        if not self.regularization_reason:
+            self.regularization_reason = "Weekend"
+
+    def _is_shift_ended(self):
+        """Check if the shift has ended for today"""
+        if not self.shift:
+            return False
+
+        IST = pytz.timezone('Asia/Kolkata')
+        current_time = timezone.now().astimezone(IST).time()
+        today = timezone.now().astimezone(IST).date()
+
+        # Only check for today's attendance
+        if self.date != today:
+            return True
+
+        return self._check_shift_end_time(current_time, self.shift.start_time, self.shift.end_time)
+
+    @staticmethod
+    def _check_shift_end_time(current_time, shift_start, shift_end):
+        """Utility method to check if shift has ended, handling night shifts"""
         current_minutes = current_time.hour * 60 + current_time.minute
-        start_minutes = shift_start_time.hour * 60 + shift_start_time.minute
-        end_minutes = shift_end_time.hour * 60 + shift_end_time.minute
+        start_minutes = shift_start.hour * 60 + shift_start.minute
+        end_minutes = shift_end.hour * 60 + shift_end.minute
+
+        # Handle night shifts (crosses midnight)
         if end_minutes < start_minutes:
             end_minutes += 24 * 60
             if current_minutes < start_minutes:
                 current_minutes += 24 * 60
+
         return current_minutes > end_minutes
 
-    @classmethod
-    def update_yet_to_clock_in_statuses(cls):
-        """
-        Update 'Yet to Clock In' attendance records to 'Absent' if shift has ended
-        This method should be run periodically throughout the day
-        """
-        IST = pytz.timezone('Asia/Kolkata')
-        today = timezone.localtime(timezone.now(), IST).date()
-        current_time = timezone.localtime(timezone.now(), IST).time()
-        pending_attendances = cls.objects.filter(
-            date=today,
-            status='Yet to Clock In'
+    def get_working_hours(self):
+        """Get actual working hours (total hours minus breaks and idle time)"""
+        if not self.total_hours:
+            return Decimal('0.00')
+
+        working_hours = self.total_hours
+
+        # Subtract official break time
+        if self.shift and self.shift.break_duration:
+            break_hours = Decimal(str(self.shift.break_duration.total_seconds() / 3600))
+            working_hours = max(Decimal('0'), working_hours - break_hours)
+
+        return working_hours
+
+    def is_eligible_for_overtime(self):
+        """Check if attendance is eligible for overtime pay"""
+        return (
+            self.overtime_hours > 0 and
+            self.status in ['Present', 'Present & Late'] and
+            not self.is_weekend and
+            not self.is_holiday
         )
-        updated_count = 0
-        for attendance in pending_attendances:
-            if attendance.shift and cls.is_shift_ended(current_time, attendance.shift.start_time, attendance.shift.end_time):
-                print(f"Marking {attendance.user.username} as Absent - shift ended at {attendance.shift.end_time}")
-                attendance.status = 'Absent'
-                attendance.regularization_reason = "Auto-marked as absent (no activity, shift ended)"
-                attendance.save()
-                updated_count += 1
-        print(f"update_yet_to_clock_in_statuses() completed - updated {updated_count} records")
-        return updated_count
+
+    def get_attendance_efficiency(self):
+        """Calculate attendance efficiency as a percentage"""
+        if not self.expected_hours or self.expected_hours == 0:
+            return 0
+
+        actual_hours = self.get_working_hours()
+        return min(100, (actual_hours / self.expected_hours) * 100)
 
     @classmethod
-    def auto_mark_attendance(cls):
+    def create_attendance_record(cls, user, clock_in_time=None, location='Office', **kwargs):
         """
-        Automatically mark attendance for all users based on their sessions and leave
+        Class method to create attendance record with proper initialization
         """
         IST = pytz.timezone('Asia/Kolkata')
-        current_ist = timezone.now().astimezone(IST)
-        today = current_ist.date()
-        current_time = current_ist.time()
-        print(f"Running auto_mark_attendance at IST: {current_ist}")
-        from django.contrib.auth import get_user_model
-        User = get_user_model()
-        users = User.objects.filter(is_active=True)
-        for user in users:
-            attendance = cls.objects.filter(user=user, date=today).first()
-            current_shift = None
-            try:
-                current_shift = ShiftAssignment.get_user_current_shift(user, today)
-            except:
-                pass
-            if not attendance:
-                sessions = UserSession.objects.filter(
-                    user=user,
-                    login_time__date=today
-                ).order_by('login_time')
-                if sessions.exists():
-                    first_session = sessions.first()
-                    cls.record_session_activity(first_session)
-                else:
-                    try:
-                        leave_request = LeaveRequest.objects.filter(
-                            user=user,
-                            status='Approved',
-                            start_date__lte=today,
-                            end_date__gte=today
-                        ).first()
-                        if leave_request:
-                            cls.objects.create(
-                                user=user,
-                                date=today,
-                                status='On Leave',
-                                leave_type=leave_request.leave_type.name,
-                                regularization_reason=f"Auto-marked by leave system: {leave_request.leave_type.name}"
-                            )
-                        else:
-                            weekday = today.weekday()
-                            is_weekend = False
-                            if current_shift:
-                                day_names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-                                current_day = day_names[weekday]
-                                if current_shift.work_days == 'Weekdays':
-                                    is_weekend = weekday >= 5
-                                elif current_shift.work_days == 'All Days':
-                                    is_weekend = False
-                                elif current_shift.work_days == 'Custom' and current_shift.custom_work_days:
-                                    custom_days = [day.strip() for day in current_shift.custom_work_days.split(',')]
-                                    is_weekend = current_day not in custom_days
-                            else:
-                                is_weekend = weekday >= 5
-                            is_holiday = False
-                            holiday_name = None
-                            try:
-                                holiday = Holiday.objects.filter(
-                                    Q(date=today) |
-                                    (Q(recurring_yearly=True) &
-                                    Q(date__day=today.day, date__month=today.month))
-                                ).first()
-                                if holiday:
-                                    print(f"Holiday found: {holiday.name}")
-                                    is_holiday = True
-                                    holiday_name = holiday.name
-                            except:
-                                print("Error checking holiday")
-                                pass
-                            if is_holiday:
-                                print("Creating holiday attendance")
-                                cls.objects.create(
-                                    user=user,
-                                    date=today,
-                                    status='Holiday',
-                                    is_holiday=True,
-                                    holiday_name=holiday_name,
-                                    shift=current_shift,
-                                    regularization_reason=f"Holiday: {holiday_name}"
-                                )
-                            elif is_weekend:
-                                print("Creating weekend attendance")
-                                cls.objects.create(
-                                    user=user,
-                                    date=today,
-                                    status='Weekend',
-                                    is_weekend=True,
-                                    shift=current_shift,
-                                    regularization_reason="Weekend"
-                                )
-                            else:
-                                if current_shift:
-                                    if not cls.is_shift_ended(current_time, current_shift.start_time, current_shift.end_time):
-                                        print(f"User {user.username} yet to clock in - Shift still active")
-                                        cls.objects.create(
-                                            user=user,
-                                            date=today,
-                                            status='Yet to Clock In',
-                                            shift=current_shift,
-                                            regularization_reason="Auto-marked as yet to clock in (shift in progress)"
-                                        )
-                                    else:
-                                        print(f"User {user.username} marked as absent - Shift ended at {current_shift.end_time} IST")
-                                        cls.objects.create(
-                                            user=user,
-                                            date=today,
-                                            status='Absent',
-                                            shift=current_shift,
-                                            regularization_reason="Auto-marked as absent (no activity, shift ended)"
-                                        )
-                                else:
-                                    print(f"User {user.username} has no shift, marking Not Marked")
-                                    cls.objects.create(
-                                        user=user,
-                                        date=today,
-                                        status='Not Marked',
-                                        shift=current_shift,
-                                        regularization_reason="Auto-marked (no shift assigned)"
-                                    )
-                    except Exception as e:
-                        print(f"Error auto-marking attendance for {user.username}: {str(e)}")
-            else:
-                print(f"Existing attendance found for {user.username}")
-                if attendance.status == 'Not Marked' or attendance.status == 'Yet to Clock In':
-                    print(f"Updating {attendance.status} attendance")
-                    sessions = UserSession.objects.filter(
-                        user=user,
-                        login_time__date=today
-                    ).order_by('login_time')
-                    if sessions.exists():
-                        print(f"Found {sessions.count()} sessions")
-                        first_session = sessions.first()
-                        last_session = sessions.order_by('-login_time').first()
-                        attendance.first_session = first_session
-                        attendance.last_session = last_session
-                        attendance.total_sessions = sessions.count()
-                        attendance.clock_in_time = first_session.login_time.astimezone(IST)
-                        if last_session.logout_time:
-                            cls.record_clock_out(
-                                user=user,
-                                clock_out_time=last_session.logout_time.astimezone(IST),
-                                location=attendance.location
-                            )
-                        elif last_session.last_activity and not last_session.is_active:
-                            cls.record_clock_out(
-                                user=user,
-                                clock_out_time=last_session.last_activity.astimezone(IST),
-                                location=attendance.location
-                            )
-                        if attendance.clock_in_time and attendance.clock_out_time:
-                            print("Calculating total hours")
-                            duration = attendance.clock_out_time - attendance.clock_in_time
-                            hours = duration.total_seconds() / 3600
-                            attendance.total_hours = round(Decimal(str(hours)), 2)
-                        idle_time = timedelta(0)
-                        for session in sessions:
-                            if hasattr(session, 'idle_time') and session.idle_time:
-                                idle_time += session.idle_time
-                        if idle_time:
-                            print(f"Adding idle time: {idle_time}")
-                            attendance.idle_time = idle_time
-                            if attendance.total_hours:
-                                idle_hours = idle_time.total_seconds() / 3600
-                                attendance.total_hours = max(Decimal('0'), attendance.total_hours - Decimal(str(idle_hours)))
-                        if attendance.status == 'Yet to Clock In':
-                            if current_shift:
-                                shift_start = current_shift.start_time
-                                clock_in_time = attendance.clock_in_time.time()
-                                grace_minutes = 10
-                                if hasattr(current_shift, 'grace_period'):
-                                    grace_period = current_shift.grace_period
-                                    grace_minutes = grace_period.total_seconds() // 60
-                                shift_start_minutes = shift_start.hour * 60 + shift_start.minute
-                                grace_end_minutes = shift_start_minutes + grace_minutes
-                                clock_in_minutes = clock_in_time.hour * 60 + clock_in_time.minute
-                                if clock_in_minutes > grace_end_minutes:
-                                    attendance.status = 'Present & Late'
-                                    attendance.late_minutes = clock_in_minutes - shift_start_minutes
-                                else:
-                                    attendance.status = 'Present'
-                            else:
-                                attendance.status = 'Present'
-                        else:
-                            attendance.status = 'Present'
-                        attendance.save()
-                    elif current_shift:
-                        if cls.is_shift_ended(current_time, current_shift.start_time, current_shift.end_time):
-                            print(f"Updating to Absent as shift has ended for {user.username} at {current_shift.end_time} IST")
-                            attendance.status = 'Absent'
-                            attendance.regularization_reason = "Auto-marked as absent (no activity, shift ended)"
-                            attendance.save()
-        print("auto_mark_attendance() completed")
-        return True
+
+        if not clock_in_time:
+            clock_in_time = timezone.now().astimezone(IST)
+        elif timezone.is_naive(clock_in_time):
+            clock_in_time = timezone.make_aware(clock_in_time, IST)
+
+        attendance_date = clock_in_time.date()
+
+        # Get or create attendance record
+        attendance, created = cls.objects.get_or_create_today_attendance(user, attendance_date)
+
+        # Update with clock-in information if this is first clock-in
+        if created or not attendance.clock_in_time:
+            attendance.clock_in_time = clock_in_time
+            attendance.location = location
+
+            # Set additional fields from kwargs
+            for key, value in kwargs.items():
+                if hasattr(attendance, key):
+                    setattr(attendance, key, value)
+
+            attendance.save()
+            logger.info(f"Created attendance record for {user.username} at {clock_in_time}")
+
+        return attendance
 
     @classmethod
-    def get_monthly_report(cls, user, year, month):
+    def record_clock_out(cls, user, clock_out_time=None, location=None, **kwargs):
         """
-        Generate monthly attendance report for a user
+        Class method to record clock-out time for attendance
         """
-        from calendar import monthrange
-        days_in_month = monthrange(year, month)[1]
-        start_date = timezone.datetime(year, month, 1).date()
-        end_date = timezone.datetime(year, month, days_in_month).date()
-        records = cls.objects.filter(
-            user=user,
-            date__gte=start_date,
-            date__lte=end_date
-        ).order_by('date')
-        report = {
-            'user': user,
-            'year': year,
-            'month': month,
-            'days': {},
-            'summary': {
-                'present': 0,
-                'present_late': 0,
-                'absent': 0,
-                'late': 0,
-                'on_leave': 0,
-                'holiday': 0,
-                'weekend': 0,
-                'work_from_home': 0,
-                'comp_off': 0,
-                'not_marked': 0,
-                'total_hours': Decimal('0'),
-                'overtime_hours': Decimal('0'),
-                'leave_days_used': Decimal('0'),
-                'total_present': 0,
-                'leave_request_count': 0,
-                'approved_leave_count': 0
-            }
-        }
-        for day in range(1, days_in_month + 1):
-            current_date = timezone.datetime(year, month, day).date()
-            weekday = current_date.weekday()
-            is_weekend = weekday >= 5
-            report['days'][day] = {
-                'date': current_date,
-                'weekday': current_date.strftime('%A'),
-                'status': 'Not Marked',
-                'is_weekend': is_weekend,
-                'is_holiday': False,
-                'holiday_name': None,
-                'clock_in_time': None,
-                'clock_out_time': None,
-                'total_hours': Decimal('0'),
-                'overtime_hours': Decimal('0'),
-                'late_minutes': 0,
-                'early_departure_minutes': 0,
-                'leave_type': None,
-                'remarks': None,
-                'idle_time': None,
-                'location': None
-            }
-        for record in records:
-            day = record.date.day
-            report['days'][day].update({
-                'status': record.status,
-                'is_weekend': record.is_weekend,
-                'is_holiday': record.is_holiday,
-                'holiday_name': record.holiday_name,
-                'clock_in_time': record.clock_in_time,
-                'clock_out_time': record.clock_out_time,
-                'total_hours': record.total_hours or Decimal('0'),
-                'overtime_hours': record.overtime_hours,
-                'late_minutes': record.late_minutes,
-                'early_departure_minutes': record.early_departure_minutes,
-                'leave_type': record.leave_type,
-                'remarks': record.regularization_reason,
-                'location': record.location,
-                'idle_time': record.idle_time
-            })
-            status_key = record.status.lower().replace(' & ', '_').replace(' ', '_')
-            if status_key in report['summary']:
-                report['summary'][status_key] += 1
-            if record.total_hours:
-                report['summary']['total_hours'] += record.total_hours
-            report['summary']['overtime_hours'] += record.overtime_hours
-            if record.leave_type:
-                report['summary']['leave_days_used'] += Decimal('1.0')
-            if record.status in ['Present', 'Present & Late', 'Work From Home']:
-                report['summary']['total_present'] += 1
-            if record.regularization_status == 'Pending':
-                report['summary']['leave_request_count'] += 1
-            elif record.regularization_status == 'Approved':
-                report['summary']['approved_leave_count'] += 1
-        return report
+        IST = pytz.timezone('Asia/Kolkata')
 
+        if not clock_out_time:
+            clock_out_time = timezone.now().astimezone(IST)
+        elif timezone.is_naive(clock_out_time):
+            clock_out_time = timezone.make_aware(clock_out_time, IST)
+
+        attendance_date = clock_out_time.date()
+
+        try:
+            attendance = cls.objects.get(user=user, date=attendance_date)
+
+            # Only update if this is a later clock-out time
+            if not attendance.clock_out_time or clock_out_time > attendance.clock_out_time:
+                attendance.clock_out_time = clock_out_time
+
+                if location:
+                    attendance.location = location
+
+                # Update additional fields from kwargs
+                for key, value in kwargs.items():
+                    if hasattr(attendance, key):
+                        setattr(attendance, key, value)
+
+                attendance.save()
+                logger.info(f"Updated clock-out time for {user.username} to {clock_out_time}")
+
+            return attendance
+
+        except cls.DoesNotExist:
+            # Create attendance record if it doesn't exist
+            logger.warning(f"No attendance record found for {user.username} on {attendance_date}, creating new one")
+            return cls.create_attendance_record(
+                user=user,
+                clock_in_time=clock_out_time - timedelta(minutes=1),  # Assume 1 minute session
+                location=location or 'Office',
+                **kwargs
+            )
+
+    @classmethod
+    def update_session_data(cls, user, session, date=None):
+        """
+        Update attendance record with session information
+        """
+        if not date:
+            date = session.login_time.date()
+
+        try:
+            attendance = cls.objects.get(user=user, date=date)
+
+            # Update session information
+            if not attendance.first_session or session.login_time < attendance.first_session.login_time:
+                attendance.first_session = session
+
+            if not attendance.last_session or session.login_time > attendance.last_session.login_time:
+                attendance.last_session = session
+
+            # Update session count
+            attendance.total_sessions = UserSession.objects.filter(
+                user=user,
+                login_time__date=date
+            ).count()
+
+            # Update clock times based on session
+            if not attendance.clock_in_time or session.login_time < attendance.clock_in_time:
+                attendance.clock_in_time = session.login_time
+
+            if session.logout_time:
+                if not attendance.clock_out_time or session.logout_time > attendance.clock_out_time:
+                    attendance.clock_out_time = session.logout_time
+
+            attendance.save()
+            logger.info(f"Updated session data for {user.username} on {date}")
+
+        except cls.DoesNotExist:
+            logger.warning(f"No attendance record found for {user.username} on {date}")
+
+    def request_regularization(self, requested_status, reason, requested_by=None):
+        """
+        Submit a regularization request for this attendance record
+        """
+        if self.regularization_status == 'Pending':
+            raise ValidationError("A regularization request is already pending for this attendance")
+
+        if self.regularization_attempts >= 5:
+            raise ValidationError("Maximum regularization attempts exceeded")
+
+        # Store original values if not already stored
+        if not self.original_status:
+            self.original_status = self.status
+        if not self.original_clock_in_time:
+            self.original_clock_in_time = self.clock_in_time
+        if not self.original_clock_out_time:
+            self.original_clock_out_time = self.clock_out_time
+
+        self.requested_status = requested_status
+        self.regularization_reason = reason
+        self.regularization_status = 'Pending'
+        self.regularization_attempts += 1
+        self.last_regularization_date = timezone.now()
+
+        if requested_by:
+            self.modified_by = requested_by
+
+        self.save()
+        logger.info(f"Regularization requested for {self.user.username} on {self.date}")
+
+    def approve_regularization(self, approved_by, comments=None):
+        """
+        Approve the regularization request
+        """
+        if self.regularization_status != 'Pending':
+            raise ValidationError("No pending regularization request to approve")
+
+        # Apply the requested changes
+        if self.requested_status:
+            self.status = self.requested_status
+
+        self.regularization_status = 'Approved'
+        self.modified_by = approved_by
+
+        if comments:
+            self.remarks = comments
+
+        self.save()
+        logger.info(f"Regularization approved for {self.user.username} on {self.date}")
+
+    def reject_regularization(self, rejected_by, comments=None):
+        """
+        Reject the regularization request
+        """
+        if self.regularization_status != 'Pending':
+            raise ValidationError("No pending regularization request to reject")
+
+        self.regularization_status = 'Rejected'
+        self.modified_by = rejected_by
+
+        if comments:
+            self.remarks = comments
+
+        # Reset to original values
+        if self.original_status:
+            self.status = self.original_status
+        if self.original_clock_in_time:
+            self.clock_in_time = self.original_clock_in_time
+        if self.original_clock_out_time:
+            self.clock_out_time = self.original_clock_out_time
+
+        self.save()
+        logger.info(f"Regularization rejected for {self.user.username} on {self.date}")
+
+    def get_formatted_duration(self):
+        """
+        Get formatted duration string
+        """
+        if not self.total_hours:
+            return "0h 0m"
+
+        hours = int(self.total_hours)
+        minutes = int((self.total_hours - hours) * 60)
+        return f"{hours}h {minutes}m"
+
+    def get_status_color(self):
+        """
+        Get color code for status display
+        """
+        status_colors = {
+            'Present': 'success',
+            'Present & Late': 'warning',
+            'Absent': 'danger',
+            'Late': 'warning',
+            'On Leave': 'info',
+            'Work From Home': 'primary',
+            'Weekend': 'secondary',
+            'Holiday': 'info',
+            'Comp Off': 'info',
+            'Not Marked': 'light',
+            'Yet to Clock In': 'warning',
+            'Half Day': 'warning'
+        }
+        return status_colors.get(self.status, 'light')
+
+    def can_request_regularization(self):
+        """
+        Check if user can request regularization for this attendance
+        """
+        # Can't regularize if already approved or if max attempts reached
+        if self.regularization_status == 'Approved':
+            return False
+
+        if self.regularization_attempts >= 5:
+            return False
+
+        # Can't regularize weekend or holiday unless it was worked
+        if self.status in ['Weekend', 'Holiday'] and not self.clock_in_time:
+            return False
+
+        # Can regularize within 7 days of the attendance date
+        days_diff = (timezone.now().date() - self.date).days
+        return days_diff <= 7
 
 
 '''-------------------------------------------- SUPPORT AREA ---------------------------------------'''
@@ -5978,6 +5998,48 @@ class BookingAnalytics:
         return bookings[:10]  # Top 10 popular hours
 
     @staticmethod
+    def get_hourly_booking_timeline(date=None):
+        """Get real hourly booking data for timeline visualization."""
+        if not date:
+            date = timezone.now().date()
+
+        from django.db.models import Count
+        from django.db.models.functions import Extract
+
+        # Get all confirmed bookings for the specified date
+        bookings = ConferenceBooking.objects.filter(
+            start_time__date=date,
+            status=ConferenceBooking.BookingStatus.CONFIRMED
+        )
+
+        # Group bookings by hour
+        hourly_data = bookings.annotate(
+            hour=Extract('start_time', 'hour')
+        ).values('hour').annotate(
+            count=Count('id')
+        ).order_by('hour')
+
+        # Create a complete 24-hour timeline
+        timeline = []
+        hourly_dict = {item['hour']: item['count'] for item in hourly_data}
+
+        for hour in range(24):
+            count = hourly_dict.get(hour, 0)
+
+            # Calculate utilization percentage for visual height
+            max_possible_bookings = Room.objects.filter(status=Room.RoomStatus.ACTIVE).count()
+            utilization_percentage = (count / max_possible_bookings * 100) if max_possible_bookings > 0 else 0
+
+            timeline.append({
+                'hour': hour,
+                'count': count,
+                'utilization_percentage': min(utilization_percentage, 100),  # Cap at 100%
+                'formatted_hour': f"{hour:02d}:00"
+            })
+
+        return timeline
+
+    @staticmethod
     def get_user_analytics(user, days=30):
         """Get comprehensive analytics for a specific user."""
         start_date = timezone.now().date() - timedelta(days=days)
@@ -6152,7 +6214,7 @@ class BookingValidator:
 
     @staticmethod
     def validate_booking_time(start_time, end_time):
-        """Validate booking time constraints."""
+        """Validate booking time constraints - Updated for 24/7 booking."""
         errors = []
 
         # Check if end time is after start time
@@ -6163,33 +6225,20 @@ class BookingValidator:
         if start_time < timezone.now():
             errors.append("Booking cannot be in the past.")
 
-        # Check if booking is within working hours (9 AM - 6 PM IST)
-        from pytz import timezone as pytz_timezone
+        # Remove working hours restrictions - allow 24/7 booking
+        # Remove weekday restrictions - allow weekend booking
 
-        IST = pytz_timezone('Asia/Kolkata')
-        start_ist = start_time.astimezone(IST)
-        end_ist = end_time.astimezone(IST)
-
-        if start_ist.hour < 9 or start_ist.hour >= 18:
-            errors.append("Booking must be within working hours (9 AM - 6 PM).")
-
-        if end_ist.hour > 18 or (end_ist.hour == 18 and end_ist.minute > 0):
-            errors.append("Booking must end by 6 PM.")
-
-        # Check if booking is on a weekday
-        if start_time.weekday() >= 5:  # Saturday = 5, Sunday = 6
-            errors.append("Bookings are only allowed on weekdays.")
-
-        # Check maximum booking duration (8 hours)
+        # Check maximum duration (12 hours instead of 8)
         duration = end_time - start_time
-        if duration > timedelta(hours=8):
-            errors.append("Booking duration cannot exceed 8 hours.")
+        if duration.total_seconds() > 12 * 3600:  # 12 hours in seconds
+            errors.append("Maximum booking duration is 12 hours.")
 
-        # Check minimum booking duration (15 minutes)
-        if duration < timedelta(minutes=15):
-            errors.append("Booking duration must be at least 15 minutes.")
+        # Check minimum duration (15 minutes)
+        if duration.total_seconds() < 15 * 60:  # 15 minutes in seconds
+            errors.append("Minimum booking duration is 15 minutes.")
 
         return errors
+
 
     @staticmethod
     def validate_room_capacity(room, attendees_count):

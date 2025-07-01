@@ -30,6 +30,7 @@ urlpatterns = [
     path('', include('trueAlign.core.urls')),
     path('shift/', include('trueAlign.shift.urls')),
     path('book/', include('trueAlign.conf_booking.urls')),
+    path('attendance/', include('trueAlign.attendance.urls')),
 
 
 

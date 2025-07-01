@@ -73,6 +73,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'trueAlign',
     'trueAlign.shift',
+    'trueAlign.attendance',
     'trueAlign.conf_booking',
     'rest_framework',
     'widget_tweaks',
@@ -85,6 +86,8 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'trueAlign.core.middleware.GlobalAuthenticationMiddleware',  # Add this line
+    'trueAlign.core.middleware.SessionTrackingMiddleware',        # Move this after auth
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'trueAlign.core.middleware.SessionAnalyticsMiddleware',
@@ -352,3 +355,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Ensure logs directory exists
 os.makedirs(os.path.join(BASE_DIR, 'logs'), exist_ok=True)
+
+
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/dashboard/'
+LOGOUT_REDIRECT_URL = '/login/'
+
+
+# Additional authentication settings to prevent conflicts
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]

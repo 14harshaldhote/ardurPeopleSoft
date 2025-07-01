@@ -383,23 +383,80 @@ def get_available_slots(request):
         return JsonResponse({'error': 'An error occurred while fetching available slots.'}, status=500)
 
 
-@login_required
 def room_dashboard(request):
     """
-    Display real-time room status dashboard.
+    Display real-time room status dashboard with real data.
     """
-    dashboard_data = RoomManager.get_room_status_dashboard()
-    daily_utilization = BookingAnalytics.get_daily_utilization()
-    available_rooms = Room.objects.filter(status=Room.RoomStatus.ACTIVE).order_by('name')
+    try:
+        # Get comprehensive dashboard data
+        dashboard_data = RoomManager.get_room_status_dashboard()
+        daily_utilization = BookingAnalytics.get_daily_utilization()
+        available_rooms = Room.objects.filter(status=Room.RoomStatus.ACTIVE).order_by('name')
+        
+        # Get today's bookings count
+        today = timezone.now().date()
+        todays_bookings = ConferenceBooking.objects.filter(
+            start_time__date=today,
+            status__in=[ConferenceBooking.BookingStatus.CONFIRMED, ConferenceBooking.BookingStatus.PENDING]
+        )
+        
+        # Get real hourly timeline data
+        hourly_timeline = BookingAnalytics.get_hourly_booking_timeline(today)
+        
+        # Categorize rooms
+        available_rooms_list = []
+        occupied_rooms_list = []
+        
+        for room_data in dashboard_data:
+            if room_data['status'] == 'occupied':
+                occupied_rooms_list.append(room_data)
+            else:
+                available_rooms_list.append(room_data)
+        
+        # Calculate average utilization
+        if daily_utilization:
+            avg_utilization = sum([room['utilization_percentage'] for room in daily_utilization]) / len(daily_utilization)
+        else:
+            avg_utilization = 0
+        
+        # Enhanced dashboard data
+        enhanced_dashboard_data = {
+            'room_status': dashboard_data,
+            'available_rooms': available_rooms_list,
+            'occupied_rooms': occupied_rooms_list,
+            'todays_bookings': todays_bookings,
+        }
 
-    context = {
-        'room_dashboard': dashboard_data,
-        'daily_utilization': daily_utilization,
-        'current_time': timezone.now(),
-        'available_rooms': available_rooms,
-    }
+        context = {
+            'room_dashboard': enhanced_dashboard_data,
+            'daily_utilization': {'average_utilization': avg_utilization},
+            'hourly_timeline': hourly_timeline,
+            'current_time': timezone.now(),
+            'available_rooms': available_rooms,
+        }
 
-    return render(request, 'conf_booking/room_dashboard.html', context)
+        return render(request, 'conf_booking/room_dashboard.html', context)
+        
+    except Exception as e:
+        logger.error(f"Error in room_dashboard view: {e}", exc_info=True)
+        messages.error(request, "Failed to load dashboard data. Please try again.")
+        
+        # Fallback data
+        context = {
+            'room_dashboard': {
+                'room_status': [],
+                'available_rooms': [],
+                'occupied_rooms': [],
+                'todays_bookings': [],
+            },
+            'daily_utilization': {'average_utilization': 0},
+            'hourly_timeline': [{'hour': i, 'count': 0, 'utilization_percentage': 0, 'formatted_hour': f"{i:02d}:00"} for i in range(24)],
+            'current_time': timezone.now(),
+            'available_rooms': Room.objects.filter(status=Room.RoomStatus.ACTIVE),
+        }
+        return render(request, 'conf_booking/room_dashboard.html', context)
+
+
 
 
 @login_required
@@ -766,17 +823,33 @@ def get_room_details(request, room_id):
         logger.error(f"Error getting room details for room {room_id}: {e}")
         return JsonResponse({'error': 'Room not found'}, status=404)
 
-
-@login_required
 def get_available_rooms(request):
     """
     API endpoint to get all available rooms.
     """
     logger.info(f"Available rooms request from user {request.user}")
+    logger.info(f"Request method: {request.method}")
+    logger.info(f"Request path: {request.path}")
 
     try:
+        # Add CORS headers if needed
+        from django.http import JsonResponse
+        
         active_rooms = Room.objects.filter(status=Room.RoomStatus.ACTIVE).order_by('name')
         logger.info(f"Found {active_rooms.count()} active rooms")
+
+        if active_rooms.count() == 0:
+            logger.warning("No active rooms found in database")
+            return JsonResponse({
+                'rooms': [],
+                'message': 'No active rooms available',
+                'debug_info': {
+                    'total_rooms': Room.objects.count(),
+                    'active_rooms': Room.objects.filter(status=Room.RoomStatus.ACTIVE).count(),
+                    'maintenance_rooms': Room.objects.filter(status=Room.RoomStatus.MAINTENANCE).count(),
+                    'inactive_rooms': Room.objects.filter(status=Room.RoomStatus.INACTIVE).count(),
+                }
+            })
 
         rooms_data = []
         for room in active_rooms:
@@ -785,9 +858,9 @@ def get_available_rooms(request):
                     'id': room.id,
                     'name': room.name,
                     'capacity': room.capacity,
-                    'location': room.location,
+                    'location': room.location or '',
                     'room_type': room.get_room_type_display(),
-                    'facilities': room.facilities,
+                    'facilities': room.facilities or '',
                     'hourly_rate': float(room.hourly_rate),
                     'is_available': room.is_available,
                     'is_occupied': room.is_occupied,
@@ -796,43 +869,255 @@ def get_available_rooms(request):
                 }
 
                 # Add current booking info if exists
-                current_booking = room.current_booking
-                if current_booking:
-                    room_info['current_booking'] = {
-                        'purpose': current_booking.purpose,
-                        'end_time': current_booking.end_time.isoformat(),
-                        'booked_by': current_booking.booked_by.get_full_name()
-                    }
+                try:
+                    current_booking = room.current_booking
+                    if current_booking:
+                        room_info['current_booking'] = {
+                            'purpose': current_booking.purpose,
+                            'end_time': current_booking.end_time.isoformat(),
+                            'booked_by': current_booking.booked_by.get_full_name()
+                        }
+                except Exception as booking_error:
+                    logger.warning(f"Error getting current booking for room {room.name}: {booking_error}")
 
                 # Add next booking info if exists
-                next_booking = room.next_booking
-                if next_booking:
-                    room_info['next_booking'] = {
-                        'purpose': next_booking.purpose,
-                        'start_time': next_booking.start_time.isoformat(),
-                        'booked_by': next_booking.booked_by.get_full_name()
-                    }
+                try:
+                    next_booking = room.next_booking
+                    if next_booking:
+                        room_info['next_booking'] = {
+                            'purpose': next_booking.purpose,
+                            'start_time': next_booking.start_time.isoformat(),
+                            'booked_by': next_booking.booked_by.get_full_name()
+                        }
+                except Exception as booking_error:
+                    logger.warning(f"Error getting next booking for room {room.name}: {booking_error}")
 
                 rooms_data.append(room_info)
 
-            except Exception as e:
-                logger.error(f"Error processing room {room.name}: {e}")
+            except Exception as room_error:
+                logger.error(f"Error processing room {room.name}: {room_error}")
                 # Add basic room info even if booking info fails
                 rooms_data.append({
                     'id': room.id,
                     'name': room.name,
                     'capacity': room.capacity,
-                    'location': room.location,
+                    'location': room.location or '',
                     'room_type': room.get_room_type_display(),
-                    'facilities': room.facilities,
+                    'facilities': room.facilities or '',
                     'hourly_rate': float(room.hourly_rate),
                     'is_available': True,
                     'is_occupied': False
                 })
 
         logger.info(f"Returning {len(rooms_data)} rooms data")
-        return JsonResponse({'rooms': rooms_data})
+        
+        response = JsonResponse({
+            'rooms': rooms_data,
+            'success': True,
+            'count': len(rooms_data)
+        })
+        
+        # Add CORS headers if needed for frontend requests
+        response['Access-Control-Allow-Origin'] = '*'
+        response['Access-Control-Allow-Methods'] = 'GET'
+        response['Access-Control-Allow-Headers'] = 'Content-Type'
+        
+        return response
 
     except Exception as e:
         logger.error(f"Error getting available rooms: {e}", exc_info=True)
-        return JsonResponse({'error': 'Failed to load rooms'}, status=500)
+        return JsonResponse({
+            'error': f'Failed to load rooms: {str(e)}',
+            'rooms': [],
+            'success': False
+        }, status=500)
+
+@login_required
+def get_calendar_data(request):
+    """
+    API endpoint to get real calendar booking data.
+    """
+    try:
+        # Get query parameters
+        start_date = request.GET.get('start_date')
+        end_date = request.GET.get('end_date')
+        room_id = request.GET.get('room_id')
+        
+        # Default to current week if no dates provided
+        if not start_date:
+            today = timezone.now().date()
+            start_date = today - timedelta(days=today.weekday())  # Monday of current week
+        else:
+            start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+            
+        if not end_date:
+            end_date = start_date + timedelta(days=6)  # Sunday of current week
+        else:
+            end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+        
+        logger.info(f"Calendar data request: {start_date} to {end_date}, room: {room_id}")
+        
+        # Get bookings for the date range
+        bookings_query = ConferenceBooking.objects.filter(
+            start_time__date__range=[start_date, end_date],
+            status__in=[ConferenceBooking.BookingStatus.CONFIRMED, ConferenceBooking.BookingStatus.PENDING]
+        ).select_related('room', 'booked_by')
+        
+        # Filter by room if specified
+        if room_id:
+            bookings_query = bookings_query.filter(room_id=room_id)
+        
+        # Get all active rooms or specific room
+        if room_id:
+            rooms = Room.objects.filter(id=room_id, status=Room.RoomStatus.ACTIVE)
+        else:
+            rooms = Room.objects.filter(status=Room.RoomStatus.ACTIVE).order_by('name')
+        
+        # Organize data by date and room
+        calendar_data = {}
+        
+        # Create date range
+        current_date = start_date
+        while current_date <= end_date:
+            date_str = current_date.strftime('%Y-%m-%d')
+            calendar_data[date_str] = {}
+            
+            for room in rooms:
+                room_key = f"room-{room.id}"
+                calendar_data[date_str][room_key] = []
+                
+                # Get bookings for this room and date
+                day_bookings = bookings_query.filter(
+                    room=room,
+                    start_time__date=current_date
+                ).order_by('start_time')
+                
+                for booking in day_bookings:
+                    # Determine booking type
+                    booking_type = 'own' if booking.booked_by == request.user else 'other'
+                    
+                    calendar_data[date_str][room_key].append({
+                        'id': booking.id,
+                        'start': booking.start_time.strftime('%H:%M'),
+                        'end': booking.end_time.strftime('%H:%M'),
+                        'title': booking.purpose,
+                        'type': booking_type,
+                        'attendees': booking.attendees_count + booking.external_attendees,
+                        'status': booking.status,
+                        'booked_by': booking.booked_by.get_full_name(),
+                        'meeting_type': booking.get_meeting_type_display(),
+                        'can_edit': booking.booked_by == request.user,
+                    })
+            
+            current_date += timedelta(days=1)
+        
+        response_data = {
+            'success': True,
+            'calendar_data': calendar_data,
+            'rooms': [
+                {
+                    'id': room.id,
+                    'name': room.name,
+                    'capacity': room.capacity,
+                    'location': room.location,
+                } for room in rooms
+            ],
+            'date_range': {
+                'start': start_date.strftime('%Y-%m-%d'),
+                'end': end_date.strftime('%Y-%m-%d'),
+            }
+        }
+        
+        return JsonResponse(response_data)
+        
+    except Exception as e:
+        logger.error(f"Error getting calendar data: {e}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'error': str(e),
+            'calendar_data': {}
+        }, status=500)
+
+
+def create_quick_booking(request):
+    """
+    API endpoint to create a quick booking from calendar.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+    
+    try:
+        data = json.loads(request.body)
+        
+        room_id = data.get('room_id')
+        start_time = data.get('start_time')
+        duration_minutes = int(data.get('duration', 60))
+        purpose = data.get('purpose', '').strip()
+        attendees = int(data.get('attendees', 1))
+        
+        # Validation
+        if not all([room_id, start_time, purpose]):
+            return JsonResponse({
+                'success': False,
+                'error': 'Missing required fields: room_id, start_time, purpose'
+            })
+        
+        # Parse start time
+        start_dt = timezone.datetime.fromisoformat(start_time.replace('Z', '+00:00'))
+        end_dt = start_dt + timedelta(minutes=duration_minutes)
+        
+        # Get room
+        try:
+            room = Room.objects.get(id=room_id, status=Room.RoomStatus.ACTIVE)
+        except Room.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Room not found'})
+        
+        # Check room capacity
+        if attendees > room.capacity:
+            return JsonResponse({
+                'success': False,
+                'error': f'Attendees ({attendees}) exceed room capacity ({room.capacity})'
+            })
+        
+        # Check for conflicts
+        conflicts = ConferenceBooking.objects.filter(
+            room=room,
+            start_time__lt=end_dt,
+            end_time__gt=start_dt,
+            status__in=[ConferenceBooking.BookingStatus.CONFIRMED, ConferenceBooking.BookingStatus.PENDING]
+        )
+        
+        if conflicts.exists():
+            return JsonResponse({
+                'success': False,
+                'error': 'Room is not available at the selected time'
+            })
+        
+        # Create booking
+        booking = ConferenceBooking.objects.create(
+            room=room,
+            booked_by=request.user,
+            purpose=purpose,
+            start_time=start_dt,
+            end_time=end_dt,
+            attendees_count=attendees,
+            external_attendees=0,
+            meeting_type=ConferenceBooking.MeetingType.INTERNAL,
+            priority=ConferenceBooking.Priority.NORMAL,
+            status=ConferenceBooking.BookingStatus.CONFIRMED
+        )
+        
+        logger.info(f"Quick booking created: {booking.id} by {request.user}")
+        
+        return JsonResponse({
+            'success': True,
+            'booking_id': booking.id,
+            'message': 'Booking created successfully'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error creating quick booking: {e}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'error': 'Failed to create booking'
+        }, status=500)

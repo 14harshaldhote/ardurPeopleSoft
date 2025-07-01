@@ -218,12 +218,12 @@ document.addEventListener('DOMContentLoaded', function() {
         showLoadingState();
 
         // Make API call to get room details
-        fetch(`/conf_booking/api/room/${roomId}/`)
-            .then(response => response.json())
-            .then(data => {
-                currentRoomData = data;
-                updateRoomDetailsModal(data);
-            })
+        fetch(`/book/api/room/${roomId}/`)  // Fixed URL
+    .then(response => response.json())
+    .then(data => {
+        currentRoomData = data;
+        updateRoomDetailsModal(data);
+    })
             .catch(error => {
                 console.error('Error loading room details:', error);
                 showErrorState();

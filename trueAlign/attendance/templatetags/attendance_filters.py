@@ -479,3 +479,56 @@ def highlight_today(date_value):
 
     except (ValueError, AttributeError):
         return ""
+
+from django import template
+
+register = template.Library()
+
+@register.filter
+def dict_get(dictionary, key):
+    """Get value from dictionary by key"""
+    return dictionary.get(key)
+
+@register.filter 
+def dict_has_key(dictionary, key):
+    """Check if dictionary has key"""
+    return key in dictionary
+
+@register.simple_tag
+def attendance_count(attendance_data, status):
+    """Count attendance records by status"""
+    count = 0
+    for day, data in attendance_data.items():
+        if data.get('status') == status:
+            count += 1
+    return count
+
+from django import template
+
+register = template.Library()
+
+@register.filter
+def dict_get(dictionary, key):
+    """Get value from dictionary by key"""
+    return dictionary.get(key)
+
+@register.filter 
+def dict_has_key(dictionary, key):
+    """Check if dictionary has key"""
+    return key in dictionary
+
+@register.simple_tag
+def attendance_count(attendance_data, status):
+    """Count attendance records by status"""
+    if not attendance_data:
+        return 0
+    count = 0
+    for day, data in attendance_data.items():
+        if data.get('status') == status:
+            count += 1
+    return count
+
+@register.filter
+def get_item(dictionary, key):
+    """Alternative way to get dictionary item"""
+    return dictionary.get(key)

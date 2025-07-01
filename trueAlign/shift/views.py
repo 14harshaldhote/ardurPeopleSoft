@@ -269,7 +269,7 @@ def shift_list(request):
 
         # Handle filters
         filter_form = ShiftFilterForm(request.GET)
-        
+
         print("\n--- Filter Form Data ---")
         print(dict(request.GET))  # Raw query parameters
 
@@ -291,14 +291,14 @@ def shift_list(request):
             active_only = False
         elif request.GET.get('is_active') == '':
             active_only = None  # Show all
-        
+
         print(f"Active Only Filter: {active_only}")
 
         # Call shift service with correct parameters
         print("Fetching shifts from shift_service...")
         shifts_data = shift_service.get_all_shifts(
-            active_only=active_only, 
-            page=page, 
+            active_only=active_only,
+            page=page,
             per_page=per_page
         )
         print(f"Service returned: {type(shifts_data)}")
@@ -306,12 +306,12 @@ def shift_list(request):
 
         # Apply additional filters to the shifts (since service doesn't support filters parameter)
         shifts_list = shifts_data.get('shifts', []) if isinstance(shifts_data, dict) else []
-        
+
         # Apply name filter
         if filter_form.is_valid() and filter_form.cleaned_data.get('name'):
             name_filter = filter_form.cleaned_data['name'].lower()
             shifts_list = [s for s in shifts_list if name_filter in s['name'].lower()]
-        
+
         # Apply work_days filter
         if filter_form.is_valid() and filter_form.cleaned_data.get('work_days'):
             work_days_filter = filter_form.cleaned_data['work_days']
@@ -331,7 +331,7 @@ def shift_list(request):
                 self.is_active = data['is_active']
                 self.break_duration = timedelta(minutes=data.get('break_minutes', 30))
                 self.grace_period = timedelta(minutes=data.get('grace_minutes', 15))
-                
+
             def get_work_days_display(self):
                 work_days_map = {
                     'Weekdays': 'Monday to Friday',
@@ -342,7 +342,7 @@ def shift_list(request):
 
         # Convert to shift objects
         shifts = [ShiftObject(shift_data) for shift_data in shifts_list]
-        
+
         # Create a simple pagination-like object for template
         class SimplePaginator:
             def __init__(self, shifts, page, per_page, total_count):
@@ -351,37 +351,37 @@ def shift_list(request):
                 self.count = total_count
                 self.num_pages = (total_count + per_page - 1) // per_page if total_count > 0 else 1
                 self._per_page = per_page
-                
+
             def __iter__(self):
                 return iter(self.object_list)
-                
+
             def has_other_pages(self):
                 return self.num_pages > 1
-                
+
             def has_previous(self):
                 return self.number > 1
-                
+
             def has_next(self):
                 return self.number < self.num_pages
-                
+
             def previous_page_number(self):
                 return self.number - 1 if self.has_previous() else None
-                
+
             def next_page_number(self):
                 return self.number + 1 if self.has_next() else None
-                
+
             @property
             def paginator(self):
                 return self
-                
+
             @property
             def page_range(self):
                 return range(1, self.num_pages + 1)
-                
+
             @property
             def start_index(self):
                 return (self.number - 1) * self._per_page + 1 if self.count > 0 else 0
-                
+
             @property
             def end_index(self):
                 return min(self.number * self._per_page, self.count) if self.count > 0 else 0
@@ -392,7 +392,7 @@ def shift_list(request):
         shifts_paginator = SimplePaginator(shifts, page, per_page, total_count)
 
         # Create form
-        create_form = ShiftForm() 
+        create_form = ShiftForm()
 
         context = {
             'page_title': 'Shifts',
@@ -405,7 +405,7 @@ def shift_list(request):
         print("Rendering shift_list.html with context.")
         print(f"Context keys: {list(context.keys())}")
         print(f"Shifts in context: {len(shifts)}")
-        
+
         return render(request, 'shift/shift_list.html', context)
 
     except Exception as e:
@@ -415,7 +415,7 @@ def shift_list(request):
         print(f"Exception type: {type(e)}")
         import traceback
         print(f"Traceback: {traceback.format_exc()}")
-        
+
         # Return empty context on error with proper iterable
         class EmptyPaginator:
             def __init__(self):
@@ -423,35 +423,35 @@ def shift_list(request):
                 self.number = 1
                 self.count = 0
                 self.num_pages = 1
-                
+
             def __iter__(self):
                 return iter(self.object_list)
-                
+
             def has_other_pages(self):
                 return False
-                
+
             def has_previous(self):
                 return False
-                
+
             def has_next(self):
                 return False
-                
+
             @property
             def paginator(self):
                 return self
-                
+
             @property
             def page_range(self):
                 return range(1, 2)
-                
+
             @property
             def start_index(self):
                 return 0
-                
+
             @property
             def end_index(self):
                 return 0
-        
+
         context = {
             'page_title': 'Shifts',
             'shifts': EmptyPaginator(),
@@ -476,11 +476,11 @@ def shift_detail(request, shift_id):
     try:
         # Get shift details from service instead of direct model access
         shift_data = shift_service.get_shift_by_id(shift_id)
-        
+
         if not shift_data:
             messages.error(request, "Shift not found.")
             return redirect('shift:list')
-        
+
         permissions = _get_user_permissions(request.user)
 
         # Get assignments for this shift
@@ -528,7 +528,7 @@ def shift_detail(request, shift_id):
                 self.crosses_midnight = data.get('crosses_midnight', False)
                 self.created_at = data.get('created_at')
                 self.updated_at = data.get('updated_at')
-                
+
             def get_work_days_display(self):
                 work_days_map = {
                     'Weekdays': 'Monday to Friday',
@@ -1173,9 +1173,13 @@ def holiday_list(request):
         # Create form for modal
         create_form = HolidayForm()
 
+        # Calculate recurring holidays count
+        recurring_count = sum(1 for holiday in holidays if holiday.get('recurring_yearly', False))
+
         context = {
             'page_title': 'Holidays',
             'holidays': holidays,
+            'recurring_count': recurring_count,
             'current_year': year or timezone.now().year,
             'available_years': range(2020, 2031),
             'create_form': create_form,

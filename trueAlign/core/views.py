@@ -55,7 +55,20 @@ def process_login_attendance(user):
     return {'status': 'success', 'clock_in': get_current_time_ist()}
 
 def login_view(request):
-    """Login view with session tracking"""
+    """Login view with session tracking and session expiry handling"""
+    # Check for session expiry messages
+    session_expired = request.GET.get('expired') == '1'
+    session_expiry_reason = request.session.pop('session_expiry_reason', None)
+
+    # Add appropriate messages for session expiry
+    if session_expired and session_expiry_reason:
+        if session_expiry_reason == 'inactivity_timeout':
+            messages.warning(request, 'Your session expired due to inactivity. Please log in again.')
+        elif session_expiry_reason == 'no_active_session':
+            messages.info(request, 'Your session was not found. Please log in again.')
+        else:
+            messages.info(request, 'Your session expired. Please log in again.')
+
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
@@ -76,18 +89,22 @@ def login_view(request):
             ip_address = x_forwarded_for.split(',')[0] if x_forwarded_for else request.META.get('REMOTE_ADDR')
 
             try:
-                session = UserSession.get_or_create_session(
+                session, created = UserSession.get_or_create_session(
                     user=user,
                     session_key=request.session.session_key,
                     ip_address=ip_address,
                     user_agent=request.META.get('HTTP_USER_AGENT', '')
                 )
-                logger.debug(f"Session created: {session}")
+                if created:
+                    logger.debug(f"New session created: {session}")
+                else:
+                    logger.debug(f"Existing session found: {session}")
                 logger.debug(f"Session login time (UTC): {session.login_time}")
                 logger.debug(f"Session login time (IST): {to_ist(session.login_time)}")
 
             except Exception as e:
                 logger.error(f"Error creating session: {e}")
+
 
             # Process attendance if applicable
             try:
@@ -98,11 +115,24 @@ def login_view(request):
                 logger.error(f"Error processing attendance: {e}")
 
             messages.success(request, f'Welcome back, {user.get_full_name() or user.username}!')
+
+            # Handle redirect to next URL if provided
+            next_url = request.GET.get('next') or request.POST.get('next')
+            if next_url:
+                # Validate the next URL to prevent redirect attacks
+                from django.utils.http import url_has_allowed_host_and_scheme
+                if url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
+                    return redirect(next_url)
+
             return redirect('core:dashboard')
         else:
             messages.error(request, 'Invalid username or password.')
 
-    return render(request, 'login.html')
+    return render(request, 'login.html', {
+        'session_expired': session_expired,
+        'next': request.GET.get('next', '')
+    })
+
 
 @login_required
 def logout_view(request):
@@ -131,7 +161,6 @@ def update_last_activity(request):
     """
     View to handle activity updates from the client.
     Updates the user's last activity timestamp and tracks idle time.
-    All times are handled and stored in Asia/Kolkata (IST) timezone.
     """
     if request.method == 'POST':
         try:
@@ -143,10 +172,11 @@ def update_last_activity(request):
             # Get the user's session
             session = _get_or_create_session(request.user, tab_id, parent_session_id, request, data)
 
-            # Update last activity
-            current_time_ist = get_current_time_ist()
-            current_time_utc = to_utc(current_time_ist)
+            if not session:
+                return JsonResponse({'status': 'error', 'message': 'Could not create session'}, status=500)
 
+            # Update last activity using the method
+            current_time_utc = timezone.now()
             session.update_activity(current_time_utc, is_idle)
 
             # Process any additional activities
@@ -287,61 +317,106 @@ def _get_or_create_session(user, tab_id, parent_session_id, request, data):
 def get_session_status(request):
     """Get the current session status. All times are returned in Asia/Kolkata (IST) timezone."""
     try:
+        # Check if user is authenticated
+        if not request.user.is_authenticated:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'User not authenticated'
+            }, status=401)
+
+        # Get tab_id from request parameters
+        tab_id = request.GET.get('tab_id')
+
         # Get active sessions for this user
         active_sessions = UserSession.objects.filter(
             user=request.user,
             is_active=True
         ).order_by('-login_time')
 
-        if not active_sessions.exists():
+        # If tab_id is provided, try to find specific session first
+        if tab_id:
+            try:
+                # Try to find session with this tab_id
+                tab_session = active_sessions.filter(
+                    tab_id=tab_id
+                ).first()
+
+                if tab_session:
+                    session = tab_session
+                else:
+                    # Fallback to most recent session
+                    session = active_sessions.first()
+            except Exception as e:
+                logger.error(f"Error filtering by tab_id {tab_id}: {e}")
+                session = active_sessions.first()
+        else:
+            session = active_sessions.first()
+
+        if not session:
             return JsonResponse({
                 'status': 'no_active_session',
                 'message': 'No active session found.'
             })
 
-        # Get the most recent session
-        session = active_sessions.first()
+        # Calculate session duration with error handling
+        try:
+            current_time_ist = get_current_time_ist()
+            login_time_ist = to_ist(session.login_time)
+            session_duration = current_time_ist - login_time_ist
 
-        # Calculate session duration
-        current_time_ist = get_current_time_ist()
-        login_time_ist = to_ist(session.login_time)
-        session_duration = current_time_ist - login_time_ist
+            # Calculate idle time
+            last_activity_ist = to_ist(session.last_activity)
+            idle_duration = current_time_ist - last_activity_ist
 
-        # Calculate idle time
-        last_activity_ist = to_ist(session.last_activity)
-        idle_duration = current_time_ist - last_activity_ist
+            # Check if session is about to expire
+            timeout_threshold = getattr(session, 'custom_timeout', None) or getattr(session, 'AUTO_LOGOUT_MINUTES', 30)
+            idle_minutes = idle_duration.total_seconds() / 60
+            warning_threshold = getattr(session, 'WARNING_THRESHOLD_MINUTES', 25)
 
-        # Check if session is about to expire
-        timeout_threshold = session.custom_timeout or session.AUTO_LOGOUT_MINUTES
-        idle_minutes = idle_duration.total_seconds() / 60
-        warning_threshold = session.WARNING_THRESHOLD_MINUTES
+            is_warning = idle_minutes >= warning_threshold
+            remaining_minutes = max(0, timeout_threshold - idle_minutes)
 
-        is_warning = idle_minutes >= warning_threshold
-        remaining_minutes = max(0, timeout_threshold - idle_minutes)
+            return JsonResponse({
+                'status': 'active',
+                'session_id': str(session.id),
+                'tab_id': tab_id,
+                'login_time': login_time_ist.isoformat(),
+                'last_activity': last_activity_ist.isoformat(),
+                'session_duration': {
+                    'hours': int(session_duration.total_seconds() // 3600),
+                    'minutes': int((session_duration.total_seconds() % 3600) // 60),
+                    'seconds': int(session_duration.total_seconds() % 60)
+                },
+                'idle_time': {
+                    'minutes': int(idle_minutes),
+                    'seconds': int(idle_duration.total_seconds() % 60)
+                },
+                'warning': is_warning,
+                'remaining_minutes': int(remaining_minutes),
+                'location': getattr(session, 'location', 'Unknown'),
+                'device': getattr(session, 'device_type', 'Unknown')
+            })
 
-        return JsonResponse({
-            'status': 'active',
-            'session_id': session.id,
-            'login_time': login_time_ist.isoformat(),
-            'last_activity': last_activity_ist.isoformat(),
-            'session_duration': {
-                'hours': int(session_duration.total_seconds() // 3600),
-                'minutes': int((session_duration.total_seconds() % 3600) // 60),
-                'seconds': int(session_duration.total_seconds() % 60)
-            },
-            'idle_time': {
-                'minutes': int(idle_minutes),
-                'seconds': int(idle_duration.total_seconds() % 60)
-            },
-            'warning': is_warning,
-            'remaining_minutes': int(remaining_minutes),
-            'location': session.location or 'Unknown',
-            'device': session.device_type or 'Unknown'
-        })
+        except Exception as time_error:
+            logger.error(f"Error calculating session times: {time_error}")
+            return JsonResponse({
+                'status': 'active',
+                'session_id': str(session.id),
+                'tab_id': tab_id,
+                'warning': False,
+                'remaining_minutes': 30,
+                'message': 'Session active but time calculation failed'
+            })
 
     except Exception as e:
-        logger.error(f"Error getting session status: {e}")
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+        logger.error(f"Error getting session status for user {request.user.id}: {e}")
+        import traceback
+        logger.error(f"Full traceback: {traceback.format_exc()}")
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Internal server error: {str(e)}'
+        }, status=500)
+
 
 @login_required
 @require_GET
@@ -633,22 +708,39 @@ def session_heartbeat(request):
     Handle session heartbeat with comprehensive tracking
     All times handled in Asia/Kolkata timezone
     """
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Only POST method allowed'}, status=405)
+
     try:
-        data = json.loads(request.body)
+        # Parse JSON data
+        if request.content_type == 'application/json':
+            data = json.loads(request.body)
+        else:
+            return JsonResponse({'status': 'error', 'message': 'Content-Type must be application/json'}, status=400)
+
+        # Extract required data with defaults
         tab_id = data.get('tab_id')
         parent_session_id = data.get('parent_session_id')
         is_idle = data.get('is_idle', False)
         is_visible = data.get('is_visible', True)
 
-        # Additional data
+        # Validate required fields
+        if not tab_id:
+            return JsonResponse({'status': 'error', 'message': 'tab_id is required'}, status=400)
+
+        # Additional data with defaults
         battery_level = data.get('battery_level')
         connection_type = data.get('connection_type')
         performance_data = data.get('performance_data', {})
 
-        # Get the session
-        session = _get_or_create_session(request.user, tab_id, parent_session_id, request, data)
+        # Get the session (this function should handle creation if needed)
+        try:
+            session = _get_or_create_session(request.user, tab_id, parent_session_id, request, data)
+        except Exception as e:
+            logger.error(f"Error getting/creating session: {e}")
+            return JsonResponse({'status': 'error', 'message': 'Failed to get or create session'}, status=500)
 
-        # Update activity data
+        # Update activity data with safe defaults
         activity_data = {
             'gained_focus': data.get('gained_focus', False),
             'page_change': data.get('page_change', False),
@@ -669,44 +761,61 @@ def session_heartbeat(request):
             'broadcast_received': data.get('broadcast_received', False)
         }
 
-        # Update tab activity
-        session.update_tab_activity(activity_data)
+        # Update tab activity with error handling
+        try:
+            session.update_tab_activity(activity_data)
+        except Exception as e:
+            logger.error(f"Error updating tab activity: {e}")
+            # Continue processing even if tab activity update fails
 
         # Update last activity
         current_time_ist = get_current_time_ist()
         current_time_utc = to_utc(current_time_ist)
 
-        session.update_activity(current_time_utc, is_idle)
+        try:
+            session.update_activity(current_time_utc, is_idle)
+        except Exception as e:
+            logger.error(f"Error updating session activity: {e}")
+            # Continue processing
 
         # Calculate productivity score if enough data is available
-        if session.page_views or session.click_events or session.keyboard_events:
-            session.calculate_productivity_score()
-            session.save(update_fields=['productivity_score'])
+        try:
+            if hasattr(session, 'page_views') and hasattr(session, 'click_events') and hasattr(session, 'keyboard_events'):
+                if session.page_views or session.click_events or session.keyboard_events:
+                    session.calculate_productivity_score()
+                    session.save(update_fields=['productivity_score'])
+        except Exception as e:
+            logger.error(f"Error calculating productivity score: {e}")
+            # Continue processing
 
         # Check timeout status
         last_activity_ist = to_ist(session.last_activity)
         idle_duration = current_time_ist - last_activity_ist
         idle_minutes = idle_duration.total_seconds() / 60
 
-        timeout_threshold = session.custom_timeout or session.AUTO_LOGOUT_MINUTES
-        warning_threshold = session.WARNING_THRESHOLD_MINUTES
+        timeout_threshold = getattr(session, 'custom_timeout', None) or getattr(session, 'AUTO_LOGOUT_MINUTES', 30)
+        warning_threshold = getattr(session, 'WARNING_THRESHOLD_MINUTES', 25)
 
         is_warning = idle_minutes >= warning_threshold
         remaining_minutes = max(0, timeout_threshold - idle_minutes)
 
         return JsonResponse({
             'status': 'success',
-            'session_id': session.id,
+            'session_id': str(session.id),
             'last_activity': last_activity_ist.isoformat(),
             'idle_minutes': round(idle_minutes, 1),
             'warning': is_warning,
             'remaining_minutes': int(remaining_minutes),
-            'productivity_score': session.productivity_score
+            'productivity_score': getattr(session, 'productivity_score', 0)
         })
 
+    except json.JSONDecodeError as e:
+        logger.error(f"JSON decode error in heartbeat: {e}")
+        return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
     except Exception as e:
         logger.error(f"Error processing heartbeat: {e}")
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
 
 # Password Reset Views
 class CustomPasswordResetView(PasswordResetView):

@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from datetime import datetime, date, timedelta
 from django.utils import timezone
 
-from ..models import Attendance, ShiftAssignment
+from trueAlign.models import Attendance, ShiftAssignment
 
 
 class AttendanceForm(forms.ModelForm):
@@ -72,6 +72,11 @@ class AttendanceForm(forms.ModelForm):
         if self.user and not (self.user.groups.filter(name='HR').exists() or self.user.is_superuser):
             self.fields['user'].queryset = User.objects.filter(id=self.user.id)
             self.fields['user'].initial = self.user
+
+        # Filter location choices if needed
+        if hasattr(self.instance, 'location'):
+            # Keep existing location choices
+            pass
 
     def clean(self):
         cleaned_data = super().clean()
@@ -439,3 +444,100 @@ class AttendanceImportForm(forms.Form):
                 raise ValidationError("Only CSV and Excel files are allowed")
 
         return file
+
+
+class AttendanceCalendarForm(forms.Form):
+    """
+    Form for calendar navigation
+    """
+    year = forms.IntegerField(
+        widget=forms.NumberInput(attrs={'class': 'form-control'}),
+        min_value=2020,
+        max_value=2030
+    )
+
+    month = forms.IntegerField(
+        widget=forms.NumberInput(attrs={'class': 'form-control'}),
+        min_value=1,
+        max_value=12
+    )
+
+
+class AttendanceSettingsForm(forms.Form):
+    """
+    Form for attendance system settings
+    """
+    auto_marking_enabled = forms.BooleanField(
+        required=False,
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        label="Enable automatic attendance marking"
+    )
+
+    grace_period_minutes = forms.IntegerField(
+        initial=10,
+        min_value=0,
+        max_value=60,
+        widget=forms.NumberInput(attrs={'class': 'form-control'}),
+        label="Grace period (minutes)"
+    )
+
+    regularization_deadline_days = forms.IntegerField(
+        initial=7,
+        min_value=1,
+        max_value=30,
+        widget=forms.NumberInput(attrs={'class': 'form-control'}),
+        label="Regularization deadline (days)"
+    )
+
+
+class SessionAttendanceForm(forms.Form):
+    """
+    Form for manual session-based attendance marking
+    """
+    user = forms.ModelChoiceField(
+        queryset=User.objects.filter(is_active=True),
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        label="Employee"
+    )
+
+    login_time = forms.DateTimeField(
+        widget=forms.DateTimeInput(attrs={
+            'type': 'datetime-local',
+            'class': 'form-control'
+        }),
+        label="Login Time"
+    )
+
+    logout_time = forms.DateTimeField(
+        required=False,
+        widget=forms.DateTimeInput(attrs={
+            'type': 'datetime-local',
+            'class': 'form-control'
+        }),
+        label="Logout Time"
+    )
+
+    location = forms.ChoiceField(
+        choices=Attendance.LOCATION_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        initial='Office'
+    )
+
+    ip_address = forms.GenericIPAddressField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'IP Address'
+        })
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        login_time = cleaned_data.get('login_time')
+        logout_time = cleaned_data.get('logout_time')
+
+        if login_time and logout_time:
+            if logout_time <= login_time:
+                raise ValidationError("Logout time must be after login time")
+
+        return cleaned_data

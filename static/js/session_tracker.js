@@ -648,7 +648,6 @@ window.SessionTracker = (function () {
             accuracy: position.coords.accuracy,
           };
 
-
           // Update session with location data
           if (state.sessionId) {
             sendApiRequest(config.apiEndpoints.updateSession, {
@@ -1007,51 +1006,61 @@ window.SessionTracker = (function () {
   /**
    * Track keyboard event
    */
-  function trackKeyboard(event) {
-    // Don't track actual keys for privacy/security reasons
-    const keyboardData = {
-      timestamp: new Date().toISOString(),
-      is_modifier: isModifierKey(event.keyCode),
-      input_type: getInputType(event.target),
-      url: window.location.href,
-      page_title: document.title,
-    };
+   function trackKeyboard(event) {
+     try {
+       // Don't track actual keys for privacy/security reasons
+       const keyboardData = {
+         timestamp: new Date().toISOString(),
+         is_modifier: isModifierKey(event.keyCode),
+         input_type: getInputType(event.target),
+         url: window.location.href,
+         page_title: document.title,
+       };
 
-    // Add to activity buffer
-    state.activityBuffer.keystrokes.push(keyboardData);
+       // Add to activity buffer
+       state.activityBuffer.keystrokes.push(keyboardData);
 
-    // If buffer is getting too large, send update
-    if (state.activityBuffer.keystrokes.length >= 20) {
-      sampleActivity();
-    }
-  }
+       // If buffer is getting too large, send update
+       if (state.activityBuffer.keystrokes.length >= 20) {
+         sampleActivity();
+       }
+     } catch (error) {
+       console.error('Error in trackKeyboard:', error);
+     }
+   }
+
 
   /**
    * Track scroll event
    */
-  function trackScroll() {
-    const scrollData = {
-      timestamp: new Date().toISOString(),
-      scroll_x: window.scrollX,
-      scroll_y: window.scrollY,
-      scroll_max_y:
-        Math.max(
-          document.body.scrollHeight,
-          document.documentElement.scrollHeight,
-        ) - window.innerHeight,
-      scroll_percent: calculateScrollPercentage(),
-      url: window.location.href,
-      page_title: document.title,
-    };
+   function trackScroll() {
+     try {
+       const scrollData = {
+         timestamp: new Date().toISOString(),
+         scroll_x: window.scrollX,
+         scroll_y: window.scrollY,
+         scroll_max_y:
+           Math.max(
+             document.body.scrollHeight,
+             document.documentElement.scrollHeight,
+           ) - window.innerHeight,
+         scroll_percent: calculateScrollPercentage(),
+         url: window.location.href,
+         page_title: document.title,
+       };
 
-    // Add to activity buffer
-    state.activityBuffer.scrolls.push(scrollData);
+       // Add to activity buffer
+       state.activityBuffer.scrolls.push(scrollData);
 
-    // If buffer is getting too large, send update
-    if (state.activityBuffer.scrolls.length >= 15) {
-      sampleActivity();
-    }
-  }
+       // If buffer is getting too large, send update
+       if (state.activityBuffer.scrolls.length >= 15) {
+         sampleActivity();
+       }
+     } catch (error) {
+       console.error('Error in trackScroll:', error);
+     }
+   }
+
 
   /**
    * Track mouse movement
@@ -1597,17 +1606,21 @@ window.SessionTracker = (function () {
     /**
      * Utility function to calculate scroll percentage
      */
-    function calculateScrollPercentage() {
-      const scrollTop = window.scrollY || document.documentElement.scrollTop;
-      const scrollHeight =
-        Math.max(
-          document.body.scrollHeight,
-          document.documentElement.scrollHeight,
-        ) - window.innerHeight;
+     function calculateScrollPercentage() {
+       try {
+         const scrollTop = window.scrollY || document.documentElement.scrollTop;
+         const scrollHeight = Math.max(
+           document.body.scrollHeight,
+           document.documentElement.scrollHeight,
+         ) - window.innerHeight;
 
-      return scrollHeight > 0
-        ? Math.round((scrollTop / scrollHeight) * 100)
-        : 0;
+         return scrollHeight > 0 ? Math.round((scrollTop / scrollHeight) * 100) : 0;
+       } catch (error) {
+         console.error('Error calculating scroll percentage:', error);
+         return 0;
+       }
+     }
+
     }
 
     /**

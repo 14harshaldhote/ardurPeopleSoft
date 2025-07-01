@@ -1,0 +1,369 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load attendance_filters %}
+
+{% block title %}Attendance Calendar - TrueAlign{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50" x-data="attendanceCalendar()">
+    <!-- Header -->
+    <div class="bg-white shadow-lg border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 py-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Attendance Calendar</h1>
+                    <p class="text-gray-600 mt-1">View your attendance history and patterns</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="{% url 'attendance:calendar_month' prev_year prev_month %}" 
+                       class="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center">
+                        <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                        </svg>
+                        Previous
+                    </a>
+                    <div class="text-center">
+                        <p class="text-lg font-semibold text-gray-900">{{ month_name }} {{ year }}</p>
+                    </div>
+                    <a href="{% url 'attendance:calendar_month' next_year next_month %}" 
+                       class="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center">
+                        Next
+                        <svg class="h-4 w-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Calendar Legend -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Status Legend</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+                <div class="flex items-center space-x-2">
+                    <div class="w-4 h-4 bg-emerald-500 rounded-full"></div>
+                    <span class="text-sm text-gray-700">Present</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <div class="w-4 h-4 bg-red-500 rounded-full"></div>
+                    <span class="text-sm text-gray-700">Absent</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <div class="w-4 h-4 bg-amber-500 rounded-full"></div>
+                    <span class="text-sm text-gray-700">Late</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <div class="w-4 h-4 bg-orange-500 rounded-full"></div>
+                    <span class="text-sm text-gray-700">Half Day</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <div class="w-4 h-4 bg-violet-500 rounded-full"></div>
+                    <span class="text-sm text-gray-700">On Leave</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <div class="w-4 h-4 bg-teal-500 rounded-full"></div>
+                    <span class="text-sm text-gray-700">Work From Home</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <div class="w-4 h-4 bg-pink-500 rounded-full"></div>
+                    <span class="text-sm text-gray-700">Regularization Pending</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <div class="w-4 h-4 bg-gray-300 rounded-full"></div>
+                    <span class="text-sm text-gray-700">No Data</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calendar Grid -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <div class="grid grid-cols-7 gap-1 mb-4">
+                <div class="text-center py-3 font-semibold text-gray-700 bg-gray-50 rounded-lg">Sun</div>
+                <div class="text-center py-3 font-semibold text-gray-700 bg-gray-50 rounded-lg">Mon</div>
+                <div class="text-center py-3 font-semibold text-gray-700 bg-gray-50 rounded-lg">Tue</div>
+                <div class="text-center py-3 font-semibold text-gray-700 bg-gray-50 rounded-lg">Wed</div>
+                <div class="text-center py-3 font-semibold text-gray-700 bg-gray-50 rounded-lg">Thu</div>
+                <div class="text-center py-3 font-semibold text-gray-700 bg-gray-50 rounded-lg">Fri</div>
+                <div class="text-center py-3 font-semibold text-gray-700 bg-gray-50 rounded-lg">Sat</div>
+            </div>
+            
+            <div class="grid grid-cols-7 gap-1">
+                {% for week in calendar %}
+                    {% for day in week %}
+                        {% if day == 0 %}
+                            <div class="h-20 bg-gray-50 rounded-lg opacity-50"></div>
+                        {% else %}
+                            <div class="relative group">
+                                <button onclick="showDateDetails({{ day }}, '{{ month_name }}', {{ year }})" 
+                                        class="w-full h-20 rounded-lg border-2 transition-all duration-200 flex flex-col items-center justify-center relative
+                                        {% if day in attendance_data %}
+                                            {% with attendance_data|dict_get:day as att_data %}
+                                                {% if att_data.status == 'Present' or att_data.status == 'Present & Late' %}
+                                                    bg-emerald-100 border-emerald-300 hover:bg-emerald-200 text-emerald-800
+                                                {% elif att_data.status == 'Absent' %}
+                                                    bg-red-100 border-red-300 hover:bg-red-200 text-red-800
+                                                {% elif att_data.status == 'Late' %}
+                                                    bg-amber-100 border-amber-300 hover:bg-amber-200 text-amber-800
+                                                {% elif att_data.status == 'Half Day' %}
+                                                    bg-orange-100 border-orange-300 hover:bg-orange-200 text-orange-800
+                                                {% elif att_data.status == 'On Leave' %}
+                                                    bg-violet-100 border-violet-300 hover:bg-violet-200 text-violet-800
+                                                {% elif att_data.status == 'Work From Home' %}
+                                                    bg-teal-100 border-teal-300 hover:bg-teal-200 text-teal-800
+                                                {% else %}
+                                                    bg-gray-100 border-gray-300 hover:bg-gray-200 text-gray-800
+                                                {% endif %}
+                                                {% if att_data.regularization_status == 'Pending' %}
+                                                    ring-2 ring-pink-400
+                                                {% endif %}
+                                            {% endwith %}
+                                        {% else %}
+                                            bg-gray-50 border-gray-200 hover:bg-gray-100 text-gray-600
+                                        {% endif %}
+                                        {% if day == today.day and month == today.month and year == today.year %}
+                                            ring-2 ring-blue-400 ring-offset-2
+                                        {% endif %}">
+                                    
+                                    <span class="text-lg font-bold mb-1">{{ day }}</span>
+                                    
+                                    {% if day in attendance_data %}
+                                        {% with attendance_data|dict_get:day as att_data %}
+                                            <div class="text-xs text-center">
+                                                {% if att_data.clock_in %}
+                                                    <div>In: {{ att_data.clock_in }}</div>
+                                                {% endif %}
+                                                {% if att_data.total_hours %}
+                                                    <div class="font-medium">{{ att_data.total_hours }}</div>
+                                                {% endif %}
+                                            </div>
+                                            
+                                            {% if att_data.late_minutes and att_data.late_minutes > 0 %}
+                                                <div class="absolute top-1 right-1 bg-amber-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                                                    !
+                                                </div>
+                                            {% endif %}
+                                            
+                                            {% if att_data.can_regularize %}
+                                                <div class="absolute bottom-1 right-1 bg-orange-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                                                    R
+                                                </div>
+                                            {% endif %}
+                                        {% endwith %}
+                                    {% endif %}
+                                </button>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Monthly Summary -->
+          <!-- Monthly Summary -->
+          <div class="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-emerald-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Present Days</p>
+                        <p class="text-2xl font-bold text-emerald-600">
+                            {% attendance_count attendance_data "Present" as present_count %}
+                            {% attendance_count attendance_data "Present & Late" as present_late_count %}
+                            {{ present_count|add:present_late_count }}
+                        </p>
+                    </div>
+                    <div class="p-3 bg-emerald-100 rounded-lg">
+                        <svg class="h-6 w-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-red-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Absent Days</p>
+                        <p class="text-2xl font-bold text-red-600">
+                            {% attendance_count attendance_data "Absent" %}
+                        </p>
+                    </div>
+                    <div class="p-3 bg-red-100 rounded-lg">
+                        <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-amber-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Late Days</p>
+                        <p class="text-2xl font-bold text-amber-600">
+                            {% attendance_count attendance_data "Late" %}
+                        </p>
+                    </div>
+                    <div class="p-3 bg-amber-100 rounded-lg">
+                        <svg class="h-6 w-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Total Days</p>
+                        <p class="text-2xl font-bold text-blue-600">{{ attendance_data|length }}</p>
+                    </div>
+                    <div class="p-3 bg-blue-100 rounded-lg">
+                        <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Date Detail Modal -->
+    <div id="dateModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-xl p-6 max-w-md w-full mx-4">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">Attendance Details</h3>
+                <button onclick="closeDateModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <div id="modalContent">
+                <!-- Content will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function attendanceCalendar() {
+    return {
+        init() {
+            // Initialize calendar
+        }
+    }
+}
+
+// Global function to show date details
+// Global function to show date details
+function showDateDetails(day, month, year, data) {
+    let content = `
+        <div class="mb-4">
+            <p class="text-sm text-gray-600">Date</p>
+            <p class="text-lg font-semibold text-gray-900">${month} ${day}, ${year}</p>
+        </div>
+    `;
+    
+    if (data && data !== 'null') {
+        const statusColors = {
+            'Present': 'bg-emerald-100 text-emerald-800',
+            'Present & Late': 'bg-emerald-100 text-emerald-800',
+            'Absent': 'bg-red-100 text-red-800',
+            'Late': 'bg-amber-100 text-amber-800',
+            'Half Day': 'bg-orange-100 text-orange-800',
+            'On Leave': 'bg-violet-100 text-violet-800',
+            'Work From Home': 'bg-teal-100 text-teal-800'
+        };
+        
+        content += `
+            <div class="mb-4">
+                <p class="text-sm text-gray-600">Status</p>
+                <span class="inline-flex px-3 py-1 text-sm font-semibold rounded-full ${statusColors[data.status] || 'bg-gray-100 text-gray-800'}">
+                    ${data.status}
+                </span>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <p class="text-sm text-gray-600">Check In</p>
+                    <p class="font-semibold text-gray-900">${data.clock_in || 'N/A'}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">Check Out</p>
+                    <p class="font-semibold text-gray-900">${data.clock_out || 'N/A'}</p>
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <p class="text-sm text-gray-600">Total Hours</p>
+                <p class="font-semibold text-gray-900">${data.total_hours || 'N/A'}</p>
+            </div>
+            
+            ${data.location ? `
+                <div class="mb-4">
+                    <p class="text-sm text-gray-600">Location</p>
+                    <p class="font-semibold text-gray-900">${data.location}</p>
+                </div>
+            ` : ''}
+            
+            ${data.late_minutes && data.late_minutes > 0 ? `
+                <div class="mb-4 p-3 bg-amber-50 rounded-lg">
+                    <p class="text-sm text-amber-800">Late by ${data.late_minutes} minutes</p>
+                </div>
+            ` : ''}
+            
+            <div class="flex space-x-3">
+                ${data.can_regularize ? `
+                    <a href="/attendance/request-regularization/?date=${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}" 
+                       class="flex-1 bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 text-center">
+                        Request Regularization
+                    </a>
+                ` : ''}
+                <button onclick="closeDateModal()" 
+                        class="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200">
+                    Close
+                </button>
+            </div>
+        `;
+    } else {
+        content += `
+            <div class="mb-4 text-center py-8">
+                <svg class="h-12 w-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <p class="text-gray-500">No attendance data available for this date</p>
+            </div>
+            
+            <button onclick="closeDateModal()" 
+                    class="w-full bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200">
+                Close
+            </button>
+        `;
+    }
+    
+    document.getElementById('modalContent').innerHTML = content;
+    document.getElementById('dateModal').classList.remove('hidden');
+}
+
+function closeDateModal() {
+    document.getElementById('dateModal').classList.add('hidden');
+}
+
+// Close modal when clicking outside
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('dateModal');
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeDateModal();
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

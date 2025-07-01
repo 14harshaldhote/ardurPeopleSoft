@@ -307,7 +307,7 @@ class BulkAssignmentForm(forms.Form):
     A fully updated and scalable form for bulk assigning shifts to a large number
     of employees, designed to work with a modern JavaScript UI.
     """
-    
+
     # Add group filter to help with large user lists
     group_filter = forms.ModelChoiceField(
         queryset=Group.objects.all().order_by('name'),
@@ -319,7 +319,7 @@ class BulkAssignmentForm(forms.Form):
         label="Filter by Group",
         help_text="Filter employees by their group/role."
     )
-    
+
     users = forms.ModelMultipleChoiceField(
         queryset=User.objects.none(),  # Will be set dynamically
         widget=forms.SelectMultiple(
@@ -365,10 +365,10 @@ class BulkAssignmentForm(forms.Form):
                 is_current=True,
                 effective_from__lte=timezone.now().date()
             ).filter(
-                models.Q(effective_to__isnull=True) | 
+                models.Q(effective_to__isnull=True) |
                 models.Q(effective_to__gte=timezone.now().date())
             ).values_list('user_id', flat=True)
-            
+
             # Set queryset to exclude users with active assignments
             self.fields['users'].queryset = User.objects.filter(
                 is_active=True
@@ -413,7 +413,7 @@ class BulkAssignmentForm(forms.Form):
         return cleaned_data
 
 
-        
+
 
 class HolidayForm(forms.ModelForm):
     """
@@ -425,16 +425,16 @@ class HolidayForm(forms.ModelForm):
         fields = ['name', 'date', 'recurring_yearly']
         widgets = {
             'name': forms.TextInput(attrs={
-                'class': 'form-control',
+                'class': 'form-input',
                 'placeholder': 'Holiday name (e.g., Christmas)',
                 'maxlength': 100
             }),
             'date': forms.DateInput(attrs={
-                'class': 'form-control',
+                'class': 'form-input',
                 'type': 'date'
             }),
             'recurring_yearly': forms.CheckboxInput(attrs={
-                'class': 'form-check-input'
+                'class': 'w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600'
             })
         }
         help_texts = {

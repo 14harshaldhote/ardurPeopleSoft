@@ -31,11 +31,11 @@
             });
         </script>
         {% endif %}
-        
+
         <!-- Fonts & Icons -->
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
         <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
-        
+
         <!-- Tailwind Config -->
         <script>
             tailwind.config = {
@@ -132,24 +132,24 @@
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
-        
+
             /* Text color hierarchy */
          h1, h2, h3, h4, h5, h6 {
              @apply text-neutral-800 tracking-tight leading-tight font-display;
          }
-         
+
          .text-heading {
              @apply text-neutral-800 font-semibold tracking-tight font-display;
          }
-         
+
          .text-body {
              @apply text-neutral-700;
          }
-         
+
          .text-muted {
              @apply text-neutral-500;
          }
-         
+
          .text-hint {
              @apply text-neutral-400 text-sm;
          }
@@ -201,7 +201,7 @@
             box-shadow: 0 4px 6px -1px rgba(111, 93, 142, 0.1);
             outline: none;
         }
-        
+
         .input-group label {
             position: absolute;
             left: 2.5rem;
@@ -211,7 +211,7 @@
             pointer-events: none;
             transition: all 0.3s ease;
         }
-        
+
         .input-group input:focus + label,
         .input-group input:not(:placeholder-shown) + label {
             top: -0.5rem;
@@ -238,7 +238,7 @@
         .submit-btn {
             width: 100%;
             padding: 0.75rem 1rem;
-            background: linear-gradient(135deg, 
+            background: linear-gradient(135deg,
                 #6f5d8e 0%, /* primary-600 */
                 #867595 50%, /* secondary-500 */
                 #d65f5f 100% /* accent-500 */
@@ -282,7 +282,7 @@
             transition: opacity 0.3s ease;
             z-index: -1;
         }
-        
+
         .submit-btn:hover::after {
             opacity: 0.6;
             animation: gradientAnimation 8s ease infinite;
@@ -307,11 +307,11 @@
             .watermark img {
                 height: 1.5rem;
             }
-            
+
             h2 {
                 font-size: 1.75rem !important;
             }
-            
+
             .gradient-text::after {
                 transform: scaleX(0.8);
                 transform-origin: left;
@@ -340,7 +340,7 @@
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             width: calc(100% - 14rem); /* Adjusted to match margin */
             background-color: #f9f9f9; /* neutral-50 */
-            background-image: 
+            background-image:
                 radial-gradient(at 100% 0%, rgba(169, 159, 192, 0.1) 0px, transparent 50%),
                 radial-gradient(at 0% 100%, rgba(162, 149, 174, 0.1) 0px, transparent 50%),
                 radial-gradient(at 50% 50%, rgba(214, 95, 95, 0.05) 0px, transparent 40%);
@@ -348,7 +348,7 @@
             background-size: 150% 150%;
             animation: ambientShift 45s infinite alternate ease-in-out;
         }
-        
+
         @keyframes ambientShift {
             0% { background-position: 0% 0%; }
             50% { background-position: 100% 100%; }
@@ -466,11 +466,11 @@
                 transform: translateX(2px);
                 color: #6f5d8e; /* primary-600 */
             }
-            
+
             .nav-item.active i {
                 color: #6f5d8e; /* primary-600 */
             }
-            
+
             /* Icon style transitions */
             .nav-item i[class*="-line"],
             .btn-primary i[class*="-line"],
@@ -478,7 +478,7 @@
             .btn-accent i[class*="-line"] {
                 transition: opacity 0.3s ease, transform 0.2s ease;
             }
-            
+
             .nav-item:hover i[class*="-line"],
             .btn-primary:hover i[class*="-line"],
             .btn-secondary:hover i[class*="-line"],
@@ -487,14 +487,14 @@
                 opacity: 0;
                 transform: scale(0.5);
             }
-            
+
             /* Create filled version positioning */
             .btn-primary,
             .btn-secondary,
             .btn-accent {
                 position: relative;
             }
-            
+
             /* Add filled version with ::after */
             .nav-item i[class*="-line"]::after,
             .btn-primary i[class*="-line"]::after,
@@ -513,7 +513,7 @@
                 transform: scale(1.5);
                 transition: opacity 0.3s ease, transform 0.2s ease;
             }
-            
+
             /* Show filled version on hover */
             .nav-item:hover i[class*="-line"]::after,
             .btn-primary:hover i[class*="-line"]::after,
@@ -523,7 +523,7 @@
                 opacity: 1;
                 transform: scale(1);
             }
-            
+
             /* Specific icon mappings */
             .ri-home-line::after { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M21 20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.49a1 1 0 0 1 .386-.79l8-6.222a1 1 0 0 1 1.228 0l8 6.222a1 1 0 0 1 .386.79V20z"/></svg>'); }
             .ri-user-line::after { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C9.38 2 7.25 4.13 7.25 6.75c0 2.57 2.01 4.65 4.63 4.74.08-.01.16-.01.22 0h.07a4.738 4.738 0 0 0 4.58-4.74C16.75 4.13 14.62 2 12 2zm5.5 11.28c-.35-.2-.7-.37-1.07-.5-.85.35-1.77.57-2.7.65h-.02c-.5.04-1.04.08-1.54.08-.51 0-1.03-.03-1.54-.08-1.13-.09-2.2-.36-3.15-.81a12.3 12.3 0 0 0-4.98 9.13V22h20v-.25c0-3.8-1.63-7.22-4.98-9.13l-.02-.01z"/></svg>'); }
@@ -564,7 +564,7 @@
                 box-shadow: 0 10px 15px -3px rgba(111, 93, 142, 0.15), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
                 border-color: rgba(255, 255, 255, 0.35);
             }
-            
+
             /* Main content card - overrides for the main block */
             main > .card {
                 margin-bottom: 0;
@@ -683,28 +683,22 @@
     </style>
     </head>
 
-    <body class="min-h-screen flex flex-col {% if user.is_authenticated %}authenticated{% endif %} relative bg-neutral-50 text-neutral-700 font-sans antialiased leading-relaxed tracking-wide" 
-          x-data="{
-            navbarOpen: window.innerWidth >= 768,
-            isMobile: window.innerWidth < 768,
-            {% if user.is_authenticated %}
-            data_idle_threshold: {{ idle_threshold|default:'1800' }},
-            data_warning_threshold: {{ warning_threshold|default:'300' }},
-            data_heartbeat_interval: {{ heartbeat_interval|default:'60' }},
-            data_session_endpoint: '{{ session_endpoint|default:"/api/session/" }}',
-            data_logout_url: '{{ logout_url|default:"/logout/" }}',
-            {% endif %}
-          }"
-          @resize.window="isMobile = window.innerWidth < 768"
-          {% if user.is_authenticated %}
-          data-heartbeat-interval="60"
-          data-warning-threshold="15"
-          data-auto-logout-threshold="30"
-          data-heartbeat-url="{% url 'core:session_heartbeat' %}"
-          data-status-url="{% url 'core:session_status' %}"
-          data-log-activity-url="{% url 'core:log_activity' %}"
-          data-logout-url="{% url 'core:logout' %}"
-          {% endif %}>
+    <body class="min-h-screen flex flex-col {% if user.is_authenticated %}authenticated{% endif %} relative bg-neutral-50 text-neutral-700 font-sans antialiased leading-relaxed tracking-wide"
+      {% if user.is_authenticated %}data-authenticated="true"{% endif %}
+      data-user-id="{{ user.id|default:'' }}"
+      data-username="{{ user.username|default:'' }}"
+      data-heartbeat-interval="60"
+      data-warning-threshold="15"
+      data-auto-logout-threshold="30"
+      data-heartbeat-url="{% url 'core:session_heartbeat' %}"
+      data-status-url="{% url 'core:session_status' %}"
+      data-log-activity-url="{% url 'core:log_activity' %}"
+      data-logout-url="{% url 'core:logout' %}"
+      x-data="{
+        navbarOpen: window.innerWidth >= 768,
+        isMobile: window.innerWidth < 768
+      }"
+      @resize.window="isMobile = window.innerWidth < 768">
     <!-- Atmospheric Background with Aurora Effect -->
     <div class="fixed inset-0 -z-10 overflow-hidden pointer-events-none atmospheric-bg">
         <!-- Aurora/Nebula Effect -->
@@ -713,32 +707,32 @@
             <div class="absolute -bottom-[50%] -left-[50%] w-[120%] h-[120%] bg-gradient-radial from-secondary-200/20 via-transparent to-transparent mix-blend-screen filter blur-[100px] opacity-30 animate-aurora animation-delay-2000"></div>
             <div class="absolute top-[25%] left-[25%] w-[100%] h-[100%] bg-gradient-radial from-accent-200/10 via-transparent to-transparent mix-blend-screen filter blur-[100px] opacity-20 animate-aurora animation-delay-4000"></div>
         </div>
-        
+
         <!-- Subtle Grid Overlay -->
         <div class="absolute inset-0 bg-grid opacity-[0.03]"></div>
     </div>
-    
+
     <style>
         /* Aurora animation */
-        @keyframes aurora {  
-            0% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0.15; }  
-            33% { transform: translate(2%, -2%) scale(1.05) rotate(1deg); opacity: 0.25; }  
-            66% { transform: translate(-2%, 1%) scale(0.98) rotate(-1deg); opacity: 0.2; }  
-            100% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0.15; }  
+        @keyframes aurora {
+            0% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0.15; }
+            33% { transform: translate(2%, -2%) scale(1.05) rotate(1deg); opacity: 0.25; }
+            66% { transform: translate(-2%, 1%) scale(0.98) rotate(-1deg); opacity: 0.2; }
+            100% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0.15; }
         }
-        
+
         .animate-aurora {
             animation: aurora 60s ease infinite alternate;
         }
-        
+
         .animation-delay-2000 {
             animation-delay: 2s;
         }
-        
+
         .animation-delay-4000 {
             animation-delay: 4s;
         }
-        
+
         .animation-delay-6000 {
             animation-delay: 6s;
         }
@@ -747,7 +741,7 @@
              --base-opacity: 0.3;
              animation: aurora 60s infinite ease-in-out;
          }
-         
+
          @keyframes aurora {
              0% {
                  transform: translate(0px, 0px) scale(1) rotate(0deg);
@@ -766,13 +760,13 @@
                  opacity: var(--base-opacity, 0.3);
              }
          }
-        
+
         /* Grid pattern */
         .bg-grid {
             background-image: radial-gradient(circle at 1px 1px, #cbd5e1 0.5px, transparent 0);
             background-size: 2rem 2rem;
         }
-        
+
         /* Radial gradient utility */
         .bg-gradient-radial {
             background-image: radial-gradient(ellipse at center, var(--tw-gradient-stops));
@@ -827,7 +821,7 @@
                         <div class="space-y-3">
                             <h1 id="greeting" class="font-display font-semibold text-3xl sm:text-4xl lg:text-5xl text-neutral-800 tracking-tight leading-tight"></h1>
                             <p class="text-neutral-500 flex items-center gap-3 text-base">
-                                
+
                             </p>
                         </div>
                         <div class="flex items-center gap-5 self-end lg:self-auto">
@@ -839,14 +833,14 @@
                                 href="{% url 'core:logout' %}"
                                 class="group btn-accent flex items-center gap-2.5 text-base font-medium py-3 px-5 rounded-xl bg-accent-500 text-white hover:bg-accent-600/90 active:bg-accent-700 transform transition-all duration-300 hover:-translate-y-0.5 hover:shadow-glow-accent relative overflow-hidden"
                             >
-                                <svg 
-                                    class="w-5 h-5 transition-transform duration-300  relative z-10" 
-                                    viewBox="0 0 24 24" 
-                                    fill="none" 
+                                <svg
+                                    class="w-5 h-5 transition-transform duration-300  relative z-10"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
                                     xmlns="http://www.w3.org/2000/svg"
                                 >
-                                    <path 
-                                        d="M17 7L15.59 8.41L18.17 11H8V13H18.17L15.59 15.58L17 17L22 12L17 7ZM4 5H12V3H4C2.9 3 2 3.9 2 5V19C2 20.1 2.9 21 4 21H12V19H4V5Z" 
+                                    <path
+                                        d="M17 7L15.59 8.41L18.17 11H8V13H18.17L15.59 15.58L17 17L22 12L17 7ZM4 5H12V3H4C2.9 3 2 3.9 2 5V19C2 20.1 2.9 21 4 21H12V19H4V5Z"
                                         fill="currentColor"
                                     />
                                 </svg>
@@ -873,11 +867,11 @@
                     >
                         {% for message in messages %}
                         <div
-                            class="toast-message flex items-start p-4 rounded-xl shadow-elegant backdrop-blur-sm transform transition-all duration-300 ease-out opacity-0 translate-y-4 
-                            {% if message.tags == 'success' %}bg-green-50/60 border border-green-200/50 
-                            {% elif message.tags == 'error' %}bg-accent-50/60 border border-accent-200/50 
-                            {% elif message.tags == 'warning' %}bg-yellow-50/60 border border-yellow-200/50 
-                            {% elif message.tags == 'info' %}bg-primary-50/60 border border-primary-200/50 
+                            class="toast-message flex items-start p-4 rounded-xl shadow-elegant backdrop-blur-sm transform transition-all duration-300 ease-out opacity-0 translate-y-4
+                            {% if message.tags == 'success' %}bg-green-50/60 border border-green-200/50
+                            {% elif message.tags == 'error' %}bg-accent-50/60 border border-accent-200/50
+                            {% elif message.tags == 'warning' %}bg-yellow-50/60 border border-yellow-200/50
+                            {% elif message.tags == 'info' %}bg-primary-50/60 border border-primary-200/50
                             {% else %}bg-white/60 border border-neutral-200/50{% endif %}"
                             x-init="
                                 setTimeout(() => {
@@ -908,11 +902,11 @@
                             <!-- Message Text -->
                             <div class="flex-1 mr-2">
                                 <p
-                                    class="text-sm font-medium 
-                                    {% if message.tags == 'success' %}text-green-900 
-                                    {% elif message.tags == 'error' %}text-accent-900 
-                                    {% elif message.tags == 'warning' %}text-yellow-900 
-                                    {% elif message.tags == 'info' %}text-primary-900 
+                                    class="text-sm font-medium
+                                    {% if message.tags == 'success' %}text-green-900
+                                    {% elif message.tags == 'error' %}text-accent-900
+                                    {% elif message.tags == 'warning' %}text-yellow-900
+                                    {% elif message.tags == 'info' %}text-primary-900
                                     {% else %}text-neutral-900{% endif %}"
                                 >
                                     {{ message }}
@@ -921,12 +915,12 @@
 
                             <!-- Close Button -->
                             <button
-                                class="flex-shrink-0 p-1 rounded-full 
-                                {% if message.tags == 'success' %}text-green-600 hover:text-green-800 hover:bg-green-100 
-                                {% elif message.tags == 'error' %}text-accent-600 hover:text-accent-800 hover:bg-accent-100 
-                                {% elif message.tags == 'warning' %}text-yellow-600 hover:text-yellow-800 hover:bg-yellow-100 
-                                {% elif message.tags == 'info' %}text-primary-600 hover:text-primary-800 hover:bg-primary-100 
-                                {% else %}text-neutral-600 hover:text-neutral-800 hover:bg-neutral-100{% endif %} 
+                                class="flex-shrink-0 p-1 rounded-full
+                                {% if message.tags == 'success' %}text-green-600 hover:text-green-800 hover:bg-green-100
+                                {% elif message.tags == 'error' %}text-accent-600 hover:text-accent-800 hover:bg-accent-100
+                                {% elif message.tags == 'warning' %}text-yellow-600 hover:text-yellow-800 hover:bg-yellow-100
+                                {% elif message.tags == 'info' %}text-primary-600 hover:text-primary-800 hover:bg-primary-100
+                                {% else %}text-neutral-600 hover:text-neutral-800 hover:bg-neutral-100{% endif %}
                                 transition-colors duration-150 focus:outline-none"
                                 @click="removeToast($el.parentElement)"
                                 aria-label="Close"
@@ -936,27 +930,10 @@
                         {% endfor %}
                     </div>
                     {% endif %}
-                    
+
                     <!-- Main Content Block -->
                     <div class="card bg-white/80 backdrop-blur-xl p-0.4 md:p-1 rounded-xl shadow-elegant border border-white/30 transition-all duration-300 hover:shadow-elegant-hover">
-                        {% block content %}
-                        {% if user.is_authenticated %}
-                        <script src="{% static 'js/session_tracker_functions.js' %}"></script>
-                        <script src="{% static 'js/session_tracker.js' %}"></script>
-                        <script>
-                            // Initialize session tracker when DOM is loaded
-                            document.addEventListener('DOMContentLoaded', function() {
-                                console.log('Initializing SessionTracker...');
-                                if (typeof SessionTracker !== 'undefined' && SessionTracker.init) {
-                                    SessionTracker.init();
-                                    console.log('SessionTracker initialized successfully');
-                                } else {
-                                    console.error('SessionTracker not available or missing init method');
-                                }
-                            });
-                        </script>
-                        {% endif %}
-                        {% endblock %}
+                        {% block content %}{% endblock %}
                     </div>
             </main>
 
@@ -1148,5 +1125,65 @@
                 // For now, the navbar is always visible at the top on mobile.
             });
         </script>
+
+        <!-- Session Warning Modal - Tailwind CSS -->
+        <div id="sessionWarningModal"
+             class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden"
+             role="dialog"
+             aria-labelledby="sessionWarningModalLabel"
+             aria-hidden="true">
+
+            <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 transform transition-all duration-300 scale-95 opacity-0"
+                 id="sessionWarningModalContent">
+
+                <!-- Modal Header -->
+                <div class="bg-yellow-50 border-b border-yellow-200 px-6 py-4 rounded-t-lg">
+                    <h3 id="sessionWarningModalLabel" class="text-lg font-semibold text-yellow-800 flex items-center">
+                        <i class="ri-error-warning-line text-xl mr-2"></i>
+                        Session Warning
+                    </h3>
+                </div>
+
+                <!-- Modal Body -->
+                <div class="px-6 py-6 text-center">
+                    <p id="sessionWarningMessage" class="text-gray-700 mb-4">
+                        Your session will expire soon due to inactivity.
+                    </p>
+                    <div class="bg-yellow-100 border border-yellow-300 rounded-lg p-4">
+                        <span class="text-yellow-800 font-semibold">
+                            Time remaining: <span id="sessionCountdown" class="font-mono">--:--</span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="px-6 py-4 bg-gray-50 rounded-b-lg flex justify-center space-x-3">
+                    <button type="button"
+                            id="continueSessionBtn"
+                            class="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center">
+                        <i class="ri-refresh-line mr-1"></i>
+                        Continue Session
+                    </button>
+                    <button type="button"
+                            id="logoutBtn"
+                            class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center">
+                        <i class="ri-logout-box-r-line mr-1"></i>
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Session Monitor Script -->
+        {% if user.is_authenticated %}
+        <script src="{% static 'js/session-monitor.js' %}"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                if (typeof SessionMonitor !== 'undefined') {
+                    window.sessionMonitor = new SessionMonitor();
+                }
+            });
+        </script>
+        {% endif %}
+
     </body>
 </html>

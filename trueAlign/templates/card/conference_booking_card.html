@@ -1,276 +1,233 @@
 {% load static %}
 {% load tz %}
 
-<div class="bg-white shadow-2xl rounded-2xl p-4 sm:p-6 md:p-8 transform transition-all duration-300 hover:scale-105 border border-gray-100">
-    <div class="border-b border-gray-200 pb-4 mb-6">
-        <div class="flex justify-between items-center">
-            <h3 class="text-xl font-semibold text-gray-800">Conference Room Booking</h3>
-            <button
-                type="button"
-                id="openBookingModalBtn"
-                class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 transition duration-200 flex items-center space-x-2"
-            >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+<div class="bg-white shadow-lg rounded-xl p-4 transform transition-all duration-300 hover:shadow-xl border border-gray-200">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-100">
+        <div class="flex items-center space-x-2">
+            <div class="p-2 bg-blue-50 rounded-lg">
+                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h3M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 8h1m0 0h1" />
                 </svg>
-                <span>Book Room</span>
+            </div>
+            <div>
+                <h3 class="text-lg font-semibold text-gray-800">Conference Rooms</h3>
+                <p class="text-xs text-gray-500">Book & manage rooms</p>
+            </div>
+        </div>
+        <a
+            href="{% url 'conf_booking:room_dashboard' %}"
+            class="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 transition duration-200 flex items-center space-x-1.5"
+        >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            <span>Book</span>
+        </a>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="flex justify-between items-center mb-4">
+        <div class="flex space-x-1">
+           
+            <button id="refreshRoomStatusBtn" class="px-2 py-1 text-xs bg-gray-50 text-gray-700 rounded-md hover:bg-gray-100 transition duration-200 flex items-center space-x-1">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                <span>Refresh</span>
             </button>
+        </div>
+        <div class="text-xs text-gray-500">
+            <span class="inline-flex items-center space-x-1">
+                <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+                <span>Available</span>
+                <div class="w-2 h-2 bg-yellow-400 rounded-full ml-2"></div>
+                <span>Soon</span>
+                <div class="w-2 h-2 bg-red-400 rounded-full ml-2"></div>
+                <span>Busy</span>
+            </span>
         </div>
     </div>
 
-    <div class="space-y-6">
-
-
-        {# Room Status Section #}
-        <div class="space-y-4">
-            <div class="flex justify-between items-center">
-                <h4 class="text-lg font-medium text-gray-700">Room Status</h4>
-                <div class="flex space-x-2">
-                    <button id="roomCalendarBtn" class="px-3 py-1 text-sm bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition duration-200">
-                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        Calendar
-                    </button>
-                    <button id="refreshRoomStatusBtn" class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition duration-200">
-                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                        </svg>
-                        Refresh
-                    </button>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {% for room in available_rooms %}
-                    <div class="room-status-card bg-gray-50 border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200">
-                        <div class="flex justify-between items-start mb-3">
-                            <div>
-                                <h5 class="font-semibold text-gray-800">{{ room.name }}</h5>
-                                <p class="text-sm text-gray-600">Capacity: {{ room.capacity }} people</p>
-                                <p class="text-xs text-gray-500">{{ room.location }}</p>
+    <!-- Room Status Grid -->
+    <div class="space-y-3 mb-4">
+        <h4 class="text-sm font-medium text-gray-700 flex items-center">
+            <svg class="w-4 h-4 mr-1 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h3M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 8h1m0 0h1" />
+            </svg>
+            Room Status
+        </h4>
+        
+        <div class="max-h-48 overflow-y-auto space-y-2">
+            {% for room in available_rooms %}
+                <div class="room-card bg-gray-50 border border-gray-200 rounded-lg p-3 hover:bg-gray-100 transition-all duration-150">
+                    <div class="flex items-center justify-between">
+                        <!-- Room Info -->
+                        <div class="flex items-center space-x-3 flex-1 min-w-0">
+                            <div class="flex-shrink-0 flex items-center space-x-2">
+                                <div class="w-3 h-3 rounded-full {% if room.is_occupied %}bg-red-400{% elif room.next_booking and room.next_booking.start_time|timeuntil|slice:"-7" == " minutes" %}bg-yellow-400{% else %}bg-green-400{% endif %}"></div>
+                                <div class="text-sm font-medium text-gray-800">{{ room.name }}</div>
                             </div>
-                            <div class="flex items-center space-x-2">
-                                <div class="room-indicator w-3 h-3 rounded-full {% if room.is_occupied %}bg-red-400{% elif room.next_booking and room.next_booking.start_time|timeuntil|slice:"-7" == " minutes" %}bg-yellow-400{% else %}bg-green-400{% endif %}"></div>
-                                <span class="text-sm font-medium {% if room.is_occupied %}text-red-600{% elif room.next_booking and room.next_booking.start_time|timeuntil|slice:"-7" == " minutes" %}text-yellow-600{% else %}text-green-600{% endif %}">
-                                    {% if room.is_occupied %}
-                                        Occupied
-                                    {% elif room.next_booking %}
-                                        {% with time_until=room.next_booking.start_time|timeuntil %}
-                                            {% if "minute" in time_until and "hour" not in time_until %}
-                                                Starting Soon
-                                            {% else %}
-                                                Available
-                                            {% endif %}
-                                        {% endwith %}
-                                    {% else %}
-                                        Available
-                                    {% endif %}
-                                </span>
+                            <div class="text-xs text-gray-500 truncate">
+                                {{ room.capacity }}p • {{ room.location }}
                             </div>
                         </div>
 
-                        {% if room.current_booking %}
-                            <div class="bg-red-50 border border-red-200 rounded p-2 mb-3">
-                                <p class="text-sm font-medium text-red-800">{{ room.current_booking.purpose }}</p>
-                                <p class="text-xs text-red-600">
-                                    Until {{ room.current_booking.end_time|timezone:"Asia/Kolkata"|time:"g:i A" }} by {{ room.current_booking.booked_by.get_full_name }}
-                                </p>
-                                <p class="text-xs text-red-500 mt-1">
-                                    Free in {{ room.current_booking.end_time|timeuntil }}
-                                </p>
-                            </div>
-                        {% elif room.next_booking %}
-                            {% with time_until=room.next_booking.start_time|timeuntil %}
-                                {% if "minute" in time_until and "hour" not in time_until %}
-                                    <div class="bg-yellow-50 border border-yellow-200 rounded p-2 mb-3">
-                                        <p class="text-sm font-medium text-yellow-800">{{ room.next_booking.purpose }}</p>
-                                        <p class="text-xs text-yellow-600">
-                                            Starting in {{ time_until }} by {{ room.next_booking.booked_by.get_full_name }}
-                                        </p>
-                                    </div>
+                        <!-- Status & Actions -->
+                        <div class="flex items-center space-x-2 flex-shrink-0">
+                            <div class="text-xs font-medium {% if room.is_occupied %}text-red-600{% elif room.next_booking and room.next_booking.start_time|timeuntil|slice:"-7" == " minutes" %}text-yellow-600{% else %}text-green-600{% endif %}">
+                                {% if room.is_occupied %}
+                                    Busy
+                                {% elif room.next_booking %}
+                                    {% with time_until=room.next_booking.start_time|timeuntil %}
+                                        {% if "minute" in time_until and "hour" not in time_until %}
+                                            Soon
+                                        {% else %}
+                                            Free
+                                        {% endif %}
+                                    {% endwith %}
                                 {% else %}
-                                    <div class="bg-green-50 border border-green-200 rounded p-2 mb-3">
-                                        <p class="text-sm font-medium text-green-800">Available now</p>
-                                        <p class="text-xs text-green-600">
-                                            Next booking at {{ room.next_booking.start_time|timezone:"Asia/Kolkata"|time:"g:i A" }}
-                                        </p>
-                                    </div>
+                                    Free
                                 {% endif %}
-                            {% endwith %}
-                        {% else %}
-                            <div class="bg-green-50 border border-green-200 rounded p-2 mb-3">
-                                <p class="text-sm font-medium text-green-800">Available for booking</p>
-                                <p class="text-xs text-green-600">No bookings scheduled today</p>
                             </div>
-                        {% endif %}
-
-                        <div class="flex justify-between items-center">
-                            <button class="room-details-btn text-sm text-blue-600 hover:text-blue-800 font-medium" data-room-id="{{ room.id }}">
-                                View Details
-                            </button>
                             {% if not room.is_occupied %}
-                                <button class="quick-book-btn px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition duration-200" data-room-id="{{ room.id }}" data-room-name="{{ room.name }}">
-                                    Quick Book
-                                </button>
+                                <a href="{% url 'conf_booking:room_dashboard' %}?room={{ room.id }}" class="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition duration-200">
+                                    Book
+                                </a>
                             {% endif %}
                         </div>
                     </div>
-                {% empty %}
-                    <div class="col-span-full text-center py-8">
-                        <p class="text-gray-500">No conference rooms available</p>
+
+                    <!-- Booking Details -->
+                    {% if room.current_booking %}
+                        <div class="mt-2 p-2 bg-red-50 border border-red-100 rounded text-xs">
+                            <div class="font-medium text-red-800">{{ room.current_booking.purpose }}</div>
+                            <div class="text-red-600">Until {{ room.current_booking.end_time|timezone:"Asia/Kolkata"|time:"g:i A" }} • {{ room.current_booking.booked_by.get_full_name }}</div>
+                        </div>
+                    {% elif room.next_booking %}
+                        {% with time_until=room.next_booking.start_time|timeuntil %}
+                            {% if "minute" in time_until and "hour" not in time_until %}
+                                <div class="mt-2 p-2 bg-yellow-50 border border-yellow-100 rounded text-xs">
+                                    <div class="font-medium text-yellow-800">{{ room.next_booking.purpose }}</div>
+                                    <div class="text-yellow-600">Starting in {{ time_until }} • {{ room.next_booking.booked_by.get_full_name }}</div>
+                                </div>
+                            {% else %}
+                                <div class="mt-2 p-2 bg-green-50 border border-green-100 rounded text-xs">
+                                    <div class="font-medium text-green-800">Available now</div>
+                                    <div class="text-green-600">Next: {{ room.next_booking.start_time|timezone:"Asia/Kolkata"|time:"g:i A" }}</div>
+                                </div>
+                            {% endif %}
+                        {% endwith %}
+                    {% endif %}
+                </div>
+            {% empty %}
+                <div class="text-center py-4">
+                    <svg class="mx-auto h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h3M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 8h1m0 0h1" />
+                    </svg>
+                    <p class="text-xs text-gray-500 mt-1">No rooms available</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- User Bookings Section -->
+    <div class="border-t border-gray-100 pt-4">
+        <div class="flex justify-between items-center mb-3">
+            <h4 class="text-sm font-medium text-gray-700 flex items-center">
+                <svg class="w-4 h-4 mr-1 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Your Bookings
+            </h4>
+            <a href="{% url 'conf_booking:user_bookings' %}" class="text-xs text-blue-600 hover:text-blue-800 font-medium">
+                View All
+            </a>
+        </div>
+
+        {% if user_bookings %}
+            <div class="space-y-2 max-h-32 overflow-y-auto">
+                {% for booking in user_bookings|slice:":2" %}
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center space-x-2 mb-1">
+                                    <h6 class="text-sm font-semibold text-blue-900 truncate">{{ booking.room.name }}</h6>
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                        {{ booking.attendees_count }}p
+                                    </span>
+                                </div>
+                                <p class="text-xs text-blue-800 mb-2 truncate">{{ booking.purpose }}</p>
+                                <div class="flex items-center space-x-3 text-xs text-blue-700">
+                                    <span>{{ booking.start_time|timezone:"Asia/Kolkata"|date:"M d" }}</span>
+                                    <span>{{ booking.start_time|timezone:"Asia/Kolkata"|time:"g:i A" }} - {{ booking.end_time|timezone:"Asia/Kolkata"|time:"g:i A" }}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="flex flex-col space-y-1 ml-3 flex-shrink-0">
+                                {% if booking.checked_in %}
+                                    <span class="px-2 py-1 text-xs bg-green-100 text-green-800 rounded text-center font-medium">
+                                        ✓ Active
+                                    </span>
+                                {% elif booking.can_check_in %}
+                                    <button class="check-in-btn px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 transition duration-200" data-booking-id="{{ booking.id }}">
+                                        Check In
+                                    </button>
+                                {% endif %}
+                                {% if booking.can_be_cancelled %}
+                                    <button class="cancel-booking-btn px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition duration-200" data-booking-id="{{ booking.id }}">
+                                        Cancel
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </div>
                     </div>
                 {% endfor %}
             </div>
-        </div>
-
-        {# User Upcoming Bookings #}
-        <div class="space-y-4">
-            <div class="flex justify-between items-center">
-                <h4 class="text-lg font-medium text-gray-700">Your Upcoming Bookings</h4>
-                <a href="{% url 'conf_booking:user_bookings' %}" class="text-sm text-blue-600 hover:text-blue-800 font-medium">
-                    View All Bookings
+        {% else %}
+            <div class="text-center py-6 bg-gray-50 rounded-lg">
+                <svg class="mx-auto h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <h4 class="mt-2 text-sm font-medium text-gray-900">No bookings</h4>
+                <p class="mt-1 text-xs text-gray-500">You don't have any upcoming bookings</p>
+                <a href="{% url 'conf_booking:room_dashboard' %}" class="mt-3 inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-200">
+                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    Book Now
                 </a>
             </div>
-
-            {% if user_bookings %}
-                <div class="space-y-3">
-                    {% for booking in user_bookings|slice:":3" %}
-                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                            <div class="flex justify-between items-start">
-                                <div class="flex-1">
-                                    <h6 class="font-semibold text-blue-900">{{ booking.room.name }}</h6>
-                                    <p class="text-sm text-blue-800 mt-1">{{ booking.purpose }}</p>
-                                    <div class="flex items-center space-x-4 mt-2 text-sm text-blue-700">
-                                        <span class="flex items-center">
-                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                            </svg>
-                                            {{ booking.start_time|timezone:"Asia/Kolkata"|date:"M d, Y" }}
-                                        </span>
-                                        <span class="flex items-center">
-                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                            {{ booking.start_time|timezone:"Asia/Kolkata"|time:"g:i A" }} - {{ booking.end_time|timezone:"Asia/Kolkata"|time:"g:i A" }}
-                                        </span>
-                                        <span class="flex items-center">
-                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
-                                            </svg>
-                                            {{ booking.attendees_count }} people
-                                        </span>
-                                    </div>
-                                </div>
-                                <div class="flex flex-col space-y-2 ml-4">
-                                    {% if booking.can_check_in %}
-                                        <button class="check-in-btn px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700 transition duration-200" data-booking-id="{{ booking.id }}">
-                                            Check In
-                                        </button>
-                                    {% endif %}
-                                    {% if booking.can_be_cancelled %}
-                                        <button class="cancel-booking-btn px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition duration-200" data-booking-id="{{ booking.id }}">
-                                            Cancel
-                                        </button>
-                                    {% endif %}
-                                    {% if booking.checked_in %}
-                                        <span class="px-3 py-1 text-sm bg-green-100 text-green-800 rounded text-center">
-                                            ✓ Checked In
-                                        </span>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <div class="text-center py-6">
-                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <h4 class="mt-2 text-sm font-medium text-gray-900">No upcoming bookings</h4>
-                    <p class="mt-1 text-sm text-gray-500">You don't have any conference room bookings scheduled.</p>
-                    <div class="mt-4">
-                        <button type="button" id="openBookingModalBtn2" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                            <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                            </svg>
-                            Book a Room
-                        </button>
-                    </div>
-                </div>
-            {% endif %}
-        </div>
+        {% endif %}
     </div>
 </div>
-
-
-<!-- Include the simple booking modal -->
-{% include 'components/simple_booking_modal.html' %}
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         console.log("Conference booking card loaded");
 
-        // Modal elements
-        const bookingModal = document.getElementById("simpleBookingModal");
-
         // Button elements
-        const openBookingBtns = document.querySelectorAll(
-            "#openBookingModalBtn, #openBookingModalBtn2",
-        );
-        const calendarBtn = document.getElementById("roomCalendarBtn");
         const refreshBtn = document.getElementById("refreshRoomStatusBtn");
-        const roomDetailsBtns = document.querySelectorAll(".room-details-btn");
-        const quickBookBtns = document.querySelectorAll(".quick-book-btn");
         const checkInBtns = document.querySelectorAll(".check-in-btn");
-        const cancelBookingBtns = document.querySelectorAll(
-            ".cancel-booking-btn",
-        );
-
-        // Open booking modal
-        function openBookingModal(roomId = null) {
-            console.log("Opening booking modal", roomId);
-            if (typeof window.openSimpleBookingModal === "function") {
-                window.openSimpleBookingModal(roomId);
-            } else {
-                console.error("Simple booking modal function not found");
-                showNotification(
-                    "Booking form is not available. Please refresh the page.",
-                    "error",
-                );
-            }
-        }
-
-        // Open calendar modal
-        function openCalendarModal() {
-            console.log("Opening calendar modal");
-            showNotification("Calendar view coming soon!", "info");
-        }
-
-        // Open room details modal
-        function openRoomDetailsModal(roomId) {
-            console.log("Opening room details modal for room:", roomId);
-            showNotification("Room details view coming soon!", "info");
-        }
+        const cancelBookingBtns = document.querySelectorAll(".cancel-booking-btn");
 
         // Check in to booking
         function checkInToBooking(bookingId) {
             console.log("Checking in to booking:", bookingId);
 
             if (!bookingId) {
-                showNotification("Invalid booking ID", "error");
+                console.error("Invalid booking ID");
                 return;
             }
 
             // Show loading state
             const checkInBtn = document.querySelector(
-                `[data-booking-id="${bookingId}"]`,
+                `[data-booking-id="${bookingId}"].check-in-btn`,
             );
             const originalText = checkInBtn ? checkInBtn.textContent : "";
             if (checkInBtn) {
                 checkInBtn.disabled = true;
-                checkInBtn.textContent = "Checking In...";
+                checkInBtn.textContent = "...";
             }
 
             fetch(`/conf_booking/check-in/${bookingId}/`, {
@@ -283,25 +240,21 @@
                 .then((response) => response.json())
                 .then((data) => {
                     if (data.success) {
-                        showNotification("Successfully checked in!", "success");
+                        console.log("Successfully checked in!");
                         // Refresh the page to update the booking status
-                        setTimeout(() => location.reload(), 1500);
+                        setTimeout(() => location.reload(), 1000);
                     } else {
-                        showNotification(
-                            data.error || "Failed to check in",
-                            "error",
-                        );
+                        console.error("Failed to check in:", data.error);
+                        // Restore button state on error
+                        if (checkInBtn) {
+                            checkInBtn.disabled = false;
+                            checkInBtn.textContent = originalText;
+                        }
                     }
                 })
                 .catch((error) => {
                     console.error("Check-in error:", error);
-                    showNotification(
-                        "An error occurred while checking in",
-                        "error",
-                    );
-                })
-                .finally(() => {
-                    // Restore button state
+                    // Restore button state on error
                     if (checkInBtn) {
                         checkInBtn.disabled = false;
                         checkInBtn.textContent = originalText;
@@ -312,7 +265,7 @@
         // Cancel booking
         function cancelBooking(bookingId) {
             if (!bookingId) {
-                showNotification("Invalid booking ID", "error");
+                console.error("Invalid booking ID");
                 return;
             }
 
@@ -326,7 +279,7 @@
             const originalText = cancelBtn ? cancelBtn.textContent : "";
             if (cancelBtn) {
                 cancelBtn.disabled = true;
-                cancelBtn.textContent = "Cancelling...";
+                cancelBtn.textContent = "...";
             }
 
             // Create form data
@@ -340,23 +293,20 @@
             })
                 .then((response) => {
                     if (response.ok) {
-                        showNotification(
-                            "Booking cancelled successfully",
-                            "success",
-                        );
-                        setTimeout(() => location.reload(), 1500);
+                        console.log("Booking cancelled successfully");
+                        setTimeout(() => location.reload(), 1000);
                     } else {
-                        showNotification("Failed to cancel booking", "error");
+                        console.error("Failed to cancel booking");
+                        // Restore button state on error
+                        if (cancelBtn) {
+                            cancelBtn.disabled = false;
+                            cancelBtn.textContent = originalText;
+                        }
                     }
                 })
                 .catch((error) => {
                     console.error("Cancel error:", error);
-                    showNotification(
-                        "An error occurred while cancelling",
-                        "error",
-                    );
-                })
-                .finally(() => {
+                    // Restore button state on error
                     if (cancelBtn) {
                         cancelBtn.disabled = false;
                         cancelBtn.textContent = originalText;
@@ -367,50 +317,21 @@
         // Refresh room status
         function refreshRoomStatus() {
             console.log("Refreshing room status");
-            showNotification("Refreshing room status...", "info");
+            const refreshBtn = document.getElementById("refreshRoomStatusBtn");
+            const originalContent = refreshBtn.innerHTML;
+            
+            refreshBtn.innerHTML = '<svg class="w-3 h-3 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>';
+            refreshBtn.disabled = true;
 
-            // Simple page reload for now
             setTimeout(() => {
                 location.reload();
-            }, 500);
+            }, 800);
         }
 
         // Event listeners
-        openBookingBtns.forEach((btn) => {
-            btn.addEventListener("click", () => openBookingModal());
-        });
-
-        if (calendarBtn) {
-            calendarBtn.addEventListener("click", openCalendarModal);
-        }
-
         if (refreshBtn) {
             refreshBtn.addEventListener("click", refreshRoomStatus);
         }
-
-        roomDetailsBtns.forEach((btn) => {
-            btn.addEventListener("click", (e) => {
-                const roomId = e.target.getAttribute("data-room-id");
-                openRoomDetailsModal(roomId);
-            });
-        });
-
-        quickBookBtns.forEach((btn) => {
-            btn.addEventListener("click", (e) => {
-                const roomId = e.target.getAttribute("data-room-id");
-                openBookingModal(roomId);
-            });
-        });
-
-        // Wait for simple modal to load, then set up additional event handlers
-        setTimeout(() => {
-            const additionalOpenBtns = document.querySelectorAll(
-                "#openBookingModalBtn2",
-            );
-            additionalOpenBtns.forEach((btn) => {
-                btn.addEventListener("click", () => openBookingModal());
-            });
-        }, 100);
 
         checkInBtns.forEach((btn) => {
             btn.addEventListener("click", (e) => {
@@ -426,7 +347,7 @@
             });
         });
 
-        // Utility functions
+        // Utility function
         function getCookie(name) {
             let cookieValue = null;
             if (document.cookie && document.cookie !== "") {
@@ -444,88 +365,53 @@
             return cookieValue;
         }
 
-        function showNotification(message, type = "info") {
-            console.log(`Notification (${type}):`, message);
-
-            // Create notification element
-            const notification = document.createElement("div");
-            notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 max-w-sm ${
-                type === "success"
-                    ? "bg-green-100 text-green-800 border border-green-400"
-                    : type === "error"
-                      ? "bg-red-100 text-red-800 border border-red-400"
-                      : "bg-blue-100 text-blue-800 border border-blue-400"
-            }`;
-
-            notification.innerHTML = `
-            <div class="flex items-center">
-                <div class="flex-shrink-0">
-                    ${
-                        type === "success"
-                            ? '<svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"/></svg>'
-                            : type === "error"
-                              ? '<svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"/></svg>'
-                              : '<svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"/></svg>'
-                    }
-                </div>
-                <div class="ml-3">
-                    <p class="text-sm font-medium">${message}</p>
-                </div>
-                <div class="ml-auto pl-3">
-                    <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-gray-600">
-                        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414 5.707 15.707a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-        `;
-
-            document.body.appendChild(notification);
-
-            // Auto remove after 5 seconds
-            setTimeout(() => {
-                if (notification && notification.parentNode) {
-                    notification.remove();
-                }
-            }, 5000);
-        }
-
-        // Make functions available globally
-        window.openBookingModal = openBookingModal;
-        window.openCalendarModal = openCalendarModal;
-        window.openRoomDetailsModal = openRoomDetailsModal;
+        // Make functions available globally for other parts of the app
         window.checkInToBooking = checkInToBooking;
         window.refreshRoomStatus = refreshRoomStatus;
-        window.showNotification = showNotification;
     });
 </script>
 
 <style>
-    .room-status-card {
-        transition: all 0.2s ease-in-out;
+    .room-card {
+        transition: all 0.15s ease-in-out;
     }
 
-    .room-status-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    .room-card:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
 
-    .room-indicator {
-        animation: pulse 2s infinite;
+    /* Custom scrollbar for the card */
+    .max-h-48::-webkit-scrollbar,
+    .max-h-32::-webkit-scrollbar {
+        width: 4px;
     }
 
-    @keyframes pulse {
-        0%,
-        100% {
-            opacity: 1;
+    .max-h-48::-webkit-scrollbar-track,
+    .max-h-32::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 2px;
+    }
+
+    .max-h-48::-webkit-scrollbar-thumb,
+    .max-h-32::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 2px;
+    }
+
+    .max-h-48::-webkit-scrollbar-thumb:hover,
+    .max-h-32::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
+    /* Smooth loading animation */
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
         }
-        50% {
-            opacity: 0.7;
-        }
     }
 
-    .modal-dialog {
-        max-height: 90vh;
+    .animate-spin {
+        animation: spin 1s linear infinite;
     }
 </style>

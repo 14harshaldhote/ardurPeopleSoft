@@ -1,238 +1,332 @@
 {% load static %}
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ardur Home - Enterprise Management</title>
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: {
-                            50: '#eef2ff',
-                            100: '#e0e7ff',
-                            200: '#c7d2fe',
-                            300: '#a5b4fc',
-                            400: '#818cf8',
-                            500: '#6366f1',
-                            600: '#4f46e5',
-                            700: '#4338ca',
-                            800: '#3730a3',
-                            900: '#312e81',
-                        }
-                    }
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Ardur Home - Enterprise Management</title>
+
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link
+            href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css"
+            rel="stylesheet"
+        />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+            rel="stylesheet"
+        />
+
+        <script>
+            tailwind.config = {
+                theme: {
+                    extend: {
+                        colors: {
+                            primary: {
+                                50: "#eef2ff",
+                                100: "#e0e7ff",
+                                200: "#c7d2fe",
+                                300: "#a5b4fc",
+                                400: "#818cf8",
+                                500: "#6366f1",
+                                600: "#4f46e5",
+                                700: "#4338ca",
+                                800: "#3730a3",
+                                900: "#312e81",
+                            },
+                        },
+                    },
+                },
+            };
+        </script>
+
+        <style>
+            @keyframes gradient {
+                0% {
+                    background-position: 0% 50%;
+                }
+                50% {
+                    background-position: 100% 50%;
+                }
+                100% {
+                    background-position: 0% 50%;
                 }
             }
-        }
-    </script>
 
-    <style>
-        @keyframes gradient {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
+            @keyframes float {
+                0% {
+                    transform: translateY(0px);
+                }
+                50% {
+                    transform: translateY(-20px);
+                }
+                100% {
+                    transform: translateY(0px);
+                }
+            }
 
-        @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-20px); }
-            100% { transform: translateY(0px); }
-        }
+            body {
+                font-family: "Poppins", sans-serif;
+                background: linear-gradient(
+                    -45deg,
+                    rgba(99, 101, 241, 0.779),
+                    rgba(229, 70, 205, 0.59),
+                    rgba(124, 58, 237, 0.4),
+                    rgba(68, 56, 202, 0.864)
+                );
+                background-size: 400% 400%;
+                animation: gradient 15s ease infinite;
+                min-height: 100vh;
+                position: relative;
+                overflow: hidden;
+            }
 
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(-45deg, rgba(99, 101, 241, 0.779), rgba(229, 70, 205, 0.59), rgba(124, 58, 237, 0.4), rgba(68, 56, 202, 0.864));
-            background-size: 400% 400%;
-            animation: gradient 15s ease infinite;
-            min-height: 100vh;
-            position: relative;
-            overflow: hidden;
-        }
+            .floating-shape {
+                position: absolute;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.1);
+                animation: float 6s ease-in-out infinite;
+            }
 
-        .floating-shape {
-            position: absolute;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
-            animation: float 6s ease-in-out infinite;
-        }
+            .shape-1 {
+                width: 300px;
+                height: 300px;
+                top: -100px;
+                left: -50px;
+            }
 
-        .shape-1 {
-            width: 300px;
-            height: 300px;
-            top: -100px;
-            left: -50px;
-        }
+            .shape-2 {
+                width: 200px;
+                height: 200px;
+                bottom: -50px;
+                right: -50px;
+                animation-delay: -3s;
+            }
 
-        .shape-2 {
-            width: 200px;
-            height: 200px;
-            bottom: -50px;
-            right: -50px;
-            animation-delay: -3s;
-        }
+            .login-container {
+                background: rgba(255, 255, 255, 0.85);
+                backdrop-filter: blur(20px);
+                border-radius: 24px;
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+                max-width: 450px;
+                width: 100%;
+                padding: 2.5rem;
+                position: relative;
+                overflow: hidden;
+            }
 
-        .login-container {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(20px);
-            border-radius: 24px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
-            max-width: 450px;
-            width: 100%;
-            padding: 2.5rem;
-            position: relative;
-            overflow: hidden;
-        }
+            .logo-container {
+                transition: transform 0.3s ease;
+                position: fixed;
+                top: 2rem;
+                left: 2rem;
+            }
 
-        .logo-container {
-            transition: transform 0.3s ease;
-            position: fixed;
-            top: 2rem;
-            left: 2rem;
-        }
+            .logo-container:hover {
+                transform: scale(1.05);
+                filter: drop-shadow(0 0 10px rgba(99, 102, 241, 0.5));
+            }
 
-        .logo-container:hover {
-            transform: scale(1.05);
-            filter: drop-shadow(0 0 10px rgba(99, 102, 241, 0.5));
-        }
+            .input-group {
+                position: relative;
+                margin-bottom: 1.5rem;
+            }
 
-        .input-group {
-            position: relative;
-            margin-bottom: 1.5rem;
-        }
+            .input-group input {
+                width: 100%;
+                padding: 1rem 1rem 1rem 3rem;
+                background: rgba(255, 255, 255, 0.9);
+                border: 2px solid transparent;
+                border-radius: 1rem;
+                font-size: 0.95rem;
+                transition: all 0.3s ease;
+            }
 
-        .input-group input {
-            width: 100%;
-            padding: 1rem 1rem 1rem 3rem;
-            background: rgba(255, 255, 255, 0.9);
-            border: 2px solid transparent;
-            border-radius: 1rem;
-            font-size: 0.95rem;
-            transition: all 0.3s ease;
-        }
+            .input-group input:focus {
+                border-color: #6366f1;
+                box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+                outline: none;
+            }
 
-        .input-group input:focus {
-            border-color: #6366f1;
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
-            outline: none;
-        }
+            .input-group i {
+                position: absolute;
+                left: 1rem;
+                top: 50%;
+                transform: translateY(-50%);
+                color: #6366f1;
+                transition: all 0.3s ease;
+            }
 
-        .input-group i {
-            position: absolute;
-            left: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #6366f1;
-            transition: all 0.3s ease;
-        }
+            .input-group input:focus + i {
+                transform: translateY(-50%) scale(1.1);
+            }
 
-        .input-group input:focus + i {
-            transform: translateY(-50%) scale(1.1);
-        }
+            .submit-btn {
+                width: 100%;
+                padding: 1rem;
+                background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+                color: white;
+                border-radius: 1rem;
+                font-weight: 500;
+                transition: all 0.3s ease;
+                position: relative;
+                overflow: hidden;
+            }
 
-        .submit-btn {
-            width: 100%;
-            padding: 1rem;
-            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-            color: white;
-            border-radius: 1rem;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
+            .submit-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3);
+            }
 
-        .submit-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3);
-        }
+            .submit-btn:active {
+                transform: translateY(0);
+            }
 
-        .submit-btn:active {
-            transform: translateY(0);
-        }
+            .submit-btn::after {
+                content: "";
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                top: 0;
+                left: -100%;
+                background: linear-gradient(
+                    90deg,
+                    transparent,
+                    rgba(255, 255, 255, 0.2),
+                    transparent
+                );
+                transition: 0.5s;
+            }
 
-        .submit-btn::after {
-            content: '';
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: -100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: 0.5s;
-        }
+            .submit-btn:hover::after {
+                left: 100%;
+            }
 
-        .submit-btn:hover::after {
-            left: 100%;
-        }
+            .watermark {
+                position: fixed;
+                bottom: 2rem;
+                right: 2rem;
+                display: flex;
+                align-items: center;
+                background: rgba(255, 255, 255, 0.1);
+                padding: 0.5rem 1rem;
+                border-radius: 1rem;
+                backdrop-filter: blur(5px);
+            }
+        </style>
+    </head>
+    <body class="flex items-center justify-center p-4">
+        <div class="floating-shape shape-1"></div>
+        <div class="floating-shape shape-2"></div>
 
-        .watermark {
-            position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            display: flex;
-            align-items: center;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 0.5rem 1rem;
-            border-radius: 1rem;
-            backdrop-filter: blur(5px);
-        }
-    </style>
-</head>
-<body class="flex items-center justify-center p-4">
-    <div class="floating-shape shape-1"></div>
-    <div class="floating-shape shape-2"></div>
-    
-    <!-- Logo -->
-    <div class="logo-container">
-        <img src="{% static 'images/logo.png' %}" alt="TrueAlign Logo" class="h-14">
-    </div>
-    
-    <div class="relative w-full max-w-screen-xl">
-        <div class="login-container mx-auto">
-            <div class="mb-8 text-center">
-                <h2 class="text-4xl font-semibold text-gray-900 mb-2">Welcome Back!</h2>
-                <p class="text-gray-600 text-sm">Please sign in to continue</p>
-            </div>
+        <!-- Logo -->
+        <div class="logo-container">
+            <img
+                src="{% static 'images/logo.png' %}"
+                alt="TrueAlign Logo"
+                class="h-14"
+            />
+        </div>
 
-            <form method="POST" class="space-y-6">
-                {% csrf_token %}
-                
-                <div class="input-group">
-                    <input type="text" name="username" placeholder="Employee ID" required>
-                    <i class="ri-user-line"></i>
+        <div class="relative w-full max-w-screen-xl">
+            <div class="login-container mx-auto">
+                <div class="text-center mb-8">
+                    <h2 class="text-4xl font-semibold text-gray-900 mb-2">
+                        Welcome Back!
+                    </h2>
+                    <p class="text-gray-600 text-sm">
+                        Please sign in to continue
+                    </p>
                 </div>
 
-                <div class="input-group">
-                    <input type="password" name="password" placeholder="Password" required>
-                    <i class="ri-lock-line"></i>
-                </div>
-
-                {% if error %}
-                <div class="bg-red-50 text-red-600 p-4 rounded-xl mb-4">
-                    {{ error }}
+                <!-- Session Expiry Message -->
+                {% if session_expired %}
+                <div
+                    class="bg-yellow-50 border border-yellow-200 text-yellow-800 p-4 rounded-xl mb-6"
+                >
+                    <div class="flex items-center">
+                        <i class="ri-error-warning-line text-xl mr-3"></i>
+                        <div>
+                            <p class="font-medium">Session Expired</p>
+                            <p class="text-sm">
+                                Your session has expired. Please log in again to
+                                continue.
+                            </p>
+                        </div>
+                    </div>
                 </div>
                 {% endif %}
 
-               
+                <!-- Messages -->
+                {% if messages %}
+                <div class="mb-6 space-y-3">
+                    {% for message in messages %}
+                    <div
+                        class="p-4 rounded-xl {% if message.tags == 'success' %}bg-green-50 border border-green-200 text-green-800 {% elif message.tags == 'error' %}bg-red-50 border border-red-200 text-red-800 {% elif message.tags == 'warning' %}bg-yellow-50 border border-yellow-200 text-yellow-800 {% elif message.tags == 'info' %}bg-blue-50 border border-blue-200 text-blue-800 {% else %}bg-gray-50 border border-gray-200 text-gray-800{% endif %}"
+                    >
+                        <div class="flex items-center">
+                            {% if message.tags == 'success' %}
+                            <i class="ri-checkbox-circle-line text-xl mr-3"></i>
+                            {% elif message.tags == 'error' %}
+                            <i class="ri-error-warning-line text-xl mr-3"></i>
+                            {% elif message.tags == 'warning' %}
+                            <i class="ri-alert-line text-xl mr-3"></i>
+                            {% elif message.tags == 'info' %}
+                            <i class="ri-information-line text-xl mr-3"></i>
+                            {% endif %}
+                            <p class="font-medium">{{ message }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
 
-                <button type="submit" class="submit-btn">
-                    Sign In
-                </button>
-            </form>
-        </div>
+                <form method="POST" class="space-y-6">
+                    {% csrf_token %}
 
-        <!-- Watermark -->
-        <div class="watermark">
-            <span class="text-sm text-white mr-2">Powered by</span>
-            <img src="{% static 'images/ardurtech.png' %}" alt="Ardur Technology" class="h-8">
+                    <!-- Hidden field to preserve next URL -->
+                    {% if next %}
+                    <input type="hidden" name="next" value="{{ next }}" />
+                    {% endif %}
+
+                    <div class="input-group">
+                        <input
+                            type="text"
+                            name="username"
+                            placeholder="Employee ID"
+                            required
+                        />
+                        <i class="ri-user-line"></i>
+                    </div>
+
+                    <div class="input-group">
+                        <input
+                            type="password"
+                            name="password"
+                            placeholder="Password"
+                            required
+                        />
+                        <i class="ri-lock-line"></i>
+                    </div>
+
+                    {% if error %}
+                    <div class="bg-red-50 text-red-600 p-4 rounded-xl mb-4">
+                        {{ error }}
+                    </div>
+                    {% endif %}
+
+                    <button type="submit" class="submit-btn">Sign In</button>
+                </form>
+            </div>
+
+            <!-- Watermark -->
+            <div class="watermark">
+                <span class="text-sm text-white mr-2">Powered by</span>
+                <img
+                    src="{% static 'images/ardurtech.png' %}"
+                    alt="Ardur Technology"
+                    class="h-8"
+                />
+            </div>
         </div>
-    </div>
-</body>
+    </body>
 </html>

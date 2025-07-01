@@ -510,7 +510,6 @@
         </div>
     </div>
 </div>
-
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         // Calendar modal elements
@@ -554,19 +553,10 @@
         let currentDate = new Date();
         let calendarData = {};
 
-        // Working hours
-        const WORK_HOURS = {
-            start: 9,
-            end: 18,
-            interval: 30, // minutes
-        };
-
         // Initialize calendar
         function initCalendar() {
             updatePeriodDisplay();
             loadCalendarData();
-
-            // Set initial view
             setActiveView("week");
         }
 
@@ -643,67 +633,68 @@
             return new Date(d.setDate(diff));
         }
 
-        // Load calendar data
+        // Load real calendar data from API
         function loadCalendarData() {
             const loadingEl = document.getElementById("calendarLoading");
             loadingEl.classList.remove("hidden");
 
-            // Simulate API call - replace with actual API
-            setTimeout(() => {
-                calendarData = generateMockData();
-                renderCalendarView();
-                loadingEl.classList.add("hidden");
-            }, 1000);
-        }
-
-        // Generate mock data for demonstration
-        function generateMockData() {
-            const data = {};
-            const today = new Date();
-
-            // Generate sample bookings for the next 7 days
-            for (let i = 0; i < 7; i++) {
-                const date = new Date(today);
-                date.setDate(date.getDate() + i);
-                const dateStr = date.toISOString().split("T")[0];
-
-                data[dateStr] = {
-                    "room-1": [
-                        {
-                            start: "09:00",
-                            end: "10:30",
-                            title: "Team Standup",
-                            type: "other",
-                            attendees: 8,
-                        },
-                        {
-                            start: "14:00",
-                            end: "15:00",
-                            title: "Client Meeting",
-                            type: "own",
-                            attendees: 4,
-                        },
-                    ],
-                    "room-2": [
-                        {
-                            start: "10:00",
-                            end: "11:00",
-                            title: "Interview",
-                            type: "other",
-                            attendees: 3,
-                        },
-                        {
-                            start: "15:30",
-                            end: "17:00",
-                            title: "Training Session",
-                            type: "other",
-                            attendees: 12,
-                        },
-                    ],
-                };
+            // Calculate date range based on current view
+            let startDate, endDate;
+            
+            switch (currentView) {
+                case "day":
+                    startDate = new Date(currentDate);
+                    endDate = new Date(currentDate);
+                    break;
+                case "week":
+                    startDate = getWeekStart(currentDate);
+                    endDate = new Date(startDate);
+                    endDate.setDate(endDate.getDate() + 6);
+                    break;
+                case "month":
+                    startDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+                    endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+                    break;
             }
 
-            return data;
+            // Build API URL
+            const params = new URLSearchParams({
+                start_date: startDate.toISOString().split('T')[0],
+                end_date: endDate.toISOString().split('T')[0]
+            });
+
+            // Add room filter if selected
+            const selectedRoom = roomFilter.value;
+            if (selectedRoom) {
+                params.append('room_id', selectedRoom);
+            }
+
+            // Fetch real data from API
+            fetch(`/book/api/calendar-data/?${params}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        calendarData = data.calendar_data;
+                        console.log('Loaded real calendar data:', calendarData);
+                        renderCalendarView();
+                    } else {
+                        throw new Error(data.error || 'Failed to load calendar data');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading calendar data:', error);
+                    // Show empty calendar on error
+                    calendarData = {};
+                    renderCalendarView();
+                })
+                .finally(() => {
+                    loadingEl.classList.add("hidden");
+                });
         }
 
         // Render calendar view
@@ -721,75 +712,72 @@
             }
         }
 
-        // Render day view
+        // Render day view with real data
         function renderDayView() {
             const dateStr = currentDate.toISOString().split("T")[0];
             const dayData = calendarData[dateStr] || {};
 
-            document
-                .querySelectorAll(".room-day-schedule")
-                .forEach((roomEl) => {
-                    const roomId = roomEl.dataset.roomId;
-                    const container = roomEl.querySelector(
-                        ".day-schedule-container",
-                    );
-                    const bookings = dayData["room-" + roomId] || [];
+            document.querySelectorAll(".room-day-schedule").forEach((roomEl) => {
+                const roomId = roomEl.dataset.roomId;
+                const container = roomEl.querySelector(".day-schedule-container");
+                const roomKey = `room-${roomId}`;
+                const bookings = dayData[roomKey] || [];
 
-                    container.innerHTML = generateDaySchedule(bookings);
-                });
+                container.innerHTML = generateDaySchedule(bookings, roomId, dateStr);
+            });
         }
 
-        // Generate day schedule HTML
-        function generateDaySchedule(bookings) {
+        // Generate day schedule HTML with real data
+        function generateDaySchedule(bookings, roomId, dateStr) {
             let html = "";
+            const timeSlots = [];
+            
+            // Generate 24-hour time slots (every 30 minutes)
+            for (let hour = 0; hour < 24; hour++) {
+                for (let minutes = 0; minutes < 60; minutes += 30) {
+                    timeSlots.push(`${hour.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`);
+                }
+            }
 
-            for (let hour = WORK_HOURS.start; hour < WORK_HOURS.end; hour++) {
-                for (
-                    let minutes = 0;
-                    minutes < 60;
-                    minutes += WORK_HOURS.interval
-                ) {
-                    const timeStr = `${hour.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
-                    const booking = bookings.find(
-                        (b) => b.start <= timeStr && b.end > timeStr,
-                    );
+            timeSlots.forEach(timeStr => {
+                const booking = bookings.find(b => {
+                    const bookingStart = b.start;
+                    const bookingEnd = b.end;
+                    return timeStr >= bookingStart && timeStr < bookingEnd;
+                });
 
-                    let slotClass =
-                        "time-slot border-b border-gray-100 p-2 min-h-[40px] cursor-pointer hover:bg-gray-50";
-                    let content = `<div class="text-xs text-gray-500">${timeStr}</div>`;
+                let slotClass = "time-slot border-b border-gray-100 p-2 min-h-[40px] cursor-pointer hover:bg-gray-50 group";
+                let content = `<div class="text-xs text-gray-500">${timeStr}</div>`;
 
-                    if (booking) {
-                        const typeClass =
-                            booking.type === "own"
-                                ? "bg-blue-100 border-blue-300 text-blue-800"
-                                : "bg-orange-100 border-orange-300 text-orange-800";
-                        slotClass = `time-slot border-b border-gray-100 p-2 min-h-[40px] ${typeClass} border-l-4`;
-                        content = `
+                if (booking) {
+                    const typeClass = booking.type === "own"
+                        ? "bg-blue-100 border-blue-300 text-blue-800"
+                        : "bg-orange-100 border-orange-300 text-orange-800";
+                    slotClass = `time-slot border-b border-gray-100 p-2 min-h-[40px] ${typeClass} border-l-4`;
+                    content = `
                         <div class="text-xs font-medium">${booking.title}</div>
                         <div class="text-xs opacity-75">${booking.start} - ${booking.end}</div>
                         <div class="text-xs opacity-75">${booking.attendees} attendees</div>
+                        <div class="text-xs opacity-75">by ${booking.booked_by}</div>
                     `;
-                    } else {
-                        slotClass += " available-slot";
-                        content +=
-                            '<div class="text-xs text-green-600 opacity-0 group-hover:opacity-100">Available</div>';
-                    }
-
-                    html += `<div class="${slotClass}" data-time="${timeStr}">${content}</div>`;
+                } else {
+                    slotClass += " available-slot";
+                    content += '<div class="text-xs text-green-600 opacity-0 group-hover:opacity-100">Click to book</div>';
                 }
-            }
+
+                html += `<div class="${slotClass}" data-time="${timeStr}" data-room-id="${roomId}" data-date="${dateStr}">${content}</div>`;
+            });
 
             return html;
         }
 
-        // Render week view
+        // Render week view with real data
         function renderWeekView() {
             const weekStart = getWeekStart(currentDate);
             const weekBody = document.getElementById("weekViewBody");
 
-            // Update headers
-            for (let i = 0; i < 5; i++) {
-                // Monday to Friday
+            // Update headers with actual dates
+            for (let i = 0; i < 5; i++) { // Monday to Friday
                 const day = new Date(weekStart);
                 day.setDate(day.getDate() + i);
 
@@ -801,9 +789,9 @@
                 });
             }
 
-            // Generate time slots
+            // Generate time slots for 24 hours
             let html = "";
-            for (let hour = WORK_HOURS.start; hour < WORK_HOURS.end; hour++) {
+            for (let hour = 0; hour < 24; hour++) {
                 const timeStr = `${hour.toString().padStart(2, "0")}:00`;
                 html += `<tr class="hover:bg-gray-50">`;
                 html += `<td class="px-4 py-3 text-sm text-gray-500 border-r border-gray-200">${timeStr}</td>`;
@@ -822,104 +810,118 @@
             weekBody.innerHTML = html;
         }
 
-        // Generate week day cell
+        // Generate week day cell with real data
         function generateWeekDayCell(dateStr, hour) {
             const dayData = calendarData[dateStr] || {};
-            const roomId = roomFilter.value || "1";
-            const bookings = dayData["room-" + roomId] || [];
+            const roomId = roomFilter.value || Object.keys(dayData)[0]?.split('-')[1] || "1";
+            const roomKey = `room-${roomId}`;
+            const bookings = dayData[roomKey] || [];
 
             const hourStr = `${hour.toString().padStart(2, "0")}:00`;
-            const booking = bookings.find((b) => {
+            const booking = bookings.find(b => {
                 const bookingHour = parseInt(b.start.split(":")[0]);
                 return bookingHour === hour;
             });
 
-            let cellClass =
-                "px-4 py-3 border-r border-gray-200 min-h-[60px] cursor-pointer hover:bg-gray-50";
+            let cellClass = "px-4 py-3 border-r border-gray-200 min-h-[60px] cursor-pointer hover:bg-gray-50";
             let content = "";
 
             if (booking) {
-                const typeClass =
-                    booking.type === "own"
-                        ? "bg-blue-50 border-l-4 border-blue-400"
-                        : "bg-orange-50 border-l-4 border-orange-400";
+                const typeClass = booking.type === "own"
+                    ? "bg-blue-50 border-l-4 border-blue-400"
+                    : "bg-orange-50 border-l-4 border-orange-400";
                 cellClass += ` ${typeClass}`;
                 content = `
-                <div class="text-xs font-medium text-gray-900 truncate">${booking.title}</div>
-                <div class="text-xs text-gray-500">${booking.start}-${booking.end}</div>
-            `;
+                    <div class="text-xs font-medium text-gray-900 truncate" title="${booking.title}">${booking.title}</div>
+                    <div class="text-xs text-gray-500">${booking.start}-${booking.end}</div>
+                    <div class="text-xs text-gray-400">${booking.booked_by}</div>
+                `;
             } else {
                 cellClass += " available-slot";
-                content =
-                    '<div class="text-xs text-green-600 opacity-50">Available</div>';
+                content = '<div class="text-xs text-green-600 opacity-50">Available</div>';
             }
 
-            return `<td class="${cellClass}" data-date="${dateStr}" data-hour="${hour}">${content}</td>`;
+            return `<td class="${cellClass}" data-date="${dateStr}" data-hour="${hour}" data-room-id="${roomId}">${content}</td>`;
         }
 
-        // Render month view
-        function renderMonthView() {
-            const year = currentDate.getFullYear();
-            const month = currentDate.getMonth();
-            const firstDay = new Date(year, month, 1);
-            const lastDay = new Date(year, month + 1, 0);
-            const startDate = new Date(firstDay);
-            startDate.setDate(startDate.getDate() - firstDay.getDay());
-
-            const grid = document.getElementById("monthCalendarGrid");
-            let html = "";
-
-            for (let week = 0; week < 6; week++) {
-                for (let day = 0; day < 7; day++) {
-                    const currentDay = new Date(startDate);
-                    currentDay.setDate(startDate.getDate() + week * 7 + day);
-
-                    const dateStr = currentDay.toISOString().split("T")[0];
-                    const isCurrentMonth = currentDay.getMonth() === month;
-                    const isToday =
-                        currentDay.toDateString() === new Date().toDateString();
-
-                    let cellClass =
-                        "border-r border-b border-gray-200 p-2 min-h-[100px] cursor-pointer hover:bg-gray-50";
-                    if (!isCurrentMonth)
-                        cellClass += " bg-gray-50 text-gray-400";
-                    if (isToday) cellClass += " bg-blue-50";
-
-                    const dayData = calendarData[dateStr] || {};
-                    const totalBookings = Object.values(dayData).reduce(
-                        (total, roomBookings) => total + roomBookings.length,
-                        0,
-                    );
-
-                    html += `
-                    <div class="${cellClass}" data-date="${dateStr}">
-                        <div class="flex justify-between items-center mb-1">
-                            <span class="text-sm font-medium">${currentDay.getDate()}</span>
-                            ${totalBookings > 0 ? `<span class="text-xs bg-blue-100 text-blue-800 px-1 rounded">${totalBookings}</span>` : ""}
-                        </div>
-                        <div class="space-y-1">
-                            ${Object.entries(dayData)
-                                .slice(0, 3)
-                                .map(([roomKey, bookings]) =>
-                                    bookings
-                                        .slice(0, 2)
-                                        .map(
-                                            (booking) =>
-                                                `<div class="text-xs p-1 rounded ${booking.type === "own" ? "bg-blue-100 text-blue-800" : "bg-orange-100 text-orange-800"} truncate">
-                                        ${booking.title}
-                                    </div>`,
-                                        )
-                                        .join(""),
-                                )
-                                .join("")}
-                            ${totalBookings > 3 ? `<div class="text-xs text-gray-500">+${totalBookings - 3} more</div>` : ""}
-                        </div>
-                    </div>
-                `;
-                }
+        // Update quick booking to use real API
+        confirmQuickBookingBtn.addEventListener("click", () => {
+            const purpose = document.getElementById("quickPurpose").value.trim();
+            const attendees = document.getElementById("quickAttendees").value;
+            const duration = document.getElementById("quickDuration").value;
+            
+            if (!purpose) {
+                alert("Please enter a meeting purpose");
+                return;
             }
 
-            grid.innerHTML = html;
+            const roomId = quickBookingModal.dataset.roomId;
+            const date = quickBookingModal.dataset.date;
+            const time = quickBookingModal.dataset.time;
+
+            if (!roomId || !date || !time) {
+                alert("Booking information is missing");
+                return;
+            }
+
+            // Create datetime string
+            const startDateTime = `${date}T${time}:00`;
+
+            // Show loading state
+            confirmQuickBookingBtn.disabled = true;
+            confirmQuickBookingBtn.textContent = "Booking...";
+
+            // Submit booking
+            fetch('/book/api/quick-booking/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value || getCookie('csrftoken'),
+                },
+                body: JSON.stringify({
+                    room_id: roomId,
+                    start_time: startDateTime,
+                    duration: parseInt(duration),
+                    purpose: purpose,
+                    attendees: parseInt(attendees)
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Booking created successfully!');
+                    closeQuickBookingModal();
+                    closeCalendarModal();
+                    // Reload calendar data
+                    loadCalendarData();
+                } else {
+                    alert(`Failed to create booking: ${data.error}`);
+                }
+            })
+            .catch(error => {
+                console.error('Error creating booking:', error);
+                alert('An error occurred while creating the booking');
+            })
+            .finally(() => {
+                confirmQuickBookingBtn.disabled = false;
+                confirmQuickBookingBtn.textContent = "Book Now";
+            });
+        });
+
+        // Helper function to get CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
         }
 
         // Event handlers
@@ -966,55 +968,19 @@
         });
 
         roomFilter.addEventListener("change", () => {
-            renderCalendarView();
+            loadCalendarData(); // Reload data when room filter changes
         });
 
         refreshBtn.addEventListener("click", () => {
             loadCalendarData();
         });
 
-        // Close modal handlers
-        closeCalendarBtns.forEach((btn) => {
-            btn.addEventListener("click", closeCalendarModal);
-        });
-
-        // Close modal when clicking outside
-        calendarModal.addEventListener("click", function (e) {
-            if (e.target === calendarModal) {
-                closeCalendarModal();
-            }
-        });
-
-        // Quick booking handlers
-        closeQuickBookingBtns.forEach((btn) => {
-            btn.addEventListener("click", closeQuickBookingModal);
-        });
-
-        confirmQuickBookingBtn.addEventListener("click", () => {
-            const purpose = document
-                .getElementById("quickPurpose")
-                .value.trim();
-            if (!purpose) {
-                alert("Please enter a meeting purpose");
-                return;
-            }
-
-            // Here you would submit the booking
-            alert(
-                "Booking confirmed! (This would integrate with your booking system)",
-            );
-            closeQuickBookingModal();
-            closeCalendarModal();
-        });
-
         // Handle available slot clicks
         document.addEventListener("click", function (e) {
             if (e.target.closest(".available-slot")) {
                 const slot = e.target.closest(".available-slot");
-                const roomId = slot.closest("[data-room-id]")?.dataset.roomId;
-                const date =
-                    slot.dataset.date ||
-                    currentDate.toISOString().split("T")[0];
+                const roomId = slot.dataset.roomId;
+                const date = slot.dataset.date;
                 const time = slot.dataset.time || slot.dataset.hour + ":00";
 
                 if (roomId && date && time) {
@@ -1025,10 +991,11 @@
 
         // Open quick booking modal
         function openQuickBookingModal(roomId, date, time) {
-            const roomName =
-                document
-                    .querySelector(`[data-room-id="${roomId}"]`)
-                    ?.querySelector("h4")?.textContent || `Room ${roomId}`;
+            // Find room name
+            const roomSelect = document.getElementById("calendarRoomFilter");
+            const roomOption = roomSelect.querySelector(`option[value="${roomId}"]`);
+            const roomName = roomOption ? roomOption.textContent : `Room ${roomId}`;
+            
             const dateObj = new Date(date + "T" + time);
 
             document.getElementById("quickBookingRoom").textContent = roomName;
@@ -1050,7 +1017,7 @@
             quickBookingModal.classList.remove("hidden");
         }
 
-        // Close quick booking modal
+        // Close modal functions
         function closeQuickBookingModal() {
             quickBookingModal.classList.add("hidden");
             document.getElementById("quickPurpose").value = "";
@@ -1058,7 +1025,6 @@
             document.getElementById("quickDuration").value = "60";
         }
 
-        // Close calendar modal
         function closeCalendarModal() {
             const modalDialog = document.getElementById("calendarModalDialog");
             calendarModal.classList.remove("bg-opacity-50");
@@ -1071,7 +1037,23 @@
             }, 300);
         }
 
-        // Initialize calendar when modal is opened
+        // Close modal handlers
+        closeCalendarBtns.forEach((btn) => {
+            btn.addEventListener("click", closeCalendarModal);
+        });
+
+        closeQuickBookingBtns.forEach((btn) => {
+            btn.addEventListener("click", closeQuickBookingModal);
+        });
+
+        // Close modal when clicking outside
+        calendarModal.addEventListener("click", function (e) {
+            if (e.target === calendarModal) {
+                closeCalendarModal();
+            }
+        });
+
+        // Make functions available globally
         window.initCalendar = initCalendar;
     });
 </script>
