@@ -74,38 +74,41 @@
 {% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50/50 py-8">
+<div class="min-h-screen py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Header -->
         <div class="mb-8">
             <div class="flex justify-between items-center">
-                <h1 class="text-3xl font-bold text-gray-900">Support Tickets</h1>
-                <div class="flex items-center space-x-4">
-                    <a href="{% url 'support:create_ticket' %}" class="btn ">
+                <h1 class="text-4xl font-bold text-gray-800">Support Tickets</h1>
+                <div class="flex items-center space-x-3">
+                    <a href="{% url 'support:create_ticket' %}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-semibold text-sm rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                         </svg>
                         New Ticket
                     </a>
-                    <a href="{% url 'support:ticket_export' %}" class="btn ">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <a href="{% url 'support:ticket_export' %}" class="inline-flex items-center px-4 py-2 bg-white text-gray-700 font-semibold text-sm rounded-lg border border-gray-300 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                        <svg class="w-5 h-5 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
                         Export
+                    </a>
+                    <a href="{% url 'support:dashboard' %}" class="inline-flex items-center px-4 py-2 bg-white text-gray-700 font-semibold text-sm rounded-lg border border-gray-300 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                        <svg class="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+                          </svg>
+                        Dashboard
                     </a>
                 </div>
             </div>
         </div>
 
-        <!-- Controls -->
-        <div class="bg-white/70 backdrop-blur-sm rounded-xl shadow-sm border border-gray-100 mb-6">
+        <div class="bg-white rounded-xl shadow-md border border-gray-200 mb-6">
             <div class="p-6">
                 <div class="flex flex-wrap items-center justify-between gap-4">
-                    <!-- Search -->
-                    <div class="flex-1 min-w-0">
+                    <div class="flex-1 min-w-[200px]">
                         <div class="relative">
-                            <input type="text" id="searchInput" placeholder="Search tickets..." 
-                                   class="block w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                             <input type="text" id="searchInput" placeholder="Search tickets..."
+                                   class="block w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-shadow">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
@@ -114,33 +117,30 @@
                         </div>
                     </div>
 
-                    <!-- View Toggle -->
                     <div class="flex items-center bg-gray-100 rounded-lg p-1">
-                        <button id="cardViewBtn" class=" px-3 py-1 text-sm rounded-md">
-                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <button id="cardViewBtn" class="flex items-center px-3 py-1 text-sm font-semibold text-gray-800 bg-white rounded-md shadow-sm">
+                            <svg class="w-4 h-4 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
                             </svg>
                             Cards
                         </button>
-                        <button id="tableViewBtn" class=" px-3 py-1 text-sm rounded-md ml-1">
-                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <button id="tableViewBtn" class="flex items-center px-3 py-1 text-sm font-medium text-gray-500 hover:text-gray-800 ml-1">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
                             </svg>
                             Table
                         </button>
                     </div>
 
-                    <!-- Filter Toggle -->
-                    <button id="filterToggle" class="btn ">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <button id="filterToggle" class="inline-flex items-center px-4 py-2 bg-white text-gray-700 font-semibold text-sm rounded-lg border border-gray-300 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                        <svg class="w-5 h-5 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z"/>
                         </svg>
                         Filters
                     </button>
 
-                    <!-- Bulk Actions -->
                     <div class="relative">
-                        <button id="bulkActionToggle" class="btn " disabled>
+                        <button id="bulkActionToggle" class="inline-flex items-center px-4 py-2 bg-white text-gray-500 font-semibold text-sm rounded-lg border border-gray-300 shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                             </svg>
@@ -148,21 +148,20 @@
                         </button>
                         <div id="bulkActionDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-10">
                             <div class="py-1">
-                                <button onclick="bulkAction('assign')" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Assign</button>
-                                <button onclick="bulkAction('status')" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Change Status</button>
-                                <button onclick="bulkAction('priority')" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Change Priority</button>
-                                <button onclick="bulkAction('delete')" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">Delete</button>
+                                <button onclick="bulkAction('assign')" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">Assign</button>
+                                <button onclick="bulkAction('status')" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">Change Status</button>
+                                <button onclick="bulkAction('priority')" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">Change Priority</button>
+                                <button onclick="bulkAction('delete')" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-700">Delete</button>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Filters Section -->
                 <div id="filterSection" class="hidden mt-6 pt-6 border-t border-gray-200">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         <div>
                             <label for="statusFilter" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                            <select id="statusFilter" class="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            <select id="statusFilter" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
                                 <option value="">All Status</option>
                                 <option value="New">New</option>
                                 <option value="Open">Open</option>
@@ -176,7 +175,7 @@
                         </div>
                         <div>
                             <label for="priorityFilter" class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
-                            <select id="priorityFilter" class="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            <select id="priorityFilter" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
                                 <option value="">All Priorities</option>
                                 <option value="Low">Low</option>
                                 <option value="Medium">Medium</option>
@@ -186,7 +185,7 @@
                         </div>
                         <div>
                             <label for="issueTypeFilter" class="block text-sm font-medium text-gray-700 mb-1">Issue Type</label>
-                            <select id="issueTypeFilter" class="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            <select id="issueTypeFilter" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
                                 <option value="">All Types</option>
                                 <option value="Hardware Issue">Hardware Issue</option>
                                 <option value="Software Issue">Software Issue</option>
@@ -201,20 +200,21 @@
                         </div>
                         <div>
                             <label for="assignedGroupFilter" class="block text-sm font-medium text-gray-700 mb-1">Assigned Group</label>
-                            <select id="assignedGroupFilter" class="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            <select id="assignedGroupFilter" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
                                 <option value="">All Groups</option>
                                 <option value="HR">HR</option>
                                 <option value="Admin">Admin</option>
                             </select>
                         </div>
                     </div>
-                    <div class="mt-4 flex space-x-4">
-                        <button onclick="applyFilters()" class="btn ">Apply Filters</button>
-                        <button onclick="clearFilters()" class="btn ">Clear Filters</button>
+                    <div class="mt-6 flex space-x-4">
+                        <button onclick="applyFilters()" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-semibold text-sm rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">Apply Filters</button>
+                        <button onclick="clearFilters()" class="inline-flex items-center px-4 py-2 bg-white text-gray-700 font-semibold text-sm rounded-lg border border-gray-300 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">Clear Filters</button>
                     </div>
                 </div>
             </div>
         </div>
+  
 
         <!-- Loading Overlay -->
         <div id="loadingOverlay" class="loading-overlay hidden">

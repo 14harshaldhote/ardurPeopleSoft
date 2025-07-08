@@ -55591,3 +55591,615 @@ django.urls.exceptions.NoReverseMatch: Reverse for 'ticket_detail' with keyword 
 [2025-07-08 15:26:07] INFO - django.server - log_message:212 - "GET /media/comment_attachments/2025/07/08/comment_attachments/HARDWARE_ISSUE-3/HARDWARE_ISSUE-3-comment-1.pdf HTTP/1.1" 200 157399
 [2025-07-08 15:26:16] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
 [2025-07-08 15:26:16] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:27:06] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-07-08 15:27:06] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:27:06] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:27:12] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:27:12] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:27:27] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:27:27] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:27:32] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:27:32] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:27:34] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:27:34] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:27:45] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:27:45] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:27:46] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:27:46] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:27:46] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 4fba66f8-6733-4353-ac05-da0b9a98a1fd
+[2025-07-08 15:27:47] INFO - django.server - log_message:212 - "GET /support/tickets/ HTTP/1.1" 200 122176
+[2025-07-08 15:27:47] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:27:47] INFO - django.server - handle_error:81 - - Broken pipe from ('127.0.0.1', 51717)
+[2025-07-08 15:27:47] INFO - django.server - handle_error:81 - - Broken pipe from ('127.0.0.1', 51794)
+[2025-07-08 15:27:47] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 236df9ce-2409-43c8-8416-edee67d99088
+[2025-07-08 15:27:47] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:27:47] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:27:47] INFO - django.server - log_message:212 - "GET /support/tickets/api/?page=1&search=&status=&priority=&issue_type=&assigned_group= HTTP/1.1" 200 696
+[2025-07-08 15:27:51] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:27:51] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:28:02] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:28:02] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:28:03] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 3a350e0d-ba97-4fd9-9adc-216a5c582920
+[2025-07-08 15:28:03] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:28:03] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:28:04] INFO - django.server - log_message:212 - "GET /support/tickets/2/ HTTP/1.1" 200 101179
+[2025-07-08 15:28:04] INFO - django.server - handle_error:81 - - Broken pipe from ('127.0.0.1', 51802)
+[2025-07-08 15:28:04] INFO - django.server - handle_error:81 - - Broken pipe from ('127.0.0.1', 51716)
+[2025-07-08 15:28:04] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:28:04] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:28:13] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: fb17ed86-cf9e-450d-93e7-b90261faa550
+[2025-07-08 15:28:13] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:28:13] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:28:14] INFO - django.server - log_message:212 - "GET /support/tickets/ HTTP/1.1" 200 122176
+[2025-07-08 15:28:14] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:28:14] INFO - django.server - handle_error:81 - - Broken pipe from ('127.0.0.1', 51871)
+[2025-07-08 15:28:14] INFO - django.server - handle_error:81 - - Broken pipe from ('127.0.0.1', 51801)
+[2025-07-08 15:28:14] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: be45530a-7494-4f44-8509-004392ee6a77
+[2025-07-08 15:28:14] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:28:14] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:28:14] INFO - django.server - log_message:212 - "GET /support/tickets/api/?page=1&search=&status=&priority=&issue_type=&assigned_group= HTTP/1.1" 200 696
+[2025-07-08 15:28:16] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:28:16] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:28:26] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:28:26] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:28:30] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:28:30] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:28:44] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:28:44] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:29:14] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 28b5f1de-7256-41dd-8831-26e6deb44428
+[2025-07-08 15:29:14] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: d05d2c13-6a04-4f6b-b9f7-6e09d2ba0283
+[2025-07-08 15:29:14] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:29:14] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:29:14] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_7e6kmotb1_1751968694243 HTTP/1.1" 200 410
+[2025-07-08 15:29:14] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_wcqyu89ky_1751968694244 HTTP/1.1" 200 410
+[2025-07-08 15:29:38] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:29:38] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:29:44] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:29:44] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:29:45] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:29:45] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:30:12] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:30:12] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:30:14] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 979f9275-08db-4916-9472-fb390324610c
+[2025-07-08 15:30:14] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 9627836e-8818-4f6c-b408-2fe1f017baf0
+[2025-07-08 15:30:14] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:30:14] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:30:14] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_7e6kmotb1_1751968694243 HTTP/1.1" 200 410
+[2025-07-08 15:30:14] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_wcqyu89ky_1751968694244 HTTP/1.1" 200 410
+[2025-07-08 15:30:14] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 16004562-6005-4d68-b838-f592887af931
+[2025-07-08 15:30:14] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:30:14] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:30:14] INFO - django.server - log_message:212 - "GET /support/tickets/ HTTP/1.1" 200 122203
+[2025-07-08 15:30:15] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:30:15] INFO - django.server - handle_error:81 - - Broken pipe from ('127.0.0.1', 51877)
+[2025-07-08 15:30:15] INFO - django.server - handle_error:81 - - Broken pipe from ('127.0.0.1', 51993)
+[2025-07-08 15:30:15] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: c63da58b-78cf-4e8d-80e7-5605a30d2290
+[2025-07-08 15:30:15] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:30:15] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:30:15] INFO - django.server - log_message:212 - "GET /support/tickets/api/?page=1&search=&status=&priority=&issue_type=&assigned_group= HTTP/1.1" 200 696
+[2025-07-08 15:30:18] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:30:18] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:30:43] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:30:43] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:30:45] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:30:45] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:30:46] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 8227f7d4-8891-4497-af20-93a33f80e3ee
+[2025-07-08 15:30:46] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:30:46] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:30:46] INFO - django.server - log_message:212 - "GET /support/tickets/ HTTP/1.1" 200 123423
+[2025-07-08 15:30:46] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:30:46] INFO - django.server - handle_error:81 - - Broken pipe from ('127.0.0.1', 51853)
+[2025-07-08 15:30:46] INFO - django.server - handle_error:81 - - Broken pipe from ('127.0.0.1', 52140)
+[2025-07-08 15:30:46] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: cf132bde-971e-4740-a791-c0d408481d5c
+[2025-07-08 15:30:46] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:30:46] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:30:46] INFO - django.server - log_message:212 - "GET /support/tickets/api/?page=1&search=&status=&priority=&issue_type=&assigned_group= HTTP/1.1" 200 696
+[2025-07-08 15:31:00] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:31:00] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:31:17] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:31:17] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:31:27] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:31:27] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:31:44] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:31:44] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:31:47] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 5dff3714-a693-48b1-a68d-36aeb1e4a61b
+[2025-07-08 15:31:47] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: e0396c5d-21bb-4592-8997-1b6135f8e896
+[2025-07-08 15:31:47] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:31:47] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:31:47] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_zc2oqf9zq_1751968846399 HTTP/1.1" 200 410
+[2025-07-08 15:31:47] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_rud9smj2r_1751968846400 HTTP/1.1" 200 410
+[2025-07-08 15:31:51] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:31:51] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:31:52] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: a1f9f957-3493-4be0-9f38-67aab575f0e0
+[2025-07-08 15:31:52] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:31:52] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:31:52] INFO - django.server - log_message:212 - "GET /support/tickets/ HTTP/1.1" 200 123411
+[2025-07-08 15:31:52] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:31:52] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:31:52] INFO - django.server - handle_error:81 - - Broken pipe from ('127.0.0.1', 52201)
+[2025-07-08 15:31:52] INFO - django.server - handle_error:81 - - Broken pipe from ('127.0.0.1', 52301)
+[2025-07-08 15:31:53] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 7459cfe7-8be5-4e30-ba3a-a307ccfc3cda
+[2025-07-08 15:31:53] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:31:53] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:31:53] INFO - django.server - log_message:212 - "GET /support/tickets/api/?page=1&search=&status=&priority=&issue_type=&assigned_group= HTTP/1.1" 200 696
+[2025-07-08 15:31:59] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:31:59] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:32:23] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:32:23] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:32:47] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:32:47] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:32:49] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:32:49] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:32:53] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: ea54cca6-a2fb-4170-9529-0d560d802495
+[2025-07-08 15:32:53] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 231452d7-0d81-4df8-905c-4f40a4929006
+[2025-07-08 15:32:53] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:32:53] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:32:53] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_mnnm2wfgb_1751968912980 HTTP/1.1" 200 410
+[2025-07-08 15:32:53] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_whd0mg9y0_1751968912981 HTTP/1.1" 200 410
+[2025-07-08 15:33:14] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:33:14] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:33:15] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 63468133-88a7-46df-b5b2-333292d140a5
+[2025-07-08 15:33:15] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:33:15] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:33:15] INFO - django.server - log_message:212 - "GET /support/tickets/ HTTP/1.1" 200 124315
+[2025-07-08 15:33:15] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:33:15] INFO - django.server - handle_error:81 - - Broken pipe from ('127.0.0.1', 51876)
+[2025-07-08 15:33:15] INFO - django.server - handle_error:81 - - Broken pipe from ('127.0.0.1', 52324)
+[2025-07-08 15:33:16] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 3e00a1d0-ad86-4970-82c3-6442c42903f0
+[2025-07-08 15:33:16] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:33:16] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:33:16] INFO - django.server - log_message:212 - "GET /support/tickets/api/?page=1&search=&status=&priority=&issue_type=&assigned_group= HTTP/1.1" 200 696
+[2025-07-08 15:33:21] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:33:21] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:33:35] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:33:35] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:33:36] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: ae6d7447-d12c-4e2e-9fa7-7c73085cd90d
+[2025-07-08 15:33:36] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:33:36] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:33:36] INFO - django.server - log_message:212 - "GET /support/dashboard/ HTTP/1.1" 200 104591
+[2025-07-08 15:33:36] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:33:36] INFO - django.server - handle_error:81 - - Broken pipe from ('127.0.0.1', 52203)
+[2025-07-08 15:33:36] INFO - django.server - handle_error:81 - - Broken pipe from ('127.0.0.1', 52510)
+[2025-07-08 15:33:37] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:33:37] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:33:40] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 4c49d47c-a11c-4b17-bb04-b041972c510e
+[2025-07-08 15:33:40] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:33:40] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:33:41] INFO - django.server - log_message:212 - "GET /support/tickets/ HTTP/1.1" 200 124315
+[2025-07-08 15:33:41] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:33:41] INFO - django.server - handle_error:81 - - Broken pipe from ('127.0.0.1', 52554)
+[2025-07-08 15:33:41] INFO - django.server - handle_error:81 - - Broken pipe from ('127.0.0.1', 52546)
+[2025-07-08 15:33:41] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: df78f481-8d2d-43d2-b264-146c88542999
+[2025-07-08 15:33:41] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:33:41] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:33:41] INFO - django.server - log_message:212 - "GET /support/tickets/api/?page=1&search=&status=&priority=&issue_type=&assigned_group= HTTP/1.1" 200 696
+[2025-07-08 15:33:57] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 54185175-78db-408f-bde6-e0f030a5e293
+[2025-07-08 15:33:57] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:33:57] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:33:57] INFO - django.server - log_message:212 - "GET /support/dashboard/ HTTP/1.1" 200 104591
+[2025-07-08 15:33:57] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:33:57] INFO - django.server - handle_error:81 - - Broken pipe from ('127.0.0.1', 52562)
+[2025-07-08 15:33:57] INFO - django.server - handle_error:81 - - Broken pipe from ('127.0.0.1', 52561)
+[2025-07-08 15:33:58] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:33:58] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:34:08] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:34:08] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:34:26] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:34:26] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:34:27] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:34:27] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:34:57] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 08428da3-7aaa-4f0f-9abd-67ef8eb39d4f
+[2025-07-08 15:34:57] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 550fb7c8-2569-409d-a775-ea2cc4c4bacd
+[2025-07-08 15:34:57] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:34:57] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:34:58] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_rznyhspy9_1751969037811 HTTP/1.1" 200 410
+[2025-07-08 15:34:58] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_jtpe4dsbm_1751969037812 HTTP/1.1" 200 410
+[2025-07-08 15:35:28] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:35:28] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:35:29] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:35:29] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:35:58] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 2c559c46-ee32-42c6-8885-4446cf832d6d
+[2025-07-08 15:35:58] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: bfc35243-f7d4-4d78-bf7d-83867ca0fe77
+[2025-07-08 15:35:58] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:35:58] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:35:58] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_jtpe4dsbm_1751969037812 HTTP/1.1" 200 410
+[2025-07-08 15:35:58] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_rznyhspy9_1751969037811 HTTP/1.1" 200 410
+[2025-07-08 15:36:28] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:36:28] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:36:58] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 0e60fd61-edd6-4bae-bc87-b4e7ffa9225f
+[2025-07-08 15:36:58] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: a2e48dde-3876-40a1-abba-cc6a8794d600
+[2025-07-08 15:36:58] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:36:58] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:36:58] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_jtpe4dsbm_1751969037812 HTTP/1.1" 200 410
+[2025-07-08 15:36:58] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_rznyhspy9_1751969037811 HTTP/1.1" 200 410
+[2025-07-08 15:37:58] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: b0f38c17-4dcf-4bbb-ba2a-d3120ce69255
+[2025-07-08 15:37:58] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: b6e9d9d5-bebb-424b-98fe-b9a9c24e6414
+[2025-07-08 15:37:58] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:37:58] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:37:58] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_jtpe4dsbm_1751969037812 HTTP/1.1" 200 410
+[2025-07-08 15:37:58] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_rznyhspy9_1751969037811 HTTP/1.1" 200 410
+[2025-07-08 15:38:58] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: ffbe57cc-5a2a-4569-841b-1770f6e2298b
+[2025-07-08 15:38:58] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 18ad9ded-dcc9-47b3-a26a-0c6cff30e4f5
+[2025-07-08 15:38:58] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 95a599c6-fefa-43ed-a151-c20446646a76
+[2025-07-08 15:38:58] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:38:58] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:38:58] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_jtpe4dsbm_1751969037812 HTTP/1.1" 200 410
+[2025-07-08 15:38:58] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_rznyhspy9_1751969037811 HTTP/1.1" 200 410
+[2025-07-08 15:38:58] INFO - django.server - log_message:212 - "GET /support/api/tickets/stats/ HTTP/1.1" 200 635
+[2025-07-08 15:39:38] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:39:38] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:39:38] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:39:38] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:39:38] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:39:38] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:39:40] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:39:40] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:39:41] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:39:41] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:39:43] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 526cf610-8071-43ca-ad85-9dbd721a765f
+[2025-07-08 15:39:43] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:39:43] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:39:50] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:39:50] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:39:55] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:39:55] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:39:57] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: cfc142d8-1eb8-4843-9b94-2b08a87aa5f1
+[2025-07-08 15:39:57] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 0799f141-a288-4865-8df2-da0232c498a0
+[2025-07-08 15:39:58] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:39:58] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:39:58] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_rznyhspy9_1751969037811 HTTP/1.1" 200 410
+[2025-07-08 15:39:58] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_jtpe4dsbm_1751969037812 HTTP/1.1" 200 410
+[2025-07-08 15:40:09] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:40:09] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 15:40:28] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:40:28] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 15:40:31] INFO - django.server - log_message:212 - "GET /logout/ HTTP/1.1" 302 0
+[2025-07-08 15:40:31] INFO - django.server - log_message:212 - "GET /login/ HTTP/1.1" 200 9589
+[2025-07-08 19:22:00] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-07-08 19:22:06] INFO - trueAlign.core.middleware - _handle_unauthenticated_request:106 - Unauthenticated access attempt to /dashbo from IP 127.0.0.1
+[2025-07-08 19:22:06] INFO - django.server - log_message:212 - "GET /dashbo HTTP/1.1" 302 0
+[2025-07-08 19:22:06] INFO - django.server - log_message:212 - "GET /login/?next=/dashbo HTTP/1.1" 200 8969
+[2025-07-08 19:22:06] WARNING - django.server - log_message:212 - "GET /favicon.ico HTTP/1.1" 404 6825
+[2025-07-08 19:22:15] INFO - django.server - log_message:212 - "POST /login/?next=/dashbo HTTP/1.1" 302 0
+[2025-07-08 19:22:15] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 3e51db24-5416-4737-ae6f-6d251c53bb85
+[2025-07-08 19:22:15] WARNING - django.server - log_message:212 - "GET /dashbo HTTP/1.1" 404 6810
+[2025-07-08 19:22:27] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: b71e8dee-bea3-4070-82ed-745c5b922d5c
+[2025-07-08 19:22:28] INFO - django.server - log_message:212 - "GET /dashboard/ HTTP/1.1" 200 247703
+[2025-07-08 19:22:28] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: e02c8e94-ff4d-4fb3-9ffe-262e73355776
+[2025-07-08 19:22:28] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:22:28] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:22:28] INFO - django.server - log_message:212 - "GET /book/api/rooms/ HTTP/1.1" 200 1041
+[2025-07-08 19:22:48] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 8ad5745c-a4a3-4af2-96fc-8c5ccbc086d1
+[2025-07-08 19:22:48] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:22:48] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:22:48] INFO - django.server - log_message:212 - "GET /support/dashboard/ HTTP/1.1" 200 104591
+[2025-07-08 19:22:48] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:22:48] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:22:48] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:22:48] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:22:52] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:22:52] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:23:18] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:23:18] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:23:48] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 0b4bd8e0-1cbc-4fef-b286-9d44695d9975
+[2025-07-08 19:23:48] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 457ed3d4-7e79-4314-8a42-9e2d73d07df8
+[2025-07-08 19:23:48] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:23:48] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:23:48] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_jmo16p76s_1751982768469 HTTP/1.1" 200 410
+[2025-07-08 19:23:48] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_ntgnxw6eb_1751982768469 HTTP/1.1" 200 410
+[2025-07-08 19:24:18] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:24:18] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:24:48] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 265fd413-49aa-4dbe-ad17-e7bf16428022
+[2025-07-08 19:24:48] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: b84c5e89-6ba2-465a-9995-6b2d9ceb2d73
+[2025-07-08 19:24:48] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:24:48] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:24:48] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_jmo16p76s_1751982768469 HTTP/1.1" 200 410
+[2025-07-08 19:24:48] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_ntgnxw6eb_1751982768469 HTTP/1.1" 200 410
+[2025-07-08 19:25:18] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:25:18] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:25:48] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 40838572-4439-45f3-9bdc-6df608a14461
+[2025-07-08 19:25:48] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: d00cdd1d-a4a4-4c59-ab0c-35360fc1ff6c
+[2025-07-08 19:25:48] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:25:48] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:25:48] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_ntgnxw6eb_1751982768469 HTTP/1.1" 200 410
+[2025-07-08 19:25:48] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_jmo16p76s_1751982768469 HTTP/1.1" 200 410
+[2025-07-08 19:26:19] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:26:19] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:26:19] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:26:19] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:26:21] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:26:21] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:26:48] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: caaf9b8c-7504-4135-9373-1042d7e3623b
+[2025-07-08 19:26:48] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: fb89571f-a3a8-48bd-a40e-57ae3b5b112a
+[2025-07-08 19:26:48] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:26:48] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:26:48] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_jmo16p76s_1751982768469 HTTP/1.1" 200 410
+[2025-07-08 19:26:48] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_ntgnxw6eb_1751982768469 HTTP/1.1" 200 410
+[2025-07-08 19:27:02] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:27:02] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:27:02] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:27:02] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:27:04] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 650b0bce-b079-43c9-8637-b34643584974
+[2025-07-08 19:27:04] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:27:04] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:27:04] INFO - django.server - log_message:212 - "GET /support/dashboard/ HTTP/1.1" 200 89785
+[2025-07-08 19:27:04] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:27:04] INFO - django.server - handle_error:81 - - Broken pipe from ('127.0.0.1', 54418)
+[2025-07-08 19:27:04] INFO - django.server - handle_error:81 - - Broken pipe from ('127.0.0.1', 54493)
+[2025-07-08 19:27:04] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:27:04] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:27:09] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:27:09] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:27:33] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:27:33] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:27:34] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:27:34] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:27:34] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 2763fb10-c55f-4e73-b9a3-1bb962aa02aa
+[2025-07-08 19:27:34] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:27:34] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:27:34] INFO - django.server - log_message:212 - "GET /support/dashboard/ HTTP/1.1" 200 94067
+[2025-07-08 19:27:35] INFO - django.server - handle_error:81 - - Broken pipe from ('127.0.0.1', 54663)
+[2025-07-08 19:27:35] INFO - django.server - handle_error:81 - - Broken pipe from ('127.0.0.1', 54441)
+[2025-07-08 19:27:35] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:27:35] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:27:41] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:27:41] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:28:05] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:28:05] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:28:35] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 0a6c8278-9fcc-4d0b-90b9-96bf6fbff61d
+[2025-07-08 19:28:35] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: b1d435b1-6f77-445a-9f59-6af6a62e1c8d
+[2025-07-08 19:28:35] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:28:35] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:28:35] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_earnkhj35_1751983055127 HTTP/1.1" 200 410
+[2025-07-08 19:28:35] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_z0js4xj7n_1751983055128 HTTP/1.1" 200 410
+[2025-07-08 19:29:05] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:29:05] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:29:35] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 571be446-5ab2-40d0-a2b9-3342479984b7
+[2025-07-08 19:29:35] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 6007615b-8e88-4488-8c6f-05631b40cd3c
+[2025-07-08 19:29:35] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:29:35] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:29:35] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_earnkhj35_1751983055127 HTTP/1.1" 200 410
+[2025-07-08 19:29:35] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_z0js4xj7n_1751983055128 HTTP/1.1" 200 410
+[2025-07-08 19:29:40] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:29:40] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:29:41] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: ecd67c3f-ac38-4daf-b8cc-d8f177c30b32
+[2025-07-08 19:29:41] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:29:41] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:29:42] INFO - django.server - log_message:212 - "GET /support/dashboard/ HTTP/1.1" 200 117502
+[2025-07-08 19:29:42] INFO - django.server - handle_error:81 - - Broken pipe from ('127.0.0.1', 54730)
+[2025-07-08 19:29:42] INFO - django.server - handle_error:81 - - Broken pipe from ('127.0.0.1', 54417)
+[2025-07-08 19:29:42] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:29:42] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:30:12] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:30:12] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:30:14] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 2e45f999-b74b-49c5-bca4-245f4893ffe4
+[2025-07-08 19:30:14] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:30:14] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:30:14] INFO - django.server - log_message:212 - "GET /support/tickets/ HTTP/1.1" 200 124315
+[2025-07-08 19:30:15] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:30:15] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:30:15] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 4a1533cf-af40-4383-a0b8-09b524642670
+[2025-07-08 19:30:15] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:30:15] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:30:15] INFO - django.server - log_message:212 - "GET /support/tickets/api/?page=1&search=&status=&priority=&issue_type=&assigned_group= HTTP/1.1" 200 696
+[2025-07-08 19:30:22] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:30:22] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:30:45] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:30:45] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:31:07] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:31:07] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:31:10] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 22c38608-3deb-4c43-860d-60af330aae22
+[2025-07-08 19:31:10] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:31:10] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:31:10] INFO - django.server - log_message:212 - "GET /support/dashboard/ HTTP/1.1" 200 117502
+[2025-07-08 19:31:10] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:31:10] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:31:10] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:31:10] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:31:23] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:31:23] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:31:41] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:31:41] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:32:11] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 2b45ef40-c8f1-4296-9884-7f019cae5711
+[2025-07-08 19:32:11] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: a15ccfff-fb19-49d8-b1d6-0a8ef05348b6
+[2025-07-08 19:32:11] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:32:11] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:32:11] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_ggoj93uid_1751983270497 HTTP/1.1" 200 410
+[2025-07-08 19:32:11] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_na9r7gb8d_1751983270498 HTTP/1.1" 200 410
+[2025-07-08 19:32:41] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:32:41] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:33:08] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:33:08] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:33:08] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:33:08] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:33:10] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 4cb340e3-c120-4d7e-99e5-96a78666f416
+[2025-07-08 19:33:10] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 9fc9906d-ac86-4746-adc2-f3604526d3e4
+[2025-07-08 19:33:10] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:33:10] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:33:10] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_na9r7gb8d_1751983270498 HTTP/1.1" 200 410
+[2025-07-08 19:33:10] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_ggoj93uid_1751983270497 HTTP/1.1" 200 410
+[2025-07-08 19:33:18] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:33:18] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:33:19] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:33:19] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:33:40] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:33:40] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:33:51] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:33:51] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:34:11] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 78750e69-1c1f-4e23-b903-c1722b0c8478
+[2025-07-08 19:34:11] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 7af3a00e-f957-44ea-970c-1a5329f1460d
+[2025-07-08 19:34:11] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:34:11] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:34:11] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_ggoj93uid_1751983270497 HTTP/1.1" 200 410
+[2025-07-08 19:34:11] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_na9r7gb8d_1751983270498 HTTP/1.1" 200 410
+[2025-07-08 19:34:41] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:34:41] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:35:11] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: db9f1ac5-c995-4664-8013-c0247efe619c
+[2025-07-08 19:35:11] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: cb8d2bb6-0a6e-4712-a172-e7fdfc885c73
+[2025-07-08 19:35:11] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_ggoj93uid_1751983270497 HTTP/1.1" 200 411
+[2025-07-08 19:35:11] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_na9r7gb8d_1751983270498 HTTP/1.1" 200 411
+[2025-07-08 19:35:37] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:35:37] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:35:37] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:35:37] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:35:39] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:35:39] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:35:40] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:35:40] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:35:42] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 52cd181f-9c0f-4aea-949c-ff39496bbfff
+[2025-07-08 19:35:42] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:35:42] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:35:42] INFO - django.server - log_message:212 - "GET /support/dashboard/ HTTP/1.1" 200 117502
+[2025-07-08 19:35:42] INFO - django.server - handle_error:81 - - Broken pipe from ('127.0.0.1', 54671)
+[2025-07-08 19:35:42] INFO - django.server - handle_error:81 - - Broken pipe from ('127.0.0.1', 54826)
+[2025-07-08 19:35:43] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:35:43] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:36:08] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:36:08] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:36:13] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:36:13] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:36:39] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:36:39] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:36:40] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 7dccfb88-0157-46b8-81d4-56d6d927b693
+[2025-07-08 19:36:40] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:36:40] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:36:40] INFO - django.server - log_message:212 - "GET /support/dashboard/ HTTP/1.1" 200 117502
+[2025-07-08 19:36:40] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:36:40] INFO - django.server - handle_error:81 - - Broken pipe from ('127.0.0.1', 54729)
+[2025-07-08 19:36:40] INFO - django.server - handle_error:81 - - Broken pipe from ('127.0.0.1', 55171)
+[2025-07-08 19:36:41] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:36:41] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:36:43] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:36:43] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:37:11] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:37:11] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:37:24] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:37:24] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:37:40] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:37:40] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:37:41] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 22245093-9357-4b90-818d-4198967c3e3b
+[2025-07-08 19:37:41] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: a15505e7-9cc8-47fc-b3ed-af40efac8fdf
+[2025-07-08 19:37:41] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:37:41] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:37:41] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_kj4flav1i_1751983600962 HTTP/1.1" 200 410
+[2025-07-08 19:37:41] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_v27q8bckj_1751983600960 HTTP/1.1" 200 410
+[2025-07-08 19:38:11] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:38:11] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:38:12] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:38:12] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:38:21] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:38:21] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:38:41] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: b19a1df0-8f84-4637-92a1-9b159addb6c4
+[2025-07-08 19:38:41] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: b883c0c4-b40a-4e69-833f-a7ed9af7e210
+[2025-07-08 19:38:41] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:38:41] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:38:41] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_v27q8bckj_1751983600960 HTTP/1.1" 200 410
+[2025-07-08 19:38:41] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_kj4flav1i_1751983600962 HTTP/1.1" 200 410
+[2025-07-08 19:38:45] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:38:45] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:38:50] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:38:50] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:39:11] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:39:11] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:39:41] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 30cae13e-b538-4519-9a47-475f4cec6140
+[2025-07-08 19:39:41] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 005b327c-c7bc-4d9f-bc1c-e1e7d938c5e5
+[2025-07-08 19:39:41] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:39:41] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:39:41] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_v27q8bckj_1751983600960 HTTP/1.1" 200 410
+[2025-07-08 19:39:41] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_kj4flav1i_1751983600962 HTTP/1.1" 200 410
+[2025-07-08 19:40:41] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 391e7114-9487-4f5f-948f-a7ce6926a8ac
+[2025-07-08 19:40:41] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 300b700e-8717-46e5-b570-26acf1dc5e00
+[2025-07-08 19:40:41] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_kj4flav1i_1751983600962 HTTP/1.1" 200 410
+[2025-07-08 19:40:41] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_v27q8bckj_1751983600960 HTTP/1.1" 200 410
+[2025-07-08 19:40:44] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:40:44] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:40:44] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:40:44] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:40:46] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 6925f500-99fc-4164-b152-3432433eab7d
+[2025-07-08 19:40:46] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:40:46] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:40:46] INFO - django.server - log_message:212 - "GET /support/dashboard/ HTTP/1.1" 200 133242
+[2025-07-08 19:40:46] INFO - django.server - handle_error:81 - - Broken pipe from ('127.0.0.1', 54913)
+[2025-07-08 19:40:46] INFO - django.server - handle_error:81 - - Broken pipe from ('127.0.0.1', 55231)
+[2025-07-08 19:40:46] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 8cf0e17c-06b1-4ee1-bf8c-5e62b5a618d4
+[2025-07-08 19:40:46] WARNING - django.server - log_message:212 - "GET /sw.js HTTP/1.1" 404 6807
+[2025-07-08 19:40:46] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:40:46] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:40:56] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:40:56] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:41:14] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:41:14] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:41:15] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 1320f20c-2fed-4a12-be89-2d319c3442c4
+[2025-07-08 19:41:15] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:41:15] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:41:15] INFO - django.server - log_message:212 - "GET /support/dashboard/ HTTP/1.1" 200 133242
+[2025-07-08 19:41:15] INFO - django.server - handle_error:81 - - Broken pipe from ('127.0.0.1', 55177)
+[2025-07-08 19:41:16] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:41:16] INFO - django.server - handle_error:81 - - Broken pipe from ('127.0.0.1', 55383)
+[2025-07-08 19:41:16] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: c195fb06-edc7-4651-b3ec-7ba78dcc2962
+[2025-07-08 19:41:16] WARNING - django.server - log_message:212 - "GET /sw.js HTTP/1.1" 404 6807
+[2025-07-08 19:41:16] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:41:16] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:41:23] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:41:23] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:41:40] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:41:40] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:41:43] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:41:43] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:41:46] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:41:46] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:41:56] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:41:56] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:42:00] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 94d25db6-1cf7-4883-a381-f7e34d51d487
+[2025-07-08 19:42:00] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:42:00] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:42:00] INFO - django.server - log_message:212 - "GET /support/dashboard/ HTTP/1.1" 200 132892
+[2025-07-08 19:42:00] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:42:00] INFO - django.server - handle_error:81 - - Broken pipe from ('127.0.0.1', 55461)
+[2025-07-08 19:42:00] INFO - django.server - handle_error:81 - - Broken pipe from ('127.0.0.1', 55232)
+[2025-07-08 19:42:01] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: b200a6f7-40f7-4ae4-9d8f-da12c0553aa6
+[2025-07-08 19:42:01] WARNING - django.server - log_message:212 - "GET /sw.js HTTP/1.1" 404 6807
+[2025-07-08 19:42:01] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:42:01] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:42:20] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:42:20] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:42:21] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:42:21] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:42:31] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:42:31] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:42:55] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:42:55] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:43:01] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 180b7a6d-a553-4a1b-a5e5-d237d5ec3e10
+[2025-07-08 19:43:01] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 3e7b95bd-aadf-4de6-a6d6-de4abf979899
+[2025-07-08 19:43:01] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:43:01] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:43:01] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_3dzc67e7r_1751983921133 HTTP/1.1" 200 410
+[2025-07-08 19:43:01] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_55p4l1bo7_1751983921135 HTTP/1.1" 200 410
+[2025-07-08 19:43:31] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:43:31] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:44:01] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 25d8bfb4-129f-4731-ac74-25285addca2e
+[2025-07-08 19:44:01] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 16a695fa-0473-4715-a8fc-63b6f6b0a463
+[2025-07-08 19:44:01] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:44:01] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:44:01] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_55p4l1bo7_1751983921135 HTTP/1.1" 200 410
+[2025-07-08 19:44:01] INFO - django.server - log_message:212 - "GET /session/status/?tab_id=tab_3dzc67e7r_1751983921133 HTTP/1.1" 200 410
+[2025-07-08 19:44:25] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:44:25] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:44:26] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:44:26] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:44:31] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:44:31] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:44:33] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: f8d1b89a-fa63-4755-abbe-e5af6795aabe
+[2025-07-08 19:44:33] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:44:33] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:44:33] INFO - django.server - log_message:212 - "GET /support/tickets/ HTTP/1.1" 200 124315
+[2025-07-08 19:44:33] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:44:33] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:44:33] INFO - trueAlign.core.middleware - _create_new_session:619 - New session created for user employeesupport, session ID: 538eeadf-d494-4f3f-a755-8b8f8bf3697c
+[2025-07-08 19:44:33] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:44:33] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:44:34] INFO - django.server - log_message:212 - "GET /support/tickets/api/?page=1&search=&status=&priority=&issue_type=&assigned_group= HTTP/1.1" 200 696
+[2025-07-08 19:45:03] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:45:03] INFO - django.server - log_message:212 - "POST /session/heartbeat/ HTTP/1.1" 200 220
+[2025-07-08 19:45:24] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
+[2025-07-08 19:45:24] INFO - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 200 74
