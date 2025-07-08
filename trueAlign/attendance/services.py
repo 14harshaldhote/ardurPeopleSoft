@@ -117,11 +117,43 @@ class AttendanceAutoMarkingService:
             # No sessions, determine status based on other factors
             self._create_attendance_without_session(user, date)
 
+    # In ardurPeopleSoft/trueAlign/attendance/services.py - Replace the method
+
     def _create_attendance_without_session(self, user, date):
-        """
-        Create attendance record for user without any sessions
-        """
-        # Check for approved leave
+        """Create attendance record for user without any sessions"""
+        # Check conditions in order of priority
+        if self._should_mark_on_leave(user, date):
+            return self._create_leave_attendance(user, date)
+
+        if self._should_mark_holiday(date):
+            return self._create_holiday_attendance(user, date)
+
+        current_shift = ShiftAssignment.get_user_current_shift(user, date)
+
+        if self._should_mark_weekend(date, current_shift):
+            return self._create_weekend_attendance(user, date, current_shift)
+
+        return self._create_regular_attendance(user, date, current_shift)
+
+    def _should_mark_on_leave(self, user, date):
+        """Check if user should be marked on leave"""
+        return LeaveRequest.objects.filter(
+            user=user,
+            status='Approved',
+            start_date__lte=date,
+            end_date__gte=date
+        ).exists()
+
+    def _should_mark_holiday(self, date):
+        """Check if date is a holiday"""
+        return Holiday.get_holiday(date) is not None
+
+    def _should_mark_weekend(self, date, shift):
+        """Check if date is a weekend"""
+        return self._is_weekend(date, shift)
+
+    def _create_leave_attendance(self, user, date):
+        """Create leave attendance record"""
         leave_request = LeaveRequest.objects.filter(
             user=user,
             status='Approved',
@@ -129,72 +161,66 @@ class AttendanceAutoMarkingService:
             end_date__gte=date
         ).select_related('leave_type').first()
 
-        if leave_request:
-            Attendance.objects.create(
-                user=user,
-                date=date,
-                status='On Leave',
-                leave_type=leave_request.leave_type.name,
-                regularization_reason=f"Auto-marked: On {leave_request.leave_type.name} leave"
-            )
-            return
+        Attendance.objects.create(
+            user=user,
+            date=date,
+            status='On Leave',
+            leave_type=leave_request.leave_type.name,
+            regularization_reason=f"Auto-marked: On {leave_request.leave_type.name} leave"
+        )
 
-        # Check for holiday
+    def _create_holiday_attendance(self, user, date):
+        """Create holiday attendance record"""
         holiday = Holiday.get_holiday(date)
-        if holiday:
-            Attendance.objects.create(
-                user=user,
-                date=date,
-                status='Holiday',
-                is_holiday=True,
-                holiday_name=holiday.name,
-                regularization_reason=f"Auto-marked: Holiday - {holiday.name}"
-            )
-            return
+        Attendance.objects.create(
+            user=user,
+            date=date,
+            status='Holiday',
+            is_holiday=True,
+            holiday_name=holiday.name,
+            regularization_reason=f"Auto-marked: Holiday - {holiday.name}"
+        )
 
-        # Get user's shift
-        current_shift = ShiftAssignment.get_user_current_shift(user, date)
+    def _create_weekend_attendance(self, user, date, shift):
+        """Create weekend attendance record"""
+        Attendance.objects.create(
+            user=user,
+            date=date,
+            status='Weekend',
+            is_weekend=True,
+            shift=shift,
+            regularization_reason="Auto-marked: Weekend"
+        )
 
-        # Check for weekend
-        if self._is_weekend(date, current_shift):
-            Attendance.objects.create(
-                user=user,
-                date=date,
-                status='Weekend',
-                is_weekend=True,
-                shift=current_shift,
-                regularization_reason="Auto-marked: Weekend"
-            )
-            return
-
-        # Regular working day
-        if current_shift:
-            if date == self.today and not self._is_shift_ended(self.current_time, current_shift):
-                # Shift still active for today
-                Attendance.objects.create(
-                    user=user,
-                    date=date,
-                    status='Yet to Clock In',
-                    shift=current_shift,
-                    regularization_reason="Auto-marked: Yet to clock in (shift in progress)"
-                )
-            else:
-                # Shift ended or past date
-                Attendance.objects.create(
-                    user=user,
-                    date=date,
-                    status='Absent',
-                    shift=current_shift,
-                    regularization_reason="Auto-marked: Absent (no activity)"
-                )
+    def _create_regular_attendance(self, user, date, shift):
+        """Create regular day attendance record"""
+        if shift:
+            status = self._determine_regular_status(date, shift)
+            reason = self._get_regular_reason(status)
         else:
-            # No shift assigned
-            Attendance.objects.create(
-                user=user,
-                date=date,
-                status='Not Marked',
-                regularization_reason="Auto-marked: No shift assigned"
-            )
+            status = 'Not Marked'
+            reason = "Auto-marked: No shift assigned"
+
+        Attendance.objects.create(
+            user=user,
+            date=date,
+            status=status,
+            shift=shift,
+            regularization_reason=reason
+        )
+
+    def _determine_regular_status(self, date, shift):
+        """Determine status for regular working day"""
+        if date == self.today and not self._is_shift_ended(self.current_time, shift):
+            return 'Yet to Clock In'
+        return 'Absent'
+
+    def _get_regular_reason(self, status):
+        """Get reason for regular attendance status"""
+        if status == 'Yet to Clock In':
+            return "Auto-marked: Yet to clock in (shift in progress)"
+        return "Auto-marked: Absent (no activity)"
+
 
     def _update_attendance_with_sessions(self, date):
         """
@@ -343,10 +369,9 @@ class AttendanceAutoMarkingService:
 
         return current_minutes > end_minutes
 
-
 class AttendanceIntegrationService:
     """
-    Service to handle integration with sessions, leaves, and other systems
+    Enhanced service to handle integration with sessions, leaves, and other systems
     """
 
     def __init__(self):
@@ -354,111 +379,292 @@ class AttendanceIntegrationService:
 
     def process_session_login(self, user, session):
         """
-        Process user login session and update attendance
+        Process user login session and create/update attendance
         """
         try:
             login_time = session.login_time.astimezone(self.IST)
             attendance_date = login_time.date()
 
-            # Create or update attendance record
-            attendance = Attendance.create_attendance_record(
+            logger.info(f"Processing login for {user.username} at {login_time}")
+
+            # Determine location from session data
+            location = self._determine_location_from_session(session)
+
+            # Get or create attendance record
+            attendance, created = Attendance.objects.get_or_create(
                 user=user,
-                clock_in_time=login_time,
-                location=getattr(session, 'location', 'Office'),
-                ip_address=getattr(session, 'ip_address', None),
-                device_info=getattr(session, 'device_info', None)
+                date=attendance_date,
+                defaults={
+                    'status': 'Yet to Clock In',
+                    'clock_in_time': login_time,
+                    'location': location,
+                    'ip_address': session.ip_address,
+                    'device_info': self._extract_device_info(session)
+                }
             )
 
-            # Update session reference
+            if not created:
+                # Update existing attendance with earlier clock-in time if applicable
+                if not attendance.clock_in_time or login_time < attendance.clock_in_time:
+                    attendance.clock_in_time = login_time
+                    attendance.ip_address = session.ip_address
+                    attendance.device_info = self._extract_device_info(session)
+                    attendance.location = location  # Update location as well
+                    attendance.save()
+                    logger.info(f"Updated clock-in time for {user.username}")
+            else:
+                logger.info(f"Created new attendance record for {user.username}")
+
+            # Update session reference and shift information
+            self._update_attendance_with_shift(attendance)
             Attendance.update_session_data(user, session, attendance_date)
 
-            logger.info(f"Processed login session for {user.username} at {login_time}")
             return attendance
 
         except Exception as e:
-            logger.error(f"Error processing session login for {user.username}: {e}")
+            logger.error(f"Error processing session login for {user.username}: {e}", exc_info=True)
             return None
+
+    def _determine_location_from_session(self, session):
+        """
+        Determine location string from session data for attendance record
+        """
+        try:
+            # Check if user is working from home based on location data
+            if session.location_type == 'home' or session.location_type == 'remote':
+                return 'Home'
+
+            # Check if it's a client site based on location data
+            if session.location_type == 'client_site':
+                return 'Client Site'
+
+            # If we have specific location information, try to determine office vs remote
+            if session.location_city and session.location_country:
+                # You can customize this logic based on your office locations
+                office_cities = ['Mumbai', 'Delhi', 'Bangalore', 'Chennai', 'Hyderabad', 'Pune']  # Add your office cities
+
+                if session.location_city in office_cities:
+                    return 'Office'
+                else:
+                    return 'Remote'
+
+            # If location information is available but not specific
+            if session.location_latitude and session.location_longitude:
+                # You could add office coordinates checking here
+                # For now, default to Office if coordinates are available
+                return 'Office'
+
+            # Default location if no specific information is available
+            logger.warning(f"No specific location information found in session, defaulting to Office")
+            return 'Office'
+
+        except Exception as e:
+            logger.error(f"Error determining location from session: {e}")
+            return 'Office'  # Safe default
+
+
 
     def process_session_logout(self, user, session):
         """
         Process user logout session and update attendance
         """
         try:
-            if session.logout_time:
-                logout_time = session.logout_time.astimezone(self.IST)
-                attendance_date = logout_time.date()
+            if not session.logout_time:
+                return None
 
-                # Record clock out
-                attendance = Attendance.record_clock_out(
-                    user=user,
-                    clock_out_time=logout_time,
-                    location=getattr(session, 'location', None)
-                )
+            logout_time = session.logout_time.astimezone(self.IST)
+            attendance_date = logout_time.date()
+
+            logger.info(f"Processing logout for {user.username} at {logout_time}")
+
+            try:
+                attendance = Attendance.objects.get(user=user, date=attendance_date)
+
+                # Update clock-out time if this is later than existing
+                if not attendance.clock_out_time or logout_time > attendance.clock_out_time:
+                    attendance.clock_out_time = logout_time
+                    attendance.save()  # This will trigger recalculation
+                    logger.info(f"Updated clock-out time for {user.username}")
 
                 # Update session reference
                 Attendance.update_session_data(user, session, attendance_date)
 
-                logger.info(f"Processed logout session for {user.username} at {logout_time}")
                 return attendance
 
+            except Attendance.DoesNotExist:
+                # Create attendance record if missing (shouldn't happen, but handle gracefully)
+                logger.warning(f"No attendance record found for logout - creating new one for {user.username}")
+                return self.process_session_login(user, session)
+
         except Exception as e:
-            logger.error(f"Error processing session logout for {user.username}: {e}")
+            logger.error(f"Error processing session logout for {user.username}: {e}", exc_info=True)
             return None
 
-    def sync_leave_with_attendance(self, leave_request):
+    def _update_attendance_with_shift(self, attendance):
         """
-        Synchronize leave request with attendance records
+        Update attendance record with appropriate shift information
         """
         try:
-            if leave_request.status != 'Approved':
-                return
-
-            current_date = leave_request.start_date
-            end_date = leave_request.end_date
-
-            while current_date <= end_date:
-                attendance, created = Attendance.objects.get_or_create_today_attendance(
-                    leave_request.user, current_date
-                )
-
-                # Update attendance for leave
-                attendance.status = 'On Leave'
-                attendance.leave_type = leave_request.leave_type.name
-                attendance.regularization_reason = f"On {leave_request.leave_type.name} leave"
-                attendance.save()
-
-                current_date += timedelta(days=1)
-
-            logger.info(f"Synced leave request for {leave_request.user.username} from {leave_request.start_date} to {leave_request.end_date}")
+            if not attendance.shift:
+                # Get current shift assignment for this user and date
+                shift_assignment = ShiftAssignment.get_user_current_shift(attendance.user, attendance.date)
+                if shift_assignment:
+                    attendance.shift = shift_assignment.shift
+                    attendance.expected_hours = attendance.shift.shift_duration
+                    attendance.save()
+                    logger.debug(f"Assigned shift {attendance.shift.name} to attendance for {attendance.user.username}")
+                else:
+                    logger.warning(f"No shift assignment found for {attendance.user.username} on {attendance.date}")
 
         except Exception as e:
-            logger.error(f"Error syncing leave with attendance: {e}")
+            logger.error(f"Error updating attendance with shift: {e}", exc_info=True)
 
-    def sync_holiday_with_attendance(self, holiday):
+    def _extract_device_info(self, session):
         """
-        Synchronize holiday with attendance records for all users
+        Extract device information from session for attendance record
         """
         try:
-            users = User.objects.filter(is_active=True)
+            device_info = {
+                'device_type': session.device_type,
+                'user_agent': session.user_agent[:200] if session.user_agent else None,
+                'screen_resolution': session.screen_resolution,
+                'browser_fingerprint': session.browser_fingerprint[:100] if session.browser_fingerprint else None,
+                'timezone_offset': session.timezone_offset,
+                'language': session.language
+            }
 
-            for user in users:
-                attendance, created = Attendance.objects.get_or_create_today_attendance(
-                    user, holiday.date
+            # Add location information if available
+            if session.location_city:
+                device_info.update({
+                    'location_city': session.location_city,
+                    'location_country': session.location_country,
+                    'location_type': session.location_type
+                })
+
+            return device_info
+
+        except Exception as e:
+            logger.error(f"Error extracting device info: {e}")
+            return {}
+
+    def create_daily_attendance_records(self, date=None):
+        """
+        Create attendance records for all users for a specific date
+        This can be run as a daily job
+        """
+        try:
+            if not date:
+                date = timezone.now().astimezone(self.IST).date()
+
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+
+            # Get all active users with shift assignments
+            users_with_shifts = User.objects.filter(
+                is_active=True,
+                shift_assignments__effective_from__lte=date,
+                shift_assignments__is_current=True
+            ).distinct()
+
+            created_count = 0
+
+            for user in users_with_shifts:
+                # Check if attendance already exists
+                if not Attendance.objects.filter(user=user, date=date).exists():
+                    # Create base attendance record
+                    attendance = Attendance.objects.create(
+                        user=user,
+                        date=date,
+                        status='Yet to Clock In'
+                    )
+
+                    # Update with shift information
+                    self._update_attendance_with_shift(attendance)
+                    created_count += 1
+
+            logger.info(f"Created {created_count} attendance records for {date}")
+            return created_count
+
+        except Exception as e:
+            logger.error(f"Error creating daily attendance records: {e}", exc_info=True)
+            return 0
+
+    def sync_leave_with_attendance(self, user, leave_request):
+        """
+        Update attendance records when leave is approved/cancelled
+        """
+        try:
+            # Get attendance records in the leave date range
+            attendances = Attendance.objects.filter(
+                user=user,
+                date__range=[leave_request.start_date, leave_request.end_date]
+            )
+
+            if leave_request.status == 'Approved':
+                # Mark as on leave
+                updated_count = attendances.update(
+                    status='On Leave',
+                    leave_type=leave_request.leave_type.name,
+                    regularization_reason=f"On {leave_request.leave_type.name} leave"
+                )
+                logger.info(f"Updated {updated_count} attendance records for approved leave")
+
+            elif leave_request.status in ['Rejected', 'Cancelled']:
+                # Revert leave status - let the system recalculate based on sessions
+                for attendance in attendances.filter(status='On Leave'):
+                    attendance.status = 'Yet to Clock In'
+                    attendance.leave_type = None
+                    attendance.regularization_reason = None
+                    attendance.save()  # This will trigger recalculation
+
+                logger.info(f"Reverted leave status for {attendances.count()} attendance records")
+
+        except Exception as e:
+            logger.error(f"Error syncing leave with attendance: {e}", exc_info=True)
+
+    def sync_holiday_with_attendance(self, holiday_date, holiday_name):
+        """
+        Update attendance records for holiday dates
+        """
+        try:
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+
+            # Get all users who don't have leave on this date
+            users_to_update = User.objects.filter(
+                is_active=True
+            ).exclude(
+                attendance_records__date=holiday_date,
+                attendance_records__status='On Leave'
+            )
+
+            updated_count = 0
+
+            for user in users_to_update:
+                attendance, created = Attendance.objects.get_or_create(
+                    user=user,
+                    date=holiday_date,
+                    defaults={
+                        'status': 'Holiday',
+                        'is_holiday': True,
+                        'holiday_name': holiday_name,
+                        'regularization_reason': f"Holiday: {holiday_name}"
+                    }
                 )
 
-                # Only update if not on leave or other special status
-                if attendance.status in ['Not Marked', 'Yet to Clock In', 'Absent']:
+                if not created and attendance.status not in ['On Leave', 'Holiday']:
                     attendance.status = 'Holiday'
                     attendance.is_holiday = True
-                    attendance.holiday_name = holiday.name
-                    attendance.regularization_reason = f"Holiday: {holiday.name}"
+                    attendance.holiday_name = holiday_name
+                    attendance.regularization_reason = f"Holiday: {holiday_name}"
                     attendance.save()
 
-            logger.info(f"Synced holiday '{holiday.name}' for {holiday.date}")
+                updated_count += 1
+
+            logger.info(f"Updated {updated_count} attendance records for holiday: {holiday_name}")
 
         except Exception as e:
-            logger.error(f"Error syncing holiday with attendance: {e}")
-
+            logger.error(f"Error syncing holiday with attendance: {e}", exc_info=True)
 
 class AttendanceRegularizationService:
     """

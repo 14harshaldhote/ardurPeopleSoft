@@ -13152,3 +13152,370 @@ INFO|2025-06-30 13:52:29,154|views|24903|6214594560|[af8e219f] ACTION_START - SH
 INFO|2025-06-30 13:52:29,711|views|24903|6214594560|[af8e219f] ACTION_SUCCESS - SHIFT_DASHBOARD_VIEW completed in 557.24ms
 INFO|2025-07-01 10:24:33,435|views|39297|6293008384|[84404035] ACTION_START - SHIFT_LIST_VIEW
 INFO|2025-07-01 10:24:33,469|views|39297|6293008384|[84404035] ACTION_SUCCESS - SHIFT_LIST_VIEW completed in 34.05ms
+INFO|2025-07-01 11:58:07,526|views|66368|6238892032|[23abd92d] ACTION_START - SHIFT_DASHBOARD_VIEW
+INFO|2025-07-01 11:58:08,282|views|66368|6238892032|[23abd92d] ACTION_SUCCESS - SHIFT_DASHBOARD_VIEW completed in 756.01ms
+INFO|2025-07-01 11:59:19,471|views|66368|6255718400|[5d3a2d17] ACTION_START - ASSIGNMENT_LIST_VIEW
+INFO|2025-07-01 11:59:19,477|views|66368|6255718400|USER_ACTION - managersupport: assignment_list_access
+INFO|2025-07-01 11:59:19,515|views|66368|6255718400|[5d3a2d17] ACTION_SUCCESS - ASSIGNMENT_LIST_VIEW completed in 43.43ms
+INFO|2025-07-01 12:02:56,388|views|66368|6255718400|[c78f11dd] ACTION_START - SHIFT_LIST_VIEW
+INFO|2025-07-01 12:02:56,430|views|66368|6255718400|[c78f11dd] ACTION_SUCCESS - SHIFT_LIST_VIEW completed in 41.92ms
+INFO|2025-07-01 12:05:56,824|views|66368|6205239296|[d6b8ba59] ACTION_START - SHIFT_LIST_VIEW
+ERROR|2025-07-01 12:05:56,856|views|66368|6205239296|Error in shift list: Invalid filter: 'div'
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/shift/views.py", line 409, in shift_list
+    return render(request, 'shift/shift_list.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 861, in do_for
+    nodelist_loop = parser.parse(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 961, in do_if
+    nodelist = parser.parse(("elif", "else", "endif"))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 481, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 479, in parse
+    filter_expression = self.compile_filter(token.contents)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 597, in compile_filter
+    return FilterExpression(token, self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 693, in __init__
+    filter_func = parser.find_filter(filter_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 603, in find_filter
+    raise TemplateSyntaxError("Invalid filter: '%s'" % filter_name)
+django.template.exceptions.TemplateSyntaxError: Invalid filter: 'div'
+ERROR|2025-07-01 12:05:56,890|views|66368|6205239296|[d6b8ba59] ACTION_ERROR - SHIFT_LIST_VIEW failed after 66.43ms: Invalid filter: 'div'
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/shift/views.py", line 409, in shift_list
+    return render(request, 'shift/shift_list.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 861, in do_for
+    nodelist_loop = parser.parse(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 961, in do_if
+    nodelist = parser.parse(("elif", "else", "endif"))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 481, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 479, in parse
+    filter_expression = self.compile_filter(token.contents)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 597, in compile_filter
+    return FilterExpression(token, self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 693, in __init__
+    filter_func = parser.find_filter(filter_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 603, in find_filter
+    raise TemplateSyntaxError("Invalid filter: '%s'" % filter_name)
+django.template.exceptions.TemplateSyntaxError: Invalid filter: 'div'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/shift/views.py", line 79, in wrapper
+    result = func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/shift/views.py", line 463, in shift_list
+    return render(request, 'shift/shift_list.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 861, in do_for
+    nodelist_loop = parser.parse(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 961, in do_if
+    nodelist = parser.parse(("elif", "else", "endif"))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 481, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 479, in parse
+    filter_expression = self.compile_filter(token.contents)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 597, in compile_filter
+    return FilterExpression(token, self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 693, in __init__
+    filter_func = parser.find_filter(filter_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 603, in find_filter
+    raise TemplateSyntaxError("Invalid filter: '%s'" % filter_name)
+django.template.exceptions.TemplateSyntaxError: Invalid filter: 'div'
+INFO|2025-07-01 12:06:17,944|views|66368|6171586560|[29f16e65] ACTION_START - SHIFT_LIST_VIEW
+INFO|2025-07-01 12:06:17,982|views|66368|6171586560|[29f16e65] ACTION_SUCCESS - SHIFT_LIST_VIEW completed in 38.16ms
+INFO|2025-07-01 12:06:21,966|views|66368|6188412928|[3f6c65cf] ACTION_START - SHIFT_LIST_VIEW
+INFO|2025-07-01 12:06:22,008|views|66368|6188412928|[3f6c65cf] ACTION_SUCCESS - SHIFT_LIST_VIEW completed in 41.55ms
+INFO|2025-07-01 12:07:33,736|views|8719|6229323776|[6a80f366] ACTION_START - SHIFT_DASHBOARD_VIEW
+ERROR|2025-07-01 12:07:34,325|views|8719|6229323776|Error in shift dashboard: Reverse for 'assignment' not found. 'assignment' is not a valid view function or pattern name.
+ERROR|2025-07-01 12:07:34,347|views|8719|6229323776|[6a80f366] ACTION_ERROR - SHIFT_DASHBOARD_VIEW failed after 610.83ms: Reverse for 'assignment' not found. 'assignment' is not a valid view function or pattern name.
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/shift/views.py", line 216, in shift_dashboard
+    return render(request, 'shift/dashboard.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/resolvers.py", line 851, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'assignment' not found. 'assignment' is not a valid view function or pattern name.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/shift/views.py", line 79, in wrapper
+    result = func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/shift/views.py", line 221, in shift_dashboard
+    return render(request, 'shift/dashboard.html', {'error': True})
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/resolvers.py", line 851, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'assignment' not found. 'assignment' is not a valid view function or pattern name.
+INFO|2025-07-01 12:07:52,209|views|8719|6162018304|[930d102f] ACTION_START - SHIFT_DASHBOARD_VIEW
+INFO|2025-07-01 12:07:52,517|views|8719|6162018304|[930d102f] ACTION_SUCCESS - SHIFT_DASHBOARD_VIEW completed in 308.58ms
+INFO|2025-07-01 12:07:54,355|views|8719|6195671040|[634ceb63] ACTION_START - ASSIGNMENT_LIST_VIEW
+INFO|2025-07-01 12:07:54,363|views|8719|6195671040|USER_ACTION - managersupport: assignment_list_access
+INFO|2025-07-01 12:07:54,407|views|8719|6195671040|[634ceb63] ACTION_SUCCESS - ASSIGNMENT_LIST_VIEW completed in 52.69ms
+INFO|2025-07-01 13:18:59,214|views|52438|6398275584|[90473dc6] ACTION_START - SHIFT_DASHBOARD_VIEW
+ERROR|2025-07-01 13:18:59,240|services|52438|6398275584|Error getting shift statistics: Cannot resolve keyword 'shiftassignment' into field. Choices are: appraisalattachment, appraisals, approved_bookings, approved_fin_parameters, approved_invoices, approved_payments, assigned_tickets, attendance_modifications, attendance_records, bankpayment, break, cancelled_bookings, cc_tickets, client_invoices, client_participations, client_profile, commentattachment, comp_off_approvals, comp_off_requests, conference_bookings, created_fin_parameters, created_games, created_groups, created_icons, created_vouchers, date_joined, dept_approved_vouchers, direct_messages, direct_reports, email, expenses_approved, expenses_paid, failedloginattempt, finance_approved_vouchers, first_name, game_stats, games_turn, globalupdate, group_memberships, groups, id, invited_games, is_active, is_staff, is_superuser, last_login, last_name, leave_approvals, leave_balances, leave_requests, logentry, managed_appraisals, messageread, notifications, onboarded_users, password, passwordchange, performed_actions, presence_marked, presences, profile, projectassignment, projects_as_client, projects_assigned, projectupdate, role_assigned_by, roleassignmentaudit, sent_messages, sessions, shift_assignments, spectating_games, statuslog, ticketactivity, ticketattachment, ticketcomment, tickets, timesheets, updated_fin_parameters, user_logs, user_permissions, username, verified_payments, won_games, workflow_actions
+ERROR|2025-07-01 13:18:59,242|views|52438|6398275584|Error in shift dashboard: Cannot resolve keyword 'shiftassignment' into field. Choices are: appraisalattachment, appraisals, approved_bookings, approved_fin_parameters, approved_invoices, approved_payments, assigned_tickets, attendance_modifications, attendance_records, bankpayment, break, cancelled_bookings, cc_tickets, client_invoices, client_participations, client_profile, commentattachment, comp_off_approvals, comp_off_requests, conference_bookings, created_fin_parameters, created_games, created_groups, created_icons, created_vouchers, date_joined, dept_approved_vouchers, direct_messages, direct_reports, email, expenses_approved, expenses_paid, failedloginattempt, finance_approved_vouchers, first_name, game_stats, games_turn, globalupdate, group_memberships, groups, id, invited_games, is_active, is_staff, is_superuser, last_login, last_name, leave_approvals, leave_balances, leave_requests, logentry, managed_appraisals, messageread, notifications, onboarded_users, password, passwordchange, performed_actions, presence_marked, presences, profile, projectassignment, projects_as_client, projects_assigned, projectupdate, role_assigned_by, roleassignmentaudit, sent_messages, sessions, shift_assignments, spectating_games, statuslog, ticketactivity, ticketattachment, ticketcomment, tickets, timesheets, updated_fin_parameters, user_logs, user_permissions, username, verified_payments, won_games, workflow_actions
+INFO|2025-07-01 13:18:59,262|views|52438|6398275584|[90473dc6] ACTION_SUCCESS - SHIFT_DASHBOARD_VIEW completed in 48.8ms
+INFO|2025-07-01 13:44:48,955|views|67557|6160674816|[000f5ac9] ACTION_START - SHIFT_DASHBOARD_VIEW
+ERROR|2025-07-01 13:44:48,969|services|67557|6160674816|Error getting shift statistics: Cannot resolve keyword 'shiftassignment' into field. Choices are: appraisalattachment, appraisals, approved_bookings, approved_fin_parameters, approved_invoices, approved_payments, assigned_tickets, attendance_modifications, attendance_records, bankpayment, break, cancelled_bookings, cc_tickets, client_invoices, client_participations, client_profile, commentattachment, comp_off_approvals, comp_off_requests, conference_bookings, created_fin_parameters, created_games, created_groups, created_icons, created_vouchers, date_joined, dept_approved_vouchers, direct_messages, direct_reports, email, expenses_approved, expenses_paid, failedloginattempt, finance_approved_vouchers, first_name, game_stats, games_turn, globalupdate, group_memberships, groups, id, invited_games, is_active, is_staff, is_superuser, last_login, last_name, leave_approvals, leave_balances, leave_requests, logentry, managed_appraisals, messageread, notifications, onboarded_users, password, passwordchange, performed_actions, presence_marked, presences, profile, projectassignment, projects_as_client, projects_assigned, projectupdate, role_assigned_by, roleassignmentaudit, sent_messages, sessions, shift_assignments, spectating_games, statuslog, ticketactivity, ticketattachment, ticketcomment, tickets, timesheets, updated_fin_parameters, user_logs, user_permissions, username, verified_payments, won_games, workflow_actions
+ERROR|2025-07-01 13:44:48,969|views|67557|6160674816|Error in shift dashboard: Cannot resolve keyword 'shiftassignment' into field. Choices are: appraisalattachment, appraisals, approved_bookings, approved_fin_parameters, approved_invoices, approved_payments, assigned_tickets, attendance_modifications, attendance_records, bankpayment, break, cancelled_bookings, cc_tickets, client_invoices, client_participations, client_profile, commentattachment, comp_off_approvals, comp_off_requests, conference_bookings, created_fin_parameters, created_games, created_groups, created_icons, created_vouchers, date_joined, dept_approved_vouchers, direct_messages, direct_reports, email, expenses_approved, expenses_paid, failedloginattempt, finance_approved_vouchers, first_name, game_stats, games_turn, globalupdate, group_memberships, groups, id, invited_games, is_active, is_staff, is_superuser, last_login, last_name, leave_approvals, leave_balances, leave_requests, logentry, managed_appraisals, messageread, notifications, onboarded_users, password, passwordchange, performed_actions, presence_marked, presences, profile, projectassignment, projects_as_client, projects_assigned, projectupdate, role_assigned_by, roleassignmentaudit, sent_messages, sessions, shift_assignments, spectating_games, statuslog, ticketactivity, ticketattachment, ticketcomment, tickets, timesheets, updated_fin_parameters, user_logs, user_permissions, username, verified_payments, won_games, workflow_actions
+INFO|2025-07-01 13:44:48,980|views|67557|6160674816|[000f5ac9] ACTION_SUCCESS - SHIFT_DASHBOARD_VIEW completed in 24.98ms
+INFO|2025-07-01 13:44:54,833|views|67557|6177501184|[bed8178d] ACTION_START - ASSIGNMENT_LIST_VIEW
+INFO|2025-07-01 13:44:54,837|views|67557|6177501184|USER_ACTION - managersupport: assignment_list_access
+INFO|2025-07-01 13:44:54,880|views|67557|6177501184|[bed8178d] ACTION_SUCCESS - ASSIGNMENT_LIST_VIEW completed in 47.22ms
+INFO|2025-07-01 13:45:05,654|views|67557|6160674816|[51f71f1c] ACTION_START - END_ASSIGNMENT
+INFO|2025-07-01 13:45:05,656|views|67557|6160674816|USER_ACTION - managersupport: assignment_end_attempt
+INFO|2025-07-01 13:45:05,662|services|67557|6160674816|Ended shift assignment 16 on 2025-07-01
+INFO|2025-07-01 13:45:05,663|views|67557|6160674816|DB_OPERATION - UPDATE on ShiftAssignment
+INFO|2025-07-01 13:45:05,663|views|67557|6160674816|USER_ACTION - managersupport: assignment_ended
+INFO|2025-07-01 13:45:05,663|views|67557|6160674816|[51f71f1c] ACTION_SUCCESS - END_ASSIGNMENT completed in 9.11ms
+INFO|2025-07-01 13:45:05,744|views|67557|6160674816|[af16f466] ACTION_START - ASSIGNMENT_LIST_VIEW
+INFO|2025-07-01 13:45:05,748|views|67557|6160674816|USER_ACTION - managersupport: assignment_list_access
+INFO|2025-07-01 13:45:05,778|views|67557|6160674816|[af16f466] ACTION_SUCCESS - ASSIGNMENT_LIST_VIEW completed in 34.05ms
+INFO|2025-07-01 13:45:09,601|views|67557|6160674816|[8eca18b3] ACTION_START - END_ASSIGNMENT
+INFO|2025-07-01 13:45:09,603|views|67557|6160674816|USER_ACTION - managersupport: assignment_end_attempt
+INFO|2025-07-01 13:45:09,604|views|67557|6160674816|USER_ACTION - managersupport: assignment_end_failed
+INFO|2025-07-01 13:45:09,604|views|67557|6160674816|[8eca18b3] ACTION_SUCCESS - END_ASSIGNMENT completed in 3.08ms
+INFO|2025-07-01 13:45:09,696|views|67557|6160674816|[7f335ff9] ACTION_START - ASSIGNMENT_LIST_VIEW
+INFO|2025-07-01 13:45:09,702|views|67557|6160674816|USER_ACTION - managersupport: assignment_list_access
+INFO|2025-07-01 13:45:09,744|views|67557|6160674816|[7f335ff9] ACTION_SUCCESS - ASSIGNMENT_LIST_VIEW completed in 48.54ms
+WARNING|2025-07-07 14:03:55,760|services|68392|8650383104|Shift with ID 99999 not found
+ERROR|2025-07-07 14:04:10,459|services|68392|8650383104|Error getting shift statistics: Cannot resolve keyword 'shiftassignment' into field. Choices are: appraisalattachment, appraisals, approved_bookings, approved_fin_parameters, approved_invoices, approved_payments, assigned_tickets, attendance_modifications, attendance_records, bankpayment, break, cancelled_bookings, cc_tickets, client_invoices, client_participations, client_profile, commentattachment, comp_off_approvals, comp_off_requests, conference_bookings, created_fin_parameters, created_games, created_groups, created_icons, created_vouchers, date_joined, dept_approved_vouchers, direct_messages, direct_reports, email, expenses_approved, expenses_paid, failedloginattempt, finance_approved_vouchers, first_name, game_stats, games_turn, globalupdate, group_memberships, groups, id, invited_games, is_active, is_staff, is_superuser, last_login, last_name, leave_approvals, leave_balances, leave_requests, logentry, managed_appraisals, messageread, notifications, onboarded_users, password, passwordchange, performed_actions, presence_marked, presences, profile, projectassignment, projects_as_client, projects_assigned, projectupdate, role_assigned_by, roleassignmentaudit, sent_messages, sessions, shift_assignments, spectating_games, statuslog, ticketactivity, ticketattachment, ticketcomment, tickets, timesheets, updated_fin_parameters, user_logs, user_permissions, username, verified_payments, won_games, workflow_actions
+INFO|2025-07-07 14:04:25,429|services|68392|8650383104|Assigned shift 'Day Shift' to user 'employee' from 2025-07-07
+INFO|2025-07-07 14:04:26,377|services|68392|8650383104|CSV import completed: 0 successful, 2 failed
+INFO|2025-07-07 14:04:27,326|services|68392|8650383104|Assigned shift 'Day Shift' to user 'employee' from 2025-07-07
+INFO|2025-07-07 14:04:27,331|services|68392|8650383104|Assigned shift 'Day Shift' to user 'manager' from 2025-07-07
+INFO|2025-07-07 14:04:27,331|services|68392|8650383104|Bulk assignment completed: 2 successful, 0 failed
+INFO|2025-07-08 11:11:53,286|views|75685|6157676544|[95e08f28] ACTION_START - ASSIGNMENT_LIST_VIEW
+INFO|2025-07-08 11:11:53,291|views|75685|6157676544|USER_ACTION - managersupport: assignment_list_access
+INFO|2025-07-08 11:11:53,336|views|75685|6157676544|[95e08f28] ACTION_SUCCESS - ASSIGNMENT_LIST_VIEW completed in 50.25ms
+INFO|2025-07-08 11:12:04,692|views|75685|6174502912|[d6231273] ACTION_START - ASSIGNMENT_LIST_VIEW
+INFO|2025-07-08 11:12:04,696|views|75685|6174502912|USER_ACTION - managersupport: assignment_list_access
+INFO|2025-07-08 11:12:04,721|views|75685|6174502912|[d6231273] ACTION_SUCCESS - ASSIGNMENT_LIST_VIEW completed in 29.76ms
+INFO|2025-07-08 11:12:16,518|views|75685|6174502912|[749353fb] ACTION_START - END_ASSIGNMENT
+INFO|2025-07-08 11:12:16,523|views|75685|6174502912|USER_ACTION - managersupport: assignment_end_attempt
+INFO|2025-07-08 11:12:16,531|services|75685|6174502912|Ended shift assignment 15 on 2025-07-08
+INFO|2025-07-08 11:12:16,532|views|75685|6174502912|DB_OPERATION - UPDATE on ShiftAssignment
+INFO|2025-07-08 11:12:16,532|views|75685|6174502912|USER_ACTION - managersupport: assignment_ended
+INFO|2025-07-08 11:12:16,533|views|75685|6174502912|[749353fb] ACTION_SUCCESS - END_ASSIGNMENT completed in 15.12ms
+INFO|2025-07-08 11:12:16,573|views|75685|6174502912|[79cb0f09] ACTION_START - ASSIGNMENT_LIST_VIEW
+INFO|2025-07-08 11:12:16,578|views|75685|6174502912|USER_ACTION - managersupport: assignment_list_access
+INFO|2025-07-08 11:12:16,604|views|75685|6174502912|[79cb0f09] ACTION_SUCCESS - ASSIGNMENT_LIST_VIEW completed in 31.19ms
+INFO|2025-07-08 11:12:19,540|views|75685|6191329280|[be414395] ACTION_START - ASSIGNMENT_LIST_VIEW
+INFO|2025-07-08 11:12:19,550|views|75685|6191329280|USER_ACTION - managersupport: assignment_list_access
+INFO|2025-07-08 11:12:19,574|views|75685|6191329280|[be414395] ACTION_SUCCESS - ASSIGNMENT_LIST_VIEW completed in 33.93ms
+INFO|2025-07-08 11:12:41,580|views|75685|6191329280|[fa7e7c1e] ACTION_START - BULK_ASSIGN_SHIFT
+INFO|2025-07-08 11:12:41,596|services|75685|6191329280|Assigned shift 'Day Shift' to user 'hrsupport' from 2025-07-08
+INFO|2025-07-08 11:12:41,605|services|75685|6191329280|Assigned shift 'Day Shift' to user 'managersupport' from 2025-07-08
+INFO|2025-07-08 11:12:41,606|services|75685|6191329280|Bulk assignment completed: 2 successful, 1 failed
+INFO|2025-07-08 11:12:41,606|views|75685|6191329280|DB_OPERATION - BULK_CREATE on ShiftAssignment
+INFO|2025-07-08 11:12:41,606|views|75685|6191329280|USER_ACTION - managersupport: bulk_assignment_completed
+INFO|2025-07-08 11:12:41,607|views|75685|6191329280|[fa7e7c1e] ACTION_SUCCESS - BULK_ASSIGN_SHIFT completed in 26.18ms
+INFO|2025-07-08 11:12:41,657|views|75685|6191329280|[d2ec4ef6] ACTION_START - ASSIGNMENT_LIST_VIEW
+INFO|2025-07-08 11:12:41,662|views|75685|6191329280|USER_ACTION - managersupport: assignment_list_access
+INFO|2025-07-08 11:12:41,700|views|75685|6191329280|[d2ec4ef6] ACTION_SUCCESS - ASSIGNMENT_LIST_VIEW completed in 42.98ms
+INFO|2025-07-08 11:15:07,898|views|75685|6208155648|[60c00c71] ACTION_START - BULK_ASSIGN_SHIFT
+INFO|2025-07-08 11:15:07,909|services|75685|6208155648|Assigned shift 'efjewfbwef' to user 'employeesupport' from 2025-07-09
+INFO|2025-07-08 11:15:07,911|services|75685|6208155648|Bulk assignment completed: 1 successful, 0 failed
+INFO|2025-07-08 11:15:07,911|views|75685|6208155648|DB_OPERATION - BULK_CREATE on ShiftAssignment
+INFO|2025-07-08 11:15:07,911|views|75685|6208155648|USER_ACTION - managersupport: bulk_assignment_completed
+INFO|2025-07-08 11:15:07,911|views|75685|6208155648|[60c00c71] ACTION_SUCCESS - BULK_ASSIGN_SHIFT completed in 13.37ms
+INFO|2025-07-08 11:15:07,948|views|75685|6208155648|[7545d2c7] ACTION_START - ASSIGNMENT_LIST_VIEW
+INFO|2025-07-08 11:15:07,952|views|75685|6208155648|USER_ACTION - managersupport: assignment_list_access
+INFO|2025-07-08 11:15:07,979|views|75685|6208155648|[7545d2c7] ACTION_SUCCESS - ASSIGNMENT_LIST_VIEW completed in 30.35ms
+INFO|2025-07-08 11:49:38,233|views|93247|6252621824|[59147394] ACTION_START - SHIFT_LIST_VIEW
+INFO|2025-07-08 11:49:38,262|views|93247|6252621824|[59147394] ACTION_SUCCESS - SHIFT_LIST_VIEW completed in 28.67ms

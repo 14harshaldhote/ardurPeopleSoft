@@ -255,7 +255,7 @@ def shift_statistics(request):
 # ============================
 
 @login_required
-@group_required(group_names=['Manager', 'Employee', 'HR'])
+@group_required(group_names=['Manager', 'HR'])
 @log_action('SHIFT_LIST_VIEW')
 def shift_list(request):
     """List all shifts with filtering, pagination, and inline create/edit forms."""

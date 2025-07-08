@@ -73,8 +73,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'trueAlign',
     'trueAlign.shift',
-    'trueAlign.attendance',
+    'trueAlign.support',
     'trueAlign.conf_booking',
+    'trueAlign.attendance.apps.AttendanceConfig',  # ✅ keep this
     'rest_framework',
     'widget_tweaks',
 ]
@@ -244,6 +245,14 @@ LOGGING = {
             'maxBytes': 1024*1024*15,  # 15MB
             'backupCount': 10,
             'formatter': 'json',
+        },
+        'cron_file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'cron.log'),
+            'maxBytes': 1024 * 1024 * 15,
+            'backupCount': 5,
+            'formatter': 'detailed',
         },
         'mail_admins': {
             'level': 'ERROR',

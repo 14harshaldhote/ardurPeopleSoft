@@ -12,6 +12,7 @@ from django.http import JsonResponse
 from django.urls import reverse
 from trueAlign.models import UserSession
 from .utils import get_client_ip, parse_user_agent, get_location_from_ip, detect_suspicious_activity, calculate_productivity_score, to_ist, to_utc, get_current_time_ist
+import pytz
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -283,6 +284,54 @@ class SessionTrackingMiddleware:
 
         return response
 
+    def _process_attendance_integration(self, request, session):
+        """
+        Integrate session with attendance system
+        """
+        try:
+            if not session or not hasattr(session, 'user'):
+                return
+
+            from trueAlign.attendance.services import AttendanceIntegrationService
+
+            attendance_service = AttendanceIntegrationService()
+
+            # Check if this is a new session (login event)
+            if hasattr(session, '_state') and session._state.adding:
+                logger.debug(f"Processing new session login for {session.user.username}")
+                attendance_service.process_session_login(session.user, session)
+
+            elif session.pk:  # Existing session being updated
+                # Always try to update attendance with latest session data
+                try:
+                    IST = pytz.timezone('Asia/Kolkata')
+                    attendance_date = session.login_time.astimezone(IST).date()
+
+                    # Import here to avoid circular imports
+                    from trueAlign.models import Attendance
+
+                    # Check if attendance exists for this user and date
+                    try:
+                        attendance = Attendance.objects.get(user=session.user, date=attendance_date)
+                        # Update session data
+                        Attendance.update_session_data(session.user, session, attendance_date)
+                    except Attendance.DoesNotExist:
+                        # Create attendance if missing
+                        logger.info(f"Creating missing attendance for {session.user.username} on {attendance_date}")
+                        attendance_service.process_session_login(session.user, session)
+
+                except Exception as e:
+                    logger.error(f"Error updating attendance session data: {e}")
+
+                # Check for logout event
+                if session.ended_at and session.logout_time:
+                    logger.debug(f"Processing session logout for {session.user.username}")
+                    attendance_service.process_session_logout(session.user, session)
+
+        except Exception as e:
+            logger.error(f"Error in attendance integration: {e}", exc_info=True)
+
+
     def _should_skip(self, request):
         """Check if tracking should be skipped for this request"""
         path = request.path
@@ -315,6 +364,9 @@ class SessionTrackingMiddleware:
             # Store session in request for later use
             request.user_session = session
 
+            # ADD THIS LINE - Process attendance integration
+            self._process_attendance_integration(request, session)
+
             # Perform security checks
             self._perform_security_checks(request, session, client_info)
 
@@ -332,8 +384,12 @@ class SessionTrackingMiddleware:
                     session = self._get_or_create_session(request, client_info, force_new=True)
                     request.user_session = session
 
+                    # ADD THIS LINE - Process attendance for new session after auto-logout
+                    self._process_attendance_integration(request, session)
+
         except Exception as e:
             logger.error(f"Error in session tracking middleware: {e}")
+
 
     def _extract_client_info(self, request):
         """Extract client information from request"""

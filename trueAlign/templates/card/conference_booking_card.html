@@ -169,15 +169,7 @@
                                     <span class="px-2 py-1 text-xs bg-green-100 text-green-800 rounded text-center font-medium">
                                         ✓ Active
                                     </span>
-                                {% elif booking.can_check_in %}
-                                    <button class="check-in-btn px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 transition duration-200" data-booking-id="{{ booking.id }}">
-                                        Check In
-                                    </button>
-                                {% endif %}
-                                {% if booking.can_be_cancelled %}
-                                    <button class="cancel-booking-btn px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition duration-200" data-booking-id="{{ booking.id }}">
-                                        Cancel
-                                    </button>
+                                
                                 {% endif %}
                             </div>
                         </div>

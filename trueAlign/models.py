@@ -13,6 +13,10 @@ import logging
 from decimal import Decimal
 from django.db import models
 import datetime
+from django.db.models import JSONField
+from math import floor
+
+
 # Set up logging
 logger = logging.getLogger(__name__)
 
@@ -75,7 +79,7 @@ class UserSession(models.Model):
     # Session timing
     created_at = models.DateTimeField(auto_now_add=True)
     login_time = models.DateTimeField(default=timezone.now)
-    logout_time = models.DateTimeField(default=timezone.now)
+    logout_time = models.DateTimeField(null=True, blank=True)
     last_activity = models.DateTimeField(default=timezone.now)
     ended_at = models.DateTimeField(null=True, blank=True)
     tab_opened_time = models.DateTimeField(null=True, blank=True)
@@ -89,6 +93,8 @@ class UserSession(models.Model):
     working_time = models.DurationField(default=timedelta)
     focus_time = models.DurationField(default=timedelta)
     session_duration = models.FloatField(null=True, blank=True)
+    idle_time = models.DurationField(null=True, blank=True)  # or IntegerField if storing seconds
+
 
     # Client information
     ip_address = models.GenericIPAddressField(null=True, blank=True)
@@ -104,6 +110,8 @@ class UserSession(models.Model):
     connection_type = models.CharField(max_length=20, null=True, blank=True)
 
     # Location information
+    location_history = JSONField(null=True, blank=True)
+
     location_country = models.CharField(max_length=100, null=True, blank=True)
     location_region = models.CharField(max_length=100, null=True, blank=True)
     location_city = models.CharField(max_length=100, null=True, blank=True)
@@ -183,6 +191,34 @@ class UserSession(models.Model):
         import random
         import string
         return ''.join(random.choices(string.ascii_letters + string.digits, k=40))
+
+    # In ardurPeopleSoft/trueAlign/models.py - Add this method to UserSession class
+
+    def end_session(self):
+        """Properly end a session"""
+        IST = pytz.timezone('Asia/Kolkata')
+        now = timezone.now().astimezone(IST)
+
+        self.logout_time = now
+        self.ended_at = now
+        self.is_active = False
+        self.save(update_fields=['logout_time', 'ended_at', 'is_active', 'last_activity'])
+
+        logger.info(f"Session ended for {self.user.username} at {now}")
+
+    @classmethod
+    def create_new_session(cls, user, **kwargs):
+        """Create a new session without default logout time"""
+        session_data = {
+            'user': user,
+            'login_time': timezone.now(),
+            'session_key': cls.generate_session_key(),
+            'is_active': True,
+            **kwargs
+        }
+
+        return cls.objects.create(**session_data)
+
 
     @classmethod
     def get_or_create_session(cls, user, tab_id=None, parent_session_id=None, client_data=None, session_key=None, ip_address=None, user_agent=None, browser_fingerprint=None, device_type=None, screen_resolution=None, timezone_offset=None, language=None, url=None, title=None, referrer=None):
@@ -1775,6 +1811,13 @@ class ShiftMaster(models.Model):
         """Determine if the shift crosses midnight"""
         return self.end_time < self.start_time
 
+    def get_working_days(self):
+        """Return a list of working day names"""
+        day_names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        working_day_indices = self.working_days_list
+        return [day_names[i] for i in working_day_indices]
+
+
     @property
     def working_days_list(self):
         """Return a list of working days (0=Monday, 6=Sunday)"""
@@ -1795,6 +1838,24 @@ class ShiftMaster(models.Model):
             except (ValueError, KeyError):
                 return [0, 1, 2, 3, 4]  # Default to weekdays if parsing fails
         return [0, 1, 2, 3, 4]  # Default to weekdays
+
+    def is_night_shift(self):
+        """
+        Determine if this is a night shift based on timing
+        """
+        # If end time is before start time, it crosses midnight (night shift)
+        if self.crosses_midnight:
+            return True
+
+        # If shift starts after 6 PM, consider it a night shift
+        if self.start_time.hour >= 18:
+            return True
+
+        # If shift name explicitly contains "Night"
+        if 'night' in self.name.lower():
+            return True
+
+        return False
 
     def is_working_day(self, date):
         """Check if the given date is a working day for this shift"""
@@ -1911,7 +1972,7 @@ class Holiday(models.Model):
         return False
 
 class ShiftAssignment(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='shift_assignments')
     shift = models.ForeignKey(ShiftMaster, on_delete=models.CASCADE)
     effective_from = models.DateField()
     effective_to = models.DateField(null=True, blank=True)
@@ -2359,25 +2420,66 @@ class Attendance(models.Model):
             if self.shift and self.clock_out_time:
                 self._calculate_early_departure()
 
+    # In ardurPeopleSoft/trueAlign/models.py - Replace the _update_status_logic method
+
     def _update_status_logic(self):
         """Update attendance status based on calculated data and business rules"""
         # Skip status update for certain fixed statuses
         if self.status in ['On Leave', 'Holiday', 'Weekend']:
             return
 
-        # Update status based on clock times and shift
-        if self.clock_in_time and self.shift:
-            if self.late_minutes > 0:
-                self.status = 'Present & Late'
-            elif self.total_hours and self.total_hours >= Decimal('4.0'):
-                self.status = 'Present'
+        if self.clock_in_time:
+            self._handle_clocked_in_status()
+        else:
+            self._handle_no_clock_in_status()
 
-        # Handle "Yet to Clock In" to "Absent" conversion
-        if self.status == 'Yet to Clock In' and not self.clock_in_time:
-            if self._is_shift_ended():
-                self.status = 'Absent'
-                if not self.regularization_reason:
-                    self.regularization_reason = "Auto-marked as absent (no activity, shift ended)"
+    def _handle_clocked_in_status(self):
+        """Handle status logic when user has clocked in"""
+        self._ensure_shift_assignment()
+
+        if self._should_mark_late():
+            self.status = 'Present & Late'
+        elif self._has_minimum_working_hours():
+            self.status = 'Present & Late' if self._should_mark_late() else 'Present'
+        else:
+            self.status = 'Present'
+
+    def _handle_no_clock_in_status(self):
+        """Handle status logic when user has not clocked in"""
+        if self.status == 'Yet to Clock In' and self._is_shift_ended():
+            self._mark_as_absent("Auto-marked as absent (no activity, shift ended)")
+        elif self.status == 'Not Marked' and self._is_past_date():
+            self._mark_as_absent("Auto-marked as absent (no activity recorded)")
+
+    def _ensure_shift_assignment(self):
+        """Ensure shift is assigned if missing"""
+        if not self.shift:
+            try:
+                self.shift = ShiftAssignment.get_user_current_shift(self.user, self.date)
+            except Exception:
+                pass
+
+    def _should_mark_late(self):
+        """Check if user should be marked as late"""
+        return self.shift and self.late_minutes > 0
+
+    def _has_minimum_working_hours(self):
+        """Check if user has minimum working hours"""
+        return self.total_hours and self.total_hours >= Decimal('0.5')
+
+    def _is_past_date(self):
+        """Check if attendance date is in the past"""
+        IST = pytz.timezone('Asia/Kolkata')
+        today = timezone.now().astimezone(IST).date()
+        return self.date < today
+
+    def _mark_as_absent(self, reason):
+        """Mark attendance as absent with reason"""
+        self.status = 'Absent'
+        if not self.regularization_reason:
+            self.regularization_reason = reason
+
+
 
     def _calculate_late_minutes(self):
         """Calculate how many minutes late the user is"""
@@ -2399,25 +2501,51 @@ class Attendance(models.Model):
         if clock_in_minutes > grace_end_minutes:
             self.late_minutes = clock_in_minutes - shift_start_minutes
 
+    # In ardurPeopleSoft/trueAlign/models.py - Replace the _calculate_early_departure method
+
     def _calculate_early_departure(self):
         """Calculate early departure minutes"""
-        if not self.clock_out_time or not self.shift:
+        if not self._can_calculate_early_departure():
             return
 
-        clock_out_time = self.clock_out_time.time()
-        shift_end = self.shift.end_time
-
-        shift_end_minutes = shift_end.hour * 60 + shift_end.minute
-        clock_out_minutes = clock_out_time.hour * 60 + clock_out_time.minute
+        clock_out_minutes = self._get_clock_out_minutes()
+        shift_end_minutes = self._get_shift_end_minutes()
 
         # Handle night shifts
-        if self.shift.is_night_shift() and clock_out_minutes > shift_end_minutes:
-            # Next day clock out
-            clock_out_minutes += 24 * 60
+        if self._is_night_shift():
+            clock_out_minutes = self._adjust_for_night_shift(clock_out_minutes, shift_end_minutes)
 
         if clock_out_minutes < shift_end_minutes:
-            self.left_early = True
-            self.early_departure_minutes = shift_end_minutes - clock_out_minutes
+            self._set_early_departure(shift_end_minutes - clock_out_minutes)
+
+    def _can_calculate_early_departure(self):
+        """Check if early departure can be calculated"""
+        return self.clock_out_time and self.shift
+
+    def _get_clock_out_minutes(self):
+        """Get clock out time in minutes"""
+        return self.clock_out_time.time().hour * 60 + self.clock_out_time.time().minute
+
+    def _get_shift_end_minutes(self):
+        """Get shift end time in minutes"""
+        return self.shift.end_time.hour * 60 + self.shift.end_time.minute
+
+    def _is_night_shift(self):
+        """Check if this is a night shift"""
+        return (hasattr(self.shift, 'is_night_shift') and self.shift.is_night_shift()) or \
+               (hasattr(self.shift, 'crosses_midnight') and self.shift.crosses_midnight)
+
+    def _adjust_for_night_shift(self, clock_out_minutes, shift_end_minutes):
+        """Adjust clock out minutes for night shift"""
+        if clock_out_minutes > shift_end_minutes:
+            return clock_out_minutes + 24 * 60
+        return clock_out_minutes
+
+    def _set_early_departure(self, minutes):
+        """Set early departure values"""
+        self.left_early = True
+        self.early_departure_minutes = minutes
+
 
     def _is_user_on_leave(self):
         """Check if user is on approved leave for this date"""
@@ -2726,15 +2854,35 @@ class Attendance(models.Model):
         self.save()
         logger.info(f"Regularization rejected for {self.user.username} on {self.date}")
 
+
+
     def get_formatted_duration(self):
         """
-        Get formatted duration string
+        Returns duration as formatted string 'Xh Ym', using Asia/Kolkata timezone.
+        Handles None, negative, or invalid durations gracefully.
         """
-        if not self.total_hours:
+        if not self.clock_in_time or not self.clock_out_time:
             return "0h 0m"
 
-        hours = int(self.total_hours)
-        minutes = int((self.total_hours - hours) * 60)
+        # Convert to Asia/Kolkata time
+        india_tz = pytz.timezone("Asia/Kolkata")
+        clock_in = self.clock_in_time.astimezone(india_tz)
+        clock_out = self.clock_out_time.astimezone(india_tz)
+
+        # Ensure no negative durations
+        if clock_out < clock_in:
+            return "0h 0m"
+
+        duration_seconds = (clock_out - clock_in).total_seconds()
+        total_hours = duration_seconds / 3600.0
+
+        hours = int(floor(total_hours))
+        minutes = int(round((total_hours - hours) * 60))
+
+        if minutes == 60:
+            hours += 1
+            minutes = 0
+
         return f"{hours}h {minutes}m"
 
     def get_status_color(self):

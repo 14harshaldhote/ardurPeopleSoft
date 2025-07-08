@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load math_filters %}
 
 {% block title %}Shifts - TrueAlign{% endblock %}
 
@@ -213,7 +214,7 @@
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm text-neutral-900">{{ shift.shift_duration }} hrs</div>
                                 {% if shift.break_duration %}
-                                <div class="text-xs text-neutral-500">Break: {{ shift.break_duration.total_seconds|floatformat:0|add:"0"|floatformat:0 }}min</div>
+                                <div class="text-xs text-neutral-500">Break: {{ shift.break_duration.total_seconds|div:60|floatformat:0|add:"0"|floatformat:0 }}min</div>
                                 {% endif %}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">

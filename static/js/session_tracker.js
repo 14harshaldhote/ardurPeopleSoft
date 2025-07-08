@@ -138,6 +138,8 @@ window.SessionTracker = (function () {
 
     // Create or update session
     initializeSession();
+
+    calculateScrollPercentage()
   }
   /**
    * Creates a throttled function that only invokes `func` at most once per
@@ -1028,6 +1030,22 @@ window.SessionTracker = (function () {
        console.error('Error in trackKeyboard:', error);
      }
    }
+   function calculateScrollPercentage() {
+     try {
+       const scrollTop = window.scrollY || document.documentElement.scrollTop;
+       const scrollHeight = Math.max(
+         document.body.scrollHeight,
+         document.documentElement.scrollHeight,
+       ) - window.innerHeight;
+
+       return scrollHeight > 0 ? Math.round((scrollTop / scrollHeight) * 100) : 0;
+     } catch (error) {
+       console.error('Error calculating scroll percentage:', error);
+       return 0;
+     }
+   }
+
+  }
 
 
   /**

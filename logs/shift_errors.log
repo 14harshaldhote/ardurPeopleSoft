@@ -13036,3 +13036,1312 @@ django.urls.exceptions.NoReverseMatch: Reverse for 'calendar_month' with argumen
 [2025-07-01 10:54:19] ERROR - django.request - log_response:241 - Internal Server Error: /session/status/
 [2025-07-01 10:54:19] ERROR - django.request - log_response:241 - Internal Server Error: /session/status/
 [2025-07-01 10:54:38] ERROR - django.request - log_response:241 - Internal Server Error: /api/session/update/
+[2025-07-01 11:53:40] ERROR - django.request - log_response:241 - Internal Server Error: /api/session/update/
+[2025-07-01 11:54:58] ERROR - django.request - log_response:241 - Internal Server Error: /api/session/update/
+[2025-07-01 11:55:52] ERROR - django.request - log_response:241 - Internal Server Error: /api/session/update/
+[2025-07-01 12:05:56] ERROR - django.request - log_response:241 - Internal Server Error: /shift/shifts/
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/shift/views.py", line 409, in shift_list
+    return render(request, 'shift/shift_list.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 861, in do_for
+    nodelist_loop = parser.parse(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 961, in do_if
+    nodelist = parser.parse(("elif", "else", "endif"))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 481, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 479, in parse
+    filter_expression = self.compile_filter(token.contents)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 597, in compile_filter
+    return FilterExpression(token, self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 693, in __init__
+    filter_func = parser.find_filter(filter_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 603, in find_filter
+    raise TemplateSyntaxError("Invalid filter: '%s'" % filter_name)
+django.template.exceptions.TemplateSyntaxError: Invalid filter: 'div'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/shift/decorators.py", line 53, in wrapper_func
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/shift/views.py", line 79, in wrapper
+    result = func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/shift/views.py", line 463, in shift_list
+    return render(request, 'shift/shift_list.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 861, in do_for
+    nodelist_loop = parser.parse(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 961, in do_if
+    nodelist = parser.parse(("elif", "else", "endif"))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 481, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 479, in parse
+    filter_expression = self.compile_filter(token.contents)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 597, in compile_filter
+    return FilterExpression(token, self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 693, in __init__
+    filter_func = parser.find_filter(filter_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 603, in find_filter
+    raise TemplateSyntaxError("Invalid filter: '%s'" % filter_name)
+django.template.exceptions.TemplateSyntaxError: Invalid filter: 'div'
+[2025-07-01 12:05:57] ERROR - django.request - log_response:241 - Internal Server Error: /api/session/update/
+[2025-07-01 12:06:22] ERROR - django.request - log_response:241 - Internal Server Error: /api/session/update/
+[2025-07-01 12:07:34] ERROR - django.request - log_response:241 - Internal Server Error: /shift/
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/shift/views.py", line 216, in shift_dashboard
+    return render(request, 'shift/dashboard.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/resolvers.py", line 851, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'assignment' not found. 'assignment' is not a valid view function or pattern name.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/shift/decorators.py", line 53, in wrapper_func
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/shift/views.py", line 79, in wrapper
+    result = func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/shift/views.py", line 221, in shift_dashboard
+    return render(request, 'shift/dashboard.html', {'error': True})
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/resolvers.py", line 851, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'assignment' not found. 'assignment' is not a valid view function or pattern name.
+[2025-07-01 12:40:39] ERROR - django.request - log_response:241 - Internal Server Error: /api/session/update/
+[2025-07-01 14:33:34] ERROR - django.request - log_response:241 - Internal Server Error: /dashboard/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/views.py", line 932, in dashboard_view
+    user_status['idle_time'] = user_session.idle_time
+AttributeError: 'UserSession' object has no attribute 'idle_time'
+[2025-07-01 14:34:52] ERROR - django.request - log_response:241 - Internal Server Error: /dashboard/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/views.py", line 933, in dashboard_view
+    user_status['working_hours'] = user_session.working_hours
+AttributeError: 'UserSession' object has no attribute 'working_hours'
+[2025-07-01 14:34:55] ERROR - django.request - log_response:241 - Internal Server Error: /dashboard/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/views.py", line 933, in dashboard_view
+    user_status['working_hours'] = user_session.working_hours
+AttributeError: 'UserSession' object has no attribute 'working_hours'
+[2025-07-01 14:35:22] ERROR - django.request - log_response:241 - Internal Server Error: /dashboard/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/views.py", line 933, in dashboard_view
+    user_status['working_hours'] = user_session.working_hours
+AttributeError: 'UserSession' object has no attribute 'working_hours'
+[2025-07-01 14:36:35] ERROR - django.request - log_response:241 - Internal Server Error: /dashboard/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/views.py", line 933, in dashboard_view
+    user_status['working_hours'] = user_session.working_hours
+AttributeError: 'UserSession' object has no attribute 'working_hours'
+[2025-07-01 14:38:21] ERROR - django.request - log_response:241 - Internal Server Error: /dashboard/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/views.py", line 933, in dashboard_view
+    user_status['working_hours'] = user_session.working_hours
+AttributeError: 'UserSession' object has no attribute 'working_hours'
+[2025-07-01 14:41:36] ERROR - django.request - log_response:241 - Internal Server Error: /dashboard/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/views.py", line 933, in dashboard_view
+    user_status['working_hours'] = user_session.working_hours
+AttributeError: 'UserSession' object has no attribute 'working_hours'
+[2025-07-01 14:54:39] ERROR - django.request - log_response:241 - Internal Server Error: /dashboard/
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/views.py", line 1005, in dashboard_view
+    booking_context = conference_booking_context(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/conf_booking/views.py", line 706, in conference_booking_context
+    if user and user.is_authenticated:
+AttributeError: 'WSGIRequest' object has no attribute 'is_authenticated'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/views.py", line 1028, in dashboard_view
+    return render(request, 'core/dashboard.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: core/dashboard.html
+[2025-07-01 15:21:27] ERROR - django.request - log_response:241 - Internal Server Error: /logout/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/views.py", line 156, in logout_view
+    return redirect('login')
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 49, in redirect
+    return redirect_class(resolve_url(to, *args, **kwargs))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 180, in resolve_url
+    return reverse(to, args=args, kwargs=kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/resolvers.py", line 851, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'login' not found. 'login' is not a valid view function or pattern name.
+[2025-07-01 15:22:19] ERROR - django.request - log_response:241 - Internal Server Error: /login/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/views.py", line 126, in login_view
+    return render(request, 'core/login.html', {
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: core/login.html
+[2025-07-01 15:25:22] ERROR - django.request - log_response:241 - Internal Server Error: /dashboard/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 71, in reverse
+    extra, resolver = resolver.namespace_dict[ns]
+KeyError: 'aps_holiday'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/views.py", line 1109, in dashboard_view
+    return render(request, 'dashboard.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 326, in render
+    return nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 210, in render
+    return template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 173, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 82, in reverse
+    raise NoReverseMatch("%s is not a registered namespace" % key)
+django.urls.exceptions.NoReverseMatch: 'aps_holiday' is not a registered namespace
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 71, in reverse
+    extra, resolver = resolver.namespace_dict[ns]
+KeyError: 'aps_holiday'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/views.py", line 1127, in dashboard_view
+    return render(request, 'dashboard.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 326, in render
+    return nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 210, in render
+    return template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 173, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 82, in reverse
+    raise NoReverseMatch("%s is not a registered namespace" % key)
+django.urls.exceptions.NoReverseMatch: 'aps_holiday' is not a registered namespace
+[2025-07-01 15:26:36] ERROR - django.request - log_response:241 - Internal Server Error: /dashboard/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 71, in reverse
+    extra, resolver = resolver.namespace_dict[ns]
+KeyError: 'aps_hr'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/views.py", line 1109, in dashboard_view
+    return render(request, 'dashboard.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 326, in render
+    return nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 210, in render
+    return template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 173, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 326, in render
+    return nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 326, in render
+    return nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 82, in reverse
+    raise NoReverseMatch("%s is not a registered namespace" % key)
+django.urls.exceptions.NoReverseMatch: 'aps_hr' is not a registered namespace
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 71, in reverse
+    extra, resolver = resolver.namespace_dict[ns]
+KeyError: 'aps_hr'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/views.py", line 1127, in dashboard_view
+    return render(request, 'dashboard.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 326, in render
+    return nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 210, in render
+    return template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 173, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 326, in render
+    return nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 326, in render
+    return nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 82, in reverse
+    raise NoReverseMatch("%s is not a registered namespace" % key)
+django.urls.exceptions.NoReverseMatch: 'aps_hr' is not a registered namespace
+[2025-07-01 22:30:43] ERROR - django.request - log_response:241 - Internal Server Error: /dashboard/
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/views.py", line 1112, in dashboard_view
+    return render(request, 'dashboard.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 210, in render
+    return template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 173, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 326, in render
+    return nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/resolvers.py", line 851, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'dashboard' not found. 'dashboard' is not a valid view function or pattern name.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/views.py", line 1130, in dashboard_view
+    return render(request, 'dashboard.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 210, in render
+    return template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 173, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 326, in render
+    return nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/resolvers.py", line 851, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'dashboard' not found. 'dashboard' is not a valid view function or pattern name.
+[2025-07-01 22:35:05] ERROR - django.request - log_response:241 - Internal Server Error: /support/dashboard/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 71, in reverse
+    extra, resolver = resolver.namespace_dict[ns]
+KeyError: 'aps_support'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/support/views.py", line 55, in support_dashboard
+    return render(request, 'support/dashboard.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 82, in reverse
+    raise NoReverseMatch("%s is not a registered namespace" % key)
+django.urls.exceptions.NoReverseMatch: 'aps_support' is not a registered namespace
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 71, in reverse
+    extra, resolver = resolver.namespace_dict[ns]
+KeyError: 'aps_support'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/support/views.py", line 60, in support_dashboard
+    return render(request, 'support/dashboard.html', {'user_roles': {}})
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 82, in reverse
+    raise NoReverseMatch("%s is not a registered namespace" % key)
+django.urls.exceptions.NoReverseMatch: 'aps_support' is not a registered namespace
+[2025-07-01 22:35:29] ERROR - django.request - log_response:241 - Internal Server Error: /support/tickets/create/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'endfor'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/support/views.py", line 197, in create_ticket
+    return render(request, 'support/create_ticket.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 226: 'endfor', expected 'endblock'. Did you forget to register or load this tag?
+[2025-07-01 22:36:23] ERROR - django.request - log_response:241 - Internal Server Error: /support/tickets/create/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 71, in reverse
+    extra, resolver = resolver.namespace_dict[ns]
+KeyError: 'aps_support'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/support/views.py", line 197, in create_ticket
+    return render(request, 'support/create_ticket.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 82, in reverse
+    raise NoReverseMatch("%s is not a registered namespace" % key)
+django.urls.exceptions.NoReverseMatch: 'aps_support' is not a registered namespace
+[2025-07-08 12:11:02] ERROR - django.request - log_response:241 - Internal Server Error: /support/tickets/1/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 875, in _resolve_lookup
+    current = current[bit]
+TypeError: 'NoneType' object is not subscriptable
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 885, in _resolve_lookup
+    current = getattr(current, bit)
+AttributeError: 'NoneType' object has no attribute 'username'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 891, in _resolve_lookup
+    current = current[int(bit)]
+ValueError: invalid literal for int() with base 10: 'username'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/support/views.py", line 218, in ticket_detail
+    return render(request, 'support/ticket_detail.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 242, in render
+    nodelist.append(node.render_annotated(context))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1059, in render
+    output = self.filter_expression.resolve(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 731, in resolve
+    arg_vals.append(arg.resolve(context))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 842, in resolve
+    value = self._resolve_lookup(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 898, in _resolve_lookup
+    raise VariableDoesNotExist(
+django.template.base.VariableDoesNotExist: Failed lookup for key [username] in None
+[2025-07-08 14:34:34] ERROR - django.request - log_response:241 - Internal Server Error: /support/tickets/
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/support/views.py", line 100, in ticket_list
+    return render(request, 'support/ticket_list.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 515, in parse
+    self.unclosed_block_tag(parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 578, in unclosed_block_tag
+    raise self.error(token, msg)
+django.template.exceptions.TemplateSyntaxError: Unclosed tag on line 103: 'block'. Looking for one of: endblock.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/support/views.py", line 105, in ticket_list
+    return render(request, 'support/ticket_list.html', {})
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 515, in parse
+    self.unclosed_block_tag(parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 578, in unclosed_block_tag
+    raise self.error(token, msg)
+django.template.exceptions.TemplateSyntaxError: Unclosed tag on line 103: 'block'. Looking for one of: endblock.
+[2025-07-08 14:45:23] ERROR - django.request - log_response:241 - Internal Server Error: /support/tickets/
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/support/views.py", line 100, in ticket_list
+    return render(request, 'support/ticket_list.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/resolvers.py", line 851, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'ticket_detail' with keyword arguments '{'pk': 'PLACEHOLDER_ID'}' not found. 1 pattern(s) tried: ['support/tickets/(?P<pk>[0-9]+)/\\Z']
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/support/views.py", line 105, in ticket_list
+    return render(request, 'support/ticket_list.html', {})
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 1000, in <listcomp>
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 961, in render_annotated
+    return self.render(context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 479, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/urls/resolvers.py", line 851, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'ticket_detail' with keyword arguments '{'pk': 'PLACEHOLDER_ID'}' not found. 1 pattern(s) tried: ['support/tickets/(?P<pk>[0-9]+)/\\Z']

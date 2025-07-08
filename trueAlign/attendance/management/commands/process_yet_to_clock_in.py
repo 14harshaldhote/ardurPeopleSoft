@@ -10,7 +10,7 @@ import logging
 from trueAlign.models import Attendance, ShiftAssignment
 from ...services import AttendanceAutoMarkingService
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('cron')
 User = get_user_model()
 
 

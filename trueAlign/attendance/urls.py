@@ -36,4 +36,8 @@ urlpatterns = [
     path('api/monthly-data/', views.get_monthly_attendance_data, name='api_monthly_data'),
     path('api/run-auto-marking/', views.run_auto_marking, name='api_run_auto_marking'),
     path('api/summary/', views.attendance_summary_api, name='api_summary'),
+
+
+    path('api/verify-session-status/', views.verify_session_status, name='verify_session_status'),
+    path('api/update-activity/', views.update_activity, name='update_activity'),
 ]

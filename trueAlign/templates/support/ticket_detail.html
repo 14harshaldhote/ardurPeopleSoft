@@ -1,0 +1,853 @@
+{% extends 'base.html' %}
+{% load static custom_filters %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        <!-- Header Section -->
+        <div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="flex items-center space-x-4">
+                <a href="{% url 'support:ticket_list' %}"
+                    class="inline-flex items-center px-4 py-2.5 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 shadow-sm transition-all duration-200 hover:shadow-md">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                    Back to Tickets
+                </a>
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">{{ ticket.ticket_id }}</h1>
+                    <p class="text-sm text-gray-500">{{ ticket.get_issue_type_display }}</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                {% if ticket.status == 'Resolved' or ticket.status == 'Closed' %}
+                {% if permissions.can_change_status %}
+                <form method="POST" action="{% url 'support:ticket_detail' pk=ticket.pk %}"
+                    onsubmit="return confirm('Are you sure you want to reopen this ticket?');">
+                    {% csrf_token %}
+                    <button type="submit" name="update_status" value="Open"
+                        class="inline-flex items-center px-4 py-2.5 rounded-lg text-sm font-semibold bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-all duration-200 hover:shadow-md">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Reopen Ticket
+                    </button>
+                </form>
+                {% endif %}
+                {% endif %}
+                {% if permissions.can_escalate %}
+                <form method="POST" action="{% url 'support:ticket_detail' pk=ticket.pk %}"
+                    onsubmit="return confirm('Are you sure you want to escalate this ticket?');">
+                    {% csrf_token %}
+                    <button type="submit" name="escalate"
+                        class="inline-flex items-center px-4 py-2.5 rounded-lg text-sm font-semibold bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition-all duration-200 hover:shadow-md">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        Escalate
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Messages -->
+        {% if messages %}
+        <div class="mb-6 space-y-2">
+            {% for message in messages %}
+            <div
+                class="p-4 rounded-lg border-l-4 {% if message.tags == 'success' %}bg-green-50 border-green-400 text-green-700{% elif message.tags == 'error' %}bg-red-50 border-red-400 text-red-700{% elif message.tags == 'warning' %}bg-yellow-50 border-yellow-400 text-yellow-700{% else %}bg-blue-50 border-blue-400 text-blue-700{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Main Content -->
+            <div class="lg:col-span-2 space-y-8">
+                <!-- Ticket Details Card -->
+                <div
+                    class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg border border-white/60 overflow-hidden hover:shadow-xl transition-all duration-300">
+                    <div class="p-8 space-y-6">
+                        <!-- Subject and Status -->
+                        <div class="space-y-4">
+                            <h2 class="text-2xl font-bold text-gray-800">{{ ticket.subject }}</h2>
+
+                            <div class="flex flex-wrap items-center gap-3">
+                                <!-- Status Badge -->
+                                <span class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium border
+                                    {% if ticket.status == 'New' %}bg-blue-50 text-blue-700 border-blue-200
+                                    {% elif ticket.status == 'Open' %}bg-amber-50 text-amber-700 border-amber-200
+                                    {% elif ticket.status == 'In Progress' %}bg-indigo-50 text-indigo-700 border-indigo-200
+                                    {% elif ticket.status == 'Pending User Response' %}bg-purple-50 text-purple-700 border-purple-200
+                                    {% elif ticket.status == 'Pending Third Party' %}bg-pink-50 text-pink-700 border-pink-200
+                                    {% elif ticket.status == 'On Hold' %}bg-gray-50 text-gray-700 border-gray-200
+                                    {% elif ticket.status == 'Resolved' %}bg-emerald-50 text-emerald-700 border-emerald-200
+                                    {% elif ticket.status == 'Closed' %}bg-slate-50 text-slate-700 border-slate-200
+                                    {% endif %}">
+                                    <div class="w-2 h-2 rounded-full mr-2
+                                        {% if ticket.status == 'New' %}bg-blue-500
+                                        {% elif ticket.status == 'Open' %}bg-amber-500
+                                        {% elif ticket.status == 'In Progress' %}bg-indigo-500
+                                        {% elif ticket.status == 'Pending User Response' %}bg-purple-500
+                                        {% elif ticket.status == 'Pending Third Party' %}bg-pink-500
+                                        {% elif ticket.status == 'On Hold' %}bg-gray-500
+                                        {% elif ticket.status == 'Resolved' %}bg-emerald-500
+                                        {% elif ticket.status == 'Closed' %}bg-slate-500
+                                        {% endif %}"></div>
+                                    {{ ticket.get_status_display }}
+                                </span>
+
+                                <!-- Priority Badge -->
+                                <span class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium border
+                                    {% if ticket.priority == 'Low' %}bg-green-50 text-green-700 border-green-200
+                                    {% elif ticket.priority == 'Medium' %}bg-blue-50 text-blue-700 border-blue-200
+                                    {% elif ticket.priority == 'High' %}bg-orange-50 text-orange-700 border-orange-200
+                                    {% elif ticket.priority == 'Critical' %}bg-red-50 text-red-700 border-red-200
+                                    {% endif %}">
+                                    <div class="w-2 h-2 rounded-full mr-2
+                                        {% if ticket.priority == 'Low' %}bg-green-500
+                                        {% elif ticket.priority == 'Medium' %}bg-blue-500
+                                        {% elif ticket.priority == 'High' %}bg-orange-500
+                                        {% elif ticket.priority == 'Critical' %}bg-red-500
+                                        {% endif %}"></div>
+                                    {{ ticket.get_priority_display }}
+                                </span>
+
+                                <!-- Assigned Group -->
+                                {% if ticket.assigned_group %}
+                                <span
+                                    class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-purple-50 text-purple-700 border border-purple-200">
+                                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                        <path
+                                            d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z">
+                                        </path>
+                                    </svg>
+                                    {{ ticket.get_assigned_group_display }}
+                                </span>
+                                {% endif %}
+
+                                <!-- Assigned User -->
+                                {% if ticket.assigned_to_user %}
+                                <span class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    {{ ticket.assigned_to_user|user_display_name }}
+                                </span>
+                                {% endif %}
+                                
+
+                                <!-- SLA Status -->
+                                {% if ticket.sla_status %}
+                                <span class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium
+                                    {% if ticket.sla_status == 'Within SLA' %}bg-green-50 text-green-700 border border-green-200
+                                    {% elif ticket.sla_status == 'Breached' %}bg-red-50 text-red-700 border border-red-200
+                                    {% endif %}">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    {{ ticket.get_sla_status_display }}
+                                </span>
+                                {% endif %}
+
+                                <!-- Overdue indicator -->
+                                {% if ticket.is_overdue %}
+                                <span
+                                    class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-red-50 text-red-700 border border-red-200">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.728-.833-2.498 0L3.732 16.5C2.962 17.333 3.924 19 5.464 19z">
+                                        </path>
+                                    </svg>
+                                    Overdue
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="space-y-3">
+                            <h3 class="text-lg font-semibold text-gray-700">Description</h3>
+                            <div class="prose max-w-none text-gray-600 bg-gray-50 p-4 rounded-lg">
+                                {{ ticket.description|linebreaksbr }}
+                            </div>
+                        </div>
+
+                        <!-- Additional Information -->
+                        {% if ticket.department or ticket.location or ticket.asset_id %}
+                        <div class="space-y-3">
+                            <h3 class="text-lg font-semibold text-gray-700">Additional Information</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                                {% if ticket.department %}
+                                <div>
+                                    <span class="font-medium text-gray-500">Department:</span>
+                                    <p class="text-gray-800">{{ ticket.department }}</p>
+                                </div>
+                                {% endif %}
+                                {% if ticket.location %}
+                                <div>
+                                    <span class="font-medium text-gray-500">Location:</span>
+                                    <p class="text-gray-800">{{ ticket.location }}</p>
+                                </div>
+                                {% endif %}
+                                {% if ticket.asset_id %}
+                                <div>
+                                    <span class="font-medium text-gray-500">Asset ID:</span>
+                                    <p class="text-gray-800">{{ ticket.asset_id }}</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Resolution Summary -->
+                        {% if ticket.status == 'Resolved' or ticket.status == 'Closed' %}
+                        {% if ticket.resolution_summary %}
+                        <div class="space-y-3 pt-6 border-t border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-700">Resolution Summary</h3>
+                            <div
+                                class="prose max-w-none text-gray-600 bg-emerald-50 border-l-4 border-emerald-400 p-4 rounded-r-lg">
+                                {{ ticket.resolution_summary|linebreaksbr }}
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Add Comment Section -->
+                {% if permissions.can_comment %}
+                <div
+                    class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg border border-white/60 p-8 hover:shadow-xl transition-all duration-300">
+                    <form method="POST" action="{% url 'support:ticket_detail' pk=ticket.pk %}"
+                        enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <h3 class="text-lg font-semibold text-gray-700 mb-6">Add a Comment</h3>
+
+                        <div class="space-y-4">
+                            <!-- Comment Content -->
+                            <div>
+                                <label for="comment_content"
+                                    class="block text-sm font-medium text-gray-700 mb-2">Comment</label>
+                                <textarea name="content" id="comment_content" rows="4"
+                                    class="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                                    placeholder="Type your comment here..." required></textarea>
+                            </div>
+
+                            <!-- File Attachments -->
+                            <div>
+                                <label for="comment_attachments"
+                                    class="block text-sm font-medium text-gray-700 mb-2">Attach Files</label>
+                                <input type="file" name="comment_attachments" id="comment_attachments" multiple
+                                    accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.zip,.csv,.xlsx"
+                                    class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all duration-200">
+                                <div id="file-list" class="text-xs text-gray-500 mt-2"></div>
+                            </div>
+
+                            <!-- Submit Section -->
+                            <div
+                                class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pt-4">
+                                {% if permissions.can_add_internal_comment %}
+                                <label class="flex items-center space-x-2 text-sm text-yellow-700">
+                                    <input type="checkbox" name="is_internal"
+                                        class="rounded border-gray-300 text-yellow-600 shadow-sm focus:border-yellow-300 focus:ring focus:ring-offset-0 focus:ring-yellow-200 focus:ring-opacity-50">
+                                    <span>Internal Note</span>
+                                </label>
+                                {% endif %}
+                                <button type="submit" name="add_comment"
+                                    class="inline-flex items-center px-6 py-3 rounded-lg text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-lg transition-all duration-200">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                    </svg>
+                                    Add Comment
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                {% endif %}
+
+                <!-- Activity Feed -->
+                <div
+                    class="bg-white backdrop-blur-sm rounded-2xl shadow-lg border border-white/60 overflow-hidden hover:shadow-xl transition-all duration-300">
+                    <div class="p-8">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-6">Activity Feed</h3>
+
+                        <div
+                            class="space-y-6 overflow-y-auto max-h-[600px] pr-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                            {% for comment in comments %}
+                            <div class="flex space-x-4">
+                                <div class="h-10 w-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-md flex-shrink-0">
+                                    <span class="text-white font-semibold text-sm">{{ comment.user|safe_user_initial }}</span>
+                                </div>
+                                <div class="flex-grow">
+                                    <div class="p-4 rounded-lg border {% if comment.is_internal %}bg-yellow-50 border-yellow-200{% else %}bg-gray-50 border-gray-200{% endif %}">
+                                        <div class="flex justify-between items-start mb-3">
+                                            <div>
+                                                <p class="font-semibold text-gray-800">{{ comment.user|user_display_name }}</p>
+                            
+                                                <p class="text-xs text-gray-500">{{ comment.created_at|date:"M d, Y g:i A" }}</p>
+                                            </div>
+                                            {% if comment.is_internal %}
+                                            <span
+                                                class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd"
+                                                        d="M18 8a6 6 0 01-7.743 5.743L10 14l-1 1-1 1H6v2H2v-4l4.257-4.257A6 6 0 0118 8zm-6-4a1 1 0 100 2 1 1 0 000-2z"
+                                                        clip-rule="evenodd"></path>
+                                                </svg>
+                                                Internal
+                                            </span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="prose max-w-none text-gray-600">
+                                            {{ comment.content|linebreaksbr }}
+                                        </div>
+
+                                        <!-- Comment Attachments -->
+                                        {% with attachments=comment.attachments.all %}
+                                        {% if attachments %}
+                                        <div class="mt-4 pt-3 border-t border-gray-200/80">
+                                            <p class="text-sm font-semibold text-gray-600 mb-2">Attachments:</p>
+                                            <div class="space-y-2">
+                                                {% for att in attachments %}
+                                                <a href="{{ att.file.url }}" download
+                                                    class="flex items-center space-x-2 text-blue-600 hover:text-blue-800 text-sm p-2 rounded-md hover:bg-blue-50 transition-colors group">
+                                                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor"
+                                                        viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13">
+                                                        </path>
+                                                    </svg>
+                                                    <span class="truncate group-hover:underline">{{ att.original_filename }}</span>
+                                                    <span class="text-gray-400 text-xs ml-auto">({{ att.file.size|filesizeformat }})</span>
+                                                </a>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                        {% endwith %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="text-center py-8">
+                                <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z">
+                                    </path>
+                                </svg>
+                                <p class="text-gray-500">No comments yet.</p>
+                            </div>
+                            {% endfor %}
+
+                            <!-- Activity Log -->
+                            {% for activity in activities %}
+                            <div class="flex items-center space-x-4 text-sm text-gray-500 pl-14">
+                                <div class="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center">
+                                    <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </div>
+                                <div class="flex-1">
+                                    <span class="font-medium">{{ activity.user|user_display_name }}</span>
+                                    <span class="text-gray-400">{{ activity.get_action_display|lower }}</span>
+                                    {% if activity.details %}
+                                    <span class="text-gray-700">{{ activity.details }}</span>
+                                
+                                    {% endif %}
+                                    <span class="text-xs text-gray-400 ml-2">{{ activity.timestamp|date:"M d, g:i A" }}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="lg:col-span-1 space-y-6">
+                <!-- Quick Actions -->
+                <div
+                    class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg border border-white/60 p-6 hover:shadow-xl transition-all duration-300">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-4 border-b pb-3">Quick Actions</h3>
+                    <div class="space-y-4">
+                        {% if permissions.can_change_status %}
+                        <form method="POST" action="{% url 'support:ticket_detail' pk=ticket.pk %}" class="space-y-3">
+                            {% csrf_token %}
+                            <div>
+                                <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                                <select name="status" id="status"
+                                    class="w-full p-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                                    onchange="toggleResolutionField(this.value)">
+                                    {% for choice in status_form.status %}
+                                    {{ choice.tag }}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div id="resolution-field" class="hidden">
+                                <label for="resolution_summary"
+                                    class="block text-sm font-medium text-gray-700 mb-1">Resolution Summary</label>
+                                <textarea name="comment" id="resolution_summary" rows="3"
+                                    class="w-full p-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                                    placeholder="Describe how the issue was resolved..."></textarea>
+                            </div>
+                            <button type="submit" name="update_status"
+                                class="w-full px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-lg transition-all duration-200">
+                                Update Status
+                            </button>
+                        </form>
+                        {% endif %}
+
+                        {% if permissions.can_assign %}
+                        <form method="POST" action="{% url 'support:ticket_detail' pk=ticket.pk %}" class="space-y-3">
+                            {% csrf_token %}
+                            <div>
+                                <label for="assigned_group"
+                                    class="block text-sm font-medium text-gray-700 mb-1">Assigned Group</label>
+                                <select name="assigned_group" id="assigned_group"
+                                    class="w-full p-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                                    onchange="updateAssigneeOptions(this.value)">
+                                    {% for choice in assignment_form.assigned_group %}
+                                    {{ choice.tag }}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div>
+                                <label for="assigned_to_user"
+                                    class="block text-sm font-medium text-gray-700 mb-1">Assigned To</label>
+                                    <select name="assigned_to_user" id="assigned_to_user" class="w-full p-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                                        <option value="">Unassigned</option>
+                                        {% for user in assignable_users %}
+                                        <option value="{{ user.pk }}" {% if ticket.assigned_to_user.pk == user.pk %}selected{% endif %}>
+                                            {{ user|user_display_name }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                    
+                            </div>
+                            <button type="submit" name="assign"
+                                class="w-full px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-md hover:shadow-lg transition-all duration-200">
+                                Update Assignment
+                            </button>
+                        </form>
+                        {% endif %}
+
+                        {% if permissions.can_edit %}
+                        <form method="POST" action="{% url 'support:ticket_detail' pk=ticket.pk %}" class="space-y-3">
+                            {% csrf_token %}
+                            <div>
+                                <label for="priority"
+                                    class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                                <select name="priority" id="priority"
+                                    class="w-full p-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                                    {% for choice in priority_form.priority %}
+                                    {{ choice.tag }}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <button type="submit" name="update_priority"
+                                class="w-full px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-orange-600 hover:bg-orange-700 shadow-md hover:shadow-lg transition-all duration-200">
+                                Update Priority
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Ticket Details -->
+                <div
+                    class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg border border-white/60 p-6 hover:shadow-xl transition-all duration-300">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-4 border-b pb-3">Ticket Details</h3>
+                    <div class="space-y-4 text-sm">
+                        <div class="flex justify-between items-start">
+                            <span class="text-gray-500 font-medium">Created by:</span>
+                            <div class="text-right">
+                                <p class="font-semibold text-gray-800">{{ ticket.user.get_full_name|default:ticket.user.username }}</p>
+                                <p class="text-xs text-gray-500">{{ ticket.user.email }}</p>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between">
+                            <span class="text-gray-500 font-medium">Created:</span>
+                            <span class="font-semibold text-gray-800">{{ ticket.created_at|date:"M d, Y g:i A" }}</span>
+                        </div>
+
+                        <div class="flex justify-between">
+                            <span class="text-gray-500 font-medium">Last Updated:</span>
+                            <span class="font-semibold text-gray-800">{{ ticket.updated_at|date:"M d, Y g:i A" }}</span>
+                        </div>
+
+                        {% if ticket.due_date %}
+                        <div class="flex justify-between">
+                            <span class="text-gray-500 font-medium">Due Date:</span>
+                            <span
+                                class="font-semibold {% if ticket.is_overdue %}text-red-600{% else %}text-gray-800{% endif %}">
+                                {{ ticket.due_date|date:"M d, Y g:i A" }}
+                            </span>
+                        </div>
+                        {% endif %}
+
+                        {% if ticket.sla_target_date %}
+                        <div class="flex justify-between">
+                            <span class="text-gray-500 font-medium">SLA Target:</span>
+                            <span class="font-semibold text-gray-800">{{ ticket.sla_target_date|date:"M d, Y g:i A" }}</span>
+                        </div>
+                        {% endif %}
+
+                        {% if ticket.resolved_at %}
+                        <div class="flex justify-between">
+                            <span class="text-gray-500 font-medium">Resolved:</span>
+                            <span class="font-semibold text-gray-800">{{ ticket.resolved_at|date:"M d, Y g:i A"
+                                }}</span>
+                        </div>
+                        {% endif %}
+
+                        {% if ticket.resolution_time %}
+                        <div class="flex justify-between">
+                            <span class="text-gray-500 font-medium">Resolution Time:</span>
+                            <span class="font-semibold text-gray-800">{{ ticket.resolution_time }}</span>
+                        </div>
+                        {% endif %}
+
+                        {% if ticket.escalation_level > 0 %}
+                        <div class="flex justify-between">
+                            <span class="text-gray-500 font-medium">Escalation Level:</span>
+                            <span class="font-semibold text-red-600">Level {{ ticket.escalation_level }}</span>
+                        </div>
+                        {% endif %}
+
+                        {% if ticket.reopen_count > 0 %}
+                        <div class="flex justify-between">
+                            <span class="text-gray-500 font-medium">Reopen Count:</span>
+                            <span class="font-semibold text-orange-600">{{ ticket.reopen_count }}</span>
+                        </div>
+                        {% endif %}
+
+                        {% if ticket.satisfaction_rating %}
+                        <div class="flex justify-between">
+                            <span class="text-gray-500 font-medium">Satisfaction:</span>
+                            <div class="flex items-center">
+                                {% for i in "12345" %}
+                                <svg class="w-4 h-4 {% if forloop.counter <= ticket.satisfaction_rating %}text-yellow-400{% else %}text-gray-300{% endif %}"
+                                    fill="currentColor" viewBox="0 0 20 20">
+                                    <path
+                                        d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z">
+                                    </path>
+                                </svg>
+                                {% endfor %}
+                                <span class="ml-2 text-sm text-gray-600">({{ ticket.satisfaction_rating }}/5)</span>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- CC Users -->
+                <!-- CC Users -->
+<div class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg border border-white/60 p-6 hover:shadow-xl transition-all duration-300">
+    <h3 class="text-lg font-semibold text-gray-700 mb-4 border-b pb-3">CC'd Users</h3>
+    <div class="space-y-4">
+        <div class="flex flex-wrap gap-2">
+            {% for user in ticket.cc_users.all %}
+            {% if user %}
+            <span class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
+                <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                {% if user.first_name and user.last_name %}
+                    {{ user.first_name }} {{ user.last_name }}
+                {% elif user.first_name %}
+                    {{ user.first_name }}
+                {% elif user.username %}
+                    {{ user.username }}
+                {% else %}
+                    Unknown User
+                {% endif %}
+            </span>
+            {% endif %}
+            {% empty %}
+            <p class="text-sm text-gray-500">No users are CC'd on this ticket.</p>
+            {% endfor %}
+        </div>
+
+        {% if permissions.can_edit %}
+        <form method="POST" action="{% url 'support:ticket_detail' pk=ticket.pk %}" class="space-y-3">
+            {% csrf_token %}
+            <div>
+                <label for="cc_users" class="block text-sm font-medium text-gray-700 mb-1">Add/Remove CC Users</label>
+                <select name="cc_users" id="cc_users" multiple class="w-full p-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 h-32">
+                    {% for user in all_users %}
+                    {% if user %}
+                    <option value="{{ user.pk }}" {% if user in ticket.cc_users.all %}selected{% endif %}>
+                        {% if user.first_name and user.last_name %}
+                            {{ user.first_name }} {{ user.last_name }}
+                        {% elif user.first_name %}
+                            {{ user.first_name }}
+                        {% elif user.username %}
+                            {{ user.username }}
+                        {% else %}
+                            User #{{ user.pk }}
+                        {% endif %}
+                    </option>
+                    {% endif %}
+                    {% endfor %}
+                </select>
+                <p class="text-xs text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple users</p>
+            </div>
+            <button type="submit" name="update_cc" class="w-full px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 shadow-md hover:shadow-lg transition-all duration-200">
+                Update CC List
+            </button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+
+                <!-- Related Tickets -->
+                {% if ticket.parent_ticket or ticket.sub_tickets.all %}
+                <div
+                    class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg border border-white/60 p-6 hover:shadow-xl transition-all duration-300">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-4 border-b pb-3">Related Tickets</h3>
+                    <div class="space-y-4">
+                        {% if ticket.parent_ticket %}
+                        <div>
+                            <h4 class="text-sm font-medium text-gray-600 mb-2">Parent Ticket</h4>
+                            <a href="{% url 'support:ticket_detail' pk=ticket.parent_ticket.pk %}"
+                                class="block p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-medium text-blue-800">{{ ticket.parent_ticket.ticket_id }}</span>
+                                    <span class="text-sm text-blue-600">{{ ticket.parent_ticket.get_status_display }}</span>
+                                </div>
+                                <p class="text-sm text-blue-700 mt-1">{{ ticket.parent_ticket.subject|truncatechars:60 }}</p>
+                            </a>
+                        </div>
+                        {% endif %}
+
+                        {% if ticket.sub_tickets.all %}
+                        <div>
+                            <h4 class="text-sm font-medium text-gray-600 mb-2">Sub-tickets</h4>
+                            <div class="space-y-2">
+                                {% for sub_ticket in ticket.sub_tickets.all %}
+                                <a href="{% url 'support:ticket_detail' pk=sub_ticket.pk %}"
+                                    class="block p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-medium text-gray-800">{{ sub_ticket.ticket_id }}</span>
+                                        <span class="text-sm text-gray-600">{{ sub_ticket.get_status_display }}</span>
+                                    </div>
+                                    <p class="text-sm text-gray-700 mt-1">{{ sub_ticket.subject|truncatechars:60 }}</p>
+                                </a>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Ticket Attachments -->
+                {% if attachments %}
+                <div
+                    class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg border border-white/60 p-6 hover:shadow-xl transition-all duration-300">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-4 border-b pb-3">Ticket Attachments</h3>
+                    <div class="space-y-3">
+                        {% for attachment in attachments %}
+                        <div
+                            class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors group">
+                            <div class="flex items-center space-x-3 flex-1 min-w-0">
+                                <svg class="w-8 h-8 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                    </path>
+                                </svg>
+                                <div class="flex-1 min-w-0">
+                                    <p class="font-medium text-gray-800 truncate"
+                                        title="{{ attachment.original_filename }}">
+                                        {{ attachment.original_filename|truncatechars:25 }}
+                                    </p>
+                                    <p class="text-xs text-gray-500">
+                                        Uploaded by {{ attachment.uploaded_by.get_full_name}}
+                                        on {{ attachment.uploaded_at|date:"M d, Y" }}
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs text-gray-400">{{ attachment.file.size|filesizeformat }}</span>
+                                <a href="{% url 'support:download_attachment' pk=ticket.pk attachment_id=attachment.pk %}"
+                                    class="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition-colors">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 10v6m0 0l-3-3m3 3l3-3m-8 5h8"></path>
+                                    </svg>
+                                    Download
+                                </a>
+                                {% if permissions.can_delete_attachment %}
+                                <form method="POST"
+                                    action="{% url 'support:delete_attachment' pk=ticket.pk attachment_id=attachment.pk %}"
+                                    class="inline"
+                                    onsubmit="return confirm('Are you sure you want to delete this attachment?');">
+                                    {% csrf_token %}
+                                    <button type="submit"
+                                        class="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium text-red-600 hover:text-red-800 hover:bg-red-50 transition-colors">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                            </path>
+                                        </svg>
+                                        Delete
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- User Feedback -->
+                {% if ticket.feedback and ticket.status == 'Closed' %}
+                <div
+                    class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg border border-white/60 p-6 hover:shadow-xl transition-all duration-300">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-4 border-b pb-3">User Feedback</h3>
+                    <div class="space-y-3">
+                        {% if ticket.satisfaction_rating %}
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm text-gray-600">Rating:</span>
+                            <div class="flex items-center">
+                                {% for i in "12345" %}
+                                <svg class="w-4 h-4 {% if forloop.counter <= ticket.satisfaction_rating %}text-yellow-400{% else %}text-gray-300{% endif %}"
+                                    fill="currentColor" viewBox="0 0 20 20">
+                                    <path
+                                        d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z">
+                                    </path>
+                                </svg>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-700">{{ ticket.feedback|linebreaksbr }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+    // Toggle resolution field based on status
+    function toggleResolutionField(status) {
+        const resolutionField = document.getElementById('resolution-field');
+        const resolutionTextarea = document.getElementById('resolution_summary');
+
+        if (status === 'Resolved' || status === 'Closed') {
+            resolutionField.classList.remove('hidden');
+            resolutionTextarea.required = true;
+        } else {
+            resolutionField.classList.add('hidden');
+            resolutionTextarea.required = false;
+        }
+    }
+
+    // Update assignee options based on selected group
+    function updateAssigneeOptions(groupId) {
+        const assigneeSelect = document.getElementById('assigned_to_user');
+
+        if (groupId) {
+            // Make AJAX call to get users for the selected group
+            fetch(`{% url 'support:get_users_by_group' group_id=0 %}`.replace('0', groupId))
+                .then(response => response.json())
+                .then(data => {
+                    assigneeSelect.innerHTML = '<option value="">Unassigned</option>';
+                    data.users.forEach(user => {
+                        const option = document.createElement('option');
+                        option.value = user.id;
+                        option.textContent = user.name;
+                        assigneeSelect.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching users:', error);
+                });
+        } else {
+            assigneeSelect.innerHTML = '<option value="">Unassigned</option>';
+        }
+    }
+
+    // File upload preview
+    document.getElementById('comment_attachments').addEventListener('change', function (e) {
+        const fileList = document.getElementById('file-list');
+        const files = Array.from(e.target.files);
+
+        if (files.length > 0) {
+            const fileNames = files.map(file => `${file.name} (${formatFileSize(file.size)})`);
+            fileList.innerHTML = `<strong>Selected files:</strong> ${fileNames.join(', ')}`;
+        } else {
+            fileList.innerHTML = '';
+        }
+    });
+
+    // Format file size
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function () {
+        const statusSelect = document.getElementById('status');
+        if (statusSelect) {
+            toggleResolutionField(statusSelect.value);
+        }
+
+        const groupSelect = document.getElementById('assigned_group');
+        if (groupSelect && groupSelect.value) {
+            updateAssigneeOptions(groupSelect.value);
+        }
+    });
+
+    // Auto-refresh activity feed every 30 seconds
+    setInterval(function () {
+        // You can implement AJAX refresh here if needed
+    }, 30000);
+</script>
+
+<!-- Custom CSS for scrollbar -->
+<style>
+    .scrollbar-thin::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 3px;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 3px;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+</style>
+{% endblock %}

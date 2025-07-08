@@ -51,83 +51,18 @@ def is_employee_check(user):
     return user.is_authenticated and user.is_active
 
 
-# Employee Views
+
 @login_required
 def attendance_dashboard(request):
-    """
-    Employee attendance dashboard with quick actions and overview
-    """
+    """Employee attendance dashboard with quick actions and overview"""
     try:
-        services = get_attendance_services()
-        today = timezone.now().astimezone(IST).date()
+        # Force attendance integration before building context
+        _ensure_attendance_integration(request.user)
 
-        # Get or create today's attendance
-        attendance_today, created = Attendance.objects.get_or_create_today_attendance(
-            request.user, today
-        )
+        context = _build_dashboard_context(request)
 
-        if created:
-            logger.info(f"Created attendance record for {request.user.username} on dashboard access")
-
-        # Get recent attendance (last 7 days)
-        start_date = today - timedelta(days=6)
-        recent_attendance = Attendance.objects.get_user_attendance_for_period(
-            request.user, start_date, today
-        )
-
-        # Calculate quick stats
-        this_month_start = today.replace(day=1)
-        monthly_attendance = Attendance.objects.get_user_attendance_for_period(
-            request.user, this_month_start, today
-        )
-
-        present_days = monthly_attendance.filter(
-            status__in=['Present', 'Present & Late', 'Work From Home']
-        ).count()
-        total_days = monthly_attendance.count()
-        attendance_percentage = (present_days / total_days * 100) if total_days > 0 else 0
-
-        # Quick attendance form
-        quick_form = QuickAttendanceForm()
-
-        # Handle quick attendance submission
         if request.method == 'POST' and 'quick_attendance' in request.POST:
-            quick_form = QuickAttendanceForm(request.POST)
-            if quick_form.is_valid():
-                try:
-                    attendance_today.status = quick_form.cleaned_data['status']
-                    attendance_today.location = quick_form.cleaned_data['location']
-                    attendance_today.remarks = quick_form.cleaned_data.get('remarks', '')
-                    attendance_today.modified_by = request.user
-                    attendance_today.save()
-
-                    messages.success(request, 'Attendance marked successfully!')
-                    return redirect('attendance:dashboard')
-
-                except Exception as e:
-                    logger.error(f"Error marking quick attendance: {e}")
-                    messages.error(request, 'Error marking attendance. Please try again.')
-
-        # Get current shift
-        current_shift = ShiftAssignment.get_user_current_shift(request.user, today)
-
-        # Check for pending regularizations
-        pending_regularizations = Attendance.objects.filter(
-            user=request.user,
-            regularization_status='Pending'
-        ).count()
-
-        context = {
-            'attendance_today': attendance_today,
-            'recent_attendance': recent_attendance,
-            'quick_form': quick_form,
-            'current_shift': current_shift,
-            'attendance_percentage': round(attendance_percentage, 1),
-            'present_days': present_days,
-            'total_days': total_days,
-            'pending_regularizations': pending_regularizations,
-            'today': today,
-        }
+            return _handle_quick_attendance(request, context['attendance_today'])
 
         return render(request, 'attendance/dashboard.html', context)
 
@@ -135,6 +70,134 @@ def attendance_dashboard(request):
         logger.error(f"Error in attendance dashboard: {e}")
         messages.error(request, 'Error loading dashboard. Please try again.')
         return render(request, 'attendance/dashboard.html', {})
+
+def _ensure_attendance_integration(user):
+    """Ensure attendance is properly integrated with current session"""
+    try:
+        from trueAlign.attendance.services import AttendanceIntegrationService
+
+        # Get current active session
+        current_session = UserSession.objects.filter(
+            user=user,
+            is_active=True
+        ).first()
+
+        if current_session:
+            integration_service = AttendanceIntegrationService()
+            integration_service.process_session_login(user, current_session)
+
+    except Exception as e:
+        logger.error(f"Error ensuring attendance integration: {e}")
+
+def _build_dashboard_context(request):
+    """Build context for dashboard"""
+    today = timezone.now().astimezone(IST).date()
+
+    attendance_today = _get_or_create_today_attendance(request.user, today)
+    recent_attendance = _get_recent_attendance(request.user, today)
+    monthly_stats = _calculate_monthly_stats(request.user, today)
+
+    return {
+        'attendance_today': attendance_today,  # Fixed: consistent variable naming
+        'recent_attendance': recent_attendance,
+        'monthly_stats': monthly_stats,
+        'quick_form': QuickAttendanceForm(),
+        'current_shift': ShiftAssignment.get_user_current_shift(request.user, today),
+        'attendance_percentage': monthly_stats['percentage'],
+        'present_days': monthly_stats['present_days'],
+        'total_days': monthly_stats['total_days'],
+        'pending_regularizations': _get_pending_regularizations_count(request.user),
+        'today': today,
+    }
+
+def _get_or_create_today_attendance(user, today):
+    """Get or create today's attendance and ensure it's properly calculated"""
+    attendance_today, created = Attendance.objects.get_or_create_today_attendance(user, today)
+
+    if created:
+        logger.info(f"Created attendance record for {user.username} on dashboard access")
+
+    # Force recalculation to ensure accurate data
+    attendance_today.refresh_from_db()
+    attendance_today._calculate_time_fields()
+    attendance_today._update_status_logic()
+    attendance_today.save(update_fields=['status', 'total_hours', 'late_minutes', 'early_departure_minutes'])
+
+    return attendance_today
+
+def _get_recent_attendance(user, today):
+    """Get recent attendance (last 7 days)"""
+    start_date = today - timedelta(days=6)
+    return Attendance.objects.get_user_attendance_for_period(user, start_date, today)
+
+def _calculate_monthly_stats(user, today):
+    """Calculate detailed monthly attendance statistics"""
+    this_month_start = today.replace(day=1)
+    monthly_attendance = Attendance.objects.get_user_attendance_for_period(
+        user, this_month_start, today
+    )
+
+    # Count different status types
+    present_count = monthly_attendance.filter(
+        status__in=['Present', 'Present & Late', 'Work From Home']
+    ).count()
+
+    late_count = monthly_attendance.filter(
+        status__in=['Late', 'Present & Late']
+    ).count()
+
+    leave_count = monthly_attendance.filter(
+        status__in=['On Leave', 'Half Day']
+    ).count()
+    absent_count = monthly_attendance.filter(
+        status__in=[ 'Absent']
+    ).count()
+
+    total_days = monthly_attendance.count()
+    percentage = (present_count / total_days * 100) if total_days > 0 else 0
+
+    return {
+        'present_count': present_count,
+        'late_count': late_count,
+        'leave_count': leave_count,
+        'total_days': total_days,
+        'absent_count': absent_count,
+        'percentage': round(percentage, 1),
+        # Keep the old keys for backward compatibility
+        'present_days': present_count,
+    }
+
+
+
+def _get_pending_regularizations_count(user):
+    """Get count of pending regularizations"""
+    return Attendance.objects.filter(
+        user=user,
+        regularization_status='Pending'
+    ).count()
+
+def _handle_quick_attendance(request, attendance_today):
+    """Handle quick attendance form submission"""
+    quick_form = QuickAttendanceForm(request.POST)
+    if quick_form.is_valid():
+        try:
+            _update_attendance_from_form(attendance_today, quick_form, request.user)
+            messages.success(request, 'Attendance marked successfully!')
+            return redirect('attendance:dashboard')
+        except Exception as e:
+            logger.error(f"Error marking quick attendance: {e}")
+            messages.error(request, 'Error marking attendance. Please try again.')
+
+    return redirect('attendance:dashboard')
+
+def _update_attendance_from_form(attendance, form, user):
+    """Update attendance from form data"""
+    attendance.status = form.cleaned_data['status']
+    attendance.location = form.cleaned_data['location']
+    attendance.remarks = form.cleaned_data.get('remarks', '')
+    attendance.modified_by = user
+    attendance.save()
+
 
 
 @login_required
@@ -1133,3 +1196,109 @@ def attendance_cleanup(request):
         logger.error(f"Error in attendance cleanup: {e}")
         messages.error(request, 'Error in cleanup operation.')
         return render(request, 'attendance/cleanup.html', {})
+
+# In ardurPeopleSoft/trueAlign/attendance/views.py - Add these new API endpoints
+
+@login_required
+def verify_session_status(request):
+    """API endpoint to verify actual session status"""
+    try:
+        IST = pytz.timezone('Asia/Kolkata')
+        today = timezone.now().astimezone(IST).date()
+
+        # Get user's active sessions
+        active_sessions = UserSession.objects.filter(
+            user=request.user,
+            is_active=True,
+            login_time__date=today
+        )
+
+        # Get today's attendance
+        try:
+            attendance = Attendance.objects.get(user=request.user, date=today)
+        except Attendance.DoesNotExist:
+            attendance = None
+
+        session_active = active_sessions.exists()
+        should_clear_logout = False
+
+        if session_active and attendance and attendance.clock_out_time:
+            # User has active session but attendance shows logout - this is the bug!
+            should_clear_logout = True
+
+            # Fix the attendance record
+            attendance.clock_out_time = None
+            attendance._calculate_time_fields()
+            attendance._update_status_logic()
+            attendance.save()
+
+            logger.info(f"Fixed false logout for {request.user.username}")
+
+        return JsonResponse({
+            'success': True,
+            'session_active': session_active,
+            'should_clear_logout': should_clear_logout,
+            'active_sessions_count': active_sessions.count()
+        })
+
+    except Exception as e:
+        logger.error(f"Error verifying session status: {e}")
+        return JsonResponse({'success': False, 'error': str(e)})
+
+@login_required
+def update_activity(request):
+    """API endpoint to update user activity"""
+    try:
+        if request.method == 'POST':
+            data = json.loads(request.body)
+
+            # Update user's active sessions
+            active_sessions = UserSession.objects.filter(
+                user=request.user,
+                is_active=True
+            )
+
+            IST = pytz.timezone('Asia/Kolkata')
+            now = timezone.now().astimezone(IST)
+
+            active_sessions.update(
+                last_activity=now,
+                is_idle=False
+            )
+
+            return JsonResponse({'success': True})
+
+    except Exception as e:
+        logger.error(f"Error updating activity: {e}")
+        return JsonResponse({'success': False, 'error': str(e)})
+
+def get_attendance_context_for_user(user):
+    """
+    Get attendance context for a user - can be used by other views like main dashboard
+    """
+    today = timezone.now().astimezone(IST).date()
+
+    try:
+        attendance_today = _get_or_create_today_attendance(user, today)
+        monthly_stats = _calculate_monthly_stats(user, today)
+        pending_regularizations = _get_pending_regularizations_count(user)
+
+        return {
+            'today_attendance': attendance_today,
+            'monthly_stats': monthly_stats,
+            'pending_regularizations': pending_regularizations,
+        }
+    except Exception as e:
+        logger.error(f"Error getting attendance context for user {user.username}: {e}")
+        return {
+            'today_attendance': None,
+            'monthly_stats': {
+                'present_count': 0,
+                'late_count': 0,
+                'leave_count': 0,
+                'total_days': 0,
+                'percentage': 0,
+                'present_days': 0,
+            },
+            'pending_regularizations': 0,
+        }
