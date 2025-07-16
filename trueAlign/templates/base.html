@@ -24,6 +24,73 @@
                 try {
                     // Get geo-location if available
                     let locationData = null;
+                    // Function to get location via IP
+                    function getLocationFromIP() {
+                        const locationIcon = document.getElementById('location-icon');
+                        const locationText = document.getElementById('location-text');
+
+                        if (locationIcon && locationText) {
+                            locationIcon.className = 'ri-map-pin-line text-blue-500';
+                            locationText.textContent = 'Getting IP location...';
+
+                            // Try to get location from IP
+                            fetch('https://ipapi.co/json/')
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.city && data.region) {
+                                        locationIcon.className = 'ri-map-pin-line text-blue-500';
+                                        locationText.textContent = `${data.city}, ${data.region}`;
+                                    } else {
+                                        locationIcon.className = 'ri-map-pin-line text-gray-500';
+                                        locationText.textContent = 'Location unavailable';
+                                    }
+                                })
+                                .catch(error => {
+                                    console.warn('IP location error:', error);
+                                    locationIcon.className = 'ri-map-pin-line text-gray-500';
+                                    locationText.textContent = 'Location unavailable';
+                                });
+                        }
+                    }
+
+                    // Function to update location display
+                    function updateLocationDisplay(position) {
+                        const locationIcon = document.getElementById('location-icon');
+                        const locationText = document.getElementById('location-text');
+
+                        if (locationIcon && locationText) {
+                            locationIcon.className = 'ri-map-pin-line text-green-500';
+                            locationText.textContent = 'Getting location name...';
+
+                            // Fetch location name using reverse geocoding
+                            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}&zoom=18&addressdetails=1`)
+                                .then(response => response.json())
+                                .then(data => {
+                                    const city = data.address.city || data.address.town || data.address.village || '';
+                                    const state = data.address.state || '';
+                                    const country = data.address.country || '';
+
+                                    let locationName = '';
+                                    if (city && state) {
+                                        locationName = `${city}, ${state}`;
+                                    } else if (city && country) {
+                                        locationName = `${city}, ${country}`;
+                                    } else if (state && country) {
+                                        locationName = `${state}, ${country}`;
+                                    } else {
+                                        locationName = 'Location detected';
+                                    }
+
+                                    locationText.textContent = locationName;
+                                })
+                                .catch(error => {
+                                    console.warn('Reverse geocoding error:', error);
+                                    locationText.textContent = 'Location detected';
+                                });
+                        }
+                    }
+
+                    // Try to get precise location first
                     if (navigator.geolocation) {
                         navigator.geolocation.getCurrentPosition(
                             function(position) {
@@ -32,40 +99,24 @@
                                     longitude: position.coords.longitude,
                                     accuracy: position.coords.accuracy
                                 };
-                                console.log('Location data obtained:', locationData);
-
-                                // Update location status display
-                                const locationStatus = document.getElementById('location-status');
-                                if (locationStatus) {
-                                    // Fetch location name using reverse geocoding
-                                    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}&zoom=18&addressdetails=1`)
-                                    .then(response => response.json())
-                                    .then(data => {
-                                        const city = data.address.city || data.address.town || data.address.village || '';
-                                        const state = data.address.state || '';
-                                        locationStatus.innerHTML = `<i class="ri-map-pin-line mr-1 text-green-500"></i><span>${city}${city && state ? ', ' : ''}${state}</span>`;
-                                    })
-                                    .catch(error => {
-                                        locationStatus.innerHTML = `<i class="ri-map-pin-line mr-1 text-green-500"></i><span>Location detected</span>`;
-                                    });
-                                }
+                                console.log('GPS location obtained:', locationData);
+                                updateLocationDisplay(position);
                             },
                             function(error) {
-                                console.warn('Location error:', error.message);
-                                // Update location status with error
-                                const locationStatus = document.getElementById('location-status');
-                                if (locationStatus) {
-                                    locationStatus.innerHTML = `<i class="ri-map-pin-line mr-1 text-yellow-500"></i><span>Using IP location</span>`;
-                                }
+                                console.warn('GPS location error:', error.message);
+                                // Fallback to IP location
+                                getLocationFromIP();
                             },
-                            { timeout: 5000, maximumAge: 600000 }
+                            {
+                                timeout: 10000,
+                                maximumAge: 600000,
+                                enableHighAccuracy: true
+                            }
                         );
                     } else {
-                        // Geolocation not supported
-                        const locationStatus = document.getElementById('location-status');
-                        if (locationStatus) {
-                            locationStatus.innerHTML = `<i class="ri-map-pin-line mr-1 text-yellow-500"></i><span>Using IP location</span>`;
-                        }
+                        // Geolocation not supported, use IP location
+                        console.log('Geolocation not supported, using IP location');
+                        getLocationFromIP();
                     }
 
                     window.sessionTracker = new OptimizedSessionTracker({
@@ -830,7 +881,44 @@
         .bg-gradient-radial {
             background-image: radial-gradient(ellipse at center, var(--tw-gradient-stops));
         }
+
     </style>
+    <style>
+        /* Dropdown z-index fix */
+        /* In your <style> tag */
+        #user-dropdown {
+            position: fixed !important;
+            z-index: 9999 !important;
+            top: auto !important;
+            right: auto !important;
+
+            /* A softer, more modern shadow */
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.07), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+            /* More specific and smoother transition for performance and feel */
+            transition-property: opacity, transform;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 200ms;
+        }
+
+        /* Ensure parent containers don't clip the dropdown */
+        .dropdown-container {
+            position: relative;
+            z-index: 9998;
+        }
+
+        /* Prevent overflow clipping */
+        main, .content-wrapper, .content-wrapper-collapsed {
+            overflow: visible !important;
+        }
+
+        /* Backdrop blur fix for dropdown */
+        .dropdown-backdrop-blur {
+            backdrop-filter: blur(20px) !important;
+            -webkit-backdrop-filter: blur(20px) !important;
+        }
+    </style>
+
         <div class="flex flex-1 min-h-0">
             <!-- Navbar - Now controlled by Alpine directly in navbar.html -->
             {% include 'navbar.html' %}
@@ -891,45 +979,34 @@
                         </div>
 
                         <div class="flex items-center gap-5 self-end lg:self-auto">
-                            <div class="relative">
-                                <div id="user-dropdown-toggle" class="flex items-center gap-3 bg-white/60 backdrop-blur-xl px-5 py-3 rounded-xl border border-white/60 shadow-elegant cursor-pointer transition-all duration-200 hover:bg-white/70 hover:shadow-elegant-hover">
+                            <div class="relative dropdown-container">
+                                <div id="user-dropdown-toggle" onclick="toggleUserDropdown()" class="flex items-center gap-3 bg-white/60 backdrop-blur-xl px-5 py-3 rounded-xl border border-white/60 shadow-elegant cursor-pointer transition-all duration-200 hover:bg-white/70 hover:shadow-elegant-hover focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2" tabindex="0" aria-haspopup="true" aria-expanded="false">
                                     <i class="ri-user-3-line text-xl text-primary-600"></i>
                                     <span class="font-medium text-neutral-700 text-base">{{ user.username }}</span>
                                     <i class="ri-arrow-down-s-line text-lg text-neutral-500 transition-transform duration-200" id="dropdown-arrow"></i>
                                 </div>
+                            </div>
+                        </div>
 
-                                <div id="user-dropdown" class="absolute top-full right-0 mt-2 w-56 bg-white/90 backdrop-blur-xl rounded-xl border border-white/60 shadow-elegant opacity-0 invisible transform -translate-y-2 transition-all duration-200 z-50">
-                                    <div class="py-2">
-                                        <div class="px-4 py-3 border-b border-white/30">
-                                            <div class="flex items-center gap-3">
-                                                <div class="w-10 h-10 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full flex items-center justify-center">
-                                                    <span class="text-white font-semibold text-sm">{{ user.first_name|first|default:user.username|first|upper }}</span>
-                                                </div>
-                                                <div>
-                                                    <p class="font-medium text-neutral-800 text-sm">{{ user.get_full_name|default:user.username }}</p>
-                                                    <p class="text-neutral-500 text-xs">{{ user.email }}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="py-1">
-                                            <a href="{% url 'core:password_reset' %}" class="flex items-center gap-3 px-4 py-3 text-neutral-700 hover:bg-white/50 transition-colors duration-150">
-                                                <i class="ri-lock-password-line text-lg text-primary-600"></i>
-                                                <span class="text-sm font-medium">Reset Password</span>
-                                            </a>
-                                            <a href="#" class="flex items-center gap-3 px-4 py-3 text-neutral-700 hover:bg-white/50 transition-colors duration-150">
-                                                <i class="ri-user-settings-line text-lg text-neutral-600"></i>
-                                                <span class="text-sm font-medium">Profile Settings</span>
-                                            </a>
-                                            <div class="border-t border-white/30 my-1"></div>
-                                            <a href="{% url 'core:logout' %}" class="flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 transition-colors duration-150">
-                                                <i class="ri-logout-box-line text-lg"></i>
-                                                <span class="text-sm font-medium">Logout</span>
-                                            </a>
-                                        </div>
-                                    </div>
+                        <!-- Dropdown moved to end of body for better z-index handling -->
+                        <div id="user-dropdown" class="fixed w-56 bg-white/95 dropdown-backdrop-blur rounded-xl border border-white/60 shadow-2xl opacity-0 invisible transform -translate-y-2 transition-all duration-300 ease-out" style="z-index: 9999;">
+                            <div class="py-2">
+
+                                <div class="py-1">
+                                    <a href="{% url 'core:password_reset' %}" class="flex items-center gap-3 px-4 py-3 text-neutral-700 hover:bg-white/50 transition-colors duration-150">
+                                        <i class="ri-lock-password-line text-lg text-primary-600"></i>
+                                        <span class="text-sm font-medium">Reset Password</span>
+                                    </a>
+
+                                    <div class="border-t border-white/30 my-1"></div>
+                                    <a href="{% url 'core:logout' %}" class="flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 transition-colors duration-150">
+                                        <i class="ri-logout-box-line text-lg"></i>
+                                        <span class="text-sm font-medium">Logout</span>
+                                    </a>
                                 </div>
                             </div>
                         </div>
+
                     </div>
                 </header>
 
@@ -1054,43 +1131,7 @@
                 }
             });
 
-            // Update clock function
-            function updateClock() {
-                const now = new Date();
-                const hoursEl = document.getElementById("hours");
-                const minutesEl = document.getElementById("minutes");
-                const secondsEl = document.getElementById("seconds");
-                const ampmEl = document.getElementById("ampm");
-                const dateEl = document.getElementById("date");
 
-                let hours = now.getHours();
-                const minutes = now.getMinutes();
-                const seconds = now.getSeconds();
-                const ampm = hours >= 12 ? "PM" : "AM";
-
-                // Convert to 12-hour format
-                hours = hours % 12;
-                hours = hours ? hours : 12; // handle midnight (0 hours)
-
-                if (hoursEl)
-                    hoursEl.textContent = hours.toString().padStart(2, "0");
-                if (minutesEl)
-                    minutesEl.textContent = minutes.toString().padStart(2, "0");
-                if (secondsEl)
-                    secondsEl.textContent = seconds.toString().padStart(2, "0");
-                if (ampmEl) ampmEl.textContent = ampm;
-
-                if (dateEl)
-                    dateEl.textContent = now.toLocaleDateString(undefined, {
-                        weekday: "short",
-                        month: "short",
-                        day: "numeric",
-                    });
-            }
-
-            // Update immediately and then every second
-            updateClock();
-            setInterval(updateClock, 1000);
         </script>
 
         <script>
@@ -1143,110 +1184,143 @@
             }
         </script>
 
-        <!-- Scripts -->
-        <script>
-            // Dynamic Greeting
-            function getGreeting() {
-                const hour = new Date().getHours();
-                if (hour < 12) return "Good Morning";
-                else if (hour < 18) return "Good Afternoon";
-                return "Good Evening";
-            }
 
-            document.addEventListener("DOMContentLoaded", function () {
-                const greetingElement = document.getElementById("greeting");
-                greetingElement.innerHTML = `${getGreeting()} <span class="font-medium text-4xl"></span>`;
-            });
-        </script>
         <!-- Additional Scripts -->
         <script>
-            // User dropdown functionality
+            // User dropdown functionality with better error handling
             function toggleUserDropdown() {
                 const dropdown = document.getElementById('user-dropdown');
+                const toggleButton = document.getElementById('user-dropdown-toggle');
                 const arrow = document.getElementById('dropdown-arrow');
 
-                if (dropdown.classList.contains('opacity-0')) {
+                if (!dropdown || !toggleButton) {
+                    console.warn('Dropdown elements not found');
+                    return;
+                }
+
+                const isHidden = dropdown.classList.contains('opacity-0');
+
+                if (isHidden) {
+                    // Position the dropdown relative to the toggle button
+                    const rect = toggleButton.getBoundingClientRect();
+                    const dropdownWidth = 224; // 56 * 4 = 224px (w-56)
+
+                    // Calculate position
+                    let left = rect.right - dropdownWidth;
+                    let top = rect.bottom + 8;
+
+                    // Ensure dropdown doesn't go off-screen
+                    if (left < 10) left = 10;
+                    if (left + dropdownWidth > window.innerWidth - 10) {
+                        left = window.innerWidth - dropdownWidth - 10;
+                    }
+
+                    if (top + 300 > window.innerHeight) {
+                        top = rect.top - 300 - 8; // Show above the button
+                    }
+
+                    // Apply position
+                    dropdown.style.left = left + 'px';
+                    dropdown.style.top = top + 'px';
+
                     // Show dropdown
-                    dropdown.classList.remove('opacity-0', 'invisible', 'translate-y-2');
+                    dropdown.classList.remove('opacity-0', 'invisible', '-translate-y-2');
                     dropdown.classList.add('opacity-100', 'visible', 'translate-y-0');
-                    arrow.classList.add('rotate-180');
+
+                    if (arrow) {
+                        arrow.classList.add('rotate-180');
+                    }
+
+                    dropdown.setAttribute('aria-hidden', 'false');
+                    toggleButton.setAttribute('aria-expanded', 'true');
                 } else {
                     // Hide dropdown
-                    dropdown.classList.add('opacity-0', 'invisible', 'translate-y-2');
+                    dropdown.classList.add('opacity-0', 'invisible', '-translate-y-2');
                     dropdown.classList.remove('opacity-100', 'visible', 'translate-y-0');
-                    arrow.classList.remove('rotate-180');
+
+                    if (arrow) {
+                        arrow.classList.remove('rotate-180');
+                    }
+
+                    dropdown.setAttribute('aria-hidden', 'true');
+                    toggleButton.setAttribute('aria-expanded', 'false');
                 }
             }
 
-            // Close dropdown when clicking outside
+
+            // Close dropdown when clicking outside with better error handling
             document.addEventListener('click', function(event) {
                 const dropdown = document.getElementById('user-dropdown');
-                const userDropdownContainer = dropdown?.closest('.relative');
 
-                if (dropdown && !userDropdownContainer?.contains(event.target)) {
-                    dropdown.classList.add('opacity-0', 'invisible', 'translate-y-2');
+                if (!dropdown) return;
+
+                const userDropdownContainer = dropdown.closest('.relative');
+                const isClickOutside = userDropdownContainer && !userDropdownContainer.contains(event.target);
+                const isDropdownVisible = !dropdown.classList.contains('opacity-0');
+
+                if (isClickOutside && isDropdownVisible) {
+                    dropdown.classList.add('opacity-0', 'invisible', '-translate-y-2');
                     dropdown.classList.remove('opacity-100', 'visible', 'translate-y-0');
+                    dropdown.setAttribute('aria-hidden', 'true');
+
                     const arrow = document.getElementById('dropdown-arrow');
-                    arrow?.classList.remove('rotate-180');
+                    if (arrow) {
+                        arrow.classList.remove('rotate-180');
+                    }
                 }
             });
 
-            // Close dropdown on escape key
+            // Close dropdown on escape key with better handling
             document.addEventListener('keydown', function(event) {
                 if (event.key === 'Escape') {
                     const dropdown = document.getElementById('user-dropdown');
-                    if (dropdown && !dropdown.classList.contains('opacity-0')) {
-                        dropdown.classList.add('opacity-0', 'invisible', 'translate-y-2');
+
+                    if (!dropdown) return;
+
+                    const isDropdownVisible = !dropdown.classList.contains('opacity-0');
+
+                    if (isDropdownVisible) {
+                        dropdown.classList.add('opacity-0', 'invisible', '-translate-y-2');
                         dropdown.classList.remove('opacity-100', 'visible', 'translate-y-0');
+                        dropdown.setAttribute('aria-hidden', 'true');
+
                         const arrow = document.getElementById('dropdown-arrow');
-                        arrow?.classList.remove('rotate-180');
+                        if (arrow) {
+                            arrow.classList.remove('rotate-180');
+                        }
+
+                        // Return focus to the toggle button
+                        const toggleButton = document.getElementById('user-dropdown-toggle');
+                        if (toggleButton) {
+                            toggleButton.focus();
+                        }
                     }
                 }
             });
         </script>
 
         <script>
-            function updateClock() {
-                const now = new Date();
-                const hoursEl = document.getElementById("hours");
-                const minutesEl = document.getElementById("minutes");
-                const secondsEl = document.getElementById("seconds");
-                const ampmEl = document.getElementById("ampm");
-                const dateEl = document.getElementById("date");
-
-                let hours = now.getHours();
-                const minutes = now.getMinutes();
-                const seconds = now.getSeconds();
-                const ampm = hours >= 12 ? "PM" : "AM";
-
-                // Convert to 12-hour format
-                hours = hours % 12;
-                hours = hours ? hours : 12; // handle midnight (0 hours)
-
-                if (hoursEl)
-                    hoursEl.textContent = hours.toString().padStart(2, "0");
-                if (minutesEl)
-                    minutesEl.textContent = minutes.toString().padStart(2, "0");
-                if (secondsEl)
-                    secondsEl.textContent = seconds.toString().padStart(2, "0");
-                if (ampmEl) ampmEl.textContent = ampm;
-
-                if (dateEl)
-                    dateEl.textContent = now.toLocaleDateString(undefined, {
-                        weekday: "short",
-                        month: "short",
-                        day: "numeric",
-                    });
-            }
-
-            // Update immediately and then every second
-            updateClock();
-            setInterval(updateClock, 1000);
-
-            // Responsive Navbar Toggle for mobile
+            // Initialize dropdown accessibility attributes
             document.addEventListener("DOMContentLoaded", function () {
-                // If you want to add a hamburger menu for mobile, you can implement it here.
-                // For now, the navbar is always visible at the top on mobile.
+                const dropdown = document.getElementById('user-dropdown');
+                const toggleButton = document.getElementById('user-dropdown-toggle');
+
+                if (dropdown) {
+                    dropdown.setAttribute('aria-hidden', 'true');
+                    dropdown.setAttribute('role', 'menu');
+                }
+
+                if (toggleButton) {
+                    toggleButton.setAttribute('aria-expanded', 'false');
+
+                    // Handle keyboard navigation
+                    toggleButton.addEventListener('keydown', function(event) {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            toggleUserDropdown();
+                        }
+                    });
+                }
             });
         </script>
 
@@ -1299,14 +1373,7 @@
         </div>
         <!-- Session Monitor Script -->
         {% if user.is_authenticated %}
-        <script src="{% static 'js/session-monitor.js' %}"></script>
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                if (typeof SessionMonitor !== 'undefined') {
-                    window.sessionMonitor = new SessionMonitor();
-                }
-            });
-        </script>
+
         {% endif %}
 
     </body>
