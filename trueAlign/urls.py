@@ -1,5 +1,5 @@
 # trueAlign/urls.py
-from django.urls import path, include
+from django.urls import path, include, re_path
 from django.urls import path, register_converter
 from uuid import UUID
 # Create a UUID converter
@@ -15,27 +15,18 @@ class UUIDConverter:
 # Register the converter
 register_converter(UUIDConverter, 'uuid')
 
-# Appraisal URL patterns
-
-
-# Enhanced Session Management URLs
-
-
-# Admin-specific URLs under 'admin/'
-
-
 # Main URL configuration for the project
 urlpatterns = [
     # Include core app URLs without the 'core/' prefix
     path('', include('trueAlign.core.urls')),
+
+    # Include other app URLs with appropriate prefixes
     path('shift/', include('trueAlign.shift.urls')),
     path('book/', include('trueAlign.conf_booking.urls')),
     path('attendance/', include('trueAlign.attendance.urls')),
     path('support/', include('trueAlign.support.urls')),
 
-
-
-    # Include chat URLs with namespace
-
-
+    # The session endpoints will be handled by core.urls directly
+    # They're defined in trueAlign.core.urls.py with paths like:
+    # path('session/heartbeat/', views.session_heartbeat, name='session_heartbeat'),
 ]

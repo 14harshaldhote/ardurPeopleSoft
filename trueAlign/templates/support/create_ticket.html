@@ -1,206 +1,338 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create Ticket - TrueAlign{% endblock %}
+
 {% block content %}
-<div class="min-h-screen bg-gray-50/50 py-8">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Card with glass morphism effect -->
-        <div class="bg-white/70 backdrop-blur-sm rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <!-- Header with gradient -->
-            <div class="bg-gradient-to-r from-blue-600/10 to-blue-100/10 px-6 py-4 border-b border-gray-100">
-                <h2 class="text-xl font-semibold text-gray-800">Create New Support Ticket</h2>
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 mb-2">Create New Ticket</h1>
+                    <p class="text-gray-600">Submit a support request and get help from our team</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="{% url 'support:ticket_list' %}" 
+                       class="inline-flex items-center px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors duration-200">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                        </svg>
+                        Back to Tickets
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Create Ticket Form -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-xl font-semibold text-gray-900">Ticket Details</h2>
+                <p class="text-sm text-gray-600 mt-1">Please provide detailed information about your issue</p>
             </div>
 
-            <!-- Form Body -->
-            <div class="p-6 space-y-6">
-                <form method="POST" enctype="multipart/form-data" class="space-y-6" id="ticketForm">
-                    {% csrf_token %}
-
-                    <!-- Subject Field -->
-                    <div class="space-y-2">
-                        <label for="subject" class="block text-sm font-medium text-gray-700">
-                            Subject <span class="text-red-500">*</span>
-                        </label>
-                        <input type="text" id="subject" name="subject" 
-                               class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm transition-colors"
-                               required maxlength="200" value="{{ form.subject.value|default:'' }}">
-                        <p class="text-sm text-gray-500">Brief description of your issue</p>
-                    </div>
-
-                    <!-- Description Field -->
-                    <div class="space-y-2">
-                        <label for="description" class="block text-sm font-medium text-gray-700">
-                            Description <span class="text-red-500">*</span>
-                        </label>
-                        <textarea id="description" name="description" rows="5" 
-                                  class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm transition-colors"
-                                  required>{{ form.description.value|default:'' }}</textarea>
-                        <p class="text-sm text-gray-500">Detailed description of your issue. Please include steps to reproduce if applicable.</p>
-                    </div>
-
-                    <!-- Priority and Issue Type Grid -->
-                    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                        <!-- Priority Select -->
-                        <div class="space-y-2">
-                            <label for="priority" class="block text-sm font-medium text-gray-700">Priority</label>
-                            <select id="priority" name="priority" 
-                                    class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm transition-colors">
-                                {% for value, label in priority_choices %}
-                                    <option value="{{ value }}" {% if form.priority.value == value %}selected{% endif %}>
-                                        {{ label }}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-
-                        <!-- Issue Type Select -->
-                        <div class="space-y-2">
-                            <label for="issue_type" class="block text-sm font-medium text-gray-700">Issue Type <span class="text-red-500">*</span></label>
-                            <select id="issue_type" name="issue_type" required
-                                    class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm transition-colors">
-                                <option value="">Select an issue type</option>
-                                {% for value, label in issue_type_choices %}
-                                    <option value="{{ value }}" {% if form.issue_type.value == value %}selected{% endif %}>
-                                        {{ label }}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Department and Location Grid -->
-                    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                        <!-- Department -->
-                        <div class="space-y-2">
-                            <label for="department" class="block text-sm font-medium text-gray-700">Department</label>
-                            <input type="text" id="department" name="department" 
-                                   class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm transition-colors"
-                                   placeholder="Your department" value="{{ form.department.value|default:'' }}">
-                        </div>
-
-                        <!-- Location -->
-                        <div class="space-y-2">
-                            <label for="location" class="block text-sm font-medium text-gray-700">Location</label>
-                            <input type="text" id="location" name="location" 
-                                   class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm transition-colors"
-                                   placeholder="Office location or building" value="{{ form.location.value|default:'' }}">
-                        </div>
-                    </div>
-
-                    <!-- Asset ID -->
-                    <div class="space-y-2">
-                        <label for="asset_id" class="block text-sm font-medium text-gray-700">Asset ID</label>
-                        <input type="text" id="asset_id" name="asset_id" 
-                               class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm transition-colors"
-                               placeholder="Hardware/Software asset ID (if applicable)" value="{{ form.asset_id.value|default:'' }}">
-                    </div>
-
-                    <!-- Assigned Group -->
-                    <div class="space-y-2">
-                        <label for="assigned_group" class="block text-sm font-medium text-gray-700">Assigned Group</label>
-                        <select id="assigned_group" name="assigned_group" 
-                                class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm transition-colors">
-                            <option value="">Auto-assign based on issue type</option>
-                            {% for value, label in assigned_group_choices %}
-                                <option value="{{ value }}" {% if form.assigned_group.value == value %}selected{% endif %}>
-                                    {{ label }}
-                                </option>
+            <form method="post" enctype="multipart/form-data" class="p-6 space-y-6">
+                {% csrf_token %}
+                
+                <!-- Subject -->
+                <div>
+                    <label for="{{ form.subject.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Subject *
+                    </label>
+                    {{ form.subject }}
+                    {% if form.subject.errors %}
+                        <div class="mt-1 text-sm text-red-600">
+                            {% for error in form.subject.errors %}
+                                <p>{{ error }}</p>
                             {% endfor %}
-                        </select>
-                        <p class="text-sm text-gray-500">Leave blank for automatic assignment</p>
+                        </div>
+                    {% endif %}
+                    {% if form.subject.help_text %}
+                        <p class="mt-1 text-sm text-gray-500">{{ form.subject.help_text }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Issue Type and Priority -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="{{ form.issue_type.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            Issue Type *
+                        </label>
+                        {{ form.issue_type }}
+                        {% if form.issue_type.errors %}
+                            <div class="mt-1 text-sm text-red-600">
+                                {% for error in form.issue_type.errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        {% if form.issue_type.help_text %}
+                            <p class="mt-1 text-sm text-gray-500">{{ form.issue_type.help_text }}</p>
+                        {% endif %}
                     </div>
 
-                    <!-- File Attachments -->
-                    <div class="space-y-2">
-                        <label for="attachments" class="block text-sm font-medium text-gray-700">Attachments</label>
-                        <input type="file" id="attachments" name="attachments" multiple
-                               class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-colors"
-                               accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.zip,.csv,.xlsx">
-                        <div id="attachment-info" class="mt-2 text-sm text-gray-600"></div>
-                        <p class="text-sm text-gray-500">You can attach multiple files (max 10 files, 10MB each, 50MB total)</p>
+                    <div>
+                        <label for="{{ form.priority.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            Priority *
+                        </label>
+                        {{ form.priority }}
+                        {% if form.priority.errors %}
+                            <div class="mt-1 text-sm text-red-600">
+                                {% for error in form.priority.errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        {% if form.priority.help_text %}
+                            <p class="mt-1 text-sm text-gray-500">{{ form.priority.help_text }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div>
+                    <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Description *
+                    </label>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                        <div class="mt-1 text-sm text-red-600">
+                            {% for error in form.description.errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    {% if form.description.help_text %}
+                        <p class="mt-1 text-sm text-gray-500">{{ form.description.help_text }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Department, Location, and Asset ID -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <label for="{{ form.department.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            Department
+                        </label>
+                        {{ form.department }}
+                        {% if form.department.errors %}
+                            <div class="mt-1 text-sm text-red-600">
+                                {% for error in form.department.errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        {% if form.department.help_text %}
+                            <p class="mt-1 text-sm text-gray-500">{{ form.department.help_text }}</p>
+                        {% endif %}
                     </div>
 
-                    <!-- Action Buttons -->
-                    <div class="flex justify-end space-x-4 pt-4">
-                        <a href="{% url 'support:ticket_list' %}" 
-                           class="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
-                            Cancel
-                        </a>
-                        <button type="submit" id="submitBtn"
-                                class="inline-flex justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
-                            Create Ticket
-                        </button>
+                    <div>
+                        <label for="{{ form.location.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            Location
+                        </label>
+                        {{ form.location }}
+                        {% if form.location.errors %}
+                            <div class="mt-1 text-sm text-red-600">
+                                {% for error in form.location.errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        {% if form.location.help_text %}
+                            <p class="mt-1 text-sm text-gray-500">{{ form.location.help_text }}</p>
+                        {% endif %}
                     </div>
-                </form>
+
+                    <div>
+                        <label for="{{ form.asset_id.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            Asset ID
+                        </label>
+                        {{ form.asset_id }}
+                        {% if form.asset_id.errors %}
+                            <div class="mt-1 text-sm text-red-600">
+                                {% for error in form.asset_id.errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        {% if form.asset_id.help_text %}
+                            <p class="mt-1 text-sm text-gray-500">{{ form.asset_id.help_text }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- CC Users -->
+                <div>
+                    <label for="{{ form.cc_users.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        CC Users
+                    </label>
+                    {{ form.cc_users }}
+                    {% if form.cc_users.errors %}
+                        <div class="mt-1 text-sm text-red-600">
+                            {% for error in form.cc_users.errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    {% if form.cc_users.help_text %}
+                        <p class="mt-1 text-sm text-gray-500">{{ form.cc_users.help_text }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- File Attachments -->
+                <div>
+                    <label for="{{ form.attachments.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Attachments
+                    </label>
+                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                        <div class="space-y-1 text-center">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <div class="flex text-sm text-gray-600">
+                                <label for="{{ form.attachments.id_for_label }}" class="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
+                                    <span>Upload files</span>
+                                    {{ form.attachments }}
+                                </label>
+                                <p class="pl-1">or drag and drop</p>
+                            </div>
+                            <p class="text-xs text-gray-500">PDF, DOC, DOCX, XLS, XLSX, TXT, PNG, JPG, GIF, ZIP up to 10MB each</p>
+                        </div>
+                    </div>
+                    {% if form.attachments.errors %}
+                        <div class="mt-1 text-sm text-red-600">
+                            {% for error in form.attachments.errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    {% if form.attachments.help_text %}
+                        <p class="mt-1 text-sm text-gray-500">{{ form.attachments.help_text }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Form Actions -->
+                <div class="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200">
+                    <a href="{% url 'support:ticket_list' %}" 
+                       class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors">
+                        Cancel
+                    </a>
+                    <button type="submit" 
+                            class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors font-medium">
+                        Create Ticket
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Help Section -->
+        <div class="mt-8 bg-blue-50 rounded-lg p-6">
+            <h3 class="text-lg font-medium text-blue-900 mb-4">Need Help?</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <h4 class="font-medium text-blue-800 mb-2">Before Creating a Ticket:</h4>
+                    <ul class="text-sm text-blue-700 space-y-1">
+                        <li>• Check our FAQ section for common issues</li>
+                        <li>• Search existing tickets to avoid duplicates</li>
+                        <li>• Gather relevant information and error messages</li>
+                        <li>• Include steps to reproduce the issue</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-medium text-blue-800 mb-2">Priority Guidelines:</h4>
+                    <ul class="text-sm text-blue-700 space-y-1">
+                        <li>• <strong>Critical:</strong> System down, security issue</li>
+                        <li>• <strong>High:</strong> Major functionality affected</li>
+                        <li>• <strong>Medium:</strong> Minor functionality issue</li>
+                        <li>• <strong>Low:</strong> Enhancement requests, questions</li>
+                    </ul>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
+<!-- JavaScript for form enhancements -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const fileInput = document.getElementById('attachments');
-    const fileInfo = document.getElementById('attachment-info');
-    const submitBtn = document.getElementById('submitBtn');
+    // Issue type guidance
+    const issueTypeSelect = document.getElementById('id_issue_type');
+    const prioritySelect = document.getElementById('id_priority');
     
-    fileInput.addEventListener('change', function(e) {
-        const files = e.target.files;
-        if (files.length === 0) {
-            fileInfo.textContent = '';
-            return;
-        }
+    function updateIssueTypeGuidance(value) {
+        const guidance = {
+            'Bug Report': 'Describe the bug, expected behavior, and steps to reproduce',
+            'Feature Request': 'Explain the desired feature and its business value',
+            'Technical Support': 'Provide system details and error messages',
+            'Account Issue': 'Include account information and specific problem',
+            'General Inquiry': 'Ask your question clearly and provide context'
+        };
         
-        if (files.length > 10) {
-            fileInfo.innerHTML = '<span class="text-red-600">⚠️ Maximum 10 files allowed</span>';
-            submitBtn.disabled = true;
-            return;
-        }
+        // You can add guidance display logic here
+        console.log('Issue type guidance:', guidance[value]);
+    }
+    
+    function updatePriorityGuidance(value) {
+        const guidance = {
+            'Critical': 'System is down or security breach',
+            'High': 'Major functionality is impacted',
+            'Medium': 'Minor functionality issue',
+            'Low': 'Enhancement or general question'
+        };
         
-        let totalSize = 0;
-        const fileList = [];
-        let hasInvalidFile = false;
-        
-        for (let i = 0; i < files.length; i++) {
-            const file = files[i];
-            totalSize += file.size;
-            fileList.push(file.name);
-            
-            // Check individual file size (10MB)
-            if (file.size > 10 * 1024 * 1024) {
-                hasInvalidFile = true;
-                fileInfo.innerHTML = `<span class="text-red-600">⚠️ File "${file.name}" exceeds 10MB limit</span>`;
-                submitBtn.disabled = true;
-                return;
+        // You can add guidance display logic here
+        console.log('Priority guidance:', guidance[value]);
+    }
+    
+    if (issueTypeSelect) {
+        issueTypeSelect.addEventListener('change', function() {
+            updateIssueTypeGuidance(this.value);
+        });
+    }
+    
+    if (prioritySelect) {
+        prioritySelect.addEventListener('change', function() {
+            updatePriorityGuidance(this.value);
+        });
+    }
+    
+    // File upload enhancements
+    const fileInput = document.getElementById('id_attachments');
+    if (fileInput) {
+        fileInput.addEventListener('change', function() {
+            const files = this.files;
+            if (files.length > 0) {
+                let fileNames = [];
+                for (let i = 0; i < files.length; i++) {
+                    fileNames.push(files[i].name);
+                }
+                console.log('Selected files:', fileNames);
             }
-        }
-        
-        const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
-        
-        if (totalSize > 50 * 1024 * 1024) {
-            fileInfo.innerHTML = '<span class="text-red-600">⚠️ Total file size cannot exceed 50MB</span>';
-            submitBtn.disabled = true;
-            return;
-        }
-        
-        submitBtn.disabled = false;
-        fileInfo.innerHTML = `
-            <span class="text-green-600">✓ ${files.length} file(s) selected (${totalSizeMB}MB total)</span>
-            <div class="mt-1 text-xs text-gray-500">
-                ${fileList.slice(0, 3).join(', ')}${files.length > 3 ? ` and ${files.length - 3} more...` : ''}
-            </div>
-        `;
-    });
-
-    // Form submission handling
-    document.getElementById('ticketForm').addEventListener('submit', function(e) {
-        const files = fileInput.files;
-        if (files.length > 10) {
-            e.preventDefault();
-            alert('Please select maximum 10 files.');
-            return;
-        }
-        
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Creating...';
-    });
+        });
+    }
+    
+    // Form validation
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const subject = document.getElementById('id_subject').value.trim();
+            const description = document.getElementById('id_description').value.trim();
+            
+            if (!subject || !description) {
+                e.preventDefault();
+                alert('Please fill in all required fields');
+                return false;
+            }
+            
+            // Show loading state
+            const submitButton = form.querySelector('button[type="submit"]');
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.textContent = 'Creating Ticket...';
+            }
+        });
+    }
 });
 </script>
 {% endblock %}

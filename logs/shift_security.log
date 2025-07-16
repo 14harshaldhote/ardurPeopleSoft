@@ -1,4 +1,0 @@
-[2025-06-29 01:10:25] WARNING - trueAlign.shift.security - test_security_logging:240 - SECURITY: permission_denied
-[2025-06-29 01:10:25] ERROR - trueAlign.shift.security - test_security_logging:242 - SECURITY: unauthorized_access
-[2025-06-29 01:10:25] WARNING - trueAlign.shift.security - test_security_logging:240 - SECURITY: suspicious_activity
-[2025-06-29 01:10:25] ERROR - trueAlign.shift.security - test_security_logging:242 - SECURITY: authentication_failed

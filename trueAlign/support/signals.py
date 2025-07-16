@@ -18,7 +18,7 @@ from trueAlign.models import (
     TicketAttachment, CommentAttachment
 )
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('support')
 
 
 # ================================

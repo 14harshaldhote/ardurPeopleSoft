@@ -82,6 +82,8 @@ class UserSession(models.Model):
     logout_time = models.DateTimeField(null=True, blank=True)
     last_activity = models.DateTimeField(default=timezone.now)
     ended_at = models.DateTimeField(null=True, blank=True)
+    session_end_time = models.DateTimeField(null=True, blank=True)
+    start_time = models.DateTimeField(default=timezone.now)
     tab_opened_time = models.DateTimeField(null=True, blank=True)
     tab_last_focus = models.DateTimeField(null=True, blank=True)
 
@@ -100,6 +102,8 @@ class UserSession(models.Model):
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     user_agent = models.TextField(null=True, blank=True)
     browser_fingerprint = models.TextField(null=True, blank=True)
+    browser = models.CharField(max_length=100, null=True, blank=True)
+    os = models.CharField(max_length=100, null=True, blank=True)
     csrf_token = models.CharField(max_length=64, null=True, blank=True)
     csrf_token_created = models.DateTimeField(null=True, blank=True)
     device_type = models.CharField(max_length=20, null=True, blank=True)
@@ -171,6 +175,7 @@ class UserSession(models.Model):
     session_quality = models.CharField(max_length=20, null=True, blank=True)
     security_score = models.FloatField(null=True, blank=True)
     security_anomalies = models.JSONField(default=list, blank=True)
+    end_reason = models.CharField(max_length=50, null=True, blank=True)
 
     class Meta:
         ordering = ['-created_at']
@@ -2747,38 +2752,74 @@ class Attendance(models.Model):
         """
         Update attendance record with session information
         """
+        from django.db import transaction
+
         if not date:
             date = session.login_time.date()
 
         try:
-            attendance = cls.objects.get(user=user, date=date)
+            # Skip if we're already in a transaction to avoid nested transaction issues
+            if transaction.get_connection().in_atomic_block:
+                # Simple update without atomic block
+                attendance = cls.objects.get(user=user, date=date)
 
-            # Update session information
-            if not attendance.first_session or session.login_time < attendance.first_session.login_time:
-                attendance.first_session = session
+                # Update session information
+                if not attendance.first_session or session.login_time < attendance.first_session.login_time:
+                    attendance.first_session = session
 
-            if not attendance.last_session or session.login_time > attendance.last_session.login_time:
-                attendance.last_session = session
+                if not attendance.last_session or session.login_time > attendance.last_session.login_time:
+                    attendance.last_session = session
 
-            # Update session count
-            attendance.total_sessions = UserSession.objects.filter(
-                user=user,
-                login_time__date=date
-            ).count()
+                # Update session count
+                attendance.total_sessions = UserSession.objects.filter(
+                    user=user,
+                    login_time__date=date
+                ).count()
 
-            # Update clock times based on session
-            if not attendance.clock_in_time or session.login_time < attendance.clock_in_time:
-                attendance.clock_in_time = session.login_time
+                # Update clock times based on session
+                if not attendance.clock_in_time or session.login_time < attendance.clock_in_time:
+                    attendance.clock_in_time = session.login_time
 
-            if session.logout_time:
-                if not attendance.clock_out_time or session.logout_time > attendance.clock_out_time:
-                    attendance.clock_out_time = session.logout_time
+                if session.logout_time:
+                    if not attendance.clock_out_time or session.logout_time > attendance.clock_out_time:
+                        attendance.clock_out_time = session.logout_time
 
-            attendance.save()
-            logger.info(f"Updated session data for {user.username} on {date}")
+                attendance.save()
+                logger.info(f"Updated session data for {user.username} on {date}")
+            else:
+                # Use atomic transaction if not already in one
+                with transaction.atomic():
+                    # Use select_for_update to prevent deadlocks
+                    attendance = cls.objects.select_for_update().get(user=user, date=date)
+
+                    # Update session information
+                    if not attendance.first_session or session.login_time < attendance.first_session.login_time:
+                        attendance.first_session = session
+
+                    if not attendance.last_session or session.login_time > attendance.last_session.login_time:
+                        attendance.last_session = session
+
+                    # Update session count
+                    attendance.total_sessions = UserSession.objects.filter(
+                        user=user,
+                        login_time__date=date
+                    ).count()
+
+                    # Update clock times based on session
+                    if not attendance.clock_in_time or session.login_time < attendance.clock_in_time:
+                        attendance.clock_in_time = session.login_time
+
+                    if session.logout_time:
+                        if not attendance.clock_out_time or session.logout_time > attendance.clock_out_time:
+                            attendance.clock_out_time = session.logout_time
+
+                    attendance.save()
+                    logger.info(f"Updated session data for {user.username} on {date}")
 
         except cls.DoesNotExist:
             logger.warning(f"No attendance record found for {user.username} on {date}")
+        except Exception as e:
+            logger.error(f"Error updating session data for {user.username}: {e}")
 
     def request_regularization(self, requested_status, reason, requested_by=None):
         """

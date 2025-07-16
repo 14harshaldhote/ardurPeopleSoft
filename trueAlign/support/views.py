@@ -1,1077 +1,1258 @@
 """
-Support Views Module - Updated for Multiple File Uploads
-Handles all HTTP requests for the support ticket system
+Comprehensive Views Module for Smart Ticketing System
+Provides role-based access control and intelligent ticket management views
 """
 
-import os
-import csv
 import json
-from datetime import datetime
+import logging
+from datetime import datetime, timedelta
+from typing import Dict, List, Optional
+import csv
+import io
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User, Group
 from django.contrib import messages
-from django.db import transaction
-from django.db.models import Q, Count, Prefetch
-from django.http import JsonResponse, FileResponse, HttpResponse, Http404
+from django.http import JsonResponse, HttpResponse, Http404, FileResponse
+from django.db.models import Q, Count, Avg, F, Sum, Max, Min
 from django.utils import timezone
-from django.views.decorators.http import require_http_methods, require_GET, require_POST
-from django.core.exceptions import ValidationError, PermissionDenied
 from django.core.paginator import Paginator
-from django.contrib.auth.models import User
-from django.core.files.storage import default_storage
+from django.views.decorators.http import require_http_methods, require_POST
 from django.views.decorators.csrf import csrf_exempt
-import mimetypes
-from django.utils import timezone
 from django.db import transaction
-from django.core.exceptions import ValidationError, PermissionDenied
+from django.conf import settings
+from django.core.exceptions import PermissionDenied, ValidationError
+from django.contrib.auth.decorators import user_passes_test
+from django.core.cache import cache
+from django.template.loader import render_to_string
+from django.urls import reverse
 
-from trueAlign.models import (
-    Support, TicketComment, TicketAttachment,
-    TicketActivity, CommentAttachment
-)
-from .services import (
-    SupportTicketService, FileAttachmentService, BulkTicketService
-)
+from trueAlign.models import Support, TicketComment, TicketAttachment, TicketActivity, UserDetails
 from .forms import (
-    TicketCreateForm, CommentForm, StatusUpdateForm,
-    AssignmentForm, PriorityUpdateForm, TicketFilterForm,
-    AttachmentForm, BulkActionForm
+    TicketCreationForm, TicketUpdateForm, CommentForm, BulkActionForm,
+    TicketSearchForm, TicketAssignmentForm, TicketEscalationForm,
+    TicketFeedbackForm, TicketReopenForm
 )
+from .utils import PermissionManager, TicketHelper, CacheManager, ReportGenerator, TicketValidator
+from .logging_system import ticket_logger
 
-import logging
-logger = logging.getLogger('support')
+logger = logging.getLogger(__name__)
+
+
+def get_services():
+    """
+    Lazy import of services to avoid Django app loading issues
+    """
+    try:
+        from .services import TicketService, NotificationService
+        from .assignment_engine import AssignmentEngine
+        from .prioritization_engine import PrioritizationEngine
+        from .sla_engine import SLAEngine
+
+        return {
+            'ticket_service': TicketService(),
+            'notification_service': NotificationService(),
+            'assignment_engine': AssignmentEngine(),
+            'prioritization_engine': PrioritizationEngine(),
+            'sla_engine': SLAEngine()
+        }
+    except ImportError as e:
+        logger.error(f"Service import error: {e}")
+        return {
+            'ticket_service': None,
+            'notification_service': None,
+            'assignment_engine': None,
+            'prioritization_engine': None,
+            'sla_engine': None
+        }
 
 
 @login_required
-def support_dashboard(request):
-    """Support dashboard with statistics and metrics"""
+def dashboard(request):
+    """
+    Main dashboard with role-based ticket overview and analytics
+    """
     try:
-        user_roles = SupportTicketService.get_user_roles(request.user)
+        services = get_services()
+        user_roles = PermissionManager.get_user_roles(request.user)
 
-        # Get statistics
-        dashboard_data = SupportTicketService.get_ticket_statistics(request.user, user_roles)
+        # Get filtered tickets based on user permissions
+        all_tickets = PermissionManager.get_filtered_tickets_queryset(request.user)
+
+        # Calculate statistics
+        today = timezone.now().date()
+
+        stats = {
+            'total_tickets': all_tickets.count(),
+            'open_tickets': all_tickets.filter(status__in=['New', 'Open', 'In Progress']).count(),
+            'overdue_tickets': all_tickets.filter(
+                sla_target_date__lt=timezone.now(),
+                status__in=['New', 'Open', 'In Progress', 'Pending User Response']
+            ).count(),
+            'resolved_today': all_tickets.filter(
+                status__in=['Resolved', 'Closed'],
+                resolved_at__date=today
+            ).count(),
+            'pending_tickets': all_tickets.filter(status='Pending User Response').count(),
+            'high_priority': all_tickets.filter(priority__in=['High', 'Critical']).count(),
+        }
+
+        # Priority breakdown
+        priority_breakdown = {}
+        for priority in Support.Priority.choices:
+            priority_breakdown[priority[0]] = all_tickets.filter(priority=priority[0]).count()
+
+        # Calculate average resolution time
+        resolved_tickets = all_tickets.filter(
+            status__in=['Resolved', 'Closed'],
+            resolved_at__isnull=False,
+            created_at__isnull=False
+        )
+
+        if resolved_tickets.exists():
+            avg_resolution_time = resolved_tickets.aggregate(
+                avg_time=Avg(F('resolved_at') - F('created_at'))
+            )['avg_time']
+            if avg_resolution_time:
+                hours = avg_resolution_time.total_seconds() / 3600
+                stats['avg_resolution_time'] = f"{hours:.1f}h"
+            else:
+                stats['avg_resolution_time'] = "N/A"
+        else:
+            stats['avg_resolution_time'] = "N/A"
+
+        # Satisfaction rating
+        satisfaction_avg = all_tickets.filter(
+            satisfaction_rating__isnull=False
+        ).aggregate(avg_rating=Avg('satisfaction_rating'))['avg_rating']
+        stats['satisfaction_rating'] = f"{satisfaction_avg:.1f}/5" if satisfaction_avg else "N/A"
+
+        # SLA compliance
+        total_resolved = resolved_tickets.count()
+        sla_compliant = resolved_tickets.filter(
+            resolved_at__lte=F('sla_target_date')
+        ).count()
+        stats['sla_compliance'] = f"{(sla_compliant/total_resolved*100):.1f}%" if total_resolved > 0 else "N/A"
+
+        # Recent tickets
+        recent_tickets = all_tickets.select_related('user', 'assigned_to_user').order_by('-created_at')[:10]
+
+        # Overdue tickets
+        overdue_tickets = all_tickets.filter(
+            sla_target_date__lt=timezone.now(),
+            status__in=['New', 'Open', 'In Progress', 'Pending User Response']
+        ).select_related('user', 'assigned_to_user')[:5]
+
+        # SLA warnings (tickets approaching SLA breach)
+        sla_warnings = []
+        if user_roles.get('is_admin') or user_roles.get('is_manager'):
+            approaching_sla = all_tickets.filter(
+                sla_target_date__lte=timezone.now() + timedelta(hours=4),
+                sla_target_date__gt=timezone.now(),
+                status__in=['New', 'Open', 'In Progress']
+            ).select_related('user', 'assigned_to_user')[:5]
+            sla_warnings = approaching_sla
+
+        # Agent performance (for managers and admins)
+        agent_performance = []
+        if user_roles.get('is_admin') or user_roles.get('is_manager'):
+            agent_performance = ReportGenerator().generate_agent_performance_report(
+                date_from=today - timedelta(days=30),
+                date_to=today
+            )
 
         context = {
-            'dashboard_data': dashboard_data,
+            'stats': stats,
+            'priority_breakdown': priority_breakdown,
+            'recent_tickets': recent_tickets,
+            'overdue_tickets': overdue_tickets,
+            'sla_warnings': sla_warnings,
+            'agent_performance': agent_performance,
             'user_roles': user_roles,
+            'page_title': 'Support Dashboard',
+            'now': timezone.now()
         }
+
         return render(request, 'support/dashboard.html', context)
 
     except Exception as e:
-        logger.error(f"Error in support_dashboard: {str(e)}", exc_info=True)
-        messages.error(request, 'An error occurred while loading the dashboard.')
-        return render(request, 'support/dashboard.html', {})
+        logger.error(f"Dashboard error for user {request.user.id}: {str(e)}")
+        messages.error(request, "Error loading dashboard. Please try again.")
+        return render(request, 'support/dashboard.html', {'error': True})
 
 
 @login_required
 def ticket_list(request):
-    """List all tickets with filtering and pagination"""
+    """
+    Display paginated list of tickets with advanced filtering
+    """
     try:
-        # Get user roles for permission checking
-        user_roles = SupportTicketService.get_user_roles(request.user)
+        services = get_services()
+        search_form = TicketSearchForm(request.GET or None)
 
-        # Get base queryset
-        queryset = SupportTicketService.get_tickets_queryset(request.user, user_roles)
+        # Get base queryset filtered by user permissions
+        tickets = PermissionManager.get_filtered_tickets_queryset(request.user)
 
-        # Apply filters
-        filter_form = TicketFilterForm(request.GET or None)
-        if filter_form.is_valid():
-            cleaned_data = filter_form.cleaned_data
+        # Apply search filters
+        if search_form.is_valid():
+            filters = search_form.cleaned_data
 
-            if cleaned_data.get('status'):
-                queryset = queryset.filter(status=cleaned_data['status'])
-            if cleaned_data.get('priority'):
-                queryset = queryset.filter(priority=cleaned_data['priority'])
-            if cleaned_data.get('issue_type'):
-                queryset = queryset.filter(issue_type=cleaned_data['issue_type'])
-            if cleaned_data.get('assigned_group'):
-                queryset = queryset.filter(assigned_group=cleaned_data['assigned_group'])
+            # Text search
+            if filters.get('search_query'):
+                query = filters['search_query']
+                tickets = tickets.filter(
+                    Q(ticket_id__icontains=query) |
+                    Q(subject__icontains=query) |
+                    Q(description__icontains=query)
+                )
+
+            # Status filter
+            if filters.get('status'):
+                tickets = tickets.filter(status__in=filters['status'])
+
+            # Priority filter
+            if filters.get('priority'):
+                tickets = tickets.filter(priority__in=filters['priority'])
+
+            # Issue type filter
+            if filters.get('issue_type'):
+                tickets = tickets.filter(issue_type__in=filters['issue_type'])
+
+            # Assignee filter
+            if filters.get('assigned_to'):
+                tickets = tickets.filter(assigned_to_user=filters['assigned_to'])
+
+            # Group filter
+            if filters.get('assigned_group'):
+                tickets = tickets.filter(assigned_group=filters['assigned_group'])
+
+            # Date range filter
+            if filters.get('date_from'):
+                tickets = tickets.filter(created_at__gte=filters['date_from'])
+            if filters.get('date_to'):
+                tickets = tickets.filter(created_at__lte=filters['date_to'])
+
+            # Overdue filter
+            if filters.get('overdue_only'):
+                tickets = tickets.filter(
+                    sla_target_date__lt=timezone.now(),
+                    status__in=['New', 'Open', 'In Progress', 'Pending User Response']
+                )
+
+        # Sorting
+        sort_by = request.GET.get('sort', '-created_at')
+        valid_sort_fields = ['created_at', '-created_at', 'priority', '-priority', 'status', '-status', 'sla_target_date', '-sla_target_date']
+        if sort_by in valid_sort_fields:
+            tickets = tickets.order_by(sort_by)
 
         # Pagination
-        paginator = Paginator(queryset, 25)
+        paginator = Paginator(tickets.select_related('user', 'assigned_to_user'), 25)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
 
+        # Get user roles for UI customization
+        user_roles = PermissionManager.get_user_roles(request.user)
+
+        # Bulk action form
+        bulk_form = BulkActionForm(user=request.user) if user_roles['is_admin'] or user_roles['is_manager'] else None
+
         context = {
-            'page_obj': page_obj,
-            'filter_form': filter_form,
+            'tickets': page_obj,
+            'search_form': search_form,
+            'bulk_form': bulk_form,
             'user_roles': user_roles,
+            'page_title': 'Tickets',
+            'total_tickets': paginator.count
         }
+
         return render(request, 'support/ticket_list.html', context)
 
     except Exception as e:
-        logger.error(f"Error in ticket_list: {str(e)}", exc_info=True)
-        messages.error(request, 'An error occurred while loading tickets.')
-        return render(request, 'support/ticket_list.html', {})
-
-
-@login_required
-def ticket_list_api(request):
-    """API endpoint for ticket list with filtering"""
-    try:
-        user_roles = SupportTicketService.get_user_roles(request.user)
-        queryset = SupportTicketService.get_tickets_queryset(request.user, user_roles)
-
-        # Apply filters from GET parameters
-        status = request.GET.get('status')
-        priority = request.GET.get('priority')
-        search = request.GET.get('search')
-
-        if status:
-            queryset = queryset.filter(status=status)
-        if priority:
-            queryset = queryset.filter(priority=priority)
-        if search:
-            queryset = queryset.filter(
-                Q(subject__icontains=search) |
-                Q(description__icontains=search) |
-                Q(ticket_id__icontains=search)
-            )
-
-        # Pagination
-        page = int(request.GET.get('page', 1))
-        per_page = int(request.GET.get('per_page', 25))
-
-        paginator = Paginator(queryset, per_page)
-        page_obj = paginator.get_page(page)
-
-        # Serialize data
-        tickets_data = []
-        for ticket in page_obj:
-            tickets_data.append({
-                'id': ticket.id,
-                'ticket_id': ticket.ticket_id,
-                'subject': ticket.subject,
-                'status': ticket.status,
-                'priority': ticket.priority,
-                'created_at': ticket.created_at.isoformat(),
-                'user': ticket.user.get_full_name() or ticket.user.username,
-                'assigned_to': ticket.assigned_to_user.get_full_name() if ticket.assigned_to_user else None,
-            })
-
-        return JsonResponse({
-            'tickets': tickets_data,
-            'pagination': {
-                'page': page_obj.number,
-                'pages': paginator.num_pages,
-                'per_page': per_page,
-                'total': paginator.count,
-            }
-        })
-
-    except Exception as e:
-        logger.error(f"Error in ticket_list_api: {str(e)}", exc_info=True)
-        return JsonResponse({'error': 'Failed to load tickets'}, status=500)
-
-
-@login_required
-def handle_ticket_actions(request, ticket):
-    """Handle POST actions on ticket detail page"""
-    action = _determine_action(request.POST)
-
-    try:
-        if action == 'add_comment':
-            return handle_add_comment(request, ticket)
-        elif action == 'update_status':
-            return handle_status_update(request, ticket)
-        elif action == 'assign':
-            return handle_assignment(request, ticket)
-        elif action == 'update_priority':
-            return handle_priority_update(request, ticket)
-        elif action == 'escalate':
-            return handle_escalation(request, ticket)
-        else:
-            messages.error(request, 'Invalid action.')
-            return redirect('support:ticket_detail', pk=ticket.pk)
-
-    except Exception as e:
-        logger.error(f"Error handling ticket action {action}: {str(e)}", exc_info=True)
-        messages.error(request, f'An error occurred while processing your request: {str(e)}')
-        return redirect('support:ticket_detail', pk=ticket.pk)
-
-
-def handle_add_comment(request, ticket):
-    """Handle adding a comment with multiple attachments"""
-    form = CommentForm(request.POST, request.FILES, user=request.user)
-
-    if form.is_valid():
-        try:
-            with transaction.atomic():
-                # Create comment
-                comment = TicketComment.objects.create(
-                    ticket=ticket,
-                    user=request.user,
-                    content=form.cleaned_data['content'],
-                    is_internal=form.cleaned_data.get('is_internal', False)
-                )
-
-                # Create ticket activity
-                activity = TicketActivity.objects.create(
-                    ticket=ticket,
-                    action=TicketActivity.Action.COMMENTED,
-                    user=request.user,
-                    details=f'Comment added: {form.cleaned_data["content"][:100]}...'
-                )
-
-                # Handle multiple comment attachments
-                attachments = form.cleaned_data.get('comment_attachments', [])
-                attachment_count = 0
-
-                for file_obj in attachments:
-                    if file_obj:
-                        try:
-                            CommentAttachment.objects.create(
-                                comment=comment,
-                                ticket_activity=activity,
-                                file=file_obj,
-                                uploaded_by=request.user,
-                                description=f'Attachment for comment'
-                            )
-                            attachment_count += 1
-                        except Exception as e:
-                            logger.error(f"Error uploading comment attachment: {str(e)}")
-                            messages.warning(request, f'Failed to upload file: {file_obj.name}')
-
-                success_msg = 'Comment added successfully!'
-                if attachment_count > 0:
-                    success_msg += f' ({attachment_count} file(s) attached)'
-                messages.success(request, success_msg)
-
-        except Exception as e:
-            logger.error(f"Error adding comment: {str(e)}", exc_info=True)
-            messages.error(request, f'Failed to add comment: {str(e)}')
-    else:
-        # Form validation errors
-        for field, errors in form.errors.items():
-            for error in errors:
-                messages.error(request, f'{field}: {error}')
-
-    return redirect('support:ticket_detail', pk=ticket.pk)
-
-
-def handle_status_update(request, ticket):
-    """Handle status updates"""
-    form = StatusUpdateForm(request.POST)
-
-    if form.is_valid():
-        try:
-            old_status = ticket.status
-            new_status = form.cleaned_data['status']
-
-            # Validate status transition
-            if not SupportTicketService.is_valid_status_transition(old_status, new_status):
-                messages.error(request, f'Invalid status transition from {old_status} to {new_status}.')
-                return redirect('support:ticket_detail', pk=ticket.pk)
-
-            # Update ticket status
-            SupportTicketService.update_ticket_status(
-                ticket=ticket,
-                new_status=new_status,
-                user=request.user,
-                comment=form.cleaned_data.get('comment', '')
-            )
-
-            messages.success(request, f'Ticket status updated to {new_status}.')
-
-        except Exception as e:
-            logger.error(f"Error updating status: {str(e)}", exc_info=True)
-            messages.error(request, f'Failed to update status: {str(e)}')
-    else:
-        for field, errors in form.errors.items():
-            for error in errors:
-                messages.error(request, f'{field}: {error}')
-
-    return redirect('support:ticket_detail', pk=ticket.pk)
-
-
-def handle_assignment(request, ticket):
-    """Handle ticket assignment"""
-    form = AssignmentForm(request.POST, user=request.user)
-
-    if form.is_valid():
-        try:
-            SupportTicketService.assign_ticket(
-                ticket=ticket,
-                assigned_user=form.cleaned_data.get('assigned_to_user'),
-                assigned_group=form.cleaned_data.get('assigned_group'),
-                assigner=request.user,
-                comment=form.cleaned_data.get('assignment_comment', '')
-            )
-
-            messages.success(request, 'Ticket assignment updated successfully.')
-
-        except Exception as e:
-            logger.error(f"Error assigning ticket: {str(e)}", exc_info=True)
-            messages.error(request, f'Failed to assign ticket: {str(e)}')
-    else:
-        for field, errors in form.errors.items():
-            for error in errors:
-                messages.error(request, f'{field}: {error}')
-
-    return redirect('support:ticket_detail', pk=ticket.pk)
-
-
-def handle_priority_update(request, ticket):
-    """Handle priority updates"""
-    form = PriorityUpdateForm(request.POST)
-
-    if form.is_valid():
-        try:
-            old_priority = ticket.priority
-            new_priority = form.cleaned_data['priority']
-
-            ticket.priority = new_priority
-            ticket.save(user=request.user)
-
-            # Create activity log
-            TicketActivity.objects.create(
-                ticket=ticket,
-                action=TicketActivity.Action.UPDATED,
-                user=request.user,
-                details=f'Priority changed from {old_priority} to {new_priority}'
-            )
-
-            messages.success(request, f'Ticket priority updated to {new_priority}.')
-
-        except Exception as e:
-            logger.error(f"Error updating priority: {str(e)}", exc_info=True)
-            messages.error(request, f'Failed to update priority: {str(e)}')
-    else:
-        for field, errors in form.errors.items():
-            for error in errors:
-                messages.error(request, f'{field}: {error}')
-
-    return redirect('support:ticket_detail', pk=ticket.pk)
-
-
-def handle_escalation(request, ticket):
-    """Handle ticket escalation"""
-    try:
-        SupportTicketService.escalate_ticket(ticket, request.user)
-        messages.success(request, 'Ticket escalated successfully.')
-    except Exception as e:
-        logger.error(f"Error escalating ticket: {str(e)}", exc_info=True)
-        messages.error(request, f'Failed to escalate ticket: {str(e)}')
-
-    return redirect('support:ticket_detail', pk=ticket.pk)
-
-
-def _determine_action(post_data):
-    """Determine which action to take based on POST data"""
-    if 'add_comment' in post_data:
-        return 'add_comment'
-    elif 'update_status' in post_data:
-        return 'update_status'
-    elif 'assign' in post_data:
-        return 'assign'
-    elif 'update_priority' in post_data:
-        return 'update_priority'
-    elif 'escalate' in post_data:
-        return 'escalate'
-    else:
-        return 'unknown'
-
-
-def get_ticket_context_data(request, ticket, user_roles):
-    """Get context data for ticket detail page"""
-    try:
-        # Get comments with attachments
-        comments = TicketComment.objects.filter(ticket=ticket).select_related('user').prefetch_related(
-            'attachments__uploaded_by'
-        ).order_by('created_at')
-
-        # Get attachments
-        attachments = TicketAttachment.objects.filter(
-            ticket=ticket,
-            is_deleted=False
-        ).select_related('uploaded_by').order_by('-uploaded_at')
-
-        # Get activity log
-        activities = TicketActivity.objects.filter(ticket=ticket).select_related('user').order_by('-timestamp')
-
-        # Get assignable users
-        assignable_users = _get_assignable_users(request.user, user_roles)
-
-        # Initialize forms
-        comment_form = CommentForm(user=request.user)
-        status_form = StatusUpdateForm(initial={'status': ticket.status})
-        assignment_form = AssignmentForm(user=request.user)
-        priority_form = PriorityUpdateForm(initial={'priority': ticket.priority})
-        attachment_form = AttachmentForm()
-
-        # Get permissions
-        permissions = SupportTicketService.get_ticket_permissions(request.user, ticket, user_roles)
-
-        return {
-            'ticket': ticket,
-            'comments': comments,
-            'attachments': attachments,
-            'activities': activities,
-            'assignable_users': assignable_users,
-            'comment_form': comment_form,
-            'status_form': status_form,
-            'assignment_form': assignment_form,
-            'priority_form': priority_form,
-            'attachment_form': attachment_form,
-            'permissions': permissions,
-            'user_roles': user_roles,
-        }
-    except Exception as e:
-        logger.error(f"Error getting ticket context: {str(e)}", exc_info=True)
-        return {
-            'ticket': ticket,
-            'error': 'Failed to load ticket data'
-        }
-
-
-def _get_assignable_users(user, user_roles):
-    """Get list of users that can be assigned tickets"""
-    try:
-        if 'Admin' in user_roles:
-            return User.objects.filter(is_staff=True).order_by('first_name', 'last_name')
-        elif 'HR' in user_roles:
-            return User.objects.filter(groups__name='HR').order_by('first_name', 'last_name')
-        else:
-            return User.objects.none()
-    except Exception as e:
-        logger.error(f"Error getting assignable users: {str(e)}")
-        return User.objects.none()
+        logger.error(f"Ticket list error for user {request.user.id}: {str(e)}")
+        messages.error(request, "Error loading tickets. Please try again.")
+        return render(request, 'support/ticket_list.html', {'error': True})
 
 
 @login_required
 def create_ticket(request):
-    """Create a new support ticket with multiple file upload support"""
+    """
+    Create new support ticket with intelligent assignment and prioritization
+    """
+    services = get_services()
+
     if request.method == 'POST':
-        form = TicketCreateForm(request.POST, request.FILES)
+        form = TicketCreationForm(request.POST, request.FILES, user=request.user)
+
         if form.is_valid():
             try:
                 with transaction.atomic():
-                    # Create the ticket
-                    ticket = Support.objects.create(
-                        user=request.user,
-                        subject=form.cleaned_data['subject'],
-                        description=form.cleaned_data['description'],
-                        priority=form.cleaned_data['priority'],
-                        issue_type=form.cleaned_data['issue_type'],
-                        assigned_group=form.cleaned_data.get('assigned_group') or None,
-                        department=form.cleaned_data.get('department', ''),
-                        location=form.cleaned_data.get('location', ''),
-                        asset_id=form.cleaned_data.get('asset_id', ''),
-                    )
+                    # Prepare ticket data
+                    ticket_data = {
+                        'subject': form.cleaned_data['subject'],
+                        'description': form.cleaned_data['description'],
+                        'issue_type': form.cleaned_data['issue_type'],
+                        'priority': form.cleaned_data['priority'],
+                        'department': form.cleaned_data['department'],
+                        'location': form.cleaned_data['location'],
+                        'asset_id': form.cleaned_data['asset_id']
+                    }
 
-                    # Handle multiple attachments
-                    attachments = form.cleaned_data.get('attachments', [])
-                    attachment_count = 0
+                    # Handle attachments
+                    attachments = request.FILES.getlist('attachments')
 
-                    for file_obj in attachments:
-                        if file_obj:
-                            try:
-                                TicketAttachment.objects.create(
+                    # Create ticket using service
+                    if services['ticket_service']:
+                        ticket = services['ticket_service'].create_ticket(
+                            user=request.user,
+                            ticket_data=ticket_data,
+                            attachments=attachments
+                        )
+                    else:
+                        # Fallback ticket creation
+                        ticket = Support.objects.create(
+                            user=request.user,
+                            **ticket_data
+                        )
+
+                        # Generate ticket ID
+                        ticket.ticket_id = TicketHelper.generate_ticket_id()
+                        ticket.save()
+
+                        # Handle attachments
+                        for attachment in attachments:
+                            TicketAttachment.objects.create(
+                                ticket=ticket,
+                                file=attachment,
+                                uploaded_by=request.user
+                            )
+
+                    # Add CC users
+                    cc_users = form.cleaned_data.get('cc_users', [])
+                    if cc_users:
+                        ticket.cc_users.set(cc_users)
+
+                    # Auto-assign using assignment engine
+                    if services['assignment_engine'] and not ticket.assigned_to_user:
+                        try:
+                            assigned_agent, reason = services['assignment_engine'].assign_ticket(ticket)
+                            if assigned_agent:
+                                ticket.assigned_to_user = assigned_agent
+                                ticket.save()
+
+                                # Log assignment
+                                TicketActivity.objects.create(
                                     ticket=ticket,
-                                    file=file_obj,
-                                    uploaded_by=request.user,
-                                    description=f'Attachment uploaded during ticket creation'
+                                    action=TicketActivity.Action.ASSIGNED,
+                                    user=request.user,
+                                    details=f"Auto-assigned to {assigned_agent.get_full_name()}: {reason}"
                                 )
-                                attachment_count += 1
-                            except Exception as e:
-                                logger.error(f"Error uploading attachment: {str(e)}")
-                                messages.warning(request, f'Failed to upload file: {file_obj.name}')
+                        except Exception as e:
+                            logger.warning(f"Auto-assignment failed: {str(e)}")
 
-                    # Create ticket activity
-                    TicketActivity.objects.create(
-                        ticket=ticket,
-                        action=TicketActivity.Action.CREATED,
-                        user=request.user,
-                        details=f'Ticket created with {attachment_count} attachment(s)'
+                    # Recalculate priority using prioritization engine
+                    if services['prioritization_engine']:
+                        try:
+                            new_priority, factors = services['prioritization_engine'].calculate_priority(ticket)
+                            if new_priority != ticket.priority:
+                                old_priority = ticket.priority
+                                ticket.priority = new_priority
+                                ticket.save()
+
+                                # Log priority change
+                                TicketActivity.objects.create(
+                                    ticket=ticket,
+                                    action=TicketActivity.Action.PRIORITY_CHANGED,
+                                    user=request.user,
+                                    details=f"Priority changed from {old_priority} to {new_priority} (Smart prioritization)"
+                                )
+                        except Exception as e:
+                            logger.warning(f"Smart prioritization failed: {str(e)}")
+
+                    # Set SLA target
+                    if services['sla_engine']:
+                        try:
+                            sla_target = services['sla_engine'].calculate_sla_target(ticket)
+                            ticket.sla_target_date = sla_target
+                            ticket.save()
+                        except Exception as e:
+                            logger.warning(f"SLA calculation failed: {str(e)}")
+
+                    # Send notifications
+                    if services['notification_service']:
+                        try:
+                            # Notify assigned agent
+                            if ticket.assigned_to_user:
+                                services['notification_service'].send_ticket_notification(
+                                    ticket, 'assigned', [ticket.assigned_to_user]
+                                )
+
+                            # Notify CC users
+                            if cc_users:
+                                services['notification_service'].send_ticket_notification(
+                                    ticket, 'cc_added', cc_users
+                                )
+                        except Exception as e:
+                            logger.warning(f"Notification sending failed: {str(e)}")
+
+                    # Log ticket creation
+                    ticket_logger.log_ticket_creation(request.user, ticket)
+
+                    messages.success(
+                        request,
+                        f'Ticket {ticket.ticket_id} created successfully! '
+                        f'Priority: {ticket.priority}'
+                        f'{", Assigned to: " + ticket.assigned_to_user.get_full_name() if ticket.assigned_to_user else ""}'
                     )
 
-                    success_msg = f'Ticket #{ticket.ticket_id} created successfully!'
-                    if attachment_count > 0:
-                        success_msg += f' ({attachment_count} file(s) attached)'
-                    messages.success(request, success_msg)
-
-                    return redirect('support:ticket_detail', pk=ticket.pk)
+                    return redirect('support:ticket_detail', ticket_id=ticket.ticket_id)
 
             except Exception as e:
-                logger.error(f"Error creating ticket: {str(e)}", exc_info=True)
-                messages.error(request, f'An error occurred while creating the ticket: {str(e)}')
-        else:
-            # Form validation errors
-            for field, errors in form.errors.items():
-                for error in errors:
-                    messages.error(request, f'{field}: {error}')
-    else:
-        form = TicketCreateForm()
+                logger.error(f"Ticket creation error: {str(e)}")
+                messages.error(request, f"Error creating ticket: {str(e)}")
 
-    context = _get_create_ticket_context()
-    context['form'] = form
+    else:
+        form = TicketCreationForm(user=request.user)
+
+    context = {
+        'form': form,
+        'page_title': 'Create New Ticket'
+    }
+
     return render(request, 'support/create_ticket.html', context)
 
 
-def _prepare_ticket_data(request):
-    """Prepare and validate ticket data from request"""
-    return {
-        'subject': request.POST.get('subject', '').strip(),
-        'description': request.POST.get('description', '').strip(),
-        'priority': request.POST.get('priority', Support.Priority.MEDIUM),
-        'issue_type': request.POST.get('issue_type'),
-        'assigned_group': request.POST.get('assigned_group'),
-        'department': request.POST.get('department', '').strip(),
-        'location': request.POST.get('location', '').strip(),
-        'asset_id': request.POST.get('asset_id', '').strip(),
-    }
-
-
-def _get_create_ticket_context():
-    """Get context for create ticket form"""
-    try:
-        return {
-            'priority_choices': Support.Priority.choices,
-            'issue_type_choices': Support.IssueType.choices,
-            'assigned_group_choices': Support.AssignedGroup.choices,
-        }
-    except Exception as e:
-        logger.error(f"Error getting create ticket context: {str(e)}")
-        return {
-            'priority_choices': [],
-            'issue_type_choices': [],
-            'assigned_group_choices': [],
-        }
-
-
 @login_required
-def ticket_detail(request, pk):
-    """Display ticket details and handle actions"""
-    ticket = get_object_or_404(Support, pk=pk)
-
-    # Check permissions
-    user_roles = SupportTicketService.get_user_roles(request.user)
-    permissions = SupportTicketService.get_ticket_permissions(request.user, ticket, user_roles)
-
-    if not permissions.get('can_view', False):
-        messages.error(request, 'You do not have permission to view this ticket.')
-        return redirect('support:ticket_list')
-
-    if request.method == 'POST':
-        return handle_ticket_actions(request, ticket)
-
-    # GET request - render ticket detail
+def ticket_detail(request, ticket_id):
+    """
+    Display detailed ticket information with comments and activities
+    """
     try:
-        context = get_ticket_context_data(request, ticket, user_roles)
+        services = get_services()
+        ticket = get_object_or_404(Support, ticket_id=ticket_id, is_deleted=False)
+
+        # Check permissions
+        if not PermissionManager.can_view_ticket(request.user, ticket):
+            raise PermissionDenied("You don't have permission to view this ticket")
+
+        # Get user roles and permissions
+        user_roles = PermissionManager.get_user_roles(request.user)
+        can_edit = PermissionManager.can_edit_ticket(request.user, ticket)
+        can_assign = PermissionManager.can_assign_ticket(request.user, ticket)
+        can_escalate = PermissionManager.can_escalate_ticket(request.user, ticket)
+        can_delete = PermissionManager.can_delete_ticket(request.user, ticket)
+        can_view_internal = PermissionManager.can_view_internal_comments(request.user, ticket)
+
+        # Get ticket comments
+        comments = TicketComment.objects.filter(ticket=ticket)
+        if not can_view_internal:
+            comments = comments.filter(is_internal=False)
+        comments = comments.select_related('user').order_by('created_at')
+
+        # Get ticket activities
+        activities = TicketActivity.objects.filter(ticket=ticket).select_related('user').order_by('-created_at')
+
+        # Get attachments
+        attachments = TicketAttachment.objects.filter(ticket=ticket).select_related('uploaded_by')
+
+        # Get related tickets
+        related_tickets = Support.objects.filter(
+            Q(user=ticket.user) | Q(subject__icontains=ticket.subject[:20]),
+            is_deleted=False
+        ).exclude(id=ticket.id)[:5]
+
+        # Get assignable users
+        assignable_users = PermissionManager.get_assignable_users(request.user, ticket)
+
+        # Get SLA information
+        sla_info = {}
+        if services['sla_engine']:
+            try:
+                sla_info = services['sla_engine'].get_sla_status(ticket)
+            except Exception as e:
+                logger.warning(f"SLA info retrieval failed: {str(e)}")
+
+        # Prepare forms
+        comment_form = CommentForm()
+        if can_edit:
+            update_form = TicketUpdateForm(instance=ticket, user=request.user)
+        else:
+            update_form = None
+
+        if can_assign:
+            assignment_form = TicketAssignmentForm(ticket=ticket, user=request.user)
+        else:
+            assignment_form = None
+
+        if can_escalate:
+            escalation_form = TicketEscalationForm(ticket=ticket)
+        else:
+            escalation_form = None
+
+        # Feedback form (for ticket creator when ticket is resolved)
+        feedback_form = None
+        if ticket.user == request.user and ticket.status in ['Resolved', 'Closed'] and not ticket.feedback_submitted:
+            feedback_form = TicketFeedbackForm()
+
+        # Reopen form (for ticket creator when ticket is closed)
+        reopen_form = None
+        if ticket.user == request.user and ticket.status == 'Closed':
+            reopen_form = TicketReopenForm()
+
+        # Calculate time metrics
+        time_metrics = {
+            'age': TicketHelper.format_duration(timezone.now() - ticket.created_at),
+            'age_category': TicketHelper.get_ticket_age_category(ticket),
+            'time_to_first_response': None,
+            'time_to_resolution': None
+        }
+
+        # First response time
+        first_response = comments.filter(user__ne=ticket.user).first()
+        if first_response:
+            time_metrics['time_to_first_response'] = TicketHelper.format_duration(
+                first_response.created_at - ticket.created_at
+            )
+
+        # Resolution time
+        if ticket.resolved_at:
+            time_metrics['time_to_resolution'] = TicketHelper.format_duration(
+                ticket.resolved_at - ticket.created_at
+            )
+
+        context = {
+            'ticket': ticket,
+            'comments': comments,
+            'activities': activities,
+            'attachments': attachments,
+            'related_tickets': related_tickets,
+            'assignable_users': assignable_users,
+            'sla_info': sla_info,
+            'time_metrics': time_metrics,
+            'user_roles': user_roles,
+            'can_edit': can_edit,
+            'can_assign': can_assign,
+            'can_escalate': can_escalate,
+            'can_delete': can_delete,
+            'can_view_internal': can_view_internal,
+            'comment_form': comment_form,
+            'update_form': update_form,
+            'assignment_form': assignment_form,
+            'escalation_form': escalation_form,
+            'feedback_form': feedback_form,
+            'reopen_form': reopen_form,
+            'page_title': f'Ticket {ticket.ticket_id}'
+        }
+
         return render(request, 'support/ticket_detail.html', context)
+
+    except Support.DoesNotExist:
+        messages.error(request, "Ticket not found")
+        return redirect('support:ticket_list')
+    except PermissionDenied as e:
+        messages.error(request, str(e))
+        return redirect('support:ticket_list')
     except Exception as e:
-        logger.error(f"Error rendering ticket detail: {str(e)}", exc_info=True)
-        messages.error(request, 'An error occurred while loading the ticket.')
+        logger.error(f"Ticket detail error: {str(e)}")
+        messages.error(request, "Error loading ticket details")
         return redirect('support:ticket_list')
 
 
 @login_required
-def delete_attachment(request, pk, attachment_id):
-    """Delete a ticket attachment"""
-    ticket = get_object_or_404(Support, pk=pk)
-    attachment = get_object_or_404(TicketAttachment, pk=attachment_id, ticket=ticket)
-
-    # Check permissions
-    user_roles = SupportTicketService.get_user_roles(request.user)
-    permissions = SupportTicketService.get_ticket_permissions(request.user, ticket, user_roles)
-
-    if not permissions.get('can_delete_attachments', False):
-        messages.error(request, 'You do not have permission to delete attachments.')
-        return redirect('support:ticket_detail', pk=pk)
-
+@require_POST
+def add_comment(request, ticket_id):
+    """
+    Add comment to a ticket
+    """
     try:
-        # Use service to delete attachment
-        FileAttachmentService.delete_attachment(attachment, request.user)
-        messages.success(request, 'Attachment deleted successfully.')
+        services = get_services()
+        ticket = get_object_or_404(Support, ticket_id=ticket_id, is_deleted=False)
 
-    except Exception as e:
-        logger.error(f"Error deleting attachment: {str(e)}", exc_info=True)
-        messages.error(request, f'Failed to delete attachment: {str(e)}')
+        # Check permissions
+        if not PermissionManager.can_view_ticket(request.user, ticket):
+            raise PermissionDenied("You don't have permission to comment on this ticket")
 
-    return redirect('support:ticket_detail', pk=pk)
-
-
-@login_required
-def download_attachment(request, pk, attachment_id):
-    """Download a ticket attachment"""
-    ticket = get_object_or_404(Support, pk=pk)
-    attachment = get_object_or_404(TicketAttachment, pk=attachment_id, ticket=ticket)
-
-    # Check permissions
-    user_roles = SupportTicketService.get_user_roles(request.user)
-    permissions = SupportTicketService.get_ticket_permissions(request.user, ticket, user_roles)
-
-    if not permissions.get('can_view', False):
-        raise PermissionDenied('You do not have permission to view this ticket.')
-
-    try:
-        # Check if file exists
-        if not attachment.file or not default_storage.exists(attachment.file.name):
-            raise Http404('File not found.')
-
-        # Get file content
-        file_path = attachment.file.path
-
-        # Determine content type
-        content_type, _ = mimetypes.guess_type(file_path)
-        if not content_type:
-            content_type = 'application/octet-stream'
-
-        # Create file response
-        response = FileResponse(
-            open(file_path, 'rb'),
-            content_type=content_type,
-            as_attachment=True,
-            filename=attachment.original_filename or attachment.file.name
-        )
-
-        return response
-
-    except Exception as e:
-        logger.error(f"Error downloading attachment: {str(e)}", exc_info=True)
-        messages.error(request, 'Failed to download attachment.')
-        return redirect('support:ticket_detail', pk=pk)
-
-
-@login_required
-def bulk_ticket_actions(request):
-    """Handle bulk actions on multiple tickets"""
-    if request.method == 'POST':
-        form = BulkActionForm(request.POST)
-        ticket_ids = request.POST.getlist('ticket_ids')
-
-        if not ticket_ids:
-            messages.error(request, 'No tickets selected.')
-            return redirect('support:ticket_list')
+        form = CommentForm(request.POST, request.FILES)
 
         if form.is_valid():
-            try:
-                action = form.cleaned_data['action']
+            with transaction.atomic():
+                comment = form.save(commit=False)
+                comment.ticket = ticket
+                comment.user = request.user
+                comment.save()
 
-                # Get tickets
-                tickets = Support.objects.filter(id__in=ticket_ids)
-
-                if action == 'assign':
-                    result = BulkTicketService.bulk_assign(
-                        tickets=tickets,
-                        assigned_user=form.cleaned_data.get('assigned_to_user'),
-                        assigned_group=form.cleaned_data.get('assigned_group'),
-                        user=request.user
-                    )
-                elif action == 'change_status':
-                    result = BulkTicketService.bulk_status_change(
-                        tickets=tickets,
-                        new_status=form.cleaned_data['new_status'],
-                        user=request.user
-                    )
-                elif action == 'change_priority':
-                    result = BulkTicketService.bulk_priority_change(
-                        tickets=tickets,
-                        new_priority=form.cleaned_data['new_priority'],
-                        user=request.user
-                    )
-                elif action == 'delete':
-                    result = BulkTicketService.bulk_delete(
-                        tickets=tickets,
-                        user=request.user
+                # Handle attachments
+                attachments = request.FILES.getlist('attachments')
+                for attachment in attachments:
+                    TicketAttachment.objects.create(
+                        ticket=ticket,
+                        file=attachment,
+                        uploaded_by=request.user,
+                        description=f"Attachment from comment by {request.user.get_full_name()}"
                     )
 
-                messages.success(request, f'Bulk action completed. {result["updated"]} tickets updated.')
+                # Update ticket status if needed
+                if ticket.status == 'Pending User Response' and ticket.user == request.user:
+                    ticket.status = 'Open'
+                    ticket.save()
 
-            except Exception as e:
-                logger.error(f"Error in bulk action: {str(e)}", exc_info=True)
-                messages.error(request, f'Bulk action failed: {str(e)}')
+                # Log activity
+                TicketActivity.objects.create(
+                    ticket=ticket,
+                    action=TicketActivity.Action.COMMENT_ADDED,
+                    user=request.user,
+                    details=f"Comment added{'(Internal)' if comment.is_internal else ''}"
+                )
+
+                # Send notifications
+                if services['notification_service']:
+                    try:
+                        recipients = []
+                        if ticket.assigned_to_user and ticket.assigned_to_user != request.user:
+                            recipients.append(ticket.assigned_to_user)
+                        if ticket.user != request.user:
+                            recipients.append(ticket.user)
+
+                        # Add CC users
+                        cc_users = ticket.cc_users.exclude(id=request.user.id)
+                        recipients.extend(cc_users)
+
+                        if recipients:
+                            services['notification_service'].send_ticket_notification(
+                                ticket, 'comment_added', recipients
+                            )
+                    except Exception as e:
+                        logger.warning(f"Notification sending failed: {str(e)}")
+
+                messages.success(request, "Comment added successfully")
+
         else:
-            for field, errors in form.errors.items():
-                for error in errors:
-                    messages.error(request, f'{field}: {error}')
+            messages.error(request, "Error adding comment. Please check your input.")
 
-    return redirect('support:ticket_list')
+        return redirect('support:ticket_detail', ticket_id=ticket_id)
+
+    except Exception as e:
+        logger.error(f"Add comment error: {str(e)}")
+        messages.error(request, "Error adding comment")
+        return redirect('support:ticket_detail', ticket_id=ticket_id)
 
 
 @login_required
-def ticket_export(request):
-    """Export tickets to CSV"""
+@require_POST
+def update_ticket(request, ticket_id):
+    """
+    Update ticket information
+    """
     try:
-        user_roles = SupportTicketService.get_user_roles(request.user)
-        queryset = SupportTicketService.get_tickets_queryset(request.user, user_roles)
+        services = get_services()
+        ticket = get_object_or_404(Support, ticket_id=ticket_id, is_deleted=False)
 
-        # Apply filters if provided
-        status = request.GET.get('status')
-        priority = request.GET.get('priority')
+        # Check permissions
+        if not PermissionManager.can_edit_ticket(request.user, ticket):
+            raise PermissionDenied("You don't have permission to edit this ticket")
 
-        if status:
-            queryset = queryset.filter(status=status)
-        if priority:
-            queryset = queryset.filter(priority=priority)
+        form = TicketUpdateForm(request.POST, instance=ticket, user=request.user)
 
-        # Create CSV response
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = f'attachment; filename="tickets_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv"'
+        if form.is_valid():
+            with transaction.atomic():
+                # Track changes
+                changes = []
+                old_values = {}
 
-        writer = csv.writer(response)
-        writer.writerow([
-            'Ticket ID', 'Subject', 'Status', 'Priority', 'Issue Type',
-            'Created By', 'Assigned To', 'Created At', 'Updated At',
-            'Resolved At', 'Department', 'Location'
-        ])
+                # Store old values for comparison
+                for field in ['subject', 'description', 'status', 'priority', 'assigned_to_user', 'assigned_group']:
+                    old_values[field] = getattr(ticket, field)
 
-        for ticket in queryset:
-            writer.writerow([
-                ticket.ticket_id,
-                ticket.subject,
-                ticket.status,
-                ticket.priority,
-                ticket.issue_type,
-                ticket.user.get_full_name() or ticket.user.username,
-                ticket.assigned_to_user.get_full_name() if ticket.assigned_to_user else 'None',
-                ticket.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-                ticket.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
-                ticket.resolved_at.strftime('%Y-%m-%d %H:%M:%S') if ticket.resolved_at else '',
-                ticket.department,
-                ticket.location,
-            ])
+                # Save the updated ticket
+                updated_ticket = form.save()
 
-        return response
+                # Check what changed and log activities
+                for field, old_value in old_values.items():
+                    new_value = getattr(updated_ticket, field)
+                    if old_value != new_value:
+                        changes.append(f"{field}: {old_value} → {new_value}")
+
+                        # Log specific activities
+                        if field == 'status':
+                            TicketActivity.objects.create(
+                                ticket=updated_ticket,
+                                action=TicketActivity.Action.STATUS_CHANGED,
+                                user=request.user,
+                                details=f"Status changed from {old_value} to {new_value}"
+                            )
+                        elif field == 'priority':
+                            TicketActivity.objects.create(
+                                ticket=updated_ticket,
+                                action=TicketActivity.Action.PRIORITY_CHANGED,
+                                user=request.user,
+                                details=f"Priority changed from {old_value} to {new_value}"
+                            )
+                        elif field == 'assigned_to_user':
+                            TicketActivity.objects.create(
+                                ticket=updated_ticket,
+                                action=TicketActivity.Action.ASSIGNED,
+                                user=request.user,
+                                details=f"Assigned to {new_value.get_full_name() if new_value else 'Unassigned'}"
+                            )
+
+                # Update resolved_at timestamp if status changed to resolved/closed
+                if updated_ticket.status in ['Resolved', 'Closed'] and old_values['status'] not in ['Resolved', 'Closed']:
+                    updated_ticket.resolved_at = timezone.now()
+                    updated_ticket.save()
+
+                # Send notifications for important changes
+                if services['notification_service'] and changes:
+                    try:
+                        recipients = []
+                        if updated_ticket.assigned_to_user and updated_ticket.assigned_to_user != request.user:
+                            recipients.append(updated_ticket.assigned_to_user)
+                        if updated_ticket.user != request.user:
+                            recipients.append(updated_ticket.user)
+
+                        if recipients:
+                            services['notification_service'].send_ticket_notification(
+                                updated_ticket, 'updated', recipients
+                            )
+                    except Exception as e:
+                        logger.warning(f"Notification sending failed: {str(e)}")
+
+                if changes:
+                    messages.success(request, f"Ticket updated successfully. Changes: {', '.join(changes[:3])}")
+                else:
+                    messages.info(request, "No changes made to the ticket")
+
+        else:
+            messages.error(request, "Error updating ticket. Please check your input.")
+
+        return redirect('support:ticket_detail', ticket_id=ticket_id)
 
     except Exception as e:
-        logger.error(f"Error exporting tickets: {str(e)}", exc_info=True)
-        messages.error(request, 'Failed to export tickets.')
+        logger.error(f"Update ticket error: {str(e)}")
+        messages.error(request, "Error updating ticket")
+        return redirect('support:ticket_detail', ticket_id=ticket_id)
+
+
+@login_required
+@require_POST
+def assign_ticket(request, ticket_id):
+    """
+    Assign ticket to a user
+    """
+    try:
+        services = get_services()
+        ticket = get_object_or_404(Support, ticket_id=ticket_id, is_deleted=False)
+
+        # Check permissions
+        if not PermissionManager.can_assign_ticket(request.user, ticket):
+            raise PermissionDenied("You don't have permission to assign this ticket")
+
+        form = TicketAssignmentForm(request.POST, ticket=ticket, user=request.user)
+
+        if form.is_valid():
+            with transaction.atomic():
+                old_assignee = ticket.assigned_to_user
+                new_assignee = form.cleaned_data['assigned_to_user']
+                assignment_reason = form.cleaned_data.get('assignment_reason', '')
+
+                ticket.assigned_to_user = new_assignee
+                ticket.assigned_group = form.cleaned_data.get('assigned_group', ticket.assigned_group)
+                ticket.save()
+
+                # Log activity
+                details = f"Assigned to {new_assignee.get_full_name() if new_assignee else 'Unassigned'}"
+                if assignment_reason:
+                    details += f" - Reason: {assignment_reason}"
+                if old_assignee:
+                    details += f" (Previously: {old_assignee.get_full_name()})"
+
+                TicketActivity.objects.create(
+                    ticket=ticket,
+                    action=TicketActivity.Action.ASSIGNED,
+                    user=request.user,
+                    details=details
+                )
+
+                # Send notifications
+                if services['notification_service']:
+                    try:
+                        recipients = []
+                        if new_assignee and new_assignee != request.user:
+                            recipients.append(new_assignee)
+                        if old_assignee and old_assignee != request.user and old_assignee != new_assignee:
+                            recipients.append(old_assignee)
+
+                        if recipients:
+                            services['notification_service'].send_ticket_notification(
+                                ticket, 'assigned', recipients
+                            )
+                    except Exception as e:
+                        logger.warning(f"Notification sending failed: {str(e)}")
+
+                messages.success(
+                    request,
+                    f"Ticket assigned to {new_assignee.get_full_name() if new_assignee else 'Unassigned'}"
+                )
+
+        else:
+            messages.error(request, "Error assigning ticket. Please check your input.")
+
+        return redirect('support:ticket_detail', ticket_id=ticket_id)
+
+    except Exception as e:
+        logger.error(f"Assign ticket error: {str(e)}")
+        messages.error(request, "Error assigning ticket")
+        return redirect('support:ticket_detail', ticket_id=ticket_id)
+
+
+@login_required
+@require_POST
+def escalate_ticket(request, ticket_id):
+    """
+    Escalate ticket to higher priority or management
+    """
+    try:
+        services = get_services()
+        ticket = get_object_or_404(Support, ticket_id=ticket_id, is_deleted=False)
+
+        # Check permissions
+        if not PermissionManager.can_escalate_ticket(request.user, ticket):
+            raise PermissionDenied("You don't have permission to escalate this ticket")
+
+        form = TicketEscalationForm(request.POST, ticket=ticket)
+
+        if form.is_valid():
+            with transaction.atomic():
+                escalation_reason = form.cleaned_data['escalation_reason']
+                escalation_level = form.cleaned_data.get('escalation_level', 'Management')
+
+                # Update ticket priority if not already at highest level
+                if ticket.priority != 'Critical':
+                    old_priority = ticket.priority
+                    ticket.priority = 'Critical'
+                    ticket.save()
+
+                    # Log priority escalation
+                    TicketActivity.objects.create(
+                        ticket=ticket,
+                        action=TicketActivity.Action.PRIORITY_CHANGED,
+                        user=request.user,
+                        details=f"Priority escalated from {old_priority} to Critical due to escalation"
+                    )
+
+                # Log escalation
+                TicketActivity.objects.create(
+                    ticket=ticket,
+                    action=TicketActivity.Action.ESCALATED,
+                    user=request.user,
+                    details=f"Escalated to {escalation_level} - Reason: {escalation_reason}"
+                )
+
+                # Reassign if needed using assignment engine
+                if services['assignment_engine']:
+                    try:
+                        new_assignee, reason = services['assignment_engine'].assign_ticket(ticket, escalation_level)
+                        if new_assignee and new_assignee != ticket.assigned_to_user:
+                            ticket.assigned_to_user = new_assignee
+                            ticket.save()
+
+                            TicketActivity.objects.create(
+                                ticket=ticket,
+                                action=TicketActivity.Action.ASSIGNED,
+                                user=request.user,
+                                details=f"Reassigned to {new_assignee.get_full_name()} due to escalation"
+                            )
+                    except Exception as e:
+                        logger.warning(f"Auto-reassignment during escalation failed: {str(e)}")
+
+                # Send notifications
+                if services['notification_service']:
+                    try:
+                        # Notify managers and admin
+                        managers = User.objects.filter(groups__name='Manager', is_active=True)
+                        admins = User.objects.filter(groups__name='Admin', is_active=True)
+                        recipients = list(managers) + list(admins)
+
+                        if ticket.assigned_to_user:
+                            recipients.append(ticket.assigned_to_user)
+
+                        services['notification_service'].send_ticket_notification(
+                            ticket, 'escalated', recipients
+                        )
+                    except Exception as e:
+                        logger.warning(f"Escalation notification failed: {str(e)}")
+
+                messages.success(request, "Ticket escalated successfully!")
+        else:
+            messages.error(request, "Error escalating ticket. Please check your input.")
+
+        return redirect('support:ticket_detail', ticket_id=ticket_id)
+
+    except Exception as e:
+        logger.error(f"Escalate ticket error: {str(e)}")
+        messages.error(request, "Error escalating ticket")
+        return redirect('support:ticket_detail', ticket_id=ticket_id)
+
+
+@login_required
+@require_POST
+def reopen_ticket(request, ticket_id):
+    """
+    Reopen a resolved/closed ticket
+    """
+    try:
+        services = get_services()
+        ticket = get_object_or_404(Support, ticket_id=ticket_id, is_deleted=False)
+
+        # Check permissions (only ticket creator can reopen)
+        if ticket.user != request.user:
+            raise PermissionDenied("Only the ticket creator can reopen this ticket")
+
+        if ticket.status not in ['Resolved', 'Closed']:
+            messages.error(request, "Only resolved or closed tickets can be reopened")
+            return redirect('support:ticket_detail', ticket_id=ticket_id)
+
+        form = TicketReopenForm(request.POST)
+
+        if form.is_valid():
+            with transaction.atomic():
+                reopen_reason = form.cleaned_data['reopen_reason']
+
+                # Update ticket status
+                ticket.status = 'Open'
+                ticket.resolved_at = None
+                ticket.save()
+
+                # Log reopening
+                TicketActivity.objects.create(
+                    ticket=ticket,
+                    action=TicketActivity.Action.REOPENED,
+                    user=request.user,
+                    details=f"Ticket reopened - Reason: {reopen_reason}"
+                )
+
+                # Send notifications
+                if services['notification_service']:
+                    try:
+                        recipients = []
+                        if ticket.assigned_to_user:
+                            recipients.append(ticket.assigned_to_user)
+
+                        # Notify managers
+                        managers = User.objects.filter(groups__name='Manager', is_active=True)
+                        recipients.extend(managers)
+
+                        services['notification_service'].send_ticket_notification(
+                            ticket, 'reopened', recipients
+                        )
+                    except Exception as e:
+                        logger.warning(f"Reopen notification failed: {str(e)}")
+
+                messages.success(request, "Ticket reopened successfully!")
+        else:
+            messages.error(request, "Error reopening ticket. Please check your input.")
+
+        return redirect('support:ticket_detail', ticket_id=ticket_id)
+
+    except Exception as e:
+        logger.error(f"Reopen ticket error: {str(e)}")
+        messages.error(request, "Error reopening ticket")
+        return redirect('support:ticket_detail', ticket_id=ticket_id)
+
+
+@login_required
+@require_POST
+def close_ticket(request, ticket_id):
+    """
+    Close a ticket
+    """
+    try:
+        services = get_services()
+        ticket = get_object_or_404(Support, ticket_id=ticket_id, is_deleted=False)
+
+        # Check permissions
+        if not PermissionManager.can_change_status(request.user, ticket, 'Closed'):
+            raise PermissionDenied("You don't have permission to close this ticket")
+
+        with transaction.atomic():
+            old_status = ticket.status
+            ticket.status = 'Closed'
+            ticket.resolved_at = timezone.now()
+            ticket.save()
+
+            # Log closure
+            TicketActivity.objects.create(
+                ticket=ticket,
+                action=TicketActivity.Action.STATUS_CHANGED,
+                user=request.user,
+                details=f"Ticket closed (was {old_status})"
+            )
+
+            # Send notifications
+            if services['notification_service']:
+                try:
+                    recipients = [ticket.user]
+                    if ticket.assigned_to_user and ticket.assigned_to_user != request.user:
+                        recipients.append(ticket.assigned_to_user)
+
+                    services['notification_service'].send_ticket_notification(
+                        ticket, 'closed', recipients
+                    )
+                except Exception as e:
+                    logger.warning(f"Close notification failed: {str(e)}")
+
+            messages.success(request, "Ticket closed successfully!")
+
+        return redirect('support:ticket_detail', ticket_id=ticket_id)
+
+    except Exception as e:
+        logger.error(f"Close ticket error: {str(e)}")
+        messages.error(request, "Error closing ticket")
+        return redirect('support:ticket_detail', ticket_id=ticket_id)
+
+
+@login_required
+@require_POST
+def submit_feedback(request, ticket_id):
+    """
+    Submit feedback for a resolved ticket
+    """
+    try:
+        ticket = get_object_or_404(Support, ticket_id=ticket_id, is_deleted=False)
+
+        # Check permissions (only ticket creator can submit feedback)
+        if ticket.user != request.user:
+            raise PermissionDenied("You can only submit feedback for your own tickets")
+
+        if ticket.status not in ['Resolved', 'Closed']:
+            messages.error(request, "You can only submit feedback for resolved or closed tickets")
+            return redirect('support:ticket_detail', ticket_id=ticket_id)
+
+        form = TicketFeedbackForm(request.POST)
+
+        if form.is_valid():
+            with transaction.atomic():
+                ticket.satisfaction_rating = form.cleaned_data['satisfaction_rating']
+                ticket.feedback = form.cleaned_data['feedback']
+                ticket.feedback_submitted = True
+                ticket.save()
+
+                # Log feedback submission
+                TicketActivity.objects.create(
+                    ticket=ticket,
+                    action=TicketActivity.Action.FEEDBACK_SUBMITTED,
+                    user=request.user,
+                    details=f"Feedback submitted - Rating: {ticket.satisfaction_rating}/5"
+                )
+
+                messages.success(request, "Thank you for your feedback!")
+        else:
+            messages.error(request, "Error submitting feedback. Please check your input.")
+
+        return redirect('support:ticket_detail', ticket_id=ticket_id)
+
+    except Exception as e:
+        logger.error(f"Submit feedback error: {str(e)}")
+        messages.error(request, "Error submitting feedback")
+        return redirect('support:ticket_detail', ticket_id=ticket_id)
+
+
+@login_required
+@require_POST
+def bulk_actions(request):
+    """
+    Handle bulk actions on tickets
+    """
+    try:
+        services = get_services()
+
+        # Check permissions
+        user_roles = PermissionManager.get_user_roles(request.user)
+        if not (user_roles['is_admin'] or user_roles['is_manager']):
+            raise PermissionDenied("You don't have permission to perform bulk actions")
+
+        form = BulkActionForm(request.POST, user=request.user)
+
+        if form.is_valid():
+            action = form.cleaned_data['action']
+            ticket_ids = form.cleaned_data['ticket_ids']
+
+            # Get tickets user can modify
+            tickets = PermissionManager.get_filtered_tickets_queryset(request.user).filter(
+                ticket_id__in=ticket_ids
+            )
+
+            updated_count = 0
+
+            with transaction.atomic():
+                for ticket in tickets:
+                    try:
+                        if action == 'assign':
+                            assignee = form.cleaned_data.get('assigned_to')
+                            if assignee and PermissionManager.can_assign_ticket(request.user, ticket):
+                                ticket.assigned_to_user = assignee
+                                ticket.save()
+                                updated_count += 1
+
+                                TicketActivity.objects.create(
+                                    ticket=ticket,
+                                    action=TicketActivity.Action.ASSIGNED,
+                                    user=request.user,
+                                    details=f"Bulk assigned to {assignee.get_full_name()}"
+                                )
+
+                        elif action == 'status_change':
+                            new_status = form.cleaned_data.get('status')
+                            if new_status and PermissionManager.can_change_status(request.user, ticket, new_status):
+                                old_status = ticket.status
+                                ticket.status = new_status
+                                ticket.save()
+                                updated_count += 1
+
+                                TicketActivity.objects.create(
+                                    ticket=ticket,
+                                    action=TicketActivity.Action.STATUS_CHANGED,
+                                    user=request.user,
+                                    details=f"Bulk status change from {old_status} to {new_status}"
+                                )
+
+                        elif action == 'priority_change':
+                            new_priority = form.cleaned_data.get('priority')
+                            if new_priority and PermissionManager.can_edit_ticket(request.user, ticket):
+                                old_priority = ticket.priority
+                                ticket.priority = new_priority
+                                ticket.save()
+                                updated_count += 1
+
+                                TicketActivity.objects.create(
+                                    ticket=ticket,
+                                    action=TicketActivity.Action.PRIORITY_CHANGED,
+                                    user=request.user,
+                                    details=f"Bulk priority change from {old_priority} to {new_priority}"
+                                )
+
+                    except Exception as e:
+                        logger.warning(f"Bulk action failed for ticket {ticket.ticket_id}: {str(e)}")
+                        continue
+
+            messages.success(request, f"Bulk action completed successfully! {updated_count} tickets updated.")
+        else:
+            messages.error(request, "Error processing bulk action. Please check your input.")
+
+        return redirect('support:ticket_list')
+
+    except Exception as e:
+        logger.error(f"Bulk actions error: {str(e)}")
+        messages.error(request, "Error performing bulk action")
         return redirect('support:ticket_list')
 
 
 @login_required
-def get_ticket_stats(request):
-    """Get ticket statistics for dashboard"""
+def analytics(request):
+    """
+    Display analytics and reports
+    """
     try:
-        user_roles = SupportTicketService.get_user_roles(request.user)
-        stats = SupportTicketService.get_ticket_statistics(request.user, user_roles)
-
-        return JsonResponse({
-            'success': True,
-            'stats': stats
-        })
-
-    except Exception as e:
-        logger.error(f"Error getting ticket stats: {str(e)}", exc_info=True)
-        return JsonResponse({
-            'success': False,
-            'error': 'Failed to get statistics'
-        }, status=500)
-
-
-
-
-@login_required
-def search_tickets(request):
-    """Search tickets API endpoint"""
-    try:
-        query = request.GET.get('q', '').strip()
-
-        if not query:
-            return JsonResponse({'results': []})
-
-        user_roles = SupportTicketService.get_user_roles(request.user)
-        queryset = SupportTicketService.get_tickets_queryset(request.user, user_roles)
-
-        # Search in multiple fields
-        from django.db.models import Q
-        search_results = queryset.filter(
-            Q(ticket_id__icontains=query) |
-            Q(subject__icontains=query) |
-            Q(description__icontains=query) |
-            Q(user__first_name__icontains=query) |
-            Q(user__last_name__icontains=query) |
-            Q(user__username__icontains=query)
-        ).select_related('user', 'assigned_to_user')[:20]
-
-        results = []
-        for ticket in search_results:
-            results.append({
-                'id': ticket.id,
-                'ticket_id': ticket.ticket_id,
-                'subject': ticket.subject,
-                'status': ticket.status,
-                'priority': ticket.priority,
-                'created_at': ticket.created_at.isoformat(),
-                'user': ticket.user.get_full_name() or ticket.user.username,
-                'assigned_to': ticket.assigned_to_user.get_full_name() if ticket.assigned_to_user else None,
-                'url': f'/support/tickets/{ticket.id}/'
-            })
-
-        return JsonResponse({
-            'success': True,
-            'results': results,
-            'query': query
-        })
-
-    except Exception as e:
-        logger.error(f"Error searching tickets: {str(e)}", exc_info=True)
-        return JsonResponse({
-            'success': False,
-            'error': 'Search failed'
-        }, status=500)
-
-
-@login_required
-def reopen_ticket(request, pk):
-    """Reopen a closed ticket"""
-    ticket = get_object_or_404(Support, pk=pk)
-
-    # Check permissions
-    user_roles = SupportTicketService.get_user_roles(request.user)
-    permissions = SupportTicketService.get_ticket_permissions(request.user, ticket, user_roles)
-
-    if not permissions.get('can_reopen', False):
-        messages.error(request, 'You do not have permission to reopen this ticket.')
-        return redirect('support:ticket_detail', pk=pk)
-
-    try:
-        # Use service to reopen ticket
-        result = SupportTicketService.reopen_ticket(ticket, request.user)
-
-        if result.get('success'):
-            messages.success(request, 'Ticket reopened successfully.')
-
-            # Log activity
-            TicketActivity.objects.create(
-                ticket=ticket,
-                action=TicketActivity.Action.REOPENED,
-                user=request.user,
-                details=f'Ticket reopened by {request.user.get_full_name() or request.user.username}'
-            )
-        else:
-            messages.error(request, result.get('error', 'Failed to reopen ticket.'))
-
-    except Exception as e:
-        logger.error(f"Error reopening ticket: {str(e)}", exc_info=True)
-        messages.error(request, f'Failed to reopen ticket: {str(e)}')
-
-    return redirect('support:ticket_detail', pk=pk)
-
-
-@login_required
-def escalate_ticket(request, pk):
-    """Escalate a ticket"""
-    ticket = get_object_or_404(Support, pk=pk)
-
-    # Check permissions
-    user_roles = SupportTicketService.get_user_roles(request.user)
-    permissions = SupportTicketService.get_ticket_permissions(request.user, ticket, user_roles)
-
-    if not permissions.get('can_escalate', False):
-        messages.error(request, 'You do not have permission to escalate this ticket.')
-        return redirect('support:ticket_detail', pk=pk)
-
-    try:
-        # Use service to escalate ticket
-        result = SupportTicketService.escalate_ticket(ticket, request.user)
-
-        if result.get('success'):
-            messages.success(request, 'Ticket escalated successfully.')
-
-            # Log activity
-            TicketActivity.objects.create(
-                ticket=ticket,
-                action=TicketActivity.Action.ESCALATED,
-                user=request.user,
-                details=f'Ticket escalated to level {ticket.escalation_level} by {request.user.get_full_name() or request.user.username}'
-            )
-        else:
-            messages.error(request, result.get('error', 'Failed to escalate ticket.'))
-
-    except Exception as e:
-        logger.error(f"Error escalating ticket: {str(e)}", exc_info=True)
-        messages.error(request, f'Failed to escalate ticket: {str(e)}')
-
-    return redirect('support:ticket_detail', pk=pk)
-
-
-@login_required
-def get_users_by_group(request, group_id):
-    """Get users by group ID - API endpoint"""
-    try:
-        # Check if user has permission to view group members
-        user_roles = SupportTicketService.get_user_roles(request.user)
-
-        if not ('Admin' in user_roles or 'HR' in user_roles):
-            return JsonResponse({
-                'success': False,
-                'error': 'Permission denied'
-            }, status=403)
-
-        # Get group
-        group = get_object_or_404(Group, pk=group_id)
-
-        # Get users in group
-        users = User.objects.filter(
-            groups=group,
-            is_active=True
-        ).order_by('first_name', 'last_name', 'username')
-
-        users_data = []
-        for user in users:
-            users_data.append({
-                'id': user.id,
-                'username': user.username,
-                'full_name': user.get_full_name() or user.username,
-                'email': user.email,
-                'is_staff': user.is_staff,
-            })
-
-        return JsonResponse({
-            'success': True,
-            'group': {
-                'id': group.id,
-                'name': group.name,
-            },
-            'users': users_data
-        })
-
-    except Exception as e:
-        logger.error(f"Error getting users by group: {str(e)}", exc_info=True)
-        return JsonResponse({
-            'success': False,
-            'error': 'Failed to get users'
-        }, status=500)
-
-
-@login_required
-def serve_ticket_attachment(request, file_path):
-    """Serve ticket attachment files"""
-    try:
-        # Security check - ensure file path is within attachment directory
-        import os
-        from django.conf import settings
-        from django.core.files.storage import default_storage
-
-        # Normalize the path
-        normalized_path = os.path.normpath(file_path)
-
-        # Check if file exists
-        if not default_storage.exists(normalized_path):
-            raise Http404('File not found')
-
-        # Get the actual file path
-        actual_path = default_storage.path(normalized_path)
-
-        # Security check - ensure file is within media directory
-        media_root = os.path.normpath(settings.MEDIA_ROOT)
-        if not actual_path.startswith(media_root):
-            raise PermissionDenied('Access denied')
-
-        # Find the attachment record to check permissions
-        from trueAlign.models import TicketAttachment, CommentAttachment
-
-        attachment = None
-
-        # Try to find ticket attachment
-        try:
-            attachment = TicketAttachment.objects.get(file=normalized_path)
-            ticket = attachment.ticket
-        except TicketAttachment.DoesNotExist:
-            # Try to find comment attachment
-            try:
-                comment_attachment = CommentAttachment.objects.get(file=normalized_path)
-                ticket = comment_attachment.ticket_activity.ticket
-            except CommentAttachment.DoesNotExist:
-                raise Http404('Attachment not found')
-
         # Check permissions
-        user_roles = SupportTicketService.get_user_roles(request.user)
-        permissions = SupportTicketService.get_ticket_permissions(request.user, ticket, user_roles)
+        user_roles = PermissionManager.get_user_roles(request.user)
+        if not (user_roles['is_admin'] or user_roles['is_manager']):
+            raise PermissionDenied("You don't have permission to view analytics")
 
-        if not permissions.get('can_view', False):
-            raise PermissionDenied('You do not have permission to view this file.')
+        # Get filtered tickets
+        tickets = PermissionManager.get_filtered_tickets_queryset(request.user)
 
-        # Serve the file
-        import mimetypes
-        content_type, _ = mimetypes.guess_type(actual_path)
-        if not content_type:
-            content_type = 'application/octet-stream'
-
-        from django.http import FileResponse
-
-        return FileResponse(
-            open(actual_path, 'rb'),
-            content_type=content_type,
-            as_attachment=True,
-            filename=os.path.basename(actual_path)
+        # Generate analytics data
+        analytics_data = ReportGenerator().generate_ticket_summary(
+            tickets=tickets,
+            user=request.user
         )
 
+        context = {
+            'analytics': analytics_data,
+            'user_roles': user_roles,
+            'page_title': 'Support Analytics'
+        }
+
+        return render(request, 'support/analytics.html', context)
+
+    except PermissionDenied:
+        messages.error(request, "You don't have permission to view analytics")
+        return redirect('support:dashboard')
     except Exception as e:
-        logger.error(f"Error serving attachment: {str(e)}", exc_info=True)
-        from django.http import Http404
-        raise Http404('File not found')
+        logger.error(f"Analytics error: {str(e)}")
+        messages.error(request, "Error loading analytics")
+        return redirect('support:dashboard')
 
-
-# Additional utility functions for AJAX calls
 
 @login_required
-def get_ticket_comments_api(request, pk):
-    """Get ticket comments via API"""
+def api_ticket_stats(request):
+    """
+    API endpoint for ticket statistics
+    """
     try:
-        ticket = get_object_or_404(Support, pk=pk)
+        tickets = PermissionManager.get_filtered_tickets_queryset(request.user)
+
+        stats = {
+            'total': tickets.count(),
+            'open': tickets.filter(status__in=['New', 'Open', 'In Progress']).count(),
+            'resolved': tickets.filter(status='Resolved').count(),
+            'closed': tickets.filter(status='Closed').count(),
+            'overdue': tickets.filter(
+                sla_target_date__lt=timezone.now(),
+                status__in=['New', 'Open', 'In Progress']
+            ).count(),
+            'high_priority': tickets.filter(priority__in=['High', 'Critical']).count(),
+        }
+
+        return JsonResponse(stats)
+
+    except Exception as e:
+        logger.error(f"API ticket stats error: {str(e)}")
+        return JsonResponse({'error': 'Failed to get ticket statistics'}, status=500)
+
+
+@login_required
+def api_assignable_users(request, ticket_id):
+    """
+    API endpoint for getting assignable users for a ticket
+    """
+    try:
+        ticket = get_object_or_404(Support, ticket_id=ticket_id, is_deleted=False)
 
         # Check permissions
-        user_roles = SupportTicketService.get_user_roles(request.user)
-        permissions = SupportTicketService.get_ticket_permissions(request.user, ticket, user_roles)
+        if not PermissionManager.can_assign_ticket(request.user, ticket):
+            return JsonResponse({'error': 'Permission denied'}, status=403)
 
-        if not permissions.get('can_view', False):
-            return JsonResponse({
-                'success': False,
-                'error': 'Permission denied'
-            }, status=403)
+        assignable_users = PermissionManager.get_assignable_users(request.user, ticket)
 
-        # Get comments
-        from trueAlign.models import TicketComment
-        comments = TicketComment.objects.filter(ticket=ticket).select_related('user').order_by('created_at')
-
-        comments_data = []
-        for comment in comments:
-            comments_data.append({
-                'id': comment.id,
-                'content': comment.content,
-                'is_internal': comment.is_internal,
-                'created_at': comment.created_at.isoformat(),
-                'user': {
-                    'id': comment.user.id,
-                    'username': comment.user.username,
-                    'full_name': comment.user.get_full_name() or comment.user.username,
-                }
+        users_data = []
+        for user in assignable_users:
+            workload = TicketHelper.get_workload_indicator(user)
+            users_data.append({
+                'id': user.id,
+                'name': user.get_full_name() or user.username,
+                'email': user.email,
+                'workload': workload
             })
 
-        return JsonResponse({
-            'success': True,
-            'comments': comments_data
-        })
+        return JsonResponse({'users': users_data})
 
     except Exception as e:
-        logger.error(f"Error getting comments: {str(e)}", exc_info=True)
-        return JsonResponse({
-            'success': False,
-            'error': 'Failed to get comments'
-        }, status=500)
+        logger.error(f"API assignable users error: {str(e)}")
+        return JsonResponse({'error': 'Failed to get assignable users'}, status=500)
 
 
 @login_required
-def get_ticket_activities_api(request, pk):
-    """Get ticket activities via API"""
+def api_ticket_activities(request, ticket_id):
+    """
+    API endpoint for getting ticket activities
+    """
     try:
-        ticket = get_object_or_404(Support, pk=pk)
+        ticket = get_object_or_404(Support, ticket_id=ticket_id, is_deleted=False)
 
         # Check permissions
-        user_roles = SupportTicketService.get_user_roles(request.user)
-        permissions = SupportTicketService.get_ticket_permissions(request.user, ticket, user_roles)
+        if not PermissionManager.can_view_ticket(request.user, ticket):
+            return JsonResponse({'error': 'Permission denied'}, status=403)
 
-        if not permissions.get('can_view', False):
-            return JsonResponse({
-                'success': False,
-                'error': 'Permission denied'
-            }, status=403)
-
-        # Get activities
-        activities = TicketActivity.objects.filter(ticket=ticket).select_related('user').order_by('-timestamp')
+        activities = TicketActivity.objects.filter(ticket=ticket).select_related('user').order_by('-timestamp')[:20]
 
         activities_data = []
         for activity in activities:
@@ -1080,21 +1261,410 @@ def get_ticket_activities_api(request, pk):
                 'action': activity.action,
                 'details': activity.details,
                 'timestamp': activity.timestamp.isoformat(),
-                'user': {
-                    'id': activity.user.id if activity.user else None,
-                    'username': activity.user.username if activity.user else 'System',
-                    'full_name': activity.user.get_full_name() if activity.user else 'System',
-                }
+                'user': activity.user.get_full_name() if activity.user else 'System'
             })
 
-        return JsonResponse({
-            'success': True,
-            'activities': activities_data
-        })
+        return JsonResponse({'activities': activities_data})
 
     except Exception as e:
-        logger.error(f"Error getting activities: {str(e)}", exc_info=True)
-        return JsonResponse({
-            'success': False,
-            'error': 'Failed to get activities'
-        }, status=500)
+        logger.error(f"API ticket activities error: {str(e)}")
+        return JsonResponse({'error': 'Failed to get ticket activities'}, status=500)
+
+
+@login_required
+def download_attachment(request, attachment_id):
+    """
+    Download a ticket attachment
+    """
+    try:
+        attachment = get_object_or_404(TicketAttachment, id=attachment_id)
+
+        # Check permissions
+        if not PermissionManager.can_view_ticket(request.user, attachment.ticket):
+            raise PermissionDenied("You don't have permission to download this attachment")
+
+        # Create response with file content
+        response = FileResponse(
+            attachment.file.open(),
+            content_type=attachment.file_type or 'application/octet-stream'
+        )
+        response['Content-Disposition'] = f'attachment; filename="{attachment.original_filename or attachment.file.name}"'
+
+        return response
+
+    except Exception as e:
+        logger.error(f"Download attachment error: {str(e)}")
+        messages.error(request, "Error downloading attachment")
+        return redirect('support:ticket_list')
+
+
+@login_required
+@require_POST
+def delete_attachment(request, attachment_id):
+    """
+    Delete a ticket attachment
+    """
+    try:
+        attachment = get_object_or_404(TicketAttachment, id=attachment_id)
+
+        # Check permissions
+        if not PermissionManager.can_edit_ticket(request.user, attachment.ticket):
+            raise PermissionDenied("You don't have permission to delete this attachment")
+
+        # Soft delete
+        attachment.is_deleted = True
+        attachment.save()
+
+        # Log activity
+        TicketActivity.objects.create(
+            ticket=attachment.ticket,
+            action=TicketActivity.Action.ATTACHMENT_DELETED,
+            user=request.user,
+            details=f"Attachment deleted: {attachment.original_filename or attachment.file.name}"
+        )
+
+        messages.success(request, "Attachment deleted successfully")
+        return JsonResponse({'success': True})
+
+    except Exception as e:
+        logger.error(f"Delete attachment error: {str(e)}")
+        return JsonResponse({'error': 'Failed to delete attachment'}, status=500)
+
+
+@login_required
+def search_tickets(request):
+    """
+    Advanced ticket search
+    """
+    try:
+        form = TicketSearchForm(request.GET or None)
+        tickets = PermissionManager.get_filtered_tickets_queryset(request.user)
+
+        if form.is_valid():
+            search_query = form.cleaned_data.get('search_query')
+            if search_query:
+                tickets = tickets.filter(
+                    Q(ticket_id__icontains=search_query) |
+                    Q(subject__icontains=search_query) |
+                    Q(description__icontains=search_query)
+                )
+
+            # Apply other filters
+            if form.cleaned_data.get('status'):
+                tickets = tickets.filter(status__in=form.cleaned_data['status'])
+            if form.cleaned_data.get('priority'):
+                tickets = tickets.filter(priority__in=form.cleaned_data['priority'])
+            if form.cleaned_data.get('assigned_to'):
+                tickets = tickets.filter(assigned_to_user=form.cleaned_data['assigned_to'])
+            if form.cleaned_data.get('date_from'):
+                tickets = tickets.filter(created_at__gte=form.cleaned_data['date_from'])
+            if form.cleaned_data.get('date_to'):
+                tickets = tickets.filter(created_at__lte=form.cleaned_data['date_to'])
+
+        # Pagination
+        paginator = Paginator(tickets.select_related('user', 'assigned_to_user'), 20)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+
+        context = {
+            'form': form,
+            'tickets': page_obj,
+            'page_title': 'Search Tickets'
+        }
+
+        return render(request, 'support/search_tickets.html', context)
+
+    except Exception as e:
+        logger.error(f"Search tickets error: {str(e)}")
+        messages.error(request, "Error searching tickets")
+        return render(request, 'support/search_tickets.html', {'form': TicketSearchForm()})
+
+
+@login_required
+def export_tickets(request):
+    """
+    Export tickets to CSV
+    """
+    try:
+        # Check permissions
+        user_roles = PermissionManager.get_user_roles(request.user)
+        if not (user_roles['is_admin'] or user_roles['is_manager']):
+            raise PermissionDenied("You don't have permission to export tickets")
+
+        # Get tickets to export
+        tickets = PermissionManager.get_filtered_tickets_queryset(request.user)
+
+        # Apply filters if provided
+        if request.GET.get('status'):
+            tickets = tickets.filter(status=request.GET.get('status'))
+        if request.GET.get('priority'):
+            tickets = tickets.filter(priority=request.GET.get('priority'))
+        if request.GET.get('date_from'):
+            tickets = tickets.filter(created_at__gte=request.GET.get('date_from'))
+        if request.GET.get('date_to'):
+            tickets = tickets.filter(created_at__lte=request.GET.get('date_to'))
+
+        # Create CSV response
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="tickets.csv"'
+
+        writer = csv.writer(response)
+        writer.writerow([
+            'Ticket ID', 'Subject', 'Status', 'Priority', 'Created',
+            'Assigned To', 'Created By', 'Department', 'Issue Type'
+        ])
+
+        for ticket in tickets.select_related('user', 'assigned_to_user'):
+            writer.writerow([
+                ticket.ticket_id,
+                ticket.subject,
+                ticket.status,
+                ticket.priority,
+                ticket.created_at.strftime('%Y-%m-%d %H:%M'),
+                ticket.assigned_to_user.get_full_name() if ticket.assigned_to_user else 'Unassigned',
+                ticket.user.get_full_name(),
+                ticket.department or '',
+                ticket.issue_type or ''
+            ])
+
+        return response
+
+    except Exception as e:
+        logger.error(f"Export tickets error: {str(e)}")
+        messages.error(request, "Error exporting tickets")
+        return redirect('support:ticket_list')
+
+
+@login_required
+def sla_monitoring(request):
+    """
+    SLA monitoring dashboard
+    """
+    try:
+        services = get_services()
+
+        # Check permissions
+        user_roles = PermissionManager.get_user_roles(request.user)
+        if not (user_roles['is_admin'] or user_roles['is_manager']):
+            raise PermissionDenied("You don't have permission to view SLA monitoring")
+
+        tickets = PermissionManager.get_filtered_tickets_queryset(request.user)
+
+        # Calculate SLA metrics
+        total_tickets = tickets.count()
+        overdue_tickets = tickets.filter(
+            sla_target_date__lt=timezone.now(),
+            status__in=['New', 'Open', 'In Progress']
+        )
+
+        approaching_sla = tickets.filter(
+            sla_target_date__lte=timezone.now() + timedelta(hours=4),
+            sla_target_date__gt=timezone.now(),
+            status__in=['New', 'Open', 'In Progress']
+        )
+
+        resolved_tickets = tickets.filter(
+            status__in=['Resolved', 'Closed'],
+            resolved_at__isnull=False
+        )
+
+        sla_compliant = resolved_tickets.filter(
+            resolved_at__lte=F('sla_target_date')
+        ).count()
+
+        sla_compliance_rate = (sla_compliant / resolved_tickets.count() * 100) if resolved_tickets.count() > 0 else 0
+
+        sla_data = {
+            'total_tickets': total_tickets,
+            'overdue_count': overdue_tickets.count(),
+            'approaching_count': approaching_sla.count(),
+            'compliance_rate': round(sla_compliance_rate, 2),
+            'overdue_tickets': overdue_tickets.select_related('user', 'assigned_to_user')[:10],
+            'approaching_tickets': approaching_sla.select_related('user', 'assigned_to_user')[:10],
+        }
+
+        context = {
+            'sla_data': sla_data,
+            'user_roles': user_roles,
+            'page_title': 'SLA Monitoring'
+        }
+
+        return render(request, 'support/sla_monitoring.html', context)
+
+    except Exception as e:
+        logger.error(f"SLA monitoring error: {str(e)}")
+        messages.error(request, "Error loading SLA monitoring")
+        return redirect('support:dashboard')
+
+
+@login_required
+@require_POST
+def run_sla_check(request):
+    """
+    Manual SLA check trigger
+    """
+    try:
+        services = get_services()
+
+        # Check permissions
+        user_roles = PermissionManager.get_user_roles(request.user)
+        if not (user_roles['is_admin'] or user_roles['is_manager']):
+            raise PermissionDenied("You don't have permission to run SLA checks")
+
+        # Run SLA check
+        if services['sla_engine']:
+            result = services['sla_engine'].run_sla_monitoring()
+            if result.get('success'):
+                messages.success(request, f"SLA check completed. {result.get('processed_count', 0)} tickets processed.")
+            else:
+                messages.error(request, f"Error running SLA check: {result.get('error', 'Unknown error')}")
+        else:
+            messages.warning(request, "SLA engine not available")
+
+        return redirect('support:sla_monitoring')
+
+    except Exception as e:
+        logger.error(f"Run SLA check error: {str(e)}")
+        messages.error(request, "Error running SLA check")
+        return redirect('support:sla_monitoring')
+
+
+@login_required
+def agent_dashboard(request):
+    """
+    Agent-specific dashboard
+    """
+    try:
+        # Get agent's assigned tickets
+        assigned_tickets = PermissionManager.get_filtered_tickets_queryset(request.user).filter(
+            assigned_to_user=request.user
+        )
+
+        # Get workload metrics
+        workload_stats = {
+            'total_assigned': assigned_tickets.count(),
+            'open_tickets': assigned_tickets.filter(status__in=['New', 'Open', 'In Progress']).count(),
+            'overdue_tickets': assigned_tickets.filter(
+                sla_target_date__lt=timezone.now(),
+                status__in=['New', 'Open', 'In Progress']
+            ).count(),
+            'resolved_today': assigned_tickets.filter(
+                status__in=['Resolved', 'Closed'],
+                resolved_at__date=timezone.now().date()
+            ).count(),
+        }
+
+        # Get performance metrics
+        performance_data = ReportGenerator().generate_agent_performance_report(
+            user=request.user,
+            date_from=timezone.now().date() - timedelta(days=30),
+            date_to=timezone.now().date()
+        )
+
+        context = {
+            'assigned_tickets': assigned_tickets.select_related('user')[:10],
+            'workload_stats': workload_stats,
+            'performance_data': performance_data,
+            'page_title': 'Agent Dashboard'
+        }
+
+        return render(request, 'support/agent_dashboard.html', context)
+
+    except Exception as e:
+        logger.error(f"Agent dashboard error: {str(e)}")
+        messages.error(request, "Error loading agent dashboard")
+        return redirect('support:dashboard')
+
+
+@login_required
+def user_guide(request):
+    """
+    User guide and help documentation
+    """
+    try:
+        user_roles = PermissionManager.get_user_roles(request.user)
+
+        context = {
+            'user_roles': user_roles,
+            'page_title': 'User Guide'
+        }
+
+        return render(request, 'support/user_guide.html', context)
+
+    except Exception as e:
+        logger.error(f"User guide error: {str(e)}")
+        messages.error(request, "Error loading user guide")
+        return redirect('support:dashboard')
+
+
+@login_required
+def my_tickets(request):
+    """
+    User's personal tickets view
+    """
+    try:
+        # Get user's own tickets
+        user_tickets = PermissionManager.get_filtered_tickets_queryset(request.user).filter(
+            user=request.user
+        )
+
+        # Get statistics
+        stats = {
+            'total_tickets': user_tickets.count(),
+            'open_tickets': user_tickets.filter(status__in=['New', 'Open', 'In Progress']).count(),
+            'resolved_tickets': user_tickets.filter(status='Resolved').count(),
+            'closed_tickets': user_tickets.filter(status='Closed').count(),
+        }
+
+        # Calculate average response time
+        resolved_tickets = user_tickets.filter(
+            status__in=['Resolved', 'Closed'],
+            resolved_at__isnull=False
+        )
+
+        if resolved_tickets.exists():
+            avg_resolution_time = resolved_tickets.aggregate(
+                avg_time=Avg(F('resolved_at') - F('created_at'))
+            )['avg_time']
+
+            if avg_resolution_time:
+                hours = avg_resolution_time.total_seconds() / 3600
+                stats['avg_response_time'] = f"{hours:.1f}h"
+            else:
+                stats['avg_response_time'] = "N/A"
+        else:
+            stats['avg_response_time'] = "N/A"
+
+        # Pagination
+        paginator = Paginator(user_tickets.select_related('assigned_to_user'), 20)
+        page_number = request.GET.get('page')
+        tickets = paginator.get_page(page_number)
+
+        context = {
+            'tickets': tickets,
+            'stats': stats,
+            'page_title': 'My Tickets'
+        }
+
+        return render(request, 'support/my_tickets.html', context)
+
+    except Exception as e:
+        logger.error(f"My tickets error: {str(e)}")
+        messages.error(request, "Error loading your tickets")
+        return redirect('support:dashboard')
+
+
+# Error handlers
+def handler404(request, exception):
+    """Custom 404 handler"""
+    return render(request, 'support/404.html', status=404)
+
+
+def handler500(request):
+    """Custom 500 handler"""
+    return render(request, 'support/500.html', status=500)
+
+
+def handler403(request, exception):
+    """Custom 403 handler"""
+    return render(request, 'support/403.html', status=403)

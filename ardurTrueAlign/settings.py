@@ -72,6 +72,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'trueAlign',
+    'trueAlign.core',
     'trueAlign.shift',
     'trueAlign.support',
     'trueAlign.conf_booking',
@@ -87,11 +88,10 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'trueAlign.core.middleware.GlobalAuthenticationMiddleware',  # Add this line
-    'trueAlign.core.middleware.SessionTrackingMiddleware',        # Move this after auth
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'trueAlign.core.middleware.SessionAnalyticsMiddleware',
+    'trueAlign.core.middleware.OptimizedSessionTrackingMiddleware',
+    'trueAlign.core.middleware.OptimizedGlobalAuthenticationMiddleware',
 ]
 
 
@@ -161,7 +161,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# Enhanced Logging Configuration for TrueAlign Shift Management
+# Enhanced Logging Configuration for TrueAlign Support System
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -210,7 +210,7 @@ LOGGING = {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(BASE_DIR, 'logs', 'shift_app.log'),
-            'maxBytes': 1024*1024*15,  # 15MB
+            'maxBytes': 1024*1024*15,
             'backupCount': 10,
             'formatter': 'detailed',
         },
@@ -218,7 +218,7 @@ LOGGING = {
             'level': 'ERROR',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(BASE_DIR, 'logs', 'shift_errors.log'),
-            'maxBytes': 1024*1024*15,  # 15MB
+            'maxBytes': 1024*1024*15,
             'backupCount': 10,
             'formatter': 'detailed',
         },
@@ -226,7 +226,7 @@ LOGGING = {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(BASE_DIR, 'logs', 'shift_actions.log'),
-            'maxBytes': 1024*1024*15,  # 15MB
+            'maxBytes': 1024*1024*15,
             'backupCount': 10,
             'formatter': 'json',
         },
@@ -234,7 +234,7 @@ LOGGING = {
             'level': 'WARNING',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(BASE_DIR, 'logs', 'shift_security.log'),
-            'maxBytes': 1024*1024*15,  # 15MB
+            'maxBytes': 1024*1024*15,
             'backupCount': 10,
             'formatter': 'detailed',
         },
@@ -242,7 +242,7 @@ LOGGING = {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(BASE_DIR, 'logs', 'shift_api.log'),
-            'maxBytes': 1024*1024*15,  # 15MB
+            'maxBytes': 1024*1024*15,
             'backupCount': 10,
             'formatter': 'json',
         },
@@ -253,6 +253,30 @@ LOGGING = {
             'maxBytes': 1024 * 1024 * 15,
             'backupCount': 5,
             'formatter': 'detailed',
+        },
+        'support_file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'support.log'),
+            'maxBytes': 1024 * 1024 * 15,
+            'backupCount': 5,
+            'formatter': 'detailed',
+        },
+        'support_error_file': {
+            'level': 'ERROR',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'support_errors.log'),
+            'maxBytes': 1024 * 1024 * 15,
+            'backupCount': 5,
+            'formatter': 'detailed',
+        },
+        'support_api_file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'support_api.log'),
+            'maxBytes': 1024 * 1024 * 15,
+            'backupCount': 5,
+            'formatter': 'json',
         },
         'mail_admins': {
             'level': 'ERROR',
@@ -268,9 +292,14 @@ LOGGING = {
             'level': 'INFO',
         },
         'django.request': {
-            'handlers': ['error_file', 'mail_admins'],
+            'handlers': ['error_file', 'support_error_file', 'mail_admins'],
             'level': 'ERROR',
             'propagate': True,
+        },
+        'django.server': {
+            'handlers': ['console', 'support_error_file'],
+            'level': 'INFO',
+            'propagate': False,
         },
         'trueAlign.shift': {
             'handlers': ['console', 'file', 'action_file'],
@@ -302,8 +331,39 @@ LOGGING = {
             'level': 'INFO',
             'propagate': True,
         },
+        'trueAlign.support': {
+            'handlers': ['support_file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'trueAlign.support.views': {
+            'handlers': ['support_file', 'support_api_file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'trueAlign.support.services': {
+            'handlers': ['support_file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'trueAlign.support.models': {
+            'handlers': ['support_file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'trueAlign.support.signals': {
+            'handlers': ['support_file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'trueAlign.support.errors': {
+            'handlers': ['support_error_file', 'console'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
     },
 }
+
 
 
 

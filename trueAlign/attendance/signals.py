@@ -2,9 +2,12 @@ import logging
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.utils import timezone
+from django.db import transaction
+from django.db.utils import OperationalError
 from trueAlign.models import UserSession, Attendance, ShiftAssignment
 from .services import AttendanceIntegrationService
 import pytz
+import time
 
 logger = logging.getLogger('trueAlign.attendance')
 
@@ -19,37 +22,37 @@ def handle_session_save(sender, instance, created, **kwargs):
     Automatically create/update attendance when user session is created or updated
     """
     try:
+        # Skip if we're in a nested transaction to avoid savepoint issues
+        if transaction.get_connection().in_atomic_block:
+            logger.debug(f"Skipping session processing for {instance.user.username} - in atomic block")
+            return
+
         IST = pytz.timezone('Asia/Kolkata')
 
         if created:
             # New session created - this is a login event
             logger.info(f"Processing new session for {instance.user.username}")
-            attendance_service.process_session_login(instance.user, instance)
+            try:
+                attendance_service.process_session_login(instance.user, instance)
+            except Exception as e:
+                logger.error(f"Error in session login processing: {e}")
 
         else:
             # Session updated - check if logout occurred
-            # FIX: Only process logout if logout_time was actually set (not default)
             if instance.logout_time and instance.ended_at and not instance.is_active:
                 logger.info(f"Processing session logout for {instance.user.username}")
-                attendance_service.process_session_logout(instance.user, instance)
+                try:
+                    attendance_service.process_session_logout(instance.user, instance)
+                except Exception as e:
+                    logger.error(f"Error in session logout processing: {e}")
             else:
                 # Just update session data without processing logout
                 login_date = instance.login_time.astimezone(IST).date()
                 try:
-                    attendance = Attendance.objects.get(user=instance.user, date=login_date)
                     Attendance.update_session_data(instance.user, instance, login_date)
-
-                    # FORCE RECALCULATE STATUS AFTER SESSION UPDATE
-                    attendance.refresh_from_db()
-                    attendance._calculate_time_fields()
-                    attendance._update_status_logic()
-                    attendance.save(update_fields=['status', 'total_hours', 'late_minutes'])
-
                     logger.debug(f"Updated attendance session data for {instance.user.username}")
-                except Attendance.DoesNotExist:
-                    # Create attendance if it doesn't exist
-                    attendance_service.process_session_login(instance.user, instance)
-                    logger.info(f"Created missing attendance for {instance.user.username}")
+                except Exception as e:
+                    logger.error(f"Error updating session data: {e}")
 
     except Exception as e:
         logger.error(f"Error processing session signal for {instance.user.username}: {e}", exc_info=True)
@@ -61,6 +64,10 @@ def handle_session_pre_save(sender, instance, **kwargs):
     Process session before saving to detect logout events
     """
     try:
+        # Skip if we're in a nested transaction to avoid savepoint issues
+        if transaction.get_connection().in_atomic_block:
+            return
+
         # Check if this is an existing session being updated
         if instance.pk:
             try:
@@ -86,6 +93,11 @@ def handle_shift_assignment_save(sender, instance, created, **kwargs):
     Update existing attendance records when shift assignments change
     """
     try:
+        # Skip if we're in a nested transaction to avoid savepoint issues
+        if transaction.get_connection().in_atomic_block:
+            logger.debug(f"Skipping shift assignment processing for {instance.user.username} - in atomic block")
+            return
+
         if created:
             logger.info(f"New shift assignment created for {instance.user.username}")
 
@@ -114,10 +126,13 @@ def handle_shift_assignment_save(sender, instance, created, **kwargs):
 
             # Recalculate each attendance record
             for attendance in affected_attendances:
-                if not attendance.shift or attendance.shift != instance.shift:
-                    attendance.shift = instance.shift
-                    attendance.save()  # This will trigger recalculation
-                    logger.debug(f"Recalculated attendance for {instance.user.username} on {attendance.date}")
+                try:
+                    if not attendance.shift or attendance.shift != instance.shift:
+                        attendance.shift = instance.shift
+                        attendance.save()  # This will trigger recalculation
+                        logger.debug(f"Recalculated attendance for {instance.user.username} on {attendance.date}")
+                except Exception as e:
+                    logger.error(f"Error updating attendance for {instance.user.username}: {e}")
 
     except Exception as e:
         logger.error(f"Error processing shift assignment signal: {e}", exc_info=True)

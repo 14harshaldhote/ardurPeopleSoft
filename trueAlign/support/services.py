@@ -1,716 +1,699 @@
 """
-Support Services Module
-Handles all business logic for the support ticket system
+Comprehensive Services Layer for Smart Ticketing System
+Provides high-level business logic and orchestration for ticket operations
 """
 
-import os
-import mimetypes
-from datetime import timedelta
-from django.db import transaction
-from django.db.models import Q, Count, Avg, Case, When, IntegerField
+import logging
+import json
+from typing import Dict, List, Optional, Tuple, Any
+from datetime import datetime, timedelta
+from django.contrib.auth.models import User, Group
+from django.db import transaction, models
+from django.db.models import Q, Count, Avg, F, Sum
 from django.utils import timezone
-from django.contrib.auth.models import User
+from django.core.cache import cache
+from django.core.mail import send_mail
+from django.conf import settings
 from django.core.exceptions import ValidationError, PermissionDenied
-from django.core.files.storage import default_storage
-from trueAlign.models import (
-    Support, StatusLog, TicketComment, TicketAttachment,
-    TicketActivity, CommentAttachment
-)
+from trueAlign.models import Support, UserDetails, TicketActivity, TicketComment, TicketAttachment
+from .logging_system import ticket_logger, AuditLog
+from .assignment_engine import assignment_engine
+from .prioritization_engine import prioritization_engine
+from .sla_engine import sla_engine
 
 
-class SupportTicketService:
-    """Service class for handling support ticket operations"""
+class TicketService:
+    """
+    Main service class for ticket operations
+    """
 
-    @staticmethod
-    def get_user_roles(user):
-        """Get user roles and permissions"""
-        return {
-            'is_admin': user.groups.filter(name='Admin').exists() or user.is_superuser,
-            'is_hr': user.groups.filter(name='HR').exists(),
-            'is_manager': user.groups.filter(name='Manager').exists(),
-            'is_employee': user.groups.filter(name='Employee').exists(),
-            'is_staff': user.is_staff
-        }
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
 
-    @staticmethod
-    def calculate_sla_target(priority, created_at=None):
-        """Calculate SLA target date based on priority"""
-        if not created_at:
-            created_at = timezone.now()
+    def create_ticket(self, user: User, ticket_data: Dict, attachments: List = None) -> Support:
+        """
+        Create a new ticket with intelligent assignment and prioritization
+        """
+        try:
+            with transaction.atomic():
+                # Create ticket instance
+                ticket = Support.objects.create(
+                    user=user,
+                    issue_type=ticket_data.get('issue_type'),
+                    subject=ticket_data.get('subject'),
+                    description=ticket_data.get('description'),
+                    department=ticket_data.get('department', ''),
+                    location=ticket_data.get('location', ''),
+                    asset_id=ticket_data.get('asset_id', ''),
+                    priority=ticket_data.get('priority', Support.Priority.MEDIUM)
+                )
 
-        sla_targets = {
-            Support.Priority.CRITICAL: 4,    # 4 hours
-            Support.Priority.HIGH: 8,        # 8 hours
-            Support.Priority.MEDIUM: 24,     # 24 hours
-            Support.Priority.LOW: 48,        # 48 hours
-        }
+                # Calculate smart priority
+                smart_priority, priority_details = prioritization_engine.calculate_priority(ticket, user)
+                if smart_priority != ticket.priority:
+                    ticket.priority = smart_priority
+                    ticket.save()
 
-        target_hours = sla_targets.get(priority, 24)
-        return created_at + timedelta(hours=target_hours)
+                # Set SLA target
+                ticket.sla_target_date = sla_engine.calculate_sla_target(ticket)
+                ticket.save()
 
-    @staticmethod
-    def get_ticket_permissions(user, ticket, user_roles=None):
-        """Calculate user permissions for a specific ticket"""
-        if not user_roles:
-            user_roles = SupportTicketService.get_user_roles(user)
-
-        permissions = {
-            'can_view': False,
-            'can_edit': False,
-            'can_comment': False,
-            'can_change_status': False,
-            'can_assign': False,
-            'can_view_internal': False,
-            'can_add_internal_comment': False,
-            'can_delete_attachments': False,
-            'can_escalate': False,
-            'can_reopen': False,
-        }
-
-        # Basic view permission
-        permissions['can_view'] = (
-            user_roles['is_admin'] or
-            ticket.user == user or
-            ticket.assigned_to_user == user or
-            user in ticket.cc_users.all() or
-            (user_roles['is_hr'] and ticket.assigned_group == Support.AssignedGroup.HR)
-        )
-
-        if not permissions['can_view']:
-            return permissions
-
-        # Advanced permissions
-        is_ticket_owner = ticket.user == user
-        is_assigned_user = ticket.assigned_to_user == user
-        is_hr_ticket = ticket.assigned_group == Support.AssignedGroup.HR
-
-        permissions.update({
-            'can_edit': (
-                user_roles['is_admin'] or
-                is_assigned_user or
-                (user_roles['is_hr'] and is_hr_ticket)
-            ),
-            'can_comment': permissions['can_view'],
-            'can_change_status': (
-                user_roles['is_admin'] or
-                is_assigned_user or
-                (user_roles['is_hr'] and is_hr_ticket) or
-                (is_ticket_owner and ticket.status in [Support.Status.PENDING_USER])
-            ),
-            'can_assign': (
-                user_roles['is_admin'] or
-                (user_roles['is_hr'] and is_hr_ticket)
-            ),
-            'can_view_internal': user_roles['is_admin'] or user_roles['is_hr'],
-            'can_add_internal_comment': user_roles['is_admin'] or user_roles['is_hr'],
-            'can_delete_attachments': (
-                user_roles['is_admin'] or
-                is_assigned_user or
-                (user_roles['is_hr'] and is_hr_ticket)
-            ),
-            'can_escalate': (
-                user_roles['is_admin'] or
-                is_assigned_user or
-                (user_roles['is_hr'] and is_hr_ticket)
-            ),
-            'can_reopen': (
-                user_roles['is_admin'] or
-                is_ticket_owner or
-                is_assigned_user
-            ),
-        })
-
-        return permissions
-
-    @staticmethod
-    def get_tickets_queryset(user, user_roles=None):
-        """Get base queryset for tickets based on user permissions"""
-        if not user_roles:
-            user_roles = SupportTicketService.get_user_roles(user)
-
-        if user_roles['is_admin']:
-            return Support.objects.filter(is_deleted=False)
-        elif user_roles['is_hr']:
-            return Support.objects.filter(
-                Q(assigned_group=Support.AssignedGroup.HR) | Q(assigned_to_user=user),
-                is_deleted=False
-            )
-        else:
-            return Support.objects.filter(
-                Q(user=user) | Q(assigned_to_user=user) | Q(cc_users=user),
-                is_deleted=False
-            ).distinct()
-
-    @staticmethod
-    @transaction.atomic
-    def create_ticket(user, data, files=None):
-        """Create a new support ticket with attachments"""
-        # Validate required fields
-        required_fields = ['subject', 'description', 'issue_type']
-        for field in required_fields:
-            if not data.get(field, '').strip():
-                raise ValidationError(f'{field.replace("_", " ").title()} is required.')
-
-        # Create ticket
-        ticket = Support.objects.create(
-            user=user,
-            subject=data['subject'].strip(),
-            description=data['description'].strip(),
-            priority=data.get('priority', Support.Priority.MEDIUM),
-            issue_type=data['issue_type'],
-            assigned_group=data.get('assigned_group'),
-            status=Support.Status.NEW,
-            sla_target_date=SupportTicketService.calculate_sla_target(
-                data.get('priority', Support.Priority.MEDIUM)
-            ),
-        )
-
-        # Create initial activity log
-        TicketActivity.objects.create(
-            ticket=ticket,
-            action=TicketActivity.Action.CREATED,
-            user=user,
-            details="Ticket created"
-        )
-
-        # Handle file attachments
-        attachment_count = 0
-        if files:
-            for file in files:
-                if file.size > 0:
+                # Auto-assign ticket
+                if ticket.assigned_group and not ticket.assigned_to_user:
                     try:
-                        content_type, _ = mimetypes.guess_type(file.name)
+                        assigned_agent, assignment_reason = assignment_engine.assign_ticket(ticket, user)
+                        ticket.assigned_to_user = assigned_agent
+                        ticket.save()
+                    except Exception as e:
+                        self.logger.warning(f"Auto-assignment failed for ticket {ticket.ticket_id}: {str(e)}")
+
+                # Process attachments
+                if attachments:
+                    for attachment in attachments:
                         TicketAttachment.objects.create(
                             ticket=ticket,
-                            file=file,
+                            file=attachment,
                             uploaded_by=user,
-                            file_type=content_type or 'application/octet-stream'
+                            description=f"Initial attachment for {ticket.ticket_id}"
                         )
-                        attachment_count += 1
-                    except Exception as e:
-                        # Log error but don't fail ticket creation
-                        pass
 
-        return ticket, attachment_count
+                # Create initial activity
+                TicketActivity.objects.create(
+                    ticket=ticket,
+                    action=TicketActivity.Action.CREATED,
+                    user=user,
+                    details=f"Ticket created with priority {ticket.priority}"
+                )
 
-    @staticmethod
-    @transaction.atomic
-    def add_comment(ticket, user, content, is_internal=False, files=None):
-        """Add a comment to a ticket with optional attachments"""
-        if not content or not content.strip():
-            raise ValidationError('Comment content cannot be empty.')
+                # Log ticket creation
+                ticket_logger.log_ticket_creation(user, ticket)
 
-        # Create comment
-        comment = TicketComment.objects.create(
-            ticket=ticket,
-            user=user,
-            content=content.strip(),
-            is_internal=is_internal
-        )
+                return ticket
 
-        # Create activity log for comment
-        activity = TicketActivity.objects.create(
-            ticket=ticket,
-            user=user,
-            action=TicketActivity.Action.COMMENTED,
-            details=f"{'Internal' if is_internal else 'Public'} comment added"
-        )
+        except Exception as e:
+            self.logger.error(f"Ticket creation failed: {str(e)}")
+            ticket_logger.log_error(user, "TICKET_CREATION", e)
+            raise
 
-        # Handle attachments
-        attachment_count = 0
-        if files:
-            for file in files:
-                if file and file.size > 0:
-                    try:
-                        import mimetypes
-                        content_type, _ = mimetypes.guess_type(file.name)
+    def update_ticket(self, ticket: Support, user: User, updates: Dict) -> Support:
+        """
+        Update ticket with validation and logging
+        """
+        try:
+            with transaction.atomic():
+                old_values = {
+                    'status': ticket.status,
+                    'priority': ticket.priority,
+                    'assigned_to': ticket.assigned_to_user
+                }
 
-                        # Create attachment linked to both comment and activity
-                        attachment = CommentAttachment.objects.create(
+                # Validate permissions
+                if not self._can_update_ticket(ticket, user):
+                    raise PermissionDenied("Insufficient permissions to update ticket")
+
+                # Update fields
+                for field, value in updates.items():
+                    if hasattr(ticket, field):
+                        setattr(ticket, field, value)
+
+                # Handle status changes
+                if 'status' in updates and updates['status'] != old_values['status']:
+                    self._handle_status_change(ticket, old_values['status'], updates['status'], user)
+
+                # Handle priority changes
+                if 'priority' in updates and updates['priority'] != old_values['priority']:
+                    self._handle_priority_change(ticket, old_values['priority'], updates['priority'], user)
+
+                # Handle assignment changes
+                if 'assigned_to_user' in updates and updates['assigned_to_user'] != old_values['assigned_to']:
+                    self._handle_assignment_change(ticket, old_values['assigned_to'], updates['assigned_to_user'], user)
+
+                # Update SLA if priority changed
+                if 'priority' in updates:
+                    ticket.sla_target_date = sla_engine.calculate_sla_target(ticket)
+
+                ticket.save()
+
+                # Log changes
+                self._log_ticket_changes(ticket, old_values, updates, user)
+
+                return ticket
+
+        except Exception as e:
+            self.logger.error(f"Ticket update failed for {ticket.ticket_id}: {str(e)}")
+            ticket_logger.log_error(user, "TICKET_UPDATE", e, ticket.ticket_id)
+            raise
+
+    def add_comment(self, ticket: Support, user: User, content: str,
+                   is_internal: bool = False, attachments: List = None) -> TicketComment:
+        """
+        Add comment to ticket with optional attachments
+        """
+        try:
+            with transaction.atomic():
+                # Create comment
+                comment = TicketComment.objects.create(
+                    ticket=ticket,
+                    user=user,
+                    content=content,
+                    is_internal=is_internal
+                )
+
+                # Create activity
+                TicketActivity.objects.create(
+                    ticket=ticket,
+                    action=TicketActivity.Action.COMMENTED,
+                    user=user,
+                    details=f"{'Internal' if is_internal else 'Public'} comment added"
+                )
+
+                # Process attachments
+                if attachments:
+                    for attachment in attachments:
+                        from trueAlign.models import CommentAttachment
+                        CommentAttachment.objects.create(
                             comment=comment,
-                            ticket_activity=activity,
-                            file=file,
-                            uploaded_by=user,
-                            content_type=content_type or 'application/octet-stream',
-                            file_size=file.size
+                            ticket_activity=TicketActivity.objects.filter(
+                                ticket=ticket,
+                                action=TicketActivity.Action.COMMENTED
+                            ).latest('timestamp'),
+                            file=attachment,
+                            uploaded_by=user
                         )
-                        attachment_count += 1
+
+                # Update response time if this is first response
+                if not ticket.response_time and user != ticket.user:
+                    ticket.response_time = timezone.now() - ticket.created_at
+                    ticket.save()
+
+                # Log comment
+                ticket_logger.log_user_activity(
+                    user,
+                    'COMMENT_ADDED',
+                    {
+                        'ticket_id': ticket.ticket_id,
+                        'is_internal': is_internal,
+                        'has_attachments': bool(attachments)
+                    }
+                )
+
+                return comment
+
+        except Exception as e:
+            self.logger.error(f"Comment addition failed for {ticket.ticket_id}: {str(e)}")
+            ticket_logger.log_error(user, "COMMENT_ADD", e, ticket.ticket_id)
+            raise
+
+    def bulk_update_tickets(self, ticket_ids: List[str], updates: Dict, user: User) -> Dict:
+        """
+        Perform bulk updates on multiple tickets
+        """
+        results = {
+            'success_count': 0,
+            'error_count': 0,
+            'errors': [],
+            'updated_tickets': []
+        }
+
+        try:
+            with transaction.atomic():
+                tickets = Support.objects.filter(ticket_id__in=ticket_ids, is_deleted=False)
+
+                for ticket in tickets:
+                    try:
+                        # Validate permissions
+                        if not self._can_update_ticket(ticket, user):
+                            results['errors'].append({
+                                'ticket_id': ticket.ticket_id,
+                                'error': 'Insufficient permissions'
+                            })
+                            results['error_count'] += 1
+                            continue
+
+                        # Update ticket
+                        updated_ticket = self.update_ticket(ticket, user, updates)
+                        results['updated_tickets'].append(updated_ticket.ticket_id)
+                        results['success_count'] += 1
+
                     except Exception as e:
-                        logger.error(f"Error creating attachment: {e}")
-                        # Don't fail comment creation for attachment errors
-                        pass
+                        results['errors'].append({
+                            'ticket_id': ticket.ticket_id,
+                            'error': str(e)
+                        })
+                        results['error_count'] += 1
 
-        # Update ticket timestamp
-        ticket.updated_at = timezone.now()
-        ticket.save(update_fields=['updated_at'])
+                # Log bulk operation
+                ticket_logger.log_bulk_operation(
+                    user,
+                    'UPDATE',
+                    ticket_ids,
+                    results
+                )
 
-        return comment, attachment_count
+        except Exception as e:
+            self.logger.error(f"Bulk update failed: {str(e)}")
+            ticket_logger.log_error(user, "BULK_UPDATE", e)
+            results['errors'].append({'system_error': str(e)})
 
-    @staticmethod
-    @transaction.atomic
-    def update_ticket_status(ticket, user, new_status, resolution_summary=None):
-        """Update ticket status with proper validation and logging"""
-        old_status = ticket.status
+        return results
 
-        if new_status not in dict(Support.Status.choices):
-            raise ValidationError('Invalid status selected.')
+    def escalate_ticket(self, ticket: Support, user: User, escalation_level: int = None) -> bool:
+        """
+        Escalate ticket to next level or specified level
+        """
+        try:
+            if escalation_level is None:
+                escalation_level = ticket.escalation_level + 1
 
-        # Validate status transition
-        if not SupportTicketService.is_valid_status_transition(old_status, new_status):
-            raise ValidationError(f'Invalid status transition from {old_status} to {new_status}.')
+            # Use SLA engine for escalation
+            success = sla_engine.escalate_ticket(ticket, escalation_level, user)
 
-        ticket.status = new_status
+            if success:
+                # Create activity
+                TicketActivity.objects.create(
+                    ticket=ticket,
+                    action=TicketActivity.Action.ESCALATED,
+                    user=user,
+                    details=f"Ticket escalated to level {escalation_level}"
+                )
 
-        # Handle resolution
+            return success
+
+        except Exception as e:
+            self.logger.error(f"Escalation failed for {ticket.ticket_id}: {str(e)}")
+            ticket_logger.log_error(user, "ESCALATION", e, ticket.ticket_id)
+            return False
+
+    def reopen_ticket(self, ticket: Support, user: User, reason: str = None) -> bool:
+        """
+        Reopen a closed or resolved ticket
+        """
+        try:
+            if ticket.status not in ['Resolved', 'Closed']:
+                raise ValidationError("Only resolved or closed tickets can be reopened")
+
+            with transaction.atomic():
+                # Update ticket
+                ticket.status = Support.Status.OPEN
+                ticket.reopen_count += 1
+                ticket.resolved_at = None
+                ticket.resolution_time = None
+                ticket.save()
+
+                # Create activity
+                TicketActivity.objects.create(
+                    ticket=ticket,
+                    action=TicketActivity.Action.REOPENED,
+                    user=user,
+                    details=f"Ticket reopened. Reason: {reason or 'No reason provided'}"
+                )
+
+                # Recalculate SLA
+                ticket.sla_target_date = sla_engine.calculate_sla_target(ticket)
+                ticket.save()
+
+                # Log reopening
+                ticket_logger.log_user_activity(
+                    user,
+                    'TICKET_REOPENED',
+                    {
+                        'ticket_id': ticket.ticket_id,
+                        'reason': reason,
+                        'reopen_count': ticket.reopen_count
+                    }
+                )
+
+                return True
+
+        except Exception as e:
+            self.logger.error(f"Reopen failed for {ticket.ticket_id}: {str(e)}")
+            ticket_logger.log_error(user, "REOPEN", e, ticket.ticket_id)
+            return False
+
+    def close_ticket(self, ticket: Support, user: User, resolution_summary: str = None) -> bool:
+        """
+        Close a ticket with resolution summary
+        """
+        try:
+            if ticket.status == Support.Status.CLOSED:
+                raise ValidationError("Ticket is already closed")
+
+            with transaction.atomic():
+                # Update ticket
+                ticket.status = Support.Status.CLOSED
+                ticket.resolved_at = timezone.now()
+                ticket.resolution_summary = resolution_summary or ""
+
+                # Calculate resolution time
+                if ticket.created_at:
+                    ticket.resolution_time = ticket.resolved_at - ticket.created_at
+
+                # Update SLA status
+                sla_engine.update_ticket_sla_status(ticket)
+
+                ticket.save()
+
+                # Create activity
+                TicketActivity.objects.create(
+                    ticket=ticket,
+                    action=TicketActivity.Action.CLOSED,
+                    user=user,
+                    details=f"Ticket closed with resolution: {resolution_summary or 'No summary provided'}"
+                )
+
+                # Log closure
+                ticket_logger.log_user_activity(
+                    user,
+                    'TICKET_CLOSED',
+                    {
+                        'ticket_id': ticket.ticket_id,
+                        'resolution_summary': resolution_summary,
+                        'resolution_time_hours': ticket.resolution_time.total_seconds() / 3600 if ticket.resolution_time else None
+                    }
+                )
+
+                return True
+
+        except Exception as e:
+            self.logger.error(f"Close failed for {ticket.ticket_id}: {str(e)}")
+            ticket_logger.log_error(user, "CLOSE", e, ticket.ticket_id)
+            return False
+
+    def get_user_tickets(self, user: User, filters: Dict = None) -> models.QuerySet:
+        """
+        Get tickets based on user role and filters
+        """
+        queryset = Support.objects.filter(is_deleted=False)
+
+        # Apply role-based filtering
+        user_groups = [g.name for g in user.groups.all()]
+
+        # Debug logging
+        print(f"User: {user.username}")
+        print(f"User groups: {user_groups}")
+        print(f"Is superuser: {user.is_superuser}")
+        print(f"Total tickets in DB: {Support.objects.filter(is_deleted=False).count()}")
+
+        if user.is_superuser:
+            # Admin can see all tickets
+            print("User is superuser - showing all tickets")
+            pass
+        elif 'Manager' in user_groups:
+            # Managers can see all tickets in their groups
+            manager_groups = user.groups.all()
+            queryset = queryset.filter(
+                Q(assigned_group__in=[g.name for g in manager_groups]) |
+                Q(user=user) |
+                Q(assigned_to_user=user)
+            )
+            print(f"User is Manager - filtered by groups: {[g.name for g in manager_groups]}")
+        elif 'HR' in user_groups:
+            # HR can see HR tickets and their own tickets
+            queryset = queryset.filter(
+                Q(assigned_group='HR') |
+                Q(user=user) |
+                Q(assigned_to_user=user)
+            )
+            print("User is HR - showing HR tickets and own tickets")
+        elif 'Admin' in user_groups:
+            # Admin group can see admin tickets and their own tickets
+            queryset = queryset.filter(
+                Q(assigned_group='Admin') |
+                Q(user=user) |
+                Q(assigned_to_user=user)
+            )
+            print("User is Admin - showing Admin tickets and own tickets")
+        else:
+            # Employees can only see their own tickets
+            queryset = queryset.filter(
+                Q(user=user) |
+                Q(assigned_to_user=user)
+            )
+            print("User is Employee - showing only own tickets")
+
+        # Apply additional filters
+        if filters:
+            if 'status' in filters:
+                queryset = queryset.filter(status=filters['status'])
+            if 'priority' in filters:
+                queryset = queryset.filter(priority=filters['priority'])
+            if 'issue_type' in filters:
+                queryset = queryset.filter(issue_type=filters['issue_type'])
+            if 'assigned_to' in filters:
+                queryset = queryset.filter(assigned_to_user=filters['assigned_to'])
+            if 'date_from' in filters:
+                queryset = queryset.filter(created_at__gte=filters['date_from'])
+            if 'date_to' in filters:
+                queryset = queryset.filter(created_at__lte=filters['date_to'])
+
+        final_count = queryset.count()
+        print(f"Final filtered queryset count: {final_count}")
+
+        return queryset.order_by('-created_at')
+
+
+    def get_ticket_statistics(self, user: User, days: int = 30) -> Dict:
+        """
+        Get comprehensive ticket statistics
+        """
+        start_date = timezone.now() - timedelta(days=days)
+        tickets = self.get_user_tickets(user, {'date_from': start_date})
+
+        stats = {
+            'total_tickets': tickets.count(),
+            'status_breakdown': {},
+            'priority_breakdown': {},
+            'issue_type_breakdown': {},
+            'sla_metrics': sla_engine.get_sla_metrics(days),
+            'assignment_metrics': assignment_engine.get_assignment_statistics(days),
+            'user_activity': self._get_user_activity_stats(user, days)
+        }
+
+        # Status breakdown
+        for status in Support.Status.choices:
+            count = tickets.filter(status=status[0]).count()
+            stats['status_breakdown'][status[0]] = count
+
+        # Priority breakdown
+        for priority in Support.Priority.choices:
+            count = tickets.filter(priority=priority[0]).count()
+            stats['priority_breakdown'][priority[0]] = count
+
+        # Issue type breakdown
+        for issue_type in Support.IssueType.choices:
+            count = tickets.filter(issue_type=issue_type[0]).count()
+            stats['issue_type_breakdown'][issue_type[0]] = count
+
+        return stats
+
+    def _can_update_ticket(self, ticket: Support, user: User) -> bool:
+        """
+        Check if user can update the ticket
+        """
+        user_groups = [g.name for g in user.groups.all()]
+
+        # Admin and managers can update any ticket
+        if user.is_superuser or 'Manager' in user_groups:
+            return True
+
+        # Users can update their own tickets
+        if ticket.user == user:
+            return True
+
+        # Assigned agents can update their tickets
+        if ticket.assigned_to_user == user:
+            return True
+
+        # Group members can update tickets in their group
+        if ticket.assigned_group in user_groups:
+            return True
+
+        return False
+
+    def _handle_status_change(self, ticket: Support, old_status: str, new_status: str, user: User):
+        """
+        Handle ticket status changes
+        """
+        # Log status change
+        ticket_logger.log_status_change(ticket, user, old_status, new_status)
+
+        # Handle specific status changes
         if new_status == Support.Status.RESOLVED:
-            if not resolution_summary:
-                raise ValidationError('Resolution summary is required when resolving a ticket.')
-            ticket.resolution_summary = resolution_summary
             ticket.resolved_at = timezone.now()
             if ticket.created_at:
                 ticket.resolution_time = ticket.resolved_at - ticket.created_at
 
-        # Handle closure
         elif new_status == Support.Status.CLOSED:
             if not ticket.resolved_at:
                 ticket.resolved_at = timezone.now()
-            if ticket.created_at and not ticket.time_to_close:
-                ticket.time_to_close = timezone.now() - ticket.created_at
-            if not ticket.resolution_summary and resolution_summary:
-                ticket.resolution_summary = resolution_summary
+                if ticket.created_at:
+                    ticket.resolution_time = ticket.resolved_at - ticket.created_at
 
-        # Handle reopening
-        elif (old_status in [Support.Status.RESOLVED, Support.Status.CLOSED] and
-              new_status in [Support.Status.OPEN, Support.Status.IN_PROGRESS]):
-            ticket.reopen_count += 1
-            ticket.resolved_at = None
-            ticket.resolution_time = None
+        # Update SLA status
+        sla_engine.update_ticket_sla_status(ticket)
 
-            TicketActivity.objects.create(
-                ticket=ticket,
-                action=TicketActivity.Action.REOPENED,
-                user=user,
-                details=f"Ticket reopened from {old_status} status (Reopen #{ticket.reopen_count})"
-            )
-
-        ticket.save(user=user)
-        return ticket
-
-    @staticmethod
-    def is_valid_status_transition(old_status, new_status):
-        """Validate if status transition is allowed"""
-        allowed_transitions = {
-            Support.Status.NEW: [Support.Status.OPEN, Support.Status.IN_PROGRESS],
-            Support.Status.OPEN: [Support.Status.IN_PROGRESS, Support.Status.PENDING_USER, Support.Status.ON_HOLD],
-            Support.Status.IN_PROGRESS: [Support.Status.PENDING_USER, Support.Status.RESOLVED, Support.Status.ON_HOLD],
-            Support.Status.PENDING_USER: [Support.Status.OPEN, Support.Status.IN_PROGRESS],
-            Support.Status.PENDING_THIRD_PARTY: [Support.Status.IN_PROGRESS],
-            Support.Status.ON_HOLD: [Support.Status.OPEN, Support.Status.IN_PROGRESS],
-            Support.Status.RESOLVED: [Support.Status.CLOSED, Support.Status.OPEN],
-            Support.Status.CLOSED: [Support.Status.OPEN],
-        }
-        return new_status in allowed_transitions.get(old_status, [])
-
-    @staticmethod
-    @transaction.atomic
-    def assign_ticket(ticket, user, assigned_to_user=None, assigned_group=None):
-        """Assign ticket to user or group"""
-        old_assigned_user = ticket.assigned_to_user
-        old_assigned_group = ticket.assigned_group
-
-        if assigned_to_user:
-            if not User.objects.filter(pk=assigned_to_user).exists():
-                raise ValidationError('Invalid user selected for assignment.')
-            ticket.assigned_to_user_id = assigned_to_user
-
-        if assigned_group and assigned_group in dict(Support.AssignedGroup.choices):
-            ticket.assigned_group = assigned_group
-
-        ticket.save(user=user)
-
-        # Create activity log
-        details = []
-        if old_assigned_user != ticket.assigned_to_user:
-            old_user = old_assigned_user.get_full_name() if old_assigned_user else 'Unassigned'
-            new_user = ticket.assigned_to_user.get_full_name() if ticket.assigned_to_user else 'Unassigned'
-            details.append(f"Assigned user changed from {old_user} to {new_user}")
-
-        if old_assigned_group != ticket.assigned_group:
-            details.append(f"Assigned group changed from {old_assigned_group or 'None'} to {ticket.assigned_group or 'None'}")
-
-        if details:
-            TicketActivity.objects.create(
-                ticket=ticket,
-                action=TicketActivity.Action.ASSIGNED,
-                user=user,
-                details="; ".join(details)
-            )
-
-        return ticket
-
-    @staticmethod
-    def calculate_sla_info(ticket):
-        """Calculate SLA status and time remaining"""
-        sla_info = {
-            'status': 'Unknown',
-            'time_remaining': None,
-            'is_breached': False,
-            'percentage_used': 0,
-        }
-
-        if not ticket.sla_target_date:
-            return sla_info
-
-        now = timezone.now()
-
-        if ticket.resolved_at:
-            # Ticket is resolved
-            if ticket.resolved_at <= ticket.sla_target_date:
-                sla_info['status'] = 'Met'
-                sla_info['is_breached'] = False
-            else:
-                sla_info['status'] = 'Breached'
-                sla_info['is_breached'] = True
-        else:
-            # Ticket is still open
-            if now > ticket.sla_target_date:
-                sla_info['status'] = 'Breached'
-                sla_info['is_breached'] = True
-            else:
-                sla_info['status'] = 'On Track'
-                sla_info['time_remaining'] = ticket.sla_target_date - now
-
-        # Calculate percentage of SLA time used
-        if ticket.created_at:
-            total_sla_time = ticket.sla_target_date - ticket.created_at
-            elapsed_time = now - ticket.created_at
-            sla_info['percentage_used'] = min(100, (elapsed_time.total_seconds() / total_sla_time.total_seconds()) * 100)
-
-        return sla_info
-
-    @staticmethod
-    def get_ticket_statistics(user, user_roles=None):
-        """Get ticket statistics for dashboard"""
-        if not user_roles:
-            user_roles = SupportTicketService.get_user_roles(user)
-
-        base_tickets = SupportTicketService.get_tickets_queryset(user, user_roles)
-
-        stats = {
-            'total_tickets': base_tickets.count(),
-            'open_tickets': base_tickets.filter(
-                status__in=[Support.Status.NEW, Support.Status.OPEN, Support.Status.IN_PROGRESS]
-            ).count(),
-            'resolved_tickets': base_tickets.filter(status=Support.Status.RESOLVED).count(),
-            'closed_tickets': base_tickets.filter(status=Support.Status.CLOSED).count(),
-            'high_priority': base_tickets.filter(priority=Support.Priority.HIGH).count(),
-            'critical_priority': base_tickets.filter(priority=Support.Priority.CRITICAL).count(),
-            'overdue_tickets': base_tickets.filter(
-                due_date__lt=timezone.now(),
-                status__in=[Support.Status.NEW, Support.Status.OPEN, Support.Status.IN_PROGRESS]
-            ).count(),
-            'my_assigned': base_tickets.filter(assigned_to_user=user).count(),
-        }
-
-        # Priority distribution
-        priority_stats = list(base_tickets.values('priority').annotate(count=Count('id')))
-
-        # Status distribution
-        status_stats = list(base_tickets.values('status').annotate(count=Count('id')))
-
-        # Issue type distribution
-        issue_type_stats = list(base_tickets.values('issue_type').annotate(count=Count('id')))
-
-        # SLA performance
-        sla_breached = base_tickets.filter(sla_breach=True).count()
-        sla_within = base_tickets.filter(sla_breach=False, resolved_at__isnull=False).count()
-
-        return {
-            'stats': stats,
-            'priority_stats': priority_stats,
-            'status_stats': status_stats,
-            'issue_type_stats': issue_type_stats,
-            'sla_breached': sla_breached,
-            'sla_within': sla_within,
-        }
-
-    @staticmethod
-    @transaction.atomic
-    def escalate_ticket(ticket, user):
-        """Escalate a ticket to higher level"""
-        ticket.escalation_level += 1
-
-        # Increase priority
-        if ticket.priority == Support.Priority.MEDIUM:
-            ticket.priority = Support.Priority.HIGH
-        elif ticket.priority == Support.Priority.HIGH:
-            ticket.priority = Support.Priority.CRITICAL
-
-        ticket.save(user=user)
-
-        # Create activity log
-        TicketActivity.objects.create(
-            ticket=ticket,
-            action=TicketActivity.Action.ESCALATED,
-            user=user,
-            details=f"Ticket escalated to level {ticket.escalation_level}, priority changed to {ticket.priority}"
+    def _handle_priority_change(self, ticket: Support, old_priority: str, new_priority: str, user: User):
+        """
+        Handle ticket priority changes
+        """
+        # Log priority change
+        ticket_logger.log_user_activity(
+            user,
+            'PRIORITY_CHANGED',
+            {
+                'ticket_id': ticket.ticket_id,
+                'old_priority': old_priority,
+                'new_priority': new_priority
+            }
         )
 
-        return ticket
-
-    @staticmethod
-    @transaction.atomic
-    def reopen_ticket(ticket, user):
-        """Reopen a closed or resolved ticket"""
-        if ticket.status not in [Support.Status.RESOLVED, Support.Status.CLOSED]:
-            raise ValidationError('Ticket cannot be reopened from current status.')
-
-        old_status = ticket.status
-        ticket.status = Support.Status.OPEN
-        ticket.resolved_at = None
-        ticket.resolution_time = None
-        ticket.reopen_count += 1
-        ticket.save(user=user)
-
-        # Create activity log
-        TicketActivity.objects.create(
-            ticket=ticket,
-            action=TicketActivity.Action.REOPENED,
-            user=user,
-            details=f"Ticket reopened from {old_status} status (Reopen #{ticket.reopen_count})"
-        )
-
-        return ticket
-
-
-class FileAttachmentService:
-    """Service for handling file attachments"""
-
-    @staticmethod
-    def get_file_type_category(content_type):
-        """Determine file category from MIME type"""
-        if not content_type:
-            return 'unknown'
-
-        content_type = content_type.lower()
-
-        if content_type.startswith('image/'):
-            return 'image'
-        elif content_type.startswith('video/'):
-            return 'video'
-        elif content_type.startswith('audio/'):
-            return 'audio'
-        elif content_type in ['application/pdf']:
-            return 'pdf'
-        elif content_type in [
-            'application/msword',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'application/vnd.oasis.opendocument.text'
-        ]:
-            return 'document'
-        elif content_type in [
-            'application/vnd.ms-excel',
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'text/csv'
-        ]:
-            return 'spreadsheet'
-        elif content_type.startswith('text/'):
-            return 'text'
-        elif content_type in ['application/zip', 'application/x-rar-compressed', 'application/x-7z-compressed']:
-            return 'archive'
-        else:
-            return 'file'
-
-    @staticmethod
-    def is_image_attachment(attachment):
-        """Check if attachment is an image"""
-        content_type = getattr(attachment, 'content_type', None) or getattr(attachment, 'file_type', None)
-        if content_type and content_type.startswith('image/'):
-            return True
-
-        # Fallback to file extension check
-        filename = getattr(attachment, 'original_filename', '') or ''
-        return filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp', '.svg'))
-
-    @staticmethod
-    def process_attachments(attachments):
-        """Process attachments to add file type information"""
-        if not attachments:
-            return
-
-        # Convert to list if it's a queryset
-        if hasattr(attachments, 'all'):
-            attachments = attachments.all()
-
-        # Ensure it's iterable
-        if not hasattr(attachments, '__iter__'):
-            return
-
-        try:
-            for attachment in attachments:
-                if not attachment:
-                    continue
-
-                # Set file type category
-                content_type = getattr(attachment, 'content_type', None) or getattr(attachment, 'file_type', None)
-                attachment.file_category = FileAttachmentService.get_file_type_category(content_type)
-                attachment.is_image = FileAttachmentService.is_image_attachment(attachment)
-
-                # Fix missing original filename
-                if not hasattr(attachment, 'original_filename') or not attachment.original_filename:
-                    if hasattr(attachment, 'file') and attachment.file:
-                        attachment.original_filename = os.path.basename(attachment.file.name)
-
-                # Fix missing file size
-                if not hasattr(attachment, 'file_size') or not attachment.file_size:
-                    if hasattr(attachment, 'file') and attachment.file:
-                        try:
-                            attachment.file_size = attachment.file.size
-                            attachment.save(update_fields=['file_size'])
-                        except (OSError, ValueError, AttributeError):
-                            attachment.file_size = 0
-        except Exception as e:
-            logger.error(f"Error processing attachments: {e}")
-
-
-    @staticmethod
-    @transaction.atomic
-    def delete_attachment(attachment, user, ticket):
-        """Soft delete an attachment"""
-        if isinstance(attachment, TicketAttachment):
-            attachment.is_deleted = True
-            attachment_type = 'ticket'
-        elif isinstance(attachment, CommentAttachment):
-            attachment.is_active = False
-            attachment_type = 'comment'
-
-        attachment.save()
-
-        # Create activity log
+        # Create activity
         TicketActivity.objects.create(
             ticket=ticket,
             action=TicketActivity.Action.UPDATED,
             user=user,
-            details=f"{attachment_type.title()} attachment '{attachment.original_filename}' deleted"
+            details=f"Priority changed from {old_priority} to {new_priority}"
         )
 
-        return attachment_type
+    def _handle_assignment_change(self, ticket: Support, old_assignee: User, new_assignee: User, user: User):
+        """
+        Handle ticket assignment changes
+        """
+        # Log assignment change
+        if new_assignee:
+            ticket_logger.log_assignment(user, ticket, new_assignee)
 
+        # Create activity
+        TicketActivity.objects.create(
+            ticket=ticket,
+            action=TicketActivity.Action.ASSIGNED,
+            user=user,
+            details=f"Assigned to {new_assignee.get_full_name() if new_assignee else 'Unassigned'}"
+        )
 
-class BulkTicketService:
-    """Service for handling bulk ticket operations"""
+    def _log_ticket_changes(self, ticket: Support, old_values: Dict, updates: Dict, user: User):
+        """
+        Log all ticket changes
+        """
+        changes = {}
+        for field, new_value in updates.items():
+            if field in old_values and old_values[field] != new_value:
+                changes[field] = {
+                    'old': str(old_values[field]),
+                    'new': str(new_value)
+                }
 
-    @staticmethod
-    @transaction.atomic
-    def bulk_assign(tickets, user, assigned_to_user=None, assigned_group=None):
-        """Bulk assign tickets"""
-        success_count = 0
-
-        if assigned_to_user:
-            try:
-                assigned_user = User.objects.get(pk=assigned_to_user)
-            except User.DoesNotExist:
-                raise ValidationError('Invalid user selected for assignment.')
-
-        for ticket in tickets:
-            user_roles = SupportTicketService.get_user_roles(user)
-            permissions = SupportTicketService.get_ticket_permissions(user, ticket, user_roles)
-
-            if permissions['can_assign']:
-                if assigned_to_user:
-                    ticket.assigned_to_user = assigned_user
-                if assigned_group:
-                    ticket.assigned_group = assigned_group
-
-                ticket.save(user=user)
-
-                TicketActivity.objects.create(
-                    ticket=ticket,
-                    action=TicketActivity.Action.ASSIGNED,
-                    user=user,
-                    details=f"Bulk assigned to {assigned_user.get_full_name() if assigned_to_user else 'group'}"
-                )
-                success_count += 1
-
-        return success_count
-
-    @staticmethod
-    @transaction.atomic
-    def bulk_status_change(tickets, user, new_status):
-        """Bulk change ticket status"""
-        success_count = 0
-
-        if new_status not in dict(Support.Status.choices):
-            raise ValidationError('Invalid status selected.')
-
-        for ticket in tickets:
-            user_roles = SupportTicketService.get_user_roles(user)
-            permissions = SupportTicketService.get_ticket_permissions(user, ticket, user_roles)
-
-            if permissions['can_change_status']:
-                old_status = ticket.status
-                if SupportTicketService.is_valid_status_transition(old_status, new_status):
-                    ticket.status = new_status
-                    ticket.save(user=user)
-
-                    TicketActivity.objects.create(
-                        ticket=ticket,
-                        action=TicketActivity.Action.UPDATED,
-                        user=user,
-                        details=f"Bulk status change: {old_status} → {new_status}"
-                    )
-                    success_count += 1
-
-        return success_count
-
-    @staticmethod
-    @transaction.atomic
-    def bulk_priority_change(tickets, user, new_priority):
-        """Bulk change ticket priority"""
-        success_count = 0
-
-        if new_priority not in dict(Support.Priority.choices):
-            raise ValidationError('Invalid priority selected.')
-
-        for ticket in tickets:
-            user_roles = SupportTicketService.get_user_roles(user)
-            permissions = SupportTicketService.get_ticket_permissions(user, ticket, user_roles)
-
-            if permissions['can_edit']:
-                old_priority = ticket.priority
-                ticket.priority = new_priority
-                ticket.save(user=user)
-
-                TicketActivity.objects.create(
-                    ticket=ticket,
-                    action=TicketActivity.Action.UPDATED,
-                    user=user,
-                    details=f"Bulk priority change: {old_priority} → {new_priority}"
-                )
-                success_count += 1
-
-        return success_count
-
-    @staticmethod
-    @transaction.atomic
-    def bulk_delete(tickets, user):
-        """Bulk delete tickets (admin only)"""
-        user_roles = SupportTicketService.get_user_roles(user)
-        if not user_roles['is_admin']:
-            raise PermissionDenied('Only administrators can delete tickets.')
-
-        success_count = 0
-
-        for ticket in tickets:
-            ticket.is_deleted = True
-            ticket.save()
-
-            TicketActivity.objects.create(
-                ticket=ticket,
-                action=TicketActivity.Action.UPDATED,
-                user=user,
-                details="Ticket deleted via bulk action"
+        if changes:
+            ticket_logger.log_user_activity(
+                user,
+                'TICKET_UPDATED',
+                {
+                    'ticket_id': ticket.ticket_id,
+                    'changes': changes
+                }
             )
-            success_count += 1
 
-        return success_count
+    def _get_user_activity_stats(self, user: User, days: int) -> Dict:
+        """
+        Get user activity statistics
+        """
+        start_date = timezone.now() - timedelta(days=days)
+
+        activities = AuditLog.objects.filter(
+            user=user,
+            timestamp__gte=start_date
+        ).values('action').annotate(
+            count=Count('id')
+        ).order_by('-count')
+
+        return {
+            'total_activities': sum(activity['count'] for activity in activities),
+            'activity_breakdown': list(activities)[:10]  # Top 10 activities
+        }
+
+
+class NotificationService:
+    """
+    Service for handling ticket notifications
+    """
+
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
+
+    def send_ticket_notification(self, ticket: Support, notification_type: str,
+                               recipients: List[User], context: Dict = None):
+        """
+        Send ticket notification to recipients
+        """
+        try:
+            subject = self._get_notification_subject(ticket, notification_type)
+            message = self._get_notification_message(ticket, notification_type, context)
+
+            for recipient in recipients:
+                send_mail(
+                    subject,
+                    message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [recipient.email],
+                    fail_silently=True
+                )
+
+            # Log notification
+            ticket_logger.log_user_activity(
+                None,  # System activity
+                'NOTIFICATION_SENT',
+                {
+                    'ticket_id': ticket.ticket_id,
+                    'notification_type': notification_type,
+                    'recipient_count': len(recipients)
+                }
+            )
+
+        except Exception as e:
+            self.logger.error(f"Notification failed for ticket {ticket.ticket_id}: {str(e)}")
+
+    def _get_notification_subject(self, ticket: Support, notification_type: str) -> str:
+        """
+        Get notification subject based on type
+        """
+        subjects = {
+            'created': f"New Ticket Created - {ticket.ticket_id}",
+            'assigned': f"Ticket Assigned - {ticket.ticket_id}",
+            'updated': f"Ticket Updated - {ticket.ticket_id}",
+            'escalated': f"Ticket Escalated - {ticket.ticket_id}",
+            'resolved': f"Ticket Resolved - {ticket.ticket_id}",
+            'closed': f"Ticket Closed - {ticket.ticket_id}",
+            'sla_warning': f"SLA Warning - {ticket.ticket_id}"
+        }
+
+        return subjects.get(notification_type, f"Ticket Notification - {ticket.ticket_id}")
+
+    def _get_notification_message(self, ticket: Support, notification_type: str, context: Dict = None) -> str:
+        """
+        Get notification message based on type
+        """
+        base_info = f"""
+        Ticket ID: {ticket.ticket_id}
+        Subject: {ticket.subject}
+        Priority: {ticket.priority}
+        Status: {ticket.status}
+        Created: {ticket.created_at}
+        Assigned to: {ticket.assigned_to_user.get_full_name() if ticket.assigned_to_user else 'Unassigned'}
+        """
+
+        messages = {
+            'created': f"A new ticket has been created.{base_info}",
+            'assigned': f"A ticket has been assigned to you.{base_info}",
+            'updated': f"A ticket has been updated.{base_info}",
+            'escalated': f"A ticket has been escalated.{base_info}",
+            'resolved': f"A ticket has been resolved.{base_info}",
+            'closed': f"A ticket has been closed.{base_info}",
+            'sla_warning': f"SLA warning for ticket.{base_info}"
+        }
+
+        return messages.get(notification_type, f"Ticket notification.{base_info}")
+
+
+# Global service instances
+ticket_service = TicketService()
+notification_service = NotificationService()

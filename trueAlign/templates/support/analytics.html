@@ -1,0 +1,302 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Support Analytics - TrueAlign{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 mb-2">Support Analytics</h1>
+                    <p class="text-gray-600">Comprehensive insights into support performance and metrics</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="{% url 'support:export_tickets' %}" 
+                       class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        Export Data
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Metrics -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Total Tickets</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ analytics.total_tickets|default:0 }}</p>
+                        <p class="text-sm text-gray-500">This month</p>
+                    </div>
+                    <div class="p-3 bg-blue-100 rounded-full">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Resolution Rate</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ analytics.resolution_rate|default:0 }}%</p>
+                        <p class="text-sm text-gray-500">This month</p>
+                    </div>
+                    <div class="p-3 bg-green-100 rounded-full">
+                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-yellow-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Avg Response Time</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ analytics.avg_response_time|default:"N/A" }}</p>
+                        <p class="text-sm text-gray-500">Hours</p>
+                    </div>
+                    <div class="p-3 bg-yellow-100 rounded-full">
+                        <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-purple-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Customer Satisfaction</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ analytics.satisfaction_score|default:"N/A" }}</p>
+                        <p class="text-sm text-gray-500">Out of 5</p>
+                    </div>
+                    <div class="p-3 bg-purple-100 rounded-full">
+                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts and Detailed Analytics -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- Ticket Status Distribution -->
+            <div class="bg-white rounded-lg shadow-md">
+                <div class="p-6 border-b border-gray-200">
+                    <h2 class="text-xl font-semibold text-gray-900">Ticket Status Distribution</h2>
+                </div>
+                <div class="p-6">
+                    <div class="space-y-4">
+                        {% for status, count in analytics.status_distribution.items %}
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <div class="w-4 h-4 rounded-full mr-3
+                                    {% if status == 'New' %}bg-blue-400
+                                    {% elif status == 'Open' %}bg-yellow-400
+                                    {% elif status == 'In Progress' %}bg-purple-400
+                                    {% elif status == 'Resolved' %}bg-green-400
+                                    {% elif status == 'Closed' %}bg-gray-400
+                                    {% else %}bg-gray-300{% endif %}"></div>
+                                <span class="text-sm font-medium text-gray-700">{{ status }}</span>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <div class="w-24 bg-gray-200 rounded-full h-2">
+                                    <div class="h-2 rounded-full
+                                        {% if status == 'New' %}bg-blue-400
+                                        {% elif status == 'Open' %}bg-yellow-400
+                                        {% elif status == 'In Progress' %}bg-purple-400
+                                        {% elif status == 'Resolved' %}bg-green-400
+                                        {% elif status == 'Closed' %}bg-gray-400
+                                        {% else %}bg-gray-300{% endif %}"
+                                        style="width: {{ count|floatformat:0 }}%"></div>
+                                </div>
+                                <span class="text-sm text-gray-600">{{ count }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Priority Distribution -->
+            <div class="bg-white rounded-lg shadow-md">
+                <div class="p-6 border-b border-gray-200">
+                    <h2 class="text-xl font-semibold text-gray-900">Priority Distribution</h2>
+                </div>
+                <div class="p-6">
+                    <div class="space-y-4">
+                        {% for priority, count in analytics.priority_distribution.items %}
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <div class="w-4 h-4 rounded-full mr-3
+                                    {% if priority == 'Critical' %}bg-red-400
+                                    {% elif priority == 'High' %}bg-orange-400
+                                    {% elif priority == 'Medium' %}bg-blue-400
+                                    {% elif priority == 'Low' %}bg-green-400
+                                    {% else %}bg-gray-300{% endif %}"></div>
+                                <span class="text-sm font-medium text-gray-700">{{ priority }}</span>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <div class="w-24 bg-gray-200 rounded-full h-2">
+                                    <div class="h-2 rounded-full
+                                        {% if priority == 'Critical' %}bg-red-400
+                                        {% elif priority == 'High' %}bg-orange-400
+                                        {% elif priority == 'Medium' %}bg-blue-400
+                                        {% elif priority == 'Low' %}bg-green-400
+                                        {% else %}bg-gray-300{% endif %}"
+                                        style="width: {{ count|floatformat:0 }}%"></div>
+                                </div>
+                                <span class="text-sm text-gray-600">{{ count }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLA Performance -->
+        <div class="bg-white rounded-lg shadow-md mb-8">
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-xl font-semibold text-gray-900">SLA Performance</h2>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-green-600">{{ analytics.sla_compliance|default:0 }}%</div>
+                        <div class="text-sm text-gray-600">SLA Compliance</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-red-600">{{ analytics.sla_breaches|default:0 }}</div>
+                        <div class="text-sm text-gray-600">SLA Breaches</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-yellow-600">{{ analytics.at_risk_tickets|default:0 }}</div>
+                        <div class="text-sm text-gray-600">At Risk Tickets</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Agent Performance -->
+        <div class="bg-white rounded-lg shadow-md mb-8">
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-xl font-semibold text-gray-900">Agent Performance</h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Agent
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Assigned Tickets
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Resolved Tickets
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Avg Response Time
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Customer Rating
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for agent in analytics.agent_performance %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 w-10 h-10 rounded-full overflow-hidden mr-3">
+                                        {% if agent.user.profile.picture %}
+                                            <img src="{{ agent.user.profile.picture.url }}"
+                                                 alt="{{ agent.user.get_full_name }}"
+                                                 class="w-full h-full object-cover">
+                                        {% else %}
+                                            <div class="w-full h-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white font-bold">
+                                                {{ agent.user.get_full_name|slice:":1"|upper }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <div class="text-sm font-medium text-gray-900">
+                                            {{ agent.user.get_full_name|default:agent.user.username }}
+                                        </div>
+                                        <div class="text-sm text-gray-500">{{ agent.user.email }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {{ agent.assigned_tickets|default:0 }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {{ agent.resolved_tickets|default:0 }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {{ agent.avg_response_time|default:"N/A" }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex items-center">
+                                        {% for i in "12345" %}
+                                        <svg class="w-4 h-4 {% if forloop.counter <= agent.rating %}text-yellow-400{% else %}text-gray-300{% endif %}" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+                                        </svg>
+                                        {% endfor %}
+                                    </div>
+                                    <span class="ml-2 text-sm text-gray-600">{{ agent.rating|default:"N/A" }}</span>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="bg-white rounded-lg shadow-md">
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-xl font-semibold text-gray-900">Recent Activity</h2>
+            </div>
+            <div class="p-6">
+                <div class="space-y-4">
+                    {% for activity in analytics.recent_activities %}
+                    <div class="flex items-start space-x-3">
+                        <div class="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                        <div class="flex-1">
+                            <p class="text-sm text-gray-900">{{ activity.description }}</p>
+                            <p class="text-xs text-gray-500">{{ activity.timestamp|date:"M d, Y H:i" }}</p>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-8">
+                        <p class="text-gray-500">No recent activity to display</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for interactive elements -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add any interactive functionality here
+    console.log('Analytics page loaded');
+});
+</script>
+{% endblock %}

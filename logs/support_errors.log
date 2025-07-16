@@ -1,0 +1,1274 @@
+[2025-07-09 15:05:35] ERROR - django.request - log_response:241 - Internal Server Error: /support/
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/support/views.py", line 97, in dashboard
+    ).aggregate(avg_rating=models.Avg('satisfaction_rating'))['avg_rating']
+NameError: name 'models' is not defined
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/support/views.py", line 135, in dashboard
+    return render(request, 'support/dashboard.html', {'error': True})
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 515, in parse
+    self.unclosed_block_tag(parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 578, in unclosed_block_tag
+    raise self.error(token, msg)
+django.template.exceptions.TemplateSyntaxError: Unclosed tag on line 6: 'block'. Looking for one of: endblock.
+[2025-07-09 15:05:35] ERROR - django.server - log_message:212 - "GET /support/ HTTP/1.1" 500 197775
+[2025-07-09 15:12:17] ERROR - django.request - log_response:241 - Internal Server Error: /support/api/stats/
+[2025-07-09 15:12:17] ERROR - django.server - log_message:212 - "GET /support/api/stats/ HTTP/1.1" 500 44
+[2025-07-09 15:48:12] ERROR - django.request - log_response:241 - Internal Server Error: /support/api/stats/
+[2025-07-09 15:48:12] ERROR - django.server - log_message:212 - "GET /support/api/stats/ HTTP/1.1" 500 44
+[2025-07-09 15:53:12] ERROR - django.request - log_response:241 - Internal Server Error: /support/api/stats/
+[2025-07-09 15:53:12] ERROR - django.server - log_message:212 - "GET /support/api/stats/ HTTP/1.1" 500 44
+[2025-07-09 15:58:12] ERROR - django.request - log_response:241 - Internal Server Error: /support/api/stats/
+[2025-07-09 15:58:12] ERROR - django.server - log_message:212 - "GET /support/api/stats/ HTTP/1.1" 500 44
+[2025-07-09 17:17:05] ERROR - django.request - log_response:241 - Internal Server Error: /support/api/stats/
+[2025-07-09 17:17:05] ERROR - django.server - log_message:212 - "GET /support/api/stats/ HTTP/1.1" 500 44
+[2025-07-09 17:22:05] ERROR - django.request - log_response:241 - Internal Server Error: /support/api/stats/
+[2025-07-09 17:22:05] ERROR - django.server - log_message:212 - "GET /support/api/stats/ HTTP/1.1" 500 44
+[2025-07-09 17:27:05] ERROR - django.request - log_response:241 - Internal Server Error: /support/api/stats/
+[2025-07-09 17:27:05] ERROR - django.server - log_message:212 - "GET /support/api/stats/ HTTP/1.1" 500 44
+[2025-07-09 17:58:24] ERROR - django.request - log_response:241 - Internal Server Error: /support/tickets/
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/support/views.py", line 257, in ticket_list
+    bulk_form = BulkActionForm(user=request.user) if user_roles['is_admin'] or user_roles['is_manager'] else None
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/support/forms.py", line 370, in __init__
+    assignable_users = PermissionManager.get_assignable_users(self.user)
+TypeError: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'endif'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/support/views.py", line 273, in ticket_list
+    return render(request, 'support/ticket_list.html', {'error': True})
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 63: 'endif', expected 'endblock'. Did you forget to register or load this tag?
+[2025-07-09 17:58:24] ERROR - django.server - log_message:212 - "GET /support/tickets/ HTTP/1.1" 500 274616
+[2025-07-09 18:01:03] ERROR - django.request - log_response:241 - Internal Server Error: /support/tickets/
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/support/views.py", line 257, in ticket_list
+    bulk_form = BulkActionForm(user=request.user) if user_roles['is_admin'] or user_roles['is_manager'] else None
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/support/forms.py", line 370, in __init__
+    assignable_users = PermissionManager.get_assignable_users(self.user)
+TypeError: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/smartif.py", line 180, in translate_token
+    op = OPERATORS[token]
+KeyError: 'request.GET.assigned_to==user.id|stringformat:"s"'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/support/views.py", line 273, in ticket_list
+    return render(request, 'support/ticket_list.html', {'error': True})
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 961, in do_if
+    nodelist = parser.parse(("elif", "else", "endif"))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 861, in do_for
+    nodelist_loop = parser.parse(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 960, in do_if
+    condition = TemplateIfParser(parser, bits).parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 893, in __init__
+    super().__init__(*args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/smartif.py", line 171, in __init__
+    mapped_tokens.append(self.translate_token(token))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/smartif.py", line 182, in translate_token
+    return self.create_var(token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 896, in create_var
+    return TemplateLiteral(self.template_parser.compile_filter(value), value)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 597, in compile_filter
+    return FilterExpression(token, self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 670, in __init__
+    raise TemplateSyntaxError(
+django.template.exceptions.TemplateSyntaxError: Could not parse some characters: request.GET.assigned_to|==user.id||stringformat:"s"
+[2025-07-09 18:01:03] ERROR - django.server - log_message:212 - "GET /support/tickets/ HTTP/1.1" 500 390176
+[2025-07-09 18:01:30] ERROR - django.request - log_response:241 - Internal Server Error: /support/tickets/
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/support/views.py", line 257, in ticket_list
+    bulk_form = BulkActionForm(user=request.user) if user_roles['is_admin'] or user_roles['is_manager'] else None
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/support/forms.py", line 370, in __init__
+    assignable_users = PermissionManager.get_assignable_users(self.user)
+TypeError: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'endif'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/support/views.py", line 273, in ticket_list
+    return render(request, 'support/ticket_list.html', {'error': True})
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 142: 'endif', expected 'endblock'. Did you forget to register or load this tag?
+[2025-07-09 18:01:30] ERROR - django.server - log_message:212 - "GET /support/tickets/ HTTP/1.1" 500 276347
+[2025-07-09 18:01:44] ERROR - django.request - log_response:241 - Internal Server Error: /support/tickets/
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/support/views.py", line 257, in ticket_list
+    bulk_form = BulkActionForm(user=request.user) if user_roles['is_admin'] or user_roles['is_manager'] else None
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/support/forms.py", line 370, in __init__
+    assignable_users = PermissionManager.get_assignable_users(self.user)
+TypeError: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'endif'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/support/views.py", line 273, in ticket_list
+    return render(request, 'support/ticket_list.html', {'error': True})
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 223: 'endif', expected 'endblock'. Did you forget to register or load this tag?
+[2025-07-09 18:01:44] ERROR - django.server - log_message:212 - "GET /support/tickets/ HTTP/1.1" 500 278458
+[2025-07-09 18:01:58] ERROR - django.request - log_response:241 - Internal Server Error: /support/tickets/
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/support/views.py", line 257, in ticket_list
+    bulk_form = BulkActionForm(user=request.user) if user_roles['is_admin'] or user_roles['is_manager'] else None
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/support/forms.py", line 370, in __init__
+    assignable_users = PermissionManager.get_assignable_users(self.user)
+TypeError: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/smartif.py", line 180, in translate_token
+    op = OPERATORS[token]
+KeyError: "request.GET.sort=='-created_at'"
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/support/views.py", line 273, in ticket_list
+    return render(request, 'support/ticket_list.html', {'error': True})
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 960, in do_if
+    condition = TemplateIfParser(parser, bits).parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 893, in __init__
+    super().__init__(*args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/smartif.py", line 171, in __init__
+    mapped_tokens.append(self.translate_token(token))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/smartif.py", line 182, in translate_token
+    return self.create_var(token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 896, in create_var
+    return TemplateLiteral(self.template_parser.compile_filter(value), value)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 597, in compile_filter
+    return FilterExpression(token, self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 698, in __init__
+    raise TemplateSyntaxError(
+django.template.exceptions.TemplateSyntaxError: Could not parse the remainder: '=='-created_at'' from 'request.GET.sort=='-created_at''
+[2025-07-09 18:01:58] ERROR - django.server - log_message:212 - "GET /support/tickets/ HTTP/1.1" 500 326212
+[2025-07-09 18:05:47] ERROR - django.request - log_response:241 - Internal Server Error: /support/tickets/
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/support/views.py", line 257, in ticket_list
+    bulk_form = BulkActionForm(user=request.user) if user_roles['is_admin'] or user_roles['is_manager'] else None
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/support/forms.py", line 370, in __init__
+    assignable_users = PermissionManager.get_assignable_users(self.user)
+TypeError: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/smartif.py", line 180, in translate_token
+    op = OPERATORS[token]
+KeyError: '(user_roles.is_admin'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/support/views.py", line 273, in ticket_list
+    return render(request, 'support/ticket_list.html', {'error': True})
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 960, in do_if
+    condition = TemplateIfParser(parser, bits).parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 893, in __init__
+    super().__init__(*args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/smartif.py", line 171, in __init__
+    mapped_tokens.append(self.translate_token(token))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/smartif.py", line 182, in translate_token
+    return self.create_var(token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 896, in create_var
+    return TemplateLiteral(self.template_parser.compile_filter(value), value)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 597, in compile_filter
+    return FilterExpression(token, self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 698, in __init__
+    raise TemplateSyntaxError(
+django.template.exceptions.TemplateSyntaxError: Could not parse the remainder: '(user_roles.is_admin' from '(user_roles.is_admin'
+[2025-07-09 18:05:47] ERROR - django.server - log_message:212 - "GET /support/tickets/ HTTP/1.1" 500 325522
+[2025-07-09 18:20:04] ERROR - django.request - log_response:241 - Internal Server Error: /support/tickets/create/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/support/views.py", line 286, in create_ticket
+    if form.is_valid():
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/forms/forms.py", line 197, in is_valid
+    return self.is_bound and not self.errors
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/forms/forms.py", line 192, in errors
+    self.full_clean()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/forms/forms.py", line 328, in full_clean
+    self._clean_form()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/forms/forms.py", line 349, in _clean_form
+    cleaned_data = self.clean()
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/support/forms.py", line 127, in clean
+    if not validation_result['valid']:
+KeyError: 'valid'
+[2025-07-09 18:20:04] ERROR - django.server - log_message:212 - "POST /support/tickets/create/ HTTP/1.1" 500 101708
+[2025-07-09 18:23:06] ERROR - django.request - log_response:241 - Internal Server Error: /support/tickets/create/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/support/views.py", line 286, in create_ticket
+    if form.is_valid():
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/forms/forms.py", line 197, in is_valid
+    return self.is_bound and not self.errors
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/forms/forms.py", line 192, in errors
+    self.full_clean()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/forms/forms.py", line 328, in full_clean
+    self._clean_form()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/forms/forms.py", line 349, in _clean_form
+    cleaned_data = self.clean()
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/support/forms.py", line 127, in clean
+    if not validation_result['is_valid']:
+KeyError: 'is_valid'
+[2025-07-09 18:23:06] ERROR - django.server - log_message:212 - "POST /support/tickets/create/ HTTP/1.1" 500 101722
+[2025-07-16 18:20:57] ERROR - django.request - log_response:241 - Internal Server Error: /logout/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/options.py", line 681, in get_field
+    return self.fields_map[field_name]
+KeyError: 'session_end_time'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/views.py", line 86, in logout_view
+    UserSession.objects.filter(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 1228, in update
+    query.add_update_values(kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/sql/subqueries.py", line 88, in add_update_values
+    field = self.get_meta().get_field(name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/options.py", line 683, in get_field
+    raise FieldDoesNotExist(
+django.core.exceptions.FieldDoesNotExist: UserSession has no field named 'session_end_time'
+[2025-07-16 18:20:57] ERROR - django.server - log_message:212 - "GET /logout/ HTTP/1.1" 500 93869
+[2025-07-16 18:23:15] ERROR - django.request - log_response:241 - Internal Server Error: /session/status/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/mysql/base.py", line 76, in execute
+    return self.cursor.execute(query, args)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/cursors.py", line 330, in _query
+    db.query(q)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/connections.py", line 280, in query
+    _mysql.connection.query(self, query)
+MySQLdb.OperationalError: (1054, "Unknown column 'trueAlign_usersession.session_end_time' in 'field list'")
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 87, in __call__
+    self._process_authenticated_request(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 161, in _process_authenticated_request
+    session = self._get_or_create_session_throttled(request, user)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 186, in _get_or_create_session_throttled
+    session = UserSession.objects.select_related('user').get(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 645, in get
+    num = len(clone)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 382, in __len__
+    self._fetch_all()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 1928, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/sql/compiler.py", line 1562, in execute_sql
+    cursor.execute(sql, params)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 122, in execute
+    return super().execute(sql, params)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/mysql/base.py", line 76, in execute
+    return self.cursor.execute(query, args)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/cursors.py", line 330, in _query
+    db.query(q)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/connections.py", line 280, in query
+    _mysql.connection.query(self, query)
+django.db.utils.OperationalError: (1054, "Unknown column 'trueAlign_usersession.session_end_time' in 'field list'")
+[2025-07-16 18:23:15] ERROR - django.request - log_response:241 - Internal Server Error: /session/status/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/mysql/base.py", line 76, in execute
+    return self.cursor.execute(query, args)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/cursors.py", line 330, in _query
+    db.query(q)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/connections.py", line 280, in query
+    _mysql.connection.query(self, query)
+MySQLdb.OperationalError: (1054, "Unknown column 'trueAlign_usersession.session_end_time' in 'field list'")
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 87, in __call__
+    self._process_authenticated_request(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 161, in _process_authenticated_request
+    session = self._get_or_create_session_throttled(request, user)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 186, in _get_or_create_session_throttled
+    session = UserSession.objects.select_related('user').get(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 645, in get
+    num = len(clone)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 382, in __len__
+    self._fetch_all()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 1928, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/sql/compiler.py", line 1562, in execute_sql
+    cursor.execute(sql, params)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 122, in execute
+    return super().execute(sql, params)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/mysql/base.py", line 76, in execute
+    return self.cursor.execute(query, args)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/cursors.py", line 330, in _query
+    db.query(q)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/connections.py", line 280, in query
+    _mysql.connection.query(self, query)
+django.db.utils.OperationalError: (1054, "Unknown column 'trueAlign_usersession.session_end_time' in 'field list'")
+[2025-07-16 18:23:15] ERROR - django.server - log_message:212 - "GET /session/status/?tab_id=tab_1e5rpevs2_1752669900602 HTTP/1.1" 500 243721
+[2025-07-16 18:23:15] ERROR - django.server - log_message:212 - "GET /session/status/?tab_id=tab_h9kg6z28x_1752669900602 HTTP/1.1" 500 243721
+[2025-07-16 18:25:07] ERROR - django.request - log_response:241 - Internal Server Error: /session/status/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/mysql/base.py", line 76, in execute
+    return self.cursor.execute(query, args)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/cursors.py", line 330, in _query
+    db.query(q)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/connections.py", line 280, in query
+    _mysql.connection.query(self, query)
+MySQLdb.OperationalError: (1054, "Unknown column 'trueAlign_usersession.session_end_time' in 'field list'")
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 87, in __call__
+    self._process_authenticated_request(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 161, in _process_authenticated_request
+    session = self._get_or_create_session_throttled(request, user)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 186, in _get_or_create_session_throttled
+    session = UserSession.objects.select_related('user').get(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 645, in get
+    num = len(clone)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 382, in __len__
+    self._fetch_all()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 1928, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/sql/compiler.py", line 1562, in execute_sql
+    cursor.execute(sql, params)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 122, in execute
+    return super().execute(sql, params)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/mysql/base.py", line 76, in execute
+    return self.cursor.execute(query, args)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/cursors.py", line 330, in _query
+    db.query(q)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/connections.py", line 280, in query
+    _mysql.connection.query(self, query)
+django.db.utils.OperationalError: (1054, "Unknown column 'trueAlign_usersession.session_end_time' in 'field list'")
+[2025-07-16 18:25:07] ERROR - django.request - log_response:241 - Internal Server Error: /session/status/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/mysql/base.py", line 76, in execute
+    return self.cursor.execute(query, args)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/cursors.py", line 330, in _query
+    db.query(q)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/connections.py", line 280, in query
+    _mysql.connection.query(self, query)
+MySQLdb.OperationalError: (1054, "Unknown column 'trueAlign_usersession.session_end_time' in 'field list'")
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 87, in __call__
+    self._process_authenticated_request(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 161, in _process_authenticated_request
+    session = self._get_or_create_session_throttled(request, user)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 186, in _get_or_create_session_throttled
+    session = UserSession.objects.select_related('user').get(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 645, in get
+    num = len(clone)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 382, in __len__
+    self._fetch_all()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 1928, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/sql/compiler.py", line 1562, in execute_sql
+    cursor.execute(sql, params)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 122, in execute
+    return super().execute(sql, params)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/mysql/base.py", line 76, in execute
+    return self.cursor.execute(query, args)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/cursors.py", line 330, in _query
+    db.query(q)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/connections.py", line 280, in query
+    _mysql.connection.query(self, query)
+django.db.utils.OperationalError: (1054, "Unknown column 'trueAlign_usersession.session_end_time' in 'field list'")
+[2025-07-16 18:25:07] ERROR - django.server - log_message:212 - "GET /session/status/?tab_id=tab_1e5rpevs2_1752669900602 HTTP/1.1" 500 243721
+[2025-07-16 18:25:07] ERROR - django.server - log_message:212 - "GET /session/status/?tab_id=tab_h9kg6z28x_1752669900602 HTTP/1.1" 500 243721
+[2025-07-16 18:26:00] ERROR - django.request - log_response:241 - Internal Server Error: /session/status/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/mysql/base.py", line 76, in execute
+    return self.cursor.execute(query, args)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/cursors.py", line 330, in _query
+    db.query(q)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/connections.py", line 280, in query
+    _mysql.connection.query(self, query)
+MySQLdb.OperationalError: (1054, "Unknown column 'trueAlign_usersession.session_end_time' in 'field list'")
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 87, in __call__
+    self._process_authenticated_request(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 161, in _process_authenticated_request
+    session = self._get_or_create_session_throttled(request, user)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 186, in _get_or_create_session_throttled
+    session = UserSession.objects.select_related('user').get(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 645, in get
+    num = len(clone)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 382, in __len__
+    self._fetch_all()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 1928, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/sql/compiler.py", line 1562, in execute_sql
+    cursor.execute(sql, params)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 122, in execute
+    return super().execute(sql, params)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/mysql/base.py", line 76, in execute
+    return self.cursor.execute(query, args)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/cursors.py", line 330, in _query
+    db.query(q)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/connections.py", line 280, in query
+    _mysql.connection.query(self, query)
+django.db.utils.OperationalError: (1054, "Unknown column 'trueAlign_usersession.session_end_time' in 'field list'")
+[2025-07-16 18:26:00] ERROR - django.request - log_response:241 - Internal Server Error: /session/status/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/mysql/base.py", line 76, in execute
+    return self.cursor.execute(query, args)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/cursors.py", line 330, in _query
+    db.query(q)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/connections.py", line 280, in query
+    _mysql.connection.query(self, query)
+MySQLdb.OperationalError: (1054, "Unknown column 'trueAlign_usersession.session_end_time' in 'field list'")
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 87, in __call__
+    self._process_authenticated_request(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 161, in _process_authenticated_request
+    session = self._get_or_create_session_throttled(request, user)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 186, in _get_or_create_session_throttled
+    session = UserSession.objects.select_related('user').get(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 645, in get
+    num = len(clone)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 382, in __len__
+    self._fetch_all()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 1928, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/sql/compiler.py", line 1562, in execute_sql
+    cursor.execute(sql, params)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 122, in execute
+    return super().execute(sql, params)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/mysql/base.py", line 76, in execute
+    return self.cursor.execute(query, args)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/cursors.py", line 330, in _query
+    db.query(q)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/connections.py", line 280, in query
+    _mysql.connection.query(self, query)
+django.db.utils.OperationalError: (1054, "Unknown column 'trueAlign_usersession.session_end_time' in 'field list'")
+[2025-07-16 18:26:00] ERROR - django.server - log_message:212 - "GET /session/status/?tab_id=tab_1e5rpevs2_1752669900602 HTTP/1.1" 500 243721
+[2025-07-16 18:26:00] ERROR - django.server - log_message:212 - "GET /session/status/?tab_id=tab_h9kg6z28x_1752669900602 HTTP/1.1" 500 243721
+[2025-07-16 18:27:00] ERROR - django.request - log_response:241 - Internal Server Error: /session/status/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/mysql/base.py", line 76, in execute
+    return self.cursor.execute(query, args)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/cursors.py", line 330, in _query
+    db.query(q)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/connections.py", line 280, in query
+    _mysql.connection.query(self, query)
+MySQLdb.OperationalError: (1054, "Unknown column 'trueAlign_usersession.session_end_time' in 'field list'")
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 87, in __call__
+    self._process_authenticated_request(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 161, in _process_authenticated_request
+    session = self._get_or_create_session_throttled(request, user)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 186, in _get_or_create_session_throttled
+    session = UserSession.objects.select_related('user').get(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 645, in get
+    num = len(clone)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 382, in __len__
+    self._fetch_all()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 1928, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/sql/compiler.py", line 1562, in execute_sql
+    cursor.execute(sql, params)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 122, in execute
+    return super().execute(sql, params)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/mysql/base.py", line 76, in execute
+    return self.cursor.execute(query, args)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/cursors.py", line 330, in _query
+    db.query(q)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/connections.py", line 280, in query
+    _mysql.connection.query(self, query)
+django.db.utils.OperationalError: (1054, "Unknown column 'trueAlign_usersession.session_end_time' in 'field list'")
+[2025-07-16 18:27:00] ERROR - django.request - log_response:241 - Internal Server Error: /session/status/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/mysql/base.py", line 76, in execute
+    return self.cursor.execute(query, args)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/cursors.py", line 330, in _query
+    db.query(q)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/connections.py", line 280, in query
+    _mysql.connection.query(self, query)
+MySQLdb.OperationalError: (1054, "Unknown column 'trueAlign_usersession.session_end_time' in 'field list'")
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 87, in __call__
+    self._process_authenticated_request(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 161, in _process_authenticated_request
+    session = self._get_or_create_session_throttled(request, user)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 186, in _get_or_create_session_throttled
+    session = UserSession.objects.select_related('user').get(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 645, in get
+    num = len(clone)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 382, in __len__
+    self._fetch_all()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 1928, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/sql/compiler.py", line 1562, in execute_sql
+    cursor.execute(sql, params)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 122, in execute
+    return super().execute(sql, params)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/mysql/base.py", line 76, in execute
+    return self.cursor.execute(query, args)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/cursors.py", line 330, in _query
+    db.query(q)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/connections.py", line 280, in query
+    _mysql.connection.query(self, query)
+django.db.utils.OperationalError: (1054, "Unknown column 'trueAlign_usersession.session_end_time' in 'field list'")
+[2025-07-16 18:27:00] ERROR - django.server - log_message:212 - "GET /session/status/?tab_id=tab_h9kg6z28x_1752669900602 HTTP/1.1" 500 243721
+[2025-07-16 18:27:00] ERROR - django.server - log_message:212 - "GET /session/status/?tab_id=tab_1e5rpevs2_1752669900602 HTTP/1.1" 500 243721
+[2025-07-16 18:28:22] ERROR - django.request - log_response:241 - Internal Server Error: /session/update-activity/
+[2025-07-16 18:28:22] ERROR - django.request - log_response:241 - Internal Server Error: /session/update-activity/
+[2025-07-16 18:28:22] ERROR - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 500 34
+[2025-07-16 18:28:22] ERROR - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 500 34
+[2025-07-16 18:28:22] ERROR - django.request - log_response:241 - Internal Server Error: /session/update-activity/
+[2025-07-16 18:28:22] ERROR - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 500 34
+[2025-07-16 18:28:22] ERROR - django.request - log_response:241 - Internal Server Error: /session/update-activity/
+[2025-07-16 18:28:22] ERROR - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 500 34
+[2025-07-16 18:28:24] ERROR - django.request - log_response:241 - Internal Server Error: /session/update-activity/
+[2025-07-16 18:28:24] ERROR - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 500 34
+[2025-07-16 18:28:24] ERROR - django.request - log_response:241 - Internal Server Error: /session/update-activity/
+[2025-07-16 18:28:24] ERROR - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 500 34
+[2025-07-16 18:28:29] ERROR - django.request - log_response:241 - Internal Server Error: /logout/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/views.py", line 102, in logout_view
+    OptimizedSessionTrackingMiddleware.force_flush_user_buffer(user.id, session.id)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 527, in force_flush_user_buffer
+    cls._flush_buffer_to_database(buffer_key, session)
+TypeError: OptimizedSessionTrackingMiddleware._flush_buffer_to_database() missing 1 required positional argument: 'session'
+[2025-07-16 18:28:29] ERROR - django.server - log_message:212 - "GET /logout/ HTTP/1.1" 500 82198
+[2025-07-16 18:29:30] ERROR - django.request - log_response:241 - Internal Server Error: /logout/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/views.py", line 102, in logout_view
+    OptimizedSessionTrackingMiddleware.force_flush_user_buffer(user.id, session.id)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 527, in force_flush_user_buffer
+    cls._flush_buffer_to_database(buffer_key, session)
+TypeError: OptimizedSessionTrackingMiddleware._flush_buffer_to_database() missing 1 required positional argument: 'session'
+[2025-07-16 18:29:30] ERROR - django.server - log_message:212 - "GET /logout/ HTTP/1.1" 500 82198
+[2025-07-16 18:30:41] ERROR - django.request - log_response:241 - Internal Server Error: /session/update-activity/
+[2025-07-16 18:30:41] ERROR - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 500 34
+[2025-07-16 18:30:43] ERROR - django.request - log_response:241 - Internal Server Error: /session/update-activity/
+[2025-07-16 18:30:43] ERROR - django.server - log_message:212 - "POST /session/update-activity/ HTTP/1.1" 500 34
+[2025-07-16 18:30:43] ERROR - django.request - log_response:241 - Internal Server Error: /logout/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/views.py", line 102, in logout_view
+    OptimizedSessionTrackingMiddleware.force_flush_user_buffer(user.id, session.id)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 527, in force_flush_user_buffer
+    cls._flush_buffer_to_database(buffer_key, session)
+TypeError: OptimizedSessionTrackingMiddleware._flush_buffer_to_database() missing 1 required positional argument: 'session'
+[2025-07-16 18:30:43] ERROR - django.server - log_message:212 - "GET /logout/ HTTP/1.1" 500 81916
+[2025-07-16 18:32:46] ERROR - django.request - log_response:241 - Internal Server Error: /dashboard/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 87, in __call__
+    self._process_authenticated_request(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 168, in _process_authenticated_request
+    self._collect_activity_data(request, session, user.id)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 325, in _collect_activity_data
+    buffer['page_views'].append(page_view)
+KeyError: 'page_views'
+[2025-07-16 18:32:46] ERROR - django.server - log_message:212 - "GET /dashboard/ HTTP/1.1" 500 79478
+[2025-07-16 18:39:21] ERROR - django.request - log_response:241 - Internal Server Error: /session/status/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 87, in __call__
+    self._process_authenticated_request(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 168, in _process_authenticated_request
+    self._collect_activity_data(request, session, user.id)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 328, in _collect_activity_data
+    buffer['pending_updates'].update({
+KeyError: 'pending_updates'
+[2025-07-16 18:39:21] ERROR - django.request - log_response:241 - Internal Server Error: /session/status/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 87, in __call__
+    self._process_authenticated_request(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 168, in _process_authenticated_request
+    self._collect_activity_data(request, session, user.id)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 328, in _collect_activity_data
+    buffer['pending_updates'].update({
+KeyError: 'pending_updates'
+[2025-07-16 18:39:21] ERROR - django.server - log_message:212 - "GET /session/status/?tab_id=tab_9gv8maqkq_1752671241460 HTTP/1.1" 500 80280
+[2025-07-16 18:39:21] ERROR - django.server - log_message:212 - "GET /session/status/?tab_id=tab_j4v24k5y5_1752671241460 HTTP/1.1" 500 80280
+[2025-07-16 18:41:21] ERROR - django.request - log_response:241 - Internal Server Error: /session/status/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 87, in __call__
+    self._process_authenticated_request(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 168, in _process_authenticated_request
+    self._collect_activity_data(request, session, user.id)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 328, in _collect_activity_data
+    buffer['pending_updates'].update({
+KeyError: 'pending_updates'
+[2025-07-16 18:41:21] ERROR - django.request - log_response:241 - Internal Server Error: /session/status/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 87, in __call__
+    self._process_authenticated_request(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 168, in _process_authenticated_request
+    self._collect_activity_data(request, session, user.id)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 328, in _collect_activity_data
+    buffer['pending_updates'].update({
+KeyError: 'pending_updates'
+[2025-07-16 18:41:21] ERROR - django.server - log_message:212 - "GET /session/status/?tab_id=tab_9gv8maqkq_1752671241460 HTTP/1.1" 500 80282
+[2025-07-16 18:41:21] ERROR - django.server - log_message:212 - "GET /session/status/?tab_id=tab_j4v24k5y5_1752671241460 HTTP/1.1" 500 80282
+[2025-07-16 18:42:21] ERROR - django.request - log_response:241 - Internal Server Error: /session/status/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 87, in __call__
+    self._process_authenticated_request(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 168, in _process_authenticated_request
+    self._collect_activity_data(request, session, user.id)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 328, in _collect_activity_data
+    buffer['pending_updates'].update({
+KeyError: 'pending_updates'
+[2025-07-16 18:42:21] ERROR - django.request - log_response:241 - Internal Server Error: /session/status/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 87, in __call__
+    self._process_authenticated_request(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 168, in _process_authenticated_request
+    self._collect_activity_data(request, session, user.id)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 328, in _collect_activity_data
+    buffer['pending_updates'].update({
+KeyError: 'pending_updates'
+[2025-07-16 18:42:21] ERROR - django.server - log_message:212 - "GET /session/status/?tab_id=tab_9gv8maqkq_1752671241460 HTTP/1.1" 500 80282
+[2025-07-16 18:42:21] ERROR - django.server - log_message:212 - "GET /session/status/?tab_id=tab_j4v24k5y5_1752671241460 HTTP/1.1" 500 80282
+[2025-07-16 18:43:21] ERROR - django.request - log_response:241 - Internal Server Error: /session/status/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 87, in __call__
+    self._process_authenticated_request(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 168, in _process_authenticated_request
+    self._collect_activity_data(request, session, user.id)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 328, in _collect_activity_data
+    buffer['pending_updates'].update({
+KeyError: 'pending_updates'
+[2025-07-16 18:43:21] ERROR - django.request - log_response:241 - Internal Server Error: /session/status/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 87, in __call__
+    self._process_authenticated_request(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 168, in _process_authenticated_request
+    self._collect_activity_data(request, session, user.id)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 328, in _collect_activity_data
+    buffer['pending_updates'].update({
+KeyError: 'pending_updates'
+[2025-07-16 18:43:21] ERROR - django.server - log_message:212 - "GET /session/status/?tab_id=tab_9gv8maqkq_1752671241460 HTTP/1.1" 500 80281
+[2025-07-16 18:43:21] ERROR - django.server - log_message:212 - "GET /session/status/?tab_id=tab_j4v24k5y5_1752671241460 HTTP/1.1" 500 80281
+[2025-07-16 18:45:07] ERROR - django.request - log_response:241 - Internal Server Error: /session/status/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 87, in __call__
+    self._process_authenticated_request(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 168, in _process_authenticated_request
+    self._collect_activity_data(request, session, user.id)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 328, in _collect_activity_data
+    buffer['pending_updates'].update({
+KeyError: 'pending_updates'
+[2025-07-16 18:45:07] ERROR - django.request - log_response:241 - Internal Server Error: /session/status/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 87, in __call__
+    self._process_authenticated_request(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 168, in _process_authenticated_request
+    self._collect_activity_data(request, session, user.id)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 328, in _collect_activity_data
+    buffer['pending_updates'].update({
+KeyError: 'pending_updates'
+[2025-07-16 18:45:07] ERROR - django.server - log_message:212 - "GET /session/status/?tab_id=tab_9gv8maqkq_1752671241460 HTTP/1.1" 500 80810
+[2025-07-16 18:45:07] ERROR - django.server - log_message:212 - "GET /session/status/?tab_id=tab_j4v24k5y5_1752671241460 HTTP/1.1" 500 80810
+[2025-07-16 18:45:55] ERROR - django.request - log_response:241 - Internal Server Error: /session/status/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 87, in __call__
+    self._process_authenticated_request(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 168, in _process_authenticated_request
+    self._collect_activity_data(request, session, user.id)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 328, in _collect_activity_data
+    buffer['pending_updates'].update({
+KeyError: 'pending_updates'
+[2025-07-16 18:45:55] ERROR - django.request - log_response:241 - Internal Server Error: /session/status/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 87, in __call__
+    self._process_authenticated_request(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 168, in _process_authenticated_request
+    self._collect_activity_data(request, session, user.id)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 328, in _collect_activity_data
+    buffer['pending_updates'].update({
+KeyError: 'pending_updates'
+[2025-07-16 18:45:55] ERROR - django.server - log_message:212 - "GET /session/status/?tab_id=tab_9gv8maqkq_1752671241460 HTTP/1.1" 500 81133
+[2025-07-16 18:45:55] ERROR - django.server - log_message:212 - "GET /session/status/?tab_id=tab_j4v24k5y5_1752671241460 HTTP/1.1" 500 81133
+[2025-07-16 18:45:57] ERROR - django.request - log_response:241 - Internal Server Error: /dashboard/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 87, in __call__
+    self._process_authenticated_request(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 168, in _process_authenticated_request
+    self._collect_activity_data(request, session, user.id)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 328, in _collect_activity_data
+    buffer['pending_updates'].update({
+KeyError: 'pending_updates'
+[2025-07-16 18:45:57] ERROR - django.server - log_message:212 - "GET /dashboard/ HTTP/1.1" 500 80746
+[2025-07-16 18:47:00] ERROR - django.request - log_response:241 - Internal Server Error: /dashboard/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 87, in __call__
+    self._process_authenticated_request(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 168, in _process_authenticated_request
+    self._collect_activity_data(request, session, user.id)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 328, in _collect_activity_data
+    buffer['pending_updates'].update({
+KeyError: 'pending_updates'
+[2025-07-16 18:47:00] ERROR - django.server - log_message:212 - "GET /dashboard/ HTTP/1.1" 500 81225
+[2025-07-16 19:02:36] ERROR - django.request - log_response:241 - Internal Server Error: /optimized-batch-activity/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 87, in __call__
+    self._process_authenticated_request(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 168, in _process_authenticated_request
+    self._collect_activity_data(request, session, user.id)
+  File "/Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/middleware.py", line 363, in _collect_activity_data
+    buffer['pending_updates'].update({
+KeyError: 'pending_updates'
+[2025-07-16 19:02:36] ERROR - django.server - log_message:212 - "POST /optimized-batch-activity/ HTTP/1.1" 500 79305

@@ -16,17 +16,76 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/reconnecting-websocket/1.0.0/reconnecting-websocket.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
         {% if user.is_authenticated %}
-        <script src="{% static 'js/session_tracker_functions.js' %}"></script>
-        <script src="{% static 'js/session_tracker.js' %}"></script>
+        <script src="{% static 'js/optimized-session-tracker.js' %}"></script>
         <script>
-            // Initialize session tracker when DOM is loaded
+            // Initialize optimized session tracker when DOM is loaded
             document.addEventListener('DOMContentLoaded', function() {
-                console.log('Initializing SessionTracker...');
-                if (typeof SessionTracker !== 'undefined' && SessionTracker.init) {
-                    SessionTracker.init();
-                    console.log('SessionTracker initialized successfully');
-                } else {
-                    console.error('SessionTracker not available or missing init method');
+                console.log('Initializing OptimizedSessionTracker...');
+                try {
+                    // Get geo-location if available
+                    let locationData = null;
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(
+                            function(position) {
+                                locationData = {
+                                    latitude: position.coords.latitude,
+                                    longitude: position.coords.longitude,
+                                    accuracy: position.coords.accuracy
+                                };
+                                console.log('Location data obtained:', locationData);
+
+                                // Update location status display
+                                const locationStatus = document.getElementById('location-status');
+                                if (locationStatus) {
+                                    // Fetch location name using reverse geocoding
+                                    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}&zoom=18&addressdetails=1`)
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        const city = data.address.city || data.address.town || data.address.village || '';
+                                        const state = data.address.state || '';
+                                        locationStatus.innerHTML = `<i class="ri-map-pin-line mr-1 text-green-500"></i><span>${city}${city && state ? ', ' : ''}${state}</span>`;
+                                    })
+                                    .catch(error => {
+                                        locationStatus.innerHTML = `<i class="ri-map-pin-line mr-1 text-green-500"></i><span>Location detected</span>`;
+                                    });
+                                }
+                            },
+                            function(error) {
+                                console.warn('Location error:', error.message);
+                                // Update location status with error
+                                const locationStatus = document.getElementById('location-status');
+                                if (locationStatus) {
+                                    locationStatus.innerHTML = `<i class="ri-map-pin-line mr-1 text-yellow-500"></i><span>Using IP location</span>`;
+                                }
+                            },
+                            { timeout: 5000, maximumAge: 600000 }
+                        );
+                    } else {
+                        // Geolocation not supported
+                        const locationStatus = document.getElementById('location-status');
+                        if (locationStatus) {
+                            locationStatus.innerHTML = `<i class="ri-map-pin-line mr-1 text-yellow-500"></i><span>Using IP location</span>`;
+                        }
+                    }
+
+                    window.sessionTracker = new OptimizedSessionTracker({
+                        heartbeatUrl: '/optimized-heartbeat/',
+                        activityUrl: '/optimized-batch-activity/',
+                        statusUrl: '/optimized-session-status/',
+                        endSessionUrl: '/optimized-end-session/',
+                        syncUrl: '/optimized-force-sync/',
+                        analyticsUrl: '/optimized-session-analytics/',
+                        user_id: '{{ user.id }}',
+                        location: locationData,
+                        enableLocationTracking: true,
+                        trackIdle: true,
+                        idleTimeout: 300000, // 5 minutes
+                        warningTimeout: 240000, // 4 minutes
+                        debug: true
+                    });
+                    console.log('OptimizedSessionTracker initialized successfully');
+                } catch (e) {
+                    console.error('OptimizedSessionTracker initialization error:', e);
                 }
             });
         </script>
@@ -816,37 +875,60 @@
                 :class="contentClasses"
                 class="flex-1 min-w-0 transition-all duration-300 ease-in-out p-4 md:p-6 bg-gradient-radial from-primary-50/5 via-transparent to-transparent"
             >
-                <header class="mb-8 bg-white/80 backdrop-blur-2xl rounded-2xl p-6 md:p-8 shadow-elegant border border-white/40 transform transition-all duration-300 hover:shadow-elegant-hover hover:-translate-y-1">
+                <header class="mb-8 bg-white/80 backdrop-blur-2xl rounded-2xl p-6 md:p-8 shadow-elegant border border-white/40 transform transition-all duration-300 hover:shadow-elegant-hover">
                     <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-                        <div class="space-y-3">
-                            <h1 id="greeting" class="font-display font-semibold text-3xl sm:text-4xl lg:text-5xl text-neutral-800 tracking-tight leading-tight"></h1>
-                            <p class="text-neutral-500 flex items-center gap-3 text-base">
 
+                        <div class="space-y-3">
+                            <h1 id="greeting" class="font-display font-semibold text-3xl sm:text-4xl lg:text-5xl text-neutral-800 tracking-tight leading-tight">
+                                Welcome Back!
+                            </h1>
+                            <p class="text-neutral-500 text-base">
+                                <span id="location-display" class="flex items-center gap-2">
+                                    <i id="location-icon" class="ri-map-pin-line text-yellow-500 animate-pulse"></i>
+                                    <span id="location-text">Determining location...</span>
+                                </span>
                             </p>
                         </div>
+
                         <div class="flex items-center gap-5 self-end lg:self-auto">
-                            <div class="flex items-center gap-3 bg-white/60 backdrop-blur-xl px-5 py-3 rounded-xl border border-white/60 shadow-elegant">
-                                <i class="ri-user-3-line text-xl text-primary-600"></i>
-                                <span class="font-medium text-neutral-700 text-base">{{ user.username }}</span>
+                            <div class="relative">
+                                <div id="user-dropdown-toggle" class="flex items-center gap-3 bg-white/60 backdrop-blur-xl px-5 py-3 rounded-xl border border-white/60 shadow-elegant cursor-pointer transition-all duration-200 hover:bg-white/70 hover:shadow-elegant-hover">
+                                    <i class="ri-user-3-line text-xl text-primary-600"></i>
+                                    <span class="font-medium text-neutral-700 text-base">{{ user.username }}</span>
+                                    <i class="ri-arrow-down-s-line text-lg text-neutral-500 transition-transform duration-200" id="dropdown-arrow"></i>
+                                </div>
+
+                                <div id="user-dropdown" class="absolute top-full right-0 mt-2 w-56 bg-white/90 backdrop-blur-xl rounded-xl border border-white/60 shadow-elegant opacity-0 invisible transform -translate-y-2 transition-all duration-200 z-50">
+                                    <div class="py-2">
+                                        <div class="px-4 py-3 border-b border-white/30">
+                                            <div class="flex items-center gap-3">
+                                                <div class="w-10 h-10 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full flex items-center justify-center">
+                                                    <span class="text-white font-semibold text-sm">{{ user.first_name|first|default:user.username|first|upper }}</span>
+                                                </div>
+                                                <div>
+                                                    <p class="font-medium text-neutral-800 text-sm">{{ user.get_full_name|default:user.username }}</p>
+                                                    <p class="text-neutral-500 text-xs">{{ user.email }}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="py-1">
+                                            <a href="{% url 'core:password_reset' %}" class="flex items-center gap-3 px-4 py-3 text-neutral-700 hover:bg-white/50 transition-colors duration-150">
+                                                <i class="ri-lock-password-line text-lg text-primary-600"></i>
+                                                <span class="text-sm font-medium">Reset Password</span>
+                                            </a>
+                                            <a href="#" class="flex items-center gap-3 px-4 py-3 text-neutral-700 hover:bg-white/50 transition-colors duration-150">
+                                                <i class="ri-user-settings-line text-lg text-neutral-600"></i>
+                                                <span class="text-sm font-medium">Profile Settings</span>
+                                            </a>
+                                            <div class="border-t border-white/30 my-1"></div>
+                                            <a href="{% url 'core:logout' %}" class="flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 transition-colors duration-150">
+                                                <i class="ri-logout-box-line text-lg"></i>
+                                                <span class="text-sm font-medium">Logout</span>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <a
-                                href="{% url 'core:logout' %}"
-                                class="group btn-accent flex items-center gap-2.5 text-base font-medium py-3 px-5 rounded-xl bg-accent-500 text-white hover:bg-accent-600/90 active:bg-accent-700 transform transition-all duration-300 hover:-translate-y-0.5 hover:shadow-glow-accent relative overflow-hidden"
-                            >
-                                <svg
-                                    class="w-5 h-5 transition-transform duration-300  relative z-10"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                >
-                                    <path
-                                        d="M17 7L15.59 8.41L18.17 11H8V13H18.17L15.59 15.58L17 17L22 12L17 7ZM4 5H12V3H4C2.9 3 2 3.9 2 5V19C2 20.1 2.9 21 4 21H12V19H4V5Z"
-                                        fill="currentColor"
-                                    />
-                                </svg>
-                                <span class="relative z-10">Logout</span>
-                                <div class="absolute inset-0 bg-gradient-to-r from-accent-600 to-accent-700 opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
-                            </a>
                         </div>
                     </div>
                 </header>
@@ -1078,7 +1160,49 @@
         </script>
         <!-- Additional Scripts -->
         <script>
-            // Additional scripts can be added here
+            // User dropdown functionality
+            function toggleUserDropdown() {
+                const dropdown = document.getElementById('user-dropdown');
+                const arrow = document.getElementById('dropdown-arrow');
+
+                if (dropdown.classList.contains('opacity-0')) {
+                    // Show dropdown
+                    dropdown.classList.remove('opacity-0', 'invisible', 'translate-y-2');
+                    dropdown.classList.add('opacity-100', 'visible', 'translate-y-0');
+                    arrow.classList.add('rotate-180');
+                } else {
+                    // Hide dropdown
+                    dropdown.classList.add('opacity-0', 'invisible', 'translate-y-2');
+                    dropdown.classList.remove('opacity-100', 'visible', 'translate-y-0');
+                    arrow.classList.remove('rotate-180');
+                }
+            }
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(event) {
+                const dropdown = document.getElementById('user-dropdown');
+                const userDropdownContainer = dropdown?.closest('.relative');
+
+                if (dropdown && !userDropdownContainer?.contains(event.target)) {
+                    dropdown.classList.add('opacity-0', 'invisible', 'translate-y-2');
+                    dropdown.classList.remove('opacity-100', 'visible', 'translate-y-0');
+                    const arrow = document.getElementById('dropdown-arrow');
+                    arrow?.classList.remove('rotate-180');
+                }
+            });
+
+            // Close dropdown on escape key
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape') {
+                    const dropdown = document.getElementById('user-dropdown');
+                    if (dropdown && !dropdown.classList.contains('opacity-0')) {
+                        dropdown.classList.add('opacity-0', 'invisible', 'translate-y-2');
+                        dropdown.classList.remove('opacity-100', 'visible', 'translate-y-0');
+                        const arrow = document.getElementById('dropdown-arrow');
+                        arrow?.classList.remove('rotate-180');
+                    }
+                }
+            });
         </script>
 
         <script>

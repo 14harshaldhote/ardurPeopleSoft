@@ -1,2 +1,0 @@
-[2025-06-29 01:10:25] INFO - trueAlign.shift.performance - test_performance_logging:197 - PERFORMANCE: test_operation took 105.02ms
-[2025-06-29 01:10:25] WARNING - trueAlign.shift.performance - test_performance_logging:204 - PERFORMANCE: slow_operation took 1500ms

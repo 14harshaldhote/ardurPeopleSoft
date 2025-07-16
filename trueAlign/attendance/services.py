@@ -438,21 +438,40 @@ class AttendanceIntegrationService:
             if session.location_type == 'client_site':
                 return 'Client Site'
 
-            # If we have specific location information, try to determine office vs remote
+            # First check if we have GPS coordinates (more accurate)
+            if session.location_latitude and session.location_longitude:
+                # You can add office coordinates checking here
+                # Example office coordinates (Mumbai: 19.0760, 72.8777)
+                office_locations = [
+                    {'lat': 19.0760, 'lng': 72.8777, 'radius': 0.01, 'name': 'Mumbai Office'},
+                    {'lat': 28.6139, 'lng': 77.2090, 'radius': 0.01, 'name': 'Delhi Office'},
+                    # Add more office locations as needed
+                ]
+
+                # Check if location is near any office
+                for office in office_locations:
+                    lat_diff = abs(float(session.location_latitude) - office['lat'])
+                    lng_diff = abs(float(session.location_longitude) - office['lng'])
+
+                    if lat_diff < office['radius'] and lng_diff < office['radius']:
+                        logger.info(f"Location detected as {office['name']} based on GPS coordinates")
+                        return 'Office'
+
+                # If not near any office, consider it remote
+                logger.info(f"Location detected as Remote based on GPS coordinates: {session.location_latitude}, {session.location_longitude}")
+                return 'Remote'
+
+            # If we have city/country but no GPS coordinates
             if session.location_city and session.location_country:
                 # You can customize this logic based on your office locations
                 office_cities = ['Mumbai', 'Delhi', 'Bangalore', 'Chennai', 'Hyderabad', 'Pune']  # Add your office cities
 
                 if session.location_city in office_cities:
+                    logger.info(f"Location detected as Office based on city: {session.location_city}")
                     return 'Office'
                 else:
+                    logger.info(f"Location detected as Remote based on city: {session.location_city}")
                     return 'Remote'
-
-            # If location information is available but not specific
-            if session.location_latitude and session.location_longitude:
-                # You could add office coordinates checking here
-                # For now, default to Office if coordinates are available
-                return 'Office'
 
             # Default location if no specific information is available
             logger.warning(f"No specific location information found in session, defaulting to Office")

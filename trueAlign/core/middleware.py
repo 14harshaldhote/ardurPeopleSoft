@@ -1,827 +1,782 @@
 import time
+import threading
 import json
 import logging
-import ipaddress
 from datetime import datetime, timedelta
+from collections import defaultdict
 from django.utils import timezone
-from django.conf import settings
+from django.core.cache import cache
 from django.contrib.auth.models import AnonymousUser
-from django.urls import resolve, Resolver404
-from django.shortcuts import redirect
 from django.http import JsonResponse
 from django.urls import reverse
+from django.conf import settings
+from django.db import transaction
 from trueAlign.models import UserSession
-from .utils import get_client_ip, parse_user_agent, get_location_from_ip, detect_suspicious_activity, calculate_productivity_score, to_ist, to_utc, get_current_time_ist
-import pytz
+from .utils import (
+    get_client_ip, parse_user_agent, get_location_from_ip,
+    detect_suspicious_activity, calculate_productivity_score,
+    to_ist, get_current_time_ist
+)
+from .session_config import CONFIG
+from .signals import (
+    trigger_maintenance_if_needed, handle_suspicious_activity,
+    get_cached_session, cache_session, invalidate_user_caches
+)
 
-# Set up logging
+# Module-level configuration constants
+THROTTLE_INTERVAL = 10 * 60  # 10 minutes in seconds
+MAX_BUFFER_SIZE = 100  # Maximum activities to buffer
+HEARTBEAT_INTERVAL = 30  # seconds
+
 logger = logging.getLogger(__name__)
 
-class GlobalAuthenticationMiddleware:
+class OptimizedSessionTrackingMiddleware:
     """
-    Middleware to enforce global login requirement for all views.
-    Handles session expiry and auto-logout with proper redirects.
+    Optimized middleware that reduces database writes through:
+    1. Throttled session updates (configurable interval)
+    2. In-memory activity buffering
+    3. Batch database operations
+    4. Smart conditional saves
     """
+
+    # Class-level configuration
+    THROTTLE_INTERVAL = 10 * 60  # 10 minutes in seconds
+    MAX_BUFFER_SIZE = 100  # Maximum activities to buffer
+    HEARTBEAT_INTERVAL = 30  # seconds
+
+    # Thread-local storage for session data
+    _local = threading.local()
+
+    # Class-level activity buffer
+    _activity_buffer = defaultdict(lambda: {
+        'clicks': [],
+        'scrolls': [],
+        'keyboard_events': [],
+        'mouse_movements': 0,
+        'page_views': [],
+        'tab_visibility_log': [],
+        'idle_state_changes': [],
+        'performance_metrics': {},
+        'last_flush': time.time(),
+        'session_id': None,
+        'user_id': None,
+        'pending_updates': {}
+    })
 
     def __init__(self, get_response):
         self.get_response = get_response
-
-        # Load settings
-        self.auto_logout_minutes = getattr(settings, 'ENHANCED_SESSION_CONFIG', {}).get('AUTO_LOGOUT_MINUTES', 30)
-        self.warning_threshold_minutes = getattr(settings, 'ENHANCED_SESSION_CONFIG', {}).get('WARNING_THRESHOLD_MINUTES', 25)
-
-        # Paths that don't require authentication
         self.exempt_paths = [
-            '/login/',
-            '/logout/',
-            '/password-reset/',
-            '/password-reset/done/',
-            '/password-reset/confirm/',
-            '/password-reset/complete/',
-            '/static/',
-            '/media/',
-            '/favicon.ico',
-            '/admin/login/',
-            '/__debug__/',
+            '/admin/', '/static/', '/media/', '/favicon.ico',
+            '/robots.txt', '/sitemap.xml'
         ]
-
-        # API paths that should return JSON errors instead of redirects
         self.api_paths = [
-            '/api/',
-            '/api/',
-            '/session/',
+            '/api/', '/session/heartbeat/', '/session/update-activity/',
+            '/session/log-activity/'
         ]
 
-        # Paths that use pattern matching
-        self.exempt_patterns = [
-            r'^/password-reset/confirm/.+/$',
-        ]
+        # Initialize cleanup thread
+        self._start_cleanup_thread()
 
     def __call__(self, request):
-        # Check if path should be exempt from authentication
-        if self._is_exempt_path(request.path):
+        # Skip processing for exempt paths
+        if self._should_skip_request(request):
             return self.get_response(request)
 
-        # Check if user is authenticated
-        if not request.user.is_authenticated:
-            return self._handle_unauthenticated_request(request)
+        # Process authenticated requests only
+        if request.user.is_authenticated:
+            self._process_authenticated_request(request)
 
-        # Check for session expiry for authenticated users
-        session_status = self._check_session_expiry(request)
-        if session_status['expired']:
-            return self._handle_expired_session(request, session_status)
+            # Trigger maintenance if needed (Django-native cleanup)
+            trigger_maintenance_if_needed()
 
-        # Add session warning headers if needed
         response = self.get_response(request)
-        if session_status['warning']:
-            self._add_session_warning_headers(response, session_status)
+
+        # Add session headers if needed
+        if request.user.is_authenticated:
+            self._add_session_headers(request, response)
 
         return response
 
-    def _is_exempt_path(self, path):
-        """Check if the path is exempt from authentication requirements"""
-        import re
 
-        # Check exact matches
+    def _get_or_create_session_throttled(self, request, user):
+        """Get or create session with throttling"""
+        tab_id = request.headers.get('X-Tab-ID') or request.GET.get('tab_id')
+        cache_key = f"session_lookup_{user.id}_{tab_id or 'default'}"
+
+        # Check cache first
+        cached_session = cache.get(cache_key)
+        if cached_session:
+            return cached_session
+
+        # Look for existing active session
+        try:
+            if tab_id:
+                session = UserSession.objects.select_related('user').get(
+                    user=user, tab_id=tab_id, is_active=True
+                )
+            else:
+                session = UserSession.objects.select_related('user').filter(
+                    user=user, is_active=True
+                ).first()
+
+            if session:
+                # Cache the session for 5 minutes
+                cache.set(cache_key, session, 300)
+                return session
+        except UserSession.DoesNotExist:
+            pass
+
+        # Create new session only if none exists
+        session = self._create_new_session_throttled(request, user, tab_id)
+        if session:
+            cache.set(cache_key, session, 300)
+
+        return session
+
+    def _should_skip_request(self, request):
+        """Check if request should be skipped"""
+        path = request.path_info
+
+        # Skip exempt paths
         for exempt_path in self.exempt_paths:
             if path.startswith(exempt_path):
                 return True
 
-        # Check pattern matches
-        for pattern in self.exempt_patterns:
-            if re.match(pattern, path):
-                return True
+        # Skip if user is not authenticated
+        if not request.user.is_authenticated:
+            return True
 
-        return False
-
-    def _is_api_path(self, path):
-        """Check if the path is an API endpoint"""
-        for api_path in self.api_paths:
-            if path.startswith(api_path):
-                return True
-        return False
-
-    def _handle_unauthenticated_request(self, request):
-        """Handle requests from unauthenticated users"""
-        logger.info(f"Unauthenticated access attempt to {request.path} from IP {get_client_ip(request)}")
-
-        # For API requests, return JSON response
-        if self._is_api_path(request.path) or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({
-                'status': 'error',
-                'message': 'Authentication required',
-                'redirect_url': settings.LOGIN_URL  # Use settings.LOGIN_URL
-            }, status=401)
-
-        # For regular requests, redirect to login with next parameter
-        login_url = settings.LOGIN_URL  # Use settings.LOGIN_URL instead of reverse
-        if request.GET:
-            # Preserve GET parameters
-            query_string = request.GET.urlencode()
-            next_url = f"{request.path}?{query_string}"
-        else:
-            next_url = request.path
-
-        # Don't redirect to login page itself to avoid loops
-        if request.path != login_url:
-            return redirect(f"{login_url}?next={next_url}")
-
-        return self.get_response(request)
-
-
-    def _check_session_expiry(self, request):
-        """Check if the user's session has expired"""
-        try:
-            # Get the most recent active session for this user
-            session = UserSession.objects.filter(
-                user=request.user,
-                is_active=True
-            ).order_by('-last_activity').first()
-
-            if not session:
-                return {
-                    'expired': True,
-                    'warning': False,
-                    'reason': 'no_active_session',
-                    'remaining_minutes': 0
-                }
-
-            # Check last activity time
-            current_time = timezone.now()
-            if session.last_activity:
-                idle_time = current_time - session.last_activity
-                idle_minutes = idle_time.total_seconds() / 60
-
-                # Check if session has expired
-                if idle_minutes >= self.auto_logout_minutes:
-                    # End the session properly
-                    session.end_session(is_idle=True)  # This method now exists
-                    logger.info(f"Session expired for user {request.user.username} due to inactivity ({idle_minutes:.1f} minutes)")
-
-                    return {
-                        'expired': True,
-                        'warning': False,
-                        'reason': 'inactivity_timeout',
-                        'idle_minutes': idle_minutes,
-                        'remaining_minutes': 0
-                    }
-
-                # Check if session is in warning period
-                elif idle_minutes >= self.warning_threshold_minutes:
-                    remaining_minutes = self.auto_logout_minutes - idle_minutes
-                    return {
-                        'expired': False,
-                        'warning': True,
-                        'reason': 'approaching_timeout',
-                        'idle_minutes': idle_minutes,
-                        'remaining_minutes': max(0, remaining_minutes)
-                    }
-
-            # Session is active and not expired
-            return {
-                'expired': False,
-                'warning': False,
-                'reason': 'active',
-                'idle_minutes': 0,
-                'remaining_minutes': self.auto_logout_minutes
-            }
-
-        except Exception as e:
-            logger.error(f"Error checking session expiry: {e}")
-            return {
-                'expired': False,
-                'warning': False,
-                'reason': 'error',
-                'remaining_minutes': self.auto_logout_minutes
-            }
-
-
-    def _handle_expired_session(self, request, session_status):
-        """Handle expired session"""
-        from django.contrib.auth import logout
-
-        # Log the session expiry
-        logger.info(f"Handling expired session for user {request.user.username}, reason: {session_status['reason']}")
-
-        # Logout the user
-        logout(request)
-
-        # For API requests, return JSON response
-        if self._is_api_path(request.path) or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({
-                'status': 'error',
-                'message': 'Session expired',
-                'reason': session_status['reason'],
-                'redirect_url': reverse('core:login')
-            }, status=401)
-
-        # For regular requests, redirect to login with message
-        login_url = reverse('core:login')
-        if request.GET:
-            query_string = request.GET.urlencode()
-            next_url = f"{request.path}?{query_string}"
-        else:
-            next_url = request.path
-
-        # Add session expiry message to session (for display after redirect)
-        if hasattr(request, 'session'):
-            request.session['session_expired'] = True
-            request.session['session_expiry_reason'] = session_status['reason']
-
-        return redirect(f"{login_url}?next={next_url}&expired=1")
-
-    def _add_session_warning_headers(self, response, session_status):
-        """Add session warning headers to response"""
-        response['X-Session-Warning'] = 'true'
-        response['X-Remaining-Minutes'] = str(int(session_status['remaining_minutes']))
-        response['X-Idle-Minutes'] = str(int(session_status.get('idle_minutes', 0)))
-
-
-class SessionTrackingMiddleware:
-    """Middleware for tracking user sessions with enhanced security and analytics"""
-
-    def __init__(self, get_response):
-        self.get_response = get_response
-        # Load settings
-        self.idle_threshold = getattr(settings, 'ENHANCED_SESSION_CONFIG', {}).get('IDLE_THRESHOLD_MINUTES', 15)
-        self.auto_logout = getattr(settings, 'ENHANCED_SESSION_CONFIG', {}).get('AUTO_LOGOUT_MINUTES', 30)
-        self.heartbeat_interval = getattr(settings, 'ENHANCED_SESSION_CONFIG', {}).get('HEARTBEAT_INTERVAL_SECONDS', 60)
-
-        # Paths to skip tracking
-        self.skip_paths = [
-            '/static/',
-            '/media/',
-            '/favicon.ico',
-            '/session/heartbeat/',
-            '/session/update-activity/',
-            '/api/health/',
-            '/__debug__/',
-        ]
-
-        # Rate limiting settings
-        self.rate_limit_window = 60  # seconds
-        self.rate_limit_max_requests = 100  # max requests per window
-        self.rate_limits = {}  # Store rate limit data
-
-    def __call__(self, request):
-        # Skip tracking for certain paths
-        if self._should_skip(request):
-            return self.get_response(request)
-
-        # Start timing for performance metrics
-        start_time = time.time()
-
-        # Process request
-        if request.user.is_authenticated:
-            self._process_authenticated_request(request)
-
-        # Get response
-        response = self.get_response(request)
-
-        # Process response
-        if request.user.is_authenticated:
-            self._process_authenticated_response(request, response, start_time)
-
-        return response
-
-    def _process_attendance_integration(self, request, session):
-        """
-        Integrate session with attendance system
-        """
-        try:
-            if not session or not hasattr(session, 'user'):
-                return
-
-            from trueAlign.attendance.services import AttendanceIntegrationService
-
-            attendance_service = AttendanceIntegrationService()
-
-            # Check if this is a new session (login event)
-            if hasattr(session, '_state') and session._state.adding:
-                logger.debug(f"Processing new session login for {session.user.username}")
-                attendance_service.process_session_login(session.user, session)
-
-            elif session.pk:  # Existing session being updated
-                # Always try to update attendance with latest session data
-                try:
-                    IST = pytz.timezone('Asia/Kolkata')
-                    attendance_date = session.login_time.astimezone(IST).date()
-
-                    # Import here to avoid circular imports
-                    from trueAlign.models import Attendance
-
-                    # Check if attendance exists for this user and date
-                    try:
-                        attendance = Attendance.objects.get(user=session.user, date=attendance_date)
-                        # Update session data
-                        Attendance.update_session_data(session.user, session, attendance_date)
-                    except Attendance.DoesNotExist:
-                        # Create attendance if missing
-                        logger.info(f"Creating missing attendance for {session.user.username} on {attendance_date}")
-                        attendance_service.process_session_login(session.user, session)
-
-                except Exception as e:
-                    logger.error(f"Error updating attendance session data: {e}")
-
-                # Check for logout event
-                if session.ended_at and session.logout_time:
-                    logger.debug(f"Processing session logout for {session.user.username}")
-                    attendance_service.process_session_logout(session.user, session)
-
-        except Exception as e:
-            logger.error(f"Error in attendance integration: {e}", exc_info=True)
-
-
-    def _should_skip(self, request):
-        """Check if tracking should be skipped for this request"""
-        path = request.path
-
-        # Skip static files and other non-tracked paths
-        for skip_path in self.skip_paths:
-            if path.startswith(skip_path):
-                return True
-
-        # Skip OPTIONS requests (CORS preflight)
-        if request.method == 'OPTIONS':
+        # Skip if this is a heartbeat request (handled separately)
+        if path in ['/session/heartbeat/', '/session/update-activity/']:
             return True
 
         return False
 
     def _process_authenticated_request(self, request):
-        """Process request for authenticated users"""
-        try:
-            # Extract client information
-            client_info = self._extract_client_info(request)
-
-            # Check rate limiting
-            if not self._check_rate_limit(request.user.id, client_info['ip_address']):
-                logger.warning(f"Rate limit exceeded for user {request.user.username} from IP {client_info['ip_address']}")
-                return
-
-            # Get or create session
-            session = self._get_or_create_session(request, client_info)
-
-            # Store session in request for later use
-            request.user_session = session
-
-            # ADD THIS LINE - Process attendance integration
-            self._process_attendance_integration(request, session)
-
-            # Perform security checks
-            self._perform_security_checks(request, session, client_info)
-
-            # Check for auto-logout
-            if session.last_activity:
-                idle_time = timezone.now() - session.last_activity
-                idle_minutes = idle_time.total_seconds() / 60
-
-                if idle_minutes > self.auto_logout:
-                    # Auto-logout due to inactivity
-                    session.end_session(is_idle=True)
-                    logger.info(f"Auto-logout for user {request.user.username} due to inactivity")
-
-                    # Create a new session
-                    session = self._get_or_create_session(request, client_info, force_new=True)
-                    request.user_session = session
-
-                    # ADD THIS LINE - Process attendance for new session after auto-logout
-                    self._process_attendance_integration(request, session)
-
-        except Exception as e:
-            logger.error(f"Error in session tracking middleware: {e}")
-
-
-    def _extract_client_info(self, request):
-        """Extract client information from request"""
-        # Get IP address
-        ip_address = get_client_ip(request)
-
-        # Get user agent
-        user_agent = request.META.get('HTTP_USER_AGENT', '')
-
-        # Get custom headers
-        tab_id = request.META.get('HTTP_X_TAB_ID', '')
-        parent_session_id = request.META.get('HTTP_X_PARENT_SESSION_ID', '')
-        device_fingerprint = request.META.get('HTTP_X_DEVICE_FINGERPRINT', '')
-
-        # Parse user agent
-        ua_data = parse_user_agent(user_agent)
-
-        # Get location data
-        location_data = get_location_from_ip(ip_address)
-
-        return {
-            'ip_address': ip_address,
-            'user_agent': user_agent,
-            'tab_id': tab_id,
-            'parent_session_id': parent_session_id,
-            'device_fingerprint': device_fingerprint,
-            'ua_data': ua_data,
-            'location_data': location_data,
-            'request_time': timezone.now(),
-            'path': request.path,
-            'method': request.method,
-            'is_ajax': request.headers.get('X-Requested-With') == 'XMLHttpRequest',
-            'is_mobile': ua_data.get('is_mobile', False),
-            'is_tablet': ua_data.get('is_tablet', False),
-            'is_bot': ua_data.get('is_bot', False)
-        }
-
-    def _check_rate_limit(self, user_id, ip_address):
-        """Check if request exceeds rate limit"""
-        current_time = time.time()
-        key = f"{user_id}:{ip_address}"
-
-        # Initialize rate limit data if not exists
-        if key not in self.rate_limits:
-            self.rate_limits[key] = {
-                'requests': 0,
-                'window_start': current_time
-            }
-
-        # Reset window if expired
-        if current_time - self.rate_limits[key]['window_start'] > self.rate_limit_window:
-            self.rate_limits[key] = {
-                'requests': 0,
-                'window_start': current_time
-            }
-
-        # Increment request count
-        self.rate_limits[key]['requests'] += 1
-
-        # Check if limit exceeded
-        return self.rate_limits[key]['requests'] <= self.rate_limit_max_requests
-
-    def _get_or_create_session(self, request, client_info, force_new=False):
-        """Get existing session or create a new one"""
+        """Process authenticated request with optimized session tracking"""
         user = request.user
-        tab_id = client_info.get('tab_id')
-        parent_session_id = client_info.get('parent_session_id')
+        session_key = f"session_{user.id}"
 
-        # Try to get existing session
-        if not force_new and tab_id:
-            session = UserSession.objects.filter(
+        # Get or create session with throttling
+        session = self._get_or_create_session_throttled(request, user)
+
+        if session:
+            # Update last activity (lightweight)
+            self._update_last_activity_throttled(session, user.id)
+
+            # Collect activity data without immediate save
+            self._collect_activity_data(request, session, user.id)
+
+            # Check if we need to flush buffered data
+            self._check_and_flush_buffer(user.id, session)
+
+    def _get_or_create_session_throttled(self, request, user):
+        """Get or create session with throttling"""
+        tab_id = request.headers.get('X-Tab-ID') or request.GET.get('tab_id')
+        cache_key = f"session_lookup_{user.id}_{tab_id or 'default'}"
+
+        # Check cache first
+        cached_session = cache.get(cache_key)
+        if cached_session:
+            return cached_session
+
+        # Look for existing active session
+        try:
+            if tab_id:
+                session = UserSession.objects.select_related('user').get(
+                    user=user, tab_id=tab_id, is_active=True
+                )
+            else:
+                session = UserSession.objects.select_related('user').filter(
+                    user=user, is_active=True
+                ).first()
+
+            if session:
+                # Cache the session for 5 minutes
+                cache.set(cache_key, session, 300)
+                return session
+        except UserSession.DoesNotExist:
+            pass
+
+        # Create new session only if none exists
+        session = self._create_new_session_throttled(request, user, tab_id)
+        if session:
+            cache.set(cache_key, session, 300)
+
+        return session
+
+    def _create_new_session_throttled(self, request, user, tab_id):
+        """Create new session with minimal data and security checks"""
+        try:
+            # Check if user already has an active session with this tab_id
+            existing_session = UserSession.objects.filter(
                 user=user,
                 tab_id=tab_id,
                 is_active=True
             ).first()
 
-            if session:
-                # Update existing session
-                return self._update_existing_session(session, request, client_info)
+            if existing_session:
+                logger.info(f"Reusing existing session {existing_session.id} for user {user.username}")
+                # Update last activity and return existing session
+                existing_session.last_activity = timezone.now()
+                existing_session.save(update_fields=['last_activity'])
+                return existing_session
 
-        # Try to get session by parent_session_id
-        if not force_new and parent_session_id:
-            session = UserSession.objects.filter(
+            # Close any old active sessions for this user to prevent duplicates
+            old_sessions = UserSession.objects.filter(
                 user=user,
-                parent_session_id=parent_session_id,
                 is_active=True
-            ).first()
+            )
 
-            if session:
-                # Update existing session
-                return self._update_existing_session(session, request, client_info)
+            if old_sessions.exists():
+                logger.info(f"Closing {old_sessions.count()} old sessions for user {user.username}")
+                old_sessions.update(
+                    is_active=False,
+                    ended_at=timezone.now(),
+                    logout_time=timezone.now()
+                )
 
-        # Create new session
-        return self._create_new_session(request, client_info)
+            client_info = self._extract_client_info(request)
 
-    def _update_existing_session(self, session, request, client_info):
-        """Update existing session with new activity"""
-        # Calculate idle time
-        current_time = timezone.now()
-        if session.last_activity:
-            idle_time = current_time - session.last_activity
-            idle_seconds = idle_time.total_seconds()
+            # Check for suspicious activity
+            if CONFIG.ENABLE_SECURITY_CHECKS:
+                # Get any existing session for comparison
+                existing_session = UserSession.objects.filter(
+                    user=user, is_active=True
+                ).first()
 
-            # Update idle time if user was idle
-            if idle_seconds > (self.idle_threshold * 60):
-                session.idle_time += idle_time
+                if existing_session:
+                    suspicious_indicators = detect_suspicious_activity(existing_session, request)
+                    if suspicious_indicators:
+                        handle_suspicious_activity(user, existing_session, suspicious_indicators)
 
-        # Update session data
-        session.last_activity = current_time
-        session.ip_address = client_info.get('ip_address')
+            # Extract location information if available
+            location_info = None
+            if client_info.get('ip_address'):
+                try:
+                    location_info = get_location_from_ip(client_info.get('ip_address'))
+                except Exception as loc_error:
+                    logger.warning(f"Error getting location: {loc_error}")
 
-        # Update device info if changed
-        if client_info.get('ua_data'):
-            ua_data = client_info.get('ua_data')
-            session.browser = ua_data.get('browser')
-            session.browser_version = ua_data.get('browser_version')
-            session.os = ua_data.get('os')
-            session.os_version = ua_data.get('os_version')
-            session.device_type = ua_data.get('device')
-
-        # Update tab info
-        if hasattr(request, 'path_info'):
-            session.tab_url = request.path_info
-
-        # Update location if changed
-        if client_info.get('location_data'):
-            location_data = client_info.get('location_data')
-
-            # Update location fields if they exist in the model
-            if hasattr(session, 'location_country') and location_data.get('country'):
-                session.location_country = location_data.get('country')
-
-            if hasattr(session, 'location_city') and location_data.get('city'):
-                session.location_city = location_data.get('city')
-
-            if hasattr(session, 'location_region') and location_data.get('region'):
-                session.location_region = location_data.get('region')
-
-            if hasattr(session, 'location_latitude') and location_data.get('latitude'):
-                session.location_latitude = location_data.get('latitude')
-
-            if hasattr(session, 'location_longitude') and location_data.get('longitude'):
-                session.location_longitude = location_data.get('longitude')
-
-            # Add to location history if the field exists
-            if hasattr(session, 'location_history'):
-                if not session.location_history:
-                    session.location_history = []
-
-                session.location_history.append({
-                    'timestamp': current_time.isoformat(),
-                    'country': location_data.get('country'),
-                    'city': location_data.get('city'),
-                    'ip_address': client_info.get('ip_address'),
-                    'latitude': location_data.get('latitude'),
-                    'longitude': location_data.get('longitude')
-                })
-
-        session.save()
-        return session
-
-    def _create_new_session(self, request, client_info):
-        """Create a new session"""
-        user = request.user
-        current_time = timezone.now()
-
-        # Extract data
-        tab_id = client_info.get('tab_id')
-        parent_session_id = client_info.get('parent_session_id')
-        ip_address = client_info.get('ip_address')
-        user_agent = client_info.get('user_agent')
-        device_fingerprint = client_info.get('device_fingerprint')
-
-        # Validate and clean UUID fields
-        if parent_session_id == '' or parent_session_id == 'null':
-            parent_session_id = None
-
-        # Parse user agent
-        ua_data = client_info.get('ua_data', {})
-
-        # Get location data
-        location_data = client_info.get('location_data', {})
-
-        # Create session data with only fields that exist in the model
-        session_data = {
-            'user': user,
-            'session_key': request.session.session_key or '',
-            'ip_address': ip_address,
-            'user_agent': user_agent,
-            'login_time': current_time,
-            'last_activity': current_time,
-            'tab_id': tab_id or '',
-            'parent_session_id': parent_session_id,  # This can be None now
-            'browser_fingerprint': device_fingerprint,
-            'device_type': ua_data.get('device') or 'desktop',
-            'tab_opened_time': current_time,
-            'tab_last_focus': current_time,
-            'is_primary_tab': not parent_session_id,
-        }
-
-        # Add location data if available
-        if location_data:
-            if location_data.get('country'):
-                session_data['location_country'] = location_data.get('country')
-            if location_data.get('city'):
-                session_data['location_city'] = location_data.get('city')
-            if location_data.get('region'):
-                session_data['location_region'] = location_data.get('region')
-            if location_data.get('latitude'):
-                session_data['location_latitude'] = location_data.get('latitude')
-            if location_data.get('longitude'):
-                session_data['location_longitude'] = location_data.get('longitude')
-
-            # Initialize location history
-            session_data['location_history'] = [{
-                'timestamp': current_time.isoformat(),
-                'country': location_data.get('country'),
-                'city': location_data.get('city'),
-                'ip_address': ip_address,
-                'latitude': location_data.get('latitude'),
-                'longitude': location_data.get('longitude')
-            }]
-
-        try:
-            # Create session
-            session = UserSession.objects.create(**session_data)
-            logger.info(f"New session created for user {user.username}, session ID: {session.id}")
-            return session
-
-        except Exception as e:
-            logger.error(f"Error creating session with data {session_data}: {e}")
-            # Fallback: create with minimal data
-            try:
-                minimal_session_data = {
-                    'user': user,
-                    'session_key': request.session.session_key or '',
-                    'ip_address': ip_address,
-                    'user_agent': user_agent,
-                    'login_time': current_time,
-                    'last_activity': current_time,
-                    'tab_id': tab_id or '',
-                    'is_primary_tab': True,
-                }
-                session = UserSession.objects.create(**minimal_session_data)
-                logger.info(f"Fallback session created for user {user.username}, session ID: {session.id}")
-                return session
-            except Exception as fallback_error:
-                logger.error(f"Failed to create fallback session: {fallback_error}")
-                return None
-
-
-
-    def _perform_security_checks(self, request, session, client_info):
-        """Perform security checks on the session"""
-        # Check for suspicious activity
-        suspicious_indicators = detect_suspicious_activity(session, request)
-
-        if suspicious_indicators:
-            # Log suspicious activity
-            for indicator in suspicious_indicators:
-                logger.warning(f"Suspicious activity detected: {indicator['type']} (Severity: {indicator['severity']}) - User: {request.user.username}, Session: {session.id}")
-
-                # Add to security log
-                if not session.security_events:
-                    session.security_events = []
-
-                session.security_events.append({
-                    'timestamp': timezone.now().isoformat(),
-                    'type': indicator['type'],
-                    'severity': indicator['severity'],
-                    'details': indicator['details'],
-                    'path': request.path,
-                    'method': request.method
-                })
-
-            # Save session with security events
-            session.save(update_fields=['security_events'])
-
-    def _process_authenticated_response(self, request, response, start_time):
-        """Process response for authenticated users"""
-        try:
-            if hasattr(request, 'user_session'):
-                session = request.user_session
-
-                # Update page views
-                if request.method == 'GET' and response.status_code == 200:
-                    # Skip AJAX requests
-                    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
-                    if not is_ajax:
-                        self._update_page_views(request, session)
-
-                # Add session headers to response
-                self._add_session_headers(request, response, session)
-
-                # Add performance metrics
-                self._add_performance_metrics(request, response, session, start_time)
-
-        except Exception as e:
-            logger.error(f"Error processing response in session tracking middleware: {e}")
-
-    def _update_page_views(self, request, session):
-        """Update page views for the session"""
-        try:
-            # Get current URL and title
-            current_url = request.path
-
-            # Skip if this is the same as the last page view (avoid duplicates)
-            if session.page_views and len(session.page_views) > 0:
-                last_view = session.page_views[-1]
-                if last_view.get('url') == current_url:
-                    return
-
-            # Add page view
-            if not session.page_views:
-                session.page_views = []
-
-            session.page_views.append({
-                'url': current_url,
-                'title': '',  # Will be updated by client
-                'timestamp': timezone.now().isoformat(),
-                'referrer': request.META.get('HTTP_REFERER', '')
-            })
-
-            # Save session
-            session.save(update_fields=['page_views'])
-
-        except Exception as e:
-            logger.error(f"Error updating page views: {e}")
-
-    def _add_session_headers(self, request, response, session):
-        """Add session-related headers to response"""
-        # Add session ID header
-        response['X-Session-ID'] = str(session.id)
-
-        # Add tab ID header if available
-        if session.tab_id:
-            response['X-Tab-ID'] = session.tab_id
-
-        # Add primary tab indicator
-        response['X-Is-Primary-Tab'] = 'true' if session.is_primary_tab else 'false'
-
-        # Add inactivity warning if needed
-        if session.last_activity:
-            idle_time = timezone.now() - session.last_activity
-            idle_minutes = idle_time.total_seconds() / 60
-
-            if idle_minutes >= self.idle_threshold:
-                response['X-Inactivity-Warning'] = 'true'
-                response['X-Remaining-Minutes'] = str(int(self.auto_logout - idle_minutes))
-
-    def _add_performance_metrics(self, request, response, session, start_time):
-        """Add performance metrics to session"""
-        try:
-            # Calculate response time
-            response_time = time.time() - start_time
-
-            # Create metrics entry
-            metrics = {
-                'timestamp': timezone.now().isoformat(),
-                'url': request.path,
-                'method': request.method,
-                'status_code': response.status_code,
-                'response_time': response_time,
-                'is_ajax': request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+            # Create session with minimal required fields
+            session_data = {
+                'user': user,
+                'tab_id': tab_id,
+                'session_key': UserSession.generate_session_key(),
+                'ip_address': client_info.get('ip_address'),
+                'user_agent': client_info.get('user_agent'),
+                'device_type': client_info.get('device_type'),
+                'login_time': timezone.now(),
+                'last_activity': timezone.now(),
+                'is_active': True
             }
 
-            # Add to session metrics
-            if not session.performance_metrics:
-                session.performance_metrics = []
+            # Add browser and os if they're present in client_info
+            if 'browser' in client_info:
+                session_data['browser'] = client_info.get('browser')
+            if 'os' in client_info:
+                session_data['os'] = client_info.get('os')
 
-            # Keep only the last 50 entries
-            session.performance_metrics.append(metrics)
-            if len(session.performance_metrics) > 50:
-                session.performance_metrics = session.performance_metrics[-50:]
+            # Add location data if available
+            if location_info:
+                session_data['location_country'] = location_info.get('country')
+                session_data['location_region'] = location_info.get('region')
+                session_data['location_city'] = location_info.get('city')
+                session_data['location_latitude'] = location_info.get('latitude')
+                session_data['location_longitude'] = location_info.get('longitude')
+                session_data['location_type'] = 'geo_ip'
 
-            # Save session
-            session.save(update_fields=['performance_metrics'])
+            session = UserSession.objects.create(**session_data)
+
+            # Initialize buffer for new session
+            buffer_key = f"activity_{user.id}_{session.id}"
+            self._activity_buffer[buffer_key] = {
+                'clicks': [],
+                'scrolls': [],
+                'keyboard_events': [],
+                'mouse_movements': 0,
+                'tab_visibility_log': [],
+                'idle_state_changes': [],
+                'performance_metrics': {},
+                'page_views': [],
+                'pending_updates': {},
+                'last_activity': timezone.now(),
+                'last_flush': time.time(),
+                'user_id': user.id
+            }
+
+            if CONFIG.should_log_category('session_creation'):
+                logger.info(f"Created new session {session.id} for user {user.username}")
+
+            return session
+        except Exception as e:
+            logger.error(f"Error creating session: {e}")
+            return None
+
+
+
+    def _extract_client_info(self, request):
+        """Extract client information from request"""
+        ip_address = get_client_ip(request)
+        user_agent = request.META.get('HTTP_USER_AGENT', '')
+        device_info = parse_user_agent(user_agent)
+
+        return {
+            'ip_address': ip_address,
+            'user_agent': user_agent,
+            'device_type': device_info.get('device', 'unknown'),
+            'browser': device_info.get('browser', 'unknown'),
+            'os': device_info.get('os', 'unknown'),
+        }
+
+    def _update_last_activity_throttled(self, session, user_id):
+        """Update last activity with throttling"""
+        current_time = time.time()
+        buffer_key = f"activity_{user_id}_{session.id}"
+
+        # Store in buffer
+        self._activity_buffer[buffer_key]['last_activity'] = timezone.now()
+        self._activity_buffer[buffer_key]['session_id'] = session.id
+        self._activity_buffer[buffer_key]['user_id'] = user_id
+
+        # Only update database if throttle interval has passed
+        last_db_update = getattr(session, '_last_db_update', 0)
+        if current_time - last_db_update >= self.THROTTLE_INTERVAL:
+            try:
+                session.last_activity = timezone.now()
+                session.save(update_fields=['last_activity'])
+                session._last_db_update = current_time
+
+                # Update cache
+                cache_key = f"session_lookup_{user_id}_{session.tab_id or 'default'}"
+                cache.set(cache_key, session, 300)
+
+            except Exception as e:
+                logger.error(f"Error updating last activity: {e}")
+
+    def _collect_activity_data(self, request, session, user_id):
+        """Collect activity data in memory buffer"""
+        buffer_key = f"activity_{user_id}_{session.id}"
+
+        # Ensure buffer exists with proper initialization
+        if buffer_key not in self._activity_buffer:
+            self._activity_buffer[buffer_key] = {
+                'clicks': [],
+                'scrolls': [],
+                'keyboard_events': [],
+                'mouse_movements': 0,
+                'tab_visibility_log': [],
+                'idle_state_changes': [],
+                'performance_metrics': {},
+                'page_views': [],
+                'pending_updates': {},
+                'last_activity': timezone.now(),
+                'last_flush': time.time(),
+                'user_id': user_id
+            }
+
+        buffer = self._activity_buffer[buffer_key]
+
+        # Ensure all required keys exist (defensive programming)
+        buffer.setdefault('clicks', [])
+        buffer.setdefault('scrolls', [])
+        buffer.setdefault('keyboard_events', [])
+        buffer.setdefault('mouse_movements', 0)
+        buffer.setdefault('tab_visibility_log', [])
+        buffer.setdefault('idle_state_changes', [])
+        buffer.setdefault('performance_metrics', {})
+        buffer.setdefault('page_views', [])
+        buffer.setdefault('pending_updates', {})
+        buffer.setdefault('last_activity', timezone.now())
+        buffer.setdefault('last_flush', time.time())
+        buffer.setdefault('user_id', user_id)
+
+        # Collect page view data
+        if request.method == 'GET':
+            page_view = {
+                'url': request.get_full_path(),
+                'title': request.META.get('HTTP_REFERER', ''),
+                'timestamp': timezone.now().isoformat(),
+                'method': request.method
+            }
+            buffer['page_views'].append(page_view)
+
+        # Collect request metadata - now safe to access
+        buffer['pending_updates'].update({
+            'url': request.get_full_path(),
+            'method': request.method,
+            'timestamp': timezone.now().isoformat()
+        })
+
+        # Limit buffer size
+        self.__class__._limit_buffer_size(buffer)
+
+    @classmethod
+    def _limit_buffer_size(cls, buffer):
+        """Limit buffer size to prevent memory issues"""
+        for key in ['clicks', 'scrolls', 'keyboard_events', 'page_views',
+                   'tab_visibility_log', 'idle_state_changes']:
+            if key in buffer and len(buffer[key]) > cls.MAX_BUFFER_SIZE:
+                buffer[key] = buffer[key][-cls.MAX_BUFFER_SIZE:]
+
+    def _check_and_flush_buffer(self, user_id, session):
+        """Check if buffer should be flushed and do so if needed"""
+        buffer_key = f"activity_{user_id}_{session.id}"
+        buffer = self._activity_buffer[buffer_key]
+
+        current_time = time.time()
+        last_flush = buffer.get('last_flush', 0)
+
+        # Flush if throttle interval has passed or buffer is full
+        should_flush = (
+            current_time - last_flush >= self.THROTTLE_INTERVAL or
+            len(buffer.get('page_views', [])) >= self.MAX_BUFFER_SIZE or
+            len(buffer.get('clicks', [])) >= self.MAX_BUFFER_SIZE
+        )
+
+        if should_flush:
+            self._flush_buffer_to_database(buffer_key, session)
+
+    @classmethod
+    def _flush_buffer_to_database(cls, buffer_key, session):
+        """Flush buffered data to database"""
+        if buffer_key not in cls._activity_buffer:
+            return
+
+        buffer = cls._activity_buffer[buffer_key]
+
+        try:
+            with transaction.atomic():
+                update_fields = []
+
+                # Update page views
+                if buffer.get('page_views'):
+                    existing_views = list(session.page_views) if session.page_views else []
+                    existing_views.extend(buffer['page_views'])
+                    session.page_views = existing_views[-1000:]  # Keep last 1000
+                    update_fields.append('page_views')
+
+                # Update clicks
+                if buffer.get('clicks'):
+                    existing_clicks = list(session.clicks) if session.clicks else []
+                    existing_clicks.extend(buffer['clicks'])
+                    session.clicks = existing_clicks[-1000:]  # Keep last 1000
+                    update_fields.append('clicks')
+
+                # Update scrolls
+                if buffer.get('scrolls'):
+                    existing_scrolls = list(session.scrolls) if session.scrolls else []
+                    existing_scrolls.extend(buffer['scrolls'])
+                    session.scrolls = existing_scrolls[-500:]  # Keep last 500
+                    update_fields.append('scrolls')
+
+                # Update keyboard events
+                if buffer.get('keyboard_events'):
+                    existing_keyboard = list(session.keyboard_events) if session.keyboard_events else []
+                    existing_keyboard.extend(buffer['keyboard_events'])
+                    session.keyboard_events = existing_keyboard[-500:]  # Keep last 500
+                    update_fields.append('keyboard_events')
+
+                # Update mouse movements
+                if buffer.get('mouse_movements'):
+                    session.mouse_movements += buffer['mouse_movements']
+                    update_fields.append('mouse_movements')
+
+                # Update tab visibility log
+                if buffer.get('tab_visibility_log'):
+                    existing_visibility = list(session.tab_visibility_log) if session.tab_visibility_log else []
+                    existing_visibility.extend(buffer['tab_visibility_log'])
+                    session.tab_visibility_log = existing_visibility[-100:]  # Keep last 100
+                    update_fields.append('tab_visibility_log')
+
+                # Update idle state changes
+                if buffer.get('idle_state_changes'):
+                    existing_idle = list(session.idle_state_changes) if session.idle_state_changes else []
+                    existing_idle.extend(buffer['idle_state_changes'])
+                    session.idle_state_changes = existing_idle[-50:]  # Keep last 50
+                    update_fields.append('idle_state_changes')
+
+                # Update performance metrics
+                if buffer.get('performance_metrics'):
+                    existing_metrics = session.performance_metrics or {}
+                    existing_metrics.update(buffer['performance_metrics'])
+                    session.performance_metrics = existing_metrics
+                    update_fields.append('performance_metrics')
+
+                # Update last activity
+                if buffer.get('last_activity'):
+                    session.last_activity = buffer['last_activity']
+                    update_fields.append('last_activity')
+
+                # Save to database
+                if update_fields:
+                    session.save(update_fields=update_fields)
+
+                    # Update cache after successful save
+                    cache_session(buffer.get('user_id'), session)
+
+                # Clear buffer
+                buffer.clear()
+                buffer['last_flush'] = time.time()
+
+                if CONFIG.should_log_category('buffer_flushes'):
+                    logger.info(f"Flushed buffer for session {session.id}")
 
         except Exception as e:
-            logger.error(f"Error adding performance metrics: {e}")
+            logger.error(f"Error flushing buffer: {e}")
 
 
-class SessionAnalyticsMiddleware:
-    """Middleware for collecting session analytics"""
+
+    def _add_session_headers(self, request, response):
+        """Add session-related headers to response"""
+        if hasattr(request, 'session_warning'):
+            response['X-Session-Warning'] = 'true'
+            response['X-Session-Remaining'] = str(request.session_remaining_time)
+
+    def _start_cleanup_thread(self):
+        """Start background thread for cleanup tasks"""
+        def cleanup_worker():
+            while True:
+                try:
+                    time.sleep(300)  # Run every 5 minutes
+                    self._cleanup_old_buffers()
+                except Exception as e:
+                    logger.error(f"Error in cleanup thread: {e}")
+
+        cleanup_thread = threading.Thread(target=cleanup_worker, daemon=True)
+        cleanup_thread.start()
+
+    @classmethod
+    def _cleanup_old_buffers(cls):
+        """Clean up old buffers to prevent memory leaks"""
+        current_time = time.time()
+        keys_to_remove = []
+
+        for key, buffer in cls._activity_buffer.items():
+            last_flush = buffer.get('last_flush', 0)
+
+            # Remove buffers that haven't been used for 1 hour
+            if current_time - last_flush > 3600:
+                keys_to_remove.append(key)
+
+        for key in keys_to_remove:
+            del cls._activity_buffer[key]
+
+        if keys_to_remove and CONFIG.should_log_category('cleanup'):
+            logger.info(f"Cleaned up {len(keys_to_remove)} old buffers")
+
+    @classmethod
+    def force_flush_user_buffer(cls, user_id, session_id):
+        """Force flush buffer for specific user session"""
+        buffer_key = f"activity_{user_id}_{session_id}"
+
+        if buffer_key in cls._activity_buffer:
+            try:
+                session = UserSession.objects.get(id=session_id)
+                cls._flush_buffer_to_database(buffer_key, session)
+            except UserSession.DoesNotExist:
+                logger.warning(f"Session {session_id} does not exist for flush")
+                pass
+
+    @classmethod
+    def log_activity(cls, user_id, session_id, activity_type, activity_data):
+        """Static method to log activity from frontend"""
+        if not user_id or not session_id:
+            return
+
+        buffer_key = f"activity_{user_id}_{session_id}"
+
+        # Initialize buffer if it doesn't exist
+        if buffer_key not in cls._activity_buffer:
+            cls._activity_buffer[buffer_key] = {
+                'clicks': [],
+                'scrolls': [],
+                'keyboard_events': [],
+                'mouse_movements': 0,
+                'tab_visibility_log': [],
+                'idle_state_changes': [],
+                'performance_metrics': {},
+                'page_views': [],
+                'pending_updates': {},
+                'last_activity': timezone.now(),
+                'last_flush': time.time(),
+                'user_id': user_id
+            }
+
+        buffer = cls._activity_buffer[buffer_key]
+
+        # Add activity to appropriate buffer
+        if activity_type == 'click':
+            buffer['clicks'].append(activity_data)
+        elif activity_type == 'scroll':
+            buffer['scrolls'].append(activity_data)
+        elif activity_type == 'keyboard':
+            buffer['keyboard_events'].append(activity_data)
+        elif activity_type == 'mouse_move':
+            buffer['mouse_movements'] += 1
+        elif activity_type == 'tab_visibility':
+            buffer['tab_visibility_log'].append(activity_data)
+        elif activity_type == 'idle_state':
+            buffer['idle_state_changes'].append(activity_data)
+        elif activity_type == 'performance':
+            buffer['performance_metrics'].update(activity_data)
+
+        # Limit buffer size if buffer exists
+        if buffer and isinstance(buffer, dict):
+            cls._limit_buffer_size(buffer)
+
+        # Update last activity
+        buffer['last_activity'] = timezone.now()
+
+        # Force flush if buffer is getting full
+        if len(buffer.get('clicks', [])) >= cls.MAX_BUFFER_SIZE:
+            try:
+                session = UserSession.objects.get(id=session_id)
+                cls._flush_buffer_to_database(buffer_key, session)
+            except UserSession.DoesNotExist:
+                logger.warning(f"Session {session_id} does not exist for flush")
+                pass
+
+
+class OptimizedGlobalAuthenticationMiddleware:
+    """
+    Optimized authentication middleware with reduced database queries
+    """
 
     def __init__(self, get_response):
         self.get_response = get_response
+        self.exempt_paths = [
+            '/login/', '/logout/', '/password-reset/', '/admin/login/',
+            '/static/', '/media/', '/favicon.ico', '/robots.txt'
+        ]
 
     def __call__(self, request):
-        # Start timing
-        start_time = time.time()
+        # Check if path is exempt
+        if self._is_exempt_path(request.path_info):
+            return self.get_response(request)
 
-        # Process request
+        # Check authentication with caching
+        if not self._is_authenticated_cached(request):
+            return self._handle_unauthenticated_request(request)
+
+        # Check session expiry with throttling
+        if self._should_check_session_expiry(request):
+            expired_response = self._check_session_expiry(request)
+            if expired_response:
+                return expired_response
+
         response = self.get_response(request)
-
-        # Process response for authenticated users
-        if request.user.is_authenticated and hasattr(request, 'user_session'):
-            self._collect_analytics(request, response, start_time)
-
         return response
 
-    def _collect_analytics(self, request, response, start_time):
-        """Collect analytics data for the session"""
+    def _is_exempt_path(self, path):
+        """Check if path is exempt from authentication"""
+        return any(path.startswith(exempt) for exempt in self.exempt_paths)
+
+    def _is_authenticated_cached(self, request):
+        """Check if user is authenticated with caching"""
+        if not hasattr(request, 'user') or isinstance(request.user, AnonymousUser):
+            return False
+
+        # Cache authentication status
+        cache_key = f"auth_status_{request.user.id}"
+        auth_status = cache.get(cache_key)
+
+        if auth_status is None:
+            auth_status = request.user.is_authenticated
+            cache.set(cache_key, auth_status, CONFIG.AUTH_STATUS_CACHE_TIMEOUT)
+
+        return auth_status
+
+        # Only check expiry every 2 minutes per user
+        cache_key = f"session_check_{request.user.id}"
+        last_check = cache.get(cache_key)
+
+        if last_check is None:
+            cache.set(cache_key, time.time(), 120)
+            return True
+
+        return False
+
+    def _should_check_session_expiry(self, request):
+        """Check if we should verify session expiry (throttled)"""
+        if not hasattr(request, 'user') or not request.user.is_authenticated:
+            return False
+
+        # Only check expiry every 2 minutes per user
+        cache_key = f"session_check_{request.user.id}"
+        last_check = cache.get(cache_key)
+
+        if last_check is None:
+            cache.set(cache_key, time.time(), 120)
+            return True
+
+        return False
+
+    def _check_session_expiry(self, request):
+        """Check session expiry with optimized queries"""
+        user = request.user
+
         try:
-            session = request.user_session
+            # Get active session with minimal fields
+            session = UserSession.objects.only(
+                'id', 'last_activity', 'is_active', 'is_idle', 'idle_start_time'
+            ).filter(user=user, is_active=True).first()
 
-            # Calculate response time
-            response_time = time.time() - start_time
+            if not session:
+                return self._handle_expired_session(request)
 
-            # Create analytics entry
-            analytics = {
-                'timestamp': timezone.now().isoformat(),
-                'url': request.path,
-                'method': request.method,
-                'status_code': response.status_code,
-                'response_time': response_time,
-                'is_ajax': request.headers.get('X-Requested-With') == 'XMLHttpRequest',
-                'content_type': response.get('Content-Type', ''),
-                'content_length': response.get('Content-Length', 0)
-            }
+            # Check if session is expired
+            now = timezone.now()
+            idle_threshold = timedelta(minutes=30)
 
-            # Add to session analytics
-            if not session.performance_metrics:
-                session.performance_metrics = []
+            if session.is_idle and session.idle_start_time:
+                idle_time = now - session.idle_start_time
+                if idle_time > idle_threshold:
+                    return self._handle_expired_session(request)
 
-            # Keep only the last 50 entries
-            session.performance_metrics.append(analytics)
-            if len(session.performance_metrics) > 50:
-                session.performance_metrics = session.performance_metrics[-50:]
-
-            # Save session
-            session.save(update_fields=['performance_metrics'])
+            # Check for inactivity warning
+            if session.last_activity:
+                inactive_time = now - session.last_activity
+                if inactive_time > timedelta(minutes=25):
+                    self._add_session_warning_headers(request, session)
 
         except Exception as e:
-            logger.error(f"Error collecting analytics: {e}")
+            logger.error(f"Error checking session expiry: {e}")
+
+        return None
+
+    def _handle_unauthenticated_request(self, request):
+        """Handle unauthenticated request"""
+        if request.path_info.startswith('/api/'):
+            return JsonResponse({'error': 'Authentication required'}, status=401)
+
+        from django.shortcuts import redirect
+        return redirect('core:login')
+
+    def _handle_expired_session(self, request):
+        """Handle expired session"""
+        # Mark session as inactive and clear caches
+        if hasattr(request, 'user') and request.user.is_authenticated:
+            UserSession.objects.filter(
+                user=request.user, is_active=True
+            ).update(is_active=False, session_end_time=timezone.now(), end_reason='timeout')
+
+            # Clear user caches
+            invalidate_user_caches(request.user.id)
+
+        if request.path_info.startswith('/api/'):
+            return JsonResponse({'error': 'Session expired'}, status=401)
+
+        from django.shortcuts import redirect
+        return redirect('core:login')
+
+
+    def _add_session_warning_headers(self, request, session):
+        """Add session warning headers"""
+        request.session_warning = True
+
+        if session.is_idle and session.idle_start_time:
+            remaining = 30 - (timezone.now() - session.idle_start_time).total_seconds() / 60
+            request.session_remaining_time = max(0, remaining)
+        else:
+            request.session_remaining_time = 5

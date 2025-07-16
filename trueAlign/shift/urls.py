@@ -1,5 +1,5 @@
 from django.urls import path, include
-from . import views
+from trueAlign.shift import views
 from . import test_views
 
 app_name = 'shift'

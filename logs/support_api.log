@@ -1,0 +1,70 @@
+ERROR|2025-07-09 14:58:22,158|views|41039|6198505472|Dashboard error for user 5: (1146, "Table 'ardurtruealign.support_audit_log' doesn't exist")
+ERROR|2025-07-09 14:59:01,683|views|41039|6198505472|Dashboard error for user 4: (1146, "Table 'ardurtruealign.support_audit_log' doesn't exist")
+ERROR|2025-07-09 15:00:25,798|views|41039|6198505472|Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+ERROR|2025-07-09 15:00:41,426|views|41039|6198505472|Ticket detail error: PermissionManager.can_change_status() missing 1 required positional argument: 'new_status'
+ERROR|2025-07-09 15:00:41,537|views|41039|6198505472|Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+ERROR|2025-07-09 15:00:55,279|views|41039|6198505472|Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+ERROR|2025-07-09 15:01:28,312|views|41039|6198505472|Dashboard error for user 4: (1146, "Table 'ardurtruealign.support_audit_log' doesn't exist")
+ERROR|2025-07-09 15:04:32,724|views|44318|6217576448|Dashboard error for user 4: name 'models' is not defined
+ERROR|2025-07-09 15:05:35,019|views|44318|6217576448|Dashboard error for user 5: name 'models' is not defined
+ERROR|2025-07-09 15:07:16,375|views|46015|6131412992|Dashboard error for user 5: name 'models' is not defined
+ERROR|2025-07-09 15:12:17,800|views|46015|6165065728|API ticket stats error: (1146, "Table 'ardurtruealign.support_audit_log' doesn't exist")
+ERROR|2025-07-09 15:12:45,163|views|48918|6155956224|Dashboard error for user 5: name 'models' is not defined
+ERROR|2025-07-09 15:15:15,578|views|50379|6143897600|Dashboard error for user 5: name 'models' is not defined
+ERROR|2025-07-09 15:16:23,778|views|50379|6325039104|Dashboard error for user 5: name 'models' is not defined
+ERROR|2025-07-09 15:28:21,090|views|57044|6124236800|Ticket detail error: PermissionManager.can_change_status() missing 1 required positional argument: 'new_status'
+ERROR|2025-07-09 15:28:25,611|views|57044|6157889536|Ticket detail error: PermissionManager.can_change_status() missing 1 required positional argument: 'new_status'
+ERROR|2025-07-09 15:30:47,570|views|57044|6157889536|Ticket detail error: PermissionManager.can_change_status() missing 1 required positional argument: 'new_status'
+ERROR|2025-07-09 15:35:07,263|views|60829|6183809024|Ticket detail error: 'list' object has no attribute 'all'
+ERROR|2025-07-09 15:37:51,473|views|62280|6252572672|Update ticket error: support/update_ticket.html
+ERROR|2025-07-09 15:38:02,508|views|62280|6235746304|Add comment error: (1146, "Table 'ardurtruealign.support_audit_log' doesn't exist")
+ERROR|2025-07-09 15:38:12,463|views|62280|6202093568|Add comment error: (1146, "Table 'ardurtruealign.support_audit_log' doesn't exist")
+ERROR|2025-07-09 15:39:52,110|views|62280|6286225408|Update ticket error: 'list' object has no attribute 'all'
+ERROR|2025-07-09 15:39:58,094|views|62280|6252572672|Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+ERROR|2025-07-09 15:41:09,650|views|62280|6235746304|Download attachment error: No TicketAttachment matches the given query.
+ERROR|2025-07-09 15:42:45,821|views|62280|6252572672|Add comment error: (1146, "Table 'ardurtruealign.support_audit_log' doesn't exist")
+ERROR|2025-07-09 15:48:12,747|views|62280|6202093568|API ticket stats error: (1146, "Table 'ardurtruealign.support_audit_log' doesn't exist")
+ERROR|2025-07-09 15:53:12,755|views|62280|6202093568|API ticket stats error: (1146, "Table 'ardurtruealign.support_audit_log' doesn't exist")
+ERROR|2025-07-09 15:58:12,692|views|62280|6235746304|API ticket stats error: (1146, "Table 'ardurtruealign.support_audit_log' doesn't exist")
+ERROR|2025-07-09 17:12:08,261|views|10051|6231584768|Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+ERROR|2025-07-09 17:12:11,831|views|10051|6214758400|Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+ERROR|2025-07-09 17:12:24,269|views|10051|6248411136|Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+ERROR|2025-07-09 17:12:30,100|views|10051|6197932032|Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+ERROR|2025-07-09 17:17:05,588|views|10051|6214758400|API ticket stats error: (1146, "Table 'ardurtruealign.support_audit_log' doesn't exist")
+ERROR|2025-07-09 17:22:05,498|views|10051|6265237504|API ticket stats error: (1146, "Table 'ardurtruealign.support_audit_log' doesn't exist")
+ERROR|2025-07-09 17:27:05,563|views|18291|6140964864|API ticket stats error: (1146, "Table 'ardurtruealign.support_audit_log' doesn't exist")
+ERROR|2025-07-09 17:27:24,558|views|18291|6157791232|Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+ERROR|2025-07-09 17:49:49,596|views|25107|6156808192|My tickets error: Invalid block tag on line 580: 'endif', expected 'empty' or 'endfor'. Did you forget to register or load this tag?
+ERROR|2025-07-09 17:49:54,302|views|25107|6139981824|My tickets error: Invalid block tag on line 580: 'endif', expected 'empty' or 'endfor'. Did you forget to register or load this tag?
+ERROR|2025-07-09 17:52:06,406|views|25107|6173634560|My tickets error: Could not parse the remainder: '=""="New"' from 'request.GET.status=""="New"'
+ERROR|2025-07-09 17:52:30,876|views|25107|6139981824|My tickets error: Could not parse the remainder: '=""="New"' from 'request.GET.status=""="New"'
+ERROR|2025-07-09 17:53:21,700|views|25107|6123155456|My tickets error: Invalid block tag on line 137: 'endif', expected 'endblock'. Did you forget to register or load this tag?
+ERROR|2025-07-09 17:53:26,996|views|25107|6173634560|My tickets error: Invalid block tag on line 137: 'endif', expected 'endblock'. Did you forget to register or load this tag?
+ERROR|2025-07-09 17:54:33,919|views|25107|6139981824|My tickets error: Invalid block tag on line 687: 'endblock', expected 'elif', 'else' or 'endif'. Did you forget to register or load this tag?
+ERROR|2025-07-09 17:57:22,887|views|25107|6139981824|Dashboard error for user 4: ReportGenerator.generate_agent_performance_report() got an unexpected keyword argument 'date_from'
+ERROR|2025-07-09 17:57:30,820|views|25107|6156808192|Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+ERROR|2025-07-09 17:57:42,323|views|25107|12918534144|Ticket detail error: Cannot resolve keyword 'created_at' into field. Choices are: action, comment_attachments, details, id, ticket, ticket_id, timestamp, user, user_id
+ERROR|2025-07-09 17:57:42,427|views|25107|12918534144|Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+ERROR|2025-07-09 17:58:24,478|views|25107|6173634560|Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+ERROR|2025-07-09 18:01:03,698|views|25107|6156808192|Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+ERROR|2025-07-09 18:01:30,674|views|25107|6156808192|Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+ERROR|2025-07-09 18:01:44,659|views|25107|6123155456|Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+ERROR|2025-07-09 18:01:58,398|views|25107|6123155456|Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+ERROR|2025-07-09 18:02:21,913|views|25107|6123155456|Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+ERROR|2025-07-09 18:02:35,515|views|25107|6156808192|Dashboard error for user 4: ReportGenerator.generate_agent_performance_report() got an unexpected keyword argument 'date_from'
+ERROR|2025-07-09 18:05:47,322|views|25107|6123155456|Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+ERROR|2025-07-09 18:08:58,418|views|25107|6173634560|Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+ERROR|2025-07-09 18:10:53,672|views|25107|6139981824|Ticket detail error: Cannot resolve keyword 'created_at' into field. Choices are: action, comment_attachments, details, id, ticket, ticket_id, timestamp, user, user_id
+ERROR|2025-07-09 18:13:39,176|views|25107|6139981824|Dashboard error for user 4: ReportGenerator.generate_agent_performance_report() got an unexpected keyword argument 'date_from'
+ERROR|2025-07-09 18:13:53,954|views|25107|6139981824|Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+ERROR|2025-07-09 18:14:02,141|views|25107|6156808192|Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+ERROR|2025-07-09 18:17:09,619|views|25107|6173634560|Dashboard error for user 3: ReportGenerator.generate_agent_performance_report() got an unexpected keyword argument 'date_from'
+ERROR|2025-07-09 18:17:12,824|views|25107|6123155456|Ticket list error for user 3: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+ERROR|2025-07-09 18:19:19,310|views|25107|6123155456|Dashboard error for user 3: ReportGenerator.generate_agent_performance_report() got an unexpected keyword argument 'date_from'
+ERROR|2025-07-09 18:22:42,264|views|48208|6197030912|Ticket list error for user 3: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+ERROR|2025-07-09 18:30:17,994|views|51935|6165639168|Ticket list error for user 3: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+ERROR|2025-07-09 18:30:21,591|views|51935|6148812800|Ticket list error for user 3: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+ERROR|2025-07-09 18:30:51,174|views|51935|6165639168|Dashboard error for user 4: ReportGenerator.generate_agent_performance_report() got an unexpected keyword argument 'date_from'
+ERROR|2025-07-09 18:30:53,952|views|51935|6148812800|Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+ERROR|2025-07-09 18:39:26,394|views|57478|6211366912|Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+ERROR|2025-07-09 18:40:11,992|views|57478|6194540544|Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'

@@ -1,49 +1,54 @@
 """
-Support URL Configuration
-URL patterns for the support ticket system with multiple file upload support
+URL Configuration for Smart Ticketing System
+Provides comprehensive URL patterns for all ticket operations
 """
 
-from django.urls import path
+from django.urls import path, include
 from . import views
 
 app_name = 'support'
 
 urlpatterns = [
-    # Dashboard
-    path('dashboard/', views.support_dashboard, name='dashboard'),
-
-    # Ticket List and API
+    # Dashboard and main views
+    path('', views.dashboard, name='dashboard'),
     path('tickets/', views.ticket_list, name='ticket_list'),
-    path('tickets/api/', views.ticket_list_api, name='ticket_list_api'),
+    path('my-tickets/', views.my_tickets, name='my_tickets'),
+    path('agent-dashboard/', views.agent_dashboard, name='agent_dashboard'),
 
-    # Ticket Management
+    # Ticket operations
     path('tickets/create/', views.create_ticket, name='create_ticket'),
-    path('tickets/<int:pk>/', views.ticket_detail, name='ticket_detail'),
+    path('tickets/<str:ticket_id>/', views.ticket_detail, name='ticket_detail'),
+    path('tickets/<str:ticket_id>/update/', views.update_ticket, name='update_ticket'),
+    path('tickets/<str:ticket_id>/comment/', views.add_comment, name='add_comment'),
+    path('tickets/<str:ticket_id>/assign/', views.assign_ticket, name='assign_ticket'),
+    path('tickets/<str:ticket_id>/escalate/', views.escalate_ticket, name='escalate_ticket'),
+    path('tickets/<str:ticket_id>/reopen/', views.reopen_ticket, name='reopen_ticket'),
+    path('tickets/<str:ticket_id>/close/', views.close_ticket, name='close_ticket'),
+    path('tickets/<str:ticket_id>/feedback/', views.submit_feedback, name='submit_feedback'),
 
-    # Ticket Actions
-    path('tickets/<int:pk>/reopen/', views.reopen_ticket, name='reopen_ticket'),
-    path('tickets/<int:pk>/escalate/', views.escalate_ticket, name='escalate_ticket'),
+    # Bulk operations
+    path('tickets/bulk-actions/', views.bulk_actions, name='bulk_actions'),
 
-    # Attachment Management
-    path('tickets/<int:pk>/attachments/<int:attachment_id>/download/',
-         views.download_attachment, name='download_attachment'),
-    path('tickets/<int:pk>/attachments/<int:attachment_id>/delete/',
-         views.delete_attachment, name='delete_attachment'),
-    path('attachments/serve/<path:file_path>/',
-         views.serve_ticket_attachment, name='serve_attachment'),
+    # File operations
+    path('attachments/<int:attachment_id>/download/', views.download_attachment, name='download_attachment'),
+    path('attachments/<int:attachment_id>/delete/', views.delete_attachment, name='delete_attachment'),
 
-    # Bulk Operations
-    path('tickets/bulk-actions/', views.bulk_ticket_actions, name='bulk_ticket_actions'),
+    # Analytics and reporting
+    path('analytics/', views.analytics, name='analytics'),
+    path('sla-monitoring/', views.sla_monitoring, name='sla_monitoring'),
+    path('sla-check/', views.run_sla_check, name='run_sla_check'),
 
-    # Export
-    path('tickets/export/', views.ticket_export, name='ticket_export'),
+    # Export functionality
+    path('export/', views.export_tickets, name='export_tickets'),
 
-    # API Endpoints
-    path('api/tickets/stats/', views.get_ticket_stats, name='get_ticket_stats'),
-    path('api/tickets/search/', views.search_tickets, name='search_tickets'),
-    path('api/users/by-group/<int:group_id>/', views.get_users_by_group, name='get_users_by_group'),
+    # Search functionality
+    path('search/', views.search_tickets, name='search_tickets'),
 
-    # Additional API endpoints for AJAX calls
-    path('api/tickets/<int:pk>/comments/', views.get_ticket_comments_api, name='get_ticket_comments_api'),
-    path('api/tickets/<int:pk>/activities/', views.get_ticket_activities_api, name='get_ticket_activities_api'),
+    # API endpoints
+    path('api/stats/', views.api_ticket_stats, name='api_ticket_stats'),
+    path('api/tickets/<str:ticket_id>/assignable-users/', views.api_assignable_users, name='api_assignable_users'),
+    path('api/tickets/<str:ticket_id>/activities/', views.api_ticket_activities, name='api_ticket_activities'),
+
+    # Help and documentation
+    path('help/', views.user_guide, name='user_guide'),
 ]

@@ -1,0 +1,73 @@
+[2025-07-09 14:58:22] ERROR - trueAlign.support.views - dashboard:106 - Dashboard error for user 5: (1146, "Table 'ardurtruealign.support_audit_log' doesn't exist")
+[2025-07-09 14:59:01] ERROR - trueAlign.support.views - dashboard:106 - Dashboard error for user 4: (1146, "Table 'ardurtruealign.support_audit_log' doesn't exist")
+[2025-07-09 15:00:25] ERROR - trueAlign.support.views - ticket_list:203 - Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+[2025-07-09 15:00:41] ERROR - trueAlign.support.views - ticket_detail:352 - Ticket detail error: PermissionManager.can_change_status() missing 1 required positional argument: 'new_status'
+[2025-07-09 15:00:41] ERROR - trueAlign.support.views - ticket_list:203 - Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+[2025-07-09 15:00:55] ERROR - trueAlign.support.views - ticket_list:203 - Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+[2025-07-09 15:01:28] ERROR - trueAlign.support.views - dashboard:106 - Dashboard error for user 4: (1146, "Table 'ardurtruealign.support_audit_log' doesn't exist")
+[2025-07-09 15:04:32] ERROR - trueAlign.support.views - dashboard:133 - Dashboard error for user 4: name 'models' is not defined
+[2025-07-09 15:05:35] ERROR - trueAlign.support.views - dashboard:133 - Dashboard error for user 5: name 'models' is not defined
+[2025-07-09 15:07:16] ERROR - trueAlign.support.views - dashboard:140 - Dashboard error for user 5: name 'models' is not defined
+[2025-07-09 15:12:17] ERROR - trueAlign.support.views - api_ticket_stats:794 - API ticket stats error: (1146, "Table 'ardurtruealign.support_audit_log' doesn't exist")
+[2025-07-09 15:12:45] ERROR - trueAlign.support.views - dashboard:147 - Dashboard error for user 5: name 'models' is not defined
+[2025-07-09 15:15:15] ERROR - trueAlign.support.views - dashboard:148 - Dashboard error for user 5: name 'models' is not defined
+[2025-07-09 15:16:23] ERROR - trueAlign.support.views - dashboard:148 - Dashboard error for user 5: name 'models' is not defined
+[2025-07-09 15:28:21] ERROR - trueAlign.support.views - ticket_detail:440 - Ticket detail error: PermissionManager.can_change_status() missing 1 required positional argument: 'new_status'
+[2025-07-09 15:28:25] ERROR - trueAlign.support.views - ticket_detail:440 - Ticket detail error: PermissionManager.can_change_status() missing 1 required positional argument: 'new_status'
+[2025-07-09 15:30:47] ERROR - trueAlign.support.views - ticket_detail:440 - Ticket detail error: PermissionManager.can_change_status() missing 1 required positional argument: 'new_status'
+[2025-07-09 15:35:07] ERROR - trueAlign.support.views - ticket_detail:440 - Ticket detail error: 'list' object has no attribute 'all'
+[2025-07-09 15:37:51] ERROR - trueAlign.support.views - update_ticket:627 - Update ticket error: support/update_ticket.html
+[2025-07-09 15:38:02] ERROR - trueAlign.support.services - add_comment:203 - Comment addition failed for HARDWARE_ISSUE-3: (1146, "Table 'ardurtruealign.support_audit_log' doesn't exist")
+[2025-07-09 15:38:02] ERROR - trueAlign.support.views - add_comment:578 - Add comment error: (1146, "Table 'ardurtruealign.support_audit_log' doesn't exist")
+[2025-07-09 15:38:12] ERROR - trueAlign.support.services - add_comment:203 - Comment addition failed for HARDWARE_ISSUE-3: (1146, "Table 'ardurtruealign.support_audit_log' doesn't exist")
+[2025-07-09 15:38:12] ERROR - trueAlign.support.views - add_comment:578 - Add comment error: (1146, "Table 'ardurtruealign.support_audit_log' doesn't exist")
+[2025-07-09 15:39:52] ERROR - trueAlign.support.views - update_ticket:627 - Update ticket error: 'list' object has no attribute 'all'
+[2025-07-09 15:39:58] ERROR - trueAlign.support.views - ticket_list:291 - Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+[2025-07-09 15:41:09] ERROR - trueAlign.support.views - download_attachment:1036 - Download attachment error: No TicketAttachment matches the given query.
+[2025-07-09 15:42:45] ERROR - trueAlign.support.services - add_comment:203 - Comment addition failed for HARDWARE_ISSUE-2: (1146, "Table 'ardurtruealign.support_audit_log' doesn't exist")
+[2025-07-09 15:42:45] ERROR - trueAlign.support.views - add_comment:578 - Add comment error: (1146, "Table 'ardurtruealign.support_audit_log' doesn't exist")
+[2025-07-09 15:48:12] ERROR - trueAlign.support.views - api_ticket_stats:948 - API ticket stats error: (1146, "Table 'ardurtruealign.support_audit_log' doesn't exist")
+[2025-07-09 15:53:12] ERROR - trueAlign.support.views - api_ticket_stats:948 - API ticket stats error: (1146, "Table 'ardurtruealign.support_audit_log' doesn't exist")
+[2025-07-09 15:58:12] ERROR - trueAlign.support.views - api_ticket_stats:948 - API ticket stats error: (1146, "Table 'ardurtruealign.support_audit_log' doesn't exist")
+[2025-07-09 17:12:08] ERROR - trueAlign.support.views - ticket_list:291 - Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+[2025-07-09 17:12:11] ERROR - trueAlign.support.views - ticket_list:291 - Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+[2025-07-09 17:12:24] ERROR - trueAlign.support.views - ticket_list:291 - Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+[2025-07-09 17:12:30] ERROR - trueAlign.support.views - ticket_list:291 - Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+[2025-07-09 17:17:05] ERROR - trueAlign.support.views - api_ticket_stats:948 - API ticket stats error: (1146, "Table 'ardurtruealign.support_audit_log' doesn't exist")
+[2025-07-09 17:22:05] ERROR - trueAlign.support.views - api_ticket_stats:948 - API ticket stats error: (1146, "Table 'ardurtruealign.support_audit_log' doesn't exist")
+[2025-07-09 17:27:05] ERROR - trueAlign.support.views - api_ticket_stats:948 - API ticket stats error: (1146, "Table 'ardurtruealign.support_audit_log' doesn't exist")
+[2025-07-09 17:27:24] ERROR - trueAlign.support.views - ticket_list:291 - Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+[2025-07-09 17:49:49] ERROR - trueAlign.support.views - my_tickets:1652 - My tickets error: Invalid block tag on line 580: 'endif', expected 'empty' or 'endfor'. Did you forget to register or load this tag?
+[2025-07-09 17:49:54] ERROR - trueAlign.support.views - my_tickets:1652 - My tickets error: Invalid block tag on line 580: 'endif', expected 'empty' or 'endfor'. Did you forget to register or load this tag?
+[2025-07-09 17:52:06] ERROR - trueAlign.support.views - my_tickets:1652 - My tickets error: Could not parse the remainder: '=""="New"' from 'request.GET.status=""="New"'
+[2025-07-09 17:52:30] ERROR - trueAlign.support.views - my_tickets:1652 - My tickets error: Could not parse the remainder: '=""="New"' from 'request.GET.status=""="New"'
+[2025-07-09 17:53:21] ERROR - trueAlign.support.views - my_tickets:1652 - My tickets error: Invalid block tag on line 137: 'endif', expected 'endblock'. Did you forget to register or load this tag?
+[2025-07-09 17:53:26] ERROR - trueAlign.support.views - my_tickets:1652 - My tickets error: Invalid block tag on line 137: 'endif', expected 'endblock'. Did you forget to register or load this tag?
+[2025-07-09 17:54:33] ERROR - trueAlign.support.views - my_tickets:1652 - My tickets error: Invalid block tag on line 687: 'endblock', expected 'elif', 'else' or 'endif'. Did you forget to register or load this tag?
+[2025-07-09 17:57:22] ERROR - trueAlign.support.views - dashboard:179 - Dashboard error for user 4: ReportGenerator.generate_agent_performance_report() got an unexpected keyword argument 'date_from'
+[2025-07-09 17:57:30] ERROR - trueAlign.support.views - ticket_list:271 - Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+[2025-07-09 17:57:42] ERROR - trueAlign.support.views - ticket_detail:555 - Ticket detail error: Cannot resolve keyword 'created_at' into field. Choices are: action, comment_attachments, details, id, ticket, ticket_id, timestamp, user, user_id
+[2025-07-09 17:57:42] ERROR - trueAlign.support.views - ticket_list:271 - Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+[2025-07-09 17:58:24] ERROR - trueAlign.support.views - ticket_list:271 - Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+[2025-07-09 18:01:03] ERROR - trueAlign.support.views - ticket_list:271 - Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+[2025-07-09 18:01:30] ERROR - trueAlign.support.views - ticket_list:271 - Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+[2025-07-09 18:01:44] ERROR - trueAlign.support.views - ticket_list:271 - Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+[2025-07-09 18:01:58] ERROR - trueAlign.support.views - ticket_list:271 - Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+[2025-07-09 18:02:21] ERROR - trueAlign.support.views - ticket_list:271 - Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+[2025-07-09 18:02:35] ERROR - trueAlign.support.views - dashboard:179 - Dashboard error for user 4: ReportGenerator.generate_agent_performance_report() got an unexpected keyword argument 'date_from'
+[2025-07-09 18:05:47] ERROR - trueAlign.support.views - ticket_list:271 - Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+[2025-07-09 18:08:58] ERROR - trueAlign.support.views - ticket_list:271 - Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+[2025-07-09 18:10:53] ERROR - trueAlign.support.views - ticket_detail:555 - Ticket detail error: Cannot resolve keyword 'created_at' into field. Choices are: action, comment_attachments, details, id, ticket, ticket_id, timestamp, user, user_id
+[2025-07-09 18:13:39] ERROR - trueAlign.support.views - dashboard:179 - Dashboard error for user 4: ReportGenerator.generate_agent_performance_report() got an unexpected keyword argument 'date_from'
+[2025-07-09 18:13:53] ERROR - trueAlign.support.views - ticket_list:271 - Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+[2025-07-09 18:14:02] ERROR - trueAlign.support.views - ticket_list:271 - Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+[2025-07-09 18:17:09] ERROR - trueAlign.support.views - dashboard:179 - Dashboard error for user 3: ReportGenerator.generate_agent_performance_report() got an unexpected keyword argument 'date_from'
+[2025-07-09 18:17:12] ERROR - trueAlign.support.views - ticket_list:271 - Ticket list error for user 3: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+[2025-07-09 18:19:19] ERROR - trueAlign.support.views - dashboard:179 - Dashboard error for user 3: ReportGenerator.generate_agent_performance_report() got an unexpected keyword argument 'date_from'
+[2025-07-09 18:22:42] ERROR - trueAlign.support.views - ticket_list:271 - Ticket list error for user 3: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+[2025-07-09 18:30:17] ERROR - trueAlign.support.views - ticket_list:271 - Ticket list error for user 3: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+[2025-07-09 18:30:21] ERROR - trueAlign.support.views - ticket_list:271 - Ticket list error for user 3: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+[2025-07-09 18:30:51] ERROR - trueAlign.support.views - dashboard:179 - Dashboard error for user 4: ReportGenerator.generate_agent_performance_report() got an unexpected keyword argument 'date_from'
+[2025-07-09 18:30:53] ERROR - trueAlign.support.views - ticket_list:271 - Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+[2025-07-09 18:39:26] ERROR - trueAlign.support.views - ticket_list:271 - Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+[2025-07-09 18:40:11] ERROR - trueAlign.support.views - ticket_list:271 - Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
