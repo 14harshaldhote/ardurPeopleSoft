@@ -2766,3 +2766,20 @@ KeyError: 'pending_updates'
 [2025-07-16 20:20:27] INFO - trueAlign.core.middleware - _create_new_session_throttled:309 - Created new session a6ead39a-4b96-43ae-97c8-ad4ae1d9ea11 for user employeesupport
 [2025-07-16 20:20:32] INFO - trueAlign.core.middleware - _create_new_session_throttled:309 - Created new session e2ad4e68-ce36-462c-894e-d238d9d0f308 for user employeesupport
 [2025-07-16 20:20:32] INFO - trueAlign.core.middleware - _create_new_session_throttled:309 - Created new session 0a5313b7-5976-4f4d-b1c9-cb1943cb0a8c for user employeesupport
+[2025-07-18 21:24:52] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-07-18 21:25:15] INFO - trueAlign.core.middleware - _create_new_session_throttled:309 - Created new session a2a3b9e8-65df-4f32-8281-6604918e5921 for user employeesupport
+[2025-07-18 21:25:16] INFO - trueAlign.core.middleware - _create_new_session_throttled:232 - Closing 1 old sessions for user employeesupport
+[2025-07-18 21:25:16] INFO - trueAlign.core.middleware - _create_new_session_throttled:232 - Closing 1 old sessions for user employeesupport
+[2025-07-18 21:25:16] INFO - trueAlign.core.middleware - _create_new_session_throttled:309 - Created new session c94ec01e-8fc2-42e3-922c-1eb394510cd9 for user employeesupport
+[2025-07-18 21:25:16] INFO - trueAlign.core.middleware - _create_new_session_throttled:309 - Created new session 2f21068b-784f-4487-9c8f-d747c22b8a46 for user employeesupport
+[2025-07-18 21:25:31] INFO - trueAlign.core.middleware - _create_new_session_throttled:309 - Created new session 16e46a66-c478-497c-a48c-434c09276f48 for user employeesupport
+[2025-07-18 21:25:31] INFO - trueAlign.core.middleware - _create_new_session_throttled:309 - Created new session 64d2335d-ab69-45d6-b447-59e107fd9adc for user employeesupport
+[2025-07-18 21:25:36] INFO - trueAlign.core.middleware - _create_new_session_throttled:232 - Closing 1 old sessions for user employeesupport
+[2025-07-18 21:25:37] INFO - trueAlign.core.middleware - _create_new_session_throttled:309 - Created new session 5f108607-8a61-4686-99b5-f977e9af11de for user employeesupport
+[2025-07-18 21:25:37] INFO - trueAlign.core.middleware - _create_new_session_throttled:309 - Created new session 1c5521bb-5839-49e4-a5d1-94e683aad9bc for user employeesupport
+[2025-07-18 21:33:24] INFO - trueAlign.core.middleware - _create_new_session_throttled:309 - Created new session c18d3f6e-283b-4fef-9272-37db3a8a810e for user employeesupport
+[2025-07-18 21:33:29] INFO - trueAlign.core.middleware - _create_new_session_throttled:309 - Created new session 37500c6c-17e2-4109-b15b-ed214520a3e6 for user adminsupport
+[2025-07-18 21:33:30] INFO - trueAlign.core.middleware - _create_new_session_throttled:232 - Closing 1 old sessions for user adminsupport
+[2025-07-18 21:33:30] INFO - trueAlign.core.middleware - _create_new_session_throttled:232 - Closing 1 old sessions for user adminsupport
+[2025-07-18 21:33:30] INFO - trueAlign.core.middleware - _create_new_session_throttled:309 - Created new session f1a9e678-d985-4e41-a075-563378a73501 for user adminsupport
+[2025-07-18 21:33:30] INFO - trueAlign.core.middleware - _create_new_session_throttled:309 - Created new session 620b7943-ff9f-449c-bac9-76b00fad402d for user adminsupport
