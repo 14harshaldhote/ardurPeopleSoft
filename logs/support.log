@@ -71,3 +71,4 @@
 [2025-07-09 18:30:53] ERROR - trueAlign.support.views - ticket_list:271 - Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
 [2025-07-09 18:39:26] ERROR - trueAlign.support.views - ticket_list:271 - Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
 [2025-07-09 18:40:11] ERROR - trueAlign.support.views - ticket_list:271 - Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
+[2025-07-18 23:41:37] ERROR - trueAlign.support.views - dashboard:179 - Dashboard error for user 4: ReportGenerator.generate_agent_performance_report() got an unexpected keyword argument 'date_from'

@@ -39,5 +39,6 @@ urlpatterns = [
     path('api/session/update/', views.update_session, name='update_session'),
 
     path('dashboard/', views.dashboard_view, name='dashboard'),
+    path('configurations/', views.configurations_view, name='configurations'),
 
 ]

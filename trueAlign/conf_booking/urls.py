@@ -25,13 +25,23 @@ urlpatterns = [
     path('api/available-slots/', views.get_available_slots, name='get_available_slots'),
     path('api/room/<int:room_id>/', views.get_room_details, name='get_room_details'),
     path('api/rooms/', views.get_available_rooms, name='get_available_rooms'),
+    path('api/calendar-data/', views.get_calendar_data, name='get_calendar_data'),
+    path('api/quick-booking/', views.create_quick_booking, name='create_quick_booking'),
+
+    # Management URLs (Admin only)
+    path('manage/locations/', views.manage_locations, name='manage_locations'),
+    path('manage/locations/add/', views.add_location, name='add_location'),
+    path('manage/locations/edit/<int:location_id>/', views.edit_location, name='edit_location'),
+    path('manage/locations/delete/<int:location_id>/', views.delete_location, name='delete_location'),
+    path('manage/rooms/', views.manage_rooms, name='manage_rooms'),
+    path('manage/rooms/add/', views.add_room, name='add_room'),
+    path('manage/rooms/edit/<int:room_id>/', views.edit_room, name='edit_room'),
+    path('manage/rooms/delete/<int:room_id>/', views.delete_room, name='delete_room'),
+
+    # API for location detection
+    path('api/office-location/', views.detect_office_location, name='detect_office_location'),
+    path('api/rooms/', views.get_rooms_by_location, name='get_rooms_by_location'),
 
     # Legacy URL for backward compatibility
     path('ut/', views.booking_room, name='booking_room_legacy'),
-    
-    path('api/available-slots/', views.get_available_slots, name='get_available_slots'),
-    path('api/room/<int:room_id>/', views.get_room_details, name='get_room_details'),
-    path('api/rooms/', views.get_available_rooms, name='get_available_rooms'),
-    path('api/calendar-data/', views.get_calendar_data, name='get_calendar_data'),
-    path('api/quick-booking/', views.create_quick_booking, name='create_quick_booking'),
 ]

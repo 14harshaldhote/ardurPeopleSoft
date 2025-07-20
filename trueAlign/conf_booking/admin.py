@@ -4,21 +4,58 @@ from django.utils import timezone
 from django.db.models import Count, Sum, F
 from django.urls import reverse
 from django.utils.safestring import mark_safe
-from trueAlign.models import Room, ConferenceBooking
+from trueAlign.models import Room, ConferenceBooking, OfficeLocation
 from datetime import timedelta
+
+
+@admin.register(OfficeLocation)
+class OfficeLocationAdmin(admin.ModelAdmin):
+    list_display = [
+        'name', 'code', 'city', 'state', 'country', 'is_active',
+        'working_hours_display', 'total_rooms', 'created_at'
+    ]
+    list_filter = ['is_active', 'country', 'state', 'city', 'created_at']
+    search_fields = ['name', 'code', 'city', 'state', 'address_line1']
+    ordering = ['name']
+    readonly_fields = ['created_at', 'updated_at', 'total_rooms']
+
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('name', 'code', 'is_active')
+        }),
+        ('Address', {
+            'fields': ('address_line1', 'address_line2', 'city', 'state', 'postal_code', 'country')
+        }),
+        ('Contact Information', {
+            'fields': ('phone', 'email')
+        }),
+        ('Operational Details', {
+            'fields': ('timezone', 'working_hours_start', 'working_hours_end')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+    def total_rooms(self, obj):
+        """Display total number of rooms in this office location."""
+        return obj.rooms.count()
+
+    total_rooms.short_description = 'Total Rooms'
 
 
 @admin.register(Room)
 class RoomAdmin(admin.ModelAdmin):
     list_display = [
-        'name', 'room_type', 'capacity', 'status', 'location',
+        'name', 'office_location', 'room_type', 'capacity', 'status', 'location',
         'total_bookings', 'total_hours_booked', 'current_status',
         'created_at'
     ]
     list_filter = [
-        'status', 'room_type', 'capacity', 'created_at'
+        'office_location', 'status', 'room_type', 'capacity', 'created_at'
     ]
-    search_fields = ['name', 'location', 'facilities']
+    search_fields = ['name', 'location', 'facilities', 'office_location__name']
     ordering = ['name']
     readonly_fields = [
         'total_bookings', 'total_hours_booked', 'created_at', 'updated_at',
@@ -27,7 +64,7 @@ class RoomAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('Basic Information', {
-            'fields': ('name', 'room_type', 'capacity', 'location', 'status')
+            'fields': ('name', 'office_location', 'room_type', 'capacity', 'location', 'status')
         }),
         ('Details', {
             'fields': ('description', 'facilities', 'hourly_rate', 'image')
@@ -367,13 +404,13 @@ class ConferenceBookingAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         """Optimize queryset with select_related."""
         return super().get_queryset(request).select_related(
-            'room', 'booked_by', 'cancelled_by', 'approved_by'
+            'room', 'room__office_location', 'booked_by', 'cancelled_by', 'approved_by'
         )
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         """Customize foreign key fields."""
         if db_field.name == "room":
-            kwargs["queryset"] = Room.objects.filter(status=Room.RoomStatus.ACTIVE)
+            kwargs["queryset"] = Room.objects.filter(status=Room.RoomStatus.ACTIVE).select_related('office_location')
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     def save_model(self, request, obj, form, change):

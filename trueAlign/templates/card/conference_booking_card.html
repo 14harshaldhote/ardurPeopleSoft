@@ -12,7 +12,15 @@
             </div>
             <div>
                 <h3 class="text-lg font-semibold text-gray-800">Conference Rooms</h3>
-                <p class="text-xs text-gray-500">Book & manage rooms</p>
+                <p class="text-xs text-gray-500" id="locationStatus">
+                    <span class="inline-flex items-center">
+                        <svg class="w-3 h-3 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        Detecting location...
+                    </span>
+                </p>
             </div>
         </div>
         <a
@@ -26,10 +34,26 @@
         </a>
     </div>
 
+    <!-- Location Detection and Manual Selection -->
+    <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+        <div class="flex items-center justify-between">
+            <button id="detectLocationBtn" class="px-3 py-1.5 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-200 flex items-center space-x-1">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span>Detect Location</span>
+            </button>
+            <select id="manualLocationSelect" class="text-xs border border-gray-300 rounded-md px-2 py-1 bg-white">
+                <option value="">Select Location</option>
+            </select>
+        </div>
+        <div id="locationError" class="text-xs text-red-600 mt-1 hidden"></div>
+    </div>
+
     <!-- Quick Actions -->
     <div class="flex justify-between items-center mb-4">
         <div class="flex space-x-1">
-           
             <button id="refreshRoomStatusBtn" class="px-2 py-1 text-xs bg-gray-50 text-gray-700 rounded-md hover:bg-gray-100 transition duration-200 flex items-center space-x-1">
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -55,12 +79,21 @@
             <svg class="w-4 h-4 mr-1 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h3M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 8h1m0 0h1" />
             </svg>
-            Room Status
+            <span id="roomStatusTitle">Room Status</span>
+            <span id="roomCount" class="text-xs text-gray-500 ml-2"></span>
         </h4>
-        
-        <div class="max-h-48 overflow-y-auto space-y-2">
+
+        <div id="roomsContainer" class="max-h-48 overflow-y-auto space-y-2">
+            <div id="loadingRooms" class="text-center py-4">
+                <svg class="animate-spin h-5 w-5 text-gray-400 mx-auto" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <p class="text-xs text-gray-500 mt-2">Loading rooms...</p>
+            </div>
+
             {% for room in available_rooms %}
-                <div class="room-card bg-gray-50 border border-gray-200 rounded-lg p-3 hover:bg-gray-100 transition-all duration-150">
+                <div class="room-card bg-gray-50 border border-gray-200 rounded-lg p-3 hover:bg-gray-100 transition-all duration-150" data-room-id="{{ room.id }}" data-location-id="{{ room.office_location.id }}">
                     <div class="flex items-center justify-between">
                         <!-- Room Info -->
                         <div class="flex items-center space-x-3 flex-1 min-w-0">
@@ -70,6 +103,9 @@
                             </div>
                             <div class="text-xs text-gray-500 truncate">
                                 {{ room.capacity }}p • {{ room.location }}
+                                {% if room.office_location %}
+                                    • {{ room.office_location.code }}
+                                {% endif %}
                             </div>
                         </div>
 
@@ -163,13 +199,13 @@
                                     <span>{{ booking.start_time|timezone:"Asia/Kolkata"|time:"g:i A" }} - {{ booking.end_time|timezone:"Asia/Kolkata"|time:"g:i A" }}</span>
                                 </div>
                             </div>
-                            
+
                             <div class="flex flex-col space-y-1 ml-3 flex-shrink-0">
                                 {% if booking.checked_in %}
                                     <span class="px-2 py-1 text-xs bg-green-100 text-green-800 rounded text-center font-medium">
                                         ✓ Active
                                     </span>
-                                
+
                                 {% endif %}
                             </div>
                         </div>
@@ -311,7 +347,7 @@
             console.log("Refreshing room status");
             const refreshBtn = document.getElementById("refreshRoomStatusBtn");
             const originalContent = refreshBtn.innerHTML;
-            
+
             refreshBtn.innerHTML = '<svg class="w-3 h-3 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>';
             refreshBtn.disabled = true;
 
@@ -361,6 +397,293 @@
         window.checkInToBooking = checkInToBooking;
         window.refreshRoomStatus = refreshRoomStatus;
     });
+
+    // Location Detection and Room Filtering
+    let currentLocationId = null;
+    let allRooms = [];
+
+    // Initialize location detection
+    function initLocationDetection() {
+        loadManualLocationOptions();
+
+        // Try to detect location automatically on page load
+        if (navigator.geolocation) {
+            setTimeout(() => {
+                detectUserLocation();
+            }, 1000);
+        } else {
+            updateLocationStatus('Location detection not supported', 'error');
+        }
+    }
+
+    // Load manual location options
+    function loadManualLocationOptions() {
+        fetch('/book/api/office-location/')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const select = document.getElementById('manualLocationSelect');
+                    select.innerHTML = '<option value="">Select Location</option>';
+                    data.locations.forEach(location => {
+                        const option = document.createElement('option');
+                        option.value = location.id;
+                        option.textContent = `${location.name} (${location.city})`;
+                        select.appendChild(option);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error loading locations:', error);
+            });
+    }
+
+    // Detect user location
+    function detectUserLocation() {
+        updateLocationStatus('Detecting your location...', 'loading');
+
+        navigator.geolocation.getCurrentPosition(
+            position => {
+                const { latitude, longitude } = position.coords;
+
+                fetch('/book/api/office-location/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        latitude: latitude,
+                        longitude: longitude
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        currentLocationId = data.office_location.id;
+                        updateLocationStatus(`${data.office_location.name} (${data.office_location.detected_city}, ${data.office_location.detected_state})`, 'success');
+                        displayRooms(data.rooms);
+
+                        // Update manual select to match detected location
+                        const select = document.getElementById('manualLocationSelect');
+                        select.value = data.office_location.id;
+
+                        // Hide location error if it was showing
+                        document.getElementById('locationError').classList.add('hidden');
+                    } else {
+                        updateLocationStatus(data.message || 'Location detection failed', 'error');
+                        if (data.suggested_city && data.suggested_state) {
+                            showLocationError(`Detected: ${data.suggested_city}, ${data.suggested_state}. No office found. Please select manually.`);
+                        } else if (data.manual_selection) {
+                            showLocationError('Could not detect city and state. Please select your office location manually.');
+                        } else {
+                            showLocationError('Location detection failed. Please select your office location manually.');
+                        }
+                        // Clear rooms display
+                        displayRooms([]);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error detecting location:', error);
+                    updateLocationStatus('Failed to detect location', 'error');
+                    showLocationError('Location detection failed. Please select your office location manually.');
+                    displayRooms([]);
+                });
+            },
+            error => {
+                console.error('Geolocation error:', error);
+                let message = 'Location access denied';
+                if (error.code === error.TIMEOUT) {
+                    message = 'Location detection timed out';
+                } else if (error.code === error.POSITION_UNAVAILABLE) {
+                    message = 'Location unavailable';
+                }
+                updateLocationStatus(message, 'error');
+                showLocationError('Please enable location access and try again, or select your location manually.');
+                displayRooms([]);
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 15000,
+                maximumAge: 300000
+            }
+        );
+    }
+
+    // Update location status display
+    function updateLocationStatus(message, type) {
+        const statusElement = document.getElementById('locationStatus');
+        const icons = {
+            loading: '<svg class="w-3 h-3 mr-1 text-blue-500 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>',
+            success: '<svg class="w-3 h-3 mr-1 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>',
+            error: '<svg class="w-3 h-3 mr-1 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
+            info: '<svg class="w-3 h-3 mr-1 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>'
+        };
+
+        statusElement.innerHTML = `<span class="inline-flex items-center">${icons[type] || icons.info}${message}</span>`;
+    }
+
+    // Show location error
+    function showLocationError(message) {
+        const errorElement = document.getElementById('locationError');
+        errorElement.textContent = message;
+        errorElement.classList.remove('hidden');
+
+        // Don't auto-hide location errors - let user manually address them
+        // setTimeout(() => {
+        //     errorElement.classList.add('hidden');
+        // }, 5000);
+    }
+
+    // Display rooms based on location
+    function displayRooms(rooms) {
+        allRooms = rooms;
+        const container = document.getElementById('roomsContainer');
+        const loading = document.getElementById('loadingRooms');
+        const roomCount = document.getElementById('roomCount');
+
+        // Hide loading
+        if (loading) loading.style.display = 'none';
+
+        // Update room count
+        roomCount.textContent = `(${rooms.length} rooms)`;
+
+        // Clear existing rooms
+        const existingRooms = container.querySelectorAll('.room-card');
+        existingRooms.forEach(room => room.remove());
+
+        if (rooms.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-4">
+                    <svg class="w-8 h-8 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h3M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 8h1m0 0h1" />
+                    </svg>
+                    <p class="text-sm text-gray-500">No rooms available</p>
+                    <p class="text-xs text-gray-400">Location must be detected first</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Create room cards
+        rooms.forEach(room => {
+            const roomCard = createRoomCard(room);
+            container.appendChild(roomCard);
+        });
+    }
+
+    // Create individual room card
+    function createRoomCard(room) {
+        const card = document.createElement('div');
+        card.className = 'room-card bg-gray-50 border border-gray-200 rounded-lg p-3 hover:bg-gray-100 transition-all duration-150';
+        card.setAttribute('data-room-id', room.id);
+        card.setAttribute('data-location-id', room.office_location.id);
+
+        // Determine room status (simplified for now)
+        const statusColor = 'bg-green-400';
+        const statusText = 'Free';
+        const statusTextColor = 'text-green-600';
+
+        card.innerHTML = `
+            <div class="flex items-center justify-between">
+                <!-- Room Info -->
+                <div class="flex items-center space-x-3 flex-1 min-w-0">
+                    <div class="flex-shrink-0 flex items-center space-x-2">
+                        <div class="w-3 h-3 rounded-full ${statusColor}"></div>
+                        <div class="text-sm font-medium text-gray-800">${room.name}</div>
+                    </div>
+                    <div class="text-xs text-gray-500 truncate">
+                        ${room.capacity}p • ${room.location || 'No location'}
+                        ${room.office_location ? `• ${room.office_location.name}` : ''}
+                    </div>
+                </div>
+
+                <!-- Status & Actions -->
+                <div class="flex items-center space-x-2 flex-shrink-0">
+                    <div class="text-xs font-medium ${statusTextColor}">
+                        ${statusText}
+                    </div>
+                    <a href="/book/dashboard/?room=${room.id}" class="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition duration-200">
+                        Book
+                    </a>
+                </div>
+            </div>
+
+            <!-- Room Details -->
+            <div class="mt-2 text-xs text-gray-500">
+                <div class="flex items-center space-x-4">
+                    <span class="flex items-center space-x-1">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h3M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 8h1m0 0h1" />
+                        </svg>
+                        <span>${room.room_type}</span>
+                    </span>
+                    ${room.hourly_rate > 0 ? `<span>₹${room.hourly_rate}/hr</span>` : '<span>Free</span>'}
+                </div>
+                ${room.facilities ? `<div class="mt-1 truncate">${room.facilities}</div>` : ''}
+            </div>
+        `;
+
+        return card;
+    }
+
+    // Event listeners
+    document.addEventListener('DOMContentLoaded', function() {
+        initLocationDetection();
+
+        // Detect location button
+        const detectBtn = document.getElementById('detectLocationBtn');
+        if (detectBtn) {
+            detectBtn.addEventListener('click', detectUserLocation);
+        }
+
+        // Manual location select
+        const manualSelect = document.getElementById('manualLocationSelect');
+        if (manualSelect) {
+            manualSelect.addEventListener('change', function() {
+                const locationId = this.value;
+                if (locationId) {
+                    currentLocationId = locationId;
+                    const selectedOption = this.options[this.selectedIndex];
+                    updateLocationStatus(`${selectedOption.textContent} (manually selected)`, 'info');
+
+                    // Hide location error when manual selection is made
+                    document.getElementById('locationError').classList.add('hidden');
+
+                    // Load rooms for selected location
+                    loadRoomsForLocation(locationId);
+                } else {
+                    // Clear rooms when no location is selected
+                    displayRooms([]);
+                    updateLocationStatus('Please select a location', 'error');
+                }
+            });
+        }
+    });
+
+    // Load rooms for specific location
+    function loadRoomsForLocation(locationId) {
+        // Show loading
+        const container = document.getElementById('roomsContainer');
+        const loading = document.getElementById('loadingRooms');
+        if (loading) loading.style.display = 'block';
+
+        // This is a simplified implementation
+        // In a real scenario, you would fetch rooms from the backend
+        fetch(`/book/api/rooms/?location=${locationId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.rooms) {
+                    displayRooms(data.rooms);
+                } else {
+                    displayRooms([]);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading rooms:', error);
+                displayRooms([]);
+            });
+    }
+
 </script>
 
 <style>

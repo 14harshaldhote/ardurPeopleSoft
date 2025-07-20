@@ -18,18 +18,332 @@
         {% if user.is_authenticated %}
         <script src="{% static 'js/optimized-session-tracker.js' %}"></script>
         <script>
+            // Global location management
+            let globalLocationData = null;
+            let locationDetectionInProgress = false;
+            let officeLocationDetected = null;
+
+            // Location detection and office matching
+            function detectOfficeLocation() {
+                if (locationDetectionInProgress) return;
+                locationDetectionInProgress = true;
+
+                const locationModal = document.getElementById('location-modal');
+                const locationStatus = document.getElementById('location-status');
+                const locationIcon = document.getElementById('location-icon');
+                const locationText = document.getElementById('location-text');
+
+                // Show modal
+                if (locationModal) {
+                    locationModal.classList.remove('hidden');
+                }
+
+                // Update status
+                if (locationStatus) {
+                    locationStatus.textContent = 'Detecting your location...';
+                }
+
+                // Try to get precise location
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        function(position) {
+                            const latitude = position.coords.latitude;
+                            const longitude = position.coords.longitude;
+
+                            globalLocationData = {
+                                latitude: latitude,
+                                longitude: longitude,
+                                accuracy: position.coords.accuracy
+                            };
+
+                            // Send coordinates to backend for office matching
+                            fetch('/book/api/office-location/', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value ||
+                                                  document.querySelector('meta[name=csrf-token]').getAttribute('content')
+                                },
+                                body: JSON.stringify({
+                                    latitude: latitude,
+                                    longitude: longitude
+                                })
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                locationDetectionInProgress = false;
+
+                                if (data.success) {
+                                    officeLocationDetected = data.office_location;
+
+                                    // Update UI
+                                    if (locationIcon) {
+                                        locationIcon.className = 'ri-map-pin-line text-green-500';
+                                    }
+                                    if (locationText) {
+                                        locationText.textContent = `${data.office_location.name}`;
+                                    }
+                                    if (locationStatus) {
+                                        locationStatus.textContent = `Location detected: ${data.office_location.name}`;
+                                    }
+
+                                    // Hide modal after success
+                                    setTimeout(() => {
+                                        if (locationModal) {
+                                            locationModal.classList.add('hidden');
+                                        }
+                                    }, 1500);
+
+                                    // Store in session
+                                    sessionStorage.setItem('office_location', JSON.stringify(data.office_location));
+                                    sessionStorage.setItem('location_access_granted', 'true');
+
+                                } else {
+                                    // Handle manual selection case
+                                    if (data.manual_selection) {
+                                        showManualLocationSelection(data.suggested_city, data.suggested_state);
+                                    } else {
+                                        showLocationError(data.message || 'Unable to detect office location');
+                                    }
+                                }
+                            })
+                            .catch(error => {
+                                locationDetectionInProgress = false;
+                                console.error('Location detection error:', error);
+                                showLocationError('Failed to detect location. Please try again.');
+                            });
+                        },
+                        function(error) {
+                            locationDetectionInProgress = false;
+                            console.error('Geolocation error:', error);
+
+                            switch(error.code) {
+                                case error.PERMISSION_DENIED:
+                                    showLocationPermissionDenied();
+                                    break;
+                                case error.POSITION_UNAVAILABLE:
+                                    showLocationError('Location information is unavailable');
+                                    break;
+                                case error.TIMEOUT:
+                                    showLocationError('Location request timed out');
+                                    break;
+                                default:
+                                    showLocationError('An unknown error occurred');
+                                    break;
+                            }
+                        },
+                        {
+                            enableHighAccuracy: true,
+                            timeout: 10000,
+                            maximumAge: 300000
+                        }
+                    );
+                } else {
+                    locationDetectionInProgress = false;
+                    showLocationError('Geolocation is not supported by this browser');
+                }
+            }
+
+            function showLocationPermissionDenied() {
+                const locationModal = document.getElementById('location-modal');
+                const locationStatus = document.getElementById('location-status');
+                const retryButton = document.getElementById('retry-location-btn');
+                const manualButton = document.getElementById('manual-location-btn');
+
+                if (locationStatus) {
+                    locationStatus.innerHTML = `
+                        <div class="text-center">
+                            <div class="text-red-600 mb-4">
+                                <i class="ri-map-pin-line text-4xl"></i>
+                            </div>
+                            <h3 class="text-lg font-semibold text-red-600 mb-2">Location Access Required</h3>
+                            <p class="text-sm text-gray-600 mb-4">
+                                Conference room booking requires location access to show available rooms in your office.
+                            </p>
+                            <div class="space-y-2">
+                                <button id="retry-location-btn" class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">
+                                    <i class="ri-refresh-line mr-2"></i>Enable Location Access
+                                </button>
+                                <button id="manual-location-btn" class="w-full bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition-colors">
+                                    <i class="ri-map-line mr-2"></i>Select Office Manually
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // Add event listeners
+                document.getElementById('retry-location-btn')?.addEventListener('click', detectOfficeLocation);
+                document.getElementById('manual-location-btn')?.addEventListener('click', showManualLocationSelection);
+            }
+
+            function showLocationError(message) {
+                const locationStatus = document.getElementById('location-status');
+                if (locationStatus) {
+                    locationStatus.innerHTML = `
+                        <div class="text-center">
+                            <div class="text-yellow-600 mb-4">
+                                <i class="ri-error-warning-line text-4xl"></i>
+                            </div>
+                            <h3 class="text-lg font-semibold text-yellow-600 mb-2">Location Detection Failed</h3>
+                            <p class="text-sm text-gray-600 mb-4">${message}</p>
+                            <div class="space-y-2">
+                                <button id="retry-location-btn" class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">
+                                    <i class="ri-refresh-line mr-2"></i>Try Again
+                                </button>
+                                <button id="manual-location-btn" class="w-full bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition-colors">
+                                    <i class="ri-map-line mr-2"></i>Select Office Manually
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // Add event listeners
+                document.getElementById('retry-location-btn')?.addEventListener('click', detectOfficeLocation);
+                document.getElementById('manual-location-btn')?.addEventListener('click', showManualLocationSelection);
+            }
+
+            function showManualLocationSelection(suggestedCity = null, suggestedState = null) {
+                const locationStatus = document.getElementById('location-status');
+
+                // Fetch available office locations
+                fetch('/book/api/office-location/', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.locations) {
+                        let optionsHtml = '<option value="">Select your office location</option>';
+
+                        data.locations.forEach(location => {
+                            const selected = suggestedCity && location.city.toLowerCase().includes(suggestedCity.toLowerCase()) ? 'selected' : '';
+                            optionsHtml += `<option value="${location.id}" ${selected}>${location.name} (${location.city}, ${location.state})</option>`;
+                        });
+
+                        if (locationStatus) {
+                            locationStatus.innerHTML = `
+                                <div class="text-center">
+                                    <div class="text-blue-600 mb-4">
+                                        <i class="ri-building-line text-4xl"></i>
+                                    </div>
+                                    <h3 class="text-lg font-semibold text-blue-600 mb-2">Select Your Office</h3>
+                                    ${suggestedCity ? `<p class="text-sm text-gray-600 mb-4">Detected location: ${suggestedCity}${suggestedState ? ', ' + suggestedState : ''}</p>` : ''}
+                                    <div class="space-y-4">
+                                        <select id="office-location-select" class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                            ${optionsHtml}
+                                        </select>
+                                        <button id="confirm-location-btn" class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50" disabled>
+                                            <i class="ri-check-line mr-2"></i>Confirm Location
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                        }
+
+                        // Add event listeners
+                        const selectElement = document.getElementById('office-location-select');
+                        const confirmButton = document.getElementById('confirm-location-btn');
+
+                        selectElement?.addEventListener('change', function() {
+                            confirmButton.disabled = !this.value;
+                        });
+
+                        confirmButton?.addEventListener('click', function() {
+                            const selectedLocationId = selectElement.value;
+                            if (selectedLocationId) {
+                                const selectedLocation = data.locations.find(loc => loc.id == selectedLocationId);
+                                if (selectedLocation) {
+                                    officeLocationDetected = selectedLocation;
+
+                                    // Update UI
+                                    const locationIcon = document.getElementById('location-icon');
+                                    const locationText = document.getElementById('location-text');
+
+                                    if (locationIcon) {
+                                        locationIcon.className = 'ri-map-pin-line text-green-500';
+                                    }
+                                    if (locationText) {
+                                        locationText.textContent = selectedLocation.name;
+                                    }
+
+                                    // Store in session
+                                    sessionStorage.setItem('office_location', JSON.stringify(selectedLocation));
+                                    sessionStorage.setItem('location_access_granted', 'true');
+
+                                    // Hide modal
+                                    const locationModal = document.getElementById('location-modal');
+                                    if (locationModal) {
+                                        locationModal.classList.add('hidden');
+                                    }
+                                }
+                            }
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching office locations:', error);
+                    showLocationError('Failed to load office locations');
+                });
+            }
+
+            // Check if location access is required for conference booking
+            function checkLocationRequirement() {
+                const currentPath = window.location.pathname;
+                const locationRequiredPaths = ['/book/', '/book/my-bookings/'];
+                const locationExcludedPaths = ['/book/manage/', '/book/admin/', '/book/dashboard/'];
+
+                const isLocationRequired = locationRequiredPaths.some(path => currentPath.startsWith(path)) &&
+                                         !locationExcludedPaths.some(path => currentPath.startsWith(path));
+
+                if (isLocationRequired) {
+                    const hasLocationAccess = sessionStorage.getItem('location_access_granted') === 'true';
+                    const hasOfficeLocation = sessionStorage.getItem('office_location');
+
+                    if (!hasLocationAccess || !hasOfficeLocation) {
+                        detectOfficeLocation();
+                    } else {
+                        // Update UI with stored location
+                        try {
+                            const storedLocation = JSON.parse(hasOfficeLocation);
+                            officeLocationDetected = storedLocation;
+
+                            const locationIcon = document.getElementById('location-icon');
+                            const locationText = document.getElementById('location-text');
+
+                            if (locationIcon) {
+                                locationIcon.className = 'ri-map-pin-line text-green-500';
+                            }
+                            if (locationText) {
+                                locationText.textContent = storedLocation.name;
+                            }
+                        } catch (e) {
+                            console.error('Error parsing stored location:', e);
+                            detectOfficeLocation();
+                        }
+                    }
+                }
+            }
+
             // Initialize optimized session tracker when DOM is loaded
             document.addEventListener('DOMContentLoaded', function() {
                 console.log('Initializing OptimizedSessionTracker...');
                 try {
-                    // Get geo-location if available
+                    // Check location requirement first
+                    checkLocationRequirement();
+
+                    // Get geo-location if available (for general display)
                     let locationData = null;
-                    // Function to get location via IP
+
+                    // Function to get location via IP (fallback)
                     function getLocationFromIP() {
                         const locationIcon = document.getElementById('location-icon');
                         const locationText = document.getElementById('location-text');
 
-                        if (locationIcon && locationText) {
+                        if (locationIcon && locationText && !officeLocationDetected) {
                             locationIcon.className = 'ri-map-pin-line text-blue-500';
                             locationText.textContent = 'Getting IP location...';
 
@@ -58,7 +372,7 @@
                         const locationIcon = document.getElementById('location-icon');
                         const locationText = document.getElementById('location-text');
 
-                        if (locationIcon && locationText) {
+                        if (locationIcon && locationText && !officeLocationDetected) {
                             locationIcon.className = 'ri-map-pin-line text-green-500';
                             locationText.textContent = 'Getting location name...';
 
@@ -90,8 +404,8 @@
                         }
                     }
 
-                    // Try to get precise location first
-                    if (navigator.geolocation) {
+                    // Try to get precise location for general display (not for office detection)
+                    if (navigator.geolocation && !officeLocationDetected) {
                         navigator.geolocation.getCurrentPosition(
                             function(position) {
                                 locationData = {
@@ -1374,7 +1688,26 @@
         <!-- Session Monitor Script -->
         {% if user.is_authenticated %}
 
+        </script>
         {% endif %}
+
+        <!-- Location Detection Modal -->
+        <div id="location-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+            <div class="bg-white rounded-lg p-6 m-4 max-w-md w-full shadow-2xl">
+                <div class="text-center">
+                    <div class="mb-4">
+                        <i class="ri-map-pin-line text-4xl text-blue-600 animate-pulse"></i>
+                    </div>
+                    <h2 class="text-xl font-semibold text-gray-800 mb-2">Location Detection</h2>
+                    <div id="location-status" class="text-gray-600">
+                        <div class="animate-pulse">
+                            <div class="h-4 bg-gray-200 rounded mb-2"></div>
+                            <div class="h-4 bg-gray-200 rounded w-3/4 mx-auto"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
     </body>
 </html>

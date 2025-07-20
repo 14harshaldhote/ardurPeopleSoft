@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
-from trueAlign.models import ConferenceBooking, Room, BookingAnalytics, RoomManager, BookingValidator, BookingNotification
+from trueAlign.models import ConferenceBooking, Room, OfficeLocation, BookingAnalytics, RoomManager, BookingValidator, BookingNotification
 from django.db import IntegrityError
 from django.utils import timezone
 from datetime import timedelta, datetime, time
@@ -24,10 +24,21 @@ IST = pytz_timezone('Asia/Kolkata')
 
 class ConferenceBookingForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
+        # Extract user from kwargs to filter rooms by office location
+        user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
 
         # Dynamically populate room choices from active rooms
-        active_rooms = Room.objects.filter(status=Room.RoomStatus.ACTIVE).order_by('name')
+        # Filter by user's office location if available
+        if user and hasattr(user, 'profile') and user.profile.office_location:
+            active_rooms = Room.objects.filter(
+                status=Room.RoomStatus.ACTIVE,
+                office_location=user.profile.office_location
+            ).order_by('name')
+        else:
+            # Fallback to all active rooms if no office location is set
+            active_rooms = Room.objects.filter(status=Room.RoomStatus.ACTIVE).order_by('name')
+
         room_choices = [('', 'Select a room')]
         room_choices.extend([(room.id, f"{room.name} (Capacity: {room.capacity})") for room in active_rooms])
 
@@ -136,6 +147,21 @@ def booking_room(request):
     Handles both displaying the booking form/dashboard (GET) and
     creating a new booking (POST).
     """
+    from .utils import LocationValidator
+
+    # For POST requests (actual bookings), check if location has been verified
+    if request.method == 'POST' and not LocationValidator.is_location_verified_in_session(request):
+        # For AJAX requests, return JSON response
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': False,
+                'error': 'Location verification required for booking',
+                'location_required': True
+            }, status=403)
+
+        # For regular requests, redirect to dashboard with message
+        messages.warning(request, 'Location must be verified before making a booking. Please enable location access and try again.', extra_tags='conf_booking')
+        return redirect('core:dashboard')
     if request.method == 'POST':
         # Check if form data is present
         form_fields = ['room', 'purpose', 'start_time', 'end_time']
@@ -146,7 +172,7 @@ def booking_room(request):
             messages.error(request, "No booking data was received. Please ensure all form fields are filled out and try again.", extra_tags='conf_booking')
             return redirect('core:dashboard')
 
-        form = ConferenceBookingForm(request.POST)
+        form = ConferenceBookingForm(request.POST, user=request.user)
         logger.info(f"Processing booking form for user {request.user} with data: {dict(request.POST)}")
 
         if form.is_valid():
@@ -387,38 +413,51 @@ def room_dashboard(request):
     """
     Display real-time room status dashboard with real data.
     """
+    from .utils import LocationValidator
+
+    # Allow GET requests for initial page load, but require location verification for booking operations
+    # Location verification happens via frontend JavaScript and AJAX calls
+
     try:
         # Get comprehensive dashboard data
         dashboard_data = RoomManager.get_room_status_dashboard()
         daily_utilization = BookingAnalytics.get_daily_utilization()
-        available_rooms = Room.objects.filter(status=Room.RoomStatus.ACTIVE).order_by('name')
-        
+
+        # Filter rooms by user's office location
+        if hasattr(request.user, 'profile') and request.user.profile.office_location:
+            available_rooms = Room.objects.filter(
+                status=Room.RoomStatus.ACTIVE,
+                office_location=request.user.profile.office_location
+            ).order_by('name')
+        else:
+            available_rooms = Room.objects.filter(status=Room.RoomStatus.ACTIVE).order_by('name')
+
         # Get today's bookings count
         today = timezone.now().date()
         todays_bookings = ConferenceBooking.objects.filter(
             start_time__date=today,
             status__in=[ConferenceBooking.BookingStatus.CONFIRMED, ConferenceBooking.BookingStatus.PENDING]
         )
-        
+
         # Get real hourly timeline data
         hourly_timeline = BookingAnalytics.get_hourly_booking_timeline(today)
-        
+
         # Categorize rooms
         available_rooms_list = []
         occupied_rooms_list = []
-        
+
         for room_data in dashboard_data:
             if room_data['status'] == 'occupied':
                 occupied_rooms_list.append(room_data)
             else:
                 available_rooms_list.append(room_data)
-        
+
         # Calculate average utilization
         if daily_utilization:
             avg_utilization = sum([room['utilization_percentage'] for room in daily_utilization]) / len(daily_utilization)
         else:
             avg_utilization = 0
-        
+
         # Enhanced dashboard data
         enhanced_dashboard_data = {
             'room_status': dashboard_data,
@@ -436,11 +475,11 @@ def room_dashboard(request):
         }
 
         return render(request, 'conf_booking/room_dashboard.html', context)
-        
+
     except Exception as e:
         logger.error(f"Error in room_dashboard view: {e}", exc_info=True)
         messages.error(request, "Failed to load dashboard data. Please try again.")
-        
+
         # Fallback data
         context = {
             'room_dashboard': {
@@ -515,6 +554,10 @@ def user_bookings(request):
     """
     Display user's booking history with filtering and pagination.
     """
+    from .utils import LocationValidator
+
+    # Allow GET requests for viewing bookings - location verification not required for viewing
+
     # Get filter parameters
     status_filter = request.GET.get('status', 'all')
     start_date_str = request.GET.get('start_date')
@@ -671,11 +714,17 @@ def conference_booking_context(user=None):
     Prepares the context required for the conference booking card.
     This can be called from your main dashboard view.
     """
-    form = ConferenceBookingForm()
+    form = ConferenceBookingForm(user=user)
     now = timezone.now()
 
-    # Get rooms with real-time status
-    available_rooms = Room.objects.filter(status=Room.RoomStatus.ACTIVE).order_by('name')
+    # Get rooms with real-time status, filtered by user's office location
+    if user and hasattr(user, 'profile') and user.profile.office_location:
+        available_rooms = Room.objects.filter(
+            status=Room.RoomStatus.ACTIVE,
+            office_location=user.profile.office_location
+        ).order_by('name')
+    else:
+        available_rooms = Room.objects.filter(status=Room.RoomStatus.ACTIVE).order_by('name')
 
     # Prefetch related bookings for efficiency
     available_rooms = available_rooms.prefetch_related(
@@ -825,17 +874,57 @@ def get_room_details(request, room_id):
 
 def get_available_rooms(request):
     """
-    API endpoint to get all available rooms.
+    API endpoint to get all available rooms filtered by detected office location.
     """
+    from .utils import LocationValidator
+
     logger.info(f"Available rooms request from user {request.user}")
     logger.info(f"Request method: {request.method}")
     logger.info(f"Request path: {request.path}")
 
+    # Check if location access is required and granted
+    if not LocationValidator.check_location_access_in_session(request):
+        return JsonResponse({
+            'success': False,
+            'error': 'Location access required',
+            'location_required': True
+        }, status=403)
+
     try:
         # Add CORS headers if needed
         from django.http import JsonResponse
-        
-        active_rooms = Room.objects.filter(status=Room.RoomStatus.ACTIVE).order_by('name')
+
+        # Get office location from session or request
+        office_location_id = request.GET.get('office_location_id')
+        office_location = None
+
+        if office_location_id:
+            try:
+                office_location = OfficeLocation.objects.get(id=office_location_id, is_active=True)
+            except OfficeLocation.DoesNotExist:
+                pass
+
+        # Filter rooms by detected office location
+        if office_location:
+            active_rooms = Room.objects.filter(
+                status=Room.RoomStatus.ACTIVE,
+                office_location=office_location
+            ).order_by('name')
+            logger.info(f"Filtering by office location: {office_location.name}")
+        elif hasattr(request.user, 'profile') and request.user.profile.office_location:
+            active_rooms = Room.objects.filter(
+                status=Room.RoomStatus.ACTIVE,
+                office_location=request.user.profile.office_location
+            ).order_by('name')
+            logger.info(f"Using user profile office location: {request.user.profile.office_location.name}")
+        else:
+            # Return empty result if no office location is detected
+            return JsonResponse({
+                'rooms': [],
+                'message': 'No office location detected. Please enable location access.',
+                'location_required': True
+            })
+
         logger.info(f"Found {active_rooms.count()} active rooms")
 
         if active_rooms.count() == 0:
@@ -910,18 +999,18 @@ def get_available_rooms(request):
                 })
 
         logger.info(f"Returning {len(rooms_data)} rooms data")
-        
+
         response = JsonResponse({
             'rooms': rooms_data,
             'success': True,
             'count': len(rooms_data)
         })
-        
+
         # Add CORS headers if needed for frontend requests
         response['Access-Control-Allow-Origin'] = '*'
         response['Access-Control-Allow-Methods'] = 'GET'
         response['Access-Control-Allow-Headers'] = 'Content-Type'
-        
+
         return response
 
     except Exception as e:
@@ -942,60 +1031,67 @@ def get_calendar_data(request):
         start_date = request.GET.get('start_date')
         end_date = request.GET.get('end_date')
         room_id = request.GET.get('room_id')
-        
+
         # Default to current week if no dates provided
         if not start_date:
             today = timezone.now().date()
             start_date = today - timedelta(days=today.weekday())  # Monday of current week
         else:
             start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
-            
+
         if not end_date:
             end_date = start_date + timedelta(days=6)  # Sunday of current week
         else:
             end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
-        
+
         logger.info(f"Calendar data request: {start_date} to {end_date}, room: {room_id}")
-        
+
         # Get bookings for the date range
         bookings_query = ConferenceBooking.objects.filter(
             start_time__date__range=[start_date, end_date],
             status__in=[ConferenceBooking.BookingStatus.CONFIRMED, ConferenceBooking.BookingStatus.PENDING]
         ).select_related('room', 'booked_by')
-        
+
         # Filter by room if specified
         if room_id:
             bookings_query = bookings_query.filter(room_id=room_id)
-        
-        # Get all active rooms or specific room
+
+        # Get all active rooms or specific room, filtered by user's office location
         if room_id:
             rooms = Room.objects.filter(id=room_id, status=Room.RoomStatus.ACTIVE)
         else:
-            rooms = Room.objects.filter(status=Room.RoomStatus.ACTIVE).order_by('name')
-        
+            # Filter by user's office location if available
+            if hasattr(request.user, 'profile') and request.user.profile.office_location:
+                rooms = Room.objects.filter(
+                    status=Room.RoomStatus.ACTIVE,
+                    office_location=request.user.profile.office_location
+                ).order_by('name')
+            else:
+                rooms = Room.objects.filter(status=Room.RoomStatus.ACTIVE).order_by('name')
+
         # Organize data by date and room
         calendar_data = {}
-        
+
         # Create date range
         current_date = start_date
         while current_date <= end_date:
             date_str = current_date.strftime('%Y-%m-%d')
             calendar_data[date_str] = {}
-            
+
             for room in rooms:
                 room_key = f"room-{room.id}"
                 calendar_data[date_str][room_key] = []
-                
+
                 # Get bookings for this room and date
                 day_bookings = bookings_query.filter(
                     room=room,
                     start_time__date=current_date
                 ).order_by('start_time')
-                
+
                 for booking in day_bookings:
                     # Determine booking type
                     booking_type = 'own' if booking.booked_by == request.user else 'other'
-                    
+
                     calendar_data[date_str][room_key].append({
                         'id': booking.id,
                         'start': booking.start_time.strftime('%H:%M'),
@@ -1008,9 +1104,9 @@ def get_calendar_data(request):
                         'meeting_type': booking.get_meeting_type_display(),
                         'can_edit': booking.booked_by == request.user,
                     })
-            
+
             current_date += timedelta(days=1)
-        
+
         response_data = {
             'success': True,
             'calendar_data': calendar_data,
@@ -1027,9 +1123,9 @@ def get_calendar_data(request):
                 'end': end_date.strftime('%Y-%m-%d'),
             }
         }
-        
+
         return JsonResponse(response_data)
-        
+
     except Exception as e:
         logger.error(f"Error getting calendar data: {e}", exc_info=True)
         return JsonResponse({
@@ -1045,40 +1141,40 @@ def create_quick_booking(request):
     """
     if request.method != 'POST':
         return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
-    
+
     try:
         data = json.loads(request.body)
-        
+
         room_id = data.get('room_id')
         start_time = data.get('start_time')
         duration_minutes = int(data.get('duration', 60))
         purpose = data.get('purpose', '').strip()
         attendees = int(data.get('attendees', 1))
-        
+
         # Validation
         if not all([room_id, start_time, purpose]):
             return JsonResponse({
                 'success': False,
                 'error': 'Missing required fields: room_id, start_time, purpose'
             })
-        
+
         # Parse start time
         start_dt = timezone.datetime.fromisoformat(start_time.replace('Z', '+00:00'))
         end_dt = start_dt + timedelta(minutes=duration_minutes)
-        
+
         # Get room
         try:
             room = Room.objects.get(id=room_id, status=Room.RoomStatus.ACTIVE)
         except Room.DoesNotExist:
             return JsonResponse({'success': False, 'error': 'Room not found'})
-        
+
         # Check room capacity
         if attendees > room.capacity:
             return JsonResponse({
                 'success': False,
                 'error': f'Attendees ({attendees}) exceed room capacity ({room.capacity})'
             })
-        
+
         # Check for conflicts
         conflicts = ConferenceBooking.objects.filter(
             room=room,
@@ -1086,13 +1182,13 @@ def create_quick_booking(request):
             end_time__gt=start_dt,
             status__in=[ConferenceBooking.BookingStatus.CONFIRMED, ConferenceBooking.BookingStatus.PENDING]
         )
-        
+
         if conflicts.exists():
             return JsonResponse({
                 'success': False,
                 'error': 'Room is not available at the selected time'
             })
-        
+
         # Create booking
         booking = ConferenceBooking.objects.create(
             room=room,
@@ -1106,18 +1202,410 @@ def create_quick_booking(request):
             priority=ConferenceBooking.Priority.NORMAL,
             status=ConferenceBooking.BookingStatus.CONFIRMED
         )
-        
+
         logger.info(f"Quick booking created: {booking.id} by {request.user}")
-        
+
         return JsonResponse({
             'success': True,
             'booking_id': booking.id,
             'message': 'Booking created successfully'
         })
-        
+
     except Exception as e:
         logger.error(f"Error creating quick booking: {e}", exc_info=True)
         return JsonResponse({
             'success': False,
             'error': 'Failed to create booking'
+        }, status=500)
+
+
+# =============================================================================
+# ADMIN MANAGEMENT VIEWS
+# =============================================================================
+
+@login_required
+def manage_locations(request):
+    """Admin view to manage office locations"""
+    # Check if user is admin/superuser
+    if not (request.user.is_superuser or request.user.groups.filter(name='Admin').exists()):
+        messages.error(request, 'You do not have permission to access this page.')
+        return redirect('core:dashboard')
+
+    locations = OfficeLocation.objects.all().order_by('name')
+
+    context = {
+        'locations': locations,
+        'page_title': 'Manage Office Locations',
+        'is_admin': True,
+    }
+
+    return render(request, 'conf_booking/manage_locations.html', context)
+
+
+@login_required
+def add_location(request):
+    """Add new office location"""
+    if not (request.user.is_superuser or request.user.groups.filter(name='Admin').exists()):
+        messages.error(request, 'You do not have permission to access this page.')
+        return redirect('core:dashboard')
+
+    if request.method == 'POST':
+        try:
+            location = OfficeLocation.objects.create(
+                name=request.POST['name'],
+                code=request.POST['code'],
+                address_line1=request.POST['address_line1'],
+                address_line2=request.POST.get('address_line2', ''),
+                city=request.POST['city'],
+                state=request.POST['state'],
+                postal_code=request.POST['postal_code'],
+                country=request.POST.get('country', 'India'),
+                phone=request.POST.get('phone', ''),
+                email=request.POST.get('email', ''),
+                timezone=request.POST.get('timezone', 'Asia/Kolkata'),
+                working_hours_start=request.POST.get('working_hours_start', '09:00'),
+                working_hours_end=request.POST.get('working_hours_end', '18:00'),
+            )
+            messages.success(request, f'Office location "{location.name}" has been added successfully.')
+            return redirect('conf_booking:manage_locations')
+        except Exception as e:
+            messages.error(request, f'Error adding location: {str(e)}')
+
+    context = {
+        'page_title': 'Add Office Location',
+        'is_admin': True,
+    }
+
+    return render(request, 'conf_booking/add_location.html', context)
+
+
+@login_required
+def edit_location(request, location_id):
+    """Edit existing office location"""
+    if not (request.user.is_superuser or request.user.groups.filter(name='Admin').exists()):
+        messages.error(request, 'You do not have permission to access this page.')
+        return redirect('core:dashboard')
+
+    try:
+        location = OfficeLocation.objects.get(id=location_id)
+    except OfficeLocation.DoesNotExist:
+        messages.error(request, 'Office location not found.')
+        return redirect('conf_booking:manage_locations')
+
+    if request.method == 'POST':
+        try:
+            location.name = request.POST['name']
+            location.code = request.POST['code']
+            location.address_line1 = request.POST['address_line1']
+            location.address_line2 = request.POST.get('address_line2', '')
+            location.city = request.POST['city']
+            location.state = request.POST['state']
+            location.postal_code = request.POST['postal_code']
+            location.country = request.POST.get('country', 'India')
+            location.phone = request.POST.get('phone', '')
+            location.email = request.POST.get('email', '')
+            location.timezone = request.POST.get('timezone', 'Asia/Kolkata')
+            location.working_hours_start = request.POST.get('working_hours_start', '09:00')
+            location.working_hours_end = request.POST.get('working_hours_end', '18:00')
+            location.is_active = request.POST.get('is_active') == 'on'
+            location.save()
+            messages.success(request, f'Office location "{location.name}" has been updated successfully.')
+            return redirect('conf_booking:manage_locations')
+        except Exception as e:
+            messages.error(request, f'Error updating location: {str(e)}')
+
+    context = {
+        'location': location,
+        'page_title': 'Edit Office Location',
+        'is_admin': True,
+    }
+
+    return render(request, 'conf_booking/edit_location.html', context)
+
+
+@login_required
+def delete_location(request, location_id):
+    """Delete office location"""
+    if not (request.user.is_superuser or request.user.groups.filter(name='Admin').exists()):
+        messages.error(request, 'You do not have permission to access this page.')
+        return redirect('core:dashboard')
+
+    try:
+        location = OfficeLocation.objects.get(id=location_id)
+        location_name = location.name
+        location.delete()
+        messages.success(request, f'Office location "{location_name}" has been deleted successfully.')
+    except OfficeLocation.DoesNotExist:
+        messages.error(request, 'Office location not found.')
+    except Exception as e:
+        messages.error(request, f'Error deleting location: {str(e)}')
+
+    return redirect('conf_booking:manage_locations')
+
+
+@login_required
+def manage_rooms(request):
+    """Admin view to manage conference rooms"""
+    if not (request.user.is_superuser or request.user.groups.filter(name='Admin').exists()):
+        messages.error(request, 'You do not have permission to access this page.')
+        return redirect('core:dashboard')
+
+    rooms = Room.objects.select_related('office_location').all().order_by('office_location__name', 'name')
+
+    context = {
+        'rooms': rooms,
+        'page_title': 'Manage Conference Rooms',
+        'is_admin': True,
+    }
+
+    return render(request, 'conf_booking/manage_rooms.html', context)
+
+
+@login_required
+def add_room(request):
+    """Add new conference room"""
+    if not (request.user.is_superuser or request.user.groups.filter(name='Admin').exists()):
+        messages.error(request, 'You do not have permission to access this page.')
+        return redirect('core:dashboard')
+
+    if request.method == 'POST':
+        try:
+            room = Room.objects.create(
+                name=request.POST['name'],
+                office_location_id=request.POST['office_location'],
+                room_type=request.POST['room_type'],
+                capacity=request.POST['capacity'],
+                location=request.POST.get('location', ''),
+                description=request.POST.get('description', ''),
+                facilities=request.POST.get('facilities', ''),
+                hourly_rate=request.POST.get('hourly_rate', 0),
+                status=request.POST.get('status', Room.RoomStatus.ACTIVE),
+            )
+            messages.success(request, f'Conference room "{room.name}" has been added successfully.')
+            return redirect('conf_booking:manage_rooms')
+        except Exception as e:
+            messages.error(request, f'Error adding room: {str(e)}')
+
+    locations = OfficeLocation.objects.filter(is_active=True).order_by('name')
+
+    context = {
+        'locations': locations,
+        'page_title': 'Add Conference Room',
+        'is_admin': True,
+    }
+
+    return render(request, 'conf_booking/add_room.html', context)
+
+
+@login_required
+def edit_room(request, room_id):
+    """Edit existing conference room"""
+    if not (request.user.is_superuser or request.user.groups.filter(name='Admin').exists()):
+        messages.error(request, 'You do not have permission to access this page.')
+        return redirect('core:dashboard')
+
+    try:
+        room = Room.objects.get(id=room_id)
+    except Room.DoesNotExist:
+        messages.error(request, 'Conference room not found.')
+        return redirect('conf_booking:manage_rooms')
+
+    if request.method == 'POST':
+        try:
+            room.name = request.POST['name']
+            room.office_location_id = request.POST['office_location']
+            room.room_type = request.POST['room_type']
+            room.capacity = request.POST['capacity']
+            room.location = request.POST.get('location', '')
+            room.description = request.POST.get('description', '')
+            room.facilities = request.POST.get('facilities', '')
+            room.hourly_rate = request.POST.get('hourly_rate', 0)
+            room.status = request.POST.get('status', Room.RoomStatus.ACTIVE)
+            room.save()
+            messages.success(request, f'Conference room "{room.name}" has been updated successfully.')
+            return redirect('conf_booking:manage_rooms')
+        except Exception as e:
+            messages.error(request, f'Error updating room: {str(e)}')
+
+    locations = OfficeLocation.objects.filter(is_active=True).order_by('name')
+
+    context = {
+        'room': room,
+        'locations': locations,
+        'page_title': 'Edit Conference Room',
+        'is_admin': True,
+    }
+
+    return render(request, 'conf_booking/edit_room.html', context)
+
+
+@login_required
+def delete_room(request, room_id):
+    """Delete conference room"""
+    if not (request.user.is_superuser or request.user.groups.filter(name='Admin').exists()):
+        messages.error(request, 'You do not have permission to access this page.')
+        return redirect('core:dashboard')
+
+    try:
+        room = Room.objects.get(id=room_id)
+        room_name = room.name
+        room.delete()
+        messages.success(request, f'Conference room "{room_name}" has been deleted successfully.')
+    except Room.DoesNotExist:
+        messages.error(request, 'Conference room not found.')
+    except Exception as e:
+        messages.error(request, f'Error deleting room: {str(e)}')
+
+    return redirect('conf_booking:manage_rooms')
+
+
+# =============================================================================
+# LOCATION DETECTION API
+# =============================================================================
+
+@login_required
+def detect_office_location(request):
+    """
+    API endpoint to detect nearest office location based on user's coordinates
+    """
+    from .utils import LocationDetector, LocationValidator
+
+    if request.method == 'POST':
+        try:
+            import json
+
+            data = json.loads(request.body)
+            user_lat = data.get('latitude')
+            user_lon = data.get('longitude')
+
+            # Validate coordinates
+            valid, lat, lon = LocationValidator.validate_coordinates(user_lat, user_lon)
+            if not valid:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Invalid coordinates provided',
+                    'manual_selection': True
+                }, status=400)
+
+            # Get city and state from coordinates
+            location_data = LocationDetector.get_city_from_coordinates(lat, lon)
+
+            if not location_data or not location_data.get('city') or not location_data.get('state'):
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Could not determine both city and state from your location',
+                    'manual_selection': True
+                })
+
+            detected_city = location_data['city']
+            detected_state = location_data['state']
+
+            # Find matching office location in database - requires both city and state
+            office_location = LocationDetector.find_matching_office_location(
+                detected_city, detected_state
+            )
+
+            if office_location:
+                # Set location access in session
+                LocationValidator.set_location_access_in_session(request, True)
+
+                # Get available rooms for this location
+                rooms_data = LocationDetector.get_rooms_for_location(office_location)
+
+                return JsonResponse({
+                    'success': True,
+                    'office_location': {
+                        'id': office_location.id,
+                        'name': office_location.name,
+                        'city': office_location.city,
+                        'state': office_location.state,
+                        'detected_city': detected_city,
+                        'detected_state': detected_state
+                    },
+                    'rooms': rooms_data,
+                    'message': f'Found {len(rooms_data)} rooms in {office_location.name}'
+                })
+            else:
+                # No matching office location found
+                return JsonResponse({
+                    'success': False,
+                    'message': f'No office location found in {detected_city}, {detected_state}',
+                    'suggested_city': detected_city,
+                    'suggested_state': detected_state,
+                    'manual_selection': True
+                })
+
+        except ValueError as e:
+            logger.error(f"Invalid coordinates: {e}")
+            return JsonResponse({
+                'success': False,
+                'error': 'Invalid coordinates provided',
+                'manual_selection': True
+            }, status=400)
+        except Exception as e:
+            logger.error(f"Error in location detection: {e}", exc_info=True)
+            return JsonResponse({
+                'success': False,
+                'error': 'Failed to detect location',
+                'manual_selection': True
+            }, status=500)
+
+    # GET request - return all office locations for manual selection
+    locations = OfficeLocation.objects.filter(is_active=True).values(
+        'id', 'name', 'city', 'state', 'country'
+    )
+
+    return JsonResponse({
+        'success': True,
+        'locations': list(locations)
+    })
+
+
+@login_required
+def get_rooms_by_location(request):
+    """
+    API endpoint to get rooms filtered by location
+    """
+    from .utils import LocationDetector, LocationValidator
+
+    location_id = request.GET.get('location')
+
+    if not location_id:
+        return JsonResponse({
+            'success': False,
+            'error': 'Location ID is required'
+        }, status=400)
+
+    try:
+        # Get office location
+        office_location = OfficeLocation.objects.get(id=location_id, is_active=True)
+
+        # Get rooms for this location using utilities
+        rooms_data = LocationDetector.get_rooms_for_location(office_location)
+
+        # Set location access in session
+        LocationValidator.set_location_access_in_session(request, True)
+
+        return JsonResponse({
+            'success': True,
+            'office_location': {
+                'id': office_location.id,
+                'name': office_location.name,
+                'city': office_location.city,
+                'state': office_location.state,
+            },
+            'rooms': rooms_data,
+            'message': f'Found {len(rooms_data)} rooms in {office_location.name}'
+        })
+
+    except OfficeLocation.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Office location not found'
+        }, status=404)
+    except Exception as e:
+        logger.error(f"Error in get_rooms_by_location: {e}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'error': 'Failed to get rooms by location'
         }, status=500)

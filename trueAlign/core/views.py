@@ -1116,3 +1116,74 @@ def update_session(request):
     except Exception as e:
         logger.error(f"Error updating session: {e}")
         return JsonResponse({'error': 'Internal server error'}, status=500)
+
+
+# =============================================================================
+# CONFIGURATIONS VIEW
+# =============================================================================
+
+@login_required
+def configurations_view(request):
+    """
+    Central configurations access point - navigation only.
+    Shows configuration options for different apps based on user permissions.
+    """
+    # Check if user is admin/superuser
+    user_groups = request.user.groups.all()
+    is_admin = request.user.is_superuser or user_groups.filter(name='Admin').exists()
+
+    if not is_admin:
+        messages.error(request, 'You do not have permission to access configurations.')
+        return redirect('core:dashboard')
+
+    # Configuration sections available to admin users
+    config_sections = [
+        {
+            'name': 'Conference Room Settings',
+            'description': 'Manage office locations, conference rooms, and booking settings',
+            'icon': 'ri-building-line',
+            'url': 'conf_booking:manage_locations',
+            'color': 'bg-blue-500',
+            'hover_color': 'hover:bg-blue-600'
+        },
+        {
+            'name': 'Conference Room Management',
+            'description': 'Add, edit, and manage conference rooms across all locations',
+            'icon': 'ri-door-open-line',
+            'url': 'conf_booking:manage_rooms',
+            'color': 'bg-purple-500',
+            'hover_color': 'hover:bg-purple-600'
+        },
+        {
+            'name': 'Attendance Dashboard',
+            'description': 'View and manage employee attendance tracking',
+            'icon': 'ri-time-line',
+            'url': 'attendance:dashboard',
+            'color': 'bg-green-500',
+            'hover_color': 'hover:bg-green-600'
+        },
+        {
+            'name': 'Support Dashboard',
+            'description': 'Manage support tickets and customer service',
+            'icon': 'ri-customer-service-line',
+            'url': 'support:dashboard',
+            'color': 'bg-orange-500',
+            'hover_color': 'hover:bg-orange-600'
+        },
+        {
+            'name': 'Conference Room Booking',
+            'description': 'Book and manage conference room reservations',
+            'icon': 'ri-calendar-line',
+            'url': 'conf_booking:booking_room',
+            'color': 'bg-indigo-500',
+            'hover_color': 'hover:bg-indigo-600'
+        }
+    ]
+
+    context = {
+        'config_sections': config_sections,
+        'page_title': 'System Configurations',
+        'is_admin': is_admin,
+    }
+
+    return render(request, 'configurations.html', context)

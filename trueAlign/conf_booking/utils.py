@@ -1006,3 +1006,189 @@ class MaintenanceScheduler:
             'success': True,
             'message': f"{room.name} is now available for booking"
         }
+
+
+class LocationDetector:
+    """
+    Utility class for detecting user location and matching with office locations.
+    """
+
+    @staticmethod
+    def get_city_from_coordinates(latitude, longitude):
+        """
+        Get city and state from coordinates using Nominatim API.
+        Returns None if both city and state are not detected.
+        """
+        import requests
+        import logging
+
+        logger = logging.getLogger(__name__)
+
+        try:
+            url = "https://nominatim.openstreetmap.org/reverse"
+            params = {
+                'format': 'json',
+                'lat': latitude,
+                'lon': longitude,
+                'zoom': 10,
+                'addressdetails': 1
+            }
+            headers = {
+                'User-Agent': 'ArdurPeopleSoft-ConferenceBooking/1.0'
+            }
+
+            response = requests.get(url, params=params, headers=headers, timeout=10)
+
+            if response.status_code == 200:
+                data = response.json()
+                address = data.get('address', {})
+
+                # Try to get city from different possible fields
+                city = (address.get('city') or
+                       address.get('town') or
+                       address.get('village') or
+                       address.get('municipality') or
+                       address.get('city_district'))
+
+                # Get state - try different possible fields
+                state = (address.get('state') or
+                        address.get('state_district') or
+                        address.get('province'))
+
+                country = address.get('country')
+
+                # CRITICAL: Return None if both city and state are not present
+                if not city or not state:
+                    logger.warning(f"Incomplete location data - City: {city}, State: {state}")
+                    return None
+
+                return {
+                    'city': city,
+                    'state': state,
+                    'country': country,
+                    'display_name': data.get('display_name')
+                }
+            return None
+        except Exception as e:
+            logger.error(f"Reverse geocoding error: {e}")
+            return None
+
+    @staticmethod
+    def find_matching_office_location(city, state=None):
+        """
+        Find matching office location based on city and state.
+        REQUIRES both city and state to be present - no fallback matching.
+        """
+        from trueAlign.models import OfficeLocation
+
+        # CRITICAL: Both city and state must be present
+        if not city or not state:
+            return None
+
+        # Try exact match first (case insensitive)
+        office_location = OfficeLocation.objects.filter(
+            city__iexact=city,
+            state__iexact=state,
+            is_active=True
+        ).first()
+
+        if office_location:
+            return office_location
+
+        # Try partial match with icontains for both city and state
+        office_location = OfficeLocation.objects.filter(
+            city__icontains=city,
+            state__icontains=state,
+            is_active=True
+        ).first()
+
+        return office_location
+
+    @staticmethod
+    def get_rooms_for_location(office_location):
+        """
+        Get available rooms for a given office location
+        """
+        from trueAlign.models import Room
+
+        rooms = Room.objects.filter(
+            office_location=office_location,
+            status=Room.RoomStatus.ACTIVE
+        ).select_related('office_location')
+
+        rooms_data = []
+        for room in rooms:
+            rooms_data.append({
+                'id': room.id,
+                'name': room.name,
+                'capacity': room.capacity,
+                'room_type': room.get_room_type_display(),
+                'facilities': room.facilities,
+                'location': room.location,
+                'hourly_rate': float(room.hourly_rate) if room.hourly_rate else 0,
+                'office_location': {
+                    'id': room.office_location.id,
+                    'name': room.office_location.name,
+                    'city': room.office_location.city,
+                    'state': room.office_location.state,
+                }
+            })
+
+        return rooms_data
+
+
+class LocationValidator:
+    """
+    Validates location access and enforces location requirements
+    """
+
+    @staticmethod
+    def validate_coordinates(latitude, longitude):
+        """
+        Validate coordinate format and range
+        """
+        try:
+            lat = float(latitude)
+            lon = float(longitude)
+
+            if -90 <= lat <= 90 and -180 <= lon <= 180:
+                return True, lat, lon
+            else:
+                return False, None, None
+        except (ValueError, TypeError):
+            return False, None, None
+
+    @staticmethod
+    def is_location_required_for_booking():
+        """
+        Check if location is required for conference booking
+        """
+        return True  # Always require location for conference booking
+
+    @staticmethod
+    def check_location_access_in_session(request):
+        """
+        Check if user has already granted location access in current session.
+        For initial page loads, allow access but require frontend validation.
+        """
+        # Allow access for initial page loads - frontend will handle validation
+        if request.method == 'GET':
+            return True
+
+        # For POST requests (actual bookings), require verified location
+        return request.session.get('location_access_granted', False)
+
+    @staticmethod
+    def set_location_access_in_session(request, granted=True):
+        """
+        Set location access status in session
+        """
+        request.session['location_access_granted'] = granted
+        request.session.modified = True
+
+    @staticmethod
+    def is_location_verified_in_session(request):
+        """
+        Check if location has been verified (for booking operations)
+        """
+        return request.session.get('location_access_granted', False)

@@ -29,6 +29,57 @@ from decimal import Decimal
 
 IST_TIMEZONE = pytz.timezone('Asia/Kolkata')
 
+'''------------------------- OFFICE LOCATION --------------------'''
+class OfficeLocation(models.Model):
+    """
+    Model to manage office locations for the organization.
+    Conference rooms and users will be associated with office locations.
+    """
+    name = models.CharField(max_length=100, unique=True, help_text="Office location name (e.g., 'Mumbai - Bandra', 'Delhi - Gurgaon')")
+    code = models.CharField(max_length=10, unique=True, help_text="Short code for the location (e.g., 'MUM', 'DEL')")
+    address_line1 = models.CharField(max_length=255, help_text="Street address")
+    address_line2 = models.CharField(max_length=255, blank=True, help_text="Additional address information")
+    city = models.CharField(max_length=100, help_text="City name")
+    state = models.CharField(max_length=100, help_text="State/Province")
+    postal_code = models.CharField(max_length=20, help_text="Postal/ZIP code")
+    country = models.CharField(max_length=100, default='India', help_text="Country")
+
+    # Contact Information
+    phone = models.CharField(max_length=20, blank=True, help_text="Office phone number")
+    email = models.EmailField(blank=True, help_text="Office email address")
+
+    # Operational Details
+    is_active = models.BooleanField(default=True, help_text="Is this location active?")
+    timezone = models.CharField(max_length=50, default='Asia/Kolkata', help_text="Timezone for this location")
+    working_hours_start = models.TimeField(default=time(9, 0), help_text="Office working hours start time")
+    working_hours_end = models.TimeField(default=time(18, 0), help_text="Office working hours end time")
+
+    # Administrative
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['name']
+        verbose_name = "Office Location"
+        verbose_name_plural = "Office Locations"
+
+    def __str__(self):
+        return f"{self.name} ({self.code})"
+
+    @property
+    def full_address(self):
+        """Return the complete address as a string."""
+        address_parts = [self.address_line1]
+        if self.address_line2:
+            address_parts.append(self.address_line2)
+        address_parts.extend([self.city, self.state, self.postal_code, self.country])
+        return ", ".join(address_parts)
+
+    @property
+    def working_hours_display(self):
+        """Return working hours in a readable format."""
+        return f"{self.working_hours_start.strftime('%I:%M %p')} - {self.working_hours_end.strftime('%I:%M %p')}"
+
 '''------------------------- CLINET PROFILE --------------------'''
 class ClientProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='client_profile')
@@ -178,6 +229,7 @@ class UserSession(models.Model):
     end_reason = models.CharField(max_length=50, null=True, blank=True)
 
     class Meta:
+        db_table = 'trueAlign_usersession'
         ordering = ['-created_at']
         indexes = [
             models.Index(fields=['user', 'is_active'], name='user_is_active_idx'),
@@ -3724,7 +3776,14 @@ class UserDetails(models.Model):
         help_text="Notice period in days"
     )
     job_description = models.TextField(null=True, blank=True)
-    work_location = models.CharField(max_length=100, null=True, blank=True)
+    office_location = models.ForeignKey(
+        OfficeLocation,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='employees',
+        help_text="Office location where the employee works"
+    )
     employment_status = models.CharField(
         max_length=50,
         choices=EMPLOYMENT_STATUS_CHOICES,
@@ -3847,7 +3906,7 @@ class UserDetails(models.Model):
         indexes = [
             models.Index(fields=['employment_status']),
             models.Index(fields=['employee_type']),
-            models.Index(fields=['work_location']),
+            models.Index(fields=['office_location']),
             models.Index(fields=['hire_date']),
             models.Index(fields=['start_date']),
         ]
@@ -5567,14 +5626,22 @@ class Room(models.Model):
         MEETING = 'MEETING', 'Meeting Room'
         BOARD = 'BOARD', 'Board Room'
 
-    name = models.CharField(max_length=100, unique=True, help_text="Room name")
+    name = models.CharField(max_length=100, help_text="Room name")
+    office_location = models.ForeignKey(
+        OfficeLocation,
+        on_delete=models.CASCADE,
+        related_name='rooms',
+        null=True,
+        blank=True,
+        help_text="Office location where this room is located"
+    )
     room_type = models.CharField(
         max_length=15,
         choices=RoomType.choices,
         default=RoomType.CONFERENCE
     )
     capacity = models.PositiveIntegerField(default=8, help_text="Maximum seating capacity")
-    location = models.CharField(max_length=100, blank=True, help_text="Room location/floor")
+    location = models.CharField(max_length=100, blank=True, help_text="Room location/floor within the office")
     facilities = models.TextField(
         blank=True,
         help_text="Available facilities (e.g., Projector, Whiteboard, Video Conferencing)"
@@ -5610,12 +5677,18 @@ class Room(models.Model):
     )
 
     class Meta:
-        ordering = ['name']
+        ordering = ['office_location', 'name']
         verbose_name = "Conference Room"
         verbose_name_plural = "Conference Rooms"
+        constraints = [
+            models.UniqueConstraint(
+                fields=['name', 'office_location'],
+                name='unique_room_name_per_location'
+            )
+        ]
 
     def __str__(self):
-        return f"{self.name} ({self.get_room_type_display()}) - {self.get_status_display()}"
+        return f"{self.name} - {self.office_location.name} ({self.get_room_type_display()}) - {self.get_status_display()}"
 
     @property
     def is_available(self):
@@ -5722,9 +5795,23 @@ class Room(models.Model):
         ).order_by('-total_bookings')[:limit]
 
     @classmethod
-    def get_available_rooms(cls):
-        """Get all available rooms for booking."""
-        return cls.objects.filter(status=cls.RoomStatus.ACTIVE)
+    def get_available_rooms(cls, office_location=None):
+        """Get all available rooms for booking, optionally filtered by office location."""
+        queryset = cls.objects.filter(status=cls.RoomStatus.ACTIVE)
+        if office_location:
+            queryset = queryset.filter(office_location=office_location)
+        return queryset
+
+    @classmethod
+    def get_available_rooms_for_user(cls, user):
+        """Get available rooms for a specific user based on their office location."""
+        try:
+            user_office_location = user.profile.office_location
+            if user_office_location:
+                return cls.get_available_rooms(office_location=user_office_location)
+        except (AttributeError, hasattr(user, 'profile')):
+            pass
+        return cls.get_available_rooms()
 
 
 class ConferenceBooking(models.Model):
@@ -6276,13 +6363,17 @@ class RoomManager:
     """
 
     @staticmethod
-    def get_available_rooms_for_slot(start_time, end_time, min_capacity=1):
+    def get_available_rooms_for_slot(start_time, end_time, min_capacity=1, office_location=None):
         """Get available rooms for a specific time slot."""
         # Get all active rooms with sufficient capacity
         rooms = Room.objects.filter(
             status=Room.RoomStatus.ACTIVE,
             capacity__gte=min_capacity
         )
+
+        # Filter by office location if specified
+        if office_location:
+            rooms = rooms.filter(office_location=office_location)
 
         available_rooms = []
 

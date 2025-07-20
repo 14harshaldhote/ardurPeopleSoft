@@ -1,0 +1,262 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Office Location{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Page Header -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Edit Office Location</h1>
+                    <p class="mt-2 text-sm text-gray-600">
+                        Update information for {{ location.name }}
+                    </p>
+                </div>
+                <a href="{% url 'conf_booking:manage_locations' %}"
+                   class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <i class="ri-arrow-left-line mr-2"></i>
+                    Back to Locations
+                </a>
+            </div>
+        </div>
+
+        <!-- Form -->
+        <div class="bg-white shadow-sm rounded-lg">
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+
+                <!-- Basic Information -->
+                <div class="px-6 py-6 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Basic Information</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-gray-700">Location Name *</label>
+                            <input type="text"
+                                   name="name"
+                                   id="name"
+                                   value="{{ location.name }}"
+                                   required
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                                   placeholder="e.g., Mumbai - Bandra Office">
+                            <p class="mt-1 text-sm text-gray-500">Enter a descriptive name for the office location</p>
+                        </div>
+                        <div>
+                            <label for="code" class="block text-sm font-medium text-gray-700">Location Code *</label>
+                            <input type="text"
+                                   name="code"
+                                   id="code"
+                                   value="{{ location.code }}"
+                                   required
+                                   maxlength="10"
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                                   placeholder="e.g., MUM">
+                            <p class="mt-1 text-sm text-gray-500">Short code for easy identification (max 10 characters)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Address Information -->
+                <div class="px-6 py-6 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Address Information</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="address_line1" class="block text-sm font-medium text-gray-700">Address Line 1 *</label>
+                            <input type="text"
+                                   name="address_line1"
+                                   id="address_line1"
+                                   value="{{ location.address_line1 }}"
+                                   required
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                                   placeholder="Enter street address">
+                        </div>
+                        <div>
+                            <label for="address_line2" class="block text-sm font-medium text-gray-700">Address Line 2</label>
+                            <input type="text"
+                                   name="address_line2"
+                                   id="address_line2"
+                                   value="{{ location.address_line2 }}"
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                                   placeholder="Apartment, suite, unit, building, floor, etc.">
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div>
+                                <label for="city" class="block text-sm font-medium text-gray-700">City *</label>
+                                <input type="text"
+                                       name="city"
+                                       id="city"
+                                       value="{{ location.city }}"
+                                       required
+                                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                                       placeholder="City">
+                            </div>
+                            <div>
+                                <label for="state" class="block text-sm font-medium text-gray-700">State *</label>
+                                <input type="text"
+                                       name="state"
+                                       id="state"
+                                       value="{{ location.state }}"
+                                       required
+                                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                                       placeholder="State">
+                            </div>
+                            <div>
+                                <label for="postal_code" class="block text-sm font-medium text-gray-700">Postal Code *</label>
+                                <input type="text"
+                                       name="postal_code"
+                                       id="postal_code"
+                                       value="{{ location.postal_code }}"
+                                       required
+                                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                                       placeholder="ZIP/Postal Code">
+                            </div>
+                            <div>
+                                <label for="country" class="block text-sm font-medium text-gray-700">Country</label>
+                                <input type="text"
+                                       name="country"
+                                       id="country"
+                                       value="{{ location.country }}"
+                                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact Information -->
+                <div class="px-6 py-6 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Contact Information</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="phone" class="block text-sm font-medium text-gray-700">Phone Number</label>
+                            <input type="tel"
+                                   name="phone"
+                                   id="phone"
+                                   value="{{ location.phone }}"
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                                   placeholder="+91 12345 67890">
+                        </div>
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-700">Email Address</label>
+                            <input type="email"
+                                   name="email"
+                                   id="email"
+                                   value="{{ location.email }}"
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                                   placeholder="office@company.com">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Operational Settings -->
+                <div class="px-6 py-6 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Operational Settings</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <label for="timezone" class="block text-sm font-medium text-gray-700">Timezone</label>
+                            <select name="timezone"
+                                    id="timezone"
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                                <option value="Asia/Kolkata" {% if location.timezone == 'Asia/Kolkata' %}selected{% endif %}>Asia/Kolkata (IST)</option>
+                                <option value="Asia/Dubai" {% if location.timezone == 'Asia/Dubai' %}selected{% endif %}>Asia/Dubai (GST)</option>
+                                <option value="America/New_York" {% if location.timezone == 'America/New_York' %}selected{% endif %}>America/New_York (EST)</option>
+                                <option value="Europe/London" {% if location.timezone == 'Europe/London' %}selected{% endif %}>Europe/London (GMT)</option>
+                                <option value="Asia/Singapore" {% if location.timezone == 'Asia/Singapore' %}selected{% endif %}>Asia/Singapore (SGT)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="working_hours_start" class="block text-sm font-medium text-gray-700">Working Hours Start</label>
+                            <input type="time"
+                                   name="working_hours_start"
+                                   id="working_hours_start"
+                                   value="{{ location.working_hours_start|time:'H:i' }}"
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                        </div>
+                        <div>
+                            <label for="working_hours_end" class="block text-sm font-medium text-gray-700">Working Hours End</label>
+                            <input type="time"
+                                   name="working_hours_end"
+                                   id="working_hours_end"
+                                   value="{{ location.working_hours_end|time:'H:i' }}"
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status Settings -->
+                <div class="px-6 py-6 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Status Settings</h3>
+                    <div class="flex items-center">
+                        <input type="checkbox"
+                               name="is_active"
+                               id="is_active"
+                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                               {% if location.is_active %}checked{% endif %}>
+                        <label for="is_active" class="ml-2 block text-sm font-medium text-gray-700">
+                            Active Location
+                        </label>
+                    </div>
+                    <p class="mt-1 text-sm text-gray-500">
+                        Inactive locations will not appear in booking forms but existing data is preserved
+                    </p>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="px-6 py-4 bg-gray-50 text-right">
+                    <div class="flex justify-end space-x-3">
+                        <a href="{% url 'conf_booking:manage_locations' %}"
+                           class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Cancel
+                        </a>
+                        <button type="submit"
+                                class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            <i class="ri-save-line mr-2"></i>
+                            Update Location
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Location Statistics -->
+        <div class="mt-8 bg-white shadow-sm rounded-lg p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Location Statistics</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-blue-600">{{ location.rooms.count }}</div>
+                    <div class="text-sm text-gray-500">Total Rooms</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-green-600">{{ location.rooms.filter.status='active'|length }}</div>
+                    <div class="text-sm text-gray-500">Active Rooms</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-purple-600">{{ location.total_bookings|default:0 }}</div>
+                    <div class="text-sm text-gray-500">Total Bookings</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Help Section -->
+        <div class="mt-8 bg-blue-50 rounded-lg p-6">
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                    <i class="ri-information-line text-blue-600 text-xl"></i>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-blue-800">Editing Office Locations</h3>
+                    <div class="mt-2 text-sm text-blue-700">
+                        <ul class="list-disc list-inside space-y-1">
+                            <li>Changes to location details will be reflected immediately</li>
+                            <li>Deactivating a location will hide it from booking forms</li>
+                            <li>Existing bookings and rooms will remain unaffected</li>
+                            <li>Working hours changes will apply to future bookings</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -25,6 +25,7 @@ urlpatterns = [
     path('book/', include('trueAlign.conf_booking.urls')),
     path('attendance/', include('trueAlign.attendance.urls')),
     path('support/', include('trueAlign.support.urls')),
+    path('sessions/', include('trueAlign.sessions.urls')),
 
     # The session endpoints will be handled by core.urls directly
     # They're defined in trueAlign.core.urls.py with paths like:

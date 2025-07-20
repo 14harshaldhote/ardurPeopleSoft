@@ -77,6 +77,7 @@ INSTALLED_APPS = [
     'trueAlign.support',
     'trueAlign.conf_booking',
     'trueAlign.attendance.apps.AttendanceConfig',  # ✅ keep this
+    'trueAlign.sessions',
     'rest_framework',
     'widget_tweaks',
 ]
