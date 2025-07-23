@@ -3627,6 +3627,27 @@ class UserDetails(models.Model):
         ('remote', 'Remote Worker')
     ]
 
+    # Role/Designation Choices
+    ROLE_CHOICES = [
+        ('admin', 'Admin'),
+        ('hr', 'HR'),
+        ('manager', 'Manager'),
+        ('team_lead', 'Team Lead'),
+        ('senior_developer', 'Senior Developer'),
+        ('developer', 'Developer'),
+        ('junior_developer', 'Junior Developer'),
+        ('intern', 'Intern'),
+        ('qa_engineer', 'QA Engineer'),
+        ('devops_engineer', 'DevOps Engineer'),
+        ('ui_ux_designer', 'UI/UX Designer'),
+        ('business_analyst', 'Business Analyst'),
+        ('project_manager', 'Project Manager'),
+        ('scrum_master', 'Scrum Master'),
+        ('consultant', 'Consultant'),
+        ('trainee', 'Trainee'),
+        ('other', 'Other')
+    ]
+
     # Blood Group Choices
     BLOOD_GROUP_CHOICES = [
         ('A+', 'A+'),
@@ -3748,6 +3769,12 @@ class UserDetails(models.Model):
         choices=EMPLOYEE_TYPE_CHOICES,
         null=True,
         blank=True
+    )
+    role = models.CharField(
+        max_length=50,
+        choices=ROLE_CHOICES,
+        default='developer',
+        help_text="Employee role/designation in the company"
     )
     reporting_manager = models.ForeignKey(
         User,

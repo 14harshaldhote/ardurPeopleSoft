@@ -73,11 +73,13 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'trueAlign',
     'trueAlign.core',
+    'trueAlign.profile',
     'trueAlign.shift',
     'trueAlign.support',
     'trueAlign.conf_booking',
     'trueAlign.attendance.apps.AttendanceConfig',  # ✅ keep this
     'trueAlign.sessions',
+    'trueAlign.leave_management',
     'rest_framework',
     'widget_tweaks',
 ]
@@ -142,6 +144,22 @@ DATABASES = {
         'PORT': '3306',
     }
 }
+
+# Test database configuration
+import sys
+
+if 'test' in sys.argv or 'test_coverage' in sys.argv:
+    DATABASES['default'] = {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'test_db',         # Use a separate test database
+        'USER': 'your_mysql_user',
+        'PASSWORD': 'your_mysql_password',
+        'HOST': 'localhost',
+        'PORT': '3306',
+        'TEST': {
+            'NAME': 'test_db',     # Django will create & destroy this DB automatically
+        }
+    }
 
 
 # Password validation

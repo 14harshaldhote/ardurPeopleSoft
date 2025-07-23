@@ -69,3 +69,4 @@ ERROR|2025-07-09 18:30:53,952|views|51935|6148812800|Ticket list error for user 
 ERROR|2025-07-09 18:39:26,394|views|57478|6211366912|Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
 ERROR|2025-07-09 18:40:11,992|views|57478|6194540544|Ticket list error for user 4: PermissionManager.get_assignable_users() missing 1 required positional argument: 'ticket'
 ERROR|2025-07-18 23:41:37,921|views|9100|6142210048|Dashboard error for user 4: ReportGenerator.generate_agent_performance_report() got an unexpected keyword argument 'date_from'
+ERROR|2025-07-20 21:38:32,701|views|16883|6162100224|Dashboard error for user 3: ReportGenerator.generate_agent_performance_report() got an unexpected keyword argument 'date_from'

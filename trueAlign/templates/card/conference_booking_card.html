@@ -3,7 +3,7 @@
 
 <div class="bg-white shadow-lg rounded-xl p-4 transform transition-all duration-300 hover:shadow-xl border border-gray-200">
     <!-- Header -->
-    <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-100">
+    <div class="flex justify-between items-center mb-4 pb-1 border-b border-gray-100">
         <div class="flex items-center space-x-2">
             <div class="p-2 bg-blue-50 rounded-lg">
                 <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -181,52 +181,8 @@
             </a>
         </div>
 
-        {% if user_bookings %}
-            <div class="space-y-2 max-h-32 overflow-y-auto">
-                {% for booking in user_bookings|slice:":2" %}
-                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                        <div class="flex items-start justify-between">
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-center space-x-2 mb-1">
-                                    <h6 class="text-sm font-semibold text-blue-900 truncate">{{ booking.room.name }}</h6>
-                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                                        {{ booking.attendees_count }}p
-                                    </span>
-                                </div>
-                                <p class="text-xs text-blue-800 mb-2 truncate">{{ booking.purpose }}</p>
-                                <div class="flex items-center space-x-3 text-xs text-blue-700">
-                                    <span>{{ booking.start_time|timezone:"Asia/Kolkata"|date:"M d" }}</span>
-                                    <span>{{ booking.start_time|timezone:"Asia/Kolkata"|time:"g:i A" }} - {{ booking.end_time|timezone:"Asia/Kolkata"|time:"g:i A" }}</span>
-                                </div>
-                            </div>
-
-                            <div class="flex flex-col space-y-1 ml-3 flex-shrink-0">
-                                {% if booking.checked_in %}
-                                    <span class="px-2 py-1 text-xs bg-green-100 text-green-800 rounded text-center font-medium">
-                                        ✓ Active
-                                    </span>
-
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <div class="text-center py-6 bg-gray-50 rounded-lg">
-                <svg class="mx-auto h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                <h4 class="mt-2 text-sm font-medium text-gray-900">No bookings</h4>
-                <p class="mt-1 text-xs text-gray-500">You don't have any upcoming bookings</p>
-                <a href="{% url 'conf_booking:room_dashboard' %}" class="mt-3 inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-200">
-                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                    Book Now
-                </a>
-            </div>
-        {% endif %}
+        
+       
     </div>
 </div>
 

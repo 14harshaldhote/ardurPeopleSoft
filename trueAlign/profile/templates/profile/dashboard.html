@@ -1,0 +1,466 @@
+{% extends 'base.html' %} {% load static %} {% block title %}HR Dashboard -
+TrueAlign{% endblock %} {% block content %}
+<div class="min-h-screen ">
+    <!-- Hero Header -->
+    <div class="relative overflow-hidden">
+        <div class="  py-12 px-4 shadow-2xl ">
+            <div class="absolute inset-0  opacity-10"></div>
+            <div class="container mx-auto max-w-7xl relative z-10">
+                <div class="text-center">
+                    <h1 class="text-4xl md:text-5xl text-sky-900 font-bold mb-4">
+                        HR Command Center
+                    </h1>
+                    <p class="text-xl text-sky-600 mb-8 max-w-2xl mx-auto">
+                        Your centralized hub for employee management, analytics,
+                        and strategic insights
+                    </p>
+                    <div class="flex justify-center items-center space-x-2">
+                        <div class="w-3 h-3 bg-lime-400 rounded-full animate-pulse"></div>
+                        <span class="text-lime-200 font-medium">System Online</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard Content -->
+    <div class="container mx-auto px-4 max-w-7xl -mt-8 relative z-20">
+        <!-- Quick Statistics Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <!-- Total Users Card -->
+            <div
+                class="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-l-4 border-transparent hover:border-sky-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wide">
+                            Total Employees
+                        </h3>
+                        <p class="text-3xl font-bold text-gray-900 mt-2">
+                            {{ total_users|default:0 }}
+                        </p>
+                        <div class="flex items-center mt-2">
+                            <span class="text-sm text-lime-600 font-medium flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                                </svg>
+                                All Registered
+                            </span>
+                        </div>
+                    </div>
+                    <div class="p-4 bg-sky-100 rounded-full">
+                        <svg class="w-8 h-8 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Users Card -->
+            <!-- Active Employees Card -->
+            <div
+                class="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-l-4 border-transparent hover:border-lime-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wide">
+                            Active Employees
+                        </h3>
+                        <p class="text-3xl font-bold text-gray-900 mt-2">
+                            {{ active_users|default:0 }}
+                        </p>
+                        <div class="flex items-center mt-2">
+                            <span class="text-sm text-lime-600 font-medium flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                Currently Working
+                            </span>
+                        </div>
+                    </div>
+                    <div class="p-4 bg-lime-100 rounded-full">
+                        <svg class="w-8 h-8 text-lime-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inactive Users Card -->
+            <!-- Pending Approvals Card -->
+            <div
+                class="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-l-4 border-transparent hover:border-amber-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wide">
+                            Pending Approvals
+                        </h3>
+                        <p class="text-3xl font-bold text-gray-900 mt-2">
+                            {{ pending_approvals|default:0 }}
+                        </p>
+                        <div class="flex items-center mt-2">
+                            <span class="text-sm text-amber-600 font-medium flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                </svg>
+                                Needs Attention
+                            </span>
+                        </div>
+                    </div>
+                    <div class="p-4 bg-amber-100 rounded-full">
+                        <svg class="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- New Hires Card -->
+            <div
+                class="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-l-4 border-transparent hover:border-orange-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wide">
+                            New Hires
+                        </h3>
+                        <p class="text-3xl font-bold text-gray-900 mt-2">
+                            {{ new_hires_count|default:0 }}
+                        </p>
+                        <div class="flex items-center mt-2">
+                            <span class="text-sm text-orange-600 font-medium flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M8 7V3a1 1 0 011-1h6a1 1 0 011 1v4m-5 8H9m2 0h2m2 0h2m-6 0v6a1 1 0 001 1h4a1 1 0 001-1v-6" />
+                                </svg>
+                                This Month
+                            </span>
+                        </div>
+                    </div>
+                    <div class="p-4 bg-orange-100 rounded-full">
+                        <svg class="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Center -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+            <!-- Primary Actions -->
+            <div class="lg:col-span-2">
+                <div class="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-xl border border-white/20">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                        <svg class="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        Quick Actions
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Add New Employee -->
+                        <a href="{% url 'profile:user-create' %}"
+                            class="bg-gradient-to-r from-sky-500 to-sky-600 text-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group overflow-hidden relative">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="text-lg font-semibold mb-2">
+                                        Add New Employee
+                                    </h3>
+                                    <p class="text-sky-100 text-sm">
+                                        Create a new employee profile with
+                                        auto-generated ID
+                                    </p>
+                                </div>
+                                <svg class="w-8 h-8 group-hover:scale-110 transition-transform" fill="none"
+                                    stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                                </svg>
+                            </div>
+                        </a>
+
+                        <!-- View All Employees -->
+                        <a href="{% url 'profile:user-list' %}"
+                            class="bg-gradient-to-r from-lime-500 to-lime-600 text-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group overflow-hidden relative">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="text-lg font-semibold mb-2">
+                                        Employee Directory
+                                    </h3>
+                                    <p class="text-lime-100 text-sm">
+                                        Browse, search, and manage all employee
+                                        records
+                                    </p>
+                                </div>
+                                <svg class="w-8 h-8 group-hover:scale-110 transition-transform" fill="none"
+                                    stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                </svg>
+                            </div>
+                        </a>
+
+                        <!-- Reports & Analytics -->
+                        <a href="{% url 'profile:export-csv' %}"
+                            class="bg-gradient-to-r from-amber-500 to-amber-600 text-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group overflow-hidden relative">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="text-lg font-semibold mb-2">
+                                        Generate Reports
+                                    </h3>
+                                    <p class="text-amber-100 text-sm">
+                                        Export data and generate comprehensive
+                                        reports
+                                    </p>
+                                </div>
+                                <svg class="w-8 h-8 group-hover:scale-110 transition-transform" fill="none"
+                                    stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                </svg>
+                            </div>
+                        </a>
+
+                        <!-- Audit Logs -->
+                        <a href="{% url 'profile:audit-logs' %}"
+                            class="bg-gradient-to-r from-rose-500 to-rose-600 text-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group overflow-hidden relative">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="text-lg font-semibold mb-2">
+                                        Activity Logs
+                                    </h3>
+                                    <p class="text-rose-100 text-sm">
+                                        Monitor system activities and user
+                                        actions
+                                    </p>
+                                </div>
+                                <svg class="w-8 h-8 group-hover:scale-110 transition-transform" fill="none"
+                                    stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Search -->
+            <div class="lg:col-span-1">
+                <div class="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-xl mb-6 border border-white/20">
+                    <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-3">
+                        <svg class="w-6 h-6 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        Quick Search
+                    </h3>
+                    <form method="GET" action="{% url 'profile:user-list' %}" class="space-y-4">
+                        <div class="relative">
+                            <input type="text" name="search" placeholder="Search employees..."
+                                class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-sky-400 focus:border-transparent transition-all" />
+                            <svg class="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                                fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </div>
+
+                        <select name="status"
+                            class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-sky-400 focus:border-transparent">
+                            <option value="">All Statuses</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                            <option value="probation">Probation</option>
+                            <option value="terminated">Terminated</option>
+                        </select>
+
+                        <button type="submit"
+                            class="w-full bg-sky-600 hover:bg-sky-700 text-white font-medium py-3 px-4 rounded-xl transition-colors flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                            Search Employees
+                        </button>
+                    </form>
+                </div>
+
+                <!-- System Status -->
+                <div class="glass-card rounded-2xl p-6 shadow-xl">
+                    <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-cog text-gray-500 mr-3"></i>
+                        System Status
+                    </h3>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-600">Database</span>
+                            <span class="flex items-center text-green-600">
+                                <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                                Online
+                            </span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-600">Email Service</span>
+                            <span class="flex items-center text-green-600">
+                                <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                                Active
+                            </span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-600">Backup</span>
+                            <span class="flex items-center text-blue-600">
+                                <div class="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
+                                Scheduled
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity & Statistics -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Location Overview -->
+            <div class="glass-card rounded-2xl p-6 shadow-xl">
+                <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                    <i class="fas fa-map-marker-alt text-red-500 mr-3"></i>
+                    Office Locations
+                </h3>
+                {% if location_stats %}
+                <div class="space-y-4">
+                    {% for location in location_stats %}
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="w-4 h-4 bg-blue-500 rounded-full mr-3"></div>
+                            <span class="font-medium">{{ location.office_location__name|default:"Unknown" }}</span>
+                        </div>
+                        <span class="text-gray-600 font-medium">{{ location.count }} employees</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-8">
+                    <i class="fas fa-building text-4xl text-gray-300 mb-3"></i>
+                    <p class="text-gray-500">No location data available</p>
+                    <p class="text-sm text-gray-400">
+                        Add employees to see location statistics
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Recent Activities -->
+            <div class="glass-card rounded-2xl p-6 shadow-xl">
+                <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                    <i class="fas fa-clock text-yellow-500 mr-3"></i>
+                    Recent Activities
+                </h3>
+                {% if new_users %}
+                <div class="space-y-4">
+                    {% for user in new_users|slice:":5" %}
+                    <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                        <div
+                            class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold mr-3">
+                            {{ user.user.first_name|first }}{{ user.user.last_name|first }}
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-medium text-gray-900">
+                                {{ user.user.get_full_name }}
+                            </p>
+                            <p class="text-sm text-gray-500">
+                                Joined {{ user.created_at|timesince }} ago
+                            </p>
+                        </div>
+                        <span class="text-green-600 text-sm font-medium">New</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-8">
+                    <i class="fas fa-user-clock text-4xl text-gray-300 mb-3"></i>
+                    <p class="text-gray-500">No recent activities</p>
+                    <p class="text-sm text-gray-400">
+                        Employee activities will appear here
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Help & Support -->
+        <div class="glass-card rounded-2xl p-6 shadow-xl mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-question-circle text-2xl text-blue-600"></i>
+                    </div>
+                    <h4 class="text-lg font-semibold text-gray-900 mb-2">
+                        Need Help?
+                    </h4>
+                    <p class="text-gray-600 text-sm mb-4">
+                        Check our documentation for detailed guides
+                    </p>
+                    <a href="#" class="text-blue-600 hover:text-blue-700 font-medium">View Docs</a>
+                </div>
+
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-headset text-2xl text-green-600"></i>
+                    </div>
+                    <h4 class="text-lg font-semibold text-gray-900 mb-2">
+                        Support
+                    </h4>
+                    <p class="text-gray-600 text-sm mb-4">
+                        Get help from our support team
+                    </p>
+                    <a href="#" class="text-green-600 hover:text-green-700 font-medium">Contact Support</a>
+                </div>
+
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-rocket text-2xl text-purple-600"></i>
+                    </div>
+                    <h4 class="text-lg font-semibold text-gray-900 mb-2">
+                        Updates
+                    </h4>
+                    <p class="text-gray-600 text-sm mb-4">
+                        Stay updated with latest features
+                    </p>
+                    <a href="#" class="text-purple-600 hover:text-purple-700 font-medium">What's New</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Add smooth animations
+        const cards = document.querySelectorAll(
+            ".metric-card, .action-btn, .glass-card",
+        );
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = "1";
+                    entry.target.style.transform = "translateY(0)";
+                }
+            });
+        });
+
+        cards.forEach((card) => {
+            card.style.opacity = "0";
+            card.style.transform = "translateY(20px)";
+            card.style.transition = "opacity 0.6s ease, transform 0.6s ease";
+            observer.observe(card);
+        });
+    });
+</script>
+{% endblock %}

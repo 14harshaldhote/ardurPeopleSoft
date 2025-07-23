@@ -1,0 +1,180 @@
+"""
+Utility functions for the profile app
+"""
+import logging
+from django.contrib.auth.models import User
+from datetime import datetime
+import re
+
+logger = logging.getLogger(__name__)
+
+# Helper function to generate employee ID
+def generate_employee_id(work_location=None, group_id=None):
+    """
+    Generate employee ID based on work location with role-based reserved ranges
+
+    Reserved ranges for Management and Finance groups (IDs 7 and 8):
+    - 1-15: First priority range
+    - 301-400: Second priority range
+
+    Regular employees use 101-300 and 401+ ranges
+    """
+    from django.db.models import Q
+
+    # Check if user belongs to Finance or Management groups based on group_id
+    is_reserved_role = False
+    if group_id and group_id in ['7', '8']:  # Finance or Management
+        is_reserved_role = True
+
+    # Determine prefix based on location
+    current_year = str(datetime.now().year)[2:]
+    if work_location and work_location.lower() == 'betul':
+        prefix = "ATS"
+        separator = "-"
+        year_suffix = current_year
+    elif work_location and work_location.lower() == 'pune':
+        prefix = "AT"
+        separator = "-"
+        year_suffix = current_year
+    else:
+        prefix = "EMP"
+        year_suffix = current_year
+        separator = "-"
+
+    # Function to extract numeric ID from username
+    def extract_id(username):
+        # Extract numbers at the end of the string
+        match = re.search(r'(\d+)$', username)
+        if match:
+            try:
+                return int(match.group(1))
+            except ValueError:
+                return None
+        return None
+
+    # Set ID ranges based on role
+    if is_reserved_role:
+        # Check if there's a gap in priority range 1-15
+        used_ids = []
+
+        # Query all users with the prefix
+        all_users = User.objects.filter(username__startswith=prefix)
+
+        # Find all used IDs in the priority range
+        for user in all_users:
+            user_id = extract_id(user.username)
+            if user_id and 1 <= user_id <= 15:
+                used_ids.append(user_id)
+
+        # Look for the first available ID in priority range
+        for i in range(1, 16):
+            if i not in used_ids:
+                seq_num = i
+                break
+        else:
+            # Priority range is full, check reserved range 301-400
+            used_ids = []
+            for user in all_users:
+                user_id = extract_id(user.username)
+                if user_id and 301 <= user_id <= 400:
+                    used_ids.append(user_id)
+
+            # Look for the first available ID in reserved range
+            for i in range(301, 401):
+                if i not in used_ids:
+                    seq_num = i
+                    break
+            else:
+                # Both ranges are full, generate fallback ID
+                timestamp = int(datetime.now().timestamp())
+                return f"{prefix}{separator}{timestamp}"
+    else:
+        # Regular employees use 101-300 and 401+
+        all_users = User.objects.filter(username__startswith=prefix)
+        highest_id = 100  # Start from 101
+
+        # Find the highest used ID outside reserved ranges
+        for user in all_users:
+            user_id = extract_id(user.username)
+            if user_id and user_id > highest_id and user_id not in range(1, 16) and user_id not in range(301, 401):
+                highest_id = user_id
+
+        # Start from highest + 1
+        seq_num = highest_id + 1
+
+        # Skip reserved ranges
+        if 1 <= seq_num <= 15:
+            seq_num = 101
+        elif 301 <= seq_num <= 400:
+            seq_num = 401
+
+    # Format the sequence number and build the ID
+    formatted_seq = f"{seq_num:04d}"
+    employee_id = f"{prefix}{year_suffix}{separator}{formatted_seq}"
+
+    # Final validation to ensure ID doesn't already exist
+    if User.objects.filter(username=employee_id).exists():
+        # If this ID is taken, recurse with a timestamp-based ID
+        timestamp = int(datetime.now().timestamp())
+        return f"{prefix}{year_suffix}{separator}{timestamp}"
+
+    return employee_id
+
+# Helper function to send welcome email
+def send_welcome_email(user, password):
+    """Send welcome email with login credentials"""
+    from django.core.mail import EmailMessage, EmailMultiAlternatives
+    from django.template.loader import render_to_string
+
+    subject = "Welcome to Ardur Company Portal"
+
+    # Plain text email body
+    email_body = f"""
+    Hello {user.first_name} {user.last_name},
+
+    Welcome to Our Company! Your account has been created successfully.
+
+    Here are your login details:
+    Username: {user.username}
+    Password: {password}
+
+    Please log in at: https://home.ardurtechnology.com/login/
+
+    For security reasons, we recommend changing your password after first login.
+
+    Regards,
+    HR Department
+    """
+
+    # Try to render HTML template, fall back to plain text if it fails
+    try:
+        html_message = render_to_string('components/hr/emails/welcome_email.html', {
+            'user': user,
+            'password': password,
+            'login_url': 'https://home.ardurtechnology.com/login/'
+        })
+
+        # Send email with both HTML and plain text
+        email = EmailMultiAlternatives(
+            subject=subject,
+            body=email_body,
+            to=[user.email]
+        )
+        email.attach_alternative(html_message, "text/html")
+    except Exception as e:
+        logger.error(f"Error rendering HTML template: {str(e)}")
+        # Fall back to plain text email
+        email = EmailMessage(
+            subject=subject,
+            body=email_body,
+            to=[user.email]
+        )
+
+    # Add logging before sending
+    logger.info(f"Attempting to send welcome email to {user.email}")
+
+    # Send the email
+    email.send()
+    logger.info(f"Welcome email sent successfully to {user.email}")
+
+    return True
