@@ -162,6 +162,8 @@ def optimized_session_heartbeat(request):
             data = {}
 
         tab_id = data.get('tab_id') or request.headers.get('X-Tab-ID')
+        parent_session_id = data.get('parent_session_id') or request.headers.get('X-Parent-Session-ID')
+        session_fingerprint = data.get('session_fingerprint') or request.headers.get('X-Session-Fingerprint')
 
         user_id = request.user.id
         current_time = time.time()
@@ -176,51 +178,75 @@ def optimized_session_heartbeat(request):
             if cached_response:
                 return JsonResponse(cached_response)
 
-        # Get session
-        session = _get_session_optimized(request.user, tab_id)
+        # Get or create session using improved logic
+        from trueAlign.models import UserSession, SessionActivity
+
+        # Prepare client data
+        client_data = {
+            'ip_address': request.META.get('REMOTE_ADDR'),
+            'user_agent': request.META.get('HTTP_USER_AGENT'),
+            'session_fingerprint': session_fingerprint,
+            'browser_fingerprint': session_fingerprint,
+            'device_type': data.get('device_type'),
+            'screen_resolution': request.headers.get('X-Screen-Resolution'),
+            'timezone_offset': request.headers.get('X-Timezone-Offset'),
+            'language': request.headers.get('X-Language'),
+            'url': data.get('url'),
+            'title': data.get('title'),
+        }
+
+        # Add location data if provided
+        location_data = data.get('location')
+        if location_data or data.get('location_latitude'):
+            client_data['location_data'] = {
+                'latitude': data.get('location_latitude') or (location_data.get('latitude') if location_data else None),
+                'longitude': data.get('location_longitude') or (location_data.get('longitude') if location_data else None),
+                'accuracy': data.get('location_accuracy') or (location_data.get('accuracy') if location_data else None),
+            }
+
+        session, created = UserSession.get_or_create_session(
+            user=request.user,
+            tab_id=tab_id,
+            parent_session_id=parent_session_id,
+            client_data=client_data,
+            session_key=UserSession.generate_session_key()
+        )
+
         if not session:
-            # Create a new session if none exists
-            try:
-                from trueAlign.models import UserSession
-                session_data = {
-                    'user': request.user,
-                    'tab_id': tab_id,
-                    'login_time': timezone.now(),
-                    'last_activity': timezone.now(),
-                    'is_active': True
-                }
+            logger.error("Failed to get or create session")
+            return JsonResponse({'error': 'Could not create session'}, status=500)
 
-                # Add location data if provided in heartbeat
-                location_data = data.get('location')
-                if location_data or data.get('location_latitude'):
-                    session_data['location_latitude'] = data.get('location_latitude') or (location_data.get('latitude') if location_data else None)
-                    session_data['location_longitude'] = data.get('location_longitude') or (location_data.get('longitude') if location_data else None)
-                    session_data['location_accuracy'] = data.get('location_accuracy') or (location_data.get('accuracy') if location_data else None)
-                    session_data['location_type'] = 'geo_location'
-
-                session = UserSession.objects.create(**session_data)
-            except Exception as create_error:
-                logger.error(f"Error creating session: {create_error}")
-                return JsonResponse({'error': 'Could not create session'}, status=500)
-
-        # Process heartbeat data
-        heartbeat_data = _process_heartbeat_data(data, session)
-
-        # Save session updates (including location data)
+        # Record heartbeat activity
         try:
-            session.last_activity = timezone.now()
-            session.save()
-        except Exception as save_error:
-            logger.error(f"Error saving session: {save_error}")
+            SessionActivity.record_activity(
+                session=session,
+                activity_type='heartbeat',
+                activity_data={
+                    'is_idle': data.get('is_idle', False),
+                    'is_visible': data.get('is_visible', True),
+                    'productivity_score': data.get('productivity_score'),
+                    'engagement_score': data.get('engagement_score'),
+                    'browser': data.get('browser'),
+                    'os': data.get('os'),
+                    'fingerprint': session_fingerprint,
+                },
+                url=data.get('url'),
+                title=data.get('title'),
+                location_data=client_data.get('location_data')
+            )
+        except Exception as activity_error:
+            logger.warning(f"Error recording heartbeat activity: {activity_error}")
 
-        # Buffer the activity
-        if heartbeat_data:
-            try:
-                OptimizedSessionTrackingMiddleware.log_activity(
-                    user_id, session.id, 'heartbeat', heartbeat_data
-                )
-            except Exception as log_error:
-                logger.warning(f"Error logging activity: {log_error}")
+        # Update session status based on heartbeat data
+        is_idle = data.get('is_idle', False)
+        session.update_idle_status(is_idle)
+
+        # Update last activity (already done in get_or_create_session, but ensure it's current)
+        session.last_activity = timezone.now()
+        session.save(update_fields=['last_activity'])
+
+        # Get recent activity summary
+        activity_summary = SessionActivity.get_activity_summary(session)
 
         # Calculate session status
         session_status = _calculate_session_status(session)
@@ -228,9 +254,17 @@ def optimized_session_heartbeat(request):
         # Prepare response
         response_data = {
             'status': 'success',
-            'session_id': session.id,
+            'session_id': str(session.id),
+            'parent_session_id': str(session.parent_session_id) if session.parent_session_id else None,
             'is_active': session.is_active,
+            'is_idle': session.is_idle,
             'session_status': session_status,
+            'activity_summary': activity_summary,
+            'last_activity': session.last_activity.isoformat() if session.last_activity else None,
+            'session_duration': session.get_session_duration(),
+            'working_time': session.get_working_time_minutes(),
+            'idle_time': session.get_idle_time(),
+            'created': created,
             'timestamp': timezone.now().isoformat()
         }
 
@@ -290,25 +324,61 @@ def optimized_batch_activity_update(request):
         if last_update and (current_time - last_update) < getattr(CONFIG, 'ACTIVITY_THROTTLE_INTERVAL', 60):
             return JsonResponse({'status': 'throttled', 'retry_after': getattr(CONFIG, 'ACTIVITY_THROTTLE_INTERVAL', 60)})
 
-        # Get session
-        session = _get_session_optimized(request.user, tab_id)
-        if not session:
-            # Create a new session if none exists
-            try:
-                from trueAlign.models import UserSession
-                session = UserSession.objects.create(
-                    user=request.user,
-                    tab_id=tab_id,
-                    login_time=timezone.now(),
-                    last_activity=timezone.now(),
-                    is_active=True
-                )
-            except Exception as create_error:
-                logger.error(f"Error creating session: {create_error}")
-                return JsonResponse({'error': 'Could not create session'}, status=500)
+        # Extract session identifiers
+        parent_session_id = data.get('parent_session_id') or request.headers.get('X-Parent-Session-ID')
+        session_fingerprint = data.get('session_fingerprint') or request.headers.get('X-Session-Fingerprint')
 
-        # Process batch activities
-        processed_count = _process_batch_activities(activities, session, user_id)
+        # Prepare client data
+        client_data = {
+            'ip_address': request.META.get('REMOTE_ADDR'),
+            'user_agent': request.META.get('HTTP_USER_AGENT'),
+            'session_fingerprint': session_fingerprint,
+            'browser_fingerprint': session_fingerprint,
+            'device_type': data.get('device_type'),
+            'screen_resolution': request.headers.get('X-Screen-Resolution'),
+            'timezone_offset': request.headers.get('X-Timezone-Offset'),
+            'language': request.headers.get('X-Language'),
+        }
+
+        # Get or create session
+        from trueAlign.models import UserSession, SessionActivity
+        session, created = UserSession.get_or_create_session(
+            user=request.user,
+            tab_id=tab_id,
+            parent_session_id=parent_session_id,
+            client_data=client_data,
+            session_key=UserSession.generate_session_key()
+        )
+
+        if not session:
+            logger.error("Failed to get or create session")
+            return JsonResponse({'error': 'Could not create session'}, status=500)
+
+        # Process batch activities using SessionActivity model
+        processed_count = 0
+        for activity in activities:
+            try:
+                activity_type = activity.get('type', 'unknown')
+                activity_data = activity.get('data', {})
+                url = activity.get('url')
+                title = activity.get('title')
+                location_data = activity.get('location')
+
+                SessionActivity.record_activity(
+                    session=session,
+                    activity_type=activity_type,
+                    activity_data=activity_data,
+                    url=url,
+                    title=title,
+                    location_data=location_data
+                )
+                processed_count += 1
+            except Exception as activity_error:
+                logger.warning(f"Error recording activity: {activity_error}")
+
+        # Update session last activity
+        session.last_activity = timezone.now()
+        session.save(update_fields=['last_activity'])
 
         # Set throttle
         cache.set(throttle_key, current_time, getattr(CONFIG, 'ACTIVITY_THROTTLE_INTERVAL', 60))
@@ -316,7 +386,9 @@ def optimized_batch_activity_update(request):
         return JsonResponse({
             'status': 'success',
             'processed_count': processed_count,
-            'session_id': session.id,
+            'session_id': str(session.id),
+            'parent_session_id': str(session.parent_session_id) if session.parent_session_id else None,
+            'created': created,
             'timestamp': timezone.now().isoformat()
         })
 
@@ -352,8 +424,27 @@ def optimized_session_status(request):
         if cached_status:
             return JsonResponse(cached_status)
 
-        # Get session
-        session = _get_session_optimized(request.user, tab_id)
+        # Extract session identifiers
+        parent_session_id = request.headers.get('X-Parent-Session-ID')
+        session_fingerprint = request.headers.get('X-Session-Fingerprint')
+
+        # Prepare minimal client data for session lookup
+        client_data = {
+            'ip_address': request.META.get('REMOTE_ADDR'),
+            'user_agent': request.META.get('HTTP_USER_AGENT'),
+            'session_fingerprint': session_fingerprint,
+            'browser_fingerprint': session_fingerprint,
+        }
+
+        # Get or create session
+        from trueAlign.models import UserSession, SessionActivity
+        session, created = UserSession.get_or_create_session(
+            user=request.user,
+            tab_id=tab_id,
+            parent_session_id=parent_session_id,
+            client_data=client_data,
+            session_key=UserSession.generate_session_key()
+        )
         if not session:
             return JsonResponse({'error': 'No active session found'}, status=404)
 
@@ -590,13 +681,43 @@ def dashboard_view(request):
             'engagement_score': analytics_data.get('engagement_score', 0)
         }
 
+        # Get conference booking context
+        conference_context = {}
+        try:
+            from trueAlign.conf_booking.views import conference_booking_context
+            conference_context = conference_booking_context(user)
+        except Exception as conf_error:
+            logger.warning(f"Error loading conference booking context: {conf_error}")
+            conference_context = {
+                'conference_form': None,
+                'user_bookings': [],
+                'user_analytics': None,
+                'available_rooms': [],
+            }
+
+        # Get user role information
+        user_groups = user.groups.all()
+        is_admin = user.is_superuser or user_groups.filter(name='Admin').exists()
+        is_manager = user_groups.filter(name='Manager').exists()
+        is_hr = user_groups.filter(name='HR').exists()
+        is_employee = user_groups.filter(name__in=['Employee', 'User']).exists()
+        is_client = user_groups.filter(name='Client').exists()
+
         context = {
             'user': user,
             'current_session': current_session,
             'session_stats': session_stats,
             'analytics': analytics_data,
             'todays_sessions': todays_sessions[:5],  # Last 5 sessions
-            'timezone': CONFIG.IST_TIMEZONE if hasattr(CONFIG, 'IST_TIMEZONE') else 'UTC'
+            'timezone': CONFIG.IST_TIMEZONE if hasattr(CONFIG, 'IST_TIMEZONE') else 'UTC',
+            # Role-based flags
+            'is_admin': is_admin,
+            'is_manager': is_manager,
+            'is_hr': is_hr,
+            'is_employee': is_employee,
+            'is_client': is_client,
+            # Conference booking context
+            **conference_context
         }
 
         return render(request, 'dashboard.html', context)

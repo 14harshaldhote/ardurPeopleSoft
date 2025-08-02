@@ -1,0 +1,419 @@
+{% extends "base.html" %}
+{% load static %}
+{% load sessions_extras %}
+
+{% block title %}
+Daily Session Summary - {{ user.username }} - {{ target_date }} - TrueAlign
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .timeline-item {
+        position: relative;
+        padding-left: 2rem;
+        border-left: 2px solid #e5e7eb;
+        padding-bottom: 1rem;
+    }
+    .timeline-item:last-child {
+        border-left: none;
+    }
+    .timeline-dot {
+        position: absolute;
+        left: -0.5rem;
+        top: 0.25rem;
+        width: 1rem;
+        height: 1rem;
+        border-radius: 50%;
+        border: 2px solid white;
+    }
+    .timeline-dot.login {
+        background-color: #10b981;
+    }
+    .timeline-dot.logout {
+        background-color: #ef4444;
+    }
+    .session-card {
+        transition: all 0.2s ease;
+        border: 1px solid #e5e7eb;
+    }
+    .session-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    .metric-card {
+        background: white;
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        text-align: center;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    .metric-value {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    .metric-label {
+        font-size: 0.875rem;
+        color: #6b7280;
+        font-weight: 500;
+    }
+    .status-active {
+        background-color: #dcfce7;
+        color: #166534;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    .status-idle {
+        background-color: #fef3c7;
+        color: #92400e;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    .status-ended {
+        background-color: #f3f4f6;
+        color: #374151;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+        .print-break {
+            page-break-after: always;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-6">
+                <div>
+                    <nav class="flex" aria-label="Breadcrumb">
+                        <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                            <li class="inline-flex items-center">
+                                <a href="{% url 'sessions:dashboard' %}" class="text-gray-500 hover:text-gray-700">
+                                    Dashboard
+                                </a>
+                            </li>
+                            <li>
+                                <div class="flex items-center">
+                                    <svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    <a href="{% url 'sessions:session_list' %}" class="ml-1 text-gray-500 hover:text-gray-700 md:ml-2">
+                                        Sessions
+                                    </a>
+                                </div>
+                            </li>
+                            <li></li>
+                                <div class="flex items-center">
+                                    <svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    <span class="ml-1 text-gray-500 md:ml-2">Daily Summary</span>
+                                </div>
+                            </li>
+                        </ol>
+                    </nav>
+                    <h1 class="text-2xl font-bold text-gray-900 mt-2">
+                        Daily Session Summary
+                    </h1>
+                    <p class="text-gray-600">
+                        {{ user.get_full_name|default:user.username }} - {{ target_date|date:"F j, Y" }}
+                    </p>
+                </div>
+                <div class="flex space-x-3 no-print">
+                    <a href="{% url 'sessions:session_list' %}?user={{ user.id }}&date={{ target_date|date:'Y-m-d' }}"
+                       class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                        👤 All User Sessions
+                    </a>
+                    <button onclick="window.print()" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors">
+                        🖨️ Print Report
+                    </button>
+                    <a href="{% url 'sessions:session_list' %}" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                        ← Back to Sessions
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="metric-card">
+                <div class="metric-value text-gray-900">{{ summary.total_sessions }}</div>
+                <div class="metric-label">Total Sessions</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value text-green-600">{{ summary.active_sessions }}</div>
+                <div class="metric-label">Active Sessions</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value text-orange-600">{{ summary.idle_sessions }}</div>
+                <div class="metric-label">Idle Sessions</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value text-purple-600">{{ summary.efficiency_percentage }}%</div>
+                <div class="metric-label">Efficiency</div>
+            </div>
+        </div>
+
+        <!-- User Information -->
+        <div class="bg-white rounded-lg shadow-sm border p-6 mb-8">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                👤 Employee Information
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <span class="text-sm font-medium text-gray-500">Employee:</span>
+                    <p class="text-gray-900">
+                        {{ user.get_full_name|default:user.username }}
+                    </p>
+                </div>
+                {% if shift_info.current_shift %}
+                <div>
+                    <span class="text-sm font-medium text-gray-500">Shift:</span>
+                    <p class="text-gray-900">
+                        {{ shift_info.current_shift.shift.name }}
+                    </p>
+                    <p class="text-xs text-gray-500">
+                        {{ shift_info.current_shift.shift.start_time }} - {{ shift_info.current_shift.shift.end_time }}
+                    </p>
+                </div>
+                {% endif %}
+                {% if user.profile.office_location %}
+                <div>
+                    <span class="text-sm font-medium text-gray-500">Office:</span>
+                    <p class="text-gray-900">
+                        {{ user.profile.office_location.name }}
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Timeline -->
+        {% if login_logout_events %}
+        <div class="bg-white rounded-lg shadow-sm border p-6 mb-8">
+            <h3 class="text-lg font-semibold text-gray-900 mb-6">
+                🕒 Session Timeline
+            </h3>
+            <div class="space-y-4">
+                {% for event in login_logout_events %}
+                <div class="timeline-item">
+                    <div class="timeline-dot {% if event.type == 'login' %}login{% else %}logout{% endif %}"></div>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-900">
+                                {% if event.type == 'login' %}
+                                    🚪 Session Started
+                                {% else %}
+                                    🚪 Session Ended
+                                {% endif %}
+                            </p>
+                            <p class="text-xs text-gray-500">
+                                {{ event.time|date:"H:i:s" }}
+                            </p>
+                        </div>
+                        <div class="text-xs text-gray-400">
+                            <a href="{% url 'sessions:session_detail' event.session_id %}"
+                               class="hover:text-indigo-600 hover:underline">
+                                Session {{ event.session_id|truncatechars:8 }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-gray-500 text-center py-8">
+                No session events found for this date.
+            </p>
+            {% endif %}
+        </div>
+
+        <!-- Session Details -->
+        <div class="bg-white rounded-lg shadow-sm border p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-6">
+                📊 Session Details
+            </h3>
+            {% if daily_sessions %}
+            <div class="space-y-4">
+                {% for session_data in daily_sessions %}
+                {% with session=session_data.session %}
+                <div class="session-card rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center space-x-3">
+                            <div class="text-sm font-medium text-gray-900">
+                                Session {{ session.id|truncatechars:8 }}
+                            </div>
+                            {% if session.is_active %}
+                                {% if session.is_idle %}
+                                    <span class="status-idle">Idle</span>
+                                {% else %}
+                                    <span class="status-active">Active</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="status-ended">Ended</span>
+                            {% endif %}
+                        </div>
+                        <div class="text-xs text-gray-500">
+                            {{ session.created_at|date:"H:i" }}
+                            {% if session.ended_at %}
+                                - {{ session.ended_at|date:"H:i" }}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="text-center">
+                            <div class="text-lg font-semibold text-gray-900">
+                                {% if session_data.duration_minutes %}
+                                    {{ session_data.duration_minutes }} min
+                                {% else %}
+                                    --
+                                {% endif %}
+                            </div>
+                            <div class="text-xs text-gray-500">Duration</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-lg font-semibold text-green-600">
+                                {{ session_data.working_time_minutes }} min
+                            </div>
+                            <div class="text-xs text-gray-500">Working</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-lg font-semibold text-orange-600">
+                                {{ session_data.idle_time_minutes }} min
+                            </div>
+                            <div class="text-xs text-gray-500">Idle</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-lg font-semibold text-blue-600">
+                                <a href="{% url 'sessions:session_detail' session.id %}"
+                                   class="hover:underline">
+                                    View Details
+                                </a>
+                            </div>
+                            <div class="text-xs text-gray-500">Actions</div>
+                        </div>
+                    </div>
+
+                    {% if session.is_active %}
+                    <div class="mt-4 pt-3 border-t border-gray-100">
+                        <div class="flex justify-between items-center">
+                            <div class="flex space-x-2">
+                                <a href="{% url 'sessions:session_detail' session.id %}"
+                                   class="bg-indigo-600 text-white px-3 py-1 rounded text-xs hover:bg-indigo-700 transition-colors">
+                                    📝 View Details
+                                </a>
+                                <form method="post" action="{% url 'sessions:end_session' session.id %}" class="inline">
+                                    {% csrf_token %}
+                                    <button type="submit"
+                                           onclick="return confirm('Are you sure you want to end this session?')"
+                                           class="bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700 transition-colors">
+                                        ⏹️ End Session
+                                    </button>
+                                </form>
+                            </div>
+                            <div class="text-xs text-gray-500">
+                                Last Activity: {{ session.last_activity|timesince|default:"Unknown" }} ago
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endwith %}
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-12">
+                <svg class="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">
+                    No Sessions Found
+                </h3>
+                <p class="text-gray-500 mb-6">
+                    No sessions were recorded for <strong>{{ user.username }}</strong> on <strong>{{ target_date|date:"F d, Y" }}</strong>.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                    <a href="{% url 'sessions:session_list' %}?user={{ user.id }}"
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        📅 View Other Dates
+                    </a>
+                    <a href="{% url 'sessions:session_list' %}"
+                       class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                        🔍 Browse All Sessions
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Summary Statistics -->
+        <div class="bg-white rounded-lg shadow-sm border p-6 mt-8 print-break">
+            <h3 class="text-lg font-semibold text-gray-900 mb-6">
+                📈 Daily Summary
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h4 class="font-medium text-gray-900 mb-3">Session Breakdown</h4>
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Total Sessions:</span>
+                            <span class="font-medium">{{ summary.total_sessions }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Active Sessions:</span>
+                            <span class="font-medium text-green-600">{{ summary.active_sessions }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Idle Sessions:</span>
+                            <span class="font-medium text-orange-600">{{ summary.idle_sessions }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Ended Sessions:</span>
+                            <span class="font-medium text-gray-600">{{ summary.ended_sessions }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="font-medium text-gray-900 mb-3">Time Analysis</h4>
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Total Time:</span>
+                            <span class="font-medium">{{ summary.total_session_minutes }} min</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Working Time:</span>
+                            <span class="font-medium text-green-600">{{ summary.total_working_minutes }} min</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Idle Time:</span>
+                            <span class="font-medium text-orange-600">{{ summary.total_idle_minutes }} min</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Efficiency:</span>
+                            <span class="font-medium text-purple-600">{{ summary.efficiency_percentage }}%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

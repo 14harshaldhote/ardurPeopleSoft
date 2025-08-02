@@ -297,11 +297,12 @@ class BookingExporter:
                 day_hours=Sum(F('end_time') - F('start_time'))
             ).order_by('-day_hours')
 
-            peak_day = daily_bookings.first()['day'] if daily_bookings else 'N/A'
+            peak_day = daily_bookings.first() if daily_bookings else None
+            peak_day = peak_day['day'] if peak_day else 'N/A'
 
             writer.writerow([
                 room.name,
-                room.get_room_type_display(),
+                getattr(room, 'get_room_type_display', lambda: room.room_type)(),
                 room.capacity,
                 bookings.count(),
                 round(total_hours, 2),
@@ -688,7 +689,7 @@ class BookingHelper:
         conflict_details = []
         for conflict in conflicts:
             conflict_details.append({
-                'id': conflict.id,
+                'id': getattr(conflict, 'id', None),
                 'purpose': conflict.purpose,
                 'booked_by': conflict.booked_by.get_full_name(),
                 'start_time': conflict.start_time,
@@ -1119,19 +1120,19 @@ class LocationDetector:
         rooms_data = []
         for room in rooms:
             rooms_data.append({
-                'id': room.id,
+                'id': getattr(room, 'id', None),
                 'name': room.name,
                 'capacity': room.capacity,
-                'room_type': room.get_room_type_display(),
+                'room_type': room.get_room_type_display() if hasattr(room, 'get_room_type_display') else room.room_type,
                 'facilities': room.facilities,
                 'location': room.location,
                 'hourly_rate': float(room.hourly_rate) if room.hourly_rate else 0,
                 'office_location': {
-                    'id': room.office_location.id,
-                    'name': room.office_location.name,
-                    'city': room.office_location.city,
-                    'state': room.office_location.state,
-                }
+                    'id': getattr(room.office_location, 'id', None) if room.office_location else None,
+                    'name': getattr(room.office_location, 'name', None) if room.office_location else None,
+                    'city': getattr(room.office_location, 'city', None) if room.office_location else None,
+                    'state': getattr(room.office_location, 'state', None) if room.office_location else None,
+                } if room.office_location else None
             })
 
         return rooms_data
@@ -1176,7 +1177,10 @@ class LocationValidator:
             return True
 
         # For POST requests (actual bookings), require verified location
-        return request.session.get('location_access_granted', False)
+        verified_location = request.session.get('location_access_granted', False)
+        if not verified_location:
+            logger.warning('Location access not verified in session')
+        return verified_location
 
     @staticmethod
     def set_location_access_in_session(request, granted=True):

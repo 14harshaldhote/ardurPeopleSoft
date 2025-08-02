@@ -844,6 +844,52 @@
             return `<td class="${cellClass}" data-date="${dateStr}" data-hour="${hour}" data-room-id="${roomId}">${content}</td>`;
         }
 
+        // Render month view with real data
+        function renderMonthView() {
+            const monthGrid = document.getElementById("monthCalendarGrid");
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            
+            // Get first day of month
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const startDate = new Date(firstDay);
+            startDate.setDate(startDate.getDate() - firstDay.getDay()); // Start from Sunday
+            
+            let html = '';
+            const today = new Date();
+            
+            // Generate 6 weeks (42 days)
+            for (let week = 0; week < 6; week++) {
+                for (let day = 0; day < 7; day++) {
+                    const cellDate = new Date(startDate);
+                    cellDate.setDate(startDate.getDate() + (week * 7) + day);
+                    const dateStr = cellDate.toISOString().split('T')[0];
+                    
+                    const isCurrentMonth = cellDate.getMonth() === month;
+                    const isToday = cellDate.toDateString() === today.toDateString();
+                    const dayData = calendarData[dateStr] || {};
+                    
+                    // Count bookings for this day
+                    let bookingCount = 0;
+                    Object.keys(dayData).forEach(roomKey => {
+                        bookingCount += dayData[roomKey].length;
+                    });
+                    
+                    let cellClass = `border-r border-b border-gray-200 p-2 h-24 cursor-pointer hover:bg-gray-50 ${!isCurrentMonth ? 'bg-gray-50 text-gray-400' : ''} ${isToday ? 'bg-blue-50 border-blue-200' : ''}`;
+                    
+                    html += `
+                        <div class="${cellClass}" data-date="${dateStr}">
+                            <div class="text-sm font-medium ${isToday ? 'text-blue-600' : 'text-gray-900'}">${cellDate.getDate()}</div>
+                            ${bookingCount > 0 ? `<div class="text-xs text-green-600 mt-1">${bookingCount} bookings</div>` : ''}
+                        </div>
+                    `;
+                }
+            }
+            
+            monthGrid.innerHTML = html;
+        }
+
         // Update quick booking to use real API
         confirmQuickBookingBtn.addEventListener("click", () => {
             const purpose = document.getElementById("quickPurpose").value.trim();

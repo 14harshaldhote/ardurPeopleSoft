@@ -7,14 +7,39 @@
         <title>{% block title %}TrueAlign - Enterprise Management{% endblock %}</title>
         {% load static %}
         <link rel="icon" type="image/x-icon" href="{% static 'images/icon.png' %}">
-        <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
-
-
-        <!-- Core Scripts -->
-        <script src="https://cdn.jsdelivr.net/npm/alpinejs@2.8.2/dist/alpine.min.js" defer></script>
+        <!-- Core Scripts - Optimized loading -->
         <script src="https://cdn.tailwindcss.com"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/reconnecting-websocket/1.0.0/reconnecting-websocket.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/alpinejs@2.8.2/dist/alpine.min.js" defer></script>
+        
+        <!-- Load additional libraries only when needed -->
+        <script>
+            // Lightweight utility functions instead of loading entire lodash
+            window.utils = {
+                debounce: function(func, wait) {
+                    let timeout;
+                    return function executedFunction(...args) {
+                        const later = () => {
+                            clearTimeout(timeout);
+                            func(...args);
+                        };
+                        clearTimeout(timeout);
+                        timeout = setTimeout(later, wait);
+                    };
+                },
+                throttle: function(func, limit) {
+                    let inThrottle;
+                    return function() {
+                        const args = arguments;
+                        const context = this;
+                        if (!inThrottle) {
+                            func.apply(context, args);
+                            inThrottle = true;
+                            setTimeout(() => inThrottle = false, limit);
+                        }
+                    }
+                }
+            };
+        </script>
         {% if user.is_authenticated %}
         <script src="{% static 'js/optimized-session-tracker.js' %}"></script>
         <script>
@@ -338,8 +363,8 @@
                     // Get geo-location if available (for general display)
                     let locationData = null;
 
-                    // Function to get location via IP (fallback)
-                    function getLocationFromIP() {
+                    // Optimized function to get location via IP (fallback)
+                    const getLocationFromIP = utils.debounce(function() {
                         const locationIcon = document.getElementById('location-icon');
                         const locationText = document.getElementById('location-text');
 
@@ -347,25 +372,47 @@
                             locationIcon.className = 'ri-map-pin-line text-blue-500';
                             locationText.textContent = 'Getting IP location...';
 
-                            // Try to get location from IP
-                            fetch('https://ipapi.co/json/')
-                                .then(response => response.json())
+                            // Use a faster IP location service with timeout
+                            const controller = new AbortController();
+                            const timeoutId = setTimeout(() => controller.abort(), 5000);
+                            
+                            fetch('https://ipapi.co/json/', {
+                                signal: controller.signal,
+                                headers: {
+                                    'Accept': 'application/json'
+                                }
+                            })
+                                .then(response => {
+                                    clearTimeout(timeoutId);
+                                    if (!response.ok) throw new Error('Network response was not ok');
+                                    return response.json();
+                                })
                                 .then(data => {
                                     if (data.city && data.region) {
                                         locationIcon.className = 'ri-map-pin-line text-blue-500';
                                         locationText.textContent = `${data.city}, ${data.region}`;
+                                        
+                                        // Cache the result
+                                        sessionStorage.setItem('ip_location', JSON.stringify({
+                                            city: data.city,
+                                            region: data.region,
+                                            timestamp: Date.now()
+                                        }));
                                     } else {
                                         locationIcon.className = 'ri-map-pin-line text-gray-500';
                                         locationText.textContent = 'Location unavailable';
                                     }
                                 })
                                 .catch(error => {
-                                    console.warn('IP location error:', error);
+                                    clearTimeout(timeoutId);
+                                    if (error.name !== 'AbortError') {
+                                        console.warn('IP location error:', error);
+                                    }
                                     locationIcon.className = 'ri-map-pin-line text-gray-500';
                                     locationText.textContent = 'Location unavailable';
                                 });
                         }
-                    }
+                    }, 1000);
 
                     // Function to update location display
                     function updateLocationDisplay(position) {

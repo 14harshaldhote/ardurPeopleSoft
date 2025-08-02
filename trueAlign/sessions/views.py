@@ -1,129 +1,398 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, User
 from django.contrib import messages
-from django.http import JsonResponse, HttpResponseForbidden
+from django.http import JsonResponse, HttpResponse, HttpResponseForbidden
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.db.models import Q, Count, Avg, Sum, Max, Min, Prefetch
+from django.db.models import (
+    Q, Count, Avg, Sum, Max, Min, Prefetch,
+    Case, When, Value, IntegerField, F, ExpressionWrapper,
+    DateTimeField, DurationField
+)
 from django.utils import timezone
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import require_http_methods, require_GET, require_POST
 from django.views.decorators.csrf import csrf_exempt
+from django.core.cache import cache
+from django.db import transaction
 from datetime import datetime, timedelta
 import json
-from collections import defaultdict
+import csv
+from collections import defaultdict, OrderedDict
+from operator import itemgetter
 
 # Import models from the main trueAlign app
 from trueAlign.models import (
     UserSession, OfficeLocation, UserDetails,
     ShiftAssignment, ShiftMaster
 )
-from django.contrib.auth.models import User
 
+
+# ============================================================================
+# UTILITY FUNCTIONS & DECORATORS
+# ============================================================================
 
 def is_admin_user(user):
     """
-    Check if user has admin privileges.
+    Enhanced admin check with caching for better performance.
     Returns True if user is superuser or belongs to 'Admin' group.
     """
     if not user.is_authenticated:
         return False
 
+    # Cache the result for 5 minutes to avoid repeated database queries
+    cache_key = f"is_admin_{user.id}"
+    cached_result = cache.get(cache_key)
+    if cached_result is not None:
+        return cached_result
+
+    result = False
+
     # Check if user is superuser
     if user.is_superuser:
-        return True
+        result = True
+    elif hasattr(user, 'is_admin') and user.is_admin:
+        result = True
+    else:
+        # Check if user belongs to Admin group
+        try:
+            result = user.groups.filter(name='Admin').exists()
+        except Exception:
+            result = False
 
-    # Check if user has is_admin attribute (custom field)
-    if hasattr(user, 'is_admin') and user.is_admin:
-        return True
+    # Cache the result
+    cache.set(cache_key, result, 300)  # 5 minutes
+    return result
 
-    # Check if user belongs to Admin group
-    try:
-        admin_group = Group.objects.get(name='Admin')
-        return user.groups.filter(id=admin_group.id).exists()
-    except Group.DoesNotExist:
-        return False
+
+def admin_required(view_func):
+    """Custom decorator to require admin privileges."""
+    def wrapper(request, *args, **kwargs):
+        if not is_admin_user(request.user):
+            messages.error(request, 'You do not have permission to access this page.')
+            return redirect('dashboard:main')
+        return view_func(request, *args, **kwargs)
+    return login_required(wrapper)
 
 
 def get_admin_office_location(user):
     """
-    Get the office location for the current admin user.
+    Get the office location for the current admin user with caching.
     Returns None if no office location is found.
     """
+    cache_key = f"admin_office_{user.id}"
+    cached_office = cache.get(cache_key)
+    if cached_office is not None:
+        return cached_office
+
     try:
-        user_details = UserDetails.objects.select_related('office_location').get(user=user)
-        return user_details.office_location
-    except UserDetails.DoesNotExist:
+        user_details = user.profile
+        office = user_details.office_location if hasattr(user_details, 'office_location') else None
+        cache.set(cache_key, office, 300)  # Cache for 5 minutes
+        return office
+    except AttributeError:
+        cache.set(cache_key, None, 300)
         return None
 
 
 def get_user_shift_info(user, date=None):
     """
-    Get current shift and shift history for a user.
-    Returns a dictionary with shift information.
+    Enhanced shift information retrieval with better error handling.
     """
     if date is None:
         date = timezone.now().date()
 
+    cache_key = f"shift_info_{user.id}_{date}"
+    cached_info = cache.get(cache_key)
+    if cached_info is not None:
+        return cached_info
+
     shift_info = {
         'current_shift': None,
         'current_shift_name': 'No shift assigned',
+        'shift_type': 'unknown',
         'shift_history': [],
-        'has_shift_data': False
+        'has_shift_data': False,
+        'is_day_shift': True,
+        'shift_start_time': None,
+        'shift_end_time': None
     }
 
     try:
-        # Get current shift
-        current_shift = ShiftAssignment.get_user_current_shift(user, date)
-        if current_shift:
-            shift_info['current_shift'] = current_shift
-            shift_info['current_shift_name'] = current_shift.name
-            shift_info['has_shift_data'] = True
+        # Get current shift with better error handling
+        current_assignment = ShiftAssignment.objects.select_related('shift').filter(
+            user=user,
+            effective_from__lte=date,
+            effective_to__gte=date,
+            is_current=True
+        ).first()
 
-        # Get shift history (last 5 assignments)
-        shift_history = ShiftAssignment.get_shift_history(user).select_related('shift')[:5]
+        if current_assignment and current_assignment.shift:
+            shift = current_assignment.shift
+            shift_info.update({
+                'current_shift': shift,
+                'current_shift_name': shift.name,
+                'shift_type': getattr(shift, 'shift_type', 'unknown'),
+                'has_shift_data': True,
+                'is_day_shift': getattr(shift, 'is_day_shift', True),
+                'shift_start_time': getattr(shift, 'start_time', None),
+                'shift_end_time': getattr(shift, 'end_time', None)
+            })
+
+        # Get recent shift history
+        shift_history = ShiftAssignment.objects.select_related('shift').filter(
+            user=user
+        ).order_by('-effective_from')[:5]
+
         shift_info['shift_history'] = [
             {
-                'shift_name': assignment.shift.name,
+                'shift_name': assignment.shift.name if assignment.shift else 'Unknown',
                 'effective_from': assignment.effective_from,
                 'effective_to': assignment.effective_to,
-                'is_current': assignment.is_current,
-                'duration_days': assignment.total_duration()
+                'is_current': assignment.effective_from <= date <= assignment.effective_to,
+                'shift_type': getattr(assignment.shift, 'shift_type', 'unknown') if assignment.shift else 'unknown'
             }
             for assignment in shift_history
         ]
 
-        if shift_history:
+        if shift_history.exists():
             shift_info['has_shift_data'] = True
 
     except Exception as e:
-        # Log the error but don't break the view
         print(f"Error getting shift info for user {user.username}: {str(e)}")
 
+    # Cache for 1 hour
+    cache.set(cache_key, shift_info, 3600)
     return shift_info
 
 
-def filter_sessions_by_office(sessions_queryset, admin_office_location):
+def get_filtered_sessions_queryset(office_id=None, admin_office=None):
     """
-    Filter sessions to only include users from the same office location as admin.
-    If admin has no office location, return all sessions.
+    Optimized session filtering with proper joins and select_related.
     """
-    if not admin_office_location:
-        return sessions_queryset
+    try:
+        # Base queryset with optimizations - use correct relationship path
+        queryset = UserSession.objects.select_related('user')
 
-    # Get all users in the same office
-    office_users = UserDetails.objects.filter(
-        office_location=admin_office_location
-    ).values_list('user_id', flat=True)
+        # Try to add profile relationship if it exists
+        try:
+            queryset = queryset.select_related('user__profile__office_location')
+        except Exception:
+            # Fall back to basic queryset if relationship doesn't exist
+            pass
 
-    # Filter sessions to only include these users
-    return sessions_queryset.filter(user_id__in=office_users)
+        # Apply office filtering
+        if office_id and office_id != 'all':
+            try:
+                office = OfficeLocation.objects.get(id=office_id)
+                office_users = User.objects.filter(
+                    profile__office_location=office
+                ).values_list('id', flat=True)
+                if office_users.exists():
+                    queryset = queryset.filter(user_id__in=office_users)
+            except (OfficeLocation.DoesNotExist, Exception):
+                # If office doesn't exist or query fails, return empty queryset
+                return UserSession.objects.none()
+        elif admin_office:
+            try:
+                office_users = User.objects.filter(
+                    profile__office_location=admin_office
+                ).values_list('id', flat=True)
+                if office_users.exists():
+                    queryset = queryset.filter(user_id__in=office_users)
+                else:
+                    # If no users in admin office, return empty queryset
+                    return UserSession.objects.none()
+            except Exception:
+                # If query fails, return all sessions (no office restriction)
+                pass
+
+        return queryset
+    except Exception:
+        # If anything goes wrong, return empty queryset
+        return UserSession.objects.none()
 
 
-@login_required
-@user_passes_test(is_admin_user, login_url='/login/')
+def calculate_session_metrics(sessions_queryset):
+    """
+    Calculate comprehensive session metrics efficiently.
+    """
+    now = timezone.now()
+    last_24h = now - timedelta(hours=24)
+    last_week = now - timedelta(days=7)
+
+    # Get basic counts with single query
+    metrics = sessions_queryset.aggregate(
+        total_sessions=Count('id'),
+        active_sessions=Count('id', filter=Q(is_active=True)),
+        idle_sessions=Count('id', filter=Q(is_active=True, is_idle=True)),
+        recent_24h=Count('id', filter=Q(created_at__gte=last_24h)),
+        recent_week=Count('id', filter=Q(created_at__gte=last_week)),
+        avg_duration=Avg(
+            ExpressionWrapper(
+                F('ended_at') - F('created_at'),
+                output_field=DurationField()
+            ),
+            filter=Q(ended_at__isnull=False, is_active=False)
+        )
+    )
+
+    # Convert average duration to minutes
+    if metrics['avg_duration']:
+        metrics['avg_duration_minutes'] = round(
+            metrics['avg_duration'].total_seconds() / 60, 2
+        )
+    else:
+        metrics['avg_duration_minutes'] = None
+
+    # Calculate working vs idle time
+    active_sessions = sessions_queryset.filter(is_active=True)
+    total_working_time = active_sessions.aggregate(
+        total_working=Sum('working_time')
+    )['total_working']
+
+    total_idle_time = active_sessions.aggregate(
+        total_idle=Sum('total_idle_time')
+    )['total_idle']
+
+    metrics.update({
+        'total_working_time': total_working_time or timedelta(0),
+        'total_idle_time': total_idle_time or timedelta(0),
+        'productivity_ratio': 0
+    })
+
+    # Calculate productivity ratio
+    if total_working_time and total_idle_time:
+        total_time = total_working_time + total_idle_time
+        if total_time.total_seconds() > 0:
+            metrics['productivity_ratio'] = round(
+                (total_working_time.total_seconds() / total_time.total_seconds()) * 100, 2
+            )
+
+    return metrics
+
+
+def get_top_users_with_shifts(sessions_queryset, limit=10):
+    """
+    Get top users by session count with shift information.
+    """
+    # Get top users efficiently
+    top_users_data = (
+        sessions_queryset
+        .values('user__id', 'user__username', 'user__first_name', 'user__last_name')
+        .annotate(
+            session_count=Count('id'),
+            active_sessions=Count('id', filter=Q(is_active=True)),
+            last_activity=Max('last_activity'),
+            total_time=Sum(
+                ExpressionWrapper(
+                    F('ended_at') - F('created_at'),
+                    output_field=DurationField()
+                ),
+                filter=Q(ended_at__isnull=False)
+            )
+        )
+        .order_by('-session_count')[:limit]
+    )
+
+    # Enhance with shift information
+    enhanced_users = []
+    for user_data in top_users_data:
+        try:
+            user = User.objects.get(id=user_data['user__id'])
+            shift_info = get_user_shift_info(user)
+
+            user_data.update({
+                'current_shift': shift_info['current_shift_name'],
+                'shift_type': shift_info['shift_type'],
+                'has_shift_data': shift_info['has_shift_data'],
+                'is_day_shift': shift_info['is_day_shift'],
+                'total_time_hours': 0
+            })
+
+            # Calculate total time in hours
+            if user_data['total_time']:
+                user_data['total_time_hours'] = round(
+                    user_data['total_time'].total_seconds() / 3600, 2
+                )
+
+            enhanced_users.append(user_data)
+        except User.DoesNotExist:
+            continue
+
+    return enhanced_users
+
+
+def get_device_statistics(sessions_queryset):
+    """
+    Get device type distribution and statistics.
+    """
+    device_stats = (
+        sessions_queryset
+        .filter(device_type__isnull=False)
+        .exclude(device_type='')
+        .values('device_type')
+        .annotate(
+            session_count=Count('id'),
+            active_count=Count('id', filter=Q(is_active=True)),
+            unique_users=Count('user', distinct=True)
+        )
+        .order_by('-session_count')
+    )
+
+    # Normalize device types
+    normalized_stats = {}
+    for stat in device_stats:
+        device_type = stat['device_type'].lower()
+        if 'mac' in device_type or 'darwin' in device_type:
+            device_type = 'Mac'
+        elif 'windows' in device_type or 'win' in device_type:
+            device_type = 'Windows'
+        elif 'linux' in device_type:
+            device_type = 'Linux'
+        elif 'android' in device_type:
+            device_type = 'Android'
+        elif 'iphone' in device_type or 'ios' in device_type:
+            device_type = 'iOS'
+        else:
+            device_type = 'Unknown'
+
+        if device_type in normalized_stats:
+            normalized_stats[device_type]['session_count'] += stat['session_count']
+            normalized_stats[device_type]['active_count'] += stat['active_count']
+            normalized_stats[device_type]['unique_users'] += stat['unique_users']
+        else:
+            normalized_stats[device_type] = stat
+            normalized_stats[device_type]['device_type'] = device_type
+
+    return list(normalized_stats.values())
+
+
+def get_location_statistics(sessions_queryset):
+    """
+    Get location-based session statistics.
+    """
+    return (
+        sessions_queryset
+        .filter(location_city__isnull=False)
+        .exclude(location_city='')
+        .values('location_city', 'location_country', 'location_region')
+        .annotate(
+            session_count=Count('id'),
+            active_count=Count('id', filter=Q(is_active=True)),
+            unique_users=Count('user', distinct=True)
+        )
+        .order_by('-session_count')[:10]
+    )
+
+
+# ============================================================================
+# MAIN DASHBOARD VIEWS
+# ============================================================================
+
+@admin_required
 def session_dashboard(request):
     """
-    Enhanced dashboard view with office location filtering and shift information.
+    Enhanced real-time session dashboard with dynamic filtering.
     """
     context = {
         'page_title': 'Session Dashboard',
@@ -131,816 +400,1222 @@ def session_dashboard(request):
     }
 
     try:
+        # Get filtering parameters
+        office_id = request.GET.get('office', None)
+        refresh = request.GET.get('refresh', 'false') == 'true'
+
         # Get admin's office location
         admin_office = get_admin_office_location(request.user)
 
-        # Get all sessions, filtered by office location
-        all_sessions = UserSession.objects.select_related('user')
-        filtered_sessions = filter_sessions_by_office(all_sessions, admin_office)
+        # Get all available offices for the dropdown
+        all_offices = OfficeLocation.objects.filter(is_active=True).order_by('name')
 
-        # Get basic statistics
-        total_sessions = filtered_sessions.count()
-        active_sessions = filtered_sessions.filter(is_active=True).count()
-        idle_sessions = filtered_sessions.filter(is_active=True, is_idle=True).count()
-
-        # Recent sessions (last 24 hours)
-        last_24h = timezone.now() - timedelta(hours=24)
-        recent_sessions = filtered_sessions.filter(created_at__gte=last_24h).count()
-
-        # Average session duration for completed sessions
-        completed_sessions = filtered_sessions.filter(is_active=False, ended_at__isnull=False)
-        avg_duration = None
-        if completed_sessions.exists():
-            durations = []
-            for session in completed_sessions[:100]:  # Sample last 100 for performance
-                if session.ended_at and session.created_at:
-                    duration = (session.ended_at - session.created_at).total_seconds() / 60
-                    durations.append(duration)
-
-            if durations:
-                avg_duration = sum(durations) / len(durations)
-
-        # Top users by session count (from same office)
-        top_users = (filtered_sessions
-                    .values('user__username', 'user__first_name', 'user__last_name')
-                    .annotate(session_count=Count('id'))
-                    .order_by('-session_count')[:10])
-
-        # Enhanced top users with shift information
-        enhanced_top_users = []
-        for user_data in top_users:
+        # Determine which office to filter by
+        selected_office = None
+        if office_id and office_id != 'all':
             try:
-                user = User.objects.get(username=user_data['user__username'])
-                shift_info = get_user_shift_info(user)
-                user_data['current_shift'] = shift_info['current_shift_name']
-                user_data['has_shift_data'] = shift_info['has_shift_data']
-                enhanced_top_users.append(user_data)
-            except User.DoesNotExist:
-                enhanced_top_users.append(user_data)
+                selected_office = OfficeLocation.objects.get(id=office_id)
+            except OfficeLocation.DoesNotExist:
+                messages.warning(request, 'Selected office not found. Showing default view.')
+                office_id = None
 
-        # Sessions by location
-        location_stats = (filtered_sessions
-                         .filter(location_city__isnull=False)
-                         .values('location_city', 'location_country')
-                         .annotate(session_count=Count('id'))
-                         .order_by('-session_count')[:10])
+        # Use admin office as default if no office specified
+        if not office_id and admin_office:
+            selected_office = admin_office
+            office_id = str(admin_office.id)
 
-        # Device type breakdown
-        device_stats = (filtered_sessions
-                       .filter(device_type__isnull=False)
-                       .values('device_type')
-                       .annotate(session_count=Count('id'))
-                       .order_by('-session_count'))
+        # Get filtered sessions
+        sessions_queryset = get_filtered_sessions_queryset(office_id, admin_office)
 
-        # Office location information
-        if admin_office:
+        # Calculate metrics
+        metrics = calculate_session_metrics(sessions_queryset)
+
+        # Get top users with shift information
+        top_users = get_top_users_with_shifts(sessions_queryset, limit=10)
+
+        # Get device statistics
+        device_stats = get_device_statistics(sessions_queryset)
+
+        # Get location statistics
+        location_stats = get_location_statistics(sessions_queryset)
+
+        # Get office information
+        if selected_office:
             office_info = {
-                'name': admin_office.name,
-                'location': admin_office.full_address(),
-                'total_employees': UserDetails.objects.filter(office_location=admin_office).count()
+                'id': selected_office.id,
+                'name': selected_office.name,
+                'code': selected_office.code,
+                'location': selected_office.full_address,
+                'total_employees': User.objects.filter(
+                    profile__office_location=selected_office
+                ).count(),
+                'working_hours': selected_office.working_hours_display,
+                'timezone': selected_office.timezone,
+                'is_active': selected_office.is_active
             }
         else:
             office_info = {
+                'id': 'all',
                 'name': 'All Offices',
+                'code': 'ALL',
                 'location': 'System-wide view',
-                'total_employees': UserDetails.objects.count()
+                'total_employees': User.objects.filter(profile__isnull=False).count(),
+                'working_hours': 'Varies by location',
+                'timezone': 'Multiple',
+                'is_active': True
             }
 
+        # Get recent activity (last 10 sessions)
+        recent_activity = (
+            sessions_queryset
+            .select_related('user')
+            .order_by('-last_activity')[:10]
+        )
+
+        # System health status
+        system_health = {
+            'status': 'operational',
+            'active_tracking': metrics['active_sessions'] > 0,
+            'last_update': timezone.now(),
+            'total_tracked_users': sessions_queryset.values('user').distinct().count()
+        }
+
         context.update({
-            'stats': {
-                'total_sessions': total_sessions,
-                'active_sessions': active_sessions,
-                'idle_sessions': idle_sessions,
-                'recent_sessions': recent_sessions,
-                'avg_duration': round(avg_duration, 2) if avg_duration else None,
-            },
-            'top_users': enhanced_top_users,
-            'location_stats': location_stats,
+            'metrics': metrics,
+            'top_users': top_users,
             'device_stats': device_stats,
+            'location_stats': location_stats,
             'office_info': office_info,
+            'recent_activity': recent_activity,
+            'system_health': system_health,
             'admin_office': admin_office,
+            'selected_office': selected_office,
+            'all_offices': all_offices,
+            'selected_office_id': office_id or 'all',
+            'refresh_enabled': refresh
         })
 
     except Exception as e:
         messages.error(request, f'Error loading dashboard data: {str(e)}')
         context.update({
-            'stats': {
+            'metrics': {
                 'total_sessions': 0,
                 'active_sessions': 0,
                 'idle_sessions': 0,
-                'recent_sessions': 0,
-                'avg_duration': None,
+                'recent_24h': 0,
+                'avg_duration_minutes': None,
+                'productivity_ratio': 0
             },
             'top_users': [],
-            'location_stats': [],
             'device_stats': [],
-            'office_info': {'name': 'Error', 'location': 'Unable to load', 'total_employees': 0},
+            'location_stats': [],
+            'office_info': {
+                'name': 'Error',
+                'location': 'Unable to load',
+                'total_employees': 0
+            },
+            'recent_activity': [],
+            'system_health': {'status': 'error'},
             'admin_office': None,
+            'all_offices': OfficeLocation.objects.filter(is_active=True).order_by('name'),
+            'selected_office_id': 'all'
         })
 
     return render(request, 'sessions/dashboard.html', context)
 
 
-@login_required
-@user_passes_test(is_admin_user, login_url='/login/')
-def session_list(request):
+@admin_required
+@require_GET
+def dashboard_ajax_update(request):
     """
-    Enhanced session list view with office location filtering and shift information.
+    AJAX endpoint for real-time dashboard updates.
     """
-    context = {
-        'page_title': 'User Sessions',
-        'active_tab': 'sessions'
-    }
-
     try:
-        # Get admin's office location
+        office_id = request.GET.get('office', None)
         admin_office = get_admin_office_location(request.user)
 
-        # Get sessions with optimized queries
-        sessions = UserSession.objects.select_related(
-            'user', 'user__profile'
-        ).prefetch_related(
-            Prefetch('user__shift_assignments',
-                    queryset=ShiftAssignment.objects.select_related('shift').order_by('-effective_from'))
-        ).order_by('-created_at')
+        # Get filtered sessions
+        sessions_queryset = get_filtered_sessions_queryset(office_id, admin_office)
 
-        # Apply office location filtering
-        sessions = filter_sessions_by_office(sessions, admin_office)
+        # Calculate metrics
+        metrics = calculate_session_metrics(sessions_queryset)
 
-        # Apply additional filters
-        search_query = request.GET.get('search', '').strip()
-        status_filter = request.GET.get('status', '')
-        user_filter = request.GET.get('user', '')
-        location_filter = request.GET.get('location', '')
-        shift_filter = request.GET.get('shift', '')
-        date_from = request.GET.get('date_from', '')
-        date_to = request.GET.get('date_to', '')
+        # Get top users
+        top_users = get_top_users_with_shifts(sessions_queryset, limit=5)
 
-        if search_query:
-            sessions = sessions.filter(
-                Q(user__username__icontains=search_query) |
-                Q(user__first_name__icontains=search_query) |
-                Q(user__last_name__icontains=search_query) |
-                Q(location_city__icontains=search_query) |
-                Q(ip_address__icontains=search_query) |
-                Q(device_type__icontains=search_query)
-            )
+        # Get device stats
+        device_stats = get_device_statistics(sessions_queryset)
 
-        if status_filter == 'active':
-            sessions = sessions.filter(is_active=True)
-        elif status_filter == 'inactive':
-            sessions = sessions.filter(is_active=False)
-        elif status_filter == 'idle':
-            sessions = sessions.filter(is_active=True, is_idle=True)
+        # System health
+        system_health = {
+            'status': 'operational',
+            'active_tracking': metrics['active_sessions'] > 0,
+            'last_update': timezone.now().isoformat(),
+            'total_tracked_users': sessions_queryset.values('user').distinct().count()
+        }
 
-        if user_filter:
-            sessions = sessions.filter(user__username=user_filter)
-
-        if location_filter:
-            sessions = sessions.filter(location_city__icontains=location_filter)
-
-        if shift_filter:
-            # Filter by users with specific shift
-            shift_users = ShiftAssignment.objects.filter(
-                shift__name__icontains=shift_filter,
-                is_current=True
-            ).values_list('user_id', flat=True)
-            sessions = sessions.filter(user_id__in=shift_users)
-
-        if date_from:
-            try:
-                date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
-                sessions = sessions.filter(created_at__date__gte=date_from_obj)
-            except ValueError:
-                messages.warning(request, 'Invalid date format for "from" date')
-
-        if date_to:
-            try:
-                date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
-                sessions = sessions.filter(created_at__date__lte=date_to_obj)
-            except ValueError:
-                messages.warning(request, 'Invalid date format for "to" date')
-
-        # Pagination
-        page = request.GET.get('page', 1)
-        paginator = Paginator(sessions, 25)  # Show 25 sessions per page
-
-        try:
-            sessions_page = paginator.page(page)
-        except PageNotAnInteger:
-            sessions_page = paginator.page(1)
-        except EmptyPage:
-            sessions_page = paginator.page(paginator.num_pages)
-
-        # Enhanced sessions with shift information
-        enhanced_sessions = []
-        for session in sessions_page:
-            try:
-                shift_info = get_user_shift_info(session.user)
-
-                # Get user's office location
-                user_office = "No office location"
-                try:
-                    user_details = UserDetails.objects.select_related('office_location').get(user=session.user)
-                    if user_details.office_location:
-                        user_office = user_details.office_location.name
-                except UserDetails.DoesNotExist:
-                    pass
-
-                session_data = {
-                    'session': session,
-                    'shift_info': shift_info,
-                    'user_office': user_office,
-                    'has_issues': False,
-                    'issues': []
-                }
-
-                # Check for data issues
-                if not shift_info['has_shift_data']:
-                    session_data['has_issues'] = True
-                    session_data['issues'].append('No shift data available')
-
-                if user_office == "No office location":
-                    session_data['has_issues'] = True
-                    session_data['issues'].append('No office location assigned')
-
-                if not session.location_city and not session.location_country:
-                    session_data['has_issues'] = True
-                    session_data['issues'].append('No location data')
-
-                enhanced_sessions.append(session_data)
-
-            except Exception as e:
-                # Handle individual session errors gracefully
-                session_data = {
-                    'session': session,
-                    'shift_info': {'current_shift_name': 'Error loading shift', 'has_shift_data': False},
-                    'user_office': 'Error loading office',
-                    'has_issues': True,
-                    'issues': [f'Error loading data: {str(e)}']
-                }
-                enhanced_sessions.append(session_data)
-
-        # Get filter options for dropdowns (filtered by office)
-        office_filtered_users = User.objects.filter(
-            sessions__in=filter_sessions_by_office(UserSession.objects.all(), admin_office)
-        ).distinct().order_by('username')
-
-        locations = (filter_sessions_by_office(UserSession.objects.all(), admin_office)
-                    .filter(location_city__isnull=False)
-                    .values_list('location_city', flat=True)
-                    .distinct()
-                    .order_by('location_city'))
-
-        # Get available shifts for filtering
-        available_shifts = ShiftMaster.objects.values_list('name', flat=True).distinct()
-
-        context.update({
-            'sessions': sessions_page,
-            'enhanced_sessions': enhanced_sessions,
-            'search_query': search_query,
-            'status_filter': status_filter,
-            'user_filter': user_filter,
-            'location_filter': location_filter,
-            'shift_filter': shift_filter,
-            'date_from': date_from,
-            'date_to': date_to,
-            'users': office_filtered_users,
-            'locations': locations,
-            'available_shifts': available_shifts,
-            'total_count': paginator.count,
-            'admin_office': admin_office,
+        return JsonResponse({
+            'success': True,
+            'metrics': metrics,
+            'top_users': top_users,
+            'device_stats': device_stats,
+            'system_health': system_health,
+            'timestamp': timezone.now().isoformat()
         })
 
     except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@admin_required
+def dashboard_filter(request):
+    """
+    Handle dashboard filtering and return updated data.
+    """
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return dashboard_ajax_update(request)
+    else:
+        # Regular HTTP request - redirect to dashboard with parameters
+        office_id = request.GET.get('office', 'all')
+        return redirect(f"{request.path.replace('/filter/', '')}?office={office_id}")
+
+
+# ============================================================================
+# SESSION MANAGEMENT VIEWS
+# ============================================================================
+
+@login_required
+def session_list(request):
+    """
+    Enhanced session list with user-date grouping and advanced filtering.
+    """
+    from collections import defaultdict
+    from django.db.models import Count, Q
+
+    # Get filtering parameters
+    office_id = request.GET.get('office', None)
+    status_filter = request.GET.get('status', 'all')  # all, active, idle, ended
+    search_query = request.GET.get('search', '').strip()
+    date_filter = request.GET.get('date', '')  # specific date filter
+    user_filter = request.GET.get('user', '')  # specific user filter
+    sort_by = request.GET.get('sort', '-date')
+    page = request.GET.get('page', 1)
+
+    # Get admin office - handle case where user has no office
+    admin_office = get_admin_office_location(request.user)
+
+    # Allow superusers and staff to see all sessions regardless of office
+    if request.user.is_superuser or request.user.is_staff:
+        admin_office_for_filter = None
+    else:
+        admin_office_for_filter = admin_office
+
+    # Start with filtered sessions
+    try:
+        sessions_queryset = get_filtered_sessions_queryset(office_id, admin_office_for_filter)
+    except Exception as e:
         messages.error(request, f'Error loading sessions: {str(e)}')
-        context.update({
-            'sessions': None,
-            'enhanced_sessions': [],
-            'search_query': '',
-            'status_filter': '',
-            'user_filter': '',
-            'location_filter': '',
-            'shift_filter': '',
-            'date_from': '',
-            'date_to': '',
-            'users': [],
-            'locations': [],
-            'available_shifts': [],
-            'total_count': 0,
-            'admin_office': None,
-        })
+        sessions_queryset = UserSession.objects.none()
+
+    # Apply search filtering
+    if search_query:
+        sessions_queryset = sessions_queryset.filter(
+            Q(user__username__icontains=search_query) |
+            Q(user__first_name__icontains=search_query) |
+            Q(user__last_name__icontains=search_query) |
+            Q(user__email__icontains=search_query)
+        )
+
+    # Apply date filtering
+    if date_filter:
+        try:
+            from datetime import datetime
+            filter_date = datetime.strptime(date_filter, '%Y-%m-%d').date()
+            sessions_queryset = sessions_queryset.filter(created_at__date=filter_date)
+        except ValueError:
+            pass
+
+    # Apply user filtering
+    if user_filter:
+        sessions_queryset = sessions_queryset.filter(user_id=user_filter)
+
+    # Group sessions by user and date
+    grouped_sessions = defaultdict(lambda: {
+        'user': None,
+        'date': None,
+        'sessions': [],
+        'total_count': 0,
+        'active_count': 0,
+        'idle_count': 0,
+        'ended_count': 0,
+        'total_working_time': 0,
+        'total_idle_time': 0
+    })
+
+    for session in sessions_queryset.select_related('user').order_by('-created_at'):
+        session_date = session.created_at.date()
+        key = f"{session.user.id}_{session_date}"
+
+        group = grouped_sessions[key]
+        group['user'] = session.user
+        group['date'] = session_date
+        group['sessions'].append(session)
+        group['total_count'] += 1
+
+        # Count by status
+        if session.is_active:
+            if session.is_idle:
+                group['idle_count'] += 1
+            else:
+                group['active_count'] += 1
+        else:
+            group['ended_count'] += 1
+
+        # Calculate working and idle time
+        if session.working_time:
+            group['total_working_time'] += session.working_time.total_seconds() / 60  # in minutes
+        if session.total_idle_time:
+            group['total_idle_time'] += session.total_idle_time.total_seconds() / 60  # in minutes
+
+    # Convert to list and apply status filtering
+    session_groups = []
+    for group in grouped_sessions.values():
+        # Apply status filtering
+        if status_filter == 'active' and group['active_count'] == 0:
+            continue
+        elif status_filter == 'idle' and group['idle_count'] == 0:
+            continue
+        elif status_filter == 'ended' and group['ended_count'] == 0:
+            continue
+
+        session_groups.append(group)
+
+    # Apply sorting
+    if sort_by == '-date':
+        session_groups.sort(key=lambda x: x['date'], reverse=True)
+    elif sort_by == 'date':
+        session_groups.sort(key=lambda x: x['date'])
+    elif sort_by == 'user':
+        session_groups.sort(key=lambda x: x['user'].username if x['user'] else '')
+    elif sort_by == '-user':
+        session_groups.sort(key=lambda x: x['user'].username if x['user'] else '', reverse=True)
+    elif sort_by == '-total_count':
+        session_groups.sort(key=lambda x: x['total_count'], reverse=True)
+    elif sort_by == 'total_count':
+        session_groups.sort(key=lambda x: x['total_count'])
+
+    # Paginate results
+    paginator = Paginator(session_groups, 25)
+    try:
+        session_groups_page = paginator.page(page)
+    except PageNotAnInteger:
+        session_groups_page = paginator.page(1)
+    except EmptyPage:
+        session_groups_page = paginator.page(paginator.num_pages)
+
+    # Get summary statistics
+    total_sessions = sessions_queryset.count()
+    summary_stats = {
+        'total_sessions': total_sessions,
+        'total_groups': len(session_groups),
+        'active_sessions': sessions_queryset.filter(is_active=True, is_idle=False).count(),
+        'idle_sessions': sessions_queryset.filter(is_active=True, is_idle=True).count(),
+        'ended_sessions': sessions_queryset.filter(is_active=False).count(),
+    }
+
+    # Get all users for filter dropdown
+    all_users = sessions_queryset.values('user__id', 'user__username', 'user__first_name', 'user__last_name').distinct().order_by('user__username')
+
+    context = {
+        'page_title': 'Session List (Grouped)',
+        'active_tab': 'sessions',
+        'session_groups': session_groups_page,
+        'summary_stats': summary_stats,
+        'all_offices': OfficeLocation.objects.filter(is_active=True).order_by('name'),
+        'all_users': all_users,
+        'admin_office': admin_office,
+        'filters': {
+            'office': office_id or 'all',
+            'status': status_filter,
+            'search': search_query,
+            'date': date_filter,
+            'user': user_filter,
+            'sort': sort_by
+        },
+        'status_choices': [
+            ('all', 'All Sessions'),
+            ('active', 'Active'),
+            ('idle', 'Idle'),
+            ('ended', 'Ended')
+        ],
+        'sort_choices': [
+            ('-date', 'Date (Newest)'),
+            ('date', 'Date (Oldest)'),
+            ('user', 'Username (A-Z)'),
+            ('-user', 'Username (Z-A)'),
+            ('-total_count', 'Session Count (High to Low)'),
+            ('total_count', 'Session Count (Low to High)')
+        ]
+    }
 
     return render(request, 'sessions/session_list.html', context)
 
 
-@login_required
-@user_passes_test(is_admin_user, login_url='/login/')
+@admin_required
 def session_detail(request, session_id):
     """
-    Enhanced session detail view with comprehensive shift and office information.
+    Individual session detail view.
     """
-    context = {
-        'page_title': 'Session Details',
-        'active_tab': 'sessions'
-    }
-
     try:
-        # Get admin's office location for filtering
-        admin_office = get_admin_office_location(request.user)
-
-        # Get the session with related data
+        # Show individual session detail
         session = get_object_or_404(
-            UserSession.objects.select_related('user'),
+            UserSession.objects.select_related(
+                'user', 'user__profile', 'user__profile__office_location'
+            ),
             id=session_id
         )
 
-        # Check if user is in admin's office (if admin has office restriction)
+        # Check if admin can view this session
+        admin_office = get_admin_office_location(request.user)
         if admin_office:
             try:
-                user_details = UserDetails.objects.select_related('office_location').get(user=session.user)
-                if user_details.office_location != admin_office:
-                    messages.error(request, 'You can only view sessions from your office location.')
+                user_office = session.user.profile.office_location if hasattr(session.user, 'profile') and hasattr(session.user.profile, 'office_location') else None
+                if user_office != admin_office:
+                    messages.error(request, 'You do not have permission to view this session.')
                     return redirect('sessions:session_list')
-            except UserDetails.DoesNotExist:
-                if not request.user.is_superuser:
-                    messages.error(request, 'User has no office location assigned.')
-                    return redirect('sessions:session_list')
-
-        # Get comprehensive user information
-        user_info = {
-            'username': session.user.username,
-            'full_name': f"{session.user.first_name} {session.user.last_name}".strip() or session.user.username,
-            'email': session.user.email,
-            'office_location': 'No office location',
-            'employee_id': 'N/A',
-            'employment_status': 'N/A',
-            'reporting_manager': 'N/A'
-        }
-
-        try:
-            user_details = UserDetails.objects.select_related(
-                'office_location', 'reporting_manager'
-            ).get(user=session.user)
-
-            if user_details.office_location:
-                user_info['office_location'] = user_details.office_location.name
-
-            user_info.update({
-                'employment_status': user_details.get_employment_status_display(),
-                'reporting_manager': (
-                    f"{user_details.reporting_manager.first_name} {user_details.reporting_manager.last_name}".strip()
-                    if user_details.reporting_manager else 'N/A'
-                )
-            })
-
-        except UserDetails.DoesNotExist:
-            pass
+            except AttributeError:
+                pass  # User has no office assigned
 
         # Get shift information
-        shift_info = get_user_shift_info(session.user, session.created_at.date())
+        shift_info = get_user_shift_info(session.user)
 
         # Calculate session metrics
-        session_metrics = {
-            'duration': 'Active' if session.is_active else 'N/A',
-            'productivity_score': session.productivity_score or 'N/A',
-            'engagement_score': session.engagement_score or 'N/A',
-            'security_score': session.security_score or 'N/A',
-            'total_clicks': len(session.clicks) if session.clicks else 0,
-            'total_scrolls': len(session.scrolls) if session.scrolls else 0,
-            'page_views': len(session.page_views) if session.page_views else 0,
-            'mouse_movements': session.mouse_movements or 0,
+        session_duration = None
+        if session.ended_at and session.created_at:
+            duration_delta = session.ended_at - session.created_at
+            session_duration = int(duration_delta.total_seconds() / 60)
+        elif session.is_active and session.created_at:
+            duration_delta = timezone.now() - session.created_at
+            session_duration = int(duration_delta.total_seconds() / 60)
+
+        # Calculate time metrics in minutes
+        working_time_minutes = None
+        idle_time_minutes = None
+
+        if session.working_time:
+            working_time_minutes = int(session.working_time.total_seconds() / 60)
+
+        if session.total_idle_time:
+            idle_time_minutes = int(session.total_idle_time.total_seconds() / 60)
+        elif session.idle_time:
+            idle_time_minutes = int(session.idle_time.total_seconds() / 60)
+
+        # Get related sessions (same user, recent)
+        related_sessions = UserSession.objects.filter(
+            user=session.user
+        ).exclude(id=session.id).order_by('-created_at')[:5]
+
+        # Activity timeline (simplified)
+        activity_timeline = []
+        if session.page_views:
+            for view in session.page_views[-10:]:  # Last 10 page views
+                activity_timeline.append({
+                    'type': 'page_view',
+                    'timestamp': view.get('timestamp'),
+                    'data': view
+                })
+
+        # Session health score (simple calculation)
+        health_score = 100
+        if session.is_idle:
+            health_score -= 20
+        if session.total_idle_time and session.total_idle_time > timedelta(hours=1):
+            health_score -= 30
+        if not session.is_active and not session.ended_at:
+            health_score -= 40
+
+        context = {
+            'page_title': f'Session Details - {session.user.username}',
+            'active_tab': 'sessions',
+            'session': session,
+            'shift_info': shift_info,
+            'session_duration': session_duration,
+            'working_time_minutes': working_time_minutes,
+            'idle_time_minutes': idle_time_minutes,
+            'related_sessions': related_sessions,
+            'activity_timeline': activity_timeline,
+            'health_score': max(0, health_score),
+            'raw_data_visible': request.GET.get('show_raw', 'false') == 'true'
         }
 
-        if session.ended_at and session.created_at:
-            duration = session.ended_at - session.created_at
-            hours = duration.total_seconds() // 3600
-            minutes = (duration.total_seconds() % 3600) // 60
-            session_metrics['duration'] = f"{int(hours)}h {int(minutes)}m"
-
-        # Check for data quality issues
-        data_issues = []
-        if not shift_info['has_shift_data']:
-            data_issues.append({
-                'type': 'warning',
-                'message': 'No shift assignment found for this user'
-            })
-
-        if user_info['office_location'] == 'No office location':
-            data_issues.append({
-                'type': 'warning',
-                'message': 'User has no office location assigned'
-            })
-
-        if not session.location_city and not session.location_country:
-            data_issues.append({
-                'type': 'info',
-                'message': 'No geographical location data available'
-            })
-
-        if session.security_anomalies:
-            data_issues.append({
-                'type': 'error',
-                'message': f'Security anomalies detected: {len(session.security_anomalies)} issues'
-            })
-
-        context.update({
-            'session': session,
-            'user_info': user_info,
-            'shift_info': shift_info,
-            'session_metrics': session_metrics,
-            'data_issues': data_issues,
-            'admin_office': admin_office,
-        })
+        return render(request, 'sessions/session_detail.html', context)
 
     except Exception as e:
         messages.error(request, f'Error loading session details: {str(e)}')
         return redirect('sessions:session_list')
 
-    return render(request, 'sessions/session_detail.html', context)
 
-
-@login_required
-@user_passes_test(is_admin_user, login_url='/login/')
-def office_locations(request):
+@admin_required
+def session_daily_detail(request, user_id, date):
     """
-    Enhanced office locations view with session statistics.
+    Daily session detail view for a specific user and date.
     """
-    context = {
-        'page_title': 'Office Locations',
-        'active_tab': 'locations'
-    }
-
     try:
-        # Get admin's office location
-        admin_office = get_admin_office_location(request.user)
+        from django.contrib.auth.models import User
+        from datetime import datetime
 
-        # If admin has office restriction, show only their office
-        if admin_office and not request.user.is_superuser:
-            offices = OfficeLocation.objects.filter(id=admin_office.id, is_active=True)
+        # Get user and parse date
+        try:
+            user = User.objects.get(id=user_id)
+            target_date = datetime.strptime(date, '%Y-%m-%d').date()
+        except (User.DoesNotExist, ValueError) as e:
+            messages.error(request, f'Invalid user or date specified: {str(e)}')
+            return redirect('sessions:session_list')
+
+        # Permission check - allow users to view their own sessions or admin access
+        can_view = False
+
+        # Users can always view their own sessions
+        if request.user.id == user.id:
+            can_view = True
         else:
-            offices = OfficeLocation.objects.filter(is_active=True)
+            # Check admin permissions for viewing other users
+            admin_office = get_admin_office_location(request.user)
+            if admin_office:
+                try:
+                    user_office = user.profile.office_location if hasattr(user, 'profile') and hasattr(user.profile, 'office_location') else None
+                    if user_office == admin_office:
+                        can_view = True
+                except AttributeError:
+                    # If user has no office assigned, allow admin to view
+                    can_view = True
+            # If no admin office, check if user is superuser or staff
+            elif request.user.is_superuser or request.user.is_staff:
+                can_view = True
 
-        # Add session statistics for each office
-        enhanced_offices = []
-        for office in offices:
-            # Get users in this office
-            office_users = UserDetails.objects.filter(office_location=office).values_list('user_id', flat=True)
+        if not can_view:
+            messages.error(request, 'You do not have permission to view this user\'s sessions.')
+            return redirect('sessions:session_list')
 
-            # Get session statistics
-            office_sessions = UserSession.objects.filter(user_id__in=office_users)
+        # Get all sessions for this user on this date
+        daily_sessions = UserSession.objects.filter(
+            user=user,
+            created_at__date=target_date
+        ).order_by('created_at')
 
-            office_stats = {
-                'total_employees': len(office_users),
-                'total_sessions': office_sessions.count(),
-                'active_sessions': office_sessions.filter(is_active=True).count(),
-                'recent_sessions': office_sessions.filter(
-                    created_at__gte=timezone.now() - timedelta(hours=24)
-                ).count()
-            }
-
-            enhanced_offices.append({
-                'office': office,
-                'stats': office_stats
+        if not daily_sessions.exists():
+            messages.info(request, f'No sessions found for {user.username} on {target_date.strftime("%B %d, %Y")}. Try a different date.')
+            # Don't redirect, show empty state instead
+            return render(request, 'sessions/session_daily_detail.html', {
+                'page_title': f'Daily Session Summary - {user.username} - {target_date}',
+                'active_tab': 'sessions',
+                'is_daily_view': True,
+                'user': user,
+                'target_date': target_date,
+                'daily_sessions': [],
+                'login_logout_events': [],
+                'shift_info': get_user_shift_info(user),
+                'summary': {
+                    'total_sessions': 0,
+                    'active_sessions': 0,
+                    'idle_sessions': 0,
+                    'ended_sessions': 0,
+                    'total_working_minutes': 0,
+                    'total_idle_minutes': 0,
+                    'total_session_minutes': 0,
+                    'efficiency_percentage': 0
+                }
             })
 
-        context.update({
-            'enhanced_offices': enhanced_offices,
-            'admin_office': admin_office,
-            'is_restricted': admin_office and not request.user.is_superuser,
-        })
+        return render_daily_session_detail(request, user, target_date, daily_sessions)
 
     except Exception as e:
-        messages.error(request, f'Error loading office locations: {str(e)}')
-        context.update({
-            'enhanced_offices': [],
-            'admin_office': None,
-            'is_restricted': False,
+        messages.error(request, f'Error loading daily session details: {str(e)}')
+        return redirect('sessions:session_list')
+
+
+def render_daily_session_detail(request, user, target_date, daily_sessions):
+    """
+    Render daily session summary for a user.
+    """
+    from datetime import timedelta
+
+    # Calculate daily totals
+    total_sessions = daily_sessions.count()
+    active_sessions = daily_sessions.filter(is_active=True, is_idle=False).count()
+    idle_sessions = daily_sessions.filter(is_active=True, is_idle=True).count()
+    ended_sessions = daily_sessions.filter(is_active=False).count()
+
+    # Calculate time totals
+    total_working_time = timedelta()
+    total_idle_time = timedelta()
+    total_session_time = timedelta()
+
+    session_details = []
+    login_logout_events = []
+
+    for session in daily_sessions:
+        # Session duration
+        session_duration = None
+        if session.ended_at and session.created_at:
+            duration = session.ended_at - session.created_at
+            total_session_time += duration
+            session_duration = int(duration.total_seconds() / 60)
+        elif session.is_active and session.created_at:
+            duration = timezone.now() - session.created_at
+            total_session_time += duration
+            session_duration = int(duration.total_seconds() / 60)
+
+        # Working time
+        working_time_minutes = 0
+        if session.working_time:
+            total_working_time += session.working_time
+            working_time_minutes = int(session.working_time.total_seconds() / 60)
+
+        # Idle time
+        idle_time_minutes = 0
+        if session.total_idle_time:
+            total_idle_time += session.total_idle_time
+            idle_time_minutes = int(session.total_idle_time.total_seconds() / 60)
+        elif session.idle_time:
+            total_idle_time += session.idle_time
+            idle_time_minutes = int(session.idle_time.total_seconds() / 60)
+
+        session_details.append({
+            'session': session,
+            'duration_minutes': session_duration,
+            'working_time_minutes': working_time_minutes,
+            'idle_time_minutes': idle_time_minutes
         })
 
-    return render(request, 'sessions/office_locations.html', context)
+        # Login/Logout events
+        login_logout_events.append({
+            'type': 'login',
+            'time': session.created_at,
+            'session_id': session.id
+        })
 
+        if session.ended_at:
+            login_logout_events.append({
+                'type': 'logout',
+                'time': session.ended_at,
+                'session_id': session.id
+            })
 
-@login_required
-@user_passes_test(is_admin_user, login_url='/login/')
-def location_detail(request, location_id):
-    """
-    Enhanced location detail view with comprehensive analytics.
-    """
+    # Sort events by time
+    login_logout_events.sort(key=lambda x: x['time'])
+
+    # Calculate totals in minutes
+    total_working_minutes = int(total_working_time.total_seconds() / 60)
+    total_idle_minutes = int(total_idle_time.total_seconds() / 60)
+    total_session_minutes = int(total_session_time.total_seconds() / 60)
+
+    # Get shift information
+    shift_info = get_user_shift_info(user)
+
     context = {
-        'page_title': 'Location Details',
-        'active_tab': 'locations'
+        'page_title': f'Daily Session Summary - {user.username} - {target_date}',
+        'active_tab': 'sessions',
+        'is_daily_view': True,
+        'user': user,
+        'target_date': target_date,
+        'daily_sessions': session_details,
+        'login_logout_events': login_logout_events,
+        'shift_info': shift_info,
+        'summary': {
+            'total_sessions': total_sessions,
+            'active_sessions': active_sessions,
+            'idle_sessions': idle_sessions,
+            'ended_sessions': ended_sessions,
+            'total_working_minutes': total_working_minutes,
+            'total_idle_minutes': total_idle_minutes,
+            'total_session_minutes': total_session_minutes,
+            'efficiency_percentage': round((total_working_minutes / total_session_minutes * 100) if total_session_minutes > 0 else 0, 1)
+        }
     }
 
-    try:
-        # Get admin's office location
-        admin_office = get_admin_office_location(request.user)
-
-        # Get the office location
-        office = get_object_or_404(OfficeLocation, id=location_id, is_active=True)
-
-        # Check if admin can view this office
-        if admin_office and admin_office != office and not request.user.is_superuser:
-            messages.error(request, 'You can only view your own office location.')
-            return redirect('sessions:office_locations')
-
-        # Get employees and their shift information
-        employees = UserDetails.objects.filter(
-            office_location=office
-        ).select_related('user', 'reporting_manager').order_by('user__username')
-
-        enhanced_employees = []
-        for employee in employees:
-            shift_info = get_user_shift_info(employee.user)
-            recent_sessions = UserSession.objects.filter(
-                user=employee.user,
-                created_at__gte=timezone.now() - timedelta(days=7)
-            ).count()
-
-            enhanced_employees.append({
-                'employee': employee,
-                'shift_info': shift_info,
-                'recent_sessions': recent_sessions
-            })
-
-        # Office statistics
-        office_users = employees.values_list('user_id', flat=True)
-        office_sessions = UserSession.objects.filter(user_id__in=office_users)
-
-        office_stats = {
-            'total_employees': employees.count(),
-            'total_sessions': office_sessions.count(),
-            'active_sessions': office_sessions.filter(is_active=True).count(),
-            'today_sessions': office_sessions.filter(
-                created_at__date=timezone.now().date()
-            ).count(),
-            'week_sessions': office_sessions.filter(
-                created_at__gte=timezone.now() - timedelta(days=7)
-            ).count()
-        }
-
-        context.update({
-            'office': office,
-            'enhanced_employees': enhanced_employees,
-            'office_stats': office_stats,
-            'admin_office': admin_office,
-        })
-
-    except Exception as e:
-        messages.error(request, f'Error loading location details: {str(e)}')
-        return redirect('sessions:office_locations')
-
-    return render(request, 'sessions/location_detail.html', context)
+    return render(request, 'sessions/session_daily_detail.html', context)
 
 
-@login_required
-@user_passes_test(is_admin_user, login_url='/login/')
-@require_http_methods(["POST"])
+@admin_required
+@require_POST
 def end_session(request, session_id):
     """
-    Enhanced end session functionality with logging.
+    Manually end a session with proper logging.
     """
     try:
-        admin_office = get_admin_office_location(request.user)
-        session = get_object_or_404(UserSession, id=session_id, is_active=True)
+        session = get_object_or_404(UserSession, id=session_id)
 
-        # Check office access if admin has restrictions
+        # Check permissions
+        admin_office = get_admin_office_location(request.user)
         if admin_office:
             try:
-                user_details = UserDetails.objects.get(user=session.user)
-                if user_details.office_location != admin_office and not request.user.is_superuser:
-                    return JsonResponse({'success': False, 'error': 'Access denied'})
-            except UserDetails.DoesNotExist:
-                if not request.user.is_superuser:
-                    return JsonResponse({'success': False, 'error': 'User office not found'})
+                user_office = session.user.profile.office_location
+                if user_office != admin_office:
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'Permission denied'
+                    }, status=403)
+            except AttributeError:
+                pass
 
-        session.end_session()
-        return JsonResponse({'success': True})
+        if session.is_active:
+            with transaction.atomic():
+                session.is_active = False
+                session.ended_at = timezone.now()
+                session.logout_time = timezone.now()
+
+                # Calculate final session duration
+                if session.created_at:
+                    duration = session.ended_at - session.created_at
+                    session.session_duration = duration.total_seconds() / 60
+
+                session.save()
+
+            # Clear relevant caches
+            cache.delete(f"admin_office_{request.user.id}")
+
+            messages.success(request, f'Session for {session.user.username} has been ended.')
+
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Session ended successfully'
+                })
+        else:
+            messages.info(request, 'Session is already inactive.')
+
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Session is already inactive'
+                })
 
     except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)})
+        messages.error(request, f'Error ending session: {str(e)}')
+
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=500)
+
+    return redirect('sessions:session_list')
 
 
-@login_required
-@user_passes_test(is_admin_user, login_url='/login/')
+# ============================================================================
+# ANALYTICS VIEWS
+# ============================================================================
+
+@admin_required
 def session_analytics(request):
     """
-    Enhanced analytics view with office-based filtering and shift analysis.
+    Enhanced analytics dashboard with comprehensive insights.
     """
-    context = {
-        'page_title': 'Session Analytics',
-        'active_tab': 'analytics'
-    }
+    # Get filtering parameters
+    office_id = request.GET.get('office', None)
+    date_range = request.GET.get('range', '7')  # days
 
     try:
-        # Get admin's office location
-        admin_office = get_admin_office_location(request.user)
+        days = int(date_range)
+    except (ValueError, TypeError):
+        days = 7
 
-        # Base queryset with office filtering
-        base_sessions = UserSession.objects.select_related('user')
-        filtered_sessions = filter_sessions_by_office(base_sessions, admin_office)
+    admin_office = get_admin_office_location(request.user)
 
-        # Time-based analytics
-        now = timezone.now()
-        periods = {
-            'today': now.replace(hour=0, minute=0, second=0, microsecond=0),
-            'week': now - timedelta(days=7),
-            'month': now - timedelta(days=30),
-        }
+    # Date range for analytics
+    end_date = timezone.now()
+    start_date = end_date - timedelta(days=days)
 
-        analytics = {}
-        for period_name, start_date in periods.items():
-            period_sessions = filtered_sessions.filter(created_at__gte=start_date)
+    # Get filtered sessions
+    sessions_queryset = get_filtered_sessions_queryset(office_id, admin_office)
 
-            analytics[period_name] = {
-                'total_sessions': period_sessions.count(),
-                'unique_users': period_sessions.values('user').distinct().count(),
-                'avg_duration': 0,
-                'top_shifts': []
-            }
+    # Filter by date range
+    sessions_queryset = sessions_queryset.filter(created_at__gte=start_date)
 
-            # Calculate average duration
-            completed = period_sessions.filter(ended_at__isnull=False)
-            if completed.exists():
-                durations = []
-                for session in completed[:100]:  # Sample for performance
-                    if session.ended_at and session.created_at:
-                        duration = (session.ended_at - session.created_at).total_seconds() / 3600
-                        durations.append(duration)
-                if durations:
-                    analytics[period_name]['avg_duration'] = round(sum(durations) / len(durations), 2)
+    # Calculate daily session counts
+    daily_stats = []
+    current_date = start_date.date()
+    end_date_only = end_date.date()
 
-        # Shift-based analytics
-        shift_analytics = []
+    while current_date <= end_date_only:
+        day_sessions = sessions_queryset.filter(created_at__date=current_date)
+        daily_stats.append({
+            'date': current_date.strftime('%Y-%m-%d'),
+            'total_sessions': day_sessions.count(),
+            'active_sessions': day_sessions.filter(is_active=True).count(),
+            'unique_users': day_sessions.values('user').distinct().count()
+        })
+        current_date += timedelta(days=1)
+
+    # Get hourly distribution (for current day or last 24h)
+    last_24h = end_date - timedelta(hours=24)
+    recent_sessions = sessions_queryset.filter(created_at__gte=last_24h)
+
+    hourly_stats = []
+    for hour in range(24):
+        hour_start = last_24h.replace(minute=0, second=0, microsecond=0) + timedelta(hours=hour)
+        hour_end = hour_start + timedelta(hours=1)
+        hour_sessions = recent_sessions.filter(
+            created_at__gte=hour_start,
+            created_at__lt=hour_end
+        )
+        hourly_stats.append({
+            'hour': hour,
+            'sessions': hour_sessions.count(),
+            'active_sessions': hour_sessions.filter(is_active=True).count()
+        })
+
+    # Get shift-based analytics
+    shift_analytics = []
+    try:
         for shift in ShiftMaster.objects.all():
             shift_users = ShiftAssignment.objects.filter(
                 shift=shift,
-                is_current=True
-            ).values_list('user_id', flat=True)
+                effective_from__lte=end_date.date(),
+                effective_to__gte=start_date.date()
+            ).values_list('user_id', flat=True).distinct()
 
-            shift_sessions = filtered_sessions.filter(user_id__in=shift_users)
+            shift_sessions = sessions_queryset.filter(user_id__in=shift_users)
 
             shift_analytics.append({
                 'shift_name': shift.name,
+                'shift_type': getattr(shift, 'shift_type', 'unknown'),
                 'total_users': len(shift_users),
                 'total_sessions': shift_sessions.count(),
                 'active_sessions': shift_sessions.filter(is_active=True).count(),
-                'avg_productivity': shift_sessions.filter(
-                    productivity_score__isnull=False
-                ).aggregate(avg_score=Avg('productivity_score'))['avg_score'] or 0
+                'avg_duration': shift_sessions.filter(
+                    ended_at__isnull=False
+                ).aggregate(
+                    avg_duration=Avg(
+                        ExpressionWrapper(
+                            F('ended_at') - F('created_at'),
+                            output_field=DurationField()
+                        )
+                    )
+                )['avg_duration']
             })
+    except Exception:
+        shift_analytics = []
 
-        context.update({
-            'analytics': analytics,
-            'shift_analytics': shift_analytics,
-            'admin_office': admin_office,
-        })
+    # Device and location trends
+    device_trends = get_device_statistics(sessions_queryset)
+    location_trends = get_location_statistics(sessions_queryset)
 
-    except Exception as e:
-        messages.error(request, f'Error loading analytics: {str(e)}')
-        context.update({
-            'analytics': {},
-            'shift_analytics': [],
-            'admin_office': None,
-        })
+    # Performance metrics
+    performance_metrics = {
+        'avg_session_duration': sessions_queryset.filter(
+            ended_at__isnull=False
+        ).aggregate(
+            avg_duration=Avg(
+                ExpressionWrapper(
+                    F('ended_at') - F('created_at'),
+                    output_field=DurationField()
+                )
+            )
+        )['avg_duration'],
+        'total_working_time': sessions_queryset.aggregate(
+            total_working=Sum('working_time')
+        )['total_working'],
+        'total_idle_time': sessions_queryset.aggregate(
+            total_idle=Sum('total_idle_time')
+        )['total_idle'],
+        'completion_rate': 0
+    }
+
+    # Calculate completion rate
+    total_sessions = sessions_queryset.count()
+    completed_sessions = sessions_queryset.filter(ended_at__isnull=False).count()
+    if total_sessions > 0:
+        performance_metrics['completion_rate'] = round(
+            (completed_sessions / total_sessions) * 100, 2
+        )
+
+    context = {
+        'page_title': 'Session Analytics',
+        'active_tab': 'analytics',
+        'daily_stats': daily_stats,
+        'hourly_stats': hourly_stats,
+        'shift_analytics': shift_analytics,
+        'device_trends': device_trends,
+        'location_trends': location_trends,
+        'performance_metrics': performance_metrics,
+        'date_range': days,
+        'start_date': start_date,
+        'end_date': end_date,
+        'all_offices': OfficeLocation.objects.filter(is_active=True).order_by('name'),
+        'selected_office_id': office_id or 'all',
+        'admin_office': admin_office
+    }
 
     return render(request, 'sessions/analytics.html', context)
 
 
-@login_required
-@user_passes_test(is_admin_user, login_url='/login/')
+@admin_required
 def session_export(request):
     """
-    Enhanced export functionality with office filtering and shift data.
+    Enhanced CSV export functionality with comprehensive session data.
     """
-    try:
-        # Get admin's office location for filtering
-        admin_office = get_admin_office_location(request.user)
+    # Get filtering parameters
+    office_id = request.GET.get('office', None)
+    date_from = request.GET.get('date_from')
+    date_to = request.GET.get('date_to')
+    format_type = request.GET.get('format', 'csv')  # csv or json
 
-        # Get filter parameters
-        date_from = request.GET.get('date_from')
-        date_to = request.GET.get('date_to')
-        user_id = request.GET.get('user_id')
-        include_shift_data = request.GET.get('include_shift_data', 'true').lower() == 'true'
+    admin_office = get_admin_office_location(request.user)
 
-        # Build base query with office filtering
-        sessions = UserSession.objects.select_related('user')
-        sessions = filter_sessions_by_office(sessions, admin_office)
+    # Get filtered sessions
+    sessions_queryset = get_filtered_sessions_queryset(office_id, admin_office)
 
-        # Apply additional filters
-        if date_from:
-            try:
-                date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
-                sessions = sessions.filter(created_at__date__gte=date_from_obj)
-            except ValueError:
-                pass
+    # Apply date filtering
+    if date_from:
+        try:
+            date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
+            sessions_queryset = sessions_queryset.filter(created_at__date__gte=date_from_obj)
+        except ValueError:
+            messages.error(request, 'Invalid start date format.')
+            return redirect('sessions:analytics')
 
-        if date_to:
-            try:
-                date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
-                sessions = sessions.filter(created_at__date__lte=date_to_obj)
-            except ValueError:
-                pass
+    if date_to:
+        try:
+            date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
+            sessions_queryset = sessions_queryset.filter(created_at__date__lte=date_to_obj)
+        except ValueError:
+            messages.error(request, 'Invalid end date format.')
+            return redirect('sessions:analytics')
 
-        if user_id:
-            sessions = sessions.filter(user_id=user_id)
+    # Limit export size for performance
+    sessions_queryset = sessions_queryset.order_by('-created_at')[:5000]
 
-        # Limit to prevent memory issues
-        sessions = sessions[:1000]
+    if format_type == 'json':
+        return _export_json(request, sessions_queryset, admin_office)
+    else:
+        return _export_csv(request, sessions_queryset, admin_office)
 
-        # Prepare enhanced export data
-        export_data = []
-        for session in sessions:
-            # Basic session data
-            session_data = {
-                'session_id': str(session.id),
-                'user_username': session.user.username,
-                'user_full_name': f"{session.user.first_name} {session.user.last_name}".strip(),
-                'created_at': session.created_at.isoformat(),
-                'last_activity': session.last_activity.isoformat(),
-                'ended_at': session.ended_at.isoformat() if session.ended_at else None,
+
+def _export_csv(request, sessions_queryset, admin_office):
+    """Export sessions data as CSV."""
+    response = HttpResponse(content_type='text/csv')
+
+    # Generate filename
+    office_suffix = f"_{admin_office.code}" if admin_office else "_all_offices"
+    timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
+    filename = f"sessions_export{office_suffix}_{timestamp}.csv"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+    writer = csv.writer(response)
+
+    # Write header
+    header = [
+        'Session ID', 'Username', 'Full Name', 'Email',
+        'Office Location', 'Created At', 'Last Activity', 'Ended At',
+        'Is Active', 'Is Idle', 'Duration (minutes)',
+        'Device Type', 'Browser', 'OS', 'IP Address',
+        'Location City', 'Location Country', 'Current Shift',
+        'Working Time (minutes)', 'Idle Time (minutes)'
+    ]
+    writer.writerow(header)
+
+    # Write data rows
+    for session in sessions_queryset:
+        # Calculate duration
+        duration_minutes = None
+        if session.ended_at and session.created_at:
+            duration = session.ended_at - session.created_at
+            duration_minutes = round(duration.total_seconds() / 60, 2)
+        elif session.is_active and session.created_at:
+            duration = timezone.now() - session.created_at
+            duration_minutes = round(duration.total_seconds() / 60, 2)
+
+        # Get user office
+        office_name = 'N/A'
+        try:
+            if hasattr(session.user, 'profile') and session.user.profile.office_location:
+                office_name = session.user.profile.office_location.name
+        except AttributeError:
+            pass
+
+        # Get shift info
+        shift_info = get_user_shift_info(session.user)
+
+        # Convert timedelta to minutes
+        working_minutes = None
+        if session.working_time:
+            working_minutes = round(session.working_time.total_seconds() / 60, 2)
+
+        idle_minutes = None
+        if session.total_idle_time:
+            idle_minutes = round(session.total_idle_time.total_seconds() / 60, 2)
+
+        row = [
+            str(session.id),
+            session.user.username,
+            f"{session.user.first_name} {session.user.last_name}".strip() or session.user.username,
+            session.user.email,
+            office_name,
+            session.created_at.strftime('%Y-%m-%d %H:%M:%S') if session.created_at else '',
+            session.last_activity.strftime('%Y-%m-%d %H:%M:%S') if session.last_activity else '',
+            session.ended_at.strftime('%Y-%m-%d %H:%M:%S') if session.ended_at else '',
+            'Yes' if session.is_active else 'No',
+            'Yes' if session.is_idle else 'No',
+            duration_minutes or '',
+            session.device_type or '',
+            session.browser or '',
+            session.os or '',
+            session.ip_address or '',
+            session.location_city or '',
+            session.location_country or '',
+            shift_info['current_shift_name'],
+            working_minutes or '',
+            idle_minutes or ''
+        ]
+        writer.writerow(row)
+
+    return response
+
+
+def _export_json(request, sessions_queryset, admin_office):
+    """Export sessions data as JSON."""
+    export_data = []
+
+    for session in sessions_queryset:
+        # Get shift info
+        shift_info = get_user_shift_info(session.user)
+
+        # Get user office
+        office_info = {'name': None, 'code': None}
+        try:
+            if hasattr(session.user, 'profile') and session.user.profile.office_location:
+                office = session.user.profile.office_location
+                office_info = {'name': office.name, 'code': office.code}
+        except AttributeError:
+            pass
+
+        session_data = {
+            'session_id': str(session.id),
+            'user': {
+                'username': session.user.username,
+                'full_name': f"{session.user.first_name} {session.user.last_name}".strip(),
+                'email': session.user.email
+            },
+            'office': office_info,
+            'timestamps': {
+                'created_at': session.created_at.isoformat() if session.created_at else None,
+                'last_activity': session.last_activity.isoformat() if session.last_activity else None,
+                'ended_at': session.ended_at.isoformat() if session.ended_at else None
+            },
+            'status': {
                 'is_active': session.is_active,
-                'is_idle': session.is_idle,
-                'device_info': {
-                    'device_type': session.device_type,
-                    'browser': session.browser,
-                    'os': session.os,
-                    'screen_resolution': session.screen_resolution,
-                },
-                'location_info': {
-                    'ip_address': session.ip_address,
-                    'country': session.location_country,
-                    'city': session.location_city,
-                    'location_type': session.location_type,
-                    'latitude': session.location_latitude,
-                    'longitude': session.location_longitude,
-                },
-                'performance_metrics': {
-                    'productivity_score': session.productivity_score,
-                    'engagement_score': session.engagement_score,
-                    'security_score': session.security_score,
-                    'page_views': len(session.page_views) if session.page_views else 0,
-                    'clicks': len(session.clicks) if session.clicks else 0,
-                    'scrolls': len(session.scrolls) if session.scrolls else 0,
-                    'mouse_movements': session.mouse_movements or 0,
-                },
+                'is_idle': session.is_idle
+            },
+            'device': {
+                'type': session.device_type,
+                'browser': session.browser,
+                'os': session.os,
+                'screen_resolution': session.screen_resolution
+            },
+            'location': {
+                'ip_address': session.ip_address,
+                'city': session.location_city,
+                'country': session.location_country,
+                'latitude': session.location_latitude,
+                'longitude': session.location_longitude
+            },
+            'shift': {
+                'current_shift': shift_info['current_shift_name'],
+                'shift_type': shift_info['shift_type'],
+                'has_shift_data': shift_info['has_shift_data']
+            },
+            'metrics': {
+                'working_time_seconds': session.working_time.total_seconds() if session.working_time else 0,
+                'idle_time_seconds': session.total_idle_time.total_seconds() if session.total_idle_time else 0,
+                'page_views': len(session.page_views) if session.page_views else 0,
+                'clicks': len(session.clicks) if session.clicks else 0,
+                'mouse_movements': session.mouse_movements or 0
             }
+        }
+        export_data.append(session_data)
 
-            # Add user office information
-            try:
-                user_details = UserDetails.objects.select_related('office_location').get(user=session.user)
-                session_data['office_info'] = {
-                    'office_name': user_details.office_location.name if user_details.office_location else None,
-                    'office_code': user_details.office_location.code if user_details.office_location else None,
-                    'employment_status': user_details.employment_status,
-                }
-            except UserDetails.DoesNotExist:
-                session_data['office_info'] = {
-                    'office_name': None,
-                    'office_code': None,
-                    'employment_status': None,
-                }
-
-            # Add shift information if requested
-            if include_shift_data:
-                shift_info = get_user_shift_info(session.user, session.created_at.date())
-                session_data['shift_info'] = {
-                    'current_shift': shift_info['current_shift_name'],
-                    'has_shift_data': shift_info['has_shift_data'],
-                    'shift_history_count': len(shift_info['shift_history']),
-                }
-
-            export_data.append(session_data)
-
-        # Prepare metadata
-        metadata = {
+    # Prepare response
+    response_data = {
+        'metadata': {
             'export_timestamp': timezone.now().isoformat(),
             'exported_by': request.user.username,
-            'admin_office': admin_office.name if admin_office else 'All Offices',
-            'filters_applied': {
-                'date_from': date_from,
-                'date_to': date_to,
-                'user_id': user_id,
-                'include_shift_data': include_shift_data,
-            },
-            'total_count': len(export_data),
-            'office_restricted': bool(admin_office and not request.user.is_superuser),
+            'total_sessions': len(export_data),
+            'office_filter': admin_office.name if admin_office else 'All Offices'
+        },
+        'sessions': export_data
+    }
+
+    response = JsonResponse(response_data, json_dumps_params={'indent': 2})
+
+    # Set filename for download
+    office_suffix = f"_{admin_office.code}" if admin_office else "_all_offices"
+    timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
+    filename = f"sessions_export{office_suffix}_{timestamp}.json"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+    return response
+
+
+# ============================================================================
+# OFFICE LOCATION VIEWS
+# ============================================================================
+
+@admin_required
+def office_locations(request):
+    """
+    Enhanced office locations view with session statistics.
+    """
+    admin_office = get_admin_office_location(request.user)
+
+    # Get offices based on admin permissions
+    if admin_office and not request.user.is_superuser:
+        offices = OfficeLocation.objects.filter(id=admin_office.id, is_active=True)
+    else:
+        offices = OfficeLocation.objects.filter(is_active=True).order_by('name')
+
+    # Enhance offices with statistics
+    enhanced_offices = []
+    for office in offices:
+        # Get office users
+        office_users = User.objects.filter(
+            profile__office_location=office
+        ).values_list('id', flat=True)
+
+        # Get session statistics
+        office_sessions = UserSession.objects.filter(user_id__in=office_users)
+        last_24h = timezone.now() - timedelta(hours=24)
+
+        office_stats = {
+            'total_employees': len(office_users),
+            'total_sessions': office_sessions.count(),
+            'active_sessions': office_sessions.filter(is_active=True).count(),
+            'recent_sessions': office_sessions.filter(created_at__gte=last_24h).count(),
+            'avg_daily_sessions': 0
         }
 
-        response = JsonResponse({
-            'metadata': metadata,
-            'sessions': export_data,
-        }, json_dumps_params={'indent': 2})
+        # Calculate average daily sessions (last 7 days)
+        last_week = timezone.now() - timedelta(days=7)
+        week_sessions = office_sessions.filter(created_at__gte=last_week).count()
+        office_stats['avg_daily_sessions'] = round(week_sessions / 7, 1)
 
-        # Set filename for download
-        office_suffix = f"_{admin_office.code}" if admin_office else "_all_offices"
-        filename = f"sessions_export{office_suffix}_{timezone.now().strftime('%Y%m%d_%H%M%S')}.json"
-        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        enhanced_offices.append({
+            'office': office,
+            'stats': office_stats
+        })
 
-        return response
+    context = {
+        'page_title': 'Office Locations',
+        'active_tab': 'locations',
+        'enhanced_offices': enhanced_offices,
+        'admin_office': admin_office,
+        'is_restricted': admin_office and not request.user.is_superuser
+    }
 
-    except Exception as e:
-        return JsonResponse({
-            'error': f'Export failed: {str(e)}',
-            'timestamp': timezone.now().isoformat()
-        }, status=500)
+    return render(request, 'sessions/office_locations.html', context)
+
+
+@admin_required
+def location_detail(request, location_id):
+    """
+    Enhanced location detail view with comprehensive analytics.
+    """
+    admin_office = get_admin_office_location(request.user)
+
+    # Get the office location
+    office = get_object_or_404(OfficeLocation, id=location_id, is_active=True)
+
+    # Check permissions
+    if admin_office and admin_office != office and not request.user.is_superuser:
+        messages.error(request, 'You can only view your own office location.')
+        return redirect('sessions:office_locations')
+
+    # Get employees with enhanced information
+    employees = User.objects.filter(
+        profile__office_location=office
+    ).select_related('profile').order_by('username')
+
+    enhanced_employees = []
+    for employee in employees:
+        # Get shift information
+        shift_info = get_user_shift_info(employee)
+
+        # Get recent session activity
+        user_sessions = UserSession.objects.filter(user=employee)
+        recent_sessions = user_sessions.filter(
+            created_at__gte=timezone.now() - timedelta(days=7)
+        ).count()
+
+        active_session = user_sessions.filter(is_active=True).first()
+
+        enhanced_employees.append({
+            'employee': employee,
+            'shift_info': shift_info,
+            'recent_sessions': recent_sessions,
+            'has_active_session': bool(active_session),
+            'last_activity': active_session.last_activity if active_session else None
+        })
+
+    # Office statistics
+    office_users = employees.values_list('user_id', flat=True)
+    office_sessions = UserSession.objects.filter(user_id__in=office_users)
+
+    now = timezone.now()
+    today = now.date()
+    week_ago = now - timedelta(days=7)
+    month_ago = now - timedelta(days=30)
+
+    office_stats = {
+        'total_employees': employees.count(),
+        'active_employees': employees.filter(employment_status='active').count(),
+        'total_sessions': office_sessions.count(),
+        'active_sessions': office_sessions.filter(is_active=True).count(),
+        'today_sessions': office_sessions.filter(created_at__date=today).count(),
+        'week_sessions': office_sessions.filter(created_at__gte=week_ago).count(),
+        'month_sessions': office_sessions.filter(created_at__gte=month_ago).count(),
+        'avg_session_duration': None
+    }
+
+    # Calculate average session duration
+    completed_sessions = office_sessions.filter(ended_at__isnull=False)
+    if completed_sessions.exists():
+        avg_duration = completed_sessions.aggregate(
+            avg_duration=Avg(
+                ExpressionWrapper(
+                    F('ended_at') - F('created_at'),
+                    output_field=DurationField()
+                )
+            )
+        )['avg_duration']
+
+        if avg_duration:
+            office_stats['avg_session_duration'] = round(
+                avg_duration.total_seconds() / 60, 2
+            )
+
+    # Daily session trend (last 7 days)
+    daily_trends = []
+    for i in range(7):
+        date = (now - timedelta(days=i)).date()
+        day_sessions = office_sessions.filter(created_at__date=date).count()
+        daily_trends.append({
+            'date': date.strftime('%Y-%m-%d'),
+            'sessions': day_sessions
+        })
+    daily_trends.reverse()
+
+    context = {
+        'page_title': f'{office.name} - Location Details',
+        'active_tab': 'locations',
+        'office': office,
+        'enhanced_employees': enhanced_employees,
+        'office_stats': office_stats,
+        'daily_trends': daily_trends,
+        'admin_office': admin_office
+    }
+
+    return render(request, 'sessions/location_detail.html', context)

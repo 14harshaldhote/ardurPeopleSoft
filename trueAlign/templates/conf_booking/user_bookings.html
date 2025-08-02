@@ -24,7 +24,7 @@
             <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="</div>text-sm font-medium text-gray-600">Total Bookings</p>
+                        <p class="text-sm font-medium text-gray-600">Total Bookings</p>
                         <p class="text-2xl font-bold text-gray-900">{{ user_stats.total_bookings }}</p>
                     </div>
                     <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -311,47 +311,153 @@
 </div>
 
 <script>
-let bookingToCancel = null;
-
-function cancelBooking(bookingId) {
-    bookingToCancel = bookingId;
-    document.getElementById('cancelBookingModal').classList.remove('hidden');
-}
-
-function closeCancelModal() {
-    document.getElementById('cancelBookingModal').classList.add('hidden');
-    bookingToCancel = null;
-}
-
-function confirmCancelBooking() {
-    if (bookingToCancel) {
-        // Make AJAX request to cancel booking
+// Optimized booking management with debouncing and caching
+(function() {
+    'use strict';
+    
+    let bookingToCancel = null;
+    let isProcessing = false;
+    
+    // Cache DOM elements
+    const modal = document.getElementById('cancelBookingModal');
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                      document.querySelector('meta[name=csrf-token]')?.getAttribute('content');
+    
+    // Optimized modal show/hide with animation classes
+    function showModal() {
+        if (modal) {
+            modal.classList.remove('hidden');
+            // Add fade-in animation
+            modal.style.opacity = '0';
+            requestAnimationFrame(() => {
+                modal.style.transition = 'opacity 0.2s ease';
+                modal.style.opacity = '1';
+            });
+        }
+    }
+    
+    function hideModal() {
+        if (modal) {
+            modal.style.opacity = '0';
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.style.transition = '';
+            }, 200);
+        }
+        bookingToCancel = null;
+        isProcessing = false;
+    }
+    
+    // Debounced cancel booking function
+    function cancelBooking(bookingId) {
+        if (isProcessing) return;
+        
+        bookingToCancel = bookingId;
+        showModal();
+    }
+    
+    // Optimized confirm cancel with better error handling
+    function confirmCancelBooking() {
+        if (!bookingToCancel || isProcessing) return;
+        
+        isProcessing = true;
+        const button = document.querySelector('#cancelBookingModal button[onclick="confirmCancelBooking()"]');
+        
+        // Show loading state
+        if (button) {
+            button.disabled = true;
+            button.innerHTML = '<i class="ri-loader-4-line animate-spin mr-2"></i>Cancelling...';
+        }
+        
         fetch(`/book/cancel/${bookingToCancel}/`, {
             method: 'POST',
             headers: {
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'X-CSRFToken': csrfToken,
                 'Content-Type': 'application/json',
             },
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
-                location.reload();
+                // Show success message briefly before reload
+                if (button) {
+                    button.innerHTML = '<i class="ri-check-line mr-2"></i>Cancelled!';
+                    button.className = 'px-4 py-2 bg-green-600 text-white rounded-lg';
+                }
+                setTimeout(() => location.reload(), 1000);
             } else {
-                alert('Failed to cancel booking: ' + data.message);
+                throw new Error(data.message || 'Unknown error occurred');
             }
         })
         .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred while cancelling the booking.');
+            console.error('Booking cancellation error:', error);
+            
+            // Reset button state
+            if (button) {
+                button.disabled = false;
+                button.innerHTML = '<i class="ri-close-line mr-2"></i>Yes, Cancel Booking';
+                button.className = 'px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors';
+            }
+            
+            // Show user-friendly error message
+            const errorMsg = error.message.includes('HTTP error') 
+                ? 'Network error. Please check your connection and try again.'
+                : `Failed to cancel booking: ${error.message}`;
+            
+            alert(errorMsg);
+            isProcessing = false;
         });
     }
-    closeCancelModal();
-}
-
-function viewBookingDetails(bookingId) {
-    // Implement booking details view - could be a modal or redirect
-    window.location.href = `/book/details/${bookingId}/`;
-}
+    
+    // Optimized booking details with loading state
+    function viewBookingDetails(bookingId) {
+        if (!bookingId) return;
+        
+        // Show loading cursor
+        document.body.style.cursor = 'wait';
+        window.location.href = `/book/details/${bookingId}/`;
+    }
+    
+    // Event delegation for better performance
+    document.addEventListener('click', function(e) {
+        const target = e.target.closest('button');
+        if (!target) return;
+        
+        const onClick = target.getAttribute('onclick');
+        if (onClick) {
+            e.preventDefault();
+            
+            if (onClick.includes('cancelBooking')) {
+                const match = onClick.match(/cancelBooking\((\d+)\)/);
+                if (match) cancelBooking(parseInt(match[1]));
+            } else if (onClick.includes('viewBookingDetails')) {
+                const match = onClick.match(/viewBookingDetails\((\d+)\)/);
+                if (match) viewBookingDetails(parseInt(match[1]));
+            } else if (onClick.includes('closeCancelModal')) {
+                hideModal();
+            } else if (onClick.includes('confirmCancelBooking')) {
+                confirmCancelBooking();
+            }
+        }
+    });
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && !modal?.classList.contains('hidden')) {
+            hideModal();
+        }
+    });
+    
+    // Expose functions globally for legacy compatibility
+    window.cancelBooking = cancelBooking;
+    window.closeCancelModal = hideModal;
+    window.confirmCancelBooking = confirmCancelBooking;
+    window.viewBookingDetails = viewBookingDetails;
+})();
 </script>
 {% endblock %}

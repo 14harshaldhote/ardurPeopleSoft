@@ -82,6 +82,7 @@ INSTALLED_APPS = [
     'trueAlign.leave_management',
     'rest_framework',
     'widget_tweaks',
+    'django_cron',
 ]
 
 MIDDLEWARE = [
@@ -146,20 +147,20 @@ DATABASES = {
 }
 
 # Test database configuration
-import sys
+# import sys
 
-if 'test' in sys.argv or 'test_coverage' in sys.argv:
-    DATABASES['default'] = {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'test_db',         # Use a separate test database
-        'USER': 'your_mysql_user',
-        'PASSWORD': 'your_mysql_password',
-        'HOST': 'localhost',
-        'PORT': '3306',
-        'TEST': {
-            'NAME': 'test_db',     # Django will create & destroy this DB automatically
-        }
-    }
+# if 'test' in sys.argv or 'test_coverage' in sys.argv:
+#     DATABASES['default'] = {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'test_db',         # Use a separate test database
+#         'USER': 'your_mysql_user',
+#         'PASSWORD': 'your_mysql_password',
+#         'HOST': 'localhost',
+#         'PORT': '3306',
+#         'TEST': {
+#             'NAME': 'test_db',     # Django will create & destroy this DB automatically
+#         }
+#     }
 
 
 # Password validation

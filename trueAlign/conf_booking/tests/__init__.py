@@ -1,1 +1,1 @@
-# Test package initialization
+# Tests for conference booking functionality

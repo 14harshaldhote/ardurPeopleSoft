@@ -1,0 +1,56 @@
+/* Base transitions */
+.view-transition {
+    transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+}
+
+.view-enter {
+    opacity: 0;
+    transform: translateY(10px);
+}
+
+.view-enter-active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Filter panel animations */
+.filter-panel {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.filter-panel.hidden {
+    transform: translateX(-100%);
+}
+
+@media (min-width: 768px) {
+    .filter-panel.hidden {
+        transform: none;
+        display: none;
+    }
+}
+
+/* Loading states */
+.loading-overlay {
+    @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50;
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+}
+
+.loading-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        transition: none !important;
+        animation: none !important;
+    }
+}
+
+/* Focus styles */
+.focus-visible:focus {
+    @apply outline-none ring-2 ring-offset-2 ring-indigo-500;
+}

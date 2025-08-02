@@ -1,5 +1,6 @@
-{% extends "base.html" %} {% load static %} {% block title %}Session Details -
-{{ session.user.username }} - TrueAlign{% endblock %} {% block content %}
+{% extends "base.html" %} {% load static %} {% load sessions_extras %} {% block title %}Session Details - {{
+session.user.username }} - TrueAlign{% endblock %}
+{% block content %}
 <div class="min-h-screen bg-gray-50">
     <!-- Header -->
     <div class="bg-white shadow-sm border-b">
@@ -7,54 +8,33 @@
             <div class="flex justify-between items-center py-6">
                 <div>
                     <nav class="flex" aria-label="Breadcrumb">
-                        <ol
-                            class="inline-flex items-center space-x-1 md:space-x-3"
-                        >
+                        <ol class="inline-flex items-center space-x-1 md:space-x-3">
                             <li class="inline-flex items-center">
-                                <a
-                                    href="{% url 'sessions:dashboard' %}"
-                                    class="text-gray-500 hover:text-gray-700"
-                                >
+                                <a href="{% url 'sessions:dashboard' %}" class="text-gray-500 hover:text-gray-700">
                                     Dashboard
                                 </a>
                             </li>
                             <li>
                                 <div class="flex items-center">
-                                    <svg
-                                        class="w-6 h-6 text-gray-400"
-                                        fill="currentColor"
-                                        viewBox="0 0 20 20"
-                                    >
-                                        <path
-                                            fill-rule="evenodd"
+                                    <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd"
                                             d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                                            clip-rule="evenodd"
-                                        ></path>
+                                            clip-rule="evenodd"></path>
                                     </svg>
-                                    <a
-                                        href="{% url 'sessions:session_list' %}"
-                                        class="ml-1 text-gray-500 hover:text-gray-700 md:ml-2"
-                                    >
+                                    <a href="{% url 'sessions:session_list' %}"
+                                        class="ml-1 text-gray-500 hover:text-gray-700 md:ml-2">
                                         Sessions
                                     </a>
                                 </div>
                             </li>
                             <li>
                                 <div class="flex items-center">
-                                    <svg
-                                        class="w-6 h-6 text-gray-400"
-                                        fill="currentColor"
-                                        viewBox="0 0 20 20"
-                                    >
-                                        <path
-                                            fill-rule="evenodd"
+                                    <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd"
                                             d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                                            clip-rule="evenodd"
-                                        ></path>
+                                            clip-rule="evenodd"></path>
                                     </svg>
-                                    <span class="ml-1 text-gray-900 md:ml-2"
-                                        >Session Details</span
-                                    >
+                                    <span class="ml-1 text-gray-900 md:ml-2">Session Details</span>
                                 </div>
                             </li>
                         </ol>
@@ -68,24 +48,15 @@
                     </p>
                 </div>
                 <div class="flex space-x-3">
-                    <a
-                        href="{% url 'sessions:session_list' %}"
-                        class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
-                    >
+                    <a href="{% url 'sessions:session_list' %}"
+                        class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
                         Back to Sessions
                     </a>
                     {% if session.is_active %}
-                    <form
-                        method="post"
-                        action="{% url 'sessions:end_session' session.id %}"
-                        class="inline"
-                    >
+                    <form method="post" action="{% url 'sessions:end_session' session.id %}" class="inline">
                         {% csrf_token %}
-                        <button
-                            type="submit"
-                            onclick="return confirm('Are you sure you want to end this session?')"
-                            class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
-                        >
+                        <button type="submit" onclick="return confirm('Are you sure you want to end this session?')"
+                            class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
                             End Session
                         </button>
                     </form>
@@ -99,28 +70,19 @@
         <!-- Session Overview -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
             <!-- User Information -->
-            <div
-                class="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
-            >
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <h3 class="text-lg font-semibold text-gray-900 mb-4">
                     User Information
                 </h3>
                 <div class="flex items-center mb-4">
-                    <div
-                        class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center"
-                    >
+                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
                         <span class="text-xl font-medium text-blue-600">
-                            {% if session.user.first_name %}{{
-                            session.user.first_name|first }}{% else %}{{
-                            session.user.username|first|upper }}{% endif %}
+                            {% if session.user.first_name %}{{ session.user.first_name|first }}{% else %}{{ session.user.username|first|upper }}{% endif %}
                         </span>
                     </div>
                     <div class="ml-4">
                         <h4 class="text-lg font-medium text-gray-900">
-                            {% if session.user.first_name and
-                            session.user.last_name %} {{ session.user.first_name
-                            }} {{ session.user.last_name }} {% else %} {{
-                            session.user.username }} {% endif %}
+                            {% if session.user.first_name and session.user.last_name %} {{ session.user.first_name }} {{ session.user.last_name }} {% else %} {{ session.user.username }} {% endif %}
                         </h4>
                         <p class="text-gray-600">
                             @{{ session.user.username }}
@@ -135,31 +97,23 @@
                 <div class="space-y-2">
                     <div class="flex justify-between">
                         <span class="text-sm text-gray-500">User ID:</span>
-                        <span class="text-sm text-gray-900"
-                            >{{ session.user.id }}</span
-                        >
+                        <span class="text-sm text-gray-900">{{ session.user.id }}</span>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-sm text-gray-500">Joined:</span>
-                        <span class="text-sm text-gray-900"
-                            >{{ session.user.date_joined|date:"M d, Y" }}</span
-                        >
+                        <span class="text-sm text-gray-900">{{ session.user.date_joined|date:"M d, Y" }}</span>
                     </div>
                     {% if session.user.last_login %}
                     <div class="flex justify-between">
                         <span class="text-sm text-gray-500">Last Login:</span>
-                        <span class="text-sm text-gray-900"
-                            >{{ session.user.last_login|date:"M d, H:i" }}</span
-                        >
+                        <span class="text-sm text-gray-900">{{ session.user.last_login|date:"M d, H:i" }}</span>
                     </div>
                     {% endif %}
                 </div>
             </div>
 
             <!-- Session Status -->
-            <div
-                class="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
-            >
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <h3 class="text-lg font-semibold text-gray-900 mb-4">
                     Session Status
                 </h3>
@@ -168,20 +122,16 @@
                         <span class="text-sm text-gray-500">Status:</span>
                         {% if session.is_active %} {% if session.is_idle %}
                         <span
-                            class="inline-flex px-3 py-1 text-sm font-semibold rounded-full bg-yellow-100 text-yellow-800"
-                        >
+                            class="inline-flex px-3 py-1 text-sm font-semibold rounded-full bg-yellow-100 text-yellow-800">
                             Idle
                         </span>
                         {% else %}
                         <span
-                            class="inline-flex px-3 py-1 text-sm font-semibold rounded-full bg-green-100 text-green-800"
-                        >
+                            class="inline-flex px-3 py-1 text-sm font-semibold rounded-full bg-green-100 text-green-800">
                             Active
                         </span>
                         {% endif %} {% else %}
-                        <span
-                            class="inline-flex px-3 py-1 text-sm font-semibold rounded-full bg-red-100 text-red-800"
-                        >
+                        <span class="inline-flex px-3 py-1 text-sm font-semibold rounded-full bg-red-100 text-red-800">
                             Ended
                         </span>
                         {% endif %}
@@ -189,140 +139,98 @@
 
                     <div class="flex items-center justify-between">
                         <span class="text-sm text-gray-500">Session ID:</span>
-                        <span class="text-xs text-gray-900 font-mono"
-                            >{{ session.id }}</span
-                        >
+                        <span class="text-xs text-gray-900 font-mono">{{ session.id }}</span>
                     </div>
 
                     {% if session.tab_id %}
                     <div class="flex items-center justify-between">
                         <span class="text-sm text-gray-500">Tab ID:</span>
-                        <span class="text-xs text-gray-900 font-mono"
-                            >{{ session.tab_id|slice:":8" }}...</span
-                        >
+                        <span class="text-xs text-gray-900 font-mono">{{ session.tab_id|slice:":8" }}...</span>
                     </div>
                     {% endif %} {% if session.parent_session_id %}
                     <div class="flex items-center justify-between">
-                        <span class="text-sm text-gray-500"
-                            >Parent Session:</span
-                        >
-                        <span class="text-xs text-gray-900 font-mono"
-                            >{{ session.parent_session_id|slice:":8" }}...</span
-                        >
+                        <span class="text-sm text-gray-500">Parent Session:</span>
+                        <span class="text-xs text-gray-900 font-mono">{{ session.parent_session_id|slice:":8"
+                            }}...</span>
                     </div>
                     {% endif %}
 
                     <div class="flex items-center justify-between">
                         <span class="text-sm text-gray-500">Created:</span>
-                        <span class="text-sm text-gray-900"
-                            >{{ session.created_at|date:"M d, Y H:i" }}</span
-                        >
+                        <span class="text-sm text-gray-900">{{ session.created_at|date:"M d, Y H:i" }}</span>
                     </div>
 
                     <div class="flex items-center justify-between">
-                        <span class="text-sm text-gray-500"
-                            >Last Activity:</span
-                        >
-                        <span class="text-sm text-gray-900"
-                            >{{ session.last_activity|date:"M d, Y H:i" }}</span
-                        >
+                        <span class="text-sm text-gray-500">Last Activity:</span>
+                        <span class="text-sm text-gray-900">{{ session.last_activity|date:"M d, Y H:i" }}</span>
                     </div>
 
                     {% if session.ended_at %}
                     <div class="flex items-center justify-between">
                         <span class="text-sm text-gray-500">Ended:</span>
-                        <span class="text-sm text-gray-900"
-                            >{{ session.ended_at|date:"M d, Y H:i" }}</span
-                        >
+                        <span class="text-sm text-gray-900">{{ session.ended_at|date:"M d, Y H:i" }}</span>
                     </div>
                     {% endif %}
                 </div>
             </div>
 
             <!-- Session Metrics -->
-            <div
-                class="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
-            >
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <h3 class="text-lg font-semibold text-gray-900 mb-4">
                     Session Metrics
                 </h3>
                 <div class="space-y-4">
                     {% if session_duration %}
                     <div class="flex items-center justify-between">
-                        <span class="text-sm text-gray-500"
-                            >Total Duration:</span
-                        >
-                        <span class="text-sm font-medium text-gray-900"
-                            >{{ session_duration }} min</span
-                        >
+                        <span class="text-sm text-gray-500">Total Duration:</span>
+                        <span class="text-sm font-medium text-gray-900">{{ session_duration }} min</span>
                     </div>
                     {% endif %} {% if working_time_minutes %}
                     <div class="flex items-center justify-between">
                         <span class="text-sm text-gray-500">Working Time:</span>
-                        <span class="text-sm font-medium text-green-600"
-                            >{{ working_time_minutes }} min</span
-                        >
+                        <span class="text-sm font-medium text-green-600">{{ working_time_minutes }} min</span>
                     </div>
                     {% endif %} {% if idle_time_minutes %}
                     <div class="flex items-center justify-between">
                         <span class="text-sm text-gray-500">Idle Time:</span>
-                        <span class="text-sm font-medium text-yellow-600"
-                            >{{ idle_time_minutes }} min</span
-                        >
+                        <span class="text-sm font-medium text-yellow-600">{{ idle_time_minutes }} min</span>
                     </div>
                     {% endif %} {% if session.productivity_score is not None %}
                     <div class="space-y-1">
                         <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-500"
-                                >Productivity Score:</span
-                            >
-                            <span class="text-sm font-medium text-blue-600"
-                                >{{ session.productivity_score|floatformat:0
-                                }}%</span
-                            >
+                            <span class="text-sm text-gray-500">Productivity Score:</span>
+                            <span class="text-sm font-medium text-blue-600">{{ session.productivity_score|floatformat:0
+                                }}%</span>
                         </div>
                         <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div
-                                class="bg-blue-600 h-2 rounded-full"
-                                style="width: {{ session.productivity_score }}%"
-                            ></div>
+                            <div class="bg-blue-600 h-2 rounded-full" style="width: {{ session.productivity_score }}%">
+                            </div>
                         </div>
                     </div>
                     {% endif %} {% if session.engagement_score is not None %}
                     <div class="space-y-1">
                         <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-500"
-                                >Engagement Score:</span
-                            >
-                            <span class="text-sm font-medium text-green-600"
-                                >{{ session.engagement_score|floatformat:0
-                                }}%</span
-                            >
+                            <span class="text-sm text-gray-500">Engagement Score:</span>
+                            <span class="text-sm font-medium text-green-600">{{ session.engagement_score|floatformat:0
+                                }}%</span>
                         </div>
                         <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div
-                                class="bg-green-600 h-2 rounded-full"
-                                style="width: {{ session.engagement_score }}%"
-                            ></div>
+                            <div class="bg-green-600 h-2 rounded-full" style="width: {{ session.engagement_score }}%">
+                            </div>
                         </div>
                     </div>
                     {% endif %} {% if session.security_score is not None %}
                     <div class="space-y-1">
                         <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-500"
-                                >Security Score:</span
-                            >
+                            <span class="text-sm text-gray-500">Security Score:</span>
                             <span
-                                class="text-sm font-medium {% if session.security_score >= 80 %}text-green-600{% elif session.security_score >= 60 %}text-yellow-600{% else %}text-red-600{% endif %}"
-                                >{{ session.security_score|floatformat:0
-                                }}%</span
-                            >
+                                class="text-sm font-medium {% if session.security_score >= 80 %}text-green-600{% elif session.security_score >= 60 %}text-yellow-600{% else %}text-red-600{% endif %}">{{
+                                session.security_score|floatformat:0
+                                }}%</span>
                         </div>
                         <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div
-                                class="{% if session.security_score >= 80 %}bg-green-600{% elif session.security_score >= 60 %}bg-yellow-600{% else %}bg-red-600{% endif %} h-2 rounded-full"
-                                style="width: {{ session.security_score }}%"
-                            ></div>
+                            <div class="{% if session.security_score >= 80 %}bg-green-600{% elif session.security_score >= 60 %}bg-yellow-600{% else %}bg-red-600{% endif %} h-2 rounded-full"
+                                style="width: {{ session.security_score }}%"></div>
                         </div>
                     </div>
                     {% endif %}
@@ -333,49 +241,33 @@
         <!-- Device and Location Information -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             <!-- Device Information -->
-            <div
-                class="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
-            >
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <h3 class="text-lg font-semibold text-gray-900 mb-4">
                     Device Information
                 </h3>
                 <div class="space-y-3">
                     <div class="flex items-center justify-between">
                         <span class="text-sm text-gray-500">IP Address:</span>
-                        <span class="text-sm text-gray-900 font-mono"
-                            >{{ session.ip_address|default:"Unknown" }}</span
-                        >
+                        <span class="text-sm text-gray-900 font-mono">{{ session.ip_address|default:"Unknown" }}</span>
                     </div>
                     <div class="flex items-center justify-between">
                         <span class="text-sm text-gray-500">Device Type:</span>
-                        <span class="text-sm text-gray-900 capitalize"
-                            >{{ session.device_type|default:"Unknown" }}</span
-                        >
+                        <span class="text-sm text-gray-900 capitalize">{{ session.device_type|default:"Unknown" }}</span>
                     </div>
                     {% if session.browser %}
                     <div class="flex items-center justify-between">
                         <span class="text-sm text-gray-500">Browser:</span>
-                        <span class="text-sm text-gray-900"
-                            >{{ session.browser }}</span
-                        >
+                        <span class="text-sm text-gray-900">{{ session.browser }}</span>
                     </div>
                     {% endif %} {% if session.os %}
                     <div class="flex items-center justify-between">
-                        <span class="text-sm text-gray-500"
-                            >Operating System:</span
-                        >
-                        <span class="text-sm text-gray-900"
-                            >{{ session.os }}</span
-                        >
+                        <span class="text-sm text-gray-500">Operating System:</span>
+                        <span class="text-sm text-gray-900">{{ session.os }}</span>
                     </div>
                     {% endif %} {% if session.screen_resolution %}
                     <div class="flex items-center justify-between">
-                        <span class="text-sm text-gray-500"
-                            >Screen Resolution:</span
-                        >
-                        <span class="text-sm text-gray-900"
-                            >{{ session.screen_resolution }}</span
-                        >
+                        <span class="text-sm text-gray-500">Screen Resolution:</span>
+                        <span class="text-sm text-gray-900">{{ session.screen_resolution }}</span>
                     </div>
                     {% endif %} {% if session.user_agent %}
                     <div class="pt-3 border-t border-gray-200">
@@ -389,9 +281,7 @@
             </div>
 
             <!-- Location Information -->
-            <div
-                class="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
-            >
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <h3 class="text-lg font-semibold text-gray-900 mb-4">
                     Location Information
                 </h3>
@@ -399,62 +289,35 @@
                     {% if session.location_country or session.location_city %}
                     <div class="flex items-center justify-between">
                         <span class="text-sm text-gray-500">Country:</span>
-                        <span class="text-sm text-gray-900"
-                            >{{ session.location_country|default:"Unknown"
-                            }}</span
-                        >
+                        <span class="text-sm text-gray-900">{{ session.location_country|default:"Unknown" }}</span>
                     </div>
                     <div class="flex items-center justify-between">
                         <span class="text-sm text-gray-500">Region:</span>
-                        <span class="text-sm text-gray-900"
-                            >{{ session.location_region|default:"Unknown"
-                            }}</span
-                        >
+                        <span class="text-sm text-gray-900">{{ session.location_region|default:"Unknown" }}</span>
                     </div>
                     <div class="flex items-center justify-between">
                         <span class="text-sm text-gray-500">City:</span>
-                        <span class="text-sm text-gray-900"
-                            >{{ session.location_city|default:"Unknown" }}</span
-                        >
+                        <span class="text-sm text-gray-900">{{ session.location_city|default:"Unknown" }}</span>
                     </div>
                     {% if session.location_type %}
                     <div class="flex items-center justify-between">
-                        <span class="text-sm text-gray-500"
-                            >Location Type:</span
-                        >
-                        <span class="text-sm text-gray-900 capitalize"
-                            >{{ session.location_type }}</span
-                        >
+                        <span class="text-sm text-gray-500">Location Type:</span>
+                        <span class="text-sm text-gray-900 capitalize">{{ session.location_type }}</span>
                     </div>
-                    {% endif %} {% if session.location_latitude and
-                    session.location_longitude %}
+                    {% endif %} {% if session.location_latitude and session.location_longitude %}
                     <div class="flex items-center justify-between">
                         <span class="text-sm text-gray-500">Coordinates:</span>
-                        <span class="text-sm text-gray-900 font-mono"
-                            >{{ session.location_latitude|floatformat:4 }}, {{
-                            session.location_longitude|floatformat:4 }}</span
-                        >
+                        <span class="text-sm text-gray-900 font-mono">{{ session.location_latitude|floatformat:4 }}, {{ session.location_longitude|floatformat:4 }}</span>
                     </div>
                     {% endif %} {% else %}
                     <div class="text-center py-8">
-                        <svg
-                            class="mx-auto h-12 w-12 text-gray-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                            ></path>
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                            ></path>
+                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z">
+                            </path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
                         </svg>
                         <p class="mt-2 text-sm text-gray-500">
                             No location data available
@@ -466,29 +329,17 @@
         </div>
 
         <!-- Activity Summary -->
-        <div
-            class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8"
-        >
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
             <h3 class="text-lg font-semibold text-gray-900 mb-6">
                 Activity Summary
             </h3>
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
                 <div class="text-center">
-                    <div
-                        class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-2"
-                    >
-                        <svg
-                            class="w-6 h-6 text-blue-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                            ></path>
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                            </path>
                         </svg>
                     </div>
                     <p class="text-2xl font-bold text-gray-900">
@@ -498,21 +349,11 @@
                 </div>
 
                 <div class="text-center">
-                    <div
-                        class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-2"
-                    >
-                        <svg
-                            class="w-6 h-6 text-green-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"
-                            ></path>
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122">
+                            </path>
                         </svg>
                     </div>
                     <p class="text-2xl font-bold text-gray-900">
@@ -522,21 +363,10 @@
                 </div>
 
                 <div class="text-center">
-                    <div
-                        class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-2"
-                    >
-                        <svg
-                            class="w-6 h-6 text-purple-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
-                            ></path>
+                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
                         </svg>
                     </div>
                     <p class="text-2xl font-bold text-gray-900">
@@ -546,21 +376,11 @@
                 </div>
 
                 <div class="text-center">
-                    <div
-                        class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mx-auto mb-2"
-                    >
-                        <svg
-                            class="w-6 h-6 text-yellow-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                            ></path>
+                    <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                        <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
+                            </path>
                         </svg>
                     </div>
                     <p class="text-2xl font-bold text-gray-900">
@@ -570,21 +390,11 @@
                 </div>
 
                 <div class="text-center">
-                    <div
-                        class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mx-auto mb-2"
-                    >
-                        <svg
-                            class="w-6 h-6 text-red-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"
-                            ></path>
+                    <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                        <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122">
+                            </path>
                         </svg>
                     </div>
                     <p class="text-2xl font-bold text-gray-900">
@@ -594,21 +404,10 @@
                 </div>
 
                 <div class="text-center">
-                    <div
-                        class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mx-auto mb-2"
-                    >
-                        <svg
-                            class="w-6 h-6 text-indigo-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
-                            ></path>
+                    <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                        <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
                         </svg>
                     </div>
                     <p class="text-2xl font-bold text-gray-900">
@@ -622,9 +421,7 @@
         <!-- Recent Page Views and URLs -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             <!-- Recent Page Views -->
-            <div
-                class="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
-            >
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <h3 class="text-lg font-semibold text-gray-900 mb-4">
                     Recent Page Views
                 </h3>
@@ -649,18 +446,10 @@
                 </div>
                 {% else %}
                 <div class="text-center py-8">
-                    <svg
-                        class="mx-auto h-12 w-12 text-gray-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                        ></path>
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                        </path>
                     </svg>
                     <p class="mt-2 text-sm text-gray-500">
                         No page views recorded
@@ -670,9 +459,7 @@
             </div>
 
             <!-- Most Visited URLs -->
-            <div
-                class="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
-            >
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <h3 class="text-lg font-semibold text-gray-900 mb-4">
                     Most Visited URLs
                 </h3>
@@ -681,9 +468,7 @@
                     {% for url, data in visited_urls %}
                     <div class="flex items-center justify-between">
                         <div class="flex-1 min-w-0">
-                            <p
-                                class="text-sm font-medium text-gray-900 truncate"
-                            >
+                            <p class="text-sm font-medium text-gray-900 truncate">
                                 {{
                                 data.title|default:"Untitled"|truncatechars:40
                                 }}
@@ -692,9 +477,7 @@
                                 {{ url|truncatechars:50 }}
                             </p>
                         </div>
-                        <span
-                            class="ml-2 bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded-full"
-                        >
+                        <span class="ml-2 bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded-full">
                             {{ data.count }} visits
                         </span>
                     </div>
@@ -702,18 +485,10 @@
                 </div>
                 {% else %}
                 <div class="text-center py-8">
-                    <svg
-                        class="mx-auto h-12 w-12 text-gray-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-                        ></path>
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1">
+                        </path>
                     </svg>
                     <p class="mt-2 text-sm text-gray-500">
                         No URL data available
@@ -725,9 +500,7 @@
 
         <!-- Security Information -->
         {% if security_anomalies or session.security_score is not None %}
-        <div
-            class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8"
-        >
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
             <h3 class="text-lg font-semibold text-gray-900 mb-4">
                 Security Information
             </h3>
@@ -740,35 +513,28 @@
                 <div class="space-y-3">
                     {% for anomaly in security_anomalies %}
                     <div
-                        class="border-l-4 {% if anomaly.severity == 'high' %}border-red-400 bg-red-50{% elif anomaly.severity == 'medium' %}border-yellow-400 bg-yellow-50{% else %}border-blue-400 bg-blue-50{% endif %} p-4 rounded-r-lg"
-                    >
+                        class="border-l-4 {% if anomaly.severity == 'high' %}border-red-400 bg-red-50{% elif anomaly.severity == 'medium' %}border-yellow-400 bg-yellow-50{% else %}border-blue-400 bg-blue-50{% endif %} p-4 rounded-r-lg">
                         <div class="flex items-center justify-between">
                             <div>
                                 <p
-                                    class="text-sm font-medium {% if anomaly.severity == 'high' %}text-red-800{% elif anomaly.severity == 'medium' %}text-yellow-800{% else %}text-blue-800{% endif %}"
-                                >
-                                    {{ anomaly.type|title|replace:"_":" " }}
+                                    class="text-sm font-medium {% if anomaly.severity == 'high' %}text-red-800{% elif anomaly.severity == 'medium' %}text-yellow-800{% else %}text-blue-800{% endif %}">
+                                    {{ anomaly.type|format_anomaly_type }}
                                 </p>
                                 <p
-                                    class="text-xs {% if anomaly.severity == 'high' %}text-red-600{% elif anomaly.severity == 'medium' %}text-yellow-600{% else %}text-blue-600{% endif %} mt-1"
-                                >
+                                    class="text-xs {% if anomaly.severity == 'high' %}text-red-600{% elif anomaly.severity == 'medium' %}text-yellow-600{% else %}text-blue-600{% endif %} mt-1">
                                     Severity: {{ anomaly.severity|title }}
                                 </p>
                             </div>
                             <span
-                                class="text-xs {% if anomaly.severity == 'high' %}text-red-600{% elif anomaly.severity == 'medium' %}text-yellow-600{% else %}text-blue-600{% endif %}"
-                            >
-                                {% if anomaly.details.timestamp %}{{
-                                anomaly.details.timestamp }}{% endif %}
+                                class="text-xs {% if anomaly.severity == 'high' %}text-red-600{% elif anomaly.severity == 'medium' %}text-yellow-600{% else %}text-blue-600{% endif %}">
+                                {% if anomaly.details.timestamp %}{{ anomaly.details.timestamp }}{% endif %}
                             </span>
                         </div>
                         {% if anomaly.details %}
                         <div class="mt-2">
-                            {% for key, value in anomaly.details.items %} {% if
-                            key != 'timestamp' %}
+                            {% for key, value in anomaly.details.items %} {% if key != 'timestamp' %}
                             <p
-                                class="text-xs {% if anomaly.severity == 'high' %}text-red-600{% elif anomaly.severity == 'medium' %}text-yellow-600{% else %}text-blue-600{% endif %}"
-                            >
+                                class="text-xs {% if anomaly.severity == 'high' %}text-red-600{% elif anomaly.severity == 'medium' %}text-yellow-600{% else %}text-blue-600{% endif %}">
                                 {{ key|title }}: {{ value }}
                             </p>
                             {% endif %} {% endfor %}
@@ -786,22 +552,19 @@
                 <div class="flex items-center space-x-4">
                     <div class="flex-1">
                         <div class="w-full bg-gray-200 rounded-full h-4">
-                            <div
-                                class="{% if session.security_score >= 80 %}bg-green-600{% elif session.security_score >= 60 %}bg-yellow-600{% else %}bg-red-600{% endif %} h-4 rounded-full"
-                                style="width: {{ session.security_score }}%"
-                            ></div>
+                            <div class="{% if session.security_score >= 80 %}bg-green-600{% elif session.security_score >= 60 %}bg-yellow-600{% else %}bg-red-600{% endif %} h-4 rounded-full"
+                                style="width: {{ session.security_score }}%"></div>
                         </div>
                     </div>
                     <span
-                        class="text-lg font-bold {% if session.security_score >= 80 %}text-green-600{% elif session.security_score >= 60 %}text-yellow-600{% else %}text-red-600{% endif %}"
-                    >
+                        class="text-lg font-bold {% if session.security_score >= 80 %}text-green-600{% elif session.security_score >= 60 %}text-yellow-600{% else %}text-red-600{% endif %}">
                         {{ session.security_score|floatformat:0 }}%
                     </span>
                 </div>
                 <p class="text-sm text-gray-600 mt-2">
                     {% if session.security_score >= 80 %} Excellent security
-                    profile with no significant anomalies detected. {% elif
-                    session.security_score >= 60 %} Good security profile with
+                    profile with no significant anomalies detected.
+                    {% elif session.security_score >= 60 %} Good security profile with
                     minor anomalies that should be monitored. {% else %} Poor
                     security profile with significant anomalies requiring
                     attention. {% endif %}
@@ -817,11 +580,7 @@
                 <h3 class="text-lg font-semibold text-gray-900">
                     Raw Session Data
                 </h3>
-                <button
-                    type="button"
-                    onclick="toggleRawData()"
-                    class="text-sm text-blue-600 hover:text-blue-800"
-                >
+                <button type="button" onclick="toggleRawData()" class="text-sm text-blue-600 hover:text-blue-800">
                     Show/Hide Raw Data
                 </button>
             </div>
@@ -881,7 +640,7 @@
 
     // Auto-refresh session data every 30 seconds if session is active
     {% if session.is_active %}
-    setInterval(function() {
+    setInterval(function () {
         if (document.visibilityState === 'visible') {
             // Only refresh specific parts to maintain scroll position
             fetch(window.location.href)

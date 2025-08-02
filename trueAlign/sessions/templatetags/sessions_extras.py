@@ -47,6 +47,34 @@ def duration_minutes(duration):
     return 0
 
 @register.filter
+def duration_format(seconds):
+    """
+    Format duration in seconds to human readable format.
+    Usage: {{ seconds|duration_format }}
+    """
+    try:
+        if hasattr(seconds, 'total_seconds'):
+            total_seconds = int(seconds.total_seconds())
+        else:
+            total_seconds = int(seconds)
+
+        if total_seconds < 0:
+            return "0m"
+
+        hours = total_seconds // 3600
+        minutes = (total_seconds % 3600) // 60
+        seconds = total_seconds % 60
+
+        if hours > 0:
+            return f"{hours}h {minutes}m"
+        elif minutes > 0:
+            return f"{minutes}m {seconds}s"
+        else:
+            return f"{seconds}s"
+    except (ValueError, TypeError, AttributeError):
+        return "0m"
+
+@register.filter
 def session_status_color(session):
     """
     Return CSS color class based on session status.
@@ -216,3 +244,81 @@ def activity_level(session):
         else:
             return 'low-activity'
     return 'unknown'
+
+@register.filter
+def replace(value, args):
+    old, new = args.split(',')
+    return value.replace(old, new)
+
+@register.filter
+def mul(value, arg):
+    """
+    Multiply the value by the argument.
+    Usage: {{ value|mul:2 }}
+    """
+    try:
+        return float(value) * float(arg)
+    except (ValueError, TypeError):
+        return 0
+
+@register.filter
+def div(value, arg):
+    """
+    Divide the value by the argument.
+    Usage: {{ value|div:60 }}
+    """
+    try:
+        if float(arg) == 0:
+            return 0
+        return float(value) / float(arg)
+    except (ValueError, TypeError, ZeroDivisionError):
+        return 0
+
+@register.filter
+def add_filter(value, arg):
+    """
+    Add the argument to the value.
+    Usage: {{ value|add_filter:10 }}
+    """
+    try:
+        return float(value) + float(arg)
+    except (ValueError, TypeError):
+        return value
+
+@register.filter
+def sub(value, arg):
+    """
+    Subtract the argument from the value.
+    Usage: {{ value|sub:5 }}
+    """
+    try:
+        return float(value) - float(arg)
+    except (ValueError, TypeError):
+        return value
+
+@register.filter
+def duration_display(minutes):
+    """
+    Display duration in minutes as human-readable format.
+    Usage: {{ minutes|duration_display }}
+    """
+    try:
+        minutes = int(minutes or 0)
+        if minutes < 0:
+            return "0m"
+
+        if minutes == 0:
+            return "0m"
+
+        hours = minutes // 60
+        remaining_minutes = minutes % 60
+
+        if hours > 0:
+            if remaining_minutes > 0:
+                return f"{hours}h {remaining_minutes}m"
+            else:
+                return f"{hours}h"
+        else:
+            return f"{minutes}m"
+    except (ValueError, TypeError):
+        return "0m"

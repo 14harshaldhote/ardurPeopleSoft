@@ -35,7 +35,7 @@
                             Book Conference Room
                         </h2>
                         <p class="text-sm text-gray-600">
-                            Reserve a room for your meeting {% if user.profile.office_location %} • {{ user.profile.office_location.name }} {% endif %}
+                            Reserve a room for your meeting{% if user.profile and user.profile.office_location %} • {{ user.profile.office_location.name }}{% endif %}
                         </p>
                     </div>
                 </div>
@@ -81,11 +81,10 @@
                                 >
                                     Select Room
                                     <span class="text-red-500">*</span>
-                                    {% if user.profile.office_location %}
+                                    {% if user.profile and user.profile.office_location %}
                                     <span class="text-xs text-gray-500 ml-1"
                                         >({{ user.profile.office_location.name
-                                        }})</span
-                                    >
+                                        }})</span>
                                     {% endif %}
                                 </label>
                                 <select

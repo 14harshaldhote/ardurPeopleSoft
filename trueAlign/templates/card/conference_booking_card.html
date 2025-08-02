@@ -361,6 +361,26 @@
     // Initialize location detection
     function initLocationDetection() {
         loadManualLocationOptions();
+        
+        // Check if we have a stored location first
+        const storedLocation = sessionStorage.getItem('office_location');
+        if (storedLocation) {
+            try {
+                const locationData = JSON.parse(storedLocation);
+                currentLocationId = locationData.id;
+                updateLocationStatus(`${locationData.name} (${locationData.city}, ${locationData.state})`, 'success');
+                loadRoomsForLocation(locationData.id);
+                
+                // Update manual select to match stored location
+                const select = document.getElementById('manualLocationSelect');
+                if (select) {
+                    select.value = locationData.id;
+                }
+                return;
+            } catch (e) {
+                console.error('Error parsing stored location:', e);
+            }
+        }
 
         // Try to detect location automatically on page load
         if (navigator.geolocation) {
@@ -369,6 +389,7 @@
             }, 1000);
         } else {
             updateLocationStatus('Location detection not supported', 'error');
+            showLocationError('Please select your office location manually.');
         }
     }
 
@@ -379,13 +400,16 @@
             .then(data => {
                 if (data.success) {
                     const select = document.getElementById('manualLocationSelect');
-                    select.innerHTML = '<option value="">Select Location</option>';
+                    select.innerHTML = '\u003coption value=""\u003eSelect Location\u003c/option\u003e';
                     data.locations.forEach(location => {
                         const option = document.createElement('option');
                         option.value = location.id;
                         option.textContent = `${location.name} (${location.city})`;
                         select.appendChild(option);
                     });
+                    console.log('Loaded locations:', data.locations);
+                } else if (data.location_required) {
+                    showLocationError('Location access required. Please enable and try again.');
                 }
             })
             .catch(error => {

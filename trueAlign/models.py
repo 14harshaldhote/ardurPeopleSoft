@@ -23,6 +23,12 @@ logger = logging.getLogger(__name__)
 # Asia/Kolkata timezone
 IST_TIMEZONE = pytz.timezone('Asia/Kolkata')
 from decimal import Decimal
+import uuid
+import json
+import math
+import ipaddress
+import geoip2.database
+import os
 
 
 
@@ -126,7 +132,6 @@ class UserSession(models.Model):
     session_fingerprint = models.CharField(max_length=255, null=True, blank=True)
     session_key = models.CharField(max_length=40)
 
-
     # Session timing
     created_at = models.DateTimeField(auto_now_add=True)
     login_time = models.DateTimeField(default=timezone.now)
@@ -146,8 +151,7 @@ class UserSession(models.Model):
     working_time = models.DurationField(default=timedelta)
     focus_time = models.DurationField(default=timedelta)
     session_duration = models.FloatField(null=True, blank=True)
-    idle_time = models.DurationField(null=True, blank=True)  # or IntegerField if storing seconds
-
+    idle_time = models.DurationField(null=True, blank=True)
 
     # Client information
     ip_address = models.GenericIPAddressField(null=True, blank=True)
@@ -165,8 +169,7 @@ class UserSession(models.Model):
     connection_type = models.CharField(max_length=20, null=True, blank=True)
 
     # Location information
-    location_history = JSONField(null=True, blank=True)
-
+    location_history = models.JSONField(null=True, blank=True)
     location_country = models.CharField(max_length=100, null=True, blank=True)
     location_region = models.CharField(max_length=100, null=True, blank=True)
     location_city = models.CharField(max_length=100, null=True, blank=True)
@@ -280,23 +283,71 @@ class UserSession(models.Model):
     @classmethod
     def get_or_create_session(cls, user, tab_id=None, parent_session_id=None, client_data=None, session_key=None, ip_address=None, user_agent=None, browser_fingerprint=None, device_type=None, screen_resolution=None, timezone_offset=None, language=None, url=None, title=None, referrer=None):
         """
-        Get an existing session or create a new one based on tab_id and parent_session_id
+        Get an existing session or create a new one based on tab_id, parent_session_id, and session_fingerprint
+        Enhanced with better duplicate session handling
         """
-        # Try to find an existing active session by tab_id
+        logger.info(f"Getting or creating session for user {user.username} with tab_id={tab_id}, parent_session_id={parent_session_id}")
+
+        # First, clean up any orphaned sessions for this user
+        try:
+            cls.objects.filter(
+                user=user,
+                is_active=True,
+                last_activity__lt=timezone.now() - timedelta(hours=24)
+            ).update(
+                is_active=False,
+                end_reason='auto_cleanup',
+                ended_at=timezone.now()
+            )
+        except Exception as e:
+            logger.warning(f"Error during session cleanup for {user.username}: {e}")
+
+        # Extract session_fingerprint from client_data if available
+        session_fingerprint = None
+        if client_data and isinstance(client_data, dict):
+            session_fingerprint = client_data.get('session_fingerprint') or client_data.get('browser_fingerprint')
+        if not session_fingerprint and browser_fingerprint:
+            session_fingerprint = browser_fingerprint
+
+        # 1. Try to find existing session by tab_id (exact tab match)
         if tab_id:
             try:
                 session = cls.objects.get(user=user, tab_id=tab_id, is_active=True)
+                logger.info(f"Found existing session by tab_id: {session.id}")
+                session.last_activity = timezone.now()
+                session.save(update_fields=['last_activity'])
                 return session, False
             except cls.DoesNotExist:
                 pass
 
-        # Try to find an existing active session by parent_session_id
-        if parent_session_id:
-            try:
-                session = cls.objects.get(user=user, parent_session_id=parent_session_id, is_active=True)
+        # 2. Try to find existing session by parent_session_id and session_fingerprint
+        if parent_session_id and session_fingerprint:
+            session = cls.objects.filter(
+                user=user,
+                parent_session_id=parent_session_id,
+                session_fingerprint=session_fingerprint,
+                is_active=True
+            ).first()
+            if session:
+                logger.info(f"Found existing session by parent_session_id and fingerprint: {session.id}")
+                session.last_activity = timezone.now()
+                session.save(update_fields=['last_activity'])
                 return session, False
-            except cls.DoesNotExist:
-                pass
+
+        # 3. Try to find existing session by session_fingerprint only (same browser/device)
+        if session_fingerprint:
+            recent_time = timezone.now() - timedelta(minutes=30)  # Look for sessions in last 30 minutes
+            session = cls.objects.filter(
+                user=user,
+                session_fingerprint=session_fingerprint,
+                is_active=True,
+                last_activity__gte=recent_time
+            ).first()
+            if session:
+                logger.info(f"Found existing session by fingerprint: {session.id}")
+                session.last_activity = timezone.now()
+                session.save(update_fields=['last_activity'])
+                return session, False
 
         # Handle standalone parameters if client_data is not provided
         if client_data is None:
@@ -324,44 +375,54 @@ class UserSession(models.Model):
         if referrer is not None:
             client_data['referrer'] = referrer
 
+        # Generate parent_session_id if not provided
+        if not parent_session_id:
+            parent_session_id = uuid.uuid4()
+            logger.info(f"Generated new parent_session_id: {parent_session_id}")
+
         # Create a new session with detailed client data if available
+        session_data = {
+            'user': user,
+            'tab_id': tab_id,
+            'parent_session_id': parent_session_id,
+            'session_key': session_key or cls.generate_session_key(),
+            'is_primary_tab': True,  # Mark as primary since it's a new parent session
+            'session_fingerprint': session_fingerprint,
+        }
+
         if client_data:
-            session = cls(
-                user=user,
-                tab_id=tab_id,
-                parent_session_id=parent_session_id,
-                session_key=session_key or cls.generate_session_key(),
-                ip_address=client_data.get('ip_address'),
-                user_agent=client_data.get('user_agent'),
-                browser_fingerprint=client_data.get('browser_fingerprint'),
-                device_type=client_data.get('device_type'),
-                screen_resolution=client_data.get('screen_resolution'),
-                timezone_offset=client_data.get('timezone_offset'),
-                language=client_data.get('language'),
-                url=client_data.get('url'),
-                title=client_data.get('title'),
-                referrer=client_data.get('referrer')
-            )
+            session_data.update({
+                'ip_address': client_data.get('ip_address'),
+                'user_agent': client_data.get('user_agent'),
+                'browser_fingerprint': client_data.get('browser_fingerprint'),
+                'device_type': client_data.get('device_type'),
+                'screen_resolution': client_data.get('screen_resolution'),
+                'timezone_offset': client_data.get('timezone_offset'),
+                'language': client_data.get('language'),
+                'url': client_data.get('url'),
+                'title': client_data.get('title'),
+                'referrer': client_data.get('referrer')
+            })
 
-            # Process location data if available
-            if client_data.get('ip_address'):
+        session = cls(**session_data)
+
+        # Process location data if available
+        if client_data and client_data.get('ip_address'):
+            try:
                 session.update_location_from_ip(client_data.get('ip_address'))
+            except Exception as e:
+                logger.warning(f"Failed to update location from IP: {e}")
 
-            # Process geolocation data if available
+        # Process geolocation data if available
+        if client_data:
             location_data = client_data.get('location_data')
             if location_data and isinstance(location_data, dict):
                 session.location_latitude = location_data.get('latitude')
                 session.location_longitude = location_data.get('longitude')
                 session.location_accuracy = location_data.get('accuracy')
 
-                # Determine location type (home/office) based on time and previous sessions
-                if hasattr(session, 'determine_location_type'):
-                    session.determine_location_type()
-        else:
-            # Create a basic session if no client data is available
-            session = cls(user=user, tab_id=tab_id, parent_session_id=parent_session_id, session_key=session_key or cls.generate_session_key())
-
         session.save()
+        logger.info(f"Created new session {session.id} with parent_session_id: {session.parent_session_id}")
         return session, True
 
     def update_location_from_ip(self, ip_address=None):
@@ -1288,28 +1349,153 @@ class UserSession(models.Model):
                       'idle_state_changes', 'visited_urls', 'related_tabs', 'security_anomalies']
 
         for field in json_fields:
-            if getattr(self, field) is None:
-                if field in ['page_views', 'clicks', 'scrolls', 'keyboard_events',
-                            'tab_visibility_log', 'idle_state_changes', 'visited_urls', 'security_anomalies']:
-                    setattr(self, field, [])
-                else:
+            field_value = getattr(self, field)
+            if field_value is None:
+                if field in ['visited_urls', 'performance_metrics', 'offline_data']:
                     setattr(self, field, {})
+                else:
+                    setattr(self, field, [])
 
-        # Set location if not already set for new sessions
-        if not self.pk and not self.location_city and self.ip_address:
-            self.update_location_from_ip()
+        # Generate session_key if not set
+        if not self.session_key:
+            self.session_key = self.generate_session_key()
 
         # Generate tab_id if not set
         if not self.tab_id:
-            import uuid
             self.tab_id = str(uuid.uuid4())
 
         # Set tab opened time for new records
         if not self.pk and not self.tab_opened_time:
-            self.tab_opened_time = self.login_time
+            self.tab_opened_time = self.login_time or timezone.now()
+
+        # Generate parent_session_id if not set (this becomes the primary session)
+        if not self.parent_session_id and not self.pk:
+            self.parent_session_id = uuid.uuid4()
+            self.is_primary_tab = True
+            logger.info(f"Auto-generating parent_session_id in save(): {self.parent_session_id}")
+
+        # Set location if not already set for new sessions
+        if not self.pk and not self.location_city and self.ip_address:
+            try:
+                self.update_location_from_ip()
+            except Exception as e:
+                logger.warning(f"Failed to update location from IP: {e}")
 
         # All times should already be in UTC when saved to DB
         super().save(*args, **kwargs)
+
+        if not hasattr(self, '_skip_log') or not self._skip_log:
+            logger.info(f"Session saved: {self.id} for user {self.user.username}, active: {self.is_active}, idle: {self.is_idle}")
+
+class SessionActivity(models.Model):
+    """
+    Separate model for tracking user activities to improve performance
+    """
+    # Link to session
+    session = models.ForeignKey(UserSession, on_delete=models.CASCADE, related_name='activities')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='session_activities')
+
+    # Activity timing
+    created_at = models.DateTimeField(auto_now_add=True)
+    activity_time = models.DateTimeField(default=timezone.now)
+
+    # Activity type and data
+    ACTIVITY_TYPES = (
+        ('click', 'Click'),
+        ('scroll', 'Scroll'),
+        ('keyboard', 'Keyboard'),
+        ('mouse_move', 'Mouse Move'),
+        ('page_view', 'Page View'),
+        ('tab_visibility', 'Tab Visibility'),
+        ('idle_state', 'Idle State'),
+        ('heartbeat', 'Heartbeat'),
+        ('location_update', 'Location Update'),
+    )
+    activity_type = models.CharField(max_length=20, choices=ACTIVITY_TYPES)
+    activity_data = models.JSONField(default=dict, blank=True)
+
+    # Page information
+    url = models.URLField(max_length=2000, null=True, blank=True)
+    title = models.CharField(max_length=500, null=True, blank=True)
+
+    # Location data (if applicable)
+    location_latitude = models.FloatField(null=True, blank=True)
+    location_longitude = models.FloatField(null=True, blank=True)
+    location_accuracy = models.FloatField(null=True, blank=True)
+
+    # Activity metrics
+    productivity_score = models.FloatField(null=True, blank=True)
+    engagement_score = models.FloatField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'trueAlign_sessionactivity'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['session', 'activity_type'], name='session_activity_type_idx'),
+            models.Index(fields=['user', 'activity_time'], name='user_activity_time_idx'),
+            models.Index(fields=['created_at'], name='activity_created_at_idx'),
+            models.Index(fields=['activity_type', 'activity_time'], name='type_time_idx'),
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} - {self.activity_type} at {self.activity_time}"
+
+    @classmethod
+    def record_activity(cls, session, activity_type, activity_data=None, url=None, title=None, location_data=None):
+        """
+        Record a user activity
+        """
+        activity = cls(
+            session=session,
+            user=session.user,
+            activity_type=activity_type,
+            activity_data=activity_data or {},
+            url=url,
+            title=title
+        )
+
+        if location_data:
+            activity.location_latitude = location_data.get('latitude')
+            activity.location_longitude = location_data.get('longitude')
+            activity.location_accuracy = location_data.get('accuracy')
+
+        activity.save()
+        return activity
+
+    @classmethod
+    def get_recent_activities(cls, session, hours=24):
+        """
+        Get recent activities for a session
+        """
+        cutoff_time = timezone.now() - timedelta(hours=hours)
+        return cls.objects.filter(
+            session=session,
+            activity_time__gte=cutoff_time
+        ).order_by('-activity_time')
+
+    @classmethod
+    def get_activity_summary(cls, session):
+        """
+        Get activity summary for a session
+        """
+        activities = cls.objects.filter(session=session)
+
+        summary = {}
+        for activity_type, _ in cls.ACTIVITY_TYPES:
+            count = activities.filter(activity_type=activity_type).count()
+            summary[activity_type] = count
+
+        return summary
+
+    @classmethod
+    def cleanup_old_activities(cls, days=30):
+        """
+        Clean up activities older than specified days
+        """
+        cutoff_date = timezone.now() - timedelta(days=days)
+        deleted_count = cls.objects.filter(created_at__lt=cutoff_date).delete()[0]
+        logger.info(f"Cleaned up {deleted_count} old session activities")
+        return deleted_count
 
 '''----------------------------------- LEAVE AREA -----------------------------------'''
 from django.core.exceptions import ValidationError
@@ -2375,9 +2561,12 @@ class Attendance(models.Model):
             if self.clock_out_time <= self.clock_in_time:
                 errors['clock_out_time'] = "Clock out time must be after clock in time"
 
-        # Validate dates
+        # Validate dates (allow today, prevent future dates)
         if self.date and self.date > timezone.now().date():
-            errors['date'] = "Cannot create attendance for future dates"
+            # Allow if it's today but in different timezone
+            ist_now = timezone.now().astimezone(pytz.timezone('Asia/Kolkata'))
+            if self.date > ist_now.date():
+                errors['date'] = "Cannot create attendance for future dates"
 
         # Validate total hours
         if self.total_hours and self.total_hours > 24:
@@ -2841,32 +3030,73 @@ class Attendance(models.Model):
             else:
                 # Use atomic transaction if not already in one
                 with transaction.atomic():
-                    # Use select_for_update to prevent deadlocks
-                    attendance = cls.objects.select_for_update().get(user=user, date=date)
+                    try:
+                        # Use select_for_update to prevent deadlocks
+                        attendance = cls.objects.select_for_update().get(user=user, date=date)
 
-                    # Update session information
-                    if not attendance.first_session or session.login_time < attendance.first_session.login_time:
-                        attendance.first_session = session
+                        # Validate session exists and is not None
+                        if not session or not hasattr(session, 'login_time'):
+                            logger.warning(f"Invalid session provided for {user.username} on {date}")
+                            return
 
-                    if not attendance.last_session or session.login_time > attendance.last_session.login_time:
-                        attendance.last_session = session
+                        # Update session information with proper existence checks
+                        update_first_session = False
+                        update_last_session = False
 
-                    # Update session count
-                    attendance.total_sessions = UserSession.objects.filter(
-                        user=user,
-                        login_time__date=date
-                    ).count()
+                        # Check if we need to update first_session
+                        if not attendance.first_session:
+                            update_first_session = True
+                        else:
+                            try:
+                                # Verify first_session still exists
+                                if attendance.first_session and hasattr(attendance.first_session, 'login_time'):
+                                    if session.login_time < attendance.first_session.login_time:
+                                        update_first_session = True
+                                else:
+                                    update_first_session = True
+                            except (AttributeError, UserSession.DoesNotExist):
+                                update_first_session = True
 
-                    # Update clock times based on session
-                    if not attendance.clock_in_time or session.login_time < attendance.clock_in_time:
-                        attendance.clock_in_time = session.login_time
+                        # Check if we need to update last_session
+                        if not attendance.last_session:
+                            update_last_session = True
+                        else:
+                            try:
+                                # Verify last_session still exists
+                                if attendance.last_session and hasattr(attendance.last_session, 'login_time'):
+                                    if session.login_time > attendance.last_session.login_time:
+                                        update_last_session = True
+                                else:
+                                    update_last_session = True
+                            except (AttributeError, UserSession.DoesNotExist):
+                                update_last_session = True
 
-                    if session.logout_time:
-                        if not attendance.clock_out_time or session.logout_time > attendance.clock_out_time:
-                            attendance.clock_out_time = session.logout_time
+                        # Apply updates
+                        if update_first_session:
+                            attendance.first_session = session
+                        if update_last_session:
+                            attendance.last_session = session
 
-                    attendance.save()
-                    logger.info(f"Updated session data for {user.username} on {date}")
+                        # Update session count
+                        attendance.total_sessions = UserSession.objects.filter(
+                            user=user,
+                            login_time__date=date
+                        ).count()
+
+                        # Update clock times based on session
+                        if not attendance.clock_in_time or session.login_time < attendance.clock_in_time:
+                            attendance.clock_in_time = session.login_time
+
+                        if session.logout_time:
+                            if not attendance.clock_out_time or session.logout_time > attendance.clock_out_time:
+                                attendance.clock_out_time = session.logout_time
+
+                        attendance.save()
+                        logger.info(f"Updated session data for {user.username} on {date}")
+
+                    except Exception as e:
+                        logger.error(f"Error in atomic transaction for {user.username}: {e}")
+                        raise
 
         except cls.DoesNotExist:
             logger.warning(f"No attendance record found for {user.username} on {date}")

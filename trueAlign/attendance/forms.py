@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from datetime import datetime, date, timedelta
 from django.utils import timezone
+import pytz
 
 from trueAlign.models import Attendance, ShiftAssignment
 
@@ -99,9 +100,12 @@ class AttendanceForm(forms.ModelForm):
             if clock_out_time <= clock_in_time:
                 raise ValidationError("Clock out time must be after clock in time")
 
-        # Validate date is not in future
+        # Validate date is not in future (allow today, prevent future dates)
         if date and date > timezone.now().date():
-            raise ValidationError("Cannot create attendance for future dates")
+            # Allow if it's today but in different timezone
+            ist_now = timezone.now().astimezone(pytz.timezone('Asia/Kolkata'))
+            if date > ist_now.date():
+                raise ValidationError("Cannot create attendance for future dates")
 
         return cleaned_data
 

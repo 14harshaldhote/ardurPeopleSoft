@@ -206,41 +206,27 @@ class OptimizedSessionTrackingMiddleware:
         return session
 
     def _create_new_session_throttled(self, request, user, tab_id):
-        """Create new session with minimal data and security checks"""
+        """Create new session with minimal data and security checks using improved session management"""
         try:
-            # Check if user already has an active session with this tab_id
-            existing_session = UserSession.objects.filter(
-                user=user,
-                tab_id=tab_id,
-                is_active=True
-            ).first()
-
-            if existing_session:
-                logger.info(f"Reusing existing session {existing_session.id} for user {user.username}")
-                # Update last activity and return existing session
-                existing_session.last_activity = timezone.now()
-                existing_session.save(update_fields=['last_activity'])
-                return existing_session
-
-            # Close any old active sessions for this user to prevent duplicates
-            old_sessions = UserSession.objects.filter(
-                user=user,
-                is_active=True
-            )
-
-            if old_sessions.exists():
-                logger.info(f"Closing {old_sessions.count()} old sessions for user {user.username}")
-                old_sessions.update(
-                    is_active=False,
-                    ended_at=timezone.now(),
-                    logout_time=timezone.now()
-                )
-
             client_info = self._extract_client_info(request)
+
+            # Extract session identifiers from headers or generate new ones
+            parent_session_id = request.headers.get('X-Parent-Session-ID')
+            session_fingerprint = request.headers.get('X-Session-Fingerprint') or client_info.get('browser_fingerprint')
+
+            # If no parent_session_id provided, check if we can derive it from existing sessions
+            if not parent_session_id and session_fingerprint:
+                recent_session = UserSession.objects.filter(
+                    user=user,
+                    session_fingerprint=session_fingerprint,
+                    is_active=True,
+                    last_activity__gte=timezone.now() - timezone.timedelta(minutes=30)
+                ).first()
+                if recent_session:
+                    parent_session_id = str(recent_session.parent_session_id)
 
             # Check for suspicious activity
             if CONFIG.ENABLE_SECURITY_CHECKS:
-                # Get any existing session for comparison
                 existing_session = UserSession.objects.filter(
                     user=user, is_active=True
                 ).first()
@@ -258,59 +244,58 @@ class OptimizedSessionTrackingMiddleware:
                 except Exception as loc_error:
                     logger.warning(f"Error getting location: {loc_error}")
 
-            # Create session with minimal required fields
-            session_data = {
-                'user': user,
-                'tab_id': tab_id,
-                'session_key': UserSession.generate_session_key(),
+            # Prepare client data for session creation
+            client_data = {
                 'ip_address': client_info.get('ip_address'),
                 'user_agent': client_info.get('user_agent'),
                 'device_type': client_info.get('device_type'),
-                'login_time': timezone.now(),
-                'last_activity': timezone.now(),
-                'is_active': True
+                'browser_fingerprint': session_fingerprint,
+                'session_fingerprint': session_fingerprint,
+                'browser': client_info.get('browser'),
+                'os': client_info.get('os'),
+                'screen_resolution': request.headers.get('X-Screen-Resolution'),
+                'timezone_offset': request.headers.get('X-Timezone-Offset'),
+                'language': request.headers.get('X-Language'),
             }
-
-            # Add browser and os if they're present in client_info
-            if 'browser' in client_info:
-                session_data['browser'] = client_info.get('browser')
-            if 'os' in client_info:
-                session_data['os'] = client_info.get('os')
 
             # Add location data if available
             if location_info:
-                session_data['location_country'] = location_info.get('country')
-                session_data['location_region'] = location_info.get('region')
-                session_data['location_city'] = location_info.get('city')
-                session_data['location_latitude'] = location_info.get('latitude')
-                session_data['location_longitude'] = location_info.get('longitude')
-                session_data['location_type'] = 'geo_ip'
+                client_data['location_data'] = location_info
 
-            session = UserSession.objects.create(**session_data)
+            # Use the improved get_or_create_session method
+            session, created = UserSession.get_or_create_session(
+                user=user,
+                tab_id=tab_id,
+                parent_session_id=parent_session_id,
+                client_data=client_data,
+                session_key=UserSession.generate_session_key()
+            )
 
-            # Initialize buffer for new session
+            # Initialize buffer for the session (whether new or existing)
             buffer_key = f"activity_{user.id}_{session.id}"
-            self._activity_buffer[buffer_key] = {
-                'clicks': [],
-                'scrolls': [],
-                'keyboard_events': [],
-                'mouse_movements': 0,
-                'tab_visibility_log': [],
-                'idle_state_changes': [],
-                'performance_metrics': {},
-                'page_views': [],
-                'pending_updates': {},
-                'last_activity': timezone.now(),
-                'last_flush': time.time(),
-                'user_id': user.id
-            }
+            if buffer_key not in self._activity_buffer:
+                self._activity_buffer[buffer_key] = {
+                    'clicks': [],
+                    'scrolls': [],
+                    'keyboard_events': [],
+                    'mouse_movements': 0,
+                    'tab_visibility_log': [],
+                    'idle_state_changes': [],
+                    'performance_metrics': {},
+                    'page_views': [],
+                    'pending_updates': {},
+                    'last_activity': timezone.now(),
+                    'last_flush': time.time(),
+                    'user_id': user.id
+                }
 
+            action = "Created" if created else "Reused existing"
             if CONFIG.should_log_category('session_creation'):
-                logger.info(f"Created new session {session.id} for user {user.username}")
+                logger.info(f"{action} session {session.id} for user {user.username} (tab: {tab_id}, parent: {parent_session_id})")
 
             return session
         except Exception as e:
-            logger.error(f"Error creating session: {e}")
+            logger.error(f"Error creating/getting session: {e}")
             return None
 
 
@@ -318,12 +303,22 @@ class OptimizedSessionTrackingMiddleware:
     def _extract_client_info(self, request):
         """Extract client information from request"""
         ip_address = get_client_ip(request)
+
+        # Generate browser fingerprint from user agent and other headers
         user_agent = request.META.get('HTTP_USER_AGENT', '')
+        accept_language = request.META.get('HTTP_ACCEPT_LANGUAGE', '')
+        accept_encoding = request.META.get('HTTP_ACCEPT_ENCODING', '')
+
+        # Create a simple fingerprint
+        import hashlib
+        fingerprint_data = f"{user_agent}|{accept_language}|{accept_encoding}|{ip_address}"
+        browser_fingerprint = hashlib.md5(fingerprint_data.encode()).hexdigest()[:16]
         device_info = parse_user_agent(user_agent)
 
         return {
             'ip_address': ip_address,
             'user_agent': user_agent,
+            'browser_fingerprint': browser_fingerprint,
             'device_type': device_info.get('device', 'unknown'),
             'browser': device_info.get('browser', 'unknown'),
             'os': device_info.get('os', 'unknown'),

@@ -1,376 +1,521 @@
 {% extends "base.html" %}
 {% load static %}
+{% load sessions_extras %}
 
 {% block title %}Session Analytics - TrueAlign{% endblock %}
+
+{% block extra_css %}
+<style>
+    .metric-card {
+        transition: all 0.3s ease;
+    }
+    .metric-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+    .chart-container {
+        position: relative;
+        height: 300px;
+    }
+    .trend-up {
+        color: #10b981;
+    }
+    .trend-down {
+        color: #ef4444;
+    }
+    .trend-neutral {
+        color: #6b7280;
+    }
+    .analytics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="min-h-screen bg-gray-50">
     <!-- Header -->
-    <div class="bg-white shadow-sm border-b">
+    <div class="bg-white shadow-sm border-b border-gray-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center py-6">
-                <div>
-                    <h1 class="text-3xl font-bold text-gray-900">Session Analytics</h1>
-                    <p class="mt-2 text-gray-600">Comprehensive insights and trends from user session data</p>
+            <div class="flex items-center justify-between py-6">
+                <div class="flex items-center space-x-3">
+                    <div class="p-3 bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl shadow-sm">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-900">Session Analytics</h1>
+                        <p class="text-gray-600 mt-1">Comprehensive insights and trends for session data</p>
+                    </div>
                 </div>
-                <div class="flex space-x-3">
-                    <a href="{% url 'sessions:dashboard' %}"
-                       class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
-                        Dashboard
-                    </a>
-                    <a href="{% url 'sessions:export' %}"
-                       class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
-                        Export Data
-                    </a>
+
+                <!-- Time Range Selector -->
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2">
+                        <label class="text-sm font-medium text-gray-700">Time Range:</label>
+                        <select id="date-range" class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            <option value="7" {% if date_range == 7 %}selected{% endif %}>Last 7 days</option>
+                            <option value="30" {% if date_range == 30 %}selected{% endif %}>Last 30 days</option>
+                            <option value="90" {% if date_range == 90 %}selected{% endif %}>Last 3 months</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <label class="text-sm font-medium text-gray-700">Office:</label>
+                        <select id="office-filter" class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            <option value="all" {% if selected_office_id == 'all' %}selected{% endif %}>All Offices</option>
+                            {% for office in all_offices %}
+                            <option value="{{ office.id }}" {% if selected_office_id == office.id|stringformat:"s" %}selected{% endif %}>
+                                {{ office.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Main Content -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Analytics Overview -->
+        <!-- Performance Metrics Overview -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <!-- Total Analyzed Sessions -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div class="flex items-center">
-                    <div class="p-3 bg-blue-100 rounded-lg">
-                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                        </svg>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Total Sessions</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ total_analyzed_sessions|floatformat:0 }}</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Average Productivity -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div class="flex items-center">
-                    <div class="p-3 bg-green-100 rounded-lg">
-                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-                        </svg>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Avg Productivity</p>
-                        <p class="text-2xl font-bold text-green-600">
-                            {% if avg_productivity %}{{ avg_productivity }}%{% else %}N/A{% endif %}
-                        </p>
+            <!-- Average Session Duration -->
+            <div class="metric-card bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="p-3 bg-blue-100 rounded-lg">
+                                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Avg Duration</dt>
+                                <dd class="text-lg font-medium text-gray-900">
+                                    {% if performance_metrics.avg_session_duration %}
+                                        {{ performance_metrics.avg_session_duration|duration_format }}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </dd>
+                            </dl>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Security Anomalies -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div class="flex items-center">
-                    <div class="p-3 bg-red-100 rounded-lg">
-                        <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-                        </svg>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Security Issues</p>
-                        <p class="text-2xl font-bold text-red-600">{{ sessions_with_anomalies }}</p>
+            <!-- Total Working Time -->
+            <div class="metric-card bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="p-3 bg-green-100 rounded-lg">
+                                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl></dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Working Time</dt>
+                                <dd class="text-lg font-medium text-gray-900">
+                                    {% if performance_metrics.total_working_time %}
+                                        {{ performance_metrics.total_working_time|duration_format }}
+                                    {% else %}
+                                        0h
+                                    {% endif %}
+                                </dd>
+                            </dl>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Unique Countries -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div class="flex items-center">
-                    <div class="p-3 bg-purple-100 rounded-lg">
-                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
+            <!-- Total Idle Time -->
+            <div class="metric-card bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="p-3 bg-yellow-100 rounded-lg">
+                                <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Idle Time</dt>
+                                <dd class="text-lg font-medium text-gray-900">
+                                    {% if performance_metrics.total_idle_time %}
+                                        {{ performance_metrics.total_idle_time|duration_format }}
+                                    {% else %}
+                                        0h
+                                    {% endif %}
+                                </dd>
+                            </dl>
+                        </div>
                     </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Countries</p>
-                        <p class="text-2xl font-bold text-purple-600">{{ country_stats|length }}</p>
+                </div>
+            </div>
+
+            <!-- Completion Rate -->
+            <div class="metric-card bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="p-3 bg-purple-100 rounded-lg">
+                                <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl></dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Completion Rate</dt>
+                                <dd class="text-lg font-medium text-gray-900">
+                                    {{ performance_metrics.completion_rate|default:0 }}%
+                                </dd>
+                            </dl>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Time-Based Analytics -->
+        <!-- Charts Section -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            <!-- Daily Sessions Chart -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Daily Sessions (Last 7 Days)</h3>
-                {% if daily_sessions %}
-                <div class="space-y-4">
-                    {% for day in daily_sessions %}
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm font-medium text-gray-900">{{ day.date }}</span>
-                        <div class="flex items-center space-x-2">
-                            <div class="w-32 bg-gray-200 rounded-full h-2">
-                                {% with max_count=daily_sessions|first %}
-                                <div class="bg-blue-600 h-2 rounded-full"
-                                     style="width: {% widthratio day.count max_count.count 100 %}%"></div>
-                                {% endwith %}
-                            </div>
-                            <span class="text-sm text-gray-600 w-8">{{ day.count }}</span>
-                        </div>
+            <!-- Daily Session Trend -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Daily Session Trend</h3>
+                    <p class="text-sm text-gray-500">Sessions over the last {{ date_range }} days</p>
+                </div>
+                <div class="p-6">
+                    <div class="chart-container">
+                        <canvas id="dailyChart"></canvas>
                     </div>
-                    {% endfor %}
                 </div>
-                {% else %}
-                <div class="text-center py-8">
-                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                    </svg>
-                    <p class="mt-2 text-sm text-gray-500">No daily session data available</p>
-                </div>
-                {% endif %}
             </div>
 
             <!-- Hourly Distribution -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Hourly Distribution (Last 24h)</h3>
-                {% if hourly_sessions %}
-                <div class="grid grid-cols-6 gap-2">
-                    {% for hour in hourly_sessions %}
-                    <div class="text-center">
-                        <div class="h-16 bg-gray-200 rounded flex items-end mb-1">
-                            {% if hour.count > 0 %}
-                            <div class="w-full bg-green-500 rounded"
-                                 style="height: {% widthratio hour.count 10 100 %}%"></div>
-                            {% endif %}
-                        </div>
-                        <span class="text-xs text-gray-600">{{ hour.hour|slice:":2" }}</span>
-                        <div class="text-xs text-gray-500">{{ hour.count }}</div>
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Hourly Distribution</h3>
+                    <p class="text-sm text-gray-500">Session activity by hour (last 24h)</p>
+                </div>
+                <div class="p-6">
+                    <div class="chart-container">
+                        <canvas id="hourlyChart"></canvas>
                     </div>
-                    {% endfor %}
                 </div>
-                {% else %}
-                <div class="text-center py-8">
-                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <p class="mt-2 text-sm text-gray-500">No hourly session data available</p>
-                </div>
-                {% endif %}
             </div>
         </div>
 
-        <!-- Device and Browser Analytics -->
+        <!-- Device and Location Analytics -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            <!-- Device Breakdown -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Device Types</h3>
-                {% if device_breakdown %}
-                <div class="space-y-4">
-                    {% for device in device_breakdown %}
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center">
-                            {% if device.device_type == 'mobile' %}
-                                <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a1 1 0 001-1V4a1 1 0 00-1-1H8a1 1 0 00-1 1v16a1 1 0 001 1z"></path>
-                                </svg>
-                            {% elif device.device_type == 'tablet' %}
-                                <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
-                                </svg>
-                            {% else %}
-                                <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                                </svg>
-                            {% endif %}
-                            <span class="text-sm font-medium text-gray-900 capitalize">{{ device.device_type|default:"Unknown" }}</span>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <div class="w-24 bg-gray-200 rounded-full h-2">
-                                <div class="bg-purple-600 h-2 rounded-full"
-                                     style="width: {% widthratio device.count device_breakdown.0.count 100 %}%"></div>
-                            </div>
-                            <span class="text-sm text-gray-600 w-8">{{ device.count }}</span>
-                        </div>
-                    </div>
-                    {% endfor %}
+            <!-- Device Distribution -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Device Distribution</h3>
                 </div>
-                {% else %}
-                <div class="text-center py-8">
-                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                    </svg>
-                    <p class="mt-2 text-sm text-gray-500">No device data available</p>
-                </div>
-                {% endif %}
-            </div>
-
-            <!-- Browser Breakdown -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Browser Types</h3>
-                {% if browser_breakdown %}
-                <div class="space-y-4">
-                    {% for browser in browser_breakdown|slice:":8" %}
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center">
-                            <div class="w-4 h-4 bg-blue-400 rounded mr-3"></div>
-                            <span class="text-sm font-medium text-gray-900">{{ browser.browser|truncatechars:20 }}</span>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <div class="w-24 bg-gray-200 rounded-full h-2">
-                                <div class="bg-blue-600 h-2 rounded-full"
-                                     style="width: {% widthratio browser.count browser_breakdown.0.count 100 %}%"></div>
-                            </div>
-                            <span class="text-sm text-gray-600 w-8">{{ browser.count }}</span>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <div class="text-center py-8">
-                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9"></path>
-                    </svg>
-                    <p class="mt-2 text-sm text-gray-500">No browser data available</p>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- Geographic Distribution -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-            <h3 class="text-lg font-semibold text-gray-900 mb-6">Geographic Distribution</h3>
-
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <!-- By Country -->
-                <div>
-                    <h4 class="text-md font-medium text-gray-900 mb-4">Sessions by Country</h4>
-                    {% if country_stats %}
-                    <div class="space-y-3">
-                        {% for country in country_stats|slice:":10" %}
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center">
-                                <div class="w-6 h-6 bg-green-100 rounded flex items-center justify-center mr-3">
-                                    <svg class="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                                    </svg>
+                <div class="p-6">
+                    {% if device_trends %}
+                        <div class="space-y-4">
+                            {% for device in device_trends %}
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0">
+                                        {% if device.device_type == 'Mac' %}
+                                            <svg class="h-6 w-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 2L3 7v11h14V7l-7-5z"/>
+                                            </svg>
+                                        {% elif device.device_type == 'Windows' %}
+                                            <svg class="h-6 w-6 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M3 3h6v6H3V3zm8 0h6v6h-6V3zM3 11h6v6H3v-6zm8 0h6v6h-6v-6z"/>
+                                            </svg>
+                                        {% else %}
+                                            <svg class="h-6 w-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M4 4h12v12H4V4z"/>
+                                            </svg>
+                                        {% endif %}
+                                    </div>
+                                    <div class="ml-3">
+                                        <p class="text-sm font-medium text-gray-900">{{ device.device_type }}</p>
+                                        <p class="text-xs text-gray-500">{{ device.unique_users }} users</p>
+                                    </div>
                                 </div>
-                                <span class="text-sm font-medium text-gray-900">{{ country.location_country|default:"Unknown" }}</span>
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <div class="w-20 bg-gray-200 rounded-full h-2">
-                                    <div class="bg-green-600 h-2 rounded-full"
-                                         style="width: {% widthratio country.count country_stats.0.count 100 %}%"></div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-sm text-gray-500">{{ device.session_count }}</span>
+                                    {% if device.active_count > 0 %}
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                            {{ device.active_count }} active
+                                        </span>
+                                    {% endif %}
                                 </div>
-                                <span class="text-sm text-gray-600 w-6">{{ country.count }}</span>
                             </div>
+                            {% endfor %}
                         </div>
-                        {% endfor %}
-                    </div>
                     {% else %}
-                    <div class="text-center py-8">
-                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        <p class="mt-2 text-sm text-gray-500">No country data available</p>
-                    </div>
+                        <p class="text-center text-gray-500 py-8">No device data available</p>
                     {% endif %}
                 </div>
+            </div>
 
-                <!-- By City -->
-                <div>
-                    <h4 class="text-md font-medium text-gray-900 mb-4">Top Cities</h4>
-                    {% if city_stats %}
-                    <div class="space-y-3">
-                        {% for city in city_stats %}
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center">
-                                <div class="w-6 h-6 bg-blue-100 rounded flex items-center justify-center mr-3">
-                                    <svg class="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                                    </svg>
+            <!-- Top Locations -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Top Locations</h3>
+                </div>
+                <div class="p-6">
+                    {% if location_trends %}
+                        <div class="space-y-4">
+                            {% for location in location_trends|slice:":8" %}
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0">
+                                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="ml-3">
+                                        <p class="text-sm font-medium text-gray-900">{{ location.location_city }}</p>
+                                        {% if location.location_country %}
+                                            <p class="text-xs text-gray-500">{{ location.location_country }}</p>
+                                        {% endif %}
+                                    </div>
                                 </div>
-                                <div>
-                                    <span class="text-sm font-medium text-gray-900">{{ city.location_city|default:"Unknown" }}</span>
-                                    <p class="text-xs text-gray-500">{{ city.location_country|default:"Unknown Country" }}</p>
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-sm text-gray-500">{{ location.session_count }}</span>
+                                    {% if location.active_count > 0 %}
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                            {{ location.active_count }} active
+                                        </span>
+                                    {% endif %}
                                 </div>
                             </div>
-                            <div class="flex items-center space-x-2">
-                                <div class="w-20 bg-gray-200 rounded-full h-2">
-                                    <div class="bg-blue-600 h-2 rounded-full"
-                                         style="width: {% widthratio city.count city_stats.0.count 100 %}%"></div>
-                                </div>
-                                <span class="text-sm text-gray-600 w-6">{{ city.count }}</span>
-                            </div>
+                            {% endfor %}
                         </div>
-                        {% endfor %}
-                    </div>
                     {% else %}
-                    <div class="text-center py-8">
-                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                        </svg>
-                        <p class="mt-2 text-sm text-gray-500">No city data available</p>
-                    </div>
+                        <p class="text-center text-gray-500 py-8">No location data available</p>
                     {% endif %}
                 </div>
             </div>
         </div>
 
-        <!-- Export and Action Buttons -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Analytics Actions</h3>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <a href="{% url 'sessions:export' %}"
-                   class="flex items-center justify-center p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
-                    <svg class="w-5 h-5 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                    </svg>
-                    <span class="text-sm font-medium text-blue-900">Export All Data</span>
-                </a>
+        <!-- Shift Analytics -->
+        {% if shift_analytics %}
+        <div class="bg-white shadow rounded-lg mb-8">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">Shift Analytics</h3>
+                <p class="text-sm text-gray-500">Performance metrics by shift type</p>
+            </div>
+            <div class="p-6">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Shift</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Users</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Sessions</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Active</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg Duration</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for shift in shift_analytics %}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    {{ shift.shift_name }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                        {% if shift.shift_type == 'day' %}bg-yellow-100 text-yellow-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+                                        {{ shift.shift_type|title }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ shift.total_users }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ shift.total_sessions }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {% if shift.active_sessions > 0 %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            {{ shift.active_sessions }}
+                                        </span>
+                                    {% else %}
+                                        <span class="text-gray-400">0</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {% if shift.avg_duration %}
+                                        {{ shift.avg_duration|duration_format }}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
 
-                <a href="{% url 'sessions:session_list' %}?date_from={{ today|date:'Y-m-d' }}"
-                   class="flex items-center justify-center p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
-                    <svg class="w-5 h-5 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                    </svg>
-                    <span class="text-sm font-medium text-green-900">Today's Sessions</span>
-                </a>
-
-                <a href="{% url 'sessions:session_list' %}?status=active"
-                   class="flex items-center justify-center p-4 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors">
-                    <svg class="w-5 h-5 text-yellow-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.636 18.364a9 9 0 010-12.728m12.728 0a9 9 0 010 12.728m-9.9-2.829a5 5 0 010-7.07m7.072 0a5 5 0 010 7.07M13 12a1 1 0 11-2 0 1 1 0 012 0z"></path>
-                    </svg>
-                    <span class="text-sm font-medium text-yellow-900">Active Sessions</span>
-                </a>
-
-                <button onclick="window.print()"
-                        class="flex items-center justify-center p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors">
-                    <svg class="w-5 h-5 text-purple-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
-                    </svg>
-                    <span class="text-sm font-medium text-purple-900">Print Report</span>
-                </button>
+        <!-- Export Section -->
+        <div class="bg-white shadow rounded-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">Export Analytics</h3>
+                <p class="text-sm text-gray-500">Download analytics data for further analysis</p>
+            </div>
+            <div class="p-6">
+                <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                    <a href="{% url 'sessions:export' %}?format=csv{% if selected_office_id != 'all' %}&office={{ selected_office_id }}{% endif %}"
+                       class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        Export CSV
+                    </a>
+                    <a href="{% url 'sessions:export' %}?format=json{% if selected_office_id != 'all' %}&office={{ selected_office_id }}{% endif %}"
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                        </svg>
+                        Export JSON
+                    </a>
+                    <a href="{% url 'sessions:dashboard' %}{% if selected_office_id != 'all' %}?office={{ selected_office_id }}{% endif %}"
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+                        </svg>
+                        Back to Dashboard
+                    </a>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<script>
-// Auto-refresh analytics every 60 seconds
-setInterval(function() {
-    if (document.visibilityState === 'visible') {
-        location.reload();
-    }
-}, 60000);
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-// Interactive chart hover effects
-document.addEventListener('DOMContentLoaded', function() {
-    // Add hover effects to chart bars
-    const chartBars = document.querySelectorAll('[data-chart-bar]');
-    chartBars.forEach(bar => {
-        bar.addEventListener('mouseenter', function() {
-            this.style.opacity = '0.8';
-        });
-        bar.addEventListener('mouseleave', function() {
-            this.style.opacity = '1';
-        });
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Filter change handlers
+    document.getElementById('date-range').addEventListener('change', function() {
+        updateAnalytics();
+    });
+
+    document.getElementById('office-filter').addEventListener('change', function() {
+        updateAnalytics();
+    });
+
+    function updateAnalytics() {
+        const dateRange = document.getElementById('date-range').value;
+        const office = document.getElementById('office-filter').value;
+
+        const url = new URL(window.location);
+        url.searchParams.set('range', dateRange);
+        url.searchParams.set('office', office);
+
+        window.location.href = url.toString();
+    }
+
+    // Daily Chart
+    const dailyCtx = document.getElementById('dailyChart').getContext('2d');
+    const dailyData = [
+        {% for day in daily_stats %}
+        {
+            date: '{{ day.date }}',
+            total: {{ day.total_sessions }},
+            active: {{ day.active_sessions }},
+            users: {{ day.unique_users }}
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    new Chart(dailyCtx, {
+        type: 'line',
+        data: {
+            labels: dailyData.map(d => {
+                const date = new Date(d.date);
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            }),
+            datasets: [
+                {
+                    label: 'Total Sessions',
+                    data: dailyData.map(d => d.total),
+                    borderColor: 'rgb(59, 130, 246)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.1
+                },
+                {
+                    label: 'Active Sessions',
+                    data: dailyData.map(d => d.active),
+                    borderColor: 'rgb(16, 185, 129)',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    tension: 0.1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Hourly Chart
+    const hourlyCtx = document.getElementById('hourlyChart').getContext('2d');
+    const hourlyData = [
+        {% for hour in hourly_stats %}
+        {
+            hour: {{ hour.hour }},
+            sessions: {{ hour.sessions }},
+            active: {{ hour.active_sessions }}
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    new Chart(hourlyCtx, {
+        type: 'bar',
+        data: {
+            labels: hourlyData.map(h => h.hour + ':00'),
+            datasets: [
+                {
+                    label: 'Sessions',
+                    data: hourlyData.map(h => h.sessions),
+                    backgroundColor: 'rgba(147, 51, 234, 0.8)',
+                    borderColor: 'rgb(147, 51, 234)',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
     });
 });
 </script>
+
 {% endblock %}

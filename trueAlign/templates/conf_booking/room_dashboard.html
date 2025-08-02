@@ -1,34 +1,27 @@
-{% extends 'base.html' %} {% block title %}Room Dashboard - TrueAlign{% endblock
-%} {% block content %}
+{% extends 'base.html' %}
+{% block title %}Room Dashboard - TrueAlign{% endblock %}
+
+{% block content %}
 <div class="min-h-screen bg-gray-50/50 py-8">
     <div class="max-w-7xl mx-auto px-4">
         <!-- Location Display -->
-        <div
-            class="mb-6 bg-white rounded-xl shadow-sm p-4 border border-gray-100"
-        >
+        <div class="mb-6 bg-white rounded-xl shadow-sm p-4 border border-gray-100">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3">
-                    <div
-                        class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center"
-                    >
+                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                         <i class="ri-map-pin-line text-blue-600 text-xl"></i>
                     </div>
                     <div>
                         <p class="text-sm font-medium text-gray-600">
                             Current Office Location
                         </p>
-                        <p
-                            id="current-office-location"
-                            class="text-lg font-semibold text-gray-800"
-                        >
+                        <p id="current-office-location" class="text-lg font-semibold text-gray-800">
                             Detecting...
                         </p>
                     </div>
                 </div>
-                <button
-                    id="change-location-btn"
-                    class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-2 shadow-sm"
-                >
+                <button id="change-location-btn"
+                    class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-2 shadow-sm">
                     <i class="ri-map-line"></i> Change Location
                 </button>
             </div>
@@ -47,124 +40,80 @@
             <div class="flex items-center space-x-4">
                 <div class="text-sm text-gray-500">
                     Last updated:
-                    <span id="lastUpdated"
-                        >{{ current_time|date:"M d, Y H:i" }}</span
-                    >
+                    <span id="lastUpdated">{{ current_time|date:"M d, Y H:i" }}</span>
                 </div>
-                <button
-                    id="refreshDashboard"
-                    class="px-4 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 transition-colors flex items-center gap-2 shadow-sm"
-                >
+                <button id="refreshDashboard"
+                    class="px-4 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 transition-colors flex items-center gap-2 shadow-sm">
                     <i class="ri-refresh-line"></i> Refresh
                 </button>
-                <button
-                    onclick="openBookingModal()"
-                    class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors flex items-center gap-2 shadow-sm"
-                >
+                <button onclick="openBookingModal()"
+                    class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors flex items-center gap-2 shadow-sm">
                     <i class="ri-add-line"></i> Book Room
                 </button>
             </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div
-                class="bg-white rounded-xl shadow-sm p-6 border border-gray-100"
-            >
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-gray-600">
                             Available Rooms
                         </p>
-                        <p
-                            id="availableRoomsCount"
-                            class="text-3xl font-bold text-green-600"
-                        >
-                            {{ room_dashboard.available_rooms|length|default:0
-                            }}
+                        <p id="availableRoomsCount" class="text-3xl font-bold text-green-600">
+                            {{ room_dashboard.available_rooms|length|default:0 }}
                         </p>
                     </div>
-                    <div
-                        class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center"
-                    >
-                        <i
-                            class="ri-door-open-line text-green-600 text-2xl"
-                        ></i>
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                        <i class="ri-door-open-line text-green-600 text-2xl"></i>
                     </div>
                 </div>
             </div>
 
-            <div
-                class="bg-white rounded-xl shadow-sm p-6 border border-gray-100"
-            >
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-gray-600">
                             Currently Occupied
                         </p>
-                        <p
-                            id="occupiedRoomsCount"
-                            class="text-3xl font-bold text-rose-600"
-                        >
+                        <p id="occupiedRoomsCount" class="text-3xl font-bold text-rose-600">
                             {{ room_dashboard.occupied_rooms|length|default:0 }}
                         </p>
                     </div>
-                    <div
-                        class="w-12 h-12 bg-rose-100 rounded-lg flex items-center justify-center"
-                    >
+                    <div class="w-12 h-12 bg-rose-100 rounded-lg flex items-center justify-center">
                         <i class="ri-door-lock-line text-rose-600 text-2xl"></i>
                     </div>
                 </div>
             </div>
 
-            <div
-                class="bg-white rounded-xl shadow-sm p-6 border border-gray-100"
-            >
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-gray-600">
                             Today's Bookings
                         </p>
-                        <p
-                            id="todaysBookingsCount"
-                            class="text-3xl font-bold text-indigo-600"
-                        >
-                            {{ room_dashboard.todays_bookings|length|default:0
-                            }}
+                        <p id="todaysBookingsCount" class="text-3xl font-bold text-indigo-600">
+                            {{ room_dashboard.todays_bookings|length|default:0 }}
                         </p>
                     </div>
-                    <div
-                        class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center"
-                    >
-                        <i
-                            class="ri-calendar-check-line text-indigo-600 text-2xl"
-                        ></i>
+                    <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
+                        <i class="ri-calendar-check-line text-indigo-600 text-2xl"></i>
                     </div>
                 </div>
             </div>
 
-            <div
-                class="bg-white rounded-xl shadow-sm p-6 border border-gray-100"
-            >
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-gray-600">
                             Avg Utilization
                         </p>
-                        <p
-                            id="avgUtilization"
-                            class="text-3xl font-bold text-purple-600"
-                        >
-                            {{
-                            daily_utilization.average_utilization|floatformat:1|default:0
-                            }}%
+                        <p id="avgUtilization" class="text-3xl font-bold text-purple-600">
+                            {{ daily_utilization.average_utilization|floatformat:1|default:0 }}%
                         </p>
                     </div>
-                    <div
-                        class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center"
-                    >
-                        <i
-                            class="ri-pie-chart-2-line text-purple-600 text-2xl"
-                        ></i>
+                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <i class="ri-pie-chart-2-line text-purple-600 text-2xl"></i>
                     </div>
                 </div>
             </div>
@@ -173,43 +122,31 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
             {% for room_data in room_dashboard.room_status %}
             <div
-                class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden transform hover:-translate-y-1 transition-transform duration-300"
-            >
+                class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden transform hover:-translate-y-1 transition-transform duration-300">
                 <div class="relative">
                     {% if room_data.status == 'occupied' %}
-                    <div
-                        class="bg-gradient-to-r from-red-500 to-rose-600 h-2"
-                    ></div>
+                    <div class="bg-gradient-to-r from-red-500 to-rose-600 h-2"></div>
                     <div class="absolute top-0 right-0 m-3">
                         <span
-                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 ring-1 ring-inset ring-red-600/20"
-                        >
-                            <i
-                                class="ri-record-circle-fill text-red-500 mr-1.5 animate-pulse"
-                            ></i>
+                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 ring-1 ring-inset ring-red-600/20">
+                            <i class="ri-record-circle-fill text-red-500 mr-1.5 animate-pulse"></i>
                             Occupied
                         </span>
                     </div>
                     {% elif room_data.status == 'soon_occupied' %}
-                    <div
-                        class="bg-gradient-to-r from-amber-400 to-orange-500 h-2"
-                    ></div>
+                    <div class="bg-gradient-to-r from-amber-400 to-orange-500 h-2"></div>
                     <div class="absolute top-0 right-0 m-3">
                         <span
-                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 ring-1 ring-inset ring-amber-600/20"
-                        >
+                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 ring-1 ring-inset ring-amber-600/20">
                             <i class="ri-time-line mr-1.5"></i>
                             Soon Occupied
                         </span>
                     </div>
                     {% else %}
-                    <div
-                        class="bg-gradient-to-r from-lime-500 to-green-600 h-2"
-                    ></div>
+                    <div class="bg-gradient-to-r from-lime-500 to-green-600 h-2"></div>
                     <div class="absolute top-0 right-0 m-3">
                         <span
-                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-lime-100 text-lime-800 ring-1 ring-inset ring-lime-600/20"
-                        >
+                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-lime-100 text-lime-800 ring-1 ring-inset ring-lime-600/20">
                             <i class="ri-check-line mr-1.5"></i>
                             Available
                         </span>
@@ -220,29 +157,21 @@
                 <div class="p-6">
                     <div class="flex items-start justify-between mb-4">
                         <div class="flex-1">
-                            <h3
-                                class="text-lg font-semibold text-gray-900 mb-1"
-                            >
+                            <h3 class="text-lg font-semibold text-gray-900 mb-1">
                                 {{ room_data.room.name }}
                             </h3>
-                            <p
-                                class="text-sm text-gray-500 flex items-center gap-2"
-                            >
+                            <p class="text-sm text-gray-500 flex items-center gap-2">
                                 <i class="ri-group-line text-gray-400"></i>
                                 Capacity: {{ room_data.room.capacity }} people
                             </p>
-                            <p
-                                class="text-sm text-gray-500 flex items-center gap-2"
-                            >
-                                <i class="ri-map-pin-line text-gray-400"></i> {{
-                                room_data.room.location|default:"No location" }}
+                            <p class="text-sm text-gray-500 flex items-center gap-2">
+                                <i class="ri-map-pin-line text-gray-400"></i> {{room_data.room.location|default:"No location" }}
                             </p>
                         </div>
                     </div>
 
                     <div
-                        class="mb-5 p-4 rounded-lg {% if room_data.status == 'occupied' %}bg-rose-50/50{% elif room_data.status == 'soon_occupied' %}bg-amber-50/50{% else %}bg-green-50/50{% endif %}"
-                    >
+                        class="mb-5 p-4 rounded-lg {% if room_data.status == 'occupied' %}bg-rose-50/50{% elif room_data.status == 'soon_occupied' %}bg-amber-50/50{% else %}bg-green-50/50{% endif %}">
                         {% if room_data.current_booking %}
                         <div class="text-sm">
                             <p class="font-medium text-rose-800 mb-1">
@@ -252,14 +181,8 @@
                                 {{ room_data.current_booking.purpose }}
                             </p>
                             <p class="text-rose-700 text-xs mt-1">
-                                Until {{
-                                room_data.current_booking.end_time|date:"g:i A"
-                                }}
-                                <span class="font-bold"
-                                    >({{
-                                    room_data.current_booking.end_time|timeuntil
-                                    }} remaining)</span
-                                >
+                                Until {{ room_data.current_booking.end_time|date:"g:i A" }}
+                                <span class="font-bold">({{ room_data.current_booking.end_time|timeuntil }} remaining)</span>
                             </p>
                         </div>
                         {% elif room_data.next_booking %}
@@ -273,9 +196,7 @@
                             </p>
                             <p class="text-gray-600 text-xs mt-1">
                                 <i class="ri-calendar-event-line mr-1"></i>
-                                Today at {{
-                                room_data.next_booking.start_time|date:"g:i A"
-                                }}
+                                Today at {{ room_data.next_booking.start_time|date:"g:i A" }}
                             </p>
                         </div>
                         {% else %}
@@ -296,54 +217,38 @@
 
                     <div class="mb-5">
                         <div class="flex justify-between items-center mb-1">
-                            <span class="text-xs font-medium text-gray-700"
-                                >Today's Utilization</span
-                            >
-                            <span class="text-xs font-bold text-gray-600"
-                                >{{ room_data.occupancy_percentage|floatformat:0
-                                }}%</span
-                            >
+                            <span class="text-xs font-medium text-gray-700">Today's Utilization</span>
+                            <span class="text-xs font-bold text-gray-600">{{ room_data.occupancy_percentage|floatformat:0 }}%</span>
                         </div>
                         <div class="w-full bg-gray-200 rounded-full h-2.5">
-                            <div
-                                class="h-2.5 rounded-full transition-all duration-500 {% if room_data.occupancy_percentage > 80 %}bg-red-500{% elif room_data.occupancy_percentage > 60 %}bg-orange-500{% elif room_data.occupancy_percentage > 30 %}bg-yellow-400{% else %}bg-green-500{% endif %}"
-                                style="width: {{ room_data.occupancy_percentage }}%"
-                            ></div>
+                            <div class="h-2.5 rounded-full transition-all duration-500 {% if room_data.occupancy_percentage > 80 %}bg-red-500{% elif room_data.occupancy_percentage > 60 %}bg-orange-500{% elif room_data.occupancy_percentage > 30 %}bg-yellow-400{% else %}bg-green-500{% endif %}"
+                                style="width: {{ room_data.occupancy_percentage }}%"></div>
                         </div>
                     </div>
 
                     <div class="flex space-x-2">
                         {% if room_data.status == 'available' %}
-                        <button
-                            onclick="bookRoom({{ room_data.room.id }}, '{{ room_data.room.name }}')"
-                            class="flex-1 px-3 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
-                        >
+                        <button onclick="bookRoom({{ room_data.room.id }}, '{{ room_data.room.name }}')"
+                            class="flex-1 px-3 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-sm">
                             <i class="ri-calendar-event-line mr-1"></i> Book Now
                         </button>
                         {% else %}
-                        <button
-                            onclick="viewRoomDetails({{ room_data.room.id }})"
-                            class="flex-1 px-3 py-2 bg-gray-200 text-gray-800 text-sm font-medium rounded-lg hover:bg-gray-300 transition-colors"
-                        >
+                        <button onclick="viewRoomDetails({{ room_data.room.id }})"
+                            class="flex-1 px-3 py-2 bg-gray-200 text-gray-800 text-sm font-medium rounded-lg hover:bg-gray-300 transition-colors">
                             <i class="ri-eye-line mr-1"></i> View Details
                         </button>
                         {% endif %}
-                        <button
-                            onclick="viewCalendar({{ room_data.room.id }})"
-                            class="px-3 py-2 bg-sky-100 text-sky-800 text-sm font-medium rounded-lg hover:bg-sky-200 transition-colors"
-                        >
+                        <button onclick="viewCalendar({{ room_data.room.id }})"
+                            class="px-3 py-2 bg-sky-100 text-sky-800 text-sm font-medium rounded-lg hover:bg-sky-200 transition-colors">
                             <i class="ri-calendar-line"></i>
                         </button>
                     </div>
                 </div>
             </div>
             {% empty %}
-            <div
-                class="col-span-full text-center py-16 bg-white rounded-xl shadow-sm border"
-            >
+            <div class="col-span-full text-center py-16 bg-white rounded-xl shadow-sm border">
                 <div
-                    class="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center border-4 border-gray-200"
-                >
+                    class="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center border-4 border-gray-200">
                     <i class="ri-door-line text-5xl text-gray-400"></i>
                 </div>
                 <h3 class="text-xl font-semibold text-gray-800 mb-2">
@@ -357,9 +262,7 @@
         </div>
 
         <!-- 24-Hour Booking Timeline with Real Data -->
-        <div
-            class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8"
-        >
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
             <div class="flex items-center justify-between mb-6">
                 <h3 class="text-lg font-semibold text-gray-900">
                     Today's Booking Timeline
@@ -372,26 +275,19 @@
                 {% for hour_data in hourly_timeline %}
                 <div class="text-center group">
                     <div
-                        class="h-20 md:h-32 bg-gray-100 rounded-lg flex items-end justify-center p-1 hover:bg-gray-200 transition relative"
-                    >
+                        class="h-20 md:h-32 bg-gray-100 rounded-lg flex items-end justify-center p-1 hover:bg-gray-200 transition relative">
                         {% if hour_data.count > 0 %}
-                        <div
-                            class="w-full rounded-sm opacity-80 group-hover:opacity-100 transition-opacity {% if hour_data.count >= 5 %}bg-red-500 {% elif hour_data.count >= 3 %}bg-orange-500 {% elif hour_data.count >= 1 %}bg-blue-500 {% else %}bg-gray-300{% endif %}"
+                        <div class="w-full rounded-sm opacity-80 group-hover:opacity-100 transition-opacity {% if hour_data.count >= 5 %}bg-red-500 {% elif hour_data.count >= 3 %}bg-orange-500 {% elif hour_data.count >= 1 %}bg-blue-500 {% else %}bg-gray-300{% endif %}"
                             style="height: {{ hour_data.utilization_percentage|floatformat:0 }}%"
-                            title="{{ hour_data.count }} booking{{ hour_data.count|pluralize }} at {{ hour_data.formatted_hour }}"
-                        ></div>
+                            title="{{ hour_data.count }} booking{{ hour_data.count|pluralize }} at {{ hour_data.formatted_hour }}">
+                        </div>
                         <!-- Tooltip on hover -->
                         <div
-                            class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap"
-                        >
-                            {{ hour_data.count }} booking{{
-                            hour_data.count|pluralize }}
+                            class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                            {{ hour_data.count }} booking{{ hour_data.count|pluralize }}
                         </div>
                         {% else %}
-                        <div
-                            class="w-full rounded-sm bg-gray-200 opacity-50"
-                            style="height: 10%"
-                        ></div>
+                        <div class="w-full rounded-sm bg-gray-200 opacity-50" style="height: 10%"></div>
                         {% endif %}
                     </div>
                     <div class="text-xs text-gray-500 mt-2">
@@ -407,9 +303,7 @@
             </div>
 
             <!-- Timeline Legend -->
-            <div
-                class="flex justify-center items-center mt-4 space-x-4 text-xs"
-            >
+            <div class="flex justify-center items-center mt-4 space-x-4 text-xs">
                 <div class="flex items-center">
                     <div class="w-3 h-3 bg-gray-300 rounded mr-1"></div>
                     <span class="text-gray-600">No bookings</span>
@@ -434,17 +328,12 @@
                 Quick Actions
             </h3>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <button
-                    onclick="openBookingModal()"
-                    class="p-4 border border-transparent rounded-lg bg-indigo-50 hover:bg-indigo-100 transition-colors text-left group"
-                >
+                <button onclick="openBookingModal()"
+                    class="p-4 border border-transparent rounded-lg bg-indigo-50 hover:bg-indigo-100 transition-colors text-left group">
                     <div class="flex items-center">
                         <div
-                            class="w-12 h-12 bg-indigo-200 rounded-lg flex items-center justify-center mr-4 group-hover:bg-indigo-300 transition-colors"
-                        >
-                            <i
-                                class="ri-calendar-event-line text-2xl text-indigo-600"
-                            ></i>
+                            class="w-12 h-12 bg-indigo-200 rounded-lg flex items-center justify-center mr-4 group-hover:bg-indigo-300 transition-colors">
+                            <i class="ri-calendar-event-line text-2xl text-indigo-600"></i>
                         </div>
                         <div>
                             <h4 class="font-bold text-indigo-900">
@@ -457,17 +346,12 @@
                     </div>
                 </button>
 
-                <button
-                    onclick="viewMyBookings()"
-                    class="p-4 border border-transparent rounded-lg bg-teal-50 hover:bg-teal-100 transition-colors text-left group"
-                >
+                <button onclick="viewMyBookings()"
+                    class="p-4 border border-transparent rounded-lg bg-teal-50 hover:bg-teal-100 transition-colors text-left group">
                     <div class="flex items-center">
                         <div
-                            class="w-12 h-12 bg-teal-200 rounded-lg flex items-center justify-center mr-4 group-hover:bg-teal-300 transition-colors"
-                        >
-                            <i
-                                class="ri-bookmark-3-line text-2xl text-teal-600"
-                            ></i>
+                            class="w-12 h-12 bg-teal-200 rounded-lg flex items-center justify-center mr-4 group-hover:bg-teal-300 transition-colors">
+                            <i class="ri-bookmark-3-line text-2xl text-teal-600"></i>
                         </div>
                         <div>
                             <h4 class="font-bold text-teal-900">My Bookings</h4>
@@ -478,17 +362,12 @@
                     </div>
                 </button>
 
-                <button
-                    onclick="viewAnalytics()"
-                    class="p-4 border border-transparent rounded-lg bg-fuchsia-50 hover:bg-fuchsia-100 transition-colors text-left group"
-                >
+                <button onclick="viewAnalytics()"
+                    class="p-4 border border-transparent rounded-lg bg-fuchsia-50 hover:bg-fuchsia-100 transition-colors text-left group">
                     <div class="flex items-center">
                         <div
-                            class="w-12 h-12 bg-fuchsia-200 rounded-lg flex items-center justify-center mr-4 group-hover:bg-fuchsia-300 transition-colors"
-                        >
-                            <i
-                                class="ri-bar-chart-2-line text-2xl text-fuchsia-600"
-                            ></i>
+                            class="w-12 h-12 bg-fuchsia-200 rounded-lg flex items-center justify-center mr-4 group-hover:bg-fuchsia-300 transition-colors">
+                            <i class="ri-bar-chart-2-line text-2xl text-fuchsia-600"></i>
                         </div>
                         <div>
                             <h4 class="font-bold text-fuchsia-900">
@@ -506,11 +385,9 @@
 </div>
 
 <!-- Include Modals -->
-{% include 'conf_booking/room/booking_modal.html' with
-available_rooms=available_rooms %} {% include
-'conf_booking/room/calendar_modal.html' with available_rooms=available_rooms %}
-{% include 'conf_booking/room/room_details_modal.html' with
-available_rooms=available_rooms %}
+{% include 'conf_booking/room/booking_modal.html' with available_rooms=available_rooms %}
+{% include 'conf_booking/room/calendar_modal.html' with available_rooms=available_rooms %}
+{% include 'conf_booking/room/room_details_modal.html' with available_rooms=available_rooms %}
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
@@ -675,121 +552,321 @@ available_rooms=available_rooms %}
         window.location.href = "{% url 'conf_booking:booking_analytics' %}";
     }
 
-    // Location management functions
-    function updateCurrentLocationDisplay() {
-        const storedLocation = sessionStorage.getItem("office_location");
-        const currentLocationElement = document.getElementById(
-            "current-office-location",
-        );
-
-        if (storedLocation && currentLocationElement) {
-            try {
-                const locationData = JSON.parse(storedLocation);
-                currentLocationElement.textContent = locationData.name;
-            } catch (e) {
-                currentLocationElement.textContent = "Unknown Location";
-            }
-        } else if (currentLocationElement) {
-            // If no stored location, trigger location detection
-            currentLocationElement.textContent = "Detecting...";
-            detectLocationForDashboard();
+    // Enhanced Location Detection System
+    let locationDetectionModal = null;
+    let currentOfficeLocation = null;
+    
+    function createLocationModal() {
+        if (locationDetectionModal) return locationDetectionModal;
+        
+        const modalHTML = `
+        <div id="locationModal" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-[100] flex items-center justify-center">
+            <div class="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 p-6">
+                <div class="text-center mb-6">
+                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="ri-map-pin-line text-blue-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Office Location Required</h3>
+                    <p class="text-gray-600 text-sm">We need to detect your office location to show available conference rooms.</p>
+                </div>
+                
+                <div id="locationStatus" class="mb-6">
+                    <div class="flex items-center justify-center py-4">
+                        <div class="animate-spin w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full mr-3"></div>
+                        <span class="text-gray-700">Detecting your location...</span>
+                    </div>
+                </div>
+                
+                <div id="locationOptions" class="hidden space-y-3">
+                    <div class="text-center mb-4">
+                        <p class="text-sm text-gray-600">Choose your office location:</p>
+                    </div>
+                    <div id="locationsList" class="space-y-2 max-h-48 overflow-y-auto"></div>
+                </div>
+                
+                <div class="flex justify-center space-x-3 mt-6">
+                    <button id="useLocationBtn" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">Use My Location</button>
+                    <button id="manualLocationBtn" class="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors">Choose Manually</button>
+                </div>
+                
+                <div class="text-center mt-4">
+                    <p class="text-xs text-gray-500">Location access is required to book conference rooms</p>
+                </div>
+            </div>
+        </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        locationDetectionModal = document.getElementById('locationModal');
+        
+        // Add event listeners
+        document.getElementById('useLocationBtn').addEventListener('click', () => {
+            attemptLocationDetection();
+        });
+        
+        document.getElementById('manualLocationBtn').addEventListener('click', () => {
+            showManualLocationSelection();
+        });
+        
+        return locationDetectionModal;
+    }
+    
+    function showLocationModal() {
+        const modal = createLocationModal();
+        modal.style.display = 'flex';
+        
+        // Reset modal state
+        document.getElementById('locationStatus').classList.remove('hidden');
+        document.getElementById('locationOptions').classList.add('hidden');
+        
+        // Auto-attempt location detection
+        setTimeout(() => {
+            attemptLocationDetection();
+        }, 1000);
+    }
+    
+    function hideLocationModal() {
+        if (locationDetectionModal) {
+            locationDetectionModal.style.display = 'none';
         }
     }
-
-    function detectLocationForDashboard() {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                function (position) {
-                    const latitude = position.coords.latitude;
-                    const longitude = position.coords.longitude;
-
-                    fetch("/book/api/office-location/", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            "X-CSRFToken":
-                                document.querySelector(
-                                    "[name=csrfmiddlewaretoken]",
-                                ).value ||
-                                document
-                                    .querySelector("meta[name=csrf-token]")
-                                    .getAttribute("content"),
-                        },
-                        body: JSON.stringify({
-                            latitude: latitude,
-                            longitude: longitude,
-                        }),
-                    })
-                        .then((response) => response.json())
-                        .then((data) => {
-                            const currentLocationElement =
-                                document.getElementById(
-                                    "current-office-location",
-                                );
-
-                            if (data.success) {
-                                // Store location data
-                                sessionStorage.setItem(
-                                    "office_location",
-                                    JSON.stringify(data.office_location),
-                                );
-                                sessionStorage.setItem(
-                                    "location_access_granted",
-                                    "true",
-                                );
-
-                                // Update display
-                                if (currentLocationElement) {
-                                    currentLocationElement.textContent =
-                                        data.office_location.name;
-                                }
-
-                                // Refresh room data for detected location
-                                loadRoomsForLocation(data.office_location.id);
-                            } else {
-                                if (currentLocationElement) {
-                                    currentLocationElement.textContent =
-                                        "Location not found";
-                                }
-                            }
-                        })
-                        .catch((error) => {
-                            console.error("Location detection error:", error);
-                            const currentLocationElement =
-                                document.getElementById(
-                                    "current-office-location",
-                                );
-                            if (currentLocationElement) {
-                                currentLocationElement.textContent =
-                                    "Detection failed";
-                            }
-                        });
-                },
-                function (error) {
-                    console.error("Geolocation error:", error);
-                    const currentLocationElement = document.getElementById(
-                        "current-office-location",
-                    );
-                    if (currentLocationElement) {
-                        currentLocationElement.textContent =
-                            "Location access denied";
-                    }
-                },
-                {
-                    enableHighAccuracy: true,
-                    timeout: 10000,
-                    maximumAge: 300000,
-                },
-            );
-        } else {
-            const currentLocationElement = document.getElementById(
-                "current-office-location",
-            );
-            if (currentLocationElement) {
-                currentLocationElement.textContent =
-                    "Geolocation not supported";
+    
+    function attemptLocationDetection() {
+        const statusDiv = document.getElementById('locationStatus');
+        statusDiv.innerHTML = `
+            <div class="flex items-center justify-center py-4">
+                <div class="animate-spin w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full mr-3"></div>
+                <span class="text-gray-700">Getting your location...</span>
+            </div>
+        `;
+        
+        if (!navigator.geolocation) {
+            showLocationError('Geolocation is not supported by this browser.');
+            return;
+        }
+        
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                const latitude = position.coords.latitude;
+                const longitude = position.coords.longitude;
+                
+                detectOfficeFromCoords(latitude, longitude);
+            },
+            function(error) {
+                console.error('Geolocation error:', error);
+                let message = 'Unable to get your location. ';
+                
+                switch(error.code) {
+                    case error.PERMISSION_DENIED:
+                        message = 'Location access denied. Please enable location access and try again.';
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        message = 'Location information unavailable.';
+                        break;
+                    case error.TIMEOUT:
+                        message = 'Location request timed out.';
+                        break;
+                }
+                
+                showLocationError(message);
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 15000,
+                maximumAge: 300000
+            }
+        );
+    }
+    
+    function detectOfficeFromCoords(latitude, longitude) {
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                         document.querySelector('meta[name=csrf-token]')?.getAttribute('content') ||
+                         getCookie('csrftoken');
+        
+        fetch('/book/api/office-location/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+                latitude: latitude,
+                longitude: longitude
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success && data.office_location) {
+                setCurrentLocation(data.office_location);
+                showLocationSuccess(data.office_location.name);
+                
+                setTimeout(() => {
+                    hideLocationModal();
+                    updateLocationDisplay();
+                    refreshDashboardForLocation();
+                }, 2000);
+            } else {
+                showLocationError('No office found at your location. Please select manually.');
+            }
+        })
+        .catch(error => {
+            console.error('Location detection error:', error);
+            showLocationError('Failed to detect office location. Please try again or select manually.');
+        });
+    }
+    
+    function showManualLocationSelection() {
+        const statusDiv = document.getElementById('locationStatus');
+        const optionsDiv = document.getElementById('locationOptions');
+        
+        statusDiv.innerHTML = `
+            <div class="flex items-center justify-center py-4">
+                <div class="animate-spin w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full mr-3"></div>
+                <span class="text-gray-700">Loading office locations...</span>
+            </div>
+        `;
+        
+        // Fetch all office locations
+        fetch('/book/api/office-location/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.locations) {
+                const locationsList = document.getElementById('locationsList');
+                locationsList.innerHTML = '';
+                
+                data.locations.forEach(location => {
+                    const locationButton = document.createElement('button');
+                    locationButton.className = 'w-full text-left p-3 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-blue-300 transition-colors';
+                    locationButton.innerHTML = `
+                        <div class="font-medium text-gray-900">${location.name}</div>
+                        <div class="text-sm text-gray-600">${location.city}, ${location.state}</div>
+                    `;
+                    
+                    locationButton.addEventListener('click', () => {
+                        setCurrentLocation(location);
+                        showLocationSuccess(location.name);
+                        
+                        setTimeout(() => {
+                            hideLocationModal();
+                            updateLocationDisplay();
+                            refreshDashboardForLocation();
+                        }, 1500);
+                    });
+                    
+                    locationsList.appendChild(locationButton);
+                });
+                
+                statusDiv.classList.add('hidden');
+                optionsDiv.classList.remove('hidden');
+            } else {
+                showLocationError('No office locations available.');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading locations:', error);
+            showLocationError('Failed to load office locations.');
+        });
+    }
+    
+    function showLocationError(message) {
+        const statusDiv = document.getElementById('locationStatus');
+        statusDiv.innerHTML = `
+            <div class="text-center py-4">
+                <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i class="ri-error-warning-line text-red-600 text-xl"></i>
+                </div>
+                <p class="text-red-600 text-sm">${message}</p>
+            </div>
+        `;
+        
+        // Show manual selection option
+        setTimeout(() => {
+            showManualLocationSelection();
+        }, 3000);
+    }
+    
+    function showLocationSuccess(locationName) {
+        const statusDiv = document.getElementById('locationStatus');
+        statusDiv.innerHTML = `
+            <div class="text-center py-4">
+                <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i class="ri-check-line text-green-600 text-xl"></i>
+                </div>
+                <p class="text-green-600 font-medium">Location Set!</p>
+                <p class="text-gray-600 text-sm">${locationName}</p>
+            </div>
+        `;
+        
+        document.getElementById('locationOptions').classList.add('hidden');
+    }
+    
+    function setCurrentLocation(location) {
+        currentOfficeLocation = location;
+        sessionStorage.setItem('office_location', JSON.stringify(location));
+        sessionStorage.setItem('location_access_granted', 'true');
+    }
+    
+    function getCurrentLocation() {
+        if (currentOfficeLocation) return currentOfficeLocation;
+        
+        const stored = sessionStorage.getItem('office_location');
+        if (stored) {
+            try {
+                currentOfficeLocation = JSON.parse(stored);
+                return currentOfficeLocation;
+            } catch (e) {
+                console.error('Error parsing stored location:', e);
             }
         }
+        return null;
+    }
+    
+    function updateLocationDisplay() {
+        const currentLocationElement = document.getElementById('current-office-location');
+        if (!currentLocationElement) return;
+        
+        const location = getCurrentLocation();
+        if (location) {
+            currentLocationElement.textContent = location.name;
+        } else {
+            currentLocationElement.textContent = 'No location set';
+        }
+    }
+    
+    function refreshDashboardForLocation() {
+        // Reload the page to show rooms for the selected location
+        setTimeout(() => {
+            window.location.reload();
+        }, 1000);
+    }
+    
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    function requireLocationForBooking() {
+        const location = getCurrentLocation();
+        if (!location) {
+            showLocationModal();
+            return false;
+        }
+        return true;
     }
 
     function loadRoomsForLocation(locationId) {
@@ -802,15 +879,54 @@ available_rooms=available_rooms %}
         // Clear current location data
         sessionStorage.removeItem("office_location");
         sessionStorage.removeItem("location_access_granted");
+        currentOfficeLocation = null;
 
-        // Trigger location detection
-        if (window.detectOfficeLocation) {
-            window.detectOfficeLocation();
+        // Show location modal for re-selection
+        showLocationModal();
+    }
+
+    function updateCurrentLocationDisplay() {
+        const location = getCurrentLocation();
+        if (location) {
+            updateLocationDisplay();
         } else {
-            // Fallback: reload page to trigger location detection
-            window.location.reload();
+            // Show location modal if no location is set
+            setTimeout(() => {
+                showLocationModal();
+            }, 1000);
         }
     }
+
+    // Override the openBookingModal function to check location first
+    const originalOpenBookingModal = window.openBookingModal || openBookingModal;
+    
+    window.openBookingModal = function(roomId = null) {
+        if (!requireLocationForBooking()) {
+            return; // Location modal will be shown
+        }
+        
+        // Location is set, proceed with booking modal
+        if (originalOpenBookingModal) {
+            originalOpenBookingModal(roomId);
+        } else {
+            const modal = document.getElementById("bookingModal");
+            if (modal) {
+                modal.classList.remove("hidden");
+                setTimeout(() => {
+                    modal.classList.remove("bg-opacity-0");
+                    modal.classList.add("bg-opacity-50");
+                    const modalDialog = modal.querySelector(".modal-dialog");
+                    if (modalDialog) {
+                        modalDialog.classList.remove(
+                            "-translate-y-10",
+                            "opacity-0",
+                        );
+                        modalDialog.classList.add("translate-y-0", "opacity-100");
+                    }
+                }, 10);
+            }
+        }
+    };
 
     // Initialize location display on page load
     document.addEventListener("DOMContentLoaded", function () {

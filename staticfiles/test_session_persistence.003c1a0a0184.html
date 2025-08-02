@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Session Persistence Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .status-card {
+            background: #f8f9ff;
+            border: 1px solid #e1e5f0;
+            border-radius: 6px;
+            padding: 15px;
+        }
+        .status-card h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .status-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #5a6fd8;
+        }
+        button.secondary {
+            background: #6c757d;
+        }
+        button.secondary:hover {
+            background: #5a6268;
+        }
+        button.danger {
+            background: #dc3545;
+        }
+        button.danger:hover {
+            background: #c82333;
+        }
+        .log-container {
+            background: #1e1e1e;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .json-display {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+        .alert {
+            padding: 12px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .alert.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .timestamp {
+            color: #666;
+            font-size: 11px;
+        }
+    </style>
+</head>
+<body data-user-id="1">
+    <div class="header">
+        <h1>🔧 Session Persistence Test Tool</h1>
+        <p>Test the session tracking fixes and verify proper session reuse</p>
+    </div>
+
+    <div class="container">
+        <h2>📊 Current Session Status</h2>
+        <div class="status-grid">
+            <div class="status-card">
+                <h3>Session ID</h3>
+                <div class="status-value" id="sessionId">Not loaded</div>
+            </div>
+            <div class="status-card">
+                <h3>Parent Session ID</h3>
+                <div class="status-value" id="parentSessionId">Not loaded</div>
+            </div>
+            <div class="status-card">
+                <h3>Tab ID</h3>
+                <div class="status-value" id="tabId">Not loaded</div>
+            </div>
+            <div class="status-card">
+                <h3>Session Fingerprint</h3>
+                <div class="status-value" id="fingerprint">Not loaded</div>
+            </div>
+            <div class="status-card">
+                <h3>Is Active</h3>
+                <div class="status-value" id="isActive">Unknown</div>
+            </div>
+            <div class="status-card">
+                <h3>Is Idle</h3>
+                <div class="status-value" id="isIdle">Unknown</div>
+            </div>
+            <div class="status-card">
+                <h3>Last Activity</h3>
+                <div class="status-value" id="lastActivity">Not available</div>
+            </div>
+            <div class="status-card">
+                <h3>Page Loads</h3>
+                <div class="status-value" id="pageLoads">0</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🧪 Test Actions</h2>
+        <div class="button-group">
+            <button onclick="refreshStatus()">🔄 Refresh Status</button>
+            <button onclick="sendHeartbeat()">💓 Send Heartbeat</button>
+            <button onclick="simulateActivity()">🎯 Simulate Activity</button>
+            <button onclick="testIdleState()">😴 Test Idle State</button>
+            <button onclick="openNewTab()" class="secondary">🗂️ Open New Tab</button>
+            <button onclick="clearSessionStorage()" class="danger">🗑️ Clear Session Storage</button>
+        </div>
+
+        <div class="button-group">
+            <button onclick="location.reload()">🔄 Reload Page</button>
+            <button onclick="showSessionStorage()">📋 Show Session Storage</button>
+            <button onclick="forceSync()">🔄 Force Sync</button>
+            <button onclick="endSession()" class="danger">⏹️ End Session</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>💾 Session Storage Data</h2>
+        <div id="sessionStorageDisplay" class="json-display">Click "Show Session Storage" to view data</div>
+    </div>
+
+    <div class="container">
+        <h2>📝 Activity Log</h2>
+        <div id="logContainer" class="log-container"></div>
+        <div class="button-group">
+            <button onclick="clearLog()" class="secondary">Clear Log</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>ℹ️ Instructions</h2>
+        <div class="alert success">
+            <strong>Testing Session Persistence:</strong>
+            <ol>
+                <li>Load this page and note the Session ID</li>
+                <li>Reload the page - Session ID should remain the same</li>
+                <li>Open in new tab - Parent Session ID should be the same</li>
+                <li>Test activity tracking with the buttons above</li>
+                <li>Monitor the activity log for session reuse messages</li>
+            </ol>
+        </div>
+        <div class="alert warning">
+            <strong>Expected Behavior:</strong>
+            Session should persist across page reloads and maintain the same Parent Session ID across tabs.
+            New sessions should only be created for new browsers or after clearing session storage.
+        </div>
+    </div>
+
+    <!-- Include the session tracker -->
+    <script src="/static/js/optimized-session-tracker.js"></script>
+
+    <script>
+        let tracker = null;
+        let pageLoadCount = parseInt(localStorage.getItem('pageLoadCount') || '0') + 1;
+        localStorage.setItem('pageLoadCount', pageLoadCount.toString());
+
+        // Initialize the session tracker
+        function initializeTracker() {
+            try {
+                tracker = new OptimizedSessionTracker({
+                    user_id: 1,
+                    heartbeatInterval: 10000, // 10 seconds for testing
+                    batchFlushInterval: 30000, // 30 seconds for testing
+                });
+
+                log('✅ Session tracker initialized successfully');
+                updatePageLoads();
+
+                // Update status every 2 seconds
+                setInterval(updateStatus, 2000);
+
+                // Initial status update
+                setTimeout(updateStatus, 1000);
+
+            } catch (error) {
+                log('❌ Error initializing tracker: ' + error.message, 'error');
+            }
+        }
+
+        // Update the status display
+        function updateStatus() {
+            if (!tracker) return;
+
+            try {
+                const state = tracker.state;
+                const metrics = tracker.getMetrics();
+
+                document.getElementById('sessionId').textContent = state.sessionId || 'Not set';
+                document.getElementById('parentSessionId').textContent = state.parentSessionId || 'Not set';
+                document.getElementById('tabId').textContent = state.tabId || 'Not set';
+                document.getElementById('fingerprint').textContent = state.fingerprint ? state.fingerprint.substring(0, 8) + '...' : 'Not set';
+                document.getElementById('isActive').textContent = state.isActive ? '✅ Yes' : '❌ No';
+                document.getElementById('isIdle').textContent = state.isIdle ? '😴 Yes' : '⚡ No';
+                document.getElementById('lastActivity').textContent = new Date(state.lastActivity).toLocaleTimeString();
+
+            } catch (error) {
+                log('❌ Error updating status: ' + error.message, 'error');
+            }
+        }
+
+        function updatePageLoads() {
+            document.getElementById('pageLoads').textContent = pageLoadCount;
+        }
+
+        // Test functions
+        function refreshStatus() {
+            updateStatus();
+            log('🔄 Status refreshed manually');
+        }
+
+        function sendHeartbeat() {
+            if (tracker) {
+                tracker.sendHeartbeat();
+                log('💓 Heartbeat sent manually');
+            }
+        }
+
+        function simulateActivity() {
+            if (tracker) {
+                // Simulate some clicks and scrolls
+                for (let i = 0; i < 5; i++) {
+                    tracker.trackClick({ clientX: Math.random() * 1000, clientY: Math.random() * 600, target: document.body });
+                }
+                tracker.trackScroll();
+                tracker.trackKeyboard({ key: 'test', code: 'KeyT' });
+                log('🎯 Simulated user activity (5 clicks, 1 scroll, 1 keypress)');
+            }
+        }
+
+        function testIdleState() {
+            if (tracker) {
+                const currentIdleState = tracker.state.isIdle;
+                tracker.state.isIdle = !currentIdleState;
+                tracker.updateLastActivity();
+                log(`😴 Toggled idle state: ${!currentIdleState ? 'IDLE' : 'ACTIVE'}`);
+            }
+        }
+
+        function openNewTab() {
+            const newWindow = window.open(window.location.href, '_blank');
+            log('🗂️ Opened new tab - check if Parent Session ID matches');
+        }
+
+        function clearSessionStorage() {
+            sessionStorage.removeItem('ardur_session_data');
+            localStorage.removeItem('pageLoadCount');
+            log('🗑️ Session storage cleared - next reload will create new session');
+        }
+
+        function showSessionStorage() {
+            const sessionData = sessionStorage.getItem('ardur_session_data');
+            const display = document.getElementById('sessionStorageDisplay');
+
+            if (sessionData) {
+                try {
+                    const parsed = JSON.parse(sessionData);
+                    display.textContent = JSON.stringify(parsed, null, 2);
+                } catch (e) {
+                    display.textContent = 'Invalid JSON: ' + sessionData;
+                }
+            } else {
+                display.textContent = 'No session data found in sessionStorage';
+            }
+            log('📋 Session storage data displayed');
+        }
+
+        function forceSync() {
+            if (tracker) {
+                tracker.forceSync().then(() => {
+                    log('🔄 Force sync completed');
+                }).catch(error => {
+                    log('❌ Force sync failed: ' + error.message, 'error');
+                });
+            }
+        }
+
+        function endSession() {
+            if (tracker) {
+                tracker.endSession('manual_test');
+                log('⏹️ Session ended manually');
+            }
+        }
+
+        function clearLog() {
+            document.getElementById('logContainer').textContent = '';
+        }
+
+        // Logging function
+        function log(message, type = 'info') {
+            const logContainer = document.getElementById('logContainer');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}\n`;
+
+            logContainer.textContent += logEntry;
+            logContainer.scrollTop = logContainer.scrollHeight;
+
+            // Also log to console with appropriate method
+            switch (type) {
+                case 'error':
+                    console.error(message);
+                    break;
+                case 'warn':
+                    console.warn(message);
+                    break;
+                default:
+                    console.log(message);
+            }
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            log('📄 Page loaded (Load #' + pageLoadCount + ')');
+
+            // Check for existing session storage
+            const existingSession = sessionStorage.getItem('ardur_session_data');
+            if (existingSession) {
+                log('💾 Found existing session data in storage');
+                try {
+                    const sessionData = JSON.parse(existingSession);
+                    log(`🔗 Previous Session ID: ${sessionData.sessionId}`);
+                    log(`🔗 Previous Parent ID: ${sessionData.parentSessionId}`);
+                } catch (e) {
+                    log('⚠️ Could not parse existing session data');
+                }
+            } else {
+                log('🆕 No existing session data found - will create new session');
+            }
+
+            // Initialize tracker after a short delay
+            setTimeout(initializeTracker, 500);
+        });
+
+        // Monitor session storage changes
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'ardur_session_data') {
+                log('💾 Session storage updated');
+                showSessionStorage();
+            }
+        });
+
+        // Log page visibility changes
+        document.addEventListener('visibilitychange', function() {
+            log(`👁️ Page visibility changed: ${document.hidden ? 'HIDDEN' : 'VISIBLE'}`);
+        });
+
+        // Log when user becomes active/inactive
+        let lastActivity = Date.now();
+        ['click', 'mousemove', 'keydown', 'scroll'].forEach(event => {
+            document.addEventListener(event, function() {
+                const now = Date.now();
+                if (now - lastActivity > 30000) { // If more than 30 seconds since last activity
+                    log('⚡ User became active again after idle period');
+                }
+                lastActivity = now;
+            });
+        });
+    </script>
+</body>
+</html>

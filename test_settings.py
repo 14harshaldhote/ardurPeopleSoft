@@ -1,45 +1,18 @@
-"""
-Test settings for the Leave Management System
-Simplifies test execution by disabling features not needed for testing
-"""
+# Test settings for running Django tests
+# This file uses SQLite instead of MySQL for faster and easier testing
+
+from ardurTrueAlign.settings import *
 import os
-import sys
 
-# Add the project root directory to Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-# Import settings from settings.py
-from settings import *
-
-# Use SQLite for testing
+# Override database configuration for testing
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': ':memory:',
+        'NAME': ':memory:',  # Use in-memory database for fast tests
     }
 }
 
-# Disable staticfiles storage for testing
-STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
-
-# Disable migration for faster tests
-class DisableMigrations:
-    def __contains__(self, item):
-        return True
-
-    def __getitem__(self, item):
-        return None
-
-MIGRATION_MODULES = DisableMigrations()
-
-# Test-specific settings
-PASSWORD_HASHERS = ['django.contrib.auth.hashers.MD5PasswordHasher']
-EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
-
-# Disable DEBUG to catch template errors
-DEBUG = False
-
-# Simplify middleware for tests
+# Simplified middleware for testing - remove problematic middleware
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -50,23 +23,61 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-# Enable test-specific logging
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
+# Simplified template context processors for testing
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [
+            os.path.join(BASE_DIR, 'trueAlign/templates'),
+        ],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
         },
     },
-    'loggers': {
-        'django': {
-            'handlers': ['console'],
-            'level': 'ERROR',
-        },
-        'trueAlign': {
-            'handlers': ['console'],
-            'level': 'ERROR',
-        }
+]
+
+# Disable logging during tests to reduce noise
+LOGGING_CONFIG = None
+import logging
+logging.disable(logging.CRITICAL)
+
+# Disable migrations for faster tests
+class DisableMigrations:
+    def __contains__(self, item):
+        return True
+    
+    def __getitem__(self, item):
+        return None
+
+# Uncomment the line below if you want to disable migrations for even faster tests
+# MIGRATION_MODULES = DisableMigrations()
+
+# Use a simple password hasher for faster tests
+PASSWORD_HASHERS = [
+    'django.contrib.auth.hashers.MD5PasswordHasher',
+]
+
+# Disable debug toolbar and other development tools during tests
+DEBUG = False
+
+# Email backend for testing
+EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
+
+# Cache configuration for testing
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
     }
 }
+
+# Media settings for testing
+MEDIA_ROOT = os.path.join(BASE_DIR, 'test_media')
+
+# Static files settings for testing
+STATIC_ROOT = os.path.join(BASE_DIR, 'test_static')

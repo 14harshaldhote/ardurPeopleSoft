@@ -30,14 +30,20 @@ class ConferenceBookingForm(forms.ModelForm):
 
         # Dynamically populate room choices from active rooms
         # Filter by user's office location if available
-        if user and hasattr(user, 'profile') and user.profile.office_location:
-            active_rooms = Room.objects.filter(
-                status=Room.RoomStatus.ACTIVE,
-                office_location=user.profile.office_location
-            ).order_by('name')
-        else:
-            # Fallback to all active rooms if no office location is set
+        try:
+            if user and hasattr(user, 'profile') and user.profile and user.profile.office_location:
+                active_rooms = Room.objects.filter(
+                    status=Room.RoomStatus.ACTIVE,
+                    office_location=user.profile.office_location
+                ).order_by('name')
+            else:
+                # Fallback to all active rooms if no office location is set
+                active_rooms = Room.objects.filter(status=Room.RoomStatus.ACTIVE).order_by('name')
+                logger.info(f"No office location found for user {user}, showing all active rooms")
+        except AttributeError:
+            # Handle case where profile doesn't exist
             active_rooms = Room.objects.filter(status=Room.RoomStatus.ACTIVE).order_by('name')
+            logger.warning(f"User {user} has no profile, showing all active rooms")
 
         room_choices = [('', 'Select a room')]
         room_choices.extend([(room.id, f"{room.name} (Capacity: {room.capacity})") for room in active_rooms])
@@ -90,20 +96,15 @@ class ConferenceBookingForm(forms.ModelForm):
             if duration > timedelta(hours=8):
                 raise forms.ValidationError("Maximum booking duration is 8 hours.")
 
-            # Working hours validation
-            start_hour = start_time.hour
-            end_hour = end_time.hour
+            # Working hours validation - removed to allow night shift bookings
             start_day = start_time.weekday()
             end_day = end_time.weekday()
 
             if start_day >= 5 or end_day >= 5:  # Saturday = 5, Sunday = 6
                 raise forms.ValidationError("Bookings are only allowed on weekdays (Monday to Friday).")
 
-            if start_hour < 9 or start_hour >= 18:
-                raise forms.ValidationError("Start time must be between 9:00 AM and 6:00 PM.")
-
-            if end_hour < 9 or end_hour > 18:
-                raise forms.ValidationError("End time must be between 9:00 AM and 6:00 PM.")
+            # Note: Working hours restriction removed to accommodate night shifts
+            # Previously restricted to 9 AM - 6 PM, now allows 24/7 booking on weekdays
 
         # Room capacity validation
         if room and attendees_count and attendees_count > room.capacity:
@@ -298,13 +299,27 @@ def get_available_slots(request):
     logger.info(f"Available slots request from user {request.user} with params: {dict(request.GET)}")
 
     try:
-        # Get query parameters
+        # Get query parameters with validation and caching
         room_id = request.GET.get('room_id')
-        duration_minutes = int(request.GET.get('duration', 60))
+        try:
+            duration_minutes = int(request.GET.get('duration', 60))
+            min_capacity = int(request.GET.get('min_capacity', 1))
+        except ValueError:
+            return JsonResponse({'error': 'Invalid duration or capacity values.'}, status=400)
+        
         start_date_str = request.GET.get('start_date')
-        min_capacity = int(request.GET.get('min_capacity', 1))
         start_time_str = request.GET.get('start_time')
         end_time_str = request.GET.get('end_time')
+        
+        # Create cache key for repeated requests
+        cache_key = f"available_slots_{room_id}_{duration_minutes}_{start_date_str}_{min_capacity}_{start_time_str}_{end_time_str}"
+        
+        # Check cache first (5 minute expiry)
+        from django.core.cache import cache
+        cached_result = cache.get(cache_key)
+        if cached_result:
+            logger.info(f"Returning cached result for available slots request")
+            return JsonResponse(cached_result)
 
         # Handle availability check for specific time slot
         if start_time_str and end_time_str and room_id:
@@ -402,7 +417,11 @@ def get_available_slots(request):
 
             logger.info(f"Found {len(available_slots)} available rooms")
 
-        return JsonResponse({'available_slots': available_slots})
+        # Cache the result for 5 minutes
+        result = {'available_slots': available_slots}
+        cache.set(cache_key, result, 300)  # 5 minutes
+        
+        return JsonResponse(result)
 
     except Exception as e:
         logger.error(f"Error fetching available slots: {e}", exc_info=True)
@@ -547,6 +566,101 @@ def booking_analytics(request):
     }
 
     return render(request, 'conf_booking/analytics.html', context)
+
+
+@login_required
+@require_http_methods(["POST"])
+def create_quick_booking(request):
+    """
+    API endpoint for quick booking creation from calendar or slot selection.
+    """
+    try:
+        import json
+        data = json.loads(request.body)
+        
+        room_id = data.get('room_id')
+        start_time_str = data.get('start_time')
+        end_time_str = data.get('end_time')
+        purpose = data.get('purpose', 'Quick Booking')
+        
+        # Validate required fields
+        if not all([room_id, start_time_str, end_time_str]):
+            return JsonResponse({
+                'success': False,
+                'error': 'Missing required fields: room_id, start_time, end_time'
+            }, status=400)
+        
+        # Get room
+        try:
+            room = Room.objects.get(id=room_id, status=Room.RoomStatus.ACTIVE)
+        except Room.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': 'Room not found or not available'
+            }, status=404)
+        
+        # Parse times
+        try:
+            start_time = datetime.fromisoformat(start_time_str.replace('Z', '+00:00'))
+            end_time = datetime.fromisoformat(end_time_str.replace('Z', '+00:00'))
+        except ValueError:
+            return JsonResponse({
+                'success': False,
+                'error': 'Invalid time format'
+            }, status=400)
+        
+        # Check for conflicts
+        conflicts = ConferenceBooking.get_conflicting_bookings(room, start_time, end_time)
+        if conflicts.exists():
+            return JsonResponse({
+                'success': False,
+                'error': 'Time slot is not available',
+                'conflicts': [{
+                    'purpose': booking.purpose,
+                    'start_time': booking.start_time.isoformat(),
+                    'end_time': booking.end_time.isoformat()
+                } for booking in conflicts]
+            }, status=409)
+        
+        # Create booking
+        booking = ConferenceBooking.objects.create(
+            room=room,
+            booked_by=request.user,
+            purpose=purpose,
+            start_time=start_time,
+            end_time=end_time,
+            attendees_count=data.get('attendees_count', 1),
+            external_attendees=data.get('external_attendees', 0),
+            meeting_type=data.get('meeting_type', 'INTERNAL'),
+            priority=data.get('priority', 'MEDIUM'),
+            status=ConferenceBooking.BookingStatus.CONFIRMED
+        )
+        
+        # Send confirmation email
+        try:
+            BookingNotification.send_booking_confirmation(booking)
+        except Exception as e:
+            logger.warning(f"Failed to send confirmation email for booking {booking.id}: {e}")
+        
+        return JsonResponse({
+            'success': True,
+            'booking': {
+                'id': booking.id,
+                'room_name': booking.room.name,
+                'purpose': booking.purpose,
+                'start_time': booking.start_time.isoformat(),
+                'end_time': booking.end_time.isoformat(),
+                'status': booking.status
+            },
+            'message': f'Successfully booked {room.name} for {booking.start_time.astimezone(IST).strftime("%b %d at %I:%M %p")}'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in create_quick_booking: {e}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'error': 'An error occurred while creating the booking'
+        }, status=500)
 
 
 @login_required
@@ -830,7 +944,7 @@ def get_room_details(request, room_id):
         room_data = {
             'id': room.id,
             'name': room.name,
-            'type': room.get_room_type_display(),
+            'type': room.get_room_type_display() if hasattr(room, 'get_room_type_display') else room.room_type,
             'capacity': room.capacity,
             'location': room.location,
             'facilities': room.facilities,
@@ -948,7 +1062,7 @@ def get_available_rooms(request):
                     'name': room.name,
                     'capacity': room.capacity,
                     'location': room.location or '',
-                    'room_type': room.get_room_type_display(),
+                    'room_type': room.get_room_type_display() if hasattr(room, 'get_room_type_display') else room.room_type,
                     'facilities': room.facilities or '',
                     'hourly_rate': float(room.hourly_rate),
                     'is_available': room.is_available,
@@ -991,7 +1105,7 @@ def get_available_rooms(request):
                     'name': room.name,
                     'capacity': room.capacity,
                     'location': room.location or '',
-                    'room_type': room.get_room_type_display(),
+                    'room_type': room.get_room_type_display() if hasattr(room, 'get_room_type_display') else room.room_type,
                     'facilities': room.facilities or '',
                     'hourly_rate': float(room.hourly_rate),
                     'is_available': True,
@@ -1101,7 +1215,7 @@ def get_calendar_data(request):
                         'attendees': booking.attendees_count + booking.external_attendees,
                         'status': booking.status,
                         'booked_by': booking.booked_by.get_full_name(),
-                        'meeting_type': booking.get_meeting_type_display(),
+                        'meeting_type': booking.get_meeting_type_display() if hasattr(booking, 'get_meeting_type_display') else booking.meeting_type,
                         'can_edit': booking.booked_by == request.user,
                     })
 
@@ -1135,88 +1249,6 @@ def get_calendar_data(request):
         }, status=500)
 
 
-def create_quick_booking(request):
-    """
-    API endpoint to create a quick booking from calendar.
-    """
-    if request.method != 'POST':
-        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
-
-    try:
-        data = json.loads(request.body)
-
-        room_id = data.get('room_id')
-        start_time = data.get('start_time')
-        duration_minutes = int(data.get('duration', 60))
-        purpose = data.get('purpose', '').strip()
-        attendees = int(data.get('attendees', 1))
-
-        # Validation
-        if not all([room_id, start_time, purpose]):
-            return JsonResponse({
-                'success': False,
-                'error': 'Missing required fields: room_id, start_time, purpose'
-            })
-
-        # Parse start time
-        start_dt = timezone.datetime.fromisoformat(start_time.replace('Z', '+00:00'))
-        end_dt = start_dt + timedelta(minutes=duration_minutes)
-
-        # Get room
-        try:
-            room = Room.objects.get(id=room_id, status=Room.RoomStatus.ACTIVE)
-        except Room.DoesNotExist:
-            return JsonResponse({'success': False, 'error': 'Room not found'})
-
-        # Check room capacity
-        if attendees > room.capacity:
-            return JsonResponse({
-                'success': False,
-                'error': f'Attendees ({attendees}) exceed room capacity ({room.capacity})'
-            })
-
-        # Check for conflicts
-        conflicts = ConferenceBooking.objects.filter(
-            room=room,
-            start_time__lt=end_dt,
-            end_time__gt=start_dt,
-            status__in=[ConferenceBooking.BookingStatus.CONFIRMED, ConferenceBooking.BookingStatus.PENDING]
-        )
-
-        if conflicts.exists():
-            return JsonResponse({
-                'success': False,
-                'error': 'Room is not available at the selected time'
-            })
-
-        # Create booking
-        booking = ConferenceBooking.objects.create(
-            room=room,
-            booked_by=request.user,
-            purpose=purpose,
-            start_time=start_dt,
-            end_time=end_dt,
-            attendees_count=attendees,
-            external_attendees=0,
-            meeting_type=ConferenceBooking.MeetingType.INTERNAL,
-            priority=ConferenceBooking.Priority.NORMAL,
-            status=ConferenceBooking.BookingStatus.CONFIRMED
-        )
-
-        logger.info(f"Quick booking created: {booking.id} by {request.user}")
-
-        return JsonResponse({
-            'success': True,
-            'booking_id': booking.id,
-            'message': 'Booking created successfully'
-        })
-
-    except Exception as e:
-        logger.error(f"Error creating quick booking: {e}", exc_info=True)
-        return JsonResponse({
-            'success': False,
-            'error': 'Failed to create booking'
-        }, status=500)
 
 
 # =============================================================================

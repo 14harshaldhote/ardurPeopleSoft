@@ -41,7 +41,6 @@ class OfficeLocationAdmin(admin.ModelAdmin):
     def total_rooms(self, obj):
         """Display total number of rooms in this office location."""
         return obj.rooms.count()
-
     total_rooms.short_description = 'Total Rooms'
 
 
