@@ -1,0 +1,854 @@
+TABLE_NAME	COLUMN_NAME	COLUMN_TYPE	IS_NULLABLE	COLUMN_DEFAULT	COLUMN_KEY	EXTRA	COLUMN_COMMENT
+auth_group	id	int	NO	NULL	PRI	auto_increment	
+auth_group	name	varchar(150)	NO	NULL	UNI		
+auth_group_permissions	id	bigint	NO	NULL	PRI	auto_increment	
+auth_group_permissions	group_id	int	NO	NULL	MUL		
+auth_group_permissions	permission_id	int	NO	NULL	MUL		
+auth_permission	id	int	NO	NULL	PRI	auto_increment	
+auth_permission	name	varchar(255)	NO	NULL			
+auth_permission	content_type_id	int	NO	NULL	MUL		
+auth_permission	codename	varchar(100)	NO	NULL			
+auth_user	id	int	NO	NULL	PRI	auto_increment	
+auth_user	password	varchar(128)	NO	NULL			
+auth_user	last_login	datetime(6)	YES	NULL			
+auth_user	is_superuser	tinyint(1)	NO	NULL			
+auth_user	username	varchar(150)	NO	NULL	UNI		
+auth_user	first_name	varchar(150)	NO	NULL			
+auth_user	last_name	varchar(150)	NO	NULL			
+auth_user	email	varchar(254)	NO	NULL			
+auth_user	is_staff	tinyint(1)	NO	NULL			
+auth_user	is_active	tinyint(1)	NO	NULL			
+auth_user	date_joined	datetime(6)	NO	NULL			
+auth_user_groups	id	bigint	NO	NULL	PRI	auto_increment	
+auth_user_groups	user_id	int	NO	NULL	MUL		
+auth_user_groups	group_id	int	NO	NULL	MUL		
+auth_user_user_permissions	id	bigint	NO	NULL	PRI	auto_increment	
+auth_user_user_permissions	user_id	int	NO	NULL	MUL		
+auth_user_user_permissions	permission_id	int	NO	NULL	MUL		
+django_admin_log	id	int	NO	NULL	PRI	auto_increment	
+django_admin_log	action_time	datetime(6)	NO	NULL			
+django_admin_log	object_id	longtext	YES	NULL			
+django_admin_log	object_repr	varchar(200)	NO	NULL			
+django_admin_log	action_flag	smallint unsigned	NO	NULL			
+django_admin_log	change_message	longtext	NO	NULL			
+django_admin_log	content_type_id	int	YES	NULL	MUL		
+django_admin_log	user_id	int	NO	NULL	MUL		
+django_celery_beat_clockedschedule	id	int	NO	NULL	PRI	auto_increment	
+django_celery_beat_clockedschedule	clocked_time	datetime(6)	NO	NULL			
+django_celery_beat_crontabschedule	id	int	NO	NULL	PRI	auto_increment	
+django_celery_beat_crontabschedule	minute	varchar(240)	NO	NULL			
+django_celery_beat_crontabschedule	hour	varchar(96)	NO	NULL			
+django_celery_beat_crontabschedule	day_of_week	varchar(64)	NO	NULL			
+django_celery_beat_crontabschedule	day_of_month	varchar(124)	NO	NULL			
+django_celery_beat_crontabschedule	month_of_year	varchar(64)	NO	NULL			
+django_celery_beat_crontabschedule	timezone	varchar(63)	NO	NULL			
+django_celery_beat_intervalschedule	id	int	NO	NULL	PRI	auto_increment	
+django_celery_beat_intervalschedule	every	int	NO	NULL			
+django_celery_beat_intervalschedule	period	varchar(24)	NO	NULL			
+django_celery_beat_periodictask	id	int	NO	NULL	PRI	auto_increment	
+django_celery_beat_periodictask	name	varchar(200)	NO	NULL	UNI		
+django_celery_beat_periodictask	task	varchar(200)	NO	NULL			
+django_celery_beat_periodictask	args	longtext	NO	NULL			
+django_celery_beat_periodictask	kwargs	longtext	NO	NULL			
+django_celery_beat_periodictask	queue	varchar(200)	YES	NULL			
+django_celery_beat_periodictask	exchange	varchar(200)	YES	NULL			
+django_celery_beat_periodictask	routing_key	varchar(200)	YES	NULL			
+django_celery_beat_periodictask	expires	datetime(6)	YES	NULL			
+django_celery_beat_periodictask	enabled	tinyint(1)	NO	NULL			
+django_celery_beat_periodictask	last_run_at	datetime(6)	YES	NULL			
+django_celery_beat_periodictask	total_run_count	int unsigned	NO	NULL			
+django_celery_beat_periodictask	date_changed	datetime(6)	NO	NULL			
+django_celery_beat_periodictask	description	longtext	NO	NULL			
+django_celery_beat_periodictask	crontab_id	int	YES	NULL	MUL		
+django_celery_beat_periodictask	interval_id	int	YES	NULL	MUL		
+django_celery_beat_periodictask	solar_id	int	YES	NULL	MUL		
+django_celery_beat_periodictask	one_off	tinyint(1)	NO	NULL			
+django_celery_beat_periodictask	start_time	datetime(6)	YES	NULL			
+django_celery_beat_periodictask	priority	int unsigned	YES	NULL			
+django_celery_beat_periodictask	headers	longtext	NO	_utf8mb4\\'{}\\'		DEFAULT_GENERATED	
+django_celery_beat_periodictask	clocked_id	int	YES	NULL	MUL		
+django_celery_beat_periodictask	expire_seconds	int unsigned	YES	NULL			
+django_celery_beat_periodictasks	ident	smallint	NO	NULL	PRI		
+django_celery_beat_periodictasks	last_update	datetime(6)	NO	NULL			
+django_celery_beat_solarschedule	id	int	NO	NULL	PRI	auto_increment	
+django_celery_beat_solarschedule	event	varchar(24)	NO	NULL	MUL		
+django_celery_beat_solarschedule	latitude	decimal(9,6)	NO	NULL			
+django_celery_beat_solarschedule	longitude	decimal(9,6)	NO	NULL			
+django_content_type	id	int	NO	NULL	PRI	auto_increment	
+django_content_type	app_label	varchar(100)	NO	NULL	MUL		
+django_content_type	model	varchar(100)	NO	NULL			
+django_cron_cronjoblock	id	bigint	NO	NULL	PRI	auto_increment	
+django_cron_cronjoblock	job_name	varchar(200)	NO	NULL	UNI		
+django_cron_cronjoblock	locked	tinyint(1)	NO	NULL			
+django_cron_cronjoblog	id	bigint	NO	NULL	PRI	auto_increment	
+django_cron_cronjoblog	code	varchar(64)	NO	NULL	MUL		
+django_cron_cronjoblog	start_time	datetime(6)	NO	NULL	MUL		
+django_cron_cronjoblog	end_time	datetime(6)	NO	NULL	MUL		
+django_cron_cronjoblog	is_success	tinyint(1)	NO	NULL			
+django_cron_cronjoblog	message	longtext	NO	NULL			
+django_cron_cronjoblog	ran_at_time	time(6)	YES	NULL	MUL		
+django_migrations	id	bigint	NO	NULL	PRI	auto_increment	
+django_migrations	app	varchar(255)	NO	NULL			
+django_migrations	name	varchar(255)	NO	NULL			
+django_migrations	applied	datetime(6)	NO	NULL			
+django_session	session_key	varchar(40)	NO	NULL	PRI		
+django_session	session_data	longtext	NO	NULL			
+django_session	expire_date	datetime(6)	NO	NULL	MUL		
+trueAlign_appraisal	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_appraisal	title	varchar(255)	NO	NULL			
+trueAlign_appraisal	overview	longtext	NO	NULL			
+trueAlign_appraisal	period_start	date	NO	NULL			
+trueAlign_appraisal	period_end	date	NO	NULL			
+trueAlign_appraisal	status	varchar(20)	NO	NULL			
+trueAlign_appraisal	created_at	datetime(6)	NO	NULL			
+trueAlign_appraisal	updated_at	datetime(6)	NO	NULL			
+trueAlign_appraisal	submitted_at	datetime(6)	YES	NULL			
+trueAlign_appraisal	approved_at	datetime(6)	YES	NULL			
+trueAlign_appraisal	manager_id	int	YES	NULL	MUL		
+trueAlign_appraisal	user_id	int	NO	NULL	MUL		
+trueAlign_appraisalattachment	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_appraisalattachment	file	varchar(100)	NO	NULL			
+trueAlign_appraisalattachment	title	varchar(255)	NO	NULL			
+trueAlign_appraisalattachment	description	longtext	NO	NULL			
+trueAlign_appraisalattachment	upload_date	datetime(6)	NO	NULL			
+trueAlign_appraisalattachment	appraisal_id	bigint	NO	NULL	MUL		
+trueAlign_appraisalattachment	uploaded_by_id	int	YES	NULL	MUL		
+trueAlign_appraisalitem	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_appraisalitem	category	varchar(20)	NO	NULL			
+trueAlign_appraisalitem	title	varchar(255)	NO	NULL			
+trueAlign_appraisalitem	description	longtext	NO	NULL			
+trueAlign_appraisalitem	date	date	YES	NULL			
+trueAlign_appraisalitem	employee_rating	smallint unsigned	YES	NULL			
+trueAlign_appraisalitem	manager_rating	smallint unsigned	YES	NULL			
+trueAlign_appraisalitem	manager_comments	longtext	NO	NULL			
+trueAlign_appraisalitem	appraisal_id	bigint	NO	NULL	MUL		
+trueAlign_appraisalworkflow	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_appraisalworkflow	from_status	varchar(20)	YES	NULL			
+trueAlign_appraisalworkflow	to_status	varchar(20)	NO	NULL			
+trueAlign_appraisalworkflow	timestamp	datetime(6)	NO	NULL			
+trueAlign_appraisalworkflow	comments	longtext	NO	NULL			
+trueAlign_appraisalworkflow	action_by_id	int	YES	NULL	MUL		
+trueAlign_appraisalworkflow	appraisal_id	bigint	NO	NULL	MUL		
+trueAlign_attendance	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_attendance	date	date	NO	NULL	MUL		
+trueAlign_attendance	status	varchar(20)	NO	NULL			
+trueAlign_attendance	leave_type	varchar(50)	YES	NULL			
+trueAlign_attendance	clock_in_time	datetime(6)	YES	NULL	MUL		
+trueAlign_attendance	clock_out_time	datetime(6)	YES	NULL	MUL		
+trueAlign_attendance	breaks	json	NO	NULL			
+trueAlign_attendance	total_hours	decimal(5,2)	YES	NULL			
+trueAlign_attendance	expected_hours	decimal(5,2)	YES	NULL			
+trueAlign_attendance	is_weekend	tinyint(1)	NO	NULL	MUL		
+trueAlign_attendance	is_holiday	tinyint(1)	NO	NULL			
+trueAlign_attendance	holiday_name	varchar(100)	YES	NULL			
+trueAlign_attendance	location	varchar(50)	NO	NULL			
+trueAlign_attendance	ip_address	char(39)	YES	NULL			
+trueAlign_attendance	device_info	json	YES	NULL			
+trueAlign_attendance	late_minutes	int	NO	NULL			
+trueAlign_attendance	early_departure_minutes	int	NO	NULL			
+trueAlign_attendance	left_early	tinyint(1)	NO	NULL			
+trueAlign_attendance	last_modified	datetime(6)	NO	NULL			
+trueAlign_attendance	regularization_reason	longtext	YES	NULL			
+trueAlign_attendance	regularization_status	varchar(20)	YES	NULL	MUL		
+trueAlign_attendance	requested_status	varchar(20)	YES	NULL			
+trueAlign_attendance	total_sessions	int	NO	NULL			
+trueAlign_attendance	idle_time	bigint	NO	NULL			
+trueAlign_attendance	overtime_hours	decimal(5,2)	NO	NULL			
+trueAlign_attendance	is_overtime_approved	tinyint(1)	NO	NULL			
+trueAlign_attendance	original_clock_in_time	datetime(6)	YES	NULL			
+trueAlign_attendance	original_clock_out_time	datetime(6)	YES	NULL			
+trueAlign_attendance	original_status	varchar(20)	YES	NULL			
+trueAlign_attendance	is_employee_notified	tinyint(1)	NO	NULL			
+trueAlign_attendance	is_hr_notified	tinyint(1)	NO	NULL			
+trueAlign_attendance	regularization_attempts	int	NO	NULL			
+trueAlign_attendance	last_regularization_date	datetime(6)	YES	NULL			
+trueAlign_attendance	remarks	longtext	YES	NULL			
+trueAlign_attendance	is_half_day	tinyint(1)	NO	NULL			
+trueAlign_attendance	modified_by_id	int	YES	NULL	MUL		
+trueAlign_attendance	user_id	int	NO	NULL	MUL		
+trueAlign_attendance	shift_id	bigint	YES	NULL	MUL		
+trueAlign_attendance	first_session_id	char(32)	YES	NULL	MUL		
+trueAlign_attendance	last_session_id	char(32)	YES	NULL	MUL		
+trueAlign_attendance	created_at	datetime(6)	NO	NULL			
+trueAlign_bankaccount	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_bankaccount	name	varchar(255)	NO	NULL			
+trueAlign_bankaccount	account_number	varchar(50)	NO	NULL	UNI		
+trueAlign_bankaccount	bank_name	varchar(255)	NO	NULL			
+trueAlign_bankaccount	branch	varchar(255)	NO	NULL			
+trueAlign_bankaccount	ifsc_code	varchar(20)	NO	NULL			
+trueAlign_bankaccount	current_balance	decimal(15,2)	NO	NULL			
+trueAlign_bankaccount	is_active	tinyint(1)	NO	NULL			
+trueAlign_bankaccount	created_at	datetime(6)	NO	NULL			
+trueAlign_bankaccount	updated_at	datetime(6)	NO	NULL			
+trueAlign_bankpayment	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_bankpayment	payment_id	varchar(50)	NO	NULL	UNI		
+trueAlign_bankpayment	party_name	varchar(255)	NO	NULL			
+trueAlign_bankpayment	payment_reason	longtext	NO	NULL			
+trueAlign_bankpayment	amount	decimal(15,2)	NO	NULL			
+trueAlign_bankpayment	payment_date	date	NO	NULL			
+trueAlign_bankpayment	reference_number	varchar(100)	YES	NULL			
+trueAlign_bankpayment	status	varchar(20)	NO	NULL			
+trueAlign_bankpayment	attachments	varchar(100)	YES	NULL			
+trueAlign_bankpayment	created_at	datetime(6)	NO	NULL			
+trueAlign_bankpayment	updated_at	datetime(6)	NO	NULL			
+trueAlign_bankpayment	approved_by_id	int	YES	NULL	MUL		
+trueAlign_bankpayment	bank_account_id	bigint	NO	NULL	MUL		
+trueAlign_bankpayment	created_by_id	int	NO	NULL	MUL		
+trueAlign_bankpayment	verified_by_id	int	YES	NULL	MUL		
+trueAlign_break	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_break	break_type	varchar(50)	NO	NULL			
+trueAlign_break	start_time	datetime(6)	NO	NULL			
+trueAlign_break	end_time	datetime(6)	YES	NULL			
+trueAlign_break	reason_for_extension	longtext	YES	NULL			
+trueAlign_break	user_id	int	NO	NULL	MUL		
+trueAlign_chartofaccount	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_chartofaccount	name	varchar(255)	NO	NULL			
+trueAlign_chartofaccount	code	varchar(20)	NO	NULL	UNI		
+trueAlign_chartofaccount	account_type	varchar(20)	NO	NULL			
+trueAlign_chartofaccount	description	longtext	YES	NULL			
+trueAlign_chartofaccount	is_active	tinyint(1)	NO	NULL			
+trueAlign_chartofaccount	created_at	datetime(6)	NO	NULL			
+trueAlign_chartofaccount	updated_at	datetime(6)	NO	NULL			
+trueAlign_chartofaccount	parent_id	bigint	YES	NULL	MUL		
+trueAlign_chatgroup	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_chatgroup	name	varchar(255)	NO	NULL			
+trueAlign_chatgroup	description	longtext	NO	NULL			
+trueAlign_chatgroup	created_at	datetime(6)	NO	NULL			
+trueAlign_chatgroup	is_active	tinyint(1)	NO	NULL			
+trueAlign_chatgroup	last_activity	datetime(6)	NO	NULL			
+trueAlign_chatgroup	created_by_id	int	YES	NULL	MUL		
+trueAlign_clientinvoice	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_clientinvoice	invoice_number	varchar(50)	NO	NULL	UNI		
+trueAlign_clientinvoice	billing_model	varchar(20)	NO	NULL			
+trueAlign_clientinvoice	billing_cycle_start	date	NO	NULL			
+trueAlign_clientinvoice	billing_cycle_end	date	NO	NULL			
+trueAlign_clientinvoice	order_count	int	YES	NULL			
+trueAlign_clientinvoice	fte_count	decimal(5,2)	YES	NULL			
+trueAlign_clientinvoice	rate	decimal(10,2)	NO	NULL			
+trueAlign_clientinvoice	subtotal	decimal(15,2)	NO	NULL			
+trueAlign_clientinvoice	tax_amount	decimal(15,2)	NO	NULL			
+trueAlign_clientinvoice	discount	decimal(15,2)	NO	NULL			
+trueAlign_clientinvoice	total_amount	decimal(15,2)	NO	NULL			
+trueAlign_clientinvoice	status	varchar(20)	NO	NULL			
+trueAlign_clientinvoice	due_date	date	NO	NULL			
+trueAlign_clientinvoice	created_at	datetime(6)	NO	NULL			
+trueAlign_clientinvoice	updated_at	datetime(6)	NO	NULL			
+trueAlign_clientinvoice	approved_by_id	int	YES	NULL	MUL		
+trueAlign_clientinvoice	client_id	int	NO	NULL	MUL		
+trueAlign_clientparticipation	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_clientparticipation	feedback	longtext	YES	NULL			
+trueAlign_clientparticipation	approved	tinyint(1)	NO	NULL			
+trueAlign_clientparticipation	date	datetime(6)	NO	NULL			
+trueAlign_clientparticipation	is_active	tinyint(1)	NO	NULL			
+trueAlign_clientparticipation	client_id	int	NO	NULL	MUL		
+trueAlign_clientparticipation	project_id	bigint	NO	NULL	MUL		
+trueAlign_clientprofile	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_clientprofile	company_name	varchar(100)	NO	NULL			
+trueAlign_clientprofile	contact_info	longtext	NO	NULL			
+trueAlign_clientprofile	industry_type	varchar(100)	NO	NULL			
+trueAlign_clientprofile	company_size	varchar(50)	NO	NULL			
+trueAlign_clientprofile	registration_number	varchar(50)	YES	NULL			
+trueAlign_clientprofile	business_location	varchar(255)	YES	NULL			
+trueAlign_clientprofile	website_url	varchar(200)	YES	NULL			
+trueAlign_clientprofile	year_established	int	YES	NULL			
+trueAlign_clientprofile	annual_revenue	decimal(15,2)	YES	NULL			
+trueAlign_clientprofile	user_id	int	NO	NULL	UNI		
+truealign_comment_attachment	id	bigint	NO	NULL	PRI	auto_increment	
+truealign_comment_attachment	file	varchar(100)	NO	NULL			
+truealign_comment_attachment	original_filename	varchar(255)	NO	NULL			
+truealign_comment_attachment	formatted_filename	varchar(255)	NO	NULL			
+truealign_comment_attachment	file_size	int unsigned	NO	NULL			
+truealign_comment_attachment	content_type	varchar(100)	YES	NULL			
+truealign_comment_attachment	uploaded_at	datetime(6)	NO	NULL			
+truealign_comment_attachment	description	longtext	YES	NULL			
+truealign_comment_attachment	is_active	tinyint(1)	NO	NULL			
+truealign_comment_attachment	uploaded_by_id	int	NO	NULL	MUL		
+truealign_comment_attachment	ticket_activity_id	bigint	NO	NULL	MUL		
+truealign_comment_attachment	comment_id	bigint	NO	NULL	MUL		
+trueAlign_compoffrequest	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_compoffrequest	worked_date	date	NO	NULL			
+trueAlign_compoffrequest	reason	longtext	NO	NULL			
+trueAlign_compoffrequest	hours_worked	decimal(4,1)	NO	NULL			
+trueAlign_compoffrequest	status	varchar(20)	NO	NULL			
+trueAlign_compoffrequest	created_at	datetime(6)	NO	NULL			
+trueAlign_compoffrequest	updated_at	datetime(6)	NO	NULL			
+trueAlign_compoffrequest	approver_id	int	YES	NULL	MUL		
+trueAlign_compoffrequest	user_id	int	NO	NULL	MUL		
+trueAlign_conferencebooking	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_conferencebooking	purpose	varchar(255)	NO	NULL			
+trueAlign_conferencebooking	description	longtext	NO	NULL			
+trueAlign_conferencebooking	start_time	datetime(6)	NO	NULL	MUL		
+trueAlign_conferencebooking	end_time	datetime(6)	NO	NULL			
+trueAlign_conferencebooking	attendees_count	int unsigned	NO	NULL			
+trueAlign_conferencebooking	external_attendees	int unsigned	NO	NULL			
+trueAlign_conferencebooking	meeting_type	varchar(50)	NO	NULL			
+trueAlign_conferencebooking	priority	varchar(10)	NO	NULL			
+trueAlign_conferencebooking	status	varchar(10)	NO	NULL	MUL		
+trueAlign_conferencebooking	created_at	datetime(6)	NO	NULL			
+trueAlign_conferencebooking	updated_at	datetime(6)	NO	NULL			
+trueAlign_conferencebooking	cancelled_at	datetime(6)	YES	NULL			
+trueAlign_conferencebooking	cancellation_reason	longtext	NO	NULL			
+trueAlign_conferencebooking	approved_at	datetime(6)	YES	NULL			
+trueAlign_conferencebooking	recurring_pattern	varchar(20)	NO	NULL			
+trueAlign_conferencebooking	checked_in	tinyint(1)	NO	NULL			
+trueAlign_conferencebooking	checked_in_at	datetime(6)	YES	NULL			
+trueAlign_conferencebooking	no_show	tinyint(1)	NO	NULL			
+trueAlign_conferencebooking	hourly_rate	decimal(8,2)	NO	NULL			
+trueAlign_conferencebooking	total_cost	decimal(10,2)	NO	NULL			
+trueAlign_conferencebooking	approved_by_id	int	YES	NULL	MUL		
+trueAlign_conferencebooking	booked_by_id	int	NO	NULL	MUL		
+trueAlign_conferencebooking	cancelled_by_id	int	YES	NULL	MUL		
+trueAlign_conferencebooking	parent_booking_id	bigint	YES	NULL	MUL		
+trueAlign_conferencebooking	room_id	bigint	NO	NULL	MUL		
+trueAlign_dailyexpense	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_dailyexpense	expense_id	varchar(50)	NO	NULL	UNI		
+trueAlign_dailyexpense	date	date	NO	NULL			
+trueAlign_dailyexpense	category	varchar(20)	NO	NULL			
+trueAlign_dailyexpense	description	longtext	NO	NULL			
+trueAlign_dailyexpense	amount	decimal(15,2)	NO	NULL			
+trueAlign_dailyexpense	status	varchar(20)	NO	NULL			
+trueAlign_dailyexpense	attachments	varchar(100)	YES	NULL			
+trueAlign_dailyexpense	approved_at	datetime(6)	YES	NULL			
+trueAlign_dailyexpense	rejection_reason	longtext	YES	NULL			
+trueAlign_dailyexpense	created_at	datetime(6)	NO	NULL			
+trueAlign_dailyexpense	updated_at	datetime(6)	NO	NULL			
+trueAlign_dailyexpense	approved_by_id	int	YES	NULL	MUL		
+trueAlign_dailyexpense	paid_by_id	int	NO	NULL	MUL		
+trueAlign_dailyexpense	department_id	bigint	NO	NULL	MUL		
+trueAlign_department	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_department	name	varchar(100)	NO	NULL	UNI		
+trueAlign_directmessage	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_directmessage	created_at	datetime(6)	NO	NULL			
+trueAlign_directmessage	is_active	tinyint(1)	NO	NULL			
+trueAlign_directmessage	last_activity	datetime(6)	NO	NULL			
+trueAlign_directmessage_participants	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_directmessage_participants	directmessage_id	bigint	NO	NULL	MUL		
+trueAlign_directmessage_participants	user_id	int	NO	NULL	MUL		
+trueAlign_failedloginattempt	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_failedloginattempt	attempt_time	datetime(6)	NO	NULL			
+trueAlign_failedloginattempt	ip_address	char(39)	NO	NULL			
+trueAlign_failedloginattempt	user_id	int	NO	NULL	MUL		
+trueAlign_featureusage	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_featureusage	feature_name	varchar(100)	NO	NULL			
+trueAlign_featureusage	usage_count	int unsigned	NO	NULL			
+trueAlign_financialparameter	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_financialparameter	key	varchar(100)	NO	NULL	MUL		
+trueAlign_financialparameter	name	varchar(255)	NO	NULL			
+trueAlign_financialparameter	category	varchar(20)	NO	NULL	MUL		
+trueAlign_financialparameter	description	longtext	YES	NULL			
+trueAlign_financialparameter	value	longtext	NO	NULL			
+trueAlign_financialparameter	value_type	varchar(20)	NO	NULL			
+trueAlign_financialparameter	is_global	tinyint(1)	NO	NULL			
+trueAlign_financialparameter	object_id	int unsigned	YES	NULL			
+trueAlign_financialparameter	valid_from	date	NO	NULL	MUL		
+trueAlign_financialparameter	valid_to	date	YES	NULL			
+trueAlign_financialparameter	fiscal_year	varchar(9)	YES	NULL	MUL		
+trueAlign_financialparameter	fiscal_quarter	varchar(6)	YES	NULL			
+trueAlign_financialparameter	created_at	datetime(6)	NO	NULL			
+trueAlign_financialparameter	updated_at	datetime(6)	NO	NULL			
+trueAlign_financialparameter	is_approved	tinyint(1)	NO	NULL			
+trueAlign_financialparameter	approved_at	datetime(6)	YES	NULL			
+trueAlign_financialparameter	approved_by_id	int	YES	NULL	MUL		
+trueAlign_financialparameter	content_type_id	int	YES	NULL	MUL		
+trueAlign_financialparameter	created_by_id	int	NO	NULL	MUL		
+trueAlign_financialparameter	updated_by_id	int	YES	NULL	MUL		
+trueAlign_gameicon	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_gameicon	name	varchar(50)	NO	NULL			
+trueAlign_gameicon	symbol	varchar(10)	NO	NULL			
+trueAlign_gameicon	is_active	tinyint(1)	NO	NULL			
+trueAlign_gameicon	created_at	datetime(6)	NO	NULL			
+trueAlign_gameicon	created_by_id	int	NO	NULL	MUL		
+trueAlign_gamespectator	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_gamespectator	joined_at	datetime(6)	NO	NULL			
+trueAlign_gamespectator	user_id	int	NO	NULL	MUL		
+trueAlign_gamespectator	game_id	char(32)	NO	NULL	MUL		
+trueAlign_globalupdate	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_globalupdate	title	varchar(255)	NO	NULL			
+trueAlign_globalupdate	description	longtext	NO	NULL			
+trueAlign_globalupdate	status	varchar(20)	NO	NULL			
+trueAlign_globalupdate	scheduled_date	datetime(6)	YES	NULL			
+trueAlign_globalupdate	created_at	datetime(6)	NO	NULL			
+trueAlign_globalupdate	updated_at	datetime(6)	NO	NULL			
+trueAlign_globalupdate	managed_by_id	int	YES	NULL	MUL		
+trueAlign_groupmember	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_groupmember	role	varchar(20)	NO	NULL			
+trueAlign_groupmember	joined_at	datetime(6)	NO	NULL			
+trueAlign_groupmember	is_active	tinyint(1)	NO	NULL			
+trueAlign_groupmember	last_seen	datetime(6)	NO	NULL			
+trueAlign_groupmember	typing_status	datetime(6)	YES	NULL			
+trueAlign_groupmember	group_id	bigint	NO	NULL	MUL		
+trueAlign_groupmember	user_id	int	NO	NULL	MUL		
+trueAlign_holiday	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_holiday	name	varchar(100)	NO	NULL			
+trueAlign_holiday	date	date	NO	NULL			
+trueAlign_holiday	recurring_yearly	tinyint(1)	NO	NULL			
+trueAlign_holiday	created_at	datetime(6)	NO	NULL			
+trueAlign_leaveallocation	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_leaveallocation	annual_days	decimal(5,1)	NO	NULL			
+trueAlign_leaveallocation	carry_forward_limit	decimal(5,1)	NO	NULL			
+trueAlign_leaveallocation	max_consecutive_days	int	NO	NULL			
+trueAlign_leaveallocation	advance_notice_days	int	NO	NULL			
+trueAlign_leaveallocation	policy_id	bigint	NO	NULL	MUL		
+trueAlign_leaveallocation	leave_type_id	bigint	NO	NULL	MUL		
+trueAlign_leavepolicy	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_leavepolicy	name	varchar(100)	NO	NULL			
+trueAlign_leavepolicy	is_active	tinyint(1)	NO	NULL			
+trueAlign_leavepolicy	created_at	datetime(6)	NO	NULL			
+trueAlign_leavepolicy	updated_at	datetime(6)	NO	NULL			
+trueAlign_leavepolicy	group_id	int	NO	NULL	MUL		
+trueAlign_leaverequest	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_leaverequest	start_date	date	NO	NULL			
+trueAlign_leaverequest	end_date	date	NO	NULL			
+trueAlign_leaverequest	half_day	tinyint(1)	NO	NULL			
+trueAlign_leaverequest	leave_days	decimal(5,1)	NO	NULL			
+trueAlign_leaverequest	reason	longtext	NO	NULL			
+trueAlign_leaverequest	status	varchar(20)	NO	NULL			
+trueAlign_leaverequest	rejection_reason	longtext	YES	NULL			
+trueAlign_leaverequest	suggested_dates	json	YES	NULL			
+trueAlign_leaverequest	documentation	varchar(100)	YES	NULL			
+trueAlign_leaverequest	is_retroactive	tinyint(1)	NO	NULL			
+trueAlign_leaverequest	created_at	datetime(6)	NO	NULL			
+trueAlign_leaverequest	updated_at	datetime(6)	NO	NULL			
+trueAlign_leaverequest	approver_id	int	YES	NULL	MUL		
+trueAlign_leaverequest	user_id	int	NO	NULL	MUL		
+trueAlign_leaverequest	leave_type_id	bigint	NO	NULL	MUL		
+trueAlign_leavetype	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_leavetype	name	varchar(100)	NO	NULL	UNI		
+trueAlign_leavetype	description	longtext	YES	NULL			
+trueAlign_leavetype	is_paid	tinyint(1)	NO	NULL			
+trueAlign_leavetype	requires_approval	tinyint(1)	NO	NULL			
+trueAlign_leavetype	requires_documentation	tinyint(1)	NO	NULL			
+trueAlign_leavetype	count_weekends	tinyint(1)	NO	NULL			
+trueAlign_leavetype	can_be_half_day	tinyint(1)	NO	NULL			
+trueAlign_leavetype	is_active	tinyint(1)	NO	NULL			
+trueAlign_leavetype	created_at	datetime(6)	NO	NULL			
+trueAlign_leavetype	updated_at	datetime(6)	NO	NULL			
+trueAlign_message	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_message	content	longtext	NO	NULL			
+trueAlign_message	message_type	varchar(20)	NO	NULL			
+trueAlign_message	file_attachment	varchar(100)	YES	NULL			
+trueAlign_message	sent_at	datetime(6)	NO	NULL			
+trueAlign_message	edited_at	datetime(6)	YES	NULL			
+trueAlign_message	is_deleted	tinyint(1)	NO	NULL			
+trueAlign_message	deleted_at	datetime(6)	YES	NULL			
+trueAlign_message	direct_message_id	bigint	YES	NULL	MUL		
+trueAlign_message	group_id	bigint	YES	NULL	MUL		
+trueAlign_message	sender_id	int	NO	NULL	MUL		
+trueAlign_messageread	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_messageread	read_at	datetime(6)	YES	NULL			
+trueAlign_messageread	message_id	bigint	NO	NULL	MUL		
+trueAlign_messageread	user_id	int	NO	NULL	MUL		
+trueAlign_notification	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_notification	message	varchar(255)	NO	NULL			
+trueAlign_notification	notification_type	varchar(20)	NO	NULL			
+trueAlign_notification	is_read	tinyint(1)	NO	NULL			
+trueAlign_notification	created_at	datetime(6)	NO	NULL			
+trueAlign_notification	recipient_id	int	NO	NULL	MUL		
+trueAlign_notification	game_id	char(32)	YES	NULL	MUL		
+trueAlign_officelocation	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_officelocation	name	varchar(100)	NO	NULL	UNI		
+trueAlign_officelocation	code	varchar(10)	NO	NULL	UNI		
+trueAlign_officelocation	address_line1	varchar(255)	NO	NULL			
+trueAlign_officelocation	address_line2	varchar(255)	NO	NULL			
+trueAlign_officelocation	city	varchar(100)	NO	NULL			
+trueAlign_officelocation	state	varchar(100)	NO	NULL			
+trueAlign_officelocation	postal_code	varchar(20)	NO	NULL			
+trueAlign_officelocation	country	varchar(100)	NO	NULL			
+trueAlign_officelocation	phone	varchar(20)	NO	NULL			
+trueAlign_officelocation	email	varchar(254)	NO	NULL			
+trueAlign_officelocation	is_active	tinyint(1)	NO	NULL			
+trueAlign_officelocation	timezone	varchar(50)	NO	NULL			
+trueAlign_officelocation	working_hours_start	time(6)	NO	NULL			
+trueAlign_officelocation	working_hours_end	time(6)	NO	NULL			
+trueAlign_officelocation	created_at	datetime(6)	NO	NULL			
+trueAlign_officelocation	updated_at	datetime(6)	NO	NULL			
+trueAlign_passwordchange	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_passwordchange	old_password	varchar(255)	NO	NULL			
+trueAlign_passwordchange	new_password	varchar(255)	NO	NULL			
+trueAlign_passwordchange	change_time	datetime(6)	NO	NULL			
+trueAlign_passwordchange	user_id	int	NO	NULL	MUL		
+trueAlign_playerstats	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_playerstats	games_played	int	NO	NULL			
+trueAlign_playerstats	games_won	int	NO	NULL			
+trueAlign_playerstats	games_lost	int	NO	NULL			
+trueAlign_playerstats	games_drawn	int	NO	NULL			
+trueAlign_playerstats	user_id	int	NO	NULL	UNI		
+trueAlign_presence	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_presence	date	date	NO	NULL			
+trueAlign_presence	status	varchar(20)	NO	NULL			
+trueAlign_presence	marked_at	datetime(6)	NO	NULL			
+trueAlign_presence	notes	longtext	YES	NULL			
+trueAlign_presence	marked_by_id	int	YES	NULL	MUL		
+trueAlign_presence	user_id	int	NO	NULL	MUL		
+trueAlign_project	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_project	name	varchar(100)	NO	NULL			
+trueAlign_project	description	longtext	NO	NULL			
+trueAlign_project	start_date	date	NO	NULL			
+trueAlign_project	deadline	date	NO	NULL			
+trueAlign_project	status	varchar(20)	NO	NULL			
+trueAlign_project	created_at	datetime(6)	NO	NULL			
+trueAlign_project	total_value	decimal(12,2)	NO	NULL			
+trueAlign_project	delivery_format	varchar(50)	NO	NULL			
+trueAlign_project_clients	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_project_clients	project_id	bigint	NO	NULL	MUL		
+trueAlign_project_clients	user_id	int	NO	NULL	MUL		
+trueAlign_projectassignment	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_projectassignment	assigned_date	date	NO	NULL			
+trueAlign_projectassignment	hours_worked	double	NO	NULL			
+trueAlign_projectassignment	role_in_project	varchar(50)	NO	NULL			
+trueAlign_projectassignment	end_date	date	YES	NULL			
+trueAlign_projectassignment	is_active	tinyint(1)	NO	NULL			
+trueAlign_projectassignment	project_id	bigint	NO	NULL	MUL		
+trueAlign_projectassignment	user_id	int	NO	NULL	MUL		
+trueAlign_projectupdate	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_projectupdate	title	varchar(200)	NO	NULL			
+trueAlign_projectupdate	description	longtext	NO	NULL			
+trueAlign_projectupdate	status	varchar(20)	NO	NULL			
+trueAlign_projectupdate	scheduled_date	datetime(6)	YES	NULL			
+trueAlign_projectupdate	created_at	datetime(6)	NO	NULL			
+trueAlign_projectupdate	created_by_id	int	NO	NULL	MUL		
+trueAlign_projectupdate	project_id	bigint	NO	NULL	MUL		
+trueAlign_roleassignmentaudit	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_roleassignmentaudit	role_assigned	varchar(50)	NO	NULL			
+trueAlign_roleassignmentaudit	assigned_date	datetime(6)	NO	NULL			
+trueAlign_roleassignmentaudit	assigned_by_id	int	NO	NULL	MUL		
+trueAlign_roleassignmentaudit	user_id	int	NO	NULL	MUL		
+trueAlign_room	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_room	name	varchar(100)	NO	NULL	MUL		
+trueAlign_room	room_type	varchar(15)	NO	NULL			
+trueAlign_room	capacity	int unsigned	NO	NULL			
+trueAlign_room	location	varchar(100)	NO	NULL			
+trueAlign_room	facilities	longtext	NO	NULL			
+trueAlign_room	status	varchar(12)	NO	NULL			
+trueAlign_room	hourly_rate	decimal(8,2)	NO	NULL			
+trueAlign_room	description	longtext	NO	NULL			
+trueAlign_room	image	varchar(100)	YES	NULL			
+trueAlign_room	created_at	datetime(6)	NO	NULL			
+trueAlign_room	updated_at	datetime(6)	NO	NULL			
+trueAlign_room	total_bookings	int unsigned	NO	NULL			
+trueAlign_room	total_hours_booked	decimal(10,2)	NO	NULL			
+trueAlign_room	office_location_id	bigint	YES	NULL	MUL		
+trueAlign_sessionactivity	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_sessionactivity	created_at	datetime(6)	NO	NULL	MUL		
+trueAlign_sessionactivity	activity_time	datetime(6)	NO	NULL			
+trueAlign_sessionactivity	activity_type	varchar(20)	NO	NULL	MUL		
+trueAlign_sessionactivity	activity_data	json	NO	NULL			
+trueAlign_sessionactivity	url	varchar(2000)	YES	NULL			
+trueAlign_sessionactivity	title	varchar(500)	YES	NULL			
+trueAlign_sessionactivity	location_latitude	double	YES	NULL			
+trueAlign_sessionactivity	location_longitude	double	YES	NULL			
+trueAlign_sessionactivity	location_accuracy	double	YES	NULL			
+trueAlign_sessionactivity	productivity_score	double	YES	NULL			
+trueAlign_sessionactivity	engagement_score	double	YES	NULL			
+trueAlign_sessionactivity	session_id	char(32)	NO	NULL	MUL		
+trueAlign_sessionactivity	user_id	int	NO	NULL	MUL		
+trueAlign_shiftassignment	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_shiftassignment	effective_from	date	NO	NULL			
+trueAlign_shiftassignment	effective_to	date	YES	NULL			
+trueAlign_shiftassignment	is_current	tinyint(1)	NO	NULL	MUL		
+trueAlign_shiftassignment	created_at	datetime(6)	NO	NULL			
+trueAlign_shiftassignment	updated_at	datetime(6)	NO	NULL			
+trueAlign_shiftassignment	user_id	int	NO	NULL	MUL		
+trueAlign_shiftassignment	shift_id	bigint	NO	NULL	MUL		
+trueAlign_shiftmaster	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_shiftmaster	name	varchar(50)	NO	NULL			
+trueAlign_shiftmaster	start_time	time(6)	NO	NULL			
+trueAlign_shiftmaster	end_time	time(6)	NO	NULL			
+trueAlign_shiftmaster	shift_duration	decimal(5,2)	NO	NULL			
+trueAlign_shiftmaster	break_duration	bigint	NO	NULL			
+trueAlign_shiftmaster	grace_period	bigint	NO	NULL			
+trueAlign_shiftmaster	work_days	varchar(20)	NO	NULL			
+trueAlign_shiftmaster	custom_work_days	varchar(255)	YES	NULL			
+trueAlign_shiftmaster	is_active	tinyint(1)	NO	NULL			
+trueAlign_shiftmaster	created_at	datetime(6)	NO	NULL			
+trueAlign_shiftmaster	updated_at	datetime(6)	NO	NULL			
+trueAlign_statuslog	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_statuslog	old_status	varchar(30)	NO	NULL			
+trueAlign_statuslog	new_status	varchar(30)	NO	NULL			
+trueAlign_statuslog	changed_at	datetime(6)	NO	NULL			
+trueAlign_statuslog	changed_by_id	int	YES	NULL	MUL		
+trueAlign_statuslog	ticket_id	bigint	NO	NULL	MUL		
+trueAlign_subscription	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_subscription	name	varchar(255)	NO	NULL			
+trueAlign_subscription	vendor	varchar(255)	NO	NULL			
+trueAlign_subscription	subscription_type	varchar(100)	NO	NULL			
+trueAlign_subscription	amount	decimal(15,2)	NO	NULL			
+trueAlign_subscription	frequency	varchar(20)	NO	NULL			
+trueAlign_subscription	start_date	date	NO	NULL			
+trueAlign_subscription	next_payment_date	date	NO	NULL			
+trueAlign_subscription	auto_renew	tinyint(1)	NO	NULL			
+trueAlign_subscription	status	varchar(20)	NO	NULL			
+trueAlign_subscription	alert_days	int	NO	NULL			
+trueAlign_subscription	created_at	datetime(6)	NO	NULL			
+trueAlign_subscription	updated_at	datetime(6)	NO	NULL			
+trueAlign_support	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_support	ticket_id	varchar(100)	NO	NULL	UNI		
+trueAlign_support	issue_type	varchar(50)	NO	NULL			
+trueAlign_support	subject	varchar(200)	NO	NULL			
+trueAlign_support	description	longtext	NO	NULL			
+trueAlign_support	status	varchar(30)	NO	NULL	MUL		
+trueAlign_support	priority	varchar(20)	NO	NULL	MUL		
+trueAlign_support	assigned_group	varchar(50)	YES	NULL			
+trueAlign_support	created_at	datetime(6)	NO	NULL	MUL		
+trueAlign_support	updated_at	datetime(6)	NO	NULL			
+trueAlign_support	resolved_at	datetime(6)	YES	NULL	MUL		
+trueAlign_support	due_date	datetime(6)	YES	NULL	MUL		
+trueAlign_support	department	varchar(100)	NO	NULL			
+trueAlign_support	location	varchar(100)	NO	NULL			
+trueAlign_support	asset_id	varchar(50)	NO	NULL			
+trueAlign_support	sla_breach	tinyint(1)	NO	NULL			
+trueAlign_support	sla_target_date	datetime(6)	YES	NULL			
+trueAlign_support	sla_status	varchar(20)	YES	NULL			
+trueAlign_support	resolution_summary	longtext	NO	NULL			
+trueAlign_support	resolution_time	bigint	YES	NULL			
+trueAlign_support	response_time	bigint	YES	NULL			
+trueAlign_support	time_to_close	bigint	YES	NULL			
+trueAlign_support	escalation_level	smallint unsigned	NO	NULL			
+trueAlign_support	reopen_count	smallint unsigned	NO	NULL			
+trueAlign_support	satisfaction_rating	int	YES	NULL			
+trueAlign_support	feedback	longtext	NO	NULL			
+trueAlign_support	is_deleted	tinyint(1)	NO	NULL			
+trueAlign_support	assigned_to_user_id	int	YES	NULL	MUL		
+trueAlign_support	parent_ticket_id	bigint	YES	NULL	MUL		
+trueAlign_support	user_id	int	NO	NULL	MUL		
+trueAlign_support_cc_users	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_support_cc_users	support_id	bigint	NO	NULL	MUL		
+trueAlign_support_cc_users	user_id	int	NO	NULL	MUL		
+trueAlign_systemerror	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_systemerror	error_message	longtext	NO	NULL			
+trueAlign_systemerror	error_time	datetime(6)	NO	NULL			
+trueAlign_systemerror	resolved	tinyint(1)	NO	NULL			
+trueAlign_systemusage	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_systemusage	peak_time_start	datetime(6)	NO	NULL			
+trueAlign_systemusage	peak_time_end	datetime(6)	NO	NULL			
+trueAlign_systemusage	active_users_count	int unsigned	NO	NULL			
+trueAlign_ticketactivity	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_ticketactivity	action	varchar(20)	NO	NULL			
+trueAlign_ticketactivity	timestamp	datetime(6)	NO	NULL			
+trueAlign_ticketactivity	details	longtext	NO	NULL			
+trueAlign_ticketactivity	ticket_id	bigint	NO	NULL	MUL		
+trueAlign_ticketactivity	user_id	int	YES	NULL	MUL		
+trueAlign_ticketattachment	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_ticketattachment	file	varchar(100)	NO	NULL			
+trueAlign_ticketattachment	uploaded_at	datetime(6)	NO	NULL			
+trueAlign_ticketattachment	description	varchar(255)	NO	NULL			
+trueAlign_ticketattachment	original_filename	varchar(255)	NO	NULL			
+trueAlign_ticketattachment	formatted_filename	varchar(255)	NO	NULL			
+trueAlign_ticketattachment	file_size	int unsigned	NO	NULL			
+trueAlign_ticketattachment	file_type	varchar(100)	NO	NULL			
+trueAlign_ticketattachment	is_deleted	tinyint(1)	NO	NULL			
+trueAlign_ticketattachment	ticket_id	bigint	NO	NULL	MUL		
+trueAlign_ticketattachment	uploaded_by_id	int	NO	NULL	MUL		
+trueAlign_ticketcomment	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_ticketcomment	content	longtext	NO	NULL			
+trueAlign_ticketcomment	created_at	datetime(6)	NO	NULL			
+trueAlign_ticketcomment	is_internal	tinyint(1)	NO	NULL			
+trueAlign_ticketcomment	ticket_id	bigint	NO	NULL	MUL		
+trueAlign_ticketcomment	user_id	int	NO	NULL	MUL		
+trueAlign_tictactoegame	id	char(32)	NO	NULL	PRI		
+trueAlign_tictactoegame	board	varchar(9)	NO	NULL			
+trueAlign_tictactoegame	status	varchar(20)	NO	NULL			
+trueAlign_tictactoegame	created_at	datetime(6)	NO	NULL			
+trueAlign_tictactoegame	updated_at	datetime(6)	NO	NULL			
+trueAlign_tictactoegame	last_move_at	datetime(6)	NO	NULL			
+trueAlign_tictactoegame	allow_spectators	tinyint(1)	NO	NULL			
+trueAlign_tictactoegame	creator_id	int	NO	NULL	MUL		
+trueAlign_tictactoegame	creator_icon_id	bigint	YES	NULL	MUL		
+trueAlign_tictactoegame	current_turn_id	int	YES	NULL	MUL		
+trueAlign_tictactoegame	opponent_id	int	NO	NULL	MUL		
+trueAlign_tictactoegame	opponent_icon_id	bigint	YES	NULL	MUL		
+trueAlign_tictactoegame	winner_id	int	YES	NULL	MUL		
+trueAlign_timesheet	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_timesheet	week_start_date	date	NO	NULL			
+trueAlign_timesheet	task_name	varchar(255)	NO	NULL			
+trueAlign_timesheet	task_description	longtext	NO	NULL			
+trueAlign_timesheet	hours	double	NO	NULL			
+trueAlign_timesheet	adjusted_hours	double	YES	NULL			
+trueAlign_timesheet	approval_status	varchar(25)	NO	NULL			
+trueAlign_timesheet	rejection_reason	varchar(30)	YES	NULL			
+trueAlign_timesheet	manager_comments	longtext	YES	NULL			
+trueAlign_timesheet	submitted_at	datetime(6)	NO	NULL			
+trueAlign_timesheet	reviewed_at	datetime(6)	YES	NULL			
+trueAlign_timesheet	original_submission_id	int	YES	NULL			
+trueAlign_timesheet	version	int unsigned	NO	NULL			
+trueAlign_timesheet	project_id	bigint	NO	NULL	MUL		
+trueAlign_timesheet	user_id	int	NO	NULL	MUL		
+trueAlign_useractionlog	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_useractionlog	action_type	varchar(20)	NO	NULL			
+trueAlign_useractionlog	timestamp	datetime(6)	NO	NULL			
+trueAlign_useractionlog	details	longtext	YES	NULL			
+trueAlign_useractionlog	action_by_id	int	YES	NULL	MUL		
+trueAlign_useractionlog	user_id	int	NO	NULL	MUL		
+trueAlign_userdetails	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_userdetails	dob	date	YES	NULL			
+trueAlign_userdetails	blood_group	varchar(10)	YES	NULL			
+trueAlign_userdetails	gender	varchar(20)	YES	NULL			
+trueAlign_userdetails	marital_status	varchar(20)	YES	NULL			
+trueAlign_userdetails	contact_number_primary	varchar(15)	YES	NULL			
+trueAlign_userdetails	personal_email	varchar(254)	YES	NULL	UNI		
+trueAlign_userdetails	company_email	varchar(254)	YES	NULL	UNI		
+trueAlign_userdetails	current_address_line1	varchar(255)	YES	NULL			
+trueAlign_userdetails	current_address_line2	varchar(255)	YES	NULL			
+trueAlign_userdetails	current_city	varchar(100)	YES	NULL			
+trueAlign_userdetails	current_state	varchar(100)	YES	NULL			
+trueAlign_userdetails	current_postal_code	varchar(10)	YES	NULL			
+trueAlign_userdetails	current_country	varchar(100)	YES	NULL			
+trueAlign_userdetails	permanent_address_line1	varchar(255)	YES	NULL			
+trueAlign_userdetails	permanent_address_line2	varchar(255)	YES	NULL			
+trueAlign_userdetails	permanent_city	varchar(100)	YES	NULL			
+trueAlign_userdetails	permanent_state	varchar(100)	YES	NULL			
+trueAlign_userdetails	permanent_postal_code	varchar(10)	YES	NULL			
+trueAlign_userdetails	permanent_country	varchar(100)	YES	NULL			
+trueAlign_userdetails	is_current_same_as_permanent	tinyint(1)	NO	NULL			
+trueAlign_userdetails	emergency_contact_name	varchar(255)	YES	NULL			
+trueAlign_userdetails	emergency_contact_number	varchar(15)	YES	NULL			
+trueAlign_userdetails	emergency_contact_relationship	varchar(50)	YES	NULL			
+trueAlign_userdetails	secondary_emergency_contact_name	varchar(255)	YES	NULL			
+trueAlign_userdetails	secondary_emergency_contact_number	varchar(15)	YES	NULL			
+trueAlign_userdetails	secondary_emergency_contact_relationship	varchar(50)	YES	NULL			
+trueAlign_userdetails	employee_type	varchar(20)	YES	NULL	MUL		
+trueAlign_userdetails	hire_date	date	YES	NULL	MUL		
+trueAlign_userdetails	start_date	date	YES	NULL	MUL		
+trueAlign_userdetails	probation_end_date	date	YES	NULL			
+trueAlign_userdetails	notice_period_days	int unsigned	NO	NULL			
+trueAlign_userdetails	job_description	longtext	YES	NULL			
+trueAlign_userdetails	employment_status	varchar(50)	NO	NULL	MUL		
+trueAlign_userdetails	exit_date	date	YES	NULL			
+trueAlign_userdetails	exit_reason	longtext	YES	NULL			
+trueAlign_userdetails	rehire_eligibility	tinyint(1)	YES	NULL			
+trueAlign_userdetails	salary_currency	varchar(3)	NO	NULL			
+trueAlign_userdetails	base_salary	decimal(12,2)	YES	NULL			
+trueAlign_userdetails	salary_frequency	varchar(20)	NO	NULL			
+trueAlign_userdetails	pan_number	varchar(10)	YES	NULL			
+trueAlign_userdetails	aadhar_number	varchar(12)	YES	NULL			
+trueAlign_userdetails	passport_number	varchar(20)	YES	NULL			
+trueAlign_userdetails	passport_expiry	date	YES	NULL			
+trueAlign_userdetails	bank_name	varchar(100)	YES	NULL			
+trueAlign_userdetails	bank_account_number	varchar(30)	YES	NULL			
+trueAlign_userdetails	bank_ifsc	varchar(11)	YES	NULL			
+trueAlign_userdetails	previous_company	varchar(255)	YES	NULL			
+trueAlign_userdetails	previous_position	varchar(100)	YES	NULL			
+trueAlign_userdetails	previous_experience_years	int unsigned	YES	NULL			
+trueAlign_userdetails	onboarding_date	datetime(6)	NO	NULL			
+trueAlign_userdetails	last_updated	datetime(6)	NO	NULL			
+trueAlign_userdetails	last_status_change	datetime(6)	YES	NULL			
+trueAlign_userdetails	skills	longtext	YES	NULL			
+trueAlign_userdetails	confidential_notes	longtext	YES	NULL			
+trueAlign_userdetails	created_at	datetime(6)	NO	NULL			
+trueAlign_userdetails	updated_at	datetime(6)	NO	NULL			
+trueAlign_userdetails	onboarded_by_id	int	YES	NULL	MUL		
+trueAlign_userdetails	reporting_manager_id	int	YES	NULL	MUL		
+trueAlign_userdetails	user_id	int	NO	NULL	UNI		
+trueAlign_userdetails	office_location_id	bigint	YES	NULL	MUL		
+trueAlign_userdetails	role	varchar(50)	NO	NULL			
+trueAlign_userleavebalance	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_userleavebalance	year	int	NO	NULL			
+trueAlign_userleavebalance	allocated	decimal(5,1)	NO	NULL			
+trueAlign_userleavebalance	used	decimal(5,1)	NO	NULL			
+trueAlign_userleavebalance	carried_forward	decimal(5,1)	NO	NULL			
+trueAlign_userleavebalance	additional	decimal(5,1)	NO	NULL			
+trueAlign_userleavebalance	leave_type_id	bigint	NO	NULL	MUL		
+trueAlign_userleavebalance	user_id	int	NO	NULL	MUL		
+trueAlign_usersession	id	char(32)	NO	NULL	PRI		
+trueAlign_usersession	parent_session_id	char(32)	YES	NULL	MUL		
+trueAlign_usersession	tab_id	varchar(100)	YES	NULL	MUL		
+trueAlign_usersession	is_primary_tab	tinyint(1)	NO	NULL			
+trueAlign_usersession	session_fingerprint	varchar(255)	YES	NULL			
+trueAlign_usersession	created_at	datetime(6)	NO	NULL	MUL		
+trueAlign_usersession	login_time	datetime(6)	NO	NULL			
+trueAlign_usersession	last_activity	datetime(6)	NO	NULL	MUL		
+trueAlign_usersession	ended_at	datetime(6)	YES	NULL			
+trueAlign_usersession	tab_opened_time	datetime(6)	YES	NULL			
+trueAlign_usersession	tab_last_focus	datetime(6)	YES	NULL			
+trueAlign_usersession	is_active	tinyint(1)	NO	NULL			
+trueAlign_usersession	is_idle	tinyint(1)	NO	NULL			
+trueAlign_usersession	idle_start_time	datetime(6)	YES	NULL			
+trueAlign_usersession	total_idle_time	bigint	NO	NULL			
+trueAlign_usersession	working_time	bigint	NO	NULL			
+trueAlign_usersession	focus_time	bigint	NO	NULL			
+trueAlign_usersession	session_duration	double	YES	NULL			
+trueAlign_usersession	ip_address	char(39)	YES	NULL			
+trueAlign_usersession	user_agent	longtext	YES	NULL			
+trueAlign_usersession	browser_fingerprint	longtext	YES	NULL			
+trueAlign_usersession	csrf_token	varchar(64)	YES	NULL			
+trueAlign_usersession	csrf_token_created	datetime(6)	YES	NULL			
+trueAlign_usersession	device_type	varchar(20)	YES	NULL			
+trueAlign_usersession	screen_resolution	varchar(20)	YES	NULL			
+trueAlign_usersession	timezone_offset	int	YES	NULL			
+trueAlign_usersession	language	varchar(10)	YES	NULL			
+trueAlign_usersession	battery_level	double	YES	NULL			
+trueAlign_usersession	connection_type	varchar(20)	YES	NULL			
+trueAlign_usersession	location_country	varchar(100)	YES	NULL			
+trueAlign_usersession	location_region	varchar(100)	YES	NULL			
+trueAlign_usersession	location_city	varchar(100)	YES	NULL			
+trueAlign_usersession	location_latitude	double	YES	NULL			
+trueAlign_usersession	location_longitude	double	YES	NULL			
+trueAlign_usersession	location_accuracy	double	YES	NULL			
+trueAlign_usersession	location_type	varchar(20)	YES	NULL			
+trueAlign_usersession	tab_title	json	NO	NULL			
+trueAlign_usersession	tab_url	json	NO	NULL			
+trueAlign_usersession	url	json	NO	NULL			
+trueAlign_usersession	title	json	NO	NULL			
+trueAlign_usersession	referrer	json	NO	NULL			
+trueAlign_usersession	page_views	json	NO	NULL			
+trueAlign_usersession	clicks	json	NO	NULL			
+trueAlign_usersession	scrolls	json	NO	NULL			
+trueAlign_usersession	keyboard_events	json	NO	NULL			
+trueAlign_usersession	mouse_movements	int	NO	NULL			
+trueAlign_usersession	tab_visibility_log	json	NO	NULL			
+trueAlign_usersession	tab_switches	int	NO	NULL			
+trueAlign_usersession	background_time	bigint	NO	NULL			
+trueAlign_usersession	idle_state_changes	json	NO	NULL			
+trueAlign_usersession	performance_metrics	json	NO	NULL			
+trueAlign_usersession	network_events	json	NO	NULL			
+trueAlign_usersession	error_events	json	NO	NULL			
+trueAlign_usersession	custom_timeout	int unsigned	YES	NULL			
+trueAlign_usersession	inactivity_warnings_sent	int	NO	NULL			
+trueAlign_usersession	last_warning_time	datetime(6)	YES	NULL			
+trueAlign_usersession	auto_logout_enabled	tinyint(1)	NO	NULL			
+trueAlign_usersession	offline_data	json	NO	NULL			
+trueAlign_usersession	last_sync_time	datetime(6)	YES	NULL			
+trueAlign_usersession	pending_sync_count	int	NO	NULL			
+trueAlign_usersession	related_tabs	json	NO	NULL			
+trueAlign_usersession	broadcast_messages_sent	int	NO	NULL			
+trueAlign_usersession	broadcast_messages_received	int	NO	NULL			
+trueAlign_usersession	cross_tab_activity_syncs	int	NO	NULL			
+trueAlign_usersession	visited_urls	json	NO	NULL			
+trueAlign_usersession	most_visited_url	varchar(2000)	YES	NULL			
+trueAlign_usersession	most_visited_count	int	NO	NULL			
+trueAlign_usersession	productivity_score	double	YES	NULL			
+trueAlign_usersession	engagement_score	double	YES	NULL			
+trueAlign_usersession	session_quality	varchar(20)	YES	NULL			
+trueAlign_usersession	security_score	double	YES	NULL			
+trueAlign_usersession	security_anomalies	json	NO	NULL			
+trueAlign_usersession	user_id	int	NO	NULL	MUL		
+trueAlign_usersession	logout_time	datetime(6)	YES	NULL			
+trueAlign_usersession	session_key	varchar(40)	NO	NULL			
+trueAlign_usersession	idle_time	bigint	YES	NULL			
+trueAlign_usersession	location_history	json	YES	NULL			
+trueAlign_usersession	browser	varchar(100)	YES	NULL			
+trueAlign_usersession	end_reason	varchar(50)	YES	NULL			
+trueAlign_usersession	os	varchar(100)	YES	NULL			
+trueAlign_usersession	session_end_time	datetime(6)	YES	NULL			
+trueAlign_usersession	start_time	datetime(6)	NO	NULL			
+trueAlign_voucher	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_voucher	voucher_number	varchar(50)	NO	NULL	UNI		
+trueAlign_voucher	type	varchar(20)	NO	NULL			
+trueAlign_voucher	date	date	NO	NULL			
+trueAlign_voucher	reference_no	varchar(100)	YES	NULL			
+trueAlign_voucher	party_name	varchar(255)	NO	NULL			
+trueAlign_voucher	purpose	longtext	NO	NULL			
+trueAlign_voucher	amount	decimal(15,2)	NO	NULL			
+trueAlign_voucher	status	varchar(25)	NO	NULL			
+trueAlign_voucher	attachments	varchar(100)	YES	NULL			
+trueAlign_voucher	created_at	datetime(6)	NO	NULL			
+trueAlign_voucher	updated_at	datetime(6)	NO	NULL			
+trueAlign_voucher	created_by_id	int	NO	NULL	MUL		
+trueAlign_voucher	department_approved_by_id	int	YES	NULL	MUL		
+trueAlign_voucher	finance_approved_by_id	int	YES	NULL	MUL		
+trueAlign_voucherdetail	id	bigint	NO	NULL	PRI	auto_increment	
+trueAlign_voucherdetail	debit_amount	decimal(15,2)	NO	NULL			
+trueAlign_voucherdetail	credit_amount	decimal(15,2)	NO	NULL			
+trueAlign_voucherdetail	description	longtext	YES	NULL			
+trueAlign_voucherdetail	account_id	bigint	NO	NULL	MUL		
+trueAlign_voucherdetail	voucher_id	bigint	NO	NULL	MUL		

@@ -1,0 +1,84 @@
+TABLE_NAME	ENGINE	TABLE_ROWS	DATA_LENGTH	INDEX_LENGTH	AUTO_INCREMENT	CREATE_TIME	UPDATE_TIME	TABLE_COLLATION
+auth_group	InnoDB	8	16384	16384	9	2025-06-19 15:29:04	NULL	utf8mb4_0900_ai_ci
+auth_group_permissions	InnoDB	0	16384	32768	1	2025-06-19 15:29:03	NULL	utf8mb4_0900_ai_ci
+auth_permission	InnoDB	315	49152	16384	316	2025-06-19 15:29:03	2025-08-03 11:41:53	utf8mb4_0900_ai_ci
+auth_user	InnoDB	12	16384	16384	17	2025-06-19 15:29:04	2025-08-03 11:43:06	utf8mb4_0900_ai_ci
+auth_user_groups	InnoDB	4	16384	32768	5	2025-06-19 15:29:03	NULL	utf8mb4_0900_ai_ci
+auth_user_user_permissions	InnoDB	0	16384	32768	1	2025-06-19 15:29:03	NULL	utf8mb4_0900_ai_ci
+django_admin_log	InnoDB	18	16384	32768	20	2025-06-19 15:29:03	NULL	utf8mb4_0900_ai_ci
+django_celery_beat_clockedschedule	InnoDB	0	16384	0	1	2025-08-03 11:41:53	NULL	utf8mb4_0900_ai_ci
+django_celery_beat_crontabschedule	InnoDB	0	16384	0	1	2025-08-03 11:41:53	NULL	utf8mb4_0900_ai_ci
+django_celery_beat_intervalschedule	InnoDB	0	16384	0	1	2025-08-03 11:41:52	NULL	utf8mb4_0900_ai_ci
+django_celery_beat_periodictask	InnoDB	0	16384	81920	1	2025-08-03 11:41:53	NULL	utf8mb4_0900_ai_ci
+django_celery_beat_periodictasks	InnoDB	0	16384	0	NULL	2025-08-03 11:41:52	NULL	utf8mb4_0900_ai_ci
+django_celery_beat_solarschedule	InnoDB	0	16384	0	1	2025-08-03 11:41:52	NULL	utf8mb4_0900_ai_ci
+django_content_type	InnoDB	77	16384	16384	78	2025-06-19 15:29:03	2025-08-03 11:41:53	utf8mb4_0900_ai_ci
+django_cron_cronjoblock	InnoDB	0	16384	16384	1	2025-08-03 00:17:54	NULL	utf8mb4_0900_ai_ci
+django_cron_cronjoblog	InnoDB	0	16384	114688	1	2025-08-03 00:17:54	NULL	utf8mb4_0900_ai_ci
+django_migrations	InnoDB	60	16384	0	61	2025-06-19 15:29:03	2025-08-03 11:41:53	utf8mb4_0900_ai_ci
+django_session	InnoDB	34	16384	16384	NULL	2025-06-19 15:29:04	2025-08-03 11:43:11	utf8mb4_0900_ai_ci
+trueAlign_appraisal	InnoDB	0	16384	32768	1	2025-06-19 15:35:16	NULL	utf8mb4_0900_ai_ci
+trueAlign_appraisalattachment	InnoDB	0	16384	32768	1	2025-06-19 15:35:16	NULL	utf8mb4_0900_ai_ci
+trueAlign_appraisalitem	InnoDB	0	16384	16384	1	2025-06-19 15:35:16	NULL	utf8mb4_0900_ai_ci
+trueAlign_appraisalworkflow	InnoDB	0	16384	32768	1	2025-06-19 15:35:16	NULL	utf8mb4_0900_ai_ci
+trueAlign_attendance	InnoDB	40	49152	180224	47	2025-07-01 10:19:46	2025-08-03 11:43:11	utf8mb4_0900_ai_ci
+trueAlign_bankaccount	InnoDB	0	16384	16384	1	2025-06-19 15:35:13	NULL	utf8mb4_0900_ai_ci
+trueAlign_bankpayment	InnoDB	0	16384	81920	1	2025-06-19 15:35:16	NULL	utf8mb4_0900_ai_ci
+trueAlign_break	InnoDB	0	16384	16384	1	2025-06-19 15:35:16	NULL	utf8mb4_0900_ai_ci
+trueAlign_chartofaccount	InnoDB	0	16384	32768	1	2025-06-19 15:35:16	NULL	utf8mb4_0900_ai_ci
+trueAlign_chatgroup	InnoDB	0	16384	16384	1	2025-06-19 15:35:16	NULL	utf8mb4_0900_ai_ci
+trueAlign_clientinvoice	InnoDB	0	16384	49152	1	2025-06-19 15:35:16	NULL	utf8mb4_0900_ai_ci
+trueAlign_clientparticipation	InnoDB	0	16384	32768	1	2025-06-19 15:35:16	NULL	utf8mb4_0900_ai_ci
+trueAlign_clientprofile	InnoDB	0	16384	16384	1	2025-06-19 15:35:16	NULL	utf8mb4_0900_ai_ci
+truealign_comment_attachment	InnoDB	0	16384	49152	2	2025-06-19 15:35:16	NULL	utf8mb4_0900_ai_ci
+trueAlign_compoffrequest	InnoDB	0	16384	32768	1	2025-06-19 15:35:16	NULL	utf8mb4_0900_ai_ci
+trueAlign_conferencebooking	InnoDB	0	16384	114688	4	2025-06-23 18:16:00	NULL	utf8mb4_0900_ai_ci
+trueAlign_dailyexpense	InnoDB	0	16384	65536	1	2025-06-19 15:35:16	NULL	utf8mb4_0900_ai_ci
+trueAlign_department	InnoDB	0	16384	16384	1	2025-06-19 15:35:13	NULL	utf8mb4_0900_ai_ci
+trueAlign_directmessage	InnoDB	0	16384	0	1	2025-06-19 15:35:13	NULL	utf8mb4_0900_ai_ci
+trueAlign_directmessage_participants	InnoDB	0	16384	32768	1	2025-06-19 15:35:16	NULL	utf8mb4_0900_ai_ci
+trueAlign_failedloginattempt	InnoDB	0	16384	16384	1	2025-06-19 15:35:16	NULL	utf8mb4_0900_ai_ci
+trueAlign_featureusage	InnoDB	0	16384	0	1	2025-06-19 15:35:13	NULL	utf8mb4_0900_ai_ci
+trueAlign_financialparameter	InnoDB	0	16384	81920	1	2025-06-19 15:35:17	NULL	utf8mb4_0900_ai_ci
+trueAlign_gameicon	InnoDB	0	16384	16384	1	2025-06-19 15:35:16	NULL	utf8mb4_0900_ai_ci
+trueAlign_gamespectator	InnoDB	0	16384	32768	1	2025-06-19 15:35:16	NULL	utf8mb4_0900_ai_ci
+trueAlign_globalupdate	InnoDB	0	16384	16384	1	2025-06-19 15:35:16	NULL	utf8mb4_0900_ai_ci
+trueAlign_groupmember	InnoDB	0	16384	32768	1	2025-06-19 15:35:17	NULL	utf8mb4_0900_ai_ci
+trueAlign_holiday	InnoDB	0	16384	0	2	2025-06-19 15:35:13	NULL	utf8mb4_0900_ai_ci
+trueAlign_leaveallocation	InnoDB	0	16384	32768	1	2025-06-19 15:35:17	NULL	utf8mb4_0900_ai_ci
+trueAlign_leavepolicy	InnoDB	0	16384	16384	1	2025-06-19 15:35:16	NULL	utf8mb4_0900_ai_ci
+trueAlign_leaverequest	InnoDB	0	16384	49152	1	2025-06-19 15:35:17	NULL	utf8mb4_0900_ai_ci
+trueAlign_leavetype	InnoDB	0	16384	16384	1	2025-06-19 15:35:13	NULL	utf8mb4_0900_ai_ci
+trueAlign_message	InnoDB	0	16384	49152	1	2025-06-19 15:35:16	NULL	utf8mb4_0900_ai_ci
+trueAlign_messageread	InnoDB	0	16384	49152	1	2025-06-19 15:35:16	NULL	utf8mb4_0900_ai_ci
+trueAlign_notification	InnoDB	0	16384	32768	1	2025-06-19 15:35:16	NULL	utf8mb4_0900_ai_ci
+trueAlign_officelocation	InnoDB	2	16384	32768	14	2025-07-18 21:48:12	2025-08-02 23:08:20	utf8mb4_0900_ai_ci
+trueAlign_passwordchange	InnoDB	0	16384	16384	1	2025-06-19 15:35:16	NULL	utf8mb4_0900_ai_ci
+trueAlign_playerstats	InnoDB	0	16384	16384	1	2025-06-19 15:35:16	NULL	utf8mb4_0900_ai_ci
+trueAlign_presence	InnoDB	0	16384	32768	1	2025-06-19 15:35:16	NULL	utf8mb4_0900_ai_ci
+trueAlign_project	InnoDB	0	16384	0	1	2025-06-19 15:35:13	NULL	utf8mb4_0900_ai_ci
+trueAlign_project_clients	InnoDB	0	16384	32768	1	2025-06-19 15:35:16	NULL	utf8mb4_0900_ai_ci
+trueAlign_projectassignment	InnoDB	0	16384	32768	1	2025-06-19 15:35:16	NULL	utf8mb4_0900_ai_ci
+trueAlign_projectupdate	InnoDB	0	16384	32768	1	2025-06-19 15:35:16	NULL	utf8mb4_0900_ai_ci
+trueAlign_roleassignmentaudit	InnoDB	0	16384	32768	1	2025-06-19 15:35:16	NULL	utf8mb4_0900_ai_ci
+trueAlign_room	InnoDB	8	16384	32768	19	2025-07-18 21:48:13	2025-08-02 23:30:37	utf8mb4_0900_ai_ci
+trueAlign_sessionactivity	InnoDB	609	262144	163840	648	2025-07-23 15:28:00	NULL	utf8mb4_0900_ai_ci
+trueAlign_shiftassignment	InnoDB	6	16384	49152	20	2025-06-19 15:35:16	NULL	utf8mb4_0900_ai_ci
+trueAlign_shiftmaster	InnoDB	3	16384	0	12	2025-06-19 15:35:13	NULL	utf8mb4_0900_ai_ci
+trueAlign_statuslog	InnoDB	4	16384	32768	5	2025-06-19 15:35:16	NULL	utf8mb4_0900_ai_ci
+trueAlign_subscription	InnoDB	0	16384	0	1	2025-06-19 15:35:13	NULL	utf8mb4_0900_ai_ci
+trueAlign_support	InnoDB	4	16384	163840	5	2025-06-19 15:35:16	NULL	utf8mb4_0900_ai_ci
+trueAlign_support_cc_users	InnoDB	0	16384	32768	1	2025-06-19 15:35:16	NULL	utf8mb4_0900_ai_ci
+trueAlign_systemerror	InnoDB	0	16384	0	1	2025-06-19 15:35:13	NULL	utf8mb4_0900_ai_ci
+trueAlign_systemusage	InnoDB	0	16384	0	1	2025-06-19 15:35:13	NULL	utf8mb4_0900_ai_ci
+trueAlign_ticketactivity	InnoDB	13	16384	32768	20	2025-06-19 15:35:16	NULL	utf8mb4_0900_ai_ci
+trueAlign_ticketattachment	InnoDB	0	16384	32768	1	2025-06-19 15:35:16	NULL	utf8mb4_0900_ai_ci
+trueAlign_ticketcomment	InnoDB	3	16384	32768	7	2025-06-19 15:35:16	NULL	utf8mb4_0900_ai_ci
+trueAlign_tictactoegame	InnoDB	0	16384	98304	NULL	2025-06-19 15:35:16	NULL	utf8mb4_0900_ai_ci
+trueAlign_timesheet	InnoDB	0	16384	32768	1	2025-06-19 15:35:17	NULL	utf8mb4_0900_ai_ci
+trueAlign_useractionlog	InnoDB	3	16384	32768	5	2025-06-19 15:35:17	NULL	utf8mb4_0900_ai_ci
+trueAlign_userdetails	InnoDB	13	16384	180224	15	2025-07-23 10:31:59	2025-08-02 23:08:16	utf8mb4_0900_ai_ci
+trueAlign_userleavebalance	InnoDB	0	16384	32768	1	2025-06-19 15:35:17	NULL	utf8mb4_0900_ai_ci
+trueAlign_usersession	InnoDB	226	196608	81920	NULL	2025-07-16 18:27:57	2025-08-03 11:43:11	utf8mb4_0900_ai_ci
+trueAlign_voucher	InnoDB	0	16384	65536	1	2025-06-19 15:35:17	NULL	utf8mb4_0900_ai_ci
+trueAlign_voucherdetail	InnoDB	0	16384	32768	1	2025-06-19 15:35:17	NULL	utf8mb4_0900_ai_ci

@@ -12,6 +12,21 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 import os
+from dotenv import load_dotenv
+from django.core.exceptions import ImproperlyConfigured
+
+# Load environment variables from .env file
+load_dotenv()
+
+def get_env_variable(var_name, default=None):
+    """Get the environment variable or return exception."""
+    try:
+        return os.environ[var_name]
+    except KeyError:
+        if default is not None:
+            return default
+        error_msg = f'Set the {var_name} environment variable'
+        raise ImproperlyConfigured(error_msg)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,13 +36,25 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-wt0_%27ipo5)5q$w^q0__tbe++rk7amy*6y%3-q5g061f1bpoa'
+SECRET_KEY = get_env_variable('SECRET_KEY', 'django-insecure-wt0_%27ipo5)5q$w^q0__tbe++rk7amy*6y%3-q5g061f1bpoa')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = get_env_variable('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
-# ALLOWED_HOSTS = ['home.aurdurtechnology.com', 'www.home.aurdurtechnology.com']
-ALLOWED_HOSTS = []
+# ALLOWED_HOSTS configuration
+ALLOWED_HOSTS = get_env_variable('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if get_env_variable('ALLOWED_HOSTS') else ['localhost', '127.0.0.1']
+
+# Security Settings for Production
+if not DEBUG:
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_REDIRECT_EXEMPT = []
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    X_FRAME_OPTIONS = 'DENY'
 
 
 
@@ -49,7 +76,7 @@ ENHANCED_SESSION_CONFIG = {
     'MAX_ACTIVITY_BUFFER_SIZE': 100,
     'ENABLE_DEVICE_FINGERPRINTING': True,
     'ENABLE_SECURITY_MONITORING': True,
-    'OFFICE_IPS': ['116.75.62.90'],  # Add your office IP addresses
+    'OFFICE_IPS': get_env_variable('OFFICE_IPS', '116.75.62.90').split(','),  # Add your office IP addresses
     'MAX_REQUESTS_PER_MINUTE': 60,
     'CLEANUP_INTERVAL_HOURS': 24,
     'MAX_EVENTS_PER_SESSION': 1000,
@@ -80,9 +107,11 @@ INSTALLED_APPS = [
     'trueAlign.attendance.apps.AttendanceConfig',  # ✅ keep this
     'trueAlign.sessions',
     'trueAlign.leave_management',
+    'trueAlign.notifications',  # New notification system
     'rest_framework',
     'widget_tweaks',
     'django_cron',
+    'django_celery_beat',  # For Celery beat scheduler
 ]
 
 MIDDLEWARE = [
@@ -135,15 +164,32 @@ WSGI_APPLICATION = 'ardurTrueAlign.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+# Database configuration with conditional options
+db_engine = get_env_variable('DB_ENGINE', 'django.db.backends.mysql')
+db_config = {
+    'ENGINE': db_engine,
+    'NAME': get_env_variable('DB_NAME', 'ardurTrueAlign'),
+}
+
+# Add connection details only for non-SQLite databases
+if 'sqlite' not in db_engine.lower():
+    db_config.update({
+        'USER': get_env_variable('DB_USER', 'root'),
+        'PASSWORD': get_env_variable('DB_PASSWORD', '12345678'),
+        'HOST': get_env_variable('DB_HOST', '127.0.0.1'),
+        'PORT': get_env_variable('DB_PORT', '3306'),
+    })
+    
+    # Add MySQL-specific options
+    if 'mysql' in db_engine.lower():
+        db_config['OPTIONS'] = {
+            'charset': 'utf8mb4',
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            'autocommit': True,
+        }
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'ardurTrueAlign',
-        'USER': 'root',
-        'PASSWORD': '12345678',
-        'HOST': '127.0.0.1',
-        'PORT': '3306',
-    }
+    'default': db_config
 }
 
 # Test database configuration
@@ -414,12 +460,70 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # EMAIL SETTINGS
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'dhoteharshal16@gmail.com'  # Replace with your actual email
-EMAIL_HOST_PASSWORD = 'qtwc pdwp hwkp geij'  # Replace with your app password, not regular password
+# EMAIL SETTINGS - Using environment variables for security
+EMAIL_BACKEND = get_env_variable('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = get_env_variable('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(get_env_variable('EMAIL_PORT', '587'))
+EMAIL_USE_TLS = get_env_variable('EMAIL_USE_TLS', 'True').lower() in ('true', '1', 'yes')
+EMAIL_HOST_USER = get_env_variable('EMAIL_HOST_USER', 'your-email@gmail.com')
+EMAIL_HOST_PASSWORD = get_env_variable('EMAIL_HOST_PASSWORD', 'your-app-password')
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+SERVER_EMAIL = EMAIL_HOST_USER
+
+# Real-Time Notification Configuration
+NOTIFICATION_CONFIG = {
+    'ENABLE_BROWSER_NOTIFICATIONS': get_env_variable('ENABLE_BROWSER_NOTIFICATIONS', 'True').lower() in ('true', '1', 'yes'),
+    'ENABLE_EMAIL_NOTIFICATIONS': get_env_variable('ENABLE_EMAIL_NOTIFICATIONS', 'True').lower() in ('true', '1', 'yes'),
+    'ENABLE_SMS_NOTIFICATIONS': get_env_variable('ENABLE_SMS_NOTIFICATIONS', 'False').lower() in ('true', '1', 'yes'),
+    'POLLING_INTERVAL_SECONDS': int(get_env_variable('NOTIFICATION_POLLING_INTERVAL', '30')),
+    'MAX_NOTIFICATIONS_PER_USER': 100,
+    'NOTIFICATION_RETENTION_DAYS': 30,
+    'REAL_TIME_EVENTS': {
+        'leave_request_created': True,
+        'leave_request_approved': True,
+        'leave_request_rejected': True,
+        'support_ticket_created': True,
+        'support_ticket_updated': True,
+        'support_ticket_assigned': True,
+        'support_ticket_resolved': True,
+        'attendance_alert': True,
+        'attendance_regularization_request': True,
+        'policy_update': True,
+        'system_announcement': True,
+        'chat_message_received': True,
+        'conference_room_booked': True,
+        'timesheet_reminder': True,
+        'birthday_reminder': True,
+        'holiday_announcement': True,
+    }
+}
+
+# Celery Configuration for cPanel hosting
+CELERY_BROKER_URL = get_env_variable('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = get_env_variable('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+CELERY_WORKER_HIJACK_ROOT_LOGGER = False
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1
+CELERY_TASK_ACKS_LATE = True
+
+# Fallback to database broker if Redis is not available
+CELERY_BROKER_TRANSPORT_OPTIONS = {
+    'visibility_timeout': 3600,
+    'fanout_prefix': True,
+    'fanout_patterns': True
+}
+
+# Task routing for better organization
+CELERY_TASK_ROUTES = {
+    'trueAlign.notifications.tasks.*': {'queue': 'notifications'},
+    'trueAlign.support.tasks.*': {'queue': 'support'},
+    'trueAlign.leave_management.tasks.*': {'queue': 'leave'},
+    'trueAlign.attendance.tasks.*': {'queue': 'attendance'},
+}
 
 
 import os

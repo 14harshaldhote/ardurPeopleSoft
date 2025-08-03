@@ -22,4 +22,5 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('trueAlign.urls')),  # Include URLs for the 'aps' app
+    path('', include('trueAlign.notifications.urls')),  # Include URLs for the notifications app
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

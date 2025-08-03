@@ -24956,3 +24956,17 @@ django.template.exceptions.TemplateSyntaxError: Unclosed tag on line 1: 'block'.
 [2025-08-03 00:20:32] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
 [2025-08-03 00:20:45] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/attendance/forms.py changed, reloading.
 [2025-08-03 00:20:46] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-08-03 11:27:52] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-08-03 11:29:56] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-08-03 11:30:28] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-08-03 11:31:17] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-08-03 11:32:12] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-08-03 11:37:32] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-08-03 11:38:10] INFO - trueAlign.core.middleware - _create_new_session_throttled:294 - Created session 5fed4995-28f6-47e6-ae28-05db1b640b98 for user admin (tab: None, parent: None)
+[2025-08-03 11:41:36] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-08-03 11:42:09] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-08-03 11:42:18] INFO - trueAlign.core.middleware - _create_new_session_throttled:294 - Created session c67ef5f8-7d91-4f5e-b091-585efdb206b6 for user employeesupport (tab: None, parent: None)
+[2025-08-03 11:42:29] INFO - trueAlign.core.middleware - _create_new_session_throttled:294 - Created session 1cdfc49d-fd4c-4908-9664-bc4ad823776d for user adminsupport (tab: None, parent: None)
+[2025-08-03 11:43:06] INFO - trueAlign.core.middleware - _create_new_session_throttled:294 - Created session 80de5aa1-ef8a-4c80-b4ff-71100bd081d5 for user homeadmin (tab: None, parent: None)
+[2025-08-03 11:51:34] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-08-03 11:51:41] INFO - trueAlign.core.middleware - _create_new_session_throttled:294 - Created session 8cf5837e-7955-4739-910a-46f59d971e66 for user adminsupport (tab: None, parent: None)
