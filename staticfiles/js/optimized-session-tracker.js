@@ -607,29 +607,46 @@ class OptimizedSessionTracker {
     const now = Date.now();
     if (now - this.state.lastHeartbeat < this.config.heartbeatInterval) return;
 
-    const heartbeatData = {
-      tab_id: this.state.tabId,
-      parent_session_id: this.state.parentSessionId,
-      session_fingerprint: this.state.fingerprint,
-      is_idle: this.state.isIdle,
-      is_visible: this.state.isVisible,
-      url: window.location.href,
-      title: document.title,
-      timestamp: new Date().toISOString(),
-      productivity_score: this.calculateProductivityScore(),
-      engagement_score: this.calculateEngagementScore(),
-      location: this.state.location || null,
-      location_latitude: this.state.location?.latitude || null,
-      location_longitude: this.state.location?.longitude || null,
-      location_accuracy: this.state.location?.accuracy || null,
-      location_timestamp: this.state.location?.timestamp || null,
-      browser: this.state.browser,
-      os: this.state.os,
-      fingerprint: this.state.fingerprint,
-      screen_resolution: `${screen.width}x${screen.height}`,
-      timezone_offset: new Date().getTimezoneOffset(),
-      csrf_token: this.getCSRFToken(),
-    };
+    try {
+      const heartbeatData = {
+        tab_id: this.state.tabId || this.generateTabId(),
+        parent_session_id: this.state.parentSessionId || this.generateParentSessionId(),
+        session_fingerprint: this.state.fingerprint || this.generateFingerprint(),
+        is_idle: Boolean(this.state.isIdle),
+        is_visible: Boolean(this.state.isVisible),
+        url: this.sanitizeUrl(window.location.href),
+        title: this.sanitizeTitle(document.title),
+        timestamp: new Date().toISOString(),
+        productivity_score: this.calculateProductivityScore() || 0,
+        engagement_score: this.calculateEngagementScore() || 0,
+        location: this.state.location || null,
+        location_latitude: this.validateCoordinate(this.state.location?.latitude, 'latitude'),
+        location_longitude: this.validateCoordinate(this.state.location?.longitude, 'longitude'),
+        location_accuracy: this.validateAccuracy(this.state.location?.accuracy),
+        location_timestamp: this.state.location?.timestamp || null,
+        browser: this.state.browser || 'unknown',
+        os: this.state.os || 'unknown',
+        device_type: this.deviceInfo?.device || 'desktop',
+        fingerprint: this.state.fingerprint || this.generateFingerprint(),
+        screen_resolution: this.getScreenResolution(),
+        timezone_offset: this.getTimezoneOffset(),
+        language: this.getLanguage(),
+        battery_level: this.getBatteryLevel(),
+        connection_type: this.getConnectionType(),
+        csrf_token: this.getCSRFToken(),
+      };
+
+      // Validate required fields
+      if (!heartbeatData.tab_id || !heartbeatData.session_fingerprint) {
+        this.log('Missing required heartbeat data, regenerating...', 'warning');
+        heartbeatData.tab_id = heartbeatData.tab_id || this.generateTabId();
+        heartbeatData.session_fingerprint = heartbeatData.session_fingerprint || this.generateFingerprint();
+        
+        // Update state with generated values
+        this.state.tabId = heartbeatData.tab_id;
+        this.state.fingerprint = heartbeatData.session_fingerprint;
+        this.storeSessionData();
+      }
 
     this.makeRequest(this.config.heartbeatUrl, heartbeatData)
       .then((response) => {

@@ -1,0 +1,166 @@
+<style>
+    /* Base body styles */
+    body {
+        font-family: 'Inter', sans-serif;
+        line-height: 1.6;
+        letter-spacing: -0.01em;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Typography hierarchy */
+    h1, h2, h3, h4, h5, h6 {
+        @apply text-neutral-800 tracking-tight leading-tight font-display;
+    }
+
+    .text-heading {
+        @apply text-neutral-800 font-semibold tracking-tight font-display;
+    }
+
+    .text-body {
+        @apply text-neutral-700;
+    }
+
+    .text-muted {
+        @apply text-neutral-500;
+    }
+
+    .text-hint {
+        @apply text-neutral-400 text-sm;
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
+    /* Focus styles */
+    *:focus-visible {
+        outline: 2px solid #6f5d8e;
+        outline-offset: 2px;
+    }
+
+    /* Button styles */
+    .btn-primary {
+        @apply bg-gradient-to-r from-primary-600 to-primary-700 text-white font-medium px-4 py-2 rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200;
+    }
+
+    .btn-secondary {
+        @apply bg-gradient-to-r from-secondary-500 to-secondary-600 text-white font-medium px-4 py-2 rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200;
+    }
+
+    .btn-accent {
+        @apply bg-gradient-to-r from-accent-500 to-accent-600 text-white font-medium px-4 py-2 rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200;
+    }
+
+    .btn-outline {
+        @apply border border-primary-300 text-primary-700 hover:bg-primary-50 px-4 py-2 rounded-lg transition-colors duration-200;
+    }
+
+    /* Card styles */
+    .card {
+        @apply bg-white/80 backdrop-blur-xl rounded-xl shadow-elegant border border-white/30 transition-all duration-300 hover:shadow-elegant-hover;
+    }
+
+    .card-header {
+        @apply p-6 border-b border-white/20;
+    }
+
+    .card-body {
+        @apply p-6;
+    }
+
+    .card-footer {
+        @apply p-6 border-t border-white/20;
+    }
+
+    /* Form styles */
+    .form-input {
+        @apply w-full px-4 py-3 bg-white/50 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200;
+    }
+
+    .form-label {
+        @apply block text-sm font-medium text-neutral-700 mb-2;
+    }
+
+    .form-error {
+        @apply text-sm text-accent-600 mt-1;
+    }
+
+    /* Animation keyframes */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Loading states */
+    .loading {
+        @apply animate-pulse;
+    }
+
+    .loading-skeleton {
+        @apply bg-neutral-200 rounded animate-pulse;
+    }
+
+    /* Charts and data visualization */
+    .chart-container {
+        @apply relative w-full h-96 bg-white/50 rounded-lg p-4;
+    }
+
+    /* Responsive utilities */
+    @media (max-width: 768px) {
+        .card {
+            @apply rounded-lg;
+        }
+        
+        .card-header,
+        .card-body,
+        .card-footer {
+            @apply p-4;
+        }
+    }
+</style>

@@ -22,8 +22,7 @@ from operator import itemgetter
 
 # Import models from the main trueAlign app
 from trueAlign.models import (
-    UserSession, OfficeLocation, UserDetails,
-    ShiftAssignment, ShiftMaster
+    UserSession, OfficeLocation,
 )
 
 

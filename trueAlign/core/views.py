@@ -1,6 +1,7 @@
 import json
 import time
 import logging
+import uuid
 from datetime import datetime, timedelta
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -153,49 +154,69 @@ class CustomPasswordResetCompleteView(PasswordResetCompleteView):
 def optimized_session_heartbeat(request):
     """
     Optimized heartbeat endpoint with throttling and batching
+    Enhanced with better data validation and error handling
     """
     try:
-        # Parse request data
+        # Parse request data with better error handling
         try:
             data = json.loads(request.body)
         except json.JSONDecodeError:
             data = {}
+        except Exception as e:
+            logger.warning(f"Error parsing request body: {e}")
+            data = {}
 
+        # Extract and validate identifiers
         tab_id = data.get('tab_id') or request.headers.get('X-Tab-ID')
         parent_session_id = data.get('parent_session_id') or request.headers.get('X-Parent-Session-ID')
         session_fingerprint = data.get('session_fingerprint') or request.headers.get('X-Session-Fingerprint')
 
+        # Validate tab_id (generate if missing)
+        if not tab_id:
+            tab_id = str(uuid.uuid4())
+            logger.info(f"Generated missing tab_id: {tab_id}")
+
         user_id = request.user.id
         current_time = time.time()
 
-        # Check throttle
+        # Check throttle with better validation
         throttle_key = f"heartbeat_throttle_{user_id}_{tab_id}"
         last_heartbeat = cache.get(throttle_key)
+        throttle_interval = getattr(CONFIG, 'HEARTBEAT_THROTTLE_INTERVAL', 30)
 
-        if last_heartbeat and (current_time - last_heartbeat) < getattr(CONFIG, 'HEARTBEAT_THROTTLE_INTERVAL', 30):
-            # Return cached response
+        if last_heartbeat and (current_time - last_heartbeat) < throttle_interval:
+            # Return cached response but ensure we still have valid data
             cached_response = cache.get(f"heartbeat_response_{user_id}_{tab_id}")
-            if cached_response:
+            if cached_response and isinstance(cached_response, dict):
+                # Update timestamp
+                cached_response['timestamp'] = timezone.now().isoformat()
                 return JsonResponse(cached_response)
 
         # Get or create session using improved logic
         from trueAlign.models import UserSession, SessionActivity
 
-        # Prepare client data
+        # Prepare comprehensive client data with validation
         client_data = {
-            'ip_address': request.META.get('REMOTE_ADDR'),
-            'user_agent': request.META.get('HTTP_USER_AGENT'),
-            'session_fingerprint': session_fingerprint,
-            'browser_fingerprint': session_fingerprint,
-            'device_type': data.get('device_type'),
-            'screen_resolution': request.headers.get('X-Screen-Resolution'),
-            'timezone_offset': request.headers.get('X-Timezone-Offset'),
-            'language': request.headers.get('X-Language'),
-            'url': data.get('url'),
-            'title': data.get('title'),
+            'ip_address': get_client_ip(request),
+            'user_agent': request.META.get('HTTP_USER_AGENT', ''),
+            'session_fingerprint': session_fingerprint or '',
+            'browser_fingerprint': session_fingerprint or '',
+            'device_type': data.get('device_type', 'unknown'),
+            'screen_resolution': request.headers.get('X-Screen-Resolution') or data.get('screen_resolution'),
+            'timezone_offset': request.headers.get('X-Timezone-Offset') or data.get('timezone_offset'),
+            'language': request.headers.get('X-Language') or data.get('language'),
+            'url': data.get('url', ''),
+            'title': data.get('title', ''),
         }
 
-        # Add location data if provided
+        # Validate and convert numeric fields
+        try:
+            if client_data['timezone_offset']:
+                client_data['timezone_offset'] = int(client_data['timezone_offset'])
+        except (ValueError, TypeError):
+            client_data['timezone_offset'] = None
+
+        # Add location data if provided with validation
         location_data = data.get('location')
         if location_data or data.get('location_latitude'):
             client_data['location_data'] = {
@@ -682,18 +703,18 @@ def dashboard_view(request):
         }
 
         # Get conference booking context
-        conference_context = {}
-        try:
-            from trueAlign.conf_booking.views import conference_booking_context
-            conference_context = conference_booking_context(user)
-        except Exception as conf_error:
-            logger.warning(f"Error loading conference booking context: {conf_error}")
-            conference_context = {
-                'conference_form': None,
-                'user_bookings': [],
-                'user_analytics': None,
-                'available_rooms': [],
-            }
+        # conference_context = {}
+        # try:
+        #     from trueAlign.conf_booking.views import conference_booking_context
+        #     conference_context = conference_booking_context(user)
+        # except Exception as conf_error:
+        #     logger.warning(f"Error loading conference booking context: {conf_error}")
+        #     conference_context = {
+        #         'conference_form': None,
+        #         'user_bookings': [],
+        #         'user_analytics': None,
+        #         'available_rooms': [],
+        #     }
 
         # Get user role information
         user_groups = user.groups.all()
@@ -717,7 +738,7 @@ def dashboard_view(request):
             'is_employee': is_employee,
             'is_client': is_client,
             # Conference booking context
-            **conference_context
+            # **conference_context
         }
 
         return render(request, 'dashboard.html', context)

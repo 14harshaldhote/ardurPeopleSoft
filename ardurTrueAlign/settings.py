@@ -100,13 +100,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'trueAlign',
     'trueAlign.core',
-    'trueAlign.profile',
-    'trueAlign.shift',
-    'trueAlign.support',
-    'trueAlign.conf_booking',
-    'trueAlign.attendance.apps.AttendanceConfig',  # ✅ keep this
     'trueAlign.sessions',
-    'trueAlign.leave_management',
     'trueAlign.notifications',  # New notification system
     'rest_framework',
     'widget_tweaks',
