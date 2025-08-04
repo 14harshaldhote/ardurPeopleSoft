@@ -304,8 +304,13 @@ def optimized_session_heartbeat(request):
 @login_required
 def optimized_batch_activity_update(request):
     """
-    Optimized batch activity update endpoint
+    Enhanced batch activity update endpoint with optimized processing
     """
+    from trueAlign.core import get_batch_writer, get_session_manager, get_session_logger
+    import hashlib
+    
+    start_time = time.time()
+    
     try:
         # Handle both JSON and form data
         try:
@@ -323,6 +328,7 @@ def optimized_batch_activity_update(request):
 
         tab_id = data.get('tab_id') or request.headers.get('X-Tab-ID')
         activities = data.get('activities', [])
+        parent_session_id = data.get('parent_session_id') or request.headers.get('X-Parent-Session-ID')
 
         # If activities is a string (from form data), try to parse it
         if isinstance(activities, str):
@@ -336,20 +342,44 @@ def optimized_batch_activity_update(request):
             activities = []
 
         user_id = request.user.id
+        session_logger = get_session_logger()
 
-        # Check throttle
+        # Enhanced request deduplication
+        request_hash = hashlib.md5(json.dumps({
+            'user_id': user_id,
+            'tab_id': tab_id,
+            'activity_count': len(activities),
+            'timestamp': int(time.time())
+        }, sort_keys=True).encode()).hexdigest()
+        
+        dedup_key = f"batch_request_dedup_{request_hash}"
+        if cache.get(dedup_key):
+            session_logger.log_error(
+                'duplicate_request_blocked',
+                f"Duplicate batch request blocked for user {request.user.username}",
+                user=request.user,
+                details={'tab_id': tab_id, 'activity_count': len(activities)}
+            )
+            return JsonResponse({'status': 'duplicate', 'message': 'Duplicate request blocked'})
+        
+        cache.set(dedup_key, True, 10)  # 10 second deduplication window
+
+        # Enhanced throttling
         throttle_key = f"batch_update_throttle_{user_id}_{tab_id}"
         last_update = cache.get(throttle_key)
         current_time = time.time()
+        throttle_interval = getattr(settings, 'ACTIVITY_THROTTLE_INTERVAL', 30)
 
-        if last_update and (current_time - last_update) < getattr(CONFIG, 'ACTIVITY_THROTTLE_INTERVAL', 60):
-            return JsonResponse({'status': 'throttled', 'retry_after': getattr(CONFIG, 'ACTIVITY_THROTTLE_INTERVAL', 60)})
+        if last_update and (current_time - last_update) < throttle_interval:
+            return JsonResponse({
+                'status': 'throttled', 
+                'retry_after': throttle_interval,
+                'message': 'Request throttled'
+            })
 
-        # Extract session identifiers
-        parent_session_id = data.get('parent_session_id') or request.headers.get('X-Parent-Session-ID')
         session_fingerprint = data.get('session_fingerprint') or request.headers.get('X-Session-Fingerprint')
 
-        # Prepare client data
+        # Prepare enhanced client data
         client_data = {
             'ip_address': request.META.get('REMOTE_ADDR'),
             'user_agent': request.META.get('HTTP_USER_AGENT'),
@@ -361,59 +391,84 @@ def optimized_batch_activity_update(request):
             'language': request.headers.get('X-Language'),
         }
 
-        # Get or create session
-        from trueAlign.models import UserSession, SessionActivity
-        session, created = UserSession.get_or_create_session(
+        # Use enhanced session manager
+        session_manager = get_session_manager()
+        session, created = session_manager.get_or_create_session(
             user=request.user,
             tab_id=tab_id,
             parent_session_id=parent_session_id,
-            client_data=client_data,
-            session_key=UserSession.generate_session_key()
+            client_data=client_data
         )
 
         if not session:
             logger.error("Failed to get or create session")
             return JsonResponse({'error': 'Could not create session'}, status=500)
 
-        # Process batch activities using SessionActivity model
+        # Use enhanced batch writer for activities
+        batch_writer = get_batch_writer()
         processed_count = 0
+        
         for activity in activities:
             try:
-                activity_type = activity.get('type', 'unknown')
+                activity_type = activity.get('type', 'heartbeat')
                 activity_data = activity.get('data', {})
                 url = activity.get('url')
                 title = activity.get('title')
                 location_data = activity.get('location')
 
-                SessionActivity.record_activity(
-                    session=session,
+                # Add to batch writer
+                batch_writer.add_activity(
+                    user_id=user_id,
+                    session_id=session.id,
                     activity_type=activity_type,
                     activity_data=activity_data,
+                    location_data=location_data,
                     url=url,
-                    title=title,
-                    location_data=location_data
+                    title=title
                 )
                 processed_count += 1
+                
             except Exception as activity_error:
-                logger.warning(f"Error recording activity: {activity_error}")
+                logger.warning(f"Error queuing activity: {activity_error}")
+                session_logger.log_error(
+                    'activity_queue_error',
+                    str(activity_error),
+                    user=request.user,
+                    session_id=session.id,
+                    details={'activity_type': activity.get('type', 'unknown')}
+                )
 
-        # Update session last activity
-        session.last_activity = timezone.now()
-        session.save(update_fields=['last_activity'])
-
-        # Set throttle
-        cache.set(throttle_key, current_time, getattr(CONFIG, 'ACTIVITY_THROTTLE_INTERVAL', 60))
+        # Update throttle cache
+        cache.set(throttle_key, current_time, throttle_interval * 2)
+        
+        # Log batch performance
+        duration_ms = (time.time() - start_time) * 1000
+        session_logger.log_batch_write_performance(
+            user_id, len(activities), duration_ms, success=True
+        )
 
         return JsonResponse({
             'status': 'success',
             'processed_count': processed_count,
+            'queued_count': processed_count,  # All activities are queued for batch processing
             'session_id': str(session.id),
             'parent_session_id': str(session.parent_session_id) if session.parent_session_id else None,
             'created': created,
-            'timestamp': timezone.now().isoformat()
+            'timestamp': timezone.now().isoformat(),
+            'processing_time_ms': duration_ms,
+            'batch_mode': True
         })
 
     except Exception as e:
+        # Log error with enhanced logger
+        duration_ms = (time.time() - start_time) * 1000
+        session_logger = get_session_logger()
+        session_logger.log_batch_write_performance(
+            user_id if 'user_id' in locals() else None, 
+            len(activities) if 'activities' in locals() else 0, 
+            duration_ms, success=False, error=str(e)
+        )
+        
         logger.error(f"Error in batch activity update: {str(e)}", exc_info=True)
         return JsonResponse({'error': 'Internal server error'}, status=500)
 

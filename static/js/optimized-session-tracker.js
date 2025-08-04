@@ -648,26 +648,29 @@ class OptimizedSessionTracker {
         this.storeSessionData();
       }
 
-    this.makeRequest(this.config.heartbeatUrl, heartbeatData)
-      .then((response) => {
-        this.state.lastHeartbeat = now;
-        this.handleHeartbeatResponse(response);
-      })
-      .catch((error) => {
-        // Fallback to legacy endpoint if optimized endpoint fails
-        this.makeRequest("/session/heartbeat/", heartbeatData)
-          .then((response) => {
-            this.state.lastHeartbeat = now;
-            this.handleHeartbeatResponse(response);
-          })
-          .catch((retryError) => {
-            this.addToRetryQueue("heartbeat", heartbeatData);
-            this.log(
-              "Heartbeat failed on both endpoints: " + error.message,
-              "error",
-            );
-          });
-      });
+      this.makeRequest(this.config.heartbeatUrl, heartbeatData)
+        .then((response) => {
+          this.state.lastHeartbeat = now;
+          this.handleHeartbeatResponse(response);
+        })
+        .catch((error) => {
+          // Fallback to legacy endpoint if optimized endpoint fails
+          this.makeRequest("/session/heartbeat/", heartbeatData)
+            .then((response) => {
+              this.state.lastHeartbeat = now;
+              this.handleHeartbeatResponse(response);
+            })
+            .catch((retryError) => {
+              this.addToRetryQueue("heartbeat", heartbeatData);
+              this.log(
+                "Heartbeat failed on both endpoints: " + error.message,
+                "error",
+              );
+            });
+        });
+    } catch (error) {
+      this.log("Error in sendHeartbeat: " + error.message, "error");
+    }
   }
 
   handleHeartbeatResponse(response) {
@@ -1681,4 +1684,19 @@ if (typeof define === "function" && define.amd) {
   define([], function () {
     return OptimizedSessionTracker;
   });
+} else {
+  // Global export
+  window.OptimizedSessionTracker = OptimizedSessionTracker;
+}
+
+// Check if we're in a browser environment before auto-initializing
+if (typeof window !== 'undefined') {
+  // Auto-initialize if DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('DOM loaded, OptimizedSessionTracker available:', typeof window.OptimizedSessionTracker !== 'undefined');
+    });
+  } else {
+    console.log('DOM already loaded, OptimizedSessionTracker available:', typeof window.OptimizedSessionTracker !== 'undefined');
+  }
 }

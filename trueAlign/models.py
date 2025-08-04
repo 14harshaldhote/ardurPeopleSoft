@@ -3,7 +3,8 @@ from django.contrib.auth.models import User, Group
 import pytz
 from django.db import models
 from django.conf import settings
-from datetime import time, timedelta
+from datetime import timedelta
+import time
 import logging
 from django.db.models import JSONField
 import uuid
@@ -265,58 +266,121 @@ class UserSession(models.Model):
 
 
     @classmethod
-    def get_or_create_session(cls, user, tab_id=None, parent_session_id=None, client_data=None, session_key=None, ip_address=None, user_agent=None, browser_fingerprint=None, device_type=None, screen_resolution=None, timezone_offset=None, language=None, url=None, title=None, referrer=None):
+    def _original_get_or_create_session(cls, user, tab_id=None, parent_session_id=None, client_data=None, session_key=None, ip_address=None, user_agent=None, browser_fingerprint=None, device_type=None, screen_resolution=None, timezone_offset=None, language=None, url=None, title=None, referrer=None):
         """
-        Get an existing session or create a new one based on tab_id, parent_session_id, and session_fingerprint
-        Enhanced with better duplicate session handling
+        Original fallback session creation method
         """
-        logger.info(f"Getting or creating session for user {user.username} with tab_id={tab_id}, parent_session_id={parent_session_id}")
-
-        # First, clean up any orphaned sessions for this user
-        try:
-            cls.objects.filter(
-                user=user,
-                is_active=True,
-                last_activity__lt=timezone.now() - timedelta(hours=24)
-            ).update(
-                is_active=False,
-                end_reason='auto_cleanup',
-                ended_at=timezone.now()
-            )
-        except Exception as e:
-            logger.warning(f"Error during session cleanup for {user.username}: {e}")
-
-        # Extract session_fingerprint from client_data if available
-        session_fingerprint = None
-        if client_data and isinstance(client_data, dict):
-            session_fingerprint = client_data.get('session_fingerprint') or client_data.get('browser_fingerprint')
-        if not session_fingerprint and browser_fingerprint:
-            session_fingerprint = browser_fingerprint
-
-        # 1. Try to find existing session by tab_id (exact tab match)
+        logger.info(f"Using fallback session creation for user {user.username}")
+        
+        # Simple session creation without enhanced features
         if tab_id:
             try:
                 session = cls.objects.get(user=user, tab_id=tab_id, is_active=True)
-                logger.info(f"Found existing session by tab_id: {session.id}")
                 session.last_activity = timezone.now()
                 session.save(update_fields=['last_activity'])
                 return session, False
             except cls.DoesNotExist:
                 pass
+        
+        # Create new session
+        session_data = {
+            'user': user,
+            'tab_id': tab_id,
+            'parent_session_id': parent_session_id or uuid.uuid4(),
+            'session_key': session_key or cls.generate_session_key(),
+            'is_primary_tab': True,
+            'login_time': timezone.now(),
+            'last_activity': timezone.now(),
+        }
+        
+        if client_data:
+            session_data.update({
+                'ip_address': client_data.get('ip_address'),
+                'user_agent': client_data.get('user_agent'),
+                'browser_fingerprint': client_data.get('browser_fingerprint'),
+                'session_fingerprint': client_data.get('session_fingerprint'),
+            })
+        
+        new_session = cls.objects.create(**session_data)
+        return new_session, True
 
-        # 2. Try to find existing session by parent_session_id and session_fingerprint
-        if parent_session_id and session_fingerprint:
-            session = cls.objects.filter(
+    @classmethod
+    def get_or_create_session(cls, user, tab_id=None, parent_session_id=None, client_data=None, session_key=None, ip_address=None, user_agent=None, browser_fingerprint=None, device_type=None, screen_resolution=None, timezone_offset=None, language=None, url=None, title=None, referrer=None):
+        """
+        Get an existing session or create a new one using the enhanced session manager
+        """
+        try:
+            from trueAlign.core import get_session_manager, get_session_logger, get_session_validator
+        except ImportError as e:
+            logger.warning(f"Enhanced session components not available: {e}")
+            # Fall back to original implementation
+            return cls._original_get_or_create_session(user, tab_id, parent_session_id, client_data, session_key, ip_address, user_agent, browser_fingerprint, device_type, screen_resolution, timezone_offset, language, url, title, referrer)
+        
+        import time as time_module
+        start_time = time_module.time()
+        session_manager = get_session_manager()
+        session_logger = get_session_logger()
+        session_validator = get_session_validator()
+        
+        try:
+            # Prepare client data if not provided
+            if client_data is None:
+                client_data = {}
+            
+            # Add standalone parameters to client_data if they're provided
+            if ip_address is not None:
+                client_data['ip_address'] = ip_address
+            if user_agent is not None:
+                client_data['user_agent'] = user_agent
+            if browser_fingerprint is not None:
+                client_data['browser_fingerprint'] = browser_fingerprint
+                client_data['session_fingerprint'] = browser_fingerprint
+            if device_type is not None:
+                client_data['device_type'] = device_type
+            if screen_resolution is not None:
+                client_data['screen_resolution'] = screen_resolution
+            if timezone_offset is not None:
+                client_data['timezone_offset'] = timezone_offset
+            if language is not None:
+                client_data['language'] = language
+            if url is not None:
+                client_data['url'] = url
+            if title is not None:
+                client_data['title'] = title
+            if referrer is not None:
+                client_data['referrer'] = referrer
+            
+            # Use enhanced session manager
+            session, created = session_manager.get_or_create_session(
                 user=user,
+                tab_id=tab_id,
                 parent_session_id=parent_session_id,
-                session_fingerprint=session_fingerprint,
-                is_active=True
-            ).first()
-            if session:
-                logger.info(f"Found existing session by parent_session_id and fingerprint: {session.id}")
-                session.last_activity = timezone.now()
-                session.save(update_fields=['last_activity'])
-                return session, False
+                client_data=client_data,
+                session_key=session_key
+            )
+            
+            # Log session creation
+            duration_ms = (time_module.time() - start_time) * 1000
+            session_logger.log_session_creation(
+                user, session.id, tab_id, duration_ms, created=created
+            )
+            
+            # Register session for validation if newly created
+            if created:
+                session_validator.register_session(session)
+            
+            return session, created
+            
+        except Exception as e:
+            # Log error
+            session_logger.log_error(
+                'session_creation_error',
+                str(e),
+                user=user,
+                details={'tab_id': tab_id, 'parent_session_id': parent_session_id}
+            )
+            logger.error(f"Error in get_or_create_session for user {user.username}: {str(e)}")
+            raise
 
         # 3. Try to find existing session by session_fingerprint only (same browser/device)
         if session_fingerprint:
@@ -1427,8 +1491,10 @@ class SessionActivity(models.Model):
     @classmethod
     def record_activity(cls, session, activity_type, activity_data=None, url=None, title=None, location_data=None):
         """
-        Record a user activity with enhanced validation and error handling
+        Record a user activity using enhanced batch writer and location synchronizer
         """
+        from trueAlign.core import get_batch_writer, get_location_synchronizer, get_session_logger
+        
         try:
             # Validate required parameters
             if not session:
@@ -1472,79 +1538,99 @@ class SessionActivity(models.Model):
             if 'timestamp' not in activity_data:
                 activity_data['timestamp'] = timezone.now().isoformat()
             
-            # Create the activity record
-            activity = cls(
+            # Get enhanced components
+            batch_writer = get_batch_writer()
+            location_sync = get_location_synchronizer()
+            session_logger = get_session_logger()
+            
+            # Use batch writer for efficient activity recording
+            batch_writer.add_activity(
+                user_id=session.user.id,
+                session_id=session.id,
+                activity_type=activity_type,
+                activity_data=activity_data,
+                location_data=location_data,
+                url=url,
+                title=title
+            )
+            
+            # Queue location update for synchronization if location data exists
+            if location_data and isinstance(location_data, dict):
+                try:
+                    # Validate basic location data structure
+                    lat = location_data.get('latitude')
+                    lng = location_data.get('longitude')
+                    
+                    if lat is not None and lng is not None:
+                        lat = float(lat)
+                        lng = float(lng)
+                        
+                        # Validate coordinate ranges
+                        if -90 <= lat <= 90 and -180 <= lng <= 180:
+                            # Queue for location synchronization
+                            location_sync.queue_location_update(
+                                session_id=session.id,
+                                activity_id=None,  # Will be set when activity is created
+                                location_data=location_data,
+                                timestamp=timezone.now()
+                            )
+                            
+                            logger.debug(f"Queued location update for session {session.id}: lat={lat}, lng={lng}")
+                        else:
+                            logger.warning(f"Invalid coordinates: lat={lat}, lng={lng}")
+                            session_logger.log_location_update(
+                                session.user, session.id, location_data, success=False,
+                                error="Invalid coordinate ranges"
+                            )
+                    else:
+                        logger.warning("Missing latitude or longitude in location data")
+                        
+                except (ValueError, TypeError) as e:
+                    logger.warning(f"Error processing location data: {e}")
+                    session_logger.log_location_update(
+                        session.user, session.id, location_data, success=False, error=str(e)
+                    )
+            
+            # Update session's last activity timestamp using cache
+            cache_key = f"session_last_activity_{session.id}"
+            cache.set(cache_key, timezone.now().isoformat(), 300)  # 5 minutes
+            
+            # Immediate database update only for critical activities
+            if activity_type in ['session_end', 'logout', 'error']:
+                session.last_activity = timezone.now()
+                session.save(update_fields=['last_activity'])
+            
+            logger.debug(f"Queued {activity_type} activity for session {session.id} (batched)")
+            
+            # Return a mock activity object for compatibility
+            # Note: The actual activity will be created by the batch writer
+            from types import SimpleNamespace
+            mock_activity = SimpleNamespace(
+                id=None,  # Will be set when actually created
                 session=session,
                 user=session.user,
                 activity_type=activity_type,
                 activity_data=activity_data,
                 url=url,
-                title=title
+                title=title,
+                timestamp=timezone.now(),
+                location_data=location_data
             )
             
-            # Process location data with validation
-            if location_data and isinstance(location_data, dict):
-                try:
-                    lat = location_data.get('latitude')
-                    lng = location_data.get('longitude')
-                    accuracy = location_data.get('accuracy')
-                    
-                    # Validate latitude (-90 to 90)
-                    if lat is not None:
-                        lat = float(lat)
-                        if -90 <= lat <= 90:
-                            activity.location_latitude = lat
-                        else:
-                            logger.warning(f"Invalid latitude: {lat}. Must be between -90 and 90.")
-                    
-                    # Validate longitude (-180 to 180)
-                    if lng is not None:
-                        lng = float(lng)
-                        if -180 <= lng <= 180:
-                            activity.location_longitude = lng
-                        else:
-                            logger.warning(f"Invalid longitude: {lng}. Must be between -180 and 180.")
-                    
-                    # Validate accuracy (should be positive)
-                    if accuracy is not None:
-                        accuracy = float(accuracy)
-                        if accuracy >= 0:
-                            activity.location_accuracy = accuracy
-                        else:
-                            logger.warning(f"Invalid accuracy: {accuracy}. Must be non-negative.")
-                            
-                except (ValueError, TypeError) as e:
-                    logger.warning(f"Error processing location data: {e}")
-            
-            # Calculate productivity and engagement scores if applicable
-            if activity_type in ['keyboard', 'click', 'scroll', 'mouse_move']:
-                try:
-                    from .utils import calculate_productivity_score
-                    
-                    # Get recent activity for scoring
-                    recent_activities = cls.objects.filter(
-                        session=session,
-                        created_at__gte=timezone.now() - timedelta(hours=1)
-                    ).count()
-                    
-                    # Simple productivity scoring based on activity frequency
-                    activity.productivity_score = min(100, recent_activities * 2)
-                    activity.engagement_score = min(100, recent_activities * 1.5)
-                    
-                except Exception as score_error:
-                    logger.warning(f"Error calculating activity scores: {score_error}")
-            
-            # Save the activity
-            activity.save()
-            
-            # Update session's last activity timestamp
-            session.last_activity = timezone.now()
-            session.save(update_fields=['last_activity'])
-            
-            logger.debug(f"Recorded {activity_type} activity for session {session.id}")
-            return activity
+            return mock_activity
             
         except Exception as e:
+            # Log error using enhanced logger
+            session_logger.log_error(
+                'activity_recording_error',
+                str(e),
+                user=session.user if session else None,
+                session_id=session.id if session else None,
+                details={
+                    'activity_type': activity_type,
+                    'has_location_data': bool(location_data)
+                }
+            )
             logger.error(f"Error recording activity: {e}", exc_info=True)
             return None
 
