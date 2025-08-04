@@ -1333,9 +1333,7 @@ class OptimizedSessionTracker {
       this.log('Failed to clear session data: ' + error.message, 'error');
     }
   }
-</text>
 
-<old_text line=579>
   sendHeartbeat() {
     if (!this.state.isActive || !this.state.userId) return;
 
