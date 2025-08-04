@@ -11,7 +11,6 @@ from django.http import JsonResponse
 from django.urls import reverse
 from django.conf import settings
 from django.db import transaction
-from trueAlign.models import UserSession
 
 # Try to import enhanced components, fall back to None if not available
 try:
@@ -277,6 +276,9 @@ class OptimizedSessionTrackingMiddleware:
             if location_info:
                 client_data['location_data'] = location_info
 
+            # Import here to avoid circular imports
+            from trueAlign.models import UserSession
+            
             # Use the improved get_or_create_session method
             session, created = UserSession.get_or_create_session(
                 user=user,

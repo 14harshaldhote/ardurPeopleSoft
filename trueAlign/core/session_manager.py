@@ -369,8 +369,17 @@ class EnhancedSessionManager:
     
     def _validate_session_duration(self, session):
         """
-        Validate session has minimum duration to prevent short-lived sessions
+        Validate session has minimum duration using session validator
         """
+        try:
+            from . import get_session_validator
+            validator = get_session_validator()
+            if validator:
+                return validator.validate_session(session)
+        except ImportError:
+            pass
+        
+        # Fallback validation
         if not session.created_at:
             return True
         
