@@ -1361,8 +1361,8 @@ class OptimizedSessionTracker {
         browser: this.state.browser,
         os: this.state.os,
         fingerprint: this.state.fingerprint,
-        screen_resolution: `${screen.width}x${screen.height}`,
-        timezone_offset: new Date().getTimezoneOffset(),
+        screen_resolution: this.getScreenResolution(),
+        timezone_offset: this.getTimezoneOffset(),
         csrf_token: this.getCSRFToken(),
       };
 
@@ -1654,6 +1654,140 @@ class OptimizedSessionTracker {
     this.cleanup();
 
     this.log("Session tracker destroyed", "info");
+  }
+
+  // Data validation methods
+  sanitizeUrl(url) {
+    try {
+      if (!url || typeof url !== 'string') return '';
+      
+      // Truncate very long URLs
+      if (url.length > 2000) {
+        this.log('URL too long, truncating', 'warning');
+        url = url.substring(0, 2000);
+      }
+      
+      // Remove sensitive query parameters
+      const urlObj = new URL(url);
+      const sensitiveParams = ['password', 'token', 'key', 'secret', 'auth'];
+      
+      for (const param of sensitiveParams) {
+        if (urlObj.searchParams.has(param)) {
+          urlObj.searchParams.set(param, '[REDACTED]');
+        }
+      }
+      
+      return urlObj.toString();
+    } catch (error) {
+      this.log('Error sanitizing URL: ' + error.message, 'warning');
+      return url ? url.substring(0, 2000) : '';
+    }
+  }
+
+  sanitizeTitle(title) {
+    try {
+      if (!title || typeof title !== 'string') return '';
+      
+      // Truncate very long titles
+      if (title.length > 500) {
+        this.log('Title too long, truncating', 'warning');
+        title = title.substring(0, 500);
+      }
+      
+      // Remove potentially sensitive information
+      title = title.replace(/password|token|key|secret/gi, '[REDACTED]');
+      
+      return title.trim();
+    } catch (error) {
+      this.log('Error sanitizing title: ' + error.message, 'warning');
+      return title ? title.substring(0, 500) : '';
+    }
+  }
+
+  validateCoordinate(coord, type) {
+    try {
+      if (coord === null || coord === undefined) return null;
+      
+      const numCoord = parseFloat(coord);
+      if (isNaN(numCoord)) return null;
+      
+      if (type === 'latitude') {
+        return (numCoord >= -90 && numCoord <= 90) ? numCoord : null;
+      } else if (type === 'longitude') {
+        return (numCoord >= -180 && numCoord <= 180) ? numCoord : null;
+      }
+      
+      return numCoord;
+    } catch (error) {
+      this.log('Error validating coordinate: ' + error.message, 'warning');
+      return null;
+    }
+  }
+
+  validateAccuracy(accuracy) {
+    try {
+      if (accuracy === null || accuracy === undefined) return null;
+      
+      const numAccuracy = parseFloat(accuracy);
+      if (isNaN(numAccuracy)) return null;
+      
+      // Accuracy should be non-negative
+      return (numAccuracy >= 0) ? numAccuracy : null;
+    } catch (error) {
+      this.log('Error validating accuracy: ' + error.message, 'warning');
+      return null;
+    }
+  }
+
+  getScreenResolution() {
+    try {
+      return `${screen.width}x${screen.height}`;
+    } catch (error) {
+      this.log('Error getting screen resolution: ' + error.message, 'warning');
+      return 'unknown';
+    }
+  }
+
+  getTimezoneOffset() {
+    try {
+      return new Date().getTimezoneOffset();
+    } catch (error) {
+      this.log('Error getting timezone offset: ' + error.message, 'warning');
+      return 0;
+    }
+  }
+
+  getLanguage() {
+    try {
+      return navigator.language || navigator.userLanguage || 'unknown';
+    } catch (error) {
+      this.log('Error getting language: ' + error.message, 'warning');
+      return 'unknown';
+    }
+  }
+
+  getBatteryLevel() {
+    try {
+      if ('getBattery' in navigator) {
+        return navigator.getBattery().then(battery => battery.level * 100);
+      }
+      return null;
+    } catch (error) {
+      this.log('Error getting battery level: ' + error.message, 'warning');
+      return null;
+    }
+  }
+
+  getConnectionType() {
+    try {
+      if ('connection' in navigator) {
+        return navigator.connection.effectiveType || 'unknown';
+      }
+      return 'unknown';
+    } catch (error) {
+      this.log('Error getting connection type: ' + error.message, 'warning');
+      return 'unknown';
+    }
   }
 }
 

@@ -648,26 +648,26 @@ class OptimizedSessionTracker {
         this.storeSessionData();
       }
 
-    this.makeRequest(this.config.heartbeatUrl, heartbeatData)
-      .then((response) => {
-        this.state.lastHeartbeat = now;
-        this.handleHeartbeatResponse(response);
-      })
-      .catch((error) => {
-        // Fallback to legacy endpoint if optimized endpoint fails
-        this.makeRequest("/session/heartbeat/", heartbeatData)
-          .then((response) => {
-            this.state.lastHeartbeat = now;
-            this.handleHeartbeatResponse(response);
-          })
-          .catch((retryError) => {
-            this.addToRetryQueue("heartbeat", heartbeatData);
-            this.log(
-              "Heartbeat failed on both endpoints: " + error.message,
-              "error",
-            );
-          });
-      });
+      this.makeRequest(this.config.heartbeatUrl, heartbeatData)
+        .then((response) => {
+          this.state.lastHeartbeat = now;
+          this.handleHeartbeatResponse(response);
+        })
+        .catch((error) => {
+          // Fallback to legacy endpoint if optimized endpoint fails
+          this.makeRequest("/session/heartbeat/", heartbeatData)
+            .then((response) => {
+              this.state.lastHeartbeat = now;
+              this.handleHeartbeatResponse(response);
+            })
+            .catch((retryError) => {
+              this.addToRetryQueue("heartbeat", heartbeatData);
+              this.log(
+                "Heartbeat failed on both endpoints: " + error.message,
+                "error",
+              );
+            });
+        });
     } catch (error) {
       this.log("Error in sendHeartbeat: " + error.message, "error");
     }
@@ -1337,6 +1337,72 @@ class OptimizedSessionTracker {
     }
   }
 
+  sendHeartbeat() {
+    if (!this.state.isActive || !this.state.userId) return;
+
+    const now = Date.now();
+    if (now - this.state.lastHeartbeat < this.config.heartbeatInterval) return;
+
+    try {
+      const heartbeatData = {
+        tab_id: this.state.tabId,
+        is_idle: this.state.isIdle,
+        is_visible: this.state.isVisible,
+        url: window.location.href,
+        title: document.title,
+        timestamp: new Date().toISOString(),
+        productivity_score: this.calculateProductivityScore(),
+        engagement_score: this.calculateEngagementScore(),
+        location: this.state.location || null,
+        location_latitude: this.state.location?.latitude || null,
+        location_longitude: this.state.location?.longitude || null,
+        location_accuracy: this.state.location?.accuracy || null,
+        location_timestamp: this.state.location?.timestamp || null,
+        browser: this.state.browser,
+        os: this.state.os,
+        fingerprint: this.state.fingerprint,
+        screen_resolution: this.getScreenResolution(),
+        timezone_offset: this.getTimezoneOffset(),
+        csrf_token: this.getCSRFToken(),
+      };
+
+      // Validate required fields
+      if (!heartbeatData.tab_id || !heartbeatData.session_fingerprint) {
+        this.log('Missing required heartbeat data, regenerating...', 'warning');
+        heartbeatData.tab_id = heartbeatData.tab_id || this.generateTabId();
+        heartbeatData.session_fingerprint = heartbeatData.session_fingerprint || this.generateFingerprint();
+        
+        // Update state with generated values
+        this.state.tabId = heartbeatData.tab_id;
+        this.state.fingerprint = heartbeatData.session_fingerprint;
+        this.storeSessionData();
+      }
+
+      this.makeRequest(this.config.heartbeatUrl, heartbeatData)
+        .then((response) => {
+          this.state.lastHeartbeat = now;
+          this.handleHeartbeatResponse(response);
+        })
+        .catch((error) => {
+          // Fallback to legacy endpoint if optimized endpoint fails
+          this.makeRequest("/session/heartbeat/", heartbeatData)
+            .then((response) => {
+              this.state.lastHeartbeat = now;
+              this.handleHeartbeatResponse(response);
+            })
+            .catch((retryError) => {
+              this.addToRetryQueue("heartbeat", heartbeatData);
+              this.log(
+                "Heartbeat failed on both endpoints: " + error.message,
+                "error",
+              );
+            });
+        });
+    } catch (error) {
+      this.log("Error in sendHeartbeat: " + error.message, "error");
+    }
+  }
+
   getCSRFToken() {
     // First try to get from cookies
     const cookies = document.cookie.split(";");
@@ -1589,6 +1655,140 @@ class OptimizedSessionTracker {
 
     this.log("Session tracker destroyed", "info");
   }
+
+  // Data validation methods
+  sanitizeUrl(url) {
+    try {
+      if (!url || typeof url !== 'string') return '';
+      
+      // Truncate very long URLs
+      if (url.length > 2000) {
+        this.log('URL too long, truncating', 'warning');
+        url = url.substring(0, 2000);
+      }
+      
+      // Remove sensitive query parameters
+      const urlObj = new URL(url);
+      const sensitiveParams = ['password', 'token', 'key', 'secret', 'auth'];
+      
+      for (const param of sensitiveParams) {
+        if (urlObj.searchParams.has(param)) {
+          urlObj.searchParams.set(param, '[REDACTED]');
+        }
+      }
+      
+      return urlObj.toString();
+    } catch (error) {
+      this.log('Error sanitizing URL: ' + error.message, 'warning');
+      return url ? url.substring(0, 2000) : '';
+    }
+  }
+
+  sanitizeTitle(title) {
+    try {
+      if (!title || typeof title !== 'string') return '';
+      
+      // Truncate very long titles
+      if (title.length > 500) {
+        this.log('Title too long, truncating', 'warning');
+        title = title.substring(0, 500);
+      }
+      
+      // Remove potentially sensitive information
+      title = title.replace(/password|token|key|secret/gi, '[REDACTED]');
+      
+      return title.trim();
+    } catch (error) {
+      this.log('Error sanitizing title: ' + error.message, 'warning');
+      return title ? title.substring(0, 500) : '';
+    }
+  }
+
+  validateCoordinate(coord, type) {
+    try {
+      if (coord === null || coord === undefined) return null;
+      
+      const numCoord = parseFloat(coord);
+      if (isNaN(numCoord)) return null;
+      
+      if (type === 'latitude') {
+        return (numCoord >= -90 && numCoord <= 90) ? numCoord : null;
+      } else if (type === 'longitude') {
+        return (numCoord >= -180 && numCoord <= 180) ? numCoord : null;
+      }
+      
+      return numCoord;
+    } catch (error) {
+      this.log('Error validating coordinate: ' + error.message, 'warning');
+      return null;
+    }
+  }
+
+  validateAccuracy(accuracy) {
+    try {
+      if (accuracy === null || accuracy === undefined) return null;
+      
+      const numAccuracy = parseFloat(accuracy);
+      if (isNaN(numAccuracy)) return null;
+      
+      // Accuracy should be non-negative
+      return (numAccuracy >= 0) ? numAccuracy : null;
+    } catch (error) {
+      this.log('Error validating accuracy: ' + error.message, 'warning');
+      return null;
+    }
+  }
+
+  getScreenResolution() {
+    try {
+      return `${screen.width}x${screen.height}`;
+    } catch (error) {
+      this.log('Error getting screen resolution: ' + error.message, 'warning');
+      return 'unknown';
+    }
+  }
+
+  getTimezoneOffset() {
+    try {
+      return new Date().getTimezoneOffset();
+    } catch (error) {
+      this.log('Error getting timezone offset: ' + error.message, 'warning');
+      return 0;
+    }
+  }
+
+  getLanguage() {
+    try {
+      return navigator.language || navigator.userLanguage || 'unknown';
+    } catch (error) {
+      this.log('Error getting language: ' + error.message, 'warning');
+      return 'unknown';
+    }
+  }
+
+  getBatteryLevel() {
+    try {
+      if ('getBattery' in navigator) {
+        return navigator.getBattery().then(battery => battery.level * 100);
+      }
+      return null;
+    } catch (error) {
+      this.log('Error getting battery level: ' + error.message, 'warning');
+      return null;
+    }
+  }
+
+  getConnectionType() {
+    try {
+      if ('connection' in navigator) {
+        return navigator.connection.effectiveType || 'unknown';
+      }
+      return 'unknown';
+    } catch (error) {
+      this.log('Error getting connection type: ' + error.message, 'warning');
+      return 'unknown';
+    }
+  }
 }
 
 // Auto-initialize when DOM is ready
@@ -1654,4 +1854,19 @@ if (typeof define === "function" && define.amd) {
   define([], function () {
     return OptimizedSessionTracker;
   });
+} else {
+  // Global export
+  window.OptimizedSessionTracker = OptimizedSessionTracker;
+}
+
+// Check if we're in a browser environment before auto-initializing
+if (typeof window !== 'undefined') {
+  // Auto-initialize if DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('DOM loaded, OptimizedSessionTracker available:', typeof window.OptimizedSessionTracker !== 'undefined');
+    });
+  } else {
+    console.log('DOM already loaded, OptimizedSessionTracker available:', typeof window.OptimizedSessionTracker !== 'undefined');
+  }
 }

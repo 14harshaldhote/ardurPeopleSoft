@@ -18,8 +18,7 @@ try:
     from . import get_batch_writer, get_session_manager, get_session_logger
     ENHANCED_COMPONENTS_AVAILABLE = True
 except ImportError as e:
-    logger = logging.getLogger(__name__)
-    logger.warning(f"Enhanced session components not available: {e}")
+    # Logger will be declared below
     get_batch_writer = lambda: None
     get_session_manager = lambda: None
     get_session_logger = lambda: None
@@ -41,6 +40,10 @@ MAX_BUFFER_SIZE = 100  # Maximum activities to buffer
 HEARTBEAT_INTERVAL = 30  # seconds
 
 logger = logging.getLogger(__name__)
+
+# Log warning if enhanced components are not available
+if not ENHANCED_COMPONENTS_AVAILABLE:
+    logger.warning("Enhanced session components not available, using fallback implementations")
 
 class OptimizedSessionTrackingMiddleware:
     """
