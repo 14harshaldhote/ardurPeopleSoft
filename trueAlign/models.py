@@ -310,15 +310,14 @@ class UserSession(models.Model):
         Get an existing session or create a new one using the enhanced session manager
         """
         try:
-            from trueAlign.core.session_manager import get_session_manager
-            from trueAlign.core.enhanced_logger import get_session_logger
-            from trueAlign.core.session_validator import get_session_validator
+            from trueAlign.core import get_session_manager, get_session_logger, get_session_validator
         except ImportError as e:
             logger.warning(f"Enhanced session components not available: {e}")
             # Fall back to original implementation
             return cls._original_get_or_create_session(user, tab_id, parent_session_id, client_data, session_key, ip_address, user_agent, browser_fingerprint, device_type, screen_resolution, timezone_offset, language, url, title, referrer)
         
-        start_time = time.time()
+        import time as time_module
+        start_time = time_module.time()
         session_manager = get_session_manager()
         session_logger = get_session_logger()
         session_validator = get_session_validator()
@@ -361,7 +360,7 @@ class UserSession(models.Model):
             )
             
             # Log session creation
-            duration_ms = (time.time() - start_time) * 1000
+            duration_ms = (time_module.time() - start_time) * 1000
             session_logger.log_session_creation(
                 user, session.id, tab_id, duration_ms, created=created
             )
@@ -1494,9 +1493,7 @@ class SessionActivity(models.Model):
         """
         Record a user activity using enhanced batch writer and location synchronizer
         """
-        from trueAlign.core.optimized_batch_writer import get_batch_writer
-        from trueAlign.core.location_sync import get_location_synchronizer
-        from trueAlign.core.enhanced_logger import get_session_logger
+        from trueAlign.core import get_batch_writer, get_location_synchronizer, get_session_logger
         
         try:
             # Validate required parameters

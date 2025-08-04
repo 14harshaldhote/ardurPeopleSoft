@@ -306,9 +306,7 @@ def optimized_batch_activity_update(request):
     """
     Enhanced batch activity update endpoint with optimized processing
     """
-    from trueAlign.core.optimized_batch_writer import get_batch_writer
-    from trueAlign.core.session_manager import get_session_manager
-    from trueAlign.core.enhanced_logger import get_session_logger
+    from trueAlign.core import get_batch_writer, get_session_manager, get_session_logger
     import hashlib
     
     start_time = time.time()

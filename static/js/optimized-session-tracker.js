@@ -1689,15 +1689,14 @@ if (typeof define === "function" && define.amd) {
   window.OptimizedSessionTracker = OptimizedSessionTracker;
 }
 
-// Auto-initialize if DOM is ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    if (window.initializeSessionTracker && typeof window.initializeSessionTracker === 'function') {
-      window.initializeSessionTracker();
-    }
-  });
-} else {
-  if (window.initializeSessionTracker && typeof window.initializeSessionTracker === 'function') {
-    window.initializeSessionTracker();
+// Check if we're in a browser environment before auto-initializing
+if (typeof window !== 'undefined') {
+  // Auto-initialize if DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('DOM loaded, OptimizedSessionTracker available:', typeof window.OptimizedSessionTracker !== 'undefined');
+    });
+  } else {
+    console.log('DOM already loaded, OptimizedSessionTracker available:', typeof window.OptimizedSessionTracker !== 'undefined');
   }
 }

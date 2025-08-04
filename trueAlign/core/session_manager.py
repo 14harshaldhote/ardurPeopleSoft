@@ -278,6 +278,7 @@ class EnhancedSessionManager:
         """
         Create session with database-level race condition prevention
         """
+        # Import here to avoid circular imports
         from trueAlign.models import UserSession
         
         max_attempts = 3

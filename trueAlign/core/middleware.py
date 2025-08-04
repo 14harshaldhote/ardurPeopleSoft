@@ -15,9 +15,7 @@ from trueAlign.models import UserSession
 
 # Try to import enhanced components, fall back to None if not available
 try:
-    from .optimized_batch_writer import get_batch_writer
-    from .session_manager import get_session_manager
-    from .enhanced_logger import get_session_logger
+    from . import get_batch_writer, get_session_manager, get_session_logger
     ENHANCED_COMPONENTS_AVAILABLE = True
 except ImportError as e:
     logger = logging.getLogger(__name__)
