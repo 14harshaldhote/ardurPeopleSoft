@@ -3,7 +3,8 @@ from django.contrib.auth.models import User, Group
 import pytz
 from django.db import models
 from django.conf import settings
-from datetime import time, timedelta
+from datetime import timedelta
+import time
 import logging
 from django.db.models import JSONField
 import uuid
