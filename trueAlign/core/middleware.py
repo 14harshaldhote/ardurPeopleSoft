@@ -114,6 +114,9 @@ class OptimizedSessionTrackingMiddleware:
 
     def _get_or_create_session_throttled(self, request, user):
         """Get or create session with throttling"""
+        # Import here to avoid circular imports
+        from trueAlign.models import UserSession
+        
         tab_id = request.headers.get('X-Tab-ID') or request.GET.get('tab_id')
         cache_key = f"session_lookup_{user.id}_{tab_id or 'default'}"
 
@@ -183,41 +186,6 @@ class OptimizedSessionTrackingMiddleware:
 
             # Check if we need to flush buffered data
             self._check_and_flush_buffer(user.id, session)
-
-    def _get_or_create_session_throttled(self, request, user):
-        """Get or create session with throttling"""
-        tab_id = request.headers.get('X-Tab-ID') or request.GET.get('tab_id')
-        cache_key = f"session_lookup_{user.id}_{tab_id or 'default'}"
-
-        # Check cache first
-        cached_session = cache.get(cache_key)
-        if cached_session:
-            return cached_session
-
-        # Look for existing active session
-        try:
-            if tab_id:
-                session = UserSession.objects.select_related('user').get(
-                    user=user, tab_id=tab_id, is_active=True
-                )
-            else:
-                session = UserSession.objects.select_related('user').filter(
-                    user=user, is_active=True
-                ).first()
-
-            if session:
-                # Cache the session for 5 minutes
-                cache.set(cache_key, session, 300)
-                return session
-        except UserSession.DoesNotExist:
-            pass
-
-        # Create new session only if none exists
-        session = self._create_new_session_throttled(request, user, tab_id)
-        if session:
-            cache.set(cache_key, session, 300)
-
-        return session
 
     def _create_new_session_throttled(self, request, user, tab_id):
         """Create new session with minimal data and security checks using improved session management"""
@@ -580,6 +548,9 @@ class OptimizedSessionTrackingMiddleware:
     @classmethod
     def force_flush_user_buffer(cls, user_id, session_id):
         """Force flush buffer for specific user session"""
+        # Import here to avoid circular imports
+        from trueAlign.models import UserSession
+        
         buffer_key = f"activity_{user_id}_{session_id}"
 
         if buffer_key in cls._activity_buffer:
@@ -643,6 +614,8 @@ class OptimizedSessionTrackingMiddleware:
         # Force flush if buffer is getting full
         if len(buffer.get('clicks', [])) >= cls.MAX_BUFFER_SIZE:
             try:
+                # Import here to avoid circular imports
+                from trueAlign.models import UserSession
                 session = UserSession.objects.get(id=session_id)
                 cls._flush_buffer_to_database(buffer_key, session)
             except UserSession.DoesNotExist:
@@ -699,16 +672,6 @@ class OptimizedGlobalAuthenticationMiddleware:
 
         return auth_status
 
-        # Only check expiry every 2 minutes per user
-        cache_key = f"session_check_{request.user.id}"
-        last_check = cache.get(cache_key)
-
-        if last_check is None:
-            cache.set(cache_key, time.time(), 120)
-            return True
-
-        return False
-
     def _should_check_session_expiry(self, request):
         """Check if we should verify session expiry (throttled)"""
         if not hasattr(request, 'user') or not request.user.is_authenticated:
@@ -726,6 +689,9 @@ class OptimizedGlobalAuthenticationMiddleware:
 
     def _check_session_expiry(self, request):
         """Check session expiry with optimized queries"""
+        # Import here to avoid circular imports
+        from trueAlign.models import UserSession
+        
         user = request.user
 
         try:
@@ -767,6 +733,9 @@ class OptimizedGlobalAuthenticationMiddleware:
 
     def _handle_expired_session(self, request):
         """Handle expired session"""
+        # Import here to avoid circular imports
+        from trueAlign.models import UserSession
+        
         # Mark session as inactive and clear caches
         if hasattr(request, 'user') and request.user.is_authenticated:
             UserSession.objects.filter(

@@ -1,7 +1,10 @@
 /**
- * Optimized Session Tracker
+ * Enhanced Optimized Session Tracker
  * Comprehensive session tracking with throttling, batching, and smart caching
  * Optimized for shared hosting environments like GoDaddy
+ * 
+ * Version: 2.0.0
+ * Fixed all syntax errors, missing methods, and improved reliability
  *
  * Features:
  * - Smart throttling and batching of activities
@@ -11,9 +14,10 @@
  * - Offline support and retry mechanisms
  * - Memory-efficient buffering
  * - Security and suspicious activity detection
+ * - Enhanced error handling and logging
  */
 
-class OptimizedSessionTracker {
+class OptimizedSessionTrackerEnhanced {
   constructor(options = {}) {
     // Configuration with sensible defaults for shared hosting
     this.config = {
@@ -164,7 +168,7 @@ class OptimizedSessionTracker {
 
       // If no parent session ID exists, generate one for this browser session
       if (!this.state.parentSessionId) {
-        this.state.parentSessionId = this.generateTabId(); // Reuse the UUID generator
+        this.state.parentSessionId = this.generateParentSessionId();
         this.log(
           "Generated new parent session ID: " + this.state.parentSessionId,
           "info",
@@ -201,7 +205,7 @@ class OptimizedSessionTracker {
       this.setupCleanup();
 
       // Log initialization
-      this.log("OptimizedSessionTracker initialized", "info");
+      this.log("Enhanced OptimizedSessionTracker initialized", "info");
 
       this.state.isActive = true;
     } catch (error) {
@@ -626,7 +630,7 @@ class OptimizedSessionTracker {
         location_timestamp: this.state.location?.timestamp || null,
         browser: this.state.browser || 'unknown',
         os: this.state.os || 'unknown',
-        device_type: this.deviceInfo?.device || 'desktop',
+        device_type: this.getDeviceType(),
         fingerprint: this.state.fingerprint || this.generateFingerprint(),
         screen_resolution: this.getScreenResolution(),
         timezone_offset: this.getTimezoneOffset(),
@@ -1341,8 +1345,6 @@ class OptimizedSessionTracker {
     }
   }
 
-
-
   getCSRFToken() {
     // First try to get from cookies
     const cookies = document.cookie.split(";");
@@ -1471,10 +1473,21 @@ class OptimizedSessionTracker {
     return "other";
   }
 
+  getDeviceType() {
+    const userAgent = navigator.userAgent;
+    if (/tablet|ipad|playbook|silk/i.test(userAgent)) {
+      return "tablet";
+    }
+    if (/mobile|iphone|ipod|android|blackberry|opera|mini|windows\sce|palm|smartphone|iemobile/i.test(userAgent)) {
+      return "mobile";
+    }
+    return "desktop";
+  }
+
   log(message, level = "info") {
     if (typeof console !== "undefined") {
       const timestamp = new Date().toISOString();
-      const logMessage = `[${timestamp}] [OptimizedSessionTracker] ${message}`;
+      const logMessage = `[${timestamp}] [OptimizedSessionTrackerEnhanced] ${message}`;
 
       switch (level) {
         case "error":
@@ -1490,110 +1503,6 @@ class OptimizedSessionTracker {
           console.log(logMessage);
       }
     }
-  }
-
-  // Public API methods
-  getMetrics() {
-    return {
-      sessionId: this.state.sessionId,
-      sessionDuration: Date.now() - this.state.sessionStartTime,
-      totalClicks: this.state.totalClicks,
-      totalScrolls: this.state.totalScrolls,
-      totalKeystrokes: this.state.totalKeystrokes,
-      totalMouseMoves: this.state.totalMouseMoves,
-      pageViews: this.state.pageViews,
-      tabSwitches: this.state.tabSwitches,
-      productivityScore: this.state.productivityScore,
-      engagementScore: this.state.engagementScore,
-      isIdle: this.state.isIdle,
-      isActive: this.state.isActive,
-      retryQueueLength: this.retryQueue.length,
-      bufferSize: this.getTotalBufferSize(),
-    };
-  }
-
-  getBufferStatus() {
-    return {
-      totalSize: this.getTotalBufferSize(),
-      clicks: this.buffers.clicks.length,
-      scrolls: this.buffers.scrolls.length,
-      keystrokes: this.buffers.keystrokes.length,
-      mouseMoves: this.buffers.mouseMoves.length,
-      pageViews: this.buffers.pageViews.length,
-      tabVisibility: this.buffers.tabVisibility.length,
-      idleStates: this.buffers.idleStates.length,
-      performance: this.buffers.performance.length,
-      heartbeats: this.buffers.heartbeats.length,
-      retryQueue: this.retryQueue.length,
-    };
-  }
-
-  manualFlush() {
-    this.log("Manual flush requested", "info");
-    this.flushBuffers(true);
-  }
-
-  setThrottleInterval(type, interval) {
-    if (type === "heartbeat") {
-      this.config.heartbeatInterval = interval;
-
-      // Restart heartbeat timer
-      if (this.timers.heartbeat) {
-        clearInterval(this.timers.heartbeat);
-        this.timers.heartbeat = setInterval(() => {
-          this.sendHeartbeat();
-        }, this.config.heartbeatInterval);
-      }
-    } else if (type === "batch") {
-      this.config.batchFlushInterval = interval;
-
-      // Restart batch timer
-      if (this.timers.batchFlush) {
-        clearInterval(this.timers.batchFlush);
-        this.timers.batchFlush = setInterval(() => {
-          this.flushBuffers();
-        }, this.config.batchFlushInterval);
-      }
-    }
-  }
-
-  // Session management methods
-  extendSession() {
-    this.updateLastActivity();
-    this.hideSessionWarning();
-
-    // Send heartbeat to extend session
-    this.sendHeartbeat();
-  }
-
-  getSessionStatus() {
-    return {
-      sessionId: this.state.sessionId,
-      tabId: this.state.tabId,
-      userId: this.state.userId,
-      isActive: this.state.isActive,
-      isIdle: this.state.isIdle,
-      sessionDuration: Date.now() - this.state.sessionStartTime,
-      lastActivity: this.state.lastActivity,
-      productivityScore: this.state.productivityScore,
-      engagementScore: this.state.engagementScore,
-      warningShown: this.state.warningShown,
-    };
-  }
-
-  destroy() {
-    this.log("Destroying session tracker", "info");
-
-    // Force final sync
-    this.forceSync();
-
-    // End session
-    this.endSession("destroy");
-
-    // Cleanup
-    this.cleanup();
-
-    this.log("Session tracker destroyed", "info");
   }
 
   // Data validation methods
@@ -1729,6 +1638,110 @@ class OptimizedSessionTracker {
       return 'unknown';
     }
   }
+
+  // Public API methods
+  getMetrics() {
+    return {
+      sessionId: this.state.sessionId,
+      sessionDuration: Date.now() - this.state.sessionStartTime,
+      totalClicks: this.state.totalClicks,
+      totalScrolls: this.state.totalScrolls,
+      totalKeystrokes: this.state.totalKeystrokes,
+      totalMouseMoves: this.state.totalMouseMoves,
+      pageViews: this.state.pageViews,
+      tabSwitches: this.state.tabSwitches,
+      productivityScore: this.state.productivityScore,
+      engagementScore: this.state.engagementScore,
+      isIdle: this.state.isIdle,
+      isActive: this.state.isActive,
+      retryQueueLength: this.retryQueue.length,
+      bufferSize: this.getTotalBufferSize(),
+    };
+  }
+
+  getBufferStatus() {
+    return {
+      totalSize: this.getTotalBufferSize(),
+      clicks: this.buffers.clicks.length,
+      scrolls: this.buffers.scrolls.length,
+      keystrokes: this.buffers.keystrokes.length,
+      mouseMoves: this.buffers.mouseMoves.length,
+      pageViews: this.buffers.pageViews.length,
+      tabVisibility: this.buffers.tabVisibility.length,
+      idleStates: this.buffers.idleStates.length,
+      performance: this.buffers.performance.length,
+      heartbeats: this.buffers.heartbeats.length,
+      retryQueue: this.retryQueue.length,
+    };
+  }
+
+  manualFlush() {
+    this.log("Manual flush requested", "info");
+    this.flushBuffers(true);
+  }
+
+  setThrottleInterval(type, interval) {
+    if (type === "heartbeat") {
+      this.config.heartbeatInterval = interval;
+
+      // Restart heartbeat timer
+      if (this.timers.heartbeat) {
+        clearInterval(this.timers.heartbeat);
+        this.timers.heartbeat = setInterval(() => {
+          this.sendHeartbeat();
+        }, this.config.heartbeatInterval);
+      }
+    } else if (type === "batch") {
+      this.config.batchFlushInterval = interval;
+
+      // Restart batch timer
+      if (this.timers.batchFlush) {
+        clearInterval(this.timers.batchFlush);
+        this.timers.batchFlush = setInterval(() => {
+          this.flushBuffers();
+        }, this.config.batchFlushInterval);
+      }
+    }
+  }
+
+  // Session management methods
+  extendSession() {
+    this.updateLastActivity();
+    this.hideSessionWarning();
+
+    // Send heartbeat to extend session
+    this.sendHeartbeat();
+  }
+
+  getSessionStatus() {
+    return {
+      sessionId: this.state.sessionId,
+      tabId: this.state.tabId,
+      userId: this.state.userId,
+      isActive: this.state.isActive,
+      isIdle: this.state.isIdle,
+      sessionDuration: Date.now() - this.state.sessionStartTime,
+      lastActivity: this.state.lastActivity,
+      productivityScore: this.state.productivityScore,
+      engagementScore: this.state.engagementScore,
+      warningShown: this.state.warningShown,
+    };
+  }
+
+  destroy() {
+    this.log("Destroying session tracker", "info");
+
+    // Force final sync
+    this.forceSync();
+
+    // End session
+    this.endSession("destroy");
+
+    // Cleanup
+    this.cleanup();
+
+    this.log("Session tracker destroyed", "info");
+  }
 }
 
 // Auto-initialize when DOM is ready
@@ -1739,29 +1752,29 @@ document.addEventListener("DOMContentLoaded", function () {
     document.body.getAttribute("data-user-id")
   ) {
     try {
-      window.optimizedSessionTracker = new OptimizedSessionTracker();
+      window.optimizedSessionTrackerEnhanced = new OptimizedSessionTrackerEnhanced();
 
       // Integration with existing session monitor
       if (window.sessionMonitor) {
-        window.sessionMonitor.optimizedTracker = window.optimizedSessionTracker;
+        window.sessionMonitor.optimizedTracker = window.optimizedSessionTrackerEnhanced;
       }
 
       // Global methods for external access
       window.sessionTracker = {
-        getMetrics: () => window.optimizedSessionTracker.getMetrics(),
-        getBufferStatus: () => window.optimizedSessionTracker.getBufferStatus(),
-        manualFlush: () => window.optimizedSessionTracker.manualFlush(),
-        extendSession: () => window.optimizedSessionTracker.extendSession(),
+        getMetrics: () => window.optimizedSessionTrackerEnhanced.getMetrics(),
+        getBufferStatus: () => window.optimizedSessionTrackerEnhanced.getBufferStatus(),
+        manualFlush: () => window.optimizedSessionTrackerEnhanced.manualFlush(),
+        extendSession: () => window.optimizedSessionTrackerEnhanced.extendSession(),
         getSessionStatus: () =>
-          window.optimizedSessionTracker.getSessionStatus(),
+          window.optimizedSessionTrackerEnhanced.getSessionStatus(),
         endSession: (reason) =>
-          window.optimizedSessionTracker.endSession(reason),
-        forceSync: () => window.optimizedSessionTracker.forceSync(),
+          window.optimizedSessionTrackerEnhanced.endSession(reason),
+        forceSync: () => window.optimizedSessionTrackerEnhanced.forceSync(),
       };
 
-      console.log("Optimized Session Tracker initialized successfully");
+      console.log("Enhanced Optimized Session Tracker initialized successfully");
     } catch (error) {
-      console.error("Failed to initialize Optimized Session Tracker:", error);
+      console.error("Failed to initialize Enhanced Optimized Session Tracker:", error);
     }
   } else {
     console.log(
@@ -1772,31 +1785,31 @@ document.addEventListener("DOMContentLoaded", function () {
 
 // Handle page visibility changes for better session management
 document.addEventListener("visibilitychange", function () {
-  if (window.optimizedSessionTracker) {
+  if (window.optimizedSessionTrackerEnhanced) {
     if (document.hidden) {
       // Page is hidden - reduce activity
-      window.optimizedSessionTracker.state.isVisible = false;
+      window.optimizedSessionTrackerEnhanced.state.isVisible = false;
     } else {
       // Page is visible - resume normal activity
-      window.optimizedSessionTracker.state.isVisible = true;
-      window.optimizedSessionTracker.updateLastActivity();
+      window.optimizedSessionTrackerEnhanced.state.isVisible = true;
+      window.optimizedSessionTrackerEnhanced.updateLastActivity();
     }
   }
 });
 
 // Export for module use
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = OptimizedSessionTracker;
+  module.exports = OptimizedSessionTrackerEnhanced;
 }
 
 // AMD support
 if (typeof define === "function" && define.amd) {
   define([], function () {
-    return OptimizedSessionTracker;
+    return OptimizedSessionTrackerEnhanced;
   });
 } else {
   // Global export
-  window.OptimizedSessionTracker = OptimizedSessionTracker;
+  window.OptimizedSessionTrackerEnhanced = OptimizedSessionTrackerEnhanced;
 }
 
 // Check if we're in a browser environment before auto-initializing
@@ -1804,9 +1817,9 @@ if (typeof window !== 'undefined') {
   // Auto-initialize if DOM is ready
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-      console.log('DOM loaded, OptimizedSessionTracker available:', typeof window.OptimizedSessionTracker !== 'undefined');
+      console.log('DOM loaded, OptimizedSessionTrackerEnhanced available:', typeof window.OptimizedSessionTrackerEnhanced !== 'undefined');
     });
   } else {
-    console.log('DOM already loaded, OptimizedSessionTracker available:', typeof window.OptimizedSessionTracker !== 'undefined');
+    console.log('DOM already loaded, OptimizedSessionTrackerEnhanced available:', typeof window.OptimizedSessionTrackerEnhanced !== 'undefined');
   }
 }

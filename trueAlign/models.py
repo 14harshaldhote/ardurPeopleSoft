@@ -99,13 +99,17 @@ class ClientProfile(models.Model):
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.conf import settings
 import json
 import uuid
 import math
+import logging
 from datetime import timedelta
 import ipaddress
 import geoip2.database
 import os
+
+logger = logging.getLogger(__name__)
 
 class UserSession(models.Model):
     # Session identification
@@ -241,6 +245,7 @@ class UserSession(models.Model):
 
     def end_session(self):
         """Properly end a session"""
+        import pytz
         IST = pytz.timezone('Asia/Kolkata')
         now = timezone.now().astimezone(IST)
 
