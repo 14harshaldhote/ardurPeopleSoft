@@ -1345,7 +1345,8 @@ class OptimizedSessionTracker {
     const now = Date.now();
     if (now - this.state.lastHeartbeat < this.config.heartbeatInterval) return;
 
-    const heartbeatData = {
+    try {
+      const heartbeatData = {
       tab_id: this.state.tabId,
       is_idle: this.state.isIdle,
       is_visible: this.state.isVisible,
@@ -1366,6 +1367,43 @@ class OptimizedSessionTracker {
       timezone_offset: new Date().getTimezoneOffset(),
       csrf_token: this.getCSRFToken(),
     };
+
+    // Validate required fields
+    if (!heartbeatData.tab_id || !heartbeatData.session_fingerprint) {
+      this.log('Missing required heartbeat data, regenerating...', 'warning');
+      heartbeatData.tab_id = heartbeatData.tab_id || this.generateTabId();
+      heartbeatData.session_fingerprint = heartbeatData.session_fingerprint || this.generateFingerprint();
+      
+      // Update state with generated values
+      this.state.tabId = heartbeatData.tab_id;
+      this.state.fingerprint = heartbeatData.session_fingerprint;
+      this.storeSessionData();
+    }
+
+    this.makeRequest(this.config.heartbeatUrl, heartbeatData)
+      .then((response) => {
+        this.state.lastHeartbeat = now;
+        this.handleHeartbeatResponse(response);
+      })
+      .catch((error) => {
+        // Fallback to legacy endpoint if optimized endpoint fails
+        this.makeRequest("/session/heartbeat/", heartbeatData)
+          .then((response) => {
+            this.state.lastHeartbeat = now;
+            this.handleHeartbeatResponse(response);
+          })
+          .catch((retryError) => {
+            this.addToRetryQueue("heartbeat", heartbeatData);
+            this.log(
+              "Heartbeat failed on both endpoints: " + error.message,
+              "error",
+            );
+          });
+      });
+  } catch (error) {
+    this.log("Error in sendHeartbeat: " + error.message, "error");
+  }
+}
 
   getCSRFToken() {
     // First try to get from cookies
