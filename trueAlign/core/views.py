@@ -169,7 +169,7 @@ def optimized_session_heartbeat(request):
         # Extract and validate identifiers
         tab_id = data.get('tab_id') or request.headers.get('X-Tab-ID')
         parent_session_id = data.get('parent_session_id') or request.headers.get('X-Parent-Session-ID')
-        session_fingerprint = data.get('session_fingerprint') or request.headers.get('X-Session-Fingerprint')
+        session_fingerprint = data.get('session_fingerprint') or data.get('fingerprint') or request.headers.get('X-Session-Fingerprint')
 
         # Validate tab_id (generate if missing)
         if not tab_id:
@@ -207,6 +207,32 @@ def optimized_session_heartbeat(request):
             'language': request.headers.get('X-Language') or data.get('language'),
             'url': data.get('url', ''),
             'title': data.get('title', ''),
+            'browser': data.get('browser', ''),
+            'os': data.get('os', ''),
+            'battery_level': data.get('battery_level'),
+            'connection_type': data.get('connection_type', ''),
+            'csrf_token': data.get('csrf_token', ''),
+            'referrer': data.get('referrer', ''),
+            'viewport_width': data.get('viewport_width'),
+            'viewport_height': data.get('viewport_height'),
+            'color_depth': data.get('color_depth'),
+            'pixel_depth': data.get('pixel_depth'),
+            'available_memory': data.get('available_memory'),
+            'hardware_concurrency': data.get('hardware_concurrency'),
+            'cookie_enabled': data.get('cookie_enabled'),
+            'do_not_track': data.get('do_not_track'),
+            'platform': data.get('platform', ''),
+            'vendor': data.get('vendor', ''),
+            'java_enabled': data.get('java_enabled'),
+            'on_line': data.get('on_line'),
+            'app_name': data.get('app_name', ''),
+            'app_version': data.get('app_version', ''),
+            'app_code_name': data.get('app_code_name', ''),
+            'product': data.get('product', ''),
+            'product_sub': data.get('product_sub', ''),
+            'vendor_sub': data.get('vendor_sub', ''),
+            'build_id': data.get('build_id', ''),
+            'user_agent_data': data.get('user_agent_data'),
         }
 
         # Validate and convert numeric fields
@@ -225,6 +251,7 @@ def optimized_session_heartbeat(request):
                 'accuracy': data.get('location_accuracy') or (location_data.get('accuracy') if location_data else None),
             }
 
+        # Create session with comprehensive data
         session, created = UserSession.get_or_create_session(
             user=request.user,
             tab_id=tab_id,
@@ -237,26 +264,107 @@ def optimized_session_heartbeat(request):
             logger.error("Failed to get or create session")
             return JsonResponse({'error': 'Could not create session'}, status=500)
 
-        # Record heartbeat activity
+        # Update session with additional data from heartbeat
         try:
-            SessionActivity.record_activity(
+            # Update device and browser information
+            if data.get('browser'):
+                session.browser = data['browser']
+            if data.get('os'):
+                session.os = data['os']
+            if data.get('device_type'):
+                session.device_type = data['device_type']
+            if data.get('screen_resolution'):
+                session.screen_resolution = data['screen_resolution']
+            if data.get('timezone_offset'):
+                session.timezone_offset = data['timezone_offset']
+            if data.get('language'):
+                session.language = data['language']
+            if data.get('battery_level'):
+                session.battery_level = data['battery_level']
+            if data.get('connection_type'):
+                session.connection_type = data['connection_type']
+            if data.get('csrf_token'):
+                session.csrf_token = data['csrf_token']
+
+            # Update location information
+            if data.get('location_latitude') and data.get('location_longitude'):
+                session.location_latitude = data['location_latitude']
+                session.location_longitude = data['location_longitude']
+                session.location_accuracy = data.get('location_accuracy')
+                session.location_type = 'gps'
+
+            # Update activity counters
+            if data.get('total_clicks'):
+                session.mouse_movements = data.get('total_mouse_moves', 0)
+            
+            # Update performance metrics
+            if data.get('performance_metrics'):
+                session.performance_metrics = data['performance_metrics']
+
+            # Update session timing
+            session.last_activity = timezone.now()
+            session.save()
+
+        except Exception as update_error:
+            logger.warning(f"Error updating session data: {update_error}")
+
+        # Record heartbeat activity with comprehensive data
+        try:
+            activity_data = {
+                'is_idle': data.get('is_idle', False),
+                'is_visible': data.get('is_visible', True),
+                'productivity_score': data.get('productivity_score'),
+                'engagement_score': data.get('engagement_score'),
+                'browser': data.get('browser'),
+                'os': data.get('os'),
+                'fingerprint': session_fingerprint,
+                'device_type': data.get('device_type'),
+                'screen_resolution': data.get('screen_resolution'),
+                'timezone_offset': data.get('timezone_offset'),
+                'language': data.get('language'),
+                'battery_level': data.get('battery_level'),
+                'connection_type': data.get('connection_type'),
+                'total_clicks': data.get('total_clicks'),
+                'total_scrolls': data.get('total_scrolls'),
+                'total_keystrokes': data.get('total_keystrokes'),
+                'total_mouse_moves': data.get('total_mouse_moves'),
+                'page_views': data.get('page_views'),
+                'tab_switches': data.get('tab_switches'),
+                'session_duration': data.get('session_duration'),
+                'idle_time': data.get('idle_time'),
+                'working_time': data.get('working_time'),
+                'performance_metrics': data.get('performance_metrics'),
+                'viewport_width': data.get('viewport_width'),
+                'viewport_height': data.get('viewport_height'),
+                'color_depth': data.get('color_depth'),
+                'pixel_depth': data.get('pixel_depth'),
+                'available_memory': data.get('available_memory'),
+                'hardware_concurrency': data.get('hardware_concurrency'),
+                'cookie_enabled': data.get('cookie_enabled'),
+                'do_not_track': data.get('do_not_track'),
+                'platform': data.get('platform'),
+                'vendor': data.get('vendor'),
+                'java_enabled': data.get('java_enabled'),
+                'on_line': data.get('on_line'),
+                'timestamp': data.get('timestamp'),
+            }
+
+            activity = SessionActivity.record_activity(
                 session=session,
                 activity_type='heartbeat',
-                activity_data={
-                    'is_idle': data.get('is_idle', False),
-                    'is_visible': data.get('is_visible', True),
-                    'productivity_score': data.get('productivity_score'),
-                    'engagement_score': data.get('engagement_score'),
-                    'browser': data.get('browser'),
-                    'os': data.get('os'),
-                    'fingerprint': session_fingerprint,
-                },
+                activity_data=activity_data,
                 url=data.get('url'),
                 title=data.get('title'),
                 location_data=client_data.get('location_data')
             )
+
+            if activity:
+                logger.info(f"Successfully recorded heartbeat activity for session {session.id}")
+            else:
+                logger.warning(f"Failed to record heartbeat activity for session {session.id}")
+
         except Exception as activity_error:
-            logger.warning(f"Error recording heartbeat activity: {activity_error}")
+            logger.error(f"Error recording heartbeat activity: {activity_error}", exc_info=True)
 
         # Update session status based on heartbeat data
         is_idle = data.get('is_idle', False)

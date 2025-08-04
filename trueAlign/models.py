@@ -379,13 +379,18 @@ class UserSession(models.Model):
                 'ip_address': client_data.get('ip_address'),
                 'user_agent': client_data.get('user_agent'),
                 'browser_fingerprint': client_data.get('browser_fingerprint'),
+                'browser': client_data.get('browser'),
+                'os': client_data.get('os'),
                 'device_type': client_data.get('device_type'),
                 'screen_resolution': client_data.get('screen_resolution'),
                 'timezone_offset': client_data.get('timezone_offset'),
                 'language': client_data.get('language'),
+                'battery_level': client_data.get('battery_level'),
+                'connection_type': client_data.get('connection_type'),
+                'csrf_token': client_data.get('csrf_token'),
                 'url': client_data.get('url'),
                 'title': client_data.get('title'),
-                'referrer': client_data.get('referrer')
+                'referrer': client_data.get('referrer'),
             })
 
         session = cls(**session_data)
@@ -404,6 +409,35 @@ class UserSession(models.Model):
                 session.location_latitude = location_data.get('latitude')
                 session.location_longitude = location_data.get('longitude')
                 session.location_accuracy = location_data.get('accuracy')
+                session.location_type = 'gps'
+
+        # Initialize JSON fields with proper defaults
+        if session.page_views is None:
+            session.page_views = []
+        if session.clicks is None:
+            session.clicks = []
+        if session.scrolls is None:
+            session.scrolls = []
+        if session.keyboard_events is None:
+            session.keyboard_events = []
+        if session.tab_visibility_log is None:
+            session.tab_visibility_log = []
+        if session.idle_state_changes is None:
+            session.idle_state_changes = []
+        if session.performance_metrics is None:
+            session.performance_metrics = {}
+        if session.network_events is None:
+            session.network_events = []
+        if session.error_events is None:
+            session.error_events = []
+        if session.offline_data is None:
+            session.offline_data = {}
+        if session.related_tabs is None:
+            session.related_tabs = []
+        if session.visited_urls is None:
+            session.visited_urls = {}
+        if session.security_anomalies is None:
+            session.security_anomalies = []
 
         session.save()
         logger.info(f"Created new session {session.id} with parent_session_id: {session.parent_session_id}")

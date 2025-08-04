@@ -608,6 +608,12 @@ class OptimizedSessionTracker {
     if (now - this.state.lastHeartbeat < this.config.heartbeatInterval) return;
 
     try {
+      // Collect comprehensive device and browser information
+      const deviceInfo = this.getDeviceInfo();
+      const browserInfo = this.getBrowserInfo();
+      const locationInfo = this.getLocationInfo();
+      const performanceInfo = this.getPerformanceInfo();
+      
       const heartbeatData = {
         tab_id: this.state.tabId || this.generateTabId(),
         parent_session_id: this.state.parentSessionId || this.generateParentSessionId(),
@@ -619,21 +625,70 @@ class OptimizedSessionTracker {
         timestamp: new Date().toISOString(),
         productivity_score: this.calculateProductivityScore() || 0,
         engagement_score: this.calculateEngagementScore() || 0,
-        location: this.state.location || null,
-        location_latitude: this.validateCoordinate(this.state.location?.latitude, 'latitude'),
-        location_longitude: this.validateCoordinate(this.state.location?.longitude, 'longitude'),
-        location_accuracy: this.validateAccuracy(this.state.location?.accuracy),
-        location_timestamp: this.state.location?.timestamp || null,
-        browser: this.state.browser || 'unknown',
-        os: this.state.os || 'unknown',
-        device_type: this.deviceInfo?.device || 'desktop',
-        fingerprint: this.state.fingerprint || this.generateFingerprint(),
+        
+        // Device and browser information
+        browser: browserInfo.browser || 'unknown',
+        os: browserInfo.os || 'unknown',
+        device_type: deviceInfo.device || 'desktop',
         screen_resolution: this.getScreenResolution(),
         timezone_offset: this.getTimezoneOffset(),
         language: this.getLanguage(),
         battery_level: this.getBatteryLevel(),
         connection_type: this.getConnectionType(),
         csrf_token: this.getCSRFToken(),
+        
+        // Location information
+        location: locationInfo.location || null,
+        location_latitude: this.validateCoordinate(locationInfo.latitude, 'latitude'),
+        location_longitude: this.validateCoordinate(locationInfo.longitude, 'longitude'),
+        location_accuracy: this.validateAccuracy(locationInfo.accuracy),
+        location_timestamp: locationInfo.timestamp || null,
+        
+        // Performance metrics
+        performance_metrics: performanceInfo,
+        
+        // Activity counters
+        total_clicks: this.state.totalClicks || 0,
+        total_scrolls: this.state.totalScrolls || 0,
+        total_keystrokes: this.state.totalKeystrokes || 0,
+        total_mouse_moves: this.state.totalMouseMoves || 0,
+        page_views: this.state.pageViews || 0,
+        tab_switches: this.state.tabSwitches || 0,
+        
+        // Session timing
+        session_duration: this.getSessionDuration(),
+        idle_time: this.getTotalIdleTime(),
+        working_time: this.getTotalWorkingTime(),
+        
+        // Security and fingerprinting
+        fingerprint: this.state.fingerprint || this.generateFingerprint(),
+        ip_address: this.state.ipAddress || null,
+        user_agent: navigator.userAgent,
+        
+        // Additional metadata
+        referrer: document.referrer || '',
+        viewport_width: window.innerWidth,
+        viewport_height: window.innerHeight,
+        color_depth: screen.colorDepth,
+        pixel_depth: screen.pixelDepth,
+        available_memory: navigator.deviceMemory || null,
+        hardware_concurrency: navigator.hardwareConcurrency || null,
+        cookie_enabled: navigator.cookieEnabled,
+        do_not_track: navigator.doNotTrack,
+        platform: navigator.platform,
+        vendor: navigator.vendor,
+        java_enabled: navigator.javaEnabled ? navigator.javaEnabled() : false,
+        on_line: navigator.onLine,
+        cookie_enabled: navigator.cookieEnabled,
+        app_name: navigator.appName,
+        app_version: navigator.appVersion,
+        app_code_name: navigator.appCodeName,
+        product: navigator.product,
+        product_sub: navigator.productSub,
+        vendor: navigator.vendor,
+        vendor_sub: navigator.vendorSub,
+        build_id: navigator.buildID,
+        user_agent_data: navigator.userAgentData || null,
       };
 
       // Validate required fields
@@ -647,6 +702,9 @@ class OptimizedSessionTracker {
         this.state.fingerprint = heartbeatData.session_fingerprint;
         this.storeSessionData();
       }
+
+      // Log the data being sent for debugging
+      this.log('Sending heartbeat with data: ' + JSON.stringify(heartbeatData, null, 2), 'debug');
 
     this.makeRequest(this.config.heartbeatUrl, heartbeatData)
       .then((response) => {
@@ -1333,36 +1391,100 @@ class OptimizedSessionTracker {
       this.log('Failed to clear session data: ' + error.message, 'error');
     }
   }
-</text>
 
-<old_text line=579>
-  sendHeartbeat() {
-    if (!this.state.isActive || !this.state.userId) return;
-
-    const now = Date.now();
-    if (now - this.state.lastHeartbeat < this.config.heartbeatInterval) return;
-
-    const heartbeatData = {
-      tab_id: this.state.tabId,
-      is_idle: this.state.isIdle,
-      is_visible: this.state.isVisible,
-      url: window.location.href,
-      title: document.title,
-      timestamp: new Date().toISOString(),
-      productivity_score: this.calculateProductivityScore(),
-      engagement_score: this.calculateEngagementScore(),
-      location: this.state.location || null,
-      location_latitude: this.state.location?.latitude || null,
-      location_longitude: this.state.location?.longitude || null,
-      location_accuracy: this.state.location?.accuracy || null,
-      location_timestamp: this.state.location?.timestamp || null,
-      browser: this.state.browser,
-      os: this.state.os,
-      fingerprint: this.state.fingerprint,
-      screen_resolution: `${screen.width}x${screen.height}`,
-      timezone_offset: new Date().getTimezoneOffset(),
-      csrf_token: this.getCSRFToken(),
+  // Helper methods for collecting device information
+  getDeviceInfo() {
+    const userAgent = navigator.userAgent.toLowerCase();
+    let device = 'desktop';
+    
+    if (/mobile|android|iphone|ipad|ipod|blackberry|windows phone/i.test(userAgent)) {
+      device = 'mobile';
+    } else if (/tablet|ipad/i.test(userAgent)) {
+      device = 'tablet';
+    }
+    
+    return {
+      device: device,
+      userAgent: navigator.userAgent,
+      platform: navigator.platform,
+      language: navigator.language,
+      languages: navigator.languages,
+      cookieEnabled: navigator.cookieEnabled,
+      onLine: navigator.onLine,
+      doNotTrack: navigator.doNotTrack,
+      maxTouchPoints: navigator.maxTouchPoints || 0,
+      hardwareConcurrency: navigator.hardwareConcurrency || 0,
+      deviceMemory: navigator.deviceMemory || null,
     };
+  }
+
+  getBrowserInfo() {
+    const userAgent = navigator.userAgent;
+    let browser = 'unknown';
+    let os = 'unknown';
+    
+    // Browser detection
+    if (userAgent.includes('Chrome')) browser = 'Chrome';
+    else if (userAgent.includes('Firefox')) browser = 'Firefox';
+    else if (userAgent.includes('Safari')) browser = 'Safari';
+    else if (userAgent.includes('Edge')) browser = 'Edge';
+    else if (userAgent.includes('Opera')) browser = 'Opera';
+    
+    // OS detection
+    if (userAgent.includes('Windows')) os = 'Windows';
+    else if (userAgent.includes('Mac')) os = 'MacOS';
+    else if (userAgent.includes('Linux')) os = 'Linux';
+    else if (userAgent.includes('Android')) os = 'Android';
+    else if (userAgent.includes('iOS')) os = 'iOS';
+    
+    return { browser, os };
+  }
+
+  getLocationInfo() {
+    return {
+      location: this.state.location,
+      latitude: this.state.location?.latitude,
+      longitude: this.state.location?.longitude,
+      accuracy: this.state.location?.accuracy,
+      timestamp: this.state.location?.timestamp,
+    };
+  }
+
+  getPerformanceInfo() {
+    if (window.performance && window.performance.timing) {
+      const timing = window.performance.timing;
+      return {
+        navigationStart: timing.navigationStart,
+        loadEventEnd: timing.loadEventEnd,
+        domContentLoadedEventEnd: timing.domContentLoadedEventEnd,
+        responseEnd: timing.responseEnd,
+        responseStart: timing.responseStart,
+        requestStart: timing.requestStart,
+        connectEnd: timing.connectEnd,
+        connectStart: timing.connectStart,
+        domainLookupEnd: timing.domainLookupEnd,
+        domainLookupStart: timing.domainLookupStart,
+        fetchStart: timing.fetchStart,
+        redirectEnd: timing.redirectEnd,
+        redirectStart: timing.redirectStart,
+        unloadEventEnd: timing.unloadEventEnd,
+        unloadEventStart: timing.unloadEventStart,
+      };
+    }
+    return {};
+  }
+
+  getSessionDuration() {
+    return Date.now() - this.state.sessionStartTime;
+  }
+
+  getTotalIdleTime() {
+    return this.state.totalIdleTime || 0;
+  }
+
+  getTotalWorkingTime() {
+    return this.state.totalActiveTime || 0;
+  }
 
   getCSRFToken() {
     // First try to get from cookies
