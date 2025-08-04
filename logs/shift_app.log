@@ -25695,3 +25695,20 @@ django.template.exceptions.TemplateDoesNotExist: auth/password_reset.html
 [2025-08-04 15:36:58] ERROR - trueAlign.core.middleware - _create_new_session_throttled:298 - Error creating/getting session: type object 'datetime.time' has no attribute 'time'
 [2025-08-04 15:36:58] ERROR - trueAlign.core.middleware - _create_new_session_throttled:298 - Error creating/getting session: type object 'datetime.time' has no attribute 'time'
 [2025-08-04 15:36:58] ERROR - trueAlign.core.middleware - _create_new_session_throttled:298 - Error creating/getting session: type object 'datetime.time' has no attribute 'time'
+[2025-08-04 16:03:28] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-08-04 16:13:24] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/models.py changed, reloading.
+[2025-08-04 16:13:26] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-08-04 16:13:34] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/models.py changed, reloading.
+[2025-08-04 16:13:36] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-08-04 16:13:41] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/__init__.py changed, reloading.
+[2025-08-04 16:13:42] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-08-04 16:16:42] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/views.py changed, reloading.
+[2025-08-04 16:16:44] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-08-04 16:16:59] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-08-04 16:21:23] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/models.py changed, reloading.
+[2025-08-04 16:21:25] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-08-04 16:21:28] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/models.py changed, reloading.
+[2025-08-04 16:21:29] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-08-04 16:21:37] ERROR - trueAlign.core.middleware - _create_new_session_throttled:310 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-08-04 16:38:38] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-08-04 16:38:46] ERROR - trueAlign.core.middleware - _create_new_session_throttled:310 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"

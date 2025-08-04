@@ -1340,6 +1340,37 @@ class OptimizedSessionTracker {
       this.log('Failed to clear session data: ' + error.message, 'error');
     }
   }
+<<<<<<< HEAD
+=======
+
+  sendHeartbeat() {
+    if (!this.state.isActive || !this.state.userId) return;
+
+    const now = Date.now();
+    if (now - this.state.lastHeartbeat < this.config.heartbeatInterval) return;
+
+    const heartbeatData = {
+      tab_id: this.state.tabId,
+      is_idle: this.state.isIdle,
+      is_visible: this.state.isVisible,
+      url: window.location.href,
+      title: document.title,
+      timestamp: new Date().toISOString(),
+      productivity_score: this.calculateProductivityScore(),
+      engagement_score: this.calculateEngagementScore(),
+      location: this.state.location || null,
+      location_latitude: this.state.location?.latitude || null,
+      location_longitude: this.state.location?.longitude || null,
+      location_accuracy: this.state.location?.accuracy || null,
+      location_timestamp: this.state.location?.timestamp || null,
+      browser: this.state.browser,
+      os: this.state.os,
+      fingerprint: this.state.fingerprint,
+      screen_resolution: `${screen.width}x${screen.height}`,
+      timezone_offset: new Date().getTimezoneOffset(),
+      csrf_token: this.getCSRFToken(),
+    };
+>>>>>>> 6f5e6bc (checkpoint before checking out cursor/fix-session-tracker-loading-and-syntax-errors-8a44)
 
   getCSRFToken() {
     // First try to get from cookies
