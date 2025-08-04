@@ -25672,3 +25672,26 @@ django.template.exceptions.TemplateDoesNotExist: auth/password_reset.html
 [2025-08-03 23:52:45] WARNING - django.security.csrf - log_response:241 - Forbidden (CSRF cookie not set.): /login/
 [2025-08-03 23:52:52] WARNING - django.security.csrf - log_response:241 - Forbidden (CSRF cookie not set.): /login/
 [2025-08-03 23:52:59] INFO - trueAlign.core.middleware - _create_new_session_throttled:294 - Created session c1566359-dc43-4b02-926c-1bb34add393c for user employeeTest (tab: None, parent: None)
+[2025-08-04 15:27:43] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-08-04 15:28:56] ERROR - trueAlign.core.middleware - _create_new_session_throttled:298 - Error creating/getting session: type object 'datetime.time' has no attribute 'time'
+[2025-08-04 15:28:56] ERROR - trueAlign.core.middleware - _create_new_session_throttled:298 - Error creating/getting session: type object 'datetime.time' has no attribute 'time'
+[2025-08-04 15:28:56] ERROR - trueAlign.core.middleware - _create_new_session_throttled:298 - Error creating/getting session: type object 'datetime.time' has no attribute 'time'
+[2025-08-04 15:28:56] ERROR - trueAlign.core.middleware - _create_new_session_throttled:298 - Error creating/getting session: type object 'datetime.time' has no attribute 'time'
+[2025-08-04 15:29:06] ERROR - trueAlign.core.middleware - _create_new_session_throttled:298 - Error creating/getting session: type object 'datetime.time' has no attribute 'time'
+[2025-08-04 15:29:07] ERROR - trueAlign.core.middleware - _create_new_session_throttled:298 - Error creating/getting session: type object 'datetime.time' has no attribute 'time'
+[2025-08-04 15:30:14] ERROR - trueAlign.core.middleware - _create_new_session_throttled:298 - Error creating/getting session: type object 'datetime.time' has no attribute 'time'
+[2025-08-04 15:30:14] ERROR - trueAlign.core.middleware - _create_new_session_throttled:298 - Error creating/getting session: type object 'datetime.time' has no attribute 'time'
+[2025-08-04 15:30:27] ERROR - trueAlign.core.middleware - _create_new_session_throttled:298 - Error creating/getting session: type object 'datetime.time' has no attribute 'time'
+[2025-08-04 15:30:28] ERROR - trueAlign.core.middleware - _create_new_session_throttled:298 - Error creating/getting session: type object 'datetime.time' has no attribute 'time'
+[2025-08-04 15:30:28] ERROR - trueAlign.core.middleware - _create_new_session_throttled:298 - Error creating/getting session: type object 'datetime.time' has no attribute 'time'
+[2025-08-04 15:30:28] ERROR - trueAlign.core.middleware - _create_new_session_throttled:298 - Error creating/getting session: type object 'datetime.time' has no attribute 'time'
+[2025-08-04 15:30:29] ERROR - trueAlign.core.middleware - _create_new_session_throttled:298 - Error creating/getting session: type object 'datetime.time' has no attribute 'time'
+[2025-08-04 15:30:29] ERROR - trueAlign.core.middleware - _create_new_session_throttled:298 - Error creating/getting session: type object 'datetime.time' has no attribute 'time'
+[2025-08-04 15:33:56] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/views.py changed, reloading.
+[2025-08-04 15:33:58] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-08-04 15:34:02] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurPeopleSoft/trueAlign/core/views.py changed, reloading.
+[2025-08-04 15:34:04] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-08-04 15:36:58] ERROR - trueAlign.core.middleware - _create_new_session_throttled:298 - Error creating/getting session: type object 'datetime.time' has no attribute 'time'
+[2025-08-04 15:36:58] ERROR - trueAlign.core.middleware - _create_new_session_throttled:298 - Error creating/getting session: type object 'datetime.time' has no attribute 'time'
+[2025-08-04 15:36:58] ERROR - trueAlign.core.middleware - _create_new_session_throttled:298 - Error creating/getting session: type object 'datetime.time' has no attribute 'time'
+[2025-08-04 15:36:58] ERROR - trueAlign.core.middleware - _create_new_session_throttled:298 - Error creating/getting session: type object 'datetime.time' has no attribute 'time'
