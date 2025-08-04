@@ -10,16 +10,17 @@ from datetime import datetime
 from django.db import transaction
 from django.utils.timezone import localtime
 import logging
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.fields import GenericForeignKey
+import uuid
+import json
+from decimal import Decimal
+from django.db.models import Q
 
 # Set up logging
 logger = logging.getLogger(__name__)
 
 # Asia/Kolkata timezone
-IST_TIMEZONE = pytz.timezone('Asia/Kolkata')
-
-
-
-
 IST_TIMEZONE = pytz.timezone('Asia/Kolkata')
 
 '''------------------------- CLINET PROFILE --------------------'''
@@ -1397,12 +1398,14 @@ class ShiftMaster(models.Model):
                 midnight = time(0, 0)
                 hours_before_midnight = (24 - self.start_time.hour - self.start_time.minute/60)
                 hours_after_midnight = self.end_time.hour + self.end_time.minute/60
-                self.shift_duration = round(hours_before_midnight + hours_after_midnight, 2)
+                total_hours = hours_before_midnight + hours_after_midnight
+                self.shift_duration = round(total_hours, 2) if total_hours is not None else 0
             else:
                 # For regular shifts
                 hours = self.end_time.hour - self.start_time.hour
                 minutes = self.end_time.minute - self.start_time.minute
-                self.shift_duration = round(hours + minutes/60, 2)
+                total_hours = hours + minutes/60
+                self.shift_duration = round(total_hours, 2) if total_hours is not None else 0
 
         super().save(*args, **kwargs)
 
@@ -1664,11 +1667,13 @@ class Attendance(models.Model):
             logger.debug(f"Calculating total hours for {self.user.username}")
             duration = self.clock_out_time - self.clock_in_time
             hours = duration.total_seconds() / 3600
-            self.total_hours = round(Decimal(str(hours)), 2)
-            if self.idle_time:
-                logger.debug(f"Subtracting idle time: {self.idle_time}")
-                idle_hours = self.idle_time.total_seconds() / 3600
-                self.total_hours = max(0, self.total_hours - round(Decimal(str(idle_hours)), 2))
+            if hours is not None:
+                self.total_hours = round(Decimal(str(hours)), 2)
+                if self.idle_time:
+                    logger.debug(f"Subtracting idle time: {self.idle_time}")
+                    idle_hours = self.idle_time.total_seconds() / 3600
+                    if idle_hours is not None:
+                        self.total_hours = max(0, self.total_hours - round(Decimal(str(idle_hours)), 2))
 
         # Calculate overtime based on shift if present
         if self.shift and self.total_hours and self.total_hours > self.shift.shift_duration:
@@ -1896,10 +1901,12 @@ class Attendance(models.Model):
                 if attendance.clock_in_time:
                     duration = clock_out_time - attendance.clock_in_time
                     hours = duration.total_seconds() / 3600
-                    attendance.total_hours = round(Decimal(str(hours)), 2)
-                    if attendance.idle_time:
-                        idle_hours = attendance.idle_time.total_seconds() / 3600
-                        attendance.total_hours = max(0, attendance.total_hours - round(Decimal(str(idle_hours)), 2))
+                    if hours is not None:
+                        attendance.total_hours = round(Decimal(str(hours)), 2)
+                        if attendance.idle_time:
+                            idle_hours = attendance.idle_time.total_seconds() / 3600
+                            if idle_hours is not None:
+                                attendance.total_hours = max(0, attendance.total_hours - round(Decimal(str(idle_hours)), 2))
                 attendance.save()
                 logger.info(f"Updated clock out time for {user.username} to {clock_out_time}")
                 return attendance
@@ -2155,7 +2162,8 @@ class Attendance(models.Model):
                             print("Calculating total hours")
                             duration = attendance.clock_out_time - attendance.clock_in_time
                             hours = duration.total_seconds() / 3600
-                            attendance.total_hours = round(Decimal(str(hours)), 2)
+                            if hours is not None:
+                                attendance.total_hours = round(Decimal(str(hours)), 2)
                         idle_time = timedelta(0)
                         for session in sessions:
                             if hasattr(session, 'idle_time') and session.idle_time:
