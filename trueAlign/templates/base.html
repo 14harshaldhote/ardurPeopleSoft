@@ -613,8 +613,10 @@
                 
                 // Session tracker initialization with error handling
                 initializeSessionTracker() {
+                    // Wait for OptimizedSessionTracker to be available
                     if (typeof OptimizedSessionTracker === 'undefined') {
-                        console.warn('OptimizedSessionTracker not available');
+                        console.log('Waiting for OptimizedSessionTracker to load...');
+                        setTimeout(() => this.initializeSessionTracker(), 100);
                         return;
                     }
                     
@@ -686,7 +688,7 @@
     </script>
     
     {% if user.is_authenticated %}
-    <script defer src="{% static 'js/optimized-session-tracker.js' %}"></script>
+    <script src="{% static 'js/optimized-session-tracker.js' %}"></script>
     <script defer src="{% static 'js/session-validation-helpers.js' %}"></script>
     {% endif %}
 </head>

@@ -648,26 +648,29 @@ class OptimizedSessionTracker {
         this.storeSessionData();
       }
 
-    this.makeRequest(this.config.heartbeatUrl, heartbeatData)
-      .then((response) => {
-        this.state.lastHeartbeat = now;
-        this.handleHeartbeatResponse(response);
-      })
-      .catch((error) => {
-        // Fallback to legacy endpoint if optimized endpoint fails
-        this.makeRequest("/session/heartbeat/", heartbeatData)
-          .then((response) => {
-            this.state.lastHeartbeat = now;
-            this.handleHeartbeatResponse(response);
-          })
-          .catch((retryError) => {
-            this.addToRetryQueue("heartbeat", heartbeatData);
-            this.log(
-              "Heartbeat failed on both endpoints: " + error.message,
-              "error",
-            );
-          });
-      });
+      this.makeRequest(this.config.heartbeatUrl, heartbeatData)
+        .then((response) => {
+          this.state.lastHeartbeat = now;
+          this.handleHeartbeatResponse(response);
+        })
+        .catch((error) => {
+          // Fallback to legacy endpoint if optimized endpoint fails
+          this.makeRequest("/session/heartbeat/", heartbeatData)
+            .then((response) => {
+              this.state.lastHeartbeat = now;
+              this.handleHeartbeatResponse(response);
+            })
+            .catch((retryError) => {
+              this.addToRetryQueue("heartbeat", heartbeatData);
+              this.log(
+                "Heartbeat failed on both endpoints: " + error.message,
+                "error",
+              );
+            });
+        });
+    } catch (error) {
+      this.log("Error in sendHeartbeat: " + error.message, "error");
+    }
   }
 
   handleHeartbeatResponse(response) {
@@ -1681,4 +1684,20 @@ if (typeof define === "function" && define.amd) {
   define([], function () {
     return OptimizedSessionTracker;
   });
+} else {
+  // Global export
+  window.OptimizedSessionTracker = OptimizedSessionTracker;
+}
+
+// Auto-initialize if DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    if (window.initializeSessionTracker && typeof window.initializeSessionTracker === 'function') {
+      window.initializeSessionTracker();
+    }
+  });
+} else {
+  if (window.initializeSessionTracker && typeof window.initializeSessionTracker === 'function') {
+    window.initializeSessionTracker();
+  }
 }

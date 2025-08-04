@@ -266,16 +266,62 @@ class UserSession(models.Model):
 
 
     @classmethod
+    def _original_get_or_create_session(cls, user, tab_id=None, parent_session_id=None, client_data=None, session_key=None, ip_address=None, user_agent=None, browser_fingerprint=None, device_type=None, screen_resolution=None, timezone_offset=None, language=None, url=None, title=None, referrer=None):
+        """
+        Original fallback session creation method
+        """
+        logger.info(f"Using fallback session creation for user {user.username}")
+        
+        # Simple session creation without enhanced features
+        if tab_id:
+            try:
+                session = cls.objects.get(user=user, tab_id=tab_id, is_active=True)
+                session.last_activity = timezone.now()
+                session.save(update_fields=['last_activity'])
+                return session, False
+            except cls.DoesNotExist:
+                pass
+        
+        # Create new session
+        session_data = {
+            'user': user,
+            'tab_id': tab_id,
+            'parent_session_id': parent_session_id or uuid.uuid4(),
+            'session_key': session_key or cls.generate_session_key(),
+            'is_primary_tab': True,
+            'login_time': timezone.now(),
+            'last_activity': timezone.now(),
+        }
+        
+        if client_data:
+            session_data.update({
+                'ip_address': client_data.get('ip_address'),
+                'user_agent': client_data.get('user_agent'),
+                'browser_fingerprint': client_data.get('browser_fingerprint'),
+                'session_fingerprint': client_data.get('session_fingerprint'),
+            })
+        
+        new_session = cls.objects.create(**session_data)
+        return new_session, True
+
+    @classmethod
     def get_or_create_session(cls, user, tab_id=None, parent_session_id=None, client_data=None, session_key=None, ip_address=None, user_agent=None, browser_fingerprint=None, device_type=None, screen_resolution=None, timezone_offset=None, language=None, url=None, title=None, referrer=None):
         """
         Get an existing session or create a new one using the enhanced session manager
         """
-        from trueAlign.core.session_manager import get_session_manager
-        from trueAlign.core.enhanced_logger import get_session_logger
+        try:
+            from trueAlign.core.session_manager import get_session_manager
+            from trueAlign.core.enhanced_logger import get_session_logger
+            from trueAlign.core.session_validator import get_session_validator
+        except ImportError as e:
+            logger.warning(f"Enhanced session components not available: {e}")
+            # Fall back to original implementation
+            return cls._original_get_or_create_session(user, tab_id, parent_session_id, client_data, session_key, ip_address, user_agent, browser_fingerprint, device_type, screen_resolution, timezone_offset, language, url, title, referrer)
         
         start_time = time.time()
         session_manager = get_session_manager()
         session_logger = get_session_logger()
+        session_validator = get_session_validator()
         
         try:
             # Prepare client data if not provided
@@ -319,6 +365,10 @@ class UserSession(models.Model):
             session_logger.log_session_creation(
                 user, session.id, tab_id, duration_ms, created=created
             )
+            
+            # Register session for validation if newly created
+            if created:
+                session_validator.register_session(session)
             
             return session, created
             

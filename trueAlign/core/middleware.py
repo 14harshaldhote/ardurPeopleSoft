@@ -12,6 +12,20 @@ from django.urls import reverse
 from django.conf import settings
 from django.db import transaction
 from trueAlign.models import UserSession
+
+# Try to import enhanced components, fall back to None if not available
+try:
+    from .optimized_batch_writer import get_batch_writer
+    from .session_manager import get_session_manager
+    from .enhanced_logger import get_session_logger
+    ENHANCED_COMPONENTS_AVAILABLE = True
+except ImportError as e:
+    logger = logging.getLogger(__name__)
+    logger.warning(f"Enhanced session components not available: {e}")
+    get_batch_writer = lambda: None
+    get_session_manager = lambda: None
+    get_session_logger = lambda: None
+    ENHANCED_COMPONENTS_AVAILABLE = False
 from .utils import (
     get_client_ip, parse_user_agent, get_location_from_ip,
     detect_suspicious_activity, calculate_productivity_score,
