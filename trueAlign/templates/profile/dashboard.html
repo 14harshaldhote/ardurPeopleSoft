@@ -1,0 +1,1267 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}HR Dashboard{% endblock %}
+
+{% block extra_css %}
+
+<style>
+    /* Enhanced Resizable Dashboard Styles with Tailwind CSS */
+    .resizable-card {
+        position: relative;
+        border: 2px solid transparent;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        min-width: 280px;
+        min-height: 200px;
+        max-width: calc(100vw - 40px);
+        overflow: hidden;
+        resize: both;
+    }
+
+    .resizable-card:hover {
+        border-color: rgba(99, 102, 241, 0.3);
+        transform: translateY(-2px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    .resizable-card.resizing {
+        border-color: #6366f1;
+        box-shadow: 0 25px 50px rgba(99, 102, 241, 0.2);
+        z-index: 1000;
+    }
+
+    /* Custom resize handles */
+    .resize-handle {
+        position: absolute;
+        background: rgba(99, 102, 241, 0.2);
+        transition: all 0.2s ease;
+        opacity: 0;
+    }
+
+    .resizable-card:hover .resize-handle {
+        opacity: 1;
+    }
+
+    .resize-handle:hover {
+        background: rgba(99, 102, 241, 0.4);
+    }
+
+    .resize-se {
+        bottom: 0;
+        right: 0;
+        width: 20px;
+        height: 20px;
+        cursor: se-resize;
+        border-radius: 12px 0 12px 0;
+    }
+
+    .resize-s {
+        bottom: 0;
+        left: 20px;
+        right: 20px;
+        height: 8px;
+        cursor: s-resize;
+    }
+
+    .resize-e {
+        top: 20px;
+        bottom: 20px;
+        right: 0;
+        width: 8px;
+        cursor: e-resize;
+    }
+
+    /* Chart containers */
+    .chart-container {
+        height: 350px;
+        width: 100%;
+    }
+
+    /* Drag handle */
+    .drag-handle {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        width: 24px;
+        height: 24px;
+        border-radius: 6px;
+        background: rgba(0, 0, 0, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: all 0.2s ease;
+        cursor: grab;
+        z-index: 10;
+    }
+
+    .resizable-card:hover .drag-handle {
+        opacity: 1;
+        background: rgba(99, 102, 241, 0.2);
+    }
+
+    .drag-handle:hover {
+        background: rgba(99, 102, 241, 0.3);
+        transform: scale(1.1);
+    }
+
+    /* Size indicator */
+    .size-indicator {
+        position: absolute;
+        bottom: 8px;
+        left: 8px;
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        z-index: 10;
+    }
+
+    .resizable-card.resizing .size-indicator {
+        opacity: 1;
+    }
+
+    /* Dashboard grid - keeping original Tailwind structure */
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    /* Loading spinner */
+    .loading-spinner {
+        width: 20px;
+        height: 20px;
+        border: 2px solid #f3f4f6;
+        border-top: 2px solid #6366f1;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* Animations */
+    .fade-in {
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .pulse-animation {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+
+    .icon-bounce {
+        animation: bounce 2s infinite;
+    }
+
+    @keyframes bounce {
+        0%, 20%, 53%, 80%, 100% { transform: translate3d(0,0,0); }
+        40%, 43% { transform: translate3d(0, -8px, 0); }
+        70% { transform: translate3d(0, -4px, 0); }
+        90% { transform: translate3d(0, -2px, 0); }
+    }
+
+    .progress-bar {
+        height: 4px;
+        background: linear-gradient(90deg, #6366f1, #8b5cf6, #ec4899);
+        border-radius: 2px;
+        animation: progress 3s ease-in-out infinite;
+    }
+
+    @keyframes progress {
+        0% { width: 0%; }
+        50% { width: 70%; }
+        100% { width: 100%; }
+    }
+
+    .table-hover tbody tr:hover {
+        background: linear-gradient(90deg, rgba(99, 102, 241, 0.05), rgba(139, 92, 246, 0.05));
+        transform: scale(1.01);
+        transition: all 0.2s ease;
+    }
+
+    .metric-card {
+        background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.8));
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255,255,255,0.3);
+    }
+
+    .dashboard-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    /* Glass effect for controls */
+    .glass-effect {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+        
+        .resizable-card {
+            min-width: 100%;
+        }
+    }
+</style>
+
+{% endblock %}
+
+{% block content %}
+
+<div class="container mx-auto px-4 py-6">
+    <!-- Dashboard Header with Tailwind Classes -->
+    <div class="dashboard-header fade-in">
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center">
+            <div>
+                <h1 class="text-3xl font-bold mb-2">HR Dashboard</h1>
+                <p class="text-blue-100 opacity-90">Manage your workforce with interactive resizable analytics</p>
+            </div>
+            <div class="flex flex-wrap gap-2 mt-4 lg:mt-0">
+                <button id="resetLayout" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg transition-all duration-200 backdrop-filter backdrop-blur-sm">
+                    <i class="fas fa-refresh mr-2"></i>Reset Layout
+                </button>
+                <button id="saveLayout" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg transition-all duration-200 backdrop-filter backdrop-blur-sm">
+                    <i class="fas fa-save mr-2"></i>Save Layout
+                </button>
+                <button id="fullscreen" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg transition-all duration-200 backdrop-filter backdrop-blur-sm">
+                    <i class="fas fa-expand mr-2"></i>Fullscreen
+                </button>
+            </div>
+        </div>
+    </div>
+
+```
+<!-- Stats Cards with Tailwind CSS and Resizable functionality -->
+<div id="dashboard-container" class="dashboard-grid">
+    <!-- Total Users Card -->
+    <div id="total-users-card" class="resizable-card bg-blue-600 text-white rounded-xl shadow-lg p-6 flex justify-between items-center fade-in" draggable="true">
+        <div class="drag-handle">
+            <i class="fas fa-grip-horizontal text-white"></i>
+        </div>
+        <div class="card-content flex justify-between items-center w-full">
+            <div>
+                <h5 class="text-lg font-medium">Total Users</h5>
+                <h2 class="text-3xl font-bold">{{ total_users }}</h2>
+                <div class="text-sm opacity-75 mt-1">
+                    <i class="fas fa-arrow-up mr-1"></i>Active workforce
+                </div>
+            </div>
+            <i class="fas fa-users text-4xl opacity-75"></i>
+        </div>
+        <div class="resize-handle resize-se"></div>
+        <div class="resize-handle resize-s"></div>
+        <div class="resize-handle resize-e"></div>
+        <div class="size-indicator"></div>
+    </div>
+
+    <!-- Active Users Card -->
+    <div id="active-users-card" class="resizable-card bg-green-600 text-white rounded-xl shadow-lg p-6 flex justify-between items-center fade-in" draggable="true">
+        <div class="drag-handle">
+            <i class="fas fa-grip-horizontal text-white"></i>
+        </div>
+        <div class="card-content flex justify-between items-center w-full">
+            <div>
+                <h5 class="text-lg font-medium">Active Users</h5>
+                <h2 class="text-3xl font-bold">{{ active_users }}</h2>
+                <div class="text-sm opacity-75 mt-1">
+                    <i class="fas fa-check-circle mr-1"></i>Currently active
+                </div>
+            </div>
+            <i class="fas fa-user-check text-4xl opacity-75"></i>
+        </div>
+        <div class="resize-handle resize-se"></div>
+        <div class="resize-handle resize-s"></div>
+        <div class="resize-handle resize-e"></div>
+        <div class="size-indicator"></div>
+    </div>
+
+    <!-- Inactive Users Card -->
+    <div id="inactive-users-card" class="resizable-card bg-yellow-500 text-white rounded-xl shadow-lg p-6 flex justify-between items-center fade-in" draggable="true">
+        <div class="drag-handle">
+            <i class="fas fa-grip-horizontal text-white"></i>
+        </div>
+        <div class="card-content flex justify-between items-center w-full">
+            <div>
+                <h5 class="text-lg font-medium">Inactive Users</h5>
+                <h2 class="text-3xl font-bold">{{ inactive_users }}</h2>
+                <div class="text-sm opacity-75 mt-1">
+                    <i class="fas fa-pause-circle mr-1"></i>Need attention
+                </div>
+            </div>
+            <i class="fas fa-user-times text-4xl opacity-75"></i>
+        </div>
+        <div class="resize-handle resize-se"></div>
+        <div class="resize-handle resize-s"></div>
+        <div class="resize-handle resize-e"></div>
+        <div class="size-indicator"></div>
+    </div>
+
+    <!-- New Hires Card -->
+    <div id="new-hires-card" class="resizable-card bg-sky-500 text-white rounded-xl shadow-lg p-6 flex justify-between items-center fade-in" draggable="true">
+        <div class="drag-handle">
+            <i class="fas fa-grip-horizontal text-white"></i>
+        </div>
+        <div class="card-content flex justify-between items-center w-full">
+            <div>
+                <h5 class="text-lg font-medium">New Hires (30 days)</h5>
+                <h2 class="text-3xl font-bold">{{ new_hires_count }}</h2>
+                <div class="text-sm opacity-75 mt-1">
+                    <i class="fas fa-calendar-alt mr-1"></i>This month
+                </div>
+            </div>
+            <i class="fas fa-user-plus text-4xl opacity-75"></i>
+        </div>
+        <div class="resize-handle resize-se"></div>
+        <div class="resize-handle resize-s"></div>
+        <div class="resize-handle resize-e"></div>
+        <div class="size-indicator"></div>
+    </div>
+</div>
+
+<!-- Location and Status Stats Cards with Tailwind -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+    <!-- Location Stats -->
+    <div id="location-stats-card" class="resizable-card bg-white rounded-xl shadow-lg p-6 fade-in">
+        <div class="drag-handle">
+            <i class="fas fa-grip-horizontal text-gray-600"></i>
+        </div>
+        <h5 class="text-lg font-semibold mb-4 text-gray-800">Employees by Location</h5>
+        <div class="space-y-3">
+            {% if location_stats %}
+                {% for stat in location_stats %}
+                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <span class="font-medium text-gray-700">{{ stat.office_location__name|default:"Not Specified" }}</span>
+                    <span class="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full">{{ stat.count }}</span>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-gray-500 text-center py-4">No location data available.</p>
+            {% endif %}
+        </div>
+        <div class="resize-handle resize-se"></div>
+        <div class="resize-handle resize-s"></div>
+        <div class="resize-handle resize-e"></div>
+        <div class="size-indicator"></div>
+    </div>
+
+    <!-- Status Stats -->
+    <div id="status-stats-card" class="resizable-card bg-white rounded-xl shadow-lg p-6 fade-in">
+        <div class="drag-handle">
+            <i class="fas fa-grip-horizontal text-gray-600"></i>
+        </div>
+        <h5 class="text-lg font-semibold mb-4 text-gray-800">Employment Status</h5>
+        <div class="space-y-3">
+            {% if status_stats %}
+                {% for stat in status_stats %}
+                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <span class="capitalize font-medium text-gray-700">{{ stat.employment_status }}</span>
+                    <span class="bg-gray-200 text-gray-800 text-sm font-medium px-3 py-1 rounded-full">{{ stat.count }}</span>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-gray-500 text-center py-4">No status data available.</p>
+            {% endif %}
+        </div>
+        <div class="resize-handle resize-se"></div>
+        <div class="resize-handle resize-s"></div>
+        <div class="resize-handle resize-e"></div>
+        <div class="size-indicator"></div>
+    </div>
+</div>
+
+<!-- Recent Activity Tables with Tailwind -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+    <!-- Recent Logins -->
+    <div id="recent-logins-card" class="resizable-card bg-white rounded-xl shadow-lg p-6 fade-in">
+        <div class="drag-handle">
+            <i class="fas fa-grip-horizontal text-gray-600"></i>
+        </div>
+        <h5 class="text-lg font-semibold mb-4 text-gray-800">Recent Logins</h5>
+        <div class="overflow-hidden">
+            {% if recent_logins %}
+                <div class="overflow-x-auto max-h-80 overflow-y-auto">
+                    <table class="min-w-full text-sm text-left table-hover">
+                        <thead class="border-b text-gray-700 font-medium bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3">User</th>
+                                <th class="px-4 py-3">Last Login</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for user in recent_logins %}
+                            <tr class="hover:bg-blue-50 transition-colors">
+                                <td class="px-4 py-3 font-medium text-gray-900">{{ user.get_full_name|default:user.username }}</td>
+                                <td class="px-4 py-3 text-gray-600">{{ user.last_login|date:"M d, Y H:i" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-8">
+                    <i class="fas fa-inbox text-4xl text-gray-300 mb-2"></i>
+                    <p class="text-gray-500">No recent logins.</p>
+                </div>
+            {% endif %}
+        </div>
+        <div class="resize-handle resize-se"></div>
+        <div class="resize-handle resize-s"></div>
+        <div class="resize-handle resize-e"></div>
+        <div class="size-indicator"></div>
+    </div>
+
+    <!-- New Users -->
+    <div id="new-users-card" class="resizable-card bg-white rounded-xl shadow-lg p-6 fade-in">
+        <div class="drag-handle">
+            <i class="fas fa-grip-horizontal text-gray-600"></i>
+        </div>
+        <h5 class="text-lg font-semibold mb-4 text-gray-800">New Users (Last 30 Days)</h5>
+        <div class="overflow-hidden">
+            {% if new_users %}
+                <div class="overflow-x-auto max-h-80 overflow-y-auto">
+                    <table class="min-w-full text-sm text-left table-hover">
+                        <thead class="border-b text-gray-700 font-medium bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3">User</th>
+                                <th class="px-4 py-3">Created</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for item in new_users %}
+                            <tr class="hover:bg-green-50 transition-colors">
+                                <td class="px-4 py-3 font-medium text-gray-900">
+                                    {% if item.user %}
+                                        {{ item.user.get_full_name|default:item.user.username }}
+                                    {% else %}
+                                        {{ item.get_full_name|default:item.username }}
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-3 text-gray-600">{{ item.created_at|date:"M d, Y" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-8">
+                    <i class="fas fa-user-plus text-4xl text-gray-300 mb-2"></i>
+                    <p class="text-gray-500">No new users in the last 30 days.</p>
+                </div>
+            {% endif %}
+        </div>
+        <div class="resize-handle resize-se"></div>
+        <div class="resize-handle resize-s"></div>
+        <div class="resize-handle resize-e"></div>
+        <div class="size-indicator"></div>
+    </div>
+</div>
+
+<!-- Analytics Charts with Tailwind -->
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
+    <!-- Employment Status Chart -->
+    <div id="status-chart-card" class="resizable-card bg-white rounded-xl shadow-lg p-6 fade-in">
+        <div class="drag-handle">
+            <i class="fas fa-grip-horizontal text-gray-600"></i>
+        </div>
+        <div class="flex justify-between items-center mb-4">
+            <h5 class="text-lg font-semibold text-gray-800">Employment Status Distribution</h5>
+            <div class="loading-spinner hidden" id="status-chart-loading"></div>
+        </div>
+        <div id="statusChart" class="chart-container"></div>
+        <div class="resize-handle resize-se"></div>
+        <div class="resize-handle resize-s"></div>
+        <div class="resize-handle resize-e"></div>
+        <div class="size-indicator"></div>
+    </div>
+
+    <!-- Location Distribution Chart -->
+    <div id="location-chart-card" class="resizable-card bg-white rounded-xl shadow-lg p-6 fade-in">
+        <div class="drag-handle">
+            <i class="fas fa-grip-horizontal text-gray-600"></i>
+        </div>
+        <div class="flex justify-between items-center mb-4">
+            <h5 class="text-lg font-semibold text-gray-800">Location Distribution</h5>
+            <div class="loading-spinner hidden" id="location-chart-loading"></div>
+        </div>
+        <div id="locationChart" class="chart-container"></div>
+        <div class="resize-handle resize-se"></div>
+        <div class="resize-handle resize-s"></div>
+        <div class="resize-handle resize-e"></div>
+        <div class="size-indicator"></div>
+    </div>
+
+    <!-- Employee Type Chart -->
+    <div id="type-chart-card" class="resizable-card bg-white rounded-xl shadow-lg p-6 fade-in">
+        <div class="drag-handle">
+            <i class="fas fa-grip-horizontal text-gray-600"></i>
+        </div>
+        <div class="flex justify-between items-center mb-4">
+            <h5 class="text-lg font-semibold text-gray-800">Employee Type Distribution</h5>
+            <div class="loading-spinner hidden" id="type-chart-loading"></div>
+        </div>
+        <div id="typeChart" class="chart-container"></div>
+        <div class="resize-handle resize-se"></div>
+        <div class="resize-handle resize-s"></div>
+        <div class="resize-handle resize-e"></div>
+        <div class="size-indicator"></div>
+    </div>
+
+    <!-- Monthly Hiring Trend -->
+    <div id="trend-chart-card" class="resizable-card bg-white rounded-xl shadow-lg p-6 fade-in">
+        <div class="drag-handle">
+            <i class="fas fa-grip-horizontal text-gray-600"></i>
+        </div>
+        <div class="flex justify-between items-center mb-4">
+            <h5 class="text-lg font-semibold text-gray-800">Monthly Hiring Trend</h5>
+            <div class="loading-spinner hidden" id="trend-chart-loading"></div>
+        </div>
+        <div id="trendChart" class="chart-container"></div>
+        <div class="resize-handle resize-se"></div>
+        <div class="resize-handle resize-s"></div>
+        <div class="resize-handle resize-e"></div>
+        <div class="size-indicator"></div>
+    </div>
+</div>
+
+<!-- Session Analytics with Tailwind -->
+<div id="session-analytics-card" class="resizable-card bg-white rounded-xl shadow-lg p-6 mb-6 fade-in">
+    <div class="drag-handle">
+        <i class="fas fa-grip-horizontal text-gray-600"></i>
+    </div>
+    <h5 class="text-lg font-semibold mb-4 text-gray-800">Session Analytics</h5>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg p-4 transform hover:scale-105 transition-transform">
+            <h6 class="text-sm font-medium opacity-90">Active Sessions Today</h6>
+            <p class="text-2xl font-bold" id="activeSessions">-</p>
+            <div class="text-xs opacity-75 mt-1">
+                <i class="fas fa-users mr-1"></i>Current active users
+            </div>
+        </div>
+        <div class="bg-gradient-to-r from-green-500 to-teal-500 text-white rounded-lg p-4 transform hover:scale-105 transition-transform">
+            <h6 class="text-sm font-medium opacity-90">Avg Session Duration</h6>
+            <p class="text-2xl font-bold" id="avgDuration">-</p>
+            <div class="text-xs opacity-75 mt-1">
+                <i class="fas fa-clock mr-1"></i>Average time spent
+            </div>
+        </div>
+        <div class="bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg p-4 transform hover:scale-105 transition-transform">
+            <h6 class="text-sm font-medium opacity-90">Top User Sessions</h6>
+            <p class="text-2xl font-bold" id="topUserSessions">-</p>
+            <div class="text-xs opacity-75 mt-1">
+                <i class="fas fa-trophy mr-1"></i>Most active user
+            </div>
+        </div>
+    </div>
+    <div class="resize-handle resize-se"></div>
+    <div class="resize-handle resize-s"></div>
+    <div class="resize-handle resize-e"></div>
+    <div class="size-indicator"></div>
+</div>
+
+<!-- Quick Actions with Tailwind -->
+<div id="quick-actions-card" class="resizable-card bg-white rounded-xl shadow-lg p-6 fade-in">
+    <div class="drag-handle">
+        <i class="fas fa-grip-horizontal text-gray-600"></i>
+    </div>
+    <h5 class="text-lg font-semibold mb-4 text-gray-800">Quick Actions</h5>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <a href="{% url 'profile:user-create' %}" class="flex items-center justify-center bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-all duration-200 transform hover:scale-105 hover:shadow-lg">
+            <i class="fas fa-user-plus mr-2"></i> Add New User
+        </a>
+        <a href="{% url 'profile:user-list' %}" class="flex items-center justify-center bg-sky-500 text-white py-3 px-4 rounded-lg hover:bg-sky-600 transition-all duration-200 transform hover:scale-105 hover:shadow-lg">
+            <i class="fas fa-list mr-2"></i> View All Users
+        </a>
+        <a href="{% url 'profile:bulk-upload' %}" class="flex items-center justify-center bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-all duration-200 transform hover:scale-105 hover:shadow-lg">
+            <i class="fas fa-file-upload mr-2"></i> Bulk Upload
+        </a>
+        <a href="{% url 'profile:audit-logs' %}" class="flex items-center justify-center bg-gray-600 text-white py-3 px-4 rounded-lg hover:bg-gray-700 transition-all duration-200 transform hover:scale-105 hover:shadow-lg">
+            <i class="fas fa-history mr-2"></i> Audit Logs
+        </a>
+    </div>
+    <div class="resize-handle resize-se"></div>
+    <div class="resize-handle resize-s"></div>
+    <div class="resize-handle resize-e"></div>
+    <div class="size-indicator"></div>
+</div>
+```
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+
+<!-- ECharts CDN -->
+
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+
+<script>
+// Enhanced Dashboard Analytics with Resizable functionality
+class ResizableDashboard {
+    constructor() {
+        this.charts = {};
+        this.apiUrl = '{% url "profile:dashboard-analytics-api" %}';
+        this.cards = new Map();
+        this.isResizing = false;
+        this.currentCard = null;
+        this.resizeHandle = null;
+        this.startX = 0;
+        this.startY = 0;
+        this.startWidth = 0;
+        this.startHeight = 0;
+        this.savedLayout = {{ saved_layout|safe }};
+        
+        this.init();
+    }
+
+    async init() {
+        try {
+            this.setupResizeHandlers();
+            await this.loadAnalyticsData();
+            this.initializeCharts();
+            this.setupLayoutControls();
+            this.loadSavedLayout();
+            this.setupRealTimeUpdates();
+        } catch (error) {
+            console.error('Failed to initialize dashboard analytics:', error);
+            this.showError('Analytics data failed to load. Please check your network or API configuration.');
+        }
+    }
+
+    async loadAnalyticsData() {
+        const response = await fetch(this.apiUrl, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        this.data = await response.json();
+        this.updateSessionMetrics();
+    }
+
+    updateSessionMetrics() {
+        const sessionData = this.data.session_analytics || {};
+        
+        document.getElementById('activeSessions').textContent = sessionData.active_sessions_today || '0';
+        document.getElementById('avgDuration').textContent = 
+            sessionData.avg_session_duration ? `${sessionData.avg_session_duration}m` : '0m';
+        
+        const topUsers = sessionData.top_users || [];
+        document.getElementById('topUserSessions').textContent = 
+            topUsers.length > 0 ? topUsers[0].session_count || '0' : '0';
+    }
+
+    setupResizeHandlers() {
+        document.querySelectorAll('.resizable-card').forEach(card => {
+            this.makeResizable(card);
+            this.cards.set(card.id, {
+                element: card,
+                originalWidth: card.offsetWidth,
+                originalHeight: card.offsetHeight
+            });
+        });
+    }
+
+    makeResizable(card) {
+        const handles = card.querySelectorAll('.resize-handle');
+        
+        handles.forEach(handle => {
+            handle.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                this.startResize(e, card, handle);
+            });
+        });
+    }
+
+    startResize(e, card, handle) {
+        this.isResizing = true;
+        this.currentCard = card;
+        this.resizeHandle = handle;
+        
+        const rect = card.getBoundingClientRect();
+        this.startX = e.clientX;
+        this.startY = e.clientY;
+        this.startWidth = rect.width;
+        this.startHeight = rect.height;
+        
+        card.classList.add('resizing');
+        document.body.style.cursor = handle.style.cursor;
+        
+        document.addEventListener('mousemove', this.handleResize.bind(this));
+        document.addEventListener('mouseup', this.stopResize.bind(this));
+    }
+
+    handleResize(e) {
+        if (!this.isResizing || !this.currentCard) return;
+        
+        const deltaX = e.clientX - this.startX;
+        const deltaY = e.clientY - this.startY;
+        
+        let newWidth = this.startWidth;
+        let newHeight = this.startHeight;
+        
+        const handleClass = this.resizeHandle.className;
+        
+        if (handleClass.includes('resize-e') || handleClass.includes('resize-se')) {
+            newWidth = Math.max(280, this.startWidth + deltaX);
+        }
+        if (handleClass.includes('resize-s') || handleClass.includes('resize-se')) {
+            newHeight = Math.max(200, this.startHeight + deltaY);
+        }
+        
+        this.currentCard.style.width = `${newWidth}px`;
+        this.currentCard.style.height = `${newHeight}px`;
+        
+        // Update size indicator
+        const sizeIndicator = this.currentCard.querySelector('.size-indicator');
+        if (sizeIndicator) {
+            sizeIndicator.textContent = `${Math.round(newWidth)}×${Math.round(newHeight)}`;
+        }
+        
+        // Resize charts if this is a chart card
+        this.resizeChart(this.currentCard.id);
+    }
+
+    stopResize() {
+        if (!this.isResizing) return;
+        
+        this.isResizing = false;
+        document.body.style.cursor = '';
+        
+        if (this.currentCard) {
+            this.currentCard.classList.remove('resizing');
+            this.saveCardLayout(this.currentCard);
+        }
+        
+        this.currentCard = null;
+        this.resizeHandle = null;
+        
+        document.removeEventListener('mousemove', this.handleResize.bind(this));
+        document.removeEventListener('mouseup', this.stopResize.bind(this));
+    }
+
+    setupLayoutControls() {
+        const resetBtn = document.getElementById('resetLayout');
+        const saveBtn = document.getElementById('saveLayout');
+        const fullscreenBtn = document.getElementById('fullscreen');
+        
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => this.resetLayout());
+        }
+        
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => this.saveLayout());
+        }
+        
+        if (fullscreenBtn) {
+            fullscreenBtn.addEventListener('click', () => this.toggleFullscreen());
+        }
+    }
+
+    initializeCharts() {
+        this.createStatusChart();
+        this.createLocationChart();
+        this.createTypeChart();
+        this.createTrendChart();
+    }
+
+    createStatusChart() {
+        const chartDom = document.getElementById('statusChart');
+        if (!chartDom) return;
+
+        const myChart = echarts.init(chartDom);
+        
+        // Use Django template data for status distribution
+        const statusData = [
+            {% for stat in status_stats %}
+            {
+                name: '{{ stat.employment_status|capfirst }}',
+                value: {{ stat.count }}
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ];
+
+        const option = {
+            tooltip: {
+                trigger: 'item',
+                formatter: '{a} <br/>{b}: {c} ({d}%)'
+            },
+            legend: {
+                orient: 'vertical',
+                left: 'left',
+                data: statusData.map(item => item.name)
+            },
+            series: [
+                {
+                    name: 'Employment Status',
+                    type: 'pie',
+                    radius: ['40%', '70%'],
+                    center: ['60%', '50%'],
+                    avoidLabelOverlap: false,
+                    itemStyle: {
+                        borderRadius: 10,
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    },
+                    label: {
+                        show: false,
+                        position: 'center'
+                    },
+                    emphasis: {
+                        label: {
+                            show: true,
+                            fontSize: 20,
+                            fontWeight: 'bold'
+                        }
+                    },
+                    labelLine: {
+                        show: false
+                    },
+                    data: statusData
+                }
+            ],
+            color: ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de', '#3ba272', '#fc8452']
+        };
+
+        myChart.setOption(option);
+        this.charts.statusChart = myChart;
+
+        // Make chart responsive
+        window.addEventListener('resize', () => {
+            myChart.resize();
+        });
+    }
+
+    createLocationChart() {
+        const chartDom = document.getElementById('locationChart');
+        if (!chartDom) return;
+
+        const myChart = echarts.init(chartDom);
+        
+        // Use Django template data for location distribution
+        const locationData = [
+            {% for stat in location_stats %}
+            {
+                name: '{{ stat.office_location__name|default:"Not Specified" }}',
+                count: {{ stat.count }}
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ];
+
+        const option = {
+            tooltip: {
+                trigger: 'axis',
+                axisPointer: {
+                    type: 'shadow'
+                }
+            },
+            grid: {
+                left: '3%',
+                right: '4%',
+                bottom: '3%',
+                containLabel: true
+            },
+            xAxis: {
+                type: 'value',
+                boundaryGap: [0, 0.01]
+            },
+            yAxis: {
+                type: 'category',
+                data: locationData.map(item => item.name)
+            },
+            series: [
+                {
+                    name: 'Employees',
+                    type: 'bar',
+                    data: locationData.map(item => item.count),
+                    itemStyle: {
+                        borderRadius: [0, 5, 5, 0],
+                        color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+                            { offset: 0, color: '#3ba272' },
+                            { offset: 1, color: '#10b981' }
+                        ])
+                    }
+                }
+            ]
+        };
+
+        myChart.setOption(option);
+        this.charts.locationChart = myChart;
+
+        window.addEventListener('resize', () => {
+            myChart.resize();
+        });
+    }
+
+    createTypeChart() {
+        const chartDom = document.getElementById('typeChart');
+        if (!chartDom) return;
+
+        const myChart = echarts.init(chartDom);
+        
+        // Use API data for employee type distribution
+        const typeData = this.data.type_distribution || [];
+
+        const option = {
+            tooltip: {
+                trigger: 'item'
+            },
+            legend: {
+                top: '5%',
+                left: 'center'
+            },
+            series: [
+                {
+                    name: 'Employee Type',
+                    type: 'pie',
+                    radius: ['30%', '70%'],
+                    avoidLabelOverlap: false,
+                    itemStyle: {
+                        borderRadius: 10,
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    },
+                    label: {
+                        show: false,
+                        position: 'center'
+                    },
+                    emphasis: {
+                        label: {
+                            show: true,
+                            fontSize: 16,
+                            fontWeight: 'bold'
+                        }
+                    },
+                    labelLine: {
+                        show: false
+                    },
+                    data: typeData.map(item => ({
+                        value: item.count,
+                        name: item.employee_type || 'Not Specified'
+                    }))
+                }
+            ],
+            color: ['#fc8452', '#73c0de', '#91cc75', '#fac858', '#ee6666', '#5470c6']
+        };
+
+        myChart.setOption(option);
+        this.charts.typeChart = myChart;
+
+        window.addEventListener('resize', () => {
+            myChart.resize();
+        });
+    }
+
+    createTrendChart() {
+        const chartDom = document.getElementById('trendChart');
+        if (!chartDom) return;
+
+        const myChart = echarts.init(chartDom);
+        const trendData = this.data.monthly_hiring_trend || [];
+
+        const option = {
+            tooltip: {
+                trigger: 'axis'
+            },
+            legend: {
+                data: ['New Hires']
+            },
+            grid: {
+                left: '3%',
+                right: '4%',
+                bottom: '3%',
+                containLabel: true
+            },
+            toolbox: {
+                feature: {
+                    saveAsImage: {}
+                }
+            },
+            xAxis: {
+                type: 'category',
+                boundaryGap: false,
+                data: trendData.map(item => item.month)
+            },
+            yAxis: {
+                type: 'value'
+            },
+            series: [
+                {
+                    name: 'New Hires',
+                    type: 'line',
+                    stack: 'Total',
+                    smooth: true,
+                    lineStyle: {
+                        width: 3
+                    },
+                    areaStyle: {
+                        opacity: 0.3,
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: 'rgba(83, 112, 198, 0.3)' },
+                            { offset: 1, color: 'rgba(83, 112, 198, 0.1)' }
+                        ])
+                    },
+                    data: trendData.map(item => item.count)
+                }
+            ],
+            color: ['#5470c6']
+        };
+
+        myChart.setOption(option);
+        this.charts.trendChart = myChart;
+
+        window.addEventListener('resize', () => {
+            myChart.resize();
+        });
+    }
+
+    resizeChart(cardId) {
+        const chartMap = {
+            'status-chart-card': 'statusChart',
+            'location-chart-card': 'locationChart',
+            'type-chart-card': 'typeChart',
+            'trend-chart-card': 'trendChart'
+        };
+        
+        const chartId = chartMap[cardId];
+        if (chartId && this.charts[chartId]) {
+            setTimeout(() => {
+                this.charts[chartId].resize();
+            }, 100);
+        }
+    }
+
+    saveCardLayout(card) {
+        const cardData = {
+            width: card.style.width,
+            height: card.style.height,
+            position: card.style.position || 'relative'
+        };
+        
+        localStorage.setItem(`dashboard-${card.id}`, JSON.stringify(cardData));
+    }
+
+    loadSavedLayout() {
+        document.querySelectorAll('.resizable-card').forEach(card => {
+            const savedData = localStorage.getItem(`dashboard-${card.id}`);
+            if (savedData) {
+                try {
+                    const data = JSON.parse(savedData);
+                    if (data.width) card.style.width = data.width;
+                    if (data.height) card.style.height = data.height;
+                } catch (e) {
+                    console.warn('Failed to load layout for:', card.id);
+                }
+            }
+        });
+        
+        // Resize charts after layout is loaded
+        setTimeout(() => {
+            Object.values(this.charts).forEach(chart => chart.resize());
+        }, 500);
+    }
+
+    resetLayout() {
+        document.querySelectorAll('.resizable-card').forEach(card => {
+            card.style.width = '';
+            card.style.height = '';
+            localStorage.removeItem(`dashboard-${card.id}`);
+        });
+        
+        // Reset to original grid layout
+        setTimeout(() => {
+            Object.values(this.charts).forEach(chart => chart.resize());
+        }, 100);
+        
+        this.showNotification('Layout reset to default', 'success');
+    }
+
+    saveLayout() {
+        const layoutData = {};
+        document.querySelectorAll('.resizable-card').forEach(card => {
+            layoutData[card.id] = {
+                width: card.style.width,
+                height: card.style.height
+            };
+        });
+        
+        // Save to backend via AJAX
+        fetch('{% url "profile:save-dashboard-layout" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({ layout: layoutData })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                this.showNotification('Layout saved successfully', 'success');
+            } else {
+                this.showNotification('Failed to save layout', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error saving layout:', error);
+            this.showNotification('Error saving layout', 'error');
+        });
+    }
+
+    toggleFullscreen() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen();
+        } else {
+            document.exitFullscreen();
+        }
+    }
+
+    setupRealTimeUpdates() {
+        // Update stats every 30 seconds  
+        setInterval(() => {
+            this.updateStatCards();
+        }, 30000);
+    }
+
+    updateStatCards() {
+        fetch('{% url "profile:dashboard-stats-api" %}')
+            .then(response => response.json())
+            .then(data => {
+                // Update stat card values with smooth animation
+                this.animateValue('total-users-card h2', data.total_users || {{ total_users }});
+                this.animateValue('active-users-card h2', data.active_users || {{ active_users }});
+                this.animateValue('inactive-users-card h2', data.inactive_users || {{ inactive_users }});
+                this.animateValue('new-hires-card h2', data.new_hires_count || {{ new_hires_count }});
+            })
+            .catch(error => {
+                console.warn('Failed to update stats:', error);
+            });
+    }
+
+    animateValue(selector, newValue) {
+        const element = document.querySelector(selector);
+        if (!element) return;
+        
+        const currentValue = parseInt(element.textContent) || 0;
+        const increment = (newValue - currentValue) / 20;
+        let current = currentValue;
+        
+        const timer = setInterval(() => {
+            current += increment;
+            if ((increment > 0 && current >= newValue) || (increment < 0 && current <= newValue)) {
+                current = newValue;
+                clearInterval(timer);
+            }
+            element.textContent = Math.round(current);
+        }, 50);
+    }
+
+    showError(message) {
+        console.error(message);
+        ['statusChart', 'locationChart', 'typeChart', 'trendChart'].forEach(chartId => {
+            const element = document.getElementById(chartId);
+            if (element) {
+                element.innerHTML = `<div class="flex items-center justify-center h-full text-gray-500">
+                    <div class="text-center">
+                        <i class="fas fa-exclamation-triangle text-3xl mb-2 text-yellow-500"></i>
+                        <p class="text-sm">${message}</p>
+                    </div>
+                </div>`;
+            }
+        });
+    }
+
+    showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        const bgColor = type === 'success' ? 'bg-green-500' : 
+                       type === 'error' ? 'bg-red-500' : 'bg-blue-500';
+        
+        notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg text-white transform transition-transform duration-300 ${bgColor}`;
+        notification.innerHTML = `
+            <div class="flex items-center">
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'} mr-2"></i>
+                <span>${message}</span>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    document.body.removeChild(notification);
+                }
+            }, 300);
+        }, 3000);
+    }
+
+    refreshData() {
+        this.init();
+    }
+}
+
+// Initialize analytics when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    window.dashboardAnalytics = new ResizableDashboard();
+    
+    // Add staggered animation delay for cards
+    setTimeout(() => {
+        document.querySelectorAll('.fade-in').forEach((card, index) => {
+            card.style.animationDelay = `${index * 0.1}s`;
+        });
+    }, 100);
+});
+
+// Auto-refresh every 5 minutes
+setInterval(() => {
+    if (window.dashboardAnalytics) {
+        window.dashboardAnalytics.refreshData();
+    }
+}, 300000);
+
+// Handle window resize for charts
+window.addEventListener('resize', () => {
+    if (window.dashboardAnalytics && window.dashboardAnalytics.charts) {
+        Object.values(window.dashboardAnalytics.charts).forEach(chart => {
+            if (chart && typeof chart.resize === 'function') {
+                chart.resize();
+            }
+        });
+    }
+});
+</script>
+
+{% endblock %}

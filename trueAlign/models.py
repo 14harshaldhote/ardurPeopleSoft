@@ -14,6 +14,9 @@ import math
 import ipaddress
 import geoip2.database
 import os
+from django.core.exceptions import ValidationError
+from django.core.cache import cache
+
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -1583,3 +1586,534 @@ class SessionActivity(models.Model):
         deleted_count = cls.objects.filter(created_at__lt=cutoff_date).delete()[0]
         logger.info(f"Cleaned up {deleted_count} old session activities")
         return deleted_count
+
+
+
+''' ------------------------------------------- PROFILE AREA ------------------------------------------- '''
+# models.py
+from django.db import models
+from django.contrib.auth.models import User
+from django.utils import timezone
+
+def validate_future_date(value):
+    """Validate that a date is not in the future."""
+    if value > timezone.now().date():
+        raise ValidationError('Date cannot be in the future.')
+
+
+def validate_pan(value):
+    """Validate PAN number format."""
+    if not value.isalnum() or len(value) != 10:
+        raise ValidationError('PAN number must be 10 alphanumeric characters.')
+    if not (value[:5].isalpha() and value[5:9].isdigit() and value[9].isalpha()):
+        raise ValidationError('PAN number format is invalid. It should be in the format AAAAA0000A.')
+
+
+def validate_aadhar(value):
+    """Validate Aadhar number format."""
+    if not value.isdigit() or len(value) != 12:
+        raise ValidationError('Aadhar number must be 12 digits.')
+
+class UserDetails(models.Model):
+    """Enhanced model for storing comprehensive employee information."""
+
+    # Employee Status Choices
+    EMPLOYMENT_STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('inactive', 'Inactive'),
+        ('terminated', 'Terminated'),
+        ('resigned', 'Resigned'),
+        ('suspended', 'Suspended'),
+        ('absconding', 'Absconding'),
+        ('probation', 'Probation'),
+        ('notice_period', 'Notice Period'),
+        ('sabbatical', 'Sabbatical'),
+        ('long_leave', 'Long Leave')
+    ]
+
+    # Employee Type Choices
+    EMPLOYEE_TYPE_CHOICES = [
+        ('full_time', 'Full-Time Employee'),
+        ('part_time', 'Part-Time Employee'),
+        ('contract', 'Contract Employee'),
+        ('intern', 'Intern'),
+        ('consultant', 'Consultant'),
+        ('probationary', 'Probationary Employee'),
+        ('remote', 'Remote Worker')
+    ]
+
+    # Role/Designation Choices
+    ROLE_CHOICES = [
+        ('admin', 'Admin'),
+        ('hr', 'HR'),
+        ('manager', 'Manager'),
+        ('team_lead', 'Team Lead'),
+        ('senior_developer', 'Senior Developer'),
+        ('developer', 'Developer'),
+        ('junior_developer', 'Junior Developer'),
+        ('intern', 'Intern'),
+        ('qa_engineer', 'QA Engineer'),
+        ('devops_engineer', 'DevOps Engineer'),
+        ('ui_ux_designer', 'UI/UX Designer'),
+        ('business_analyst', 'Business Analyst'),
+        ('project_manager', 'Project Manager'),
+        ('scrum_master', 'Scrum Master'),
+        ('consultant', 'Consultant'),
+        ('trainee', 'Trainee'),
+        ('other', 'Other')
+    ]
+
+    # Blood Group Choices
+    BLOOD_GROUP_CHOICES = [
+        ('A+', 'A+'),
+        ('A-', 'A-'),
+        ('B+', 'B+'),
+        ('B-', 'B-'),
+        ('AB+', 'AB+'),
+        ('AB-', 'AB-'),
+        ('O+', 'O+'),
+        ('O-', 'O-'),
+    ]
+
+    # Gender Choices
+    GENDER_CHOICES = [
+        ('Male', 'Male'),
+        ('Female', 'Female'),
+        ('Other', 'Other'),
+        ('Prefer not to say', 'Prefer not to say')
+    ]
+
+    # Marital Status Choices
+    MARITAL_STATUS_CHOICES = [
+        ('single', 'Single'),
+        ('married', 'Married'),
+        ('divorced', 'Divorced'),
+        ('widowed', 'Widowed'),
+        ('separated', 'Separated'),
+        ('other', 'Other')
+    ]
+
+    # Basic User Connection
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name='profile'
+    )
+
+    # Personal Information
+    dob = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name="Date of Birth",
+        validators=[validate_future_date]
+    )
+    blood_group = models.CharField(
+        max_length=10,
+        choices=BLOOD_GROUP_CHOICES,
+        null=True,
+        blank=True,
+        help_text="Select blood group"
+    )
+    gender = models.CharField(
+        max_length=20,
+        choices=GENDER_CHOICES,
+        null=True,
+        blank=True
+    )
+    marital_status = models.CharField(
+        max_length=20,
+        choices=MARITAL_STATUS_CHOICES,
+        null=True,
+        blank=True
+    )
+
+
+    # Contact Information
+    contact_number_primary = models.CharField(
+        max_length=15,
+        null=True,
+        blank=True,
+        help_text="Primary contact number with country code"
+    )
+
+    personal_email = models.EmailField(
+        unique=True,
+        null=True,
+        blank=True
+    )
+    company_email = models.EmailField(
+        unique=True,
+        null=True,
+        blank=True,
+        help_text="Official company email"
+    )
+
+    # Address Information
+    current_address_line1 = models.CharField(max_length=255, null=True, blank=True)
+    current_address_line2 = models.CharField(max_length=255, null=True, blank=True)
+    current_city = models.CharField(max_length=100, null=True, blank=True)
+    current_state = models.CharField(max_length=100, null=True, blank=True)
+    current_postal_code = models.CharField(max_length=10, null=True, blank=True)
+    current_country = models.CharField(max_length=100, null=True, blank=True)
+
+    # Permanent Address
+    permanent_address_line1 = models.CharField(max_length=255, null=True, blank=True)
+    permanent_address_line2 = models.CharField(max_length=255, null=True, blank=True)
+    permanent_city = models.CharField(max_length=100, null=True, blank=True)
+    permanent_state = models.CharField(max_length=100, null=True, blank=True)
+    permanent_postal_code = models.CharField(max_length=10, null=True, blank=True)
+    permanent_country = models.CharField(max_length=100, null=True, blank=True)
+    is_current_same_as_permanent = models.BooleanField(
+        default=False,
+        help_text="Is current address same as permanent address?"
+    )
+
+    # Emergency Contact
+    emergency_contact_name = models.CharField(max_length=255, null=True, blank=True)
+    emergency_contact_number = models.CharField(max_length=15, null=True, blank=True)
+    emergency_contact_relationship = models.CharField(max_length=50, null=True, blank=True)
+
+    # Secondary Emergency Contact
+    secondary_emergency_contact_name = models.CharField(max_length=255, null=True, blank=True)
+    secondary_emergency_contact_number = models.CharField(max_length=15, null=True, blank=True)
+    secondary_emergency_contact_relationship = models.CharField(max_length=50, null=True, blank=True)
+
+    # Employment Information
+    employee_type = models.CharField(
+        max_length=20,
+        choices=EMPLOYEE_TYPE_CHOICES,
+        null=True,
+        blank=True
+    )
+    role = models.CharField(
+        max_length=50,
+        choices=ROLE_CHOICES,
+        default='developer',
+        help_text="Employee role/designation in the company"
+    )
+    reporting_manager = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='direct_reports'
+    )
+    hire_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Date when offer was accepted"
+    )
+    start_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="First day of work"
+    )
+    probation_end_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Date when probation period ends"
+    )
+    notice_period_days = models.PositiveIntegerField(
+        default=30,
+        help_text="Notice period in days"
+    )
+    job_description = models.TextField(null=True, blank=True)
+    office_location = models.ForeignKey(
+        OfficeLocation,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='employees',
+        help_text="Office location where the employee works"
+    )
+    employment_status = models.CharField(
+        max_length=50,
+        choices=EMPLOYMENT_STATUS_CHOICES,
+        default='probation',
+        db_index=True
+    )
+    exit_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Last working day"
+    )
+    exit_reason = models.TextField(
+        null=True,
+        blank=True,
+        help_text="Reason for leaving the company"
+    )
+    rehire_eligibility = models.BooleanField(
+        null=True,
+        blank=True,
+        help_text="Eligible for rehire"
+    )
+
+    # Compensation Details
+    salary_currency = models.CharField(
+        max_length=3,
+        default='INR',
+        help_text="Currency code (e.g., INR, USD)"
+    )
+    base_salary = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True
+    )
+    salary_frequency = models.CharField(
+        max_length=20,
+        choices=[
+            ('monthly', 'Monthly'),
+            ('bi_weekly', 'Bi-Weekly'),
+            ('weekly', 'Weekly')
+        ],
+        default='monthly'
+    )
+
+    # Government IDs
+    pan_number = models.CharField(
+        max_length=10,
+        null=True,
+        blank=True,
+        verbose_name="PAN Number",
+        validators=[validate_pan]
+    )
+    aadhar_number = models.CharField(
+        max_length=12,
+        null=True,
+        blank=True,
+        verbose_name="Aadhar Number",
+        validators=[validate_aadhar]
+    )
+    passport_number = models.CharField(
+        max_length=20,
+        null=True,
+        blank=True
+    )
+    passport_expiry = models.DateField(
+        null=True,
+        blank=True
+    )
+
+    # Banking Details
+    bank_name = models.CharField(max_length=100, null=True, blank=True)
+    bank_account_number = models.CharField(max_length=30, null=True, blank=True)
+    bank_ifsc = models.CharField(
+        max_length=11,
+        null=True,
+        blank=True
+    )
+
+    # Previous Employment
+    previous_company = models.CharField(max_length=255, null=True, blank=True)
+    previous_position = models.CharField(max_length=100, null=True, blank=True)
+    previous_experience_years = models.PositiveIntegerField(
+        null=True,
+        blank=True
+    )
+
+    # HR Management
+    onboarded_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='onboarded_users'
+    )
+    onboarding_date = models.DateTimeField(auto_now_add=True)
+    last_updated = models.DateTimeField(auto_now=True)
+    last_status_change = models.DateTimeField(null=True, blank=True)
+
+    # Skills and Competencies
+    skills = models.TextField(
+        null=True,
+        blank=True,
+        help_text="Comma-separated list of skills"
+    )
+
+    # Additional HR Notes
+    confidential_notes = models.TextField(
+        null=True,
+        blank=True,
+        help_text="Confidential HR notes (visible only to HR)"
+    )
+
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "User Detail"
+        verbose_name_plural = "User Details"
+        indexes = [
+            models.Index(fields=['employment_status']),
+            models.Index(fields=['employee_type']),
+            models.Index(fields=['office_location']),
+            models.Index(fields=['hire_date']),
+            models.Index(fields=['start_date']),
+        ]
+        permissions = [
+            ("view_confidential_notes", "Can view confidential HR notes"),
+            ("view_salary_information", "Can view salary information"),
+            ("export_employee_data", "Can export employee data"),
+            ("manage_employee_status", "Can change employee status"),
+        ]
+
+    def save(self, *args, **kwargs):
+        # Handle email fields
+        if self.company_email == "":
+            self.company_email = None
+
+        if self.personal_email == "":
+            self.personal_email = None
+
+        # Update last_status_change when employment status changes
+        try:
+            if self.pk:
+                old_instance = UserDetails.objects.get(pk=self.pk)
+                if old_instance.employment_status != self.employment_status:
+                    self.last_status_change = timezone.now()
+        except UserDetails.DoesNotExist:
+            pass
+
+        # Handle same address flag
+        if self.is_current_same_as_permanent:
+            self.permanent_address_line1 = self.current_address_line1
+            self.permanent_address_line2 = self.current_address_line2
+            self.permanent_city = self.current_city
+            self.permanent_state = self.current_state
+            self.permanent_postal_code = self.current_postal_code
+            self.permanent_country = self.current_country
+
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.user.get_full_name() or self.user.username}"
+
+    @property
+    def full_name(self):
+        return self.user.get_full_name() or self.user.username
+
+    @property
+    def age(self):
+        if not self.dob:
+            return None
+        today = timezone.now().date()
+        return today.year - self.dob.year - ((today.month, today.day) < (self.dob.month, self.dob.day))
+
+    @property
+    def employment_duration(self):
+        if not self.start_date:
+            return None
+
+        end_date = self.exit_date if self.exit_date else timezone.now().date()
+        delta = end_date - self.start_date
+        years = delta.days // 365
+        months = (delta.days % 365) // 30
+
+        if years > 0:
+            return f"{years} year{'s' if years > 1 else ''}, {months} month{'s' if months > 1 else ''}"
+        return f"{months} month{'s' if months > 1 else ''}"
+
+    @property
+    def status_display(self):
+        status_colors = {
+            'active': 'success',
+            'inactive': 'secondary',
+            'terminated': 'danger',
+            'resigned': 'warning',
+            'suspended': 'info',
+            'absconding': 'dark',
+            'probation': 'primary',
+            'notice_period': 'warning',
+            'sabbatical': 'purple',
+            'long_leave': 'orange'
+        }
+
+        status_text = dict(self.EMPLOYMENT_STATUS_CHOICES).get(self.employment_status)
+        status_color = status_colors.get(self.employment_status, 'secondary')
+
+        return {'text': status_text, 'color': status_color}
+
+    @property
+    def is_on_notice(self):
+        return self.employment_status == 'notice_period'
+
+    @property
+    def remaining_notice_period(self):
+        if not self.is_on_notice or not self.exit_date:
+            return None
+
+        today = timezone.now().date()
+        if today >= self.exit_date:
+            return 0
+
+        return (self.exit_date - today).days
+
+    @property
+    def get_reporting_chain(self):
+        """Get the hierarchical reporting chain for this employee."""
+        chain = []
+        current = self.reporting_manager
+
+        while current:
+            try:
+                manager_profile = UserDetails.objects.get(user=current)
+                chain.append({
+                    'name': current.get_full_name(),
+                    'id': current.id
+                })
+                current = manager_profile.reporting_manager
+            except (UserDetails.DoesNotExist, AttributeError):
+                break
+
+        return chain
+
+# User action log for tracking important HR actions
+class UserActionLog(models.Model):
+    ACTION_TYPES = [
+        ('create', 'User Created'),
+        ('update', 'User Updated'),
+        ('status_change', 'Status Changed'),
+        ('role_change', 'Role Changed'),
+        ('deactivate', 'User Deactivated'),
+        ('activate', 'User Activated'),
+        ('password_reset', 'Password Reset'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_logs')
+    action_type = models.CharField(max_length=20, choices=ACTION_TYPES)
+    action_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='performed_actions')
+    timestamp = models.DateTimeField(auto_now_add=True)
+    details = models.TextField(blank=True, null=True)
+
+    class Meta:
+        ordering = ['-timestamp']
+
+    def __str__(self):
+        return f"{self.get_action_type_display()} for {self.user.username} on {self.timestamp.strftime('%Y-%m-%d %H:%M')}"
+
+
+# Dashboard Layout Preferences Model
+class LayoutPreference(models.Model):
+    """
+    Model to store user's dashboard layout preferences
+    """
+    user = models.OneToOneField(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name='layout_preference'
+    )
+    layout = JSONField(
+        default=dict, 
+        help_text="JSON data storing card positions, sizes, and order"
+    )
+    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Layout Preference"
+        verbose_name_plural = "Layout Preferences"
+
+    def __str__(self):
+        return f"{self.user.username}'s Layout Preference"

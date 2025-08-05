@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}User Profile{% endblock %}
+
+{% block content %}
+cdiv class="container mx-auto px-4 py-6"e
+    cdiv class="flex justify-between items-center mb-6"e
+        ch1 class="text-3xl font-bold text-gray-900"eUser Profile: {{ user_profile.full_name }}c/h1e
+        cdiv class="flex space-x-3"e
+            ca href="{% url 'profile:user-list' %}" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition duration-200"e
+                ci class="fas fa-arrow-left mr-2"ec/ieBack to List
+            c/ae
+            {% if can_edit %}
+            ca href="{% url 'profile:user-update' user_profile.user.id %}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg transition duration-200"e
+                ci class="fas fa-edit mr-2"ec/ieEdit Profile
+            c/ae
+            {% endif %}
+        c/dive
+    c/dive
+
+    cdiv class="bg-white rounded-lg shadow-sm p-6"e
+        ctable class="min-w-full table-fixed"e
+            ctbodye
+                ctr class="border-t"e
+                    cth class="px-6 py-3 text-left text-sm font-medium text-gray-500"eUsernamec/the
+                    ctd class="px-6 py-3 whitespace-nowrap text-sm text-gray-900"e{{ user_profile.user.username }}c/tde
+                c/tre
+                ctr class="border-t"e
+                    cth class="px-6 py-3 text-left text-sm font-medium text-gray-500"eEmailc/the
+                    ctd class="px-6 py-3 whitespace-nowrap text-sm text-gray-900"e{{ user_profile.user.email }}c/tde
+                c/tre
+                ctr class="border-t"e
+                    cth class="px-6 py-3 text-left text-sm font-medium text-gray-500"eFull Namec/the
+                    ctd class="px-6 py-3 whitespace-nowrap text-sm text-gray-900"e{{ user_profile.full_name }}c/tde
+                c/tre
+                ctr class="border-t"e
+                    cth class="px-6 py-3 text-left text-sm font-medium text-gray-500"eContact Numberc/the
+                    ctd class="px-6 py-3 whitespace-nowrap text-sm text-gray-900"e{{ user_profile.contact_number_primary|default:"Not provided" }}c/tde
+                c/tre
+                ctr class="border-t"e
+                    cth class="px-6 py-3 text-left text-sm font-medium text-gray-500"eEmployment Statusc/the
+                    ctd class="px-6 py-3 whitespace-nowrap text-sm text-gray-900"e{{ user_profile.get_employment_status_display }}c/tde
+                c/tre
+                ctr class="border-t"e
+                    cth class="px-6 py-3 text-left text-sm font-medium text-gray-500"eEmployee Typec/the
+                    ctd class="px-6 py-3 whitespace-nowrap text-sm text-gray-900"e{{ user_profile.get_employee_type_display|default:"Not specified" }}c/tde
+                c/tre
+                ctr class="border-t"e
+                    cth class="px-6 py-3 text-left text-sm font-medium text-gray-500"eRolec/the
+                    ctd class="px-6 py-3 whitespace-nowrap text-sm text-gray-900"e{{ user_profile.get_role_display|default:"Not specified" }}c/tde
+                c/tre
+                ctr class="border-t"e
+                    cth class="px-6 py-3 text-left text-sm font-medium text-gray-500"eOffice Locationc/the
+                    ctd class="px-6 py-3 whitespace-nowrap text-sm text-gray-900"e{{ user_profile.office_location.name|default:"Not assigned" }}c/tde
+                c/tre
+            c/tbodye
+        c/tablee
+
+        cdiv class="mt-6"e
+            ch3 class="text-lg font-semibold text-gray-700"eAction Logsc/h3e
+            ctable class="min-w-full mt-4 border-t"e
+                ctheade
+                    ctre
+                        cth class="px-6 py-3 text-left text-sm font-medium text-gray-500"eActionc/the
+                        cth class="px-6 py-3 text-left text-sm font-medium text-gray-500"eDatec/the
+                        cth class="px-6 py-3 text-left text-sm font-medium text-gray-500"eByc/the
+                    c/tre
+                c/theade
+                ctbody class="divide-y divide-gray-200"e
+                    {% for log in action_logs %}
+                    ctre
+                        ctd class="px-6 py-3 whitespace-nowrap text-sm text-gray-900"e{{ log.get_action_type_display }}c/tde
+                        ctd class="px-6 py-3 whitespace-nowrap text-sm text-gray-900"e{{ log.timestamp|date:"SHORT_DATETIME_FORMAT" }}c/tde
+                        ctd class="px-6 py-3 whitespace-nowrap text-sm text-gray-900"e{{ log.action_by.get_full_name|default:log.action_by.username }}c/tde
+                    c/tre
+                    {% empty %}
+                    ctre
+                        ctd colspan="3" class="px-6 py-3 text-center text-sm text-gray-500"eNo action logs available.c/tde
+                    c/tre
+                    {% endfor %}
+                c/tbodye
+            c/tablee
+        c/dive
+    c/dive
+
+c/dive
+{% endblock %}

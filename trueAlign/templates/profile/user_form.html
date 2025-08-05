@@ -1,0 +1,355 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-900">{{ title }}</h1>
+        <a href="{% url 'profile:user-list' %}" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition duration-200">
+            <i class="fas fa-arrow-left mr-2"></i>Back to List
+        </a>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-sm p-6">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Personal Information Section -->
+            <div class="border-b border-gray-200 pb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Personal Information</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- First Name -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">First Name *</label>
+                        {{ form.first_name }}
+                        {% if form.first_name.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.first_name.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Last Name -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Last Name *</label>
+                        {{ form.last_name }}
+                        {% if form.last_name.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.last_name.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Email -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.email.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Password (only for create) -->
+                    {% if title == 'Create New User' %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Password *</label>
+                        <input type="password" name="password" value="{{ form.password.value|default:'Welcome@123' }}" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                        {% if form.password.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.password.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Date of Birth -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Date of Birth</label>
+                        {{ form.dob }}
+                        {% if form.dob.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.dob.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Gender -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Gender</label>
+                        {{ form.gender }}
+                        {% if form.gender.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.gender.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Blood Group -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Blood Group</label>
+                        {{ form.blood_group }}
+                        {% if form.blood_group.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.blood_group.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Marital Status -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Marital Status</label>
+                        {{ form.marital_status }}
+                        {% if form.marital_status.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.marital_status.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Information Section -->
+            <div class="border-b border-gray-200 pb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Contact Information</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Primary Contact -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Primary Contact Number</label>
+                        {{ form.contact_number_primary }}
+                        {% if form.contact_number_primary.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.contact_number_primary.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Personal Email -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Personal Email</label>
+                        {{ form.personal_email }}
+                        {% if form.personal_email.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.personal_email.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Company Email -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Company Email</label>
+                        {{ form.company_email }}
+                        {% if form.company_email.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.company_email.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Employment Information Section -->
+            <div class="border-b border-gray-200 pb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Employment Information</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Employee Type -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Employee Type</label>
+                        {{ form.employee_type }}
+                        {% if form.employee_type.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.employee_type.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Role -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Role</label>
+                        {{ form.role }}
+                        {% if form.role.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.role.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Office Location -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Office Location</label>
+                        {{ form.office_location }}
+                        {% if form.office_location.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.office_location.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Group (only for create) -->
+                    {% if title == 'Create New User' %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">User Group *</label>
+                        {{ form.group }}
+                        {% if form.group.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.group.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Employment Status -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Employment Status</label>
+                        {{ form.employment_status }}
+                        {% if form.employment_status.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.employment_status.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Reporting Manager -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Reporting Manager</label>
+                        {{ form.reporting_manager }}
+                        {% if form.reporting_manager.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.reporting_manager.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Hire Date -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Hire Date</label>
+                        {{ form.hire_date }}
+                        {% if form.hire_date.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.hire_date.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Start Date -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+                        {{ form.start_date }}
+                        {% if form.start_date.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.start_date.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Address Information Section -->
+            <div class="border-b border-gray-200 pb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Address Information</h3>
+                
+                <!-- Current Address -->
+                <h4 class="text-md font-medium text-gray-700 mb-3">Current Address</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Address Line 1</label>
+                        {{ form.current_address_line1 }}
+                        {% if form.current_address_line1.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.current_address_line1.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Address Line 2</label>
+                        {{ form.current_address_line2 }}
+                        {% if form.current_address_line2.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.current_address_line2.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">City</label>
+                        {{ form.current_city }}
+                        {% if form.current_city.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.current_city.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">State</label>
+                        {{ form.current_state }}
+                        {% if form.current_state.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.current_state.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Postal Code</label>
+                        {{ form.current_postal_code }}
+                        {% if form.current_postal_code.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.current_postal_code.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Country</label>
+                        {{ form.current_country }}
+                        {% if form.current_country.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.current_country.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Same as Current Address Checkbox -->
+                <div class="mb-4">
+                    <label class="flex items-center">
+                        {{ form.is_current_same_as_permanent }}
+                        <span class="ml-2 text-sm text-gray-700">Permanent address is same as current address</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Emergency Contact Section -->
+            <div class="border-b border-gray-200 pb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Emergency Contact</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Name</label>
+                        {{ form.emergency_contact_name }}
+                        {% if form.emergency_contact_name.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.emergency_contact_name.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+                        {{ form.emergency_contact_number }}
+                        {% if form.emergency_contact_number.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.emergency_contact_number.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Relationship</label>
+                        {{ form.emergency_contact_relationship }}
+                        {% if form.emergency_contact_relationship.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.emergency_contact_relationship.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Job Description -->
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Additional Information</h3>
+                <div class="grid grid-cols-1 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Job Description</label>
+                        {{ form.job_description }}
+                        {% if form.job_description.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.job_description.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Skills</label>
+                        {{ form.skills }}
+                        {% if form.skills.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.skills.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+                <a href="{% url 'profile:user-list' %}" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-md transition duration-200">
+                    Cancel
+                </a>
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md transition duration-200">
+                    <i class="fas fa-save mr-2"></i>{% if 'create' in request.resolver_match.url_name %}Create User{% else %}Update User{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Handle same address checkbox
+document.addEventListener('DOMContentLoaded', function() {
+    const sameAddressCheckbox = document.querySelector('input[name="is_current_same_as_permanent"]');
+    if (sameAddressCheckbox) {
+        sameAddressCheckbox.addEventListener('change', function() {
+            // You can add JavaScript here to copy current address to permanent address fields
+            // if the checkbox is checked
+        });
+    }
+});
+</script>
+{% endblock %}

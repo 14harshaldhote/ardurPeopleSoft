@@ -42,7 +42,7 @@ SECRET_KEY = get_env_variable('SECRET_KEY', 'django-insecure-wt0_%27ipo5)5q$w^q0
 DEBUG = get_env_variable('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
 # ALLOWED_HOSTS configuration
-ALLOWED_HOSTS = get_env_variable('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if get_env_variable('ALLOWED_HOSTS') else ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = get_env_variable('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if get_env_variable('ALLOWED_HOSTS') else ['localhost', '127.0.0.1', 'testserver']
 
 # Security Settings for Production
 if not DEBUG:
@@ -101,6 +101,7 @@ INSTALLED_APPS = [
     'trueAlign',
     'trueAlign.core',
     'trueAlign.sessions',
+    'trueAlign.profile',  # Profile management app
     'trueAlign.notifications',  # New notification system
     'rest_framework',
     'widget_tweaks',
