@@ -1,188 +1,385 @@
 {% extends 'base.html' %}
-{% load static %}
-
-{% block title %}User Management{% endblock %}
-
+{% block title %}User Management - TrueAlign Portal{% endblock %}
 {% block content %}
-<div class="container mx-auto px-4 py-6">
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-3xl font-bold text-gray-900">User Management</h1>
-        <a href="{% url 'profile:user-create' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200">
-            <i class="fas fa-plus mr-2"></i>Add New User
+
+<div class="min-h-screen py-6 px-4 lg:px-8 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+    <div class="max-w-7xl mx-auto">
+
+        <!-- Header Section -->
+        <div class="relative overflow-hidden mb-8 rounded-2xl bg-white/80 backdrop-blur-sm border border-white/20 shadow-xl">
+            <div class="absolute inset-0 bg-gradient-to-r from-indigo-500/10 via-purple-500/5 to-pink-500/10"></div>
+            <div class="relative p-8">
+                <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center">
+                    <div>
+                        <h1 class="text-4xl font-bold text-slate-800 mb-2 tracking-wide">User Management</h1>
+                        <p class="text-slate-600 text-lg">Manage employee profiles and access permissions</p>
+                    </div>
+                    <div class="flex flex-wrap gap-3 mt-6 lg:mt-0">
+                        <a href="{% url 'profile:user-create' %}" class="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white px-6 py-3 rounded-xl transition-all duration-300 font-semibold tracking-wide shadow-lg hover:shadow-xl transform hover:scale-105">
+                            <i class="fas fa-plus mr-2"></i>Add New User
+                        </a>
+                        <a href="{% url 'profile:bulk-upload' %}" class="bg-white/80 backdrop-blur-sm hover:bg-white text-slate-700 hover:text-slate-900 px-6 py-3 rounded-xl border border-slate-200 transition-all duration-300 font-semibold tracking-wide shadow-md hover:shadow-lg">
+                            <i class="fas fa-upload mr-2"></i>Bulk Upload
+                        </a>
+                        <a href="{% url 'profile:export-csv' %}" class="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 rounded-xl transition-all duration-300 font-semibold tracking-wide shadow-lg hover:shadow-xl">
+                            <i class="fas fa-download mr-2"></i>Export CSV
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters Section -->
+        <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-8 mb-8 border border-white/20">
+            <div class="flex items-center mb-6">
+                <i class="fas fa-filter text-2xl text-indigo-500 mr-3"></i>
+                <h2 class="text-2xl font-bold text-slate-800 tracking-wide">Filters</h2>
+            </div>
+
+            <form method="get" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Search -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-semibold text-slate-700 tracking-wide">Search Users</label>
+                    <div class="relative">
+                        <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                        <input type="text" name="search" value="{{ search_query }}"
+                               placeholder="Name, email, username..."
+                               class="w-full pl-12 pr-4 py-3 bg-white/70 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 font-medium">
+                    </div>
+                </div>
+
+                <!-- Status Filter -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-semibold text-slate-700 tracking-wide">Employment Status</label>
+                    <div class="relative">
+                        <i class="fas fa-user-check absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                        <select name="status" class="w-full pl-12 pr-10 py-3 bg-white/70 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 font-medium appearance-none">
+                            <option value="">All Statuses</option>
+                            {% for value, label in status_choices %}
+                                <option value="{{ value }}" {% if current_status == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                        <i class="fas fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+                    </div>
+                </div>
+
+                <!-- Location Filter -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-semibold text-slate-700 tracking-wide">Office Location</label>
+                    <div class="relative">
+                        <i class="fas fa-map-marker-alt absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                        <select name="location" class="w-full pl-12 pr-10 py-3 bg-white/70 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 font-medium appearance-none">
+                            <option value="">All Locations</option>
+                            {% for location in locations %}
+                                <option value="{{ location.id }}" {% if current_location == location.id|stringformat:"s" %}selected{% endif %}>{{ location.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <i class="fas fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+                    </div>
+                </div>
+
+                <!-- Employee Type Filter -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-semibold text-slate-700 tracking-wide">Employee Type</label>
+                    <div class="relative">
+                        <i class="fas fa-briefcase absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                        <select name="employee_type" class="w-full pl-12 pr-10 py-3 bg-white/70 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 font-medium appearance-none">
+                            <option value="">All Types</option>
+                            {% for value, label in employee_types %}
+                                <option value="{{ value }}" {% if current_employee_type == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                        <i class="fas fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+                    </div>
+                </div>
+
+                <!-- Filter Actions -->
+                <div class="md:col-span-2 lg:col-span-4 flex flex-wrap gap-3 pt-4">
+                    <button type="submit" class="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white px-8 py-3 rounded-xl transition-all duration-300 font-semibold tracking-wide shadow-lg hover:shadow-xl transform hover:scale-105">
+                        <i class="fas fa-search mr-2"></i>Apply Filters
+                    </button>
+                    <a href="{% url 'profile:user-list' %}" class="bg-slate-200 hover:bg-slate-300 text-slate-700 hover:text-slate-900 px-8 py-3 rounded-xl transition-all duration-300 font-semibold tracking-wide">
+                        <i class="fas fa-times mr-2"></i>Clear Filters
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Users Table -->
+        <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 overflow-hidden">
+            <div class="p-8 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-slate-100">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <i class="fas fa-users text-2xl text-indigo-500 mr-3"></i>
+                        <h2 class="text-2xl font-bold text-slate-800 tracking-wide">
+                            Users Directory
+                            <span class="text-lg font-normal text-slate-600">
+                                ({{ page_obj.paginator.count }} total)
+                            </span>
+                        </h2>
+                    </div>
+                </div>
+            </div>
+
+            {% if users %}
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gradient-to-r from-slate-100 to-slate-200">
+                        <tr>
+                            <th class="px-8 py-4 text-left text-sm font-bold text-slate-700 tracking-wider uppercase">User</th>
+                            <th class="px-8 py-4 text-left text-sm font-bold text-slate-700 tracking-wider uppercase">Contact</th>
+                            <th class="px-8 py-4 text-left text-sm font-bold text-slate-700 tracking-wider uppercase">Role & Status</th>
+                            <th class="px-8 py-4 text-left text-sm font-bold text-slate-700 tracking-wider uppercase">Location</th>
+                            <th class="px-8 py-4 text-left text-sm font-bold text-slate-700 tracking-wider uppercase">Joined</th>
+                            <th class="px-8 py-4 text-center text-sm font-bold text-slate-700 tracking-wider uppercase">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200">
+                        {% for user_profile in users %}
+                        <tr class="hover:bg-gradient-to-r hover:from-indigo-50/50 hover:to-purple-50/50 transition-all duration-300 group">
+                            <td class="px-8 py-6">
+                                <div class="flex items-center space-x-4">
+                                    <div class="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                                        {{ user_profile.user.first_name|first|default:user_profile.user.username|first|upper }}
+                                    </div>
+                                    <div>
+                                        <h3 class="text-lg font-semibold text-slate-800 group-hover:text-indigo-600 transition-colors">
+                                            {{ user_profile.user.get_full_name|default:user_profile.user.username }}
+                                        </h3>
+                                        <p class="text-sm text-slate-600 font-medium">{{ user_profile.user.username }}</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-8 py-6">
+                                <div class="space-y-1">
+                                    <div class="flex items-center text-slate-700">
+                                        <i class="fas fa-envelope text-indigo-500 mr-2 w-4"></i>
+                                        <span class="font-medium">{{ user_profile.user.email|default:"Not provided" }}</span>
+                                    </div>
+                                    {% if user_profile.contact_number_primary %}
+                                    <div class="flex items-center text-slate-600">
+                                        <i class="fas fa-phone text-emerald-500 mr-2 w-4"></i>
+                                        <span class="font-medium">{{ user_profile.contact_number_primary }}</span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="px-8 py-6">
+                                <div class="space-y-3">
+                                    <div>
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold
+                                            {% if user_profile.employment_status == 'active' %}
+                                                bg-emerald-100 text-emerald-800 border border-emerald-200
+                                            {% elif user_profile.employment_status == 'inactive' %}
+                                                bg-amber-100 text-amber-800 border border-amber-200
+                                            {% elif user_profile.employment_status == 'terminated' %}
+                                                bg-red-100 text-red-800 border border-red-200
+                                            {% else %}
+                                                bg-slate-100 text-slate-800 border border-slate-200
+                                            {% endif %}">
+                                            {% if user_profile.employment_status == 'active' %}
+                                                <i class="fas fa-check-circle mr-1"></i>
+                                            {% elif user_profile.employment_status == 'inactive' %}
+                                                <i class="fas fa-pause-circle mr-1"></i>
+                                            {% elif user_profile.employment_status == 'terminated' %}
+                                                <i class="fas fa-times-circle mr-1"></i>
+                                            {% else %}
+                                                <i class="fas fa-question-circle mr-1"></i>
+                                            {% endif %}
+                                            {{ user_profile.get_employment_status_display }}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <span class="text-sm font-semibold text-slate-700 bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
+                                            {{ user_profile.get_role_display|default:"No Role" }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-8 py-6">
+                                {% if user_profile.office_location %}
+                                    <div class="flex items-center text-slate-700">
+                                        <i class="fas fa-map-marker-alt text-rose-500 mr-2"></i>
+                                        <div>
+                                            <p class="font-semibold">{{ user_profile.office_location.name }}</p>
+                                            <p class="text-sm text-slate-600">{{ user_profile.office_location.city }}</p>
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <span class="text-slate-500 italic">Not assigned</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-8 py-6">
+                                <div class="text-slate-700">
+                                    {% if user_profile.hire_date %}
+                                        <p class="font-semibold">{{ user_profile.hire_date|date:"M d, Y" }}</p>
+                                        <p class="text-sm text-slate-600">{{ user_profile.hire_date|timesince }} ago</p>
+                                    {% else %}
+                                        <p class="font-semibold">{{ user_profile.user.date_joined|date:"M d, Y" }}</p>
+                                        <p class="text-sm text-slate-600">{{ user_profile.user.date_joined|timesince }} ago</p>
+                                    {% endif %}
+                                </div>
+                            </td>
+                           <td class="px-8 py-6">
+    <div class="flex items-center justify-center space-x-2">
+        <!-- View Details -->
+        <a href="{% url 'profile:user-detail' user_profile.user.pk %}"
+           class="bg-indigo-500 hover:bg-indigo-600 text-white p-3 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-110"
+           title="View Details">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path d="M1.5 12s4-7.5 10.5-7.5S22.5 12 22.5 12s-4 7.5-10.5 7.5S1.5 12 1.5 12z"/>
+                <circle cx="12" cy="12" r="3"/>
+            </svg>
         </a>
+
+        <!-- Edit User -->
+        <a href="{% url 'profile:user-update' user_profile.user.pk %}"
+           class="bg-emerald-500 hover:bg-emerald-600 text-white p-3 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-110"
+           title="Edit User">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path d="M16.862 3.487a2.25 2.25 0 113.182 3.182L7.5 19.212l-4.5 1.125 1.125-4.5 12.737-12.35z"/>
+            </svg>
+        </a>
+
+        <!-- Change Status
+        <button data-user-id="{{ user_profile.user.pk }}" data-current-status="{{ user_profile.employment_status }}"
+                class="status-change-btn bg-amber-500 hover:bg-amber-600 text-white p-3 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-110"
+                title="Change Status">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v6h6M20 20v-6h-6M4 20v-6h6M20 4v6h-6"/>
+            </svg>
+        </button> -->
     </div>
+</td>
 
-    <!-- Filters -->
-    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-        <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <!-- Search -->
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
-                <input type="text" name="search" value="{{ search_query }}" 
-                       placeholder="Name, email, username..." 
-                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
+            {% else %}
+            <div class="p-16 text-center">
+                <div class="max-w-md mx-auto">
+                    <div class="w-24 h-24 bg-gradient-to-br from-slate-200 to-slate-300 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-users text-4xl text-slate-500"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-slate-800 mb-2">No Users Found</h3>
+                    <p class="text-slate-600 mb-8">No users match your current filters. Try adjusting your search criteria or create a new user.</p>
+                    <a href="{% url 'profile:user-create' %}" class="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white px-8 py-3 rounded-xl transition-all duration-300 font-semibold tracking-wide shadow-lg hover:shadow-xl transform hover:scale-105 inline-flex items-center">
+                        <i class="fas fa-plus mr-2"></i>Add First User
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
 
-            <!-- Status Filter -->
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Employment Status</label>
-                <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="">All Statuses</option>
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div class="mt-8 flex justify-center">
+            <nav class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-2">
+                <div class="flex items-center space-x-1">
+                    {% if page_obj.has_previous %}
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page=1"
+                           class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-all duration-300 font-medium">
+                            <i class="fas fa-angle-double-left mr-1"></i>First
+                        </a>
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}"
+                           class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-all duration-300 font-medium">
+                            <i class="fas fa-angle-left mr-1"></i>Previous
+                        </a>
+                    {% endif %}
+
+                    <span class="px-6 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-semibold">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                    </span>
+
+                    {% if page_obj.has_next %}
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}"
+                           class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-all duration-300 font-medium">
+                            Next<i class="fas fa-angle-right ml-1"></i>
+                        </a>
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.paginator.num_pages }}"
+                           class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-all duration-300 font-medium">
+                            Last<i class="fas fa-angle-double-right ml-1"></i>
+                        </a>
+                    {% endif %}
+                </div>
+            </nav>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+<!-- Status Change Modal -->
+<div id="statusModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden z-50 flex items-center justify-center">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 p-8">
+        <div class="text-center mb-6">
+            <div class="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-exchange-alt text-2xl text-amber-600"></i>
+            </div>
+            <h3 class="text-xl font-bold text-slate-800 mb-2">Change User Status</h3>
+            <p class="text-slate-600">Select the new employment status for this user.</p>
+        </div>
+
+        <form id="statusForm" method="post">
+            {% csrf_token %}
+            <div class="space-y-4">
+                <select id="statusSelect" name="status" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
                     {% for value, label in status_choices %}
-                        <option value="{{ value }}" {% if current_status == value %}selected{% endif %}>{{ label }}</option>
+                        <option value="{{ value }}">{{ label }}</option>
                     {% endfor %}
                 </select>
             </div>
 
-            <!-- Location Filter -->
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Location</label>
-                <select name="location" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="">All Locations</option>
-                    {% for location in locations %}
-                        <option value="{{ location.id }}" {% if current_location == location.id|stringformat:"s" %}selected{% endif %}>{{ location.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <!-- Employee Type Filter -->
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Employee Type</label>
-                <select name="employee_type" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="">All Types</option>
-                    {% for value, label in employee_types %}
-                        <option value="{{ value }}" {% if current_employee_type == value %}selected{% endif %}>{{ label }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="md:col-span-4 flex gap-2">
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition duration-200">
-                    <i class="fas fa-search mr-2"></i>Filter
+            <div class="flex space-x-3 mt-8">
+                <button type="button" onclick="closeStatusModal()"
+                        class="flex-1 px-6 py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl transition-all duration-300 font-semibold">
+                    Cancel
                 </button>
-                <a href="{% url 'profile:user-list' %}" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md transition duration-200">
-                    <i class="fas fa-times mr-2"></i>Clear
-                </a>
-                <a href="{% url 'profile:export-csv' %}?{{ request.GET.urlencode }}" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition duration-200">
-                    <i class="fas fa-download mr-2"></i>Export CSV
-                </a>
+                <button type="submit"
+                        class="flex-1 px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-xl transition-all duration-300 font-semibold">
+                    Update Status
+                </button>
             </div>
         </form>
     </div>
-
-    <!-- User Table -->
-    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employment</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    {% for user_profile in users %}
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="flex items-center">
-                                <div class="flex-shrink-0 h-10 w-10">
-                                    <div class="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium">
-                                        {{ user_profile.user.first_name|first|default:user_profile.user.username|first }}
-                                    </div>
-                                </div>
-                                <div class="ml-4">
-                                    <div class="text-sm font-medium text-gray-900">{{ user_profile.full_name }}</div>
-                                    <div class="text-sm text-gray-500">{{ user_profile.user.username }}</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm text-gray-900">{{ user_profile.user.email }}</div>
-                            <div class="text-sm text-gray-500">{{ user_profile.contact_number_primary|default:"No phone" }}</div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm text-gray-900">{{ user_profile.get_employee_type_display|default:"N/A" }}</div>
-                            <div class="text-sm text-gray-500">{{ user_profile.get_role_display|default:"N/A" }}</div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {{ user_profile.office_location.name|default:"Not Assigned" }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            {% with status=user_profile.status_display %}
-                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-{{ status.color }}-100 text-{{ status.color }}-800">
-                                {{ status.text }}
-                            </span>
-                            {% endwith %}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div class="flex space-x-2">
-                                <a href="{% url 'profile:user-detail' user_profile.user.id %}" 
-                                   class="inline-flex items-center px-3 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 text-xs font-medium rounded-full transition duration-200" 
-                                   title="View Details">
-                                    <i class="fas fa-eye mr-1"></i>View
-                                </a>
-                                <a href="{% url 'profile:user-update' user_profile.user.id %}" 
-                                   class="inline-flex items-center px-3 py-1 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 text-xs font-medium rounded-full transition duration-200" 
-                                   title="Edit User">
-                                    <i class="fas fa-edit mr-1"></i>Edit
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="6" class="px-6 py-4 text-center text-gray-500">
-                            <div class="py-12">
-                                <i class="fas fa-users text-4xl text-gray-300 mb-4"></i>
-                                <p class="text-lg">No users found</p>
-                                <p class="text-sm">Try adjusting your filters or add a new user</p>
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Pagination -->
-    {% if is_paginated %}
-    <div class="flex justify-between items-center mt-6">
-        <div class="text-sm text-gray-700">
-            Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} results
-        </div>
-        <div class="flex space-x-1">
-            {% if page_obj.has_previous %}
-                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page=1" 
-                   class="px-3 py-2 bg-white border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50">
-                    First
-                </a>
-                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}" 
-                   class="px-3 py-2 bg-white border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50">
-                    Previous
-                </a>
-            {% endif %}
-            
-            <span class="px-3 py-2 bg-blue-600 text-white rounded-md text-sm">
-                {{ page_obj.number }}
-            </span>
-            
-            {% if page_obj.has_next %}
-                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}" 
-                   class="px-3 py-2 bg-white border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50">
-                    Next
-                </a>
-                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.paginator.num_pages }}" 
-                   class="px-3 py-2 bg-white border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50">
-                    Last
-                </a>
-            {% endif %}
-        </div>
-    </div>
-    {% endif %}
 </div>
+
+<script>
+function changeUserStatus(userId, currentStatus) {
+    const modal = document.getElementById('statusModal');
+    const form = document.getElementById('statusForm');
+    const statusSelect = document.getElementById('statusSelect');
+
+    form.action = `/profile/users/${userId}/change-status/`;
+    statusSelect.value = currentStatus;
+
+    modal.classList.remove('hidden');
+}
+
+// Add event listeners for status change buttons
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.status-change-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const userId = this.dataset.userId;
+            const currentStatus = this.dataset.currentStatus;
+            changeUserStatus(userId, currentStatus);
+        });
+    });
+});
+
+function closeStatusModal() {
+    const modal = document.getElementById('statusModal');
+    modal.classList.add('hidden');
+}
+
+// Close modal when clicking outside
+document.getElementById('statusModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeStatusModal();
+    }
+});
+</script>
+
 {% endblock %}

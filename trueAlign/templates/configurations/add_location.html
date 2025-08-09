@@ -1,0 +1,346 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Add Office Location - TrueAlign Portal{% endblock %}
+
+{% block content %}
+<div class="min-h-screen py-6 px-4 lg:px-8 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+    <div class="max-w-4xl mx-auto">
+
+        <!-- Header Section -->
+        <div class="relative overflow-hidden mb-8 rounded-2xl bg-white/80 backdrop-blur-sm border border-white/20 shadow-xl">
+            <div class="absolute inset-0 bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-green-500/10"></div>
+            <div class="relative p-8">
+                <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center">
+                    <div class="flex items-center space-x-6">
+                        <div class="w-20 h-20 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center text-white font-bold text-2xl shadow-lg">
+                            <i class="ri-add-line"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-4xl font-bold text-slate-800 mb-2 tracking-wide">Add Office Location</h1>
+                            <p class="text-slate-600 text-lg">Create a new office location in the system</p>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-3 mt-6 lg:mt-0">
+                        <a href="{% url 'core:manage_locations' %}"
+                           class="bg-white/80 backdrop-blur-sm hover:bg-white text-slate-700 hover:text-slate-900 px-6 py-3 rounded-xl border border-slate-200 transition-all duration-300 font-semibold tracking-wide shadow-md hover:shadow-lg">
+                            <i class="ri-arrow-left-line mr-2"></i>Back to Locations
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Container -->
+        <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 overflow-hidden">
+            <form method="post" class="space-y-0">
+                {% csrf_token %}
+
+                <!-- Basic Information Section -->
+                <div class="p-8 border-b border-slate-200 bg-gradient-to-r from-slate-50/50 to-slate-100/50">
+                    <div class="flex items-center mb-8">
+                        <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                            <i class="ri-building-line text-white text-xl"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold text-slate-800 ml-4 tracking-wide">Basic Information</h2>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Location Name -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-semibold text-slate-700 tracking-wide">
+                                Location Name <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <i class="ri-building-line absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                                <input type="text" name="name"
+                                       class="w-full pl-12 pr-4 py-3 bg-white/70 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-300 font-medium"
+                                       placeholder="e.g., Mumbai - Bandra West" required>
+                            </div>
+                            <p class="text-xs text-slate-500">Descriptive name for the office location</p>
+                        </div>
+
+                        <!-- Location Code -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-semibold text-slate-700 tracking-wide">
+                                Location Code <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <i class="ri-hashtag absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                                <input type="text" name="code"
+                                       class="w-full pl-12 pr-4 py-3 bg-white/70 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-300 font-medium uppercase"
+                                       placeholder="e.g., MUM" maxlength="10" required>
+                            </div>
+                            <p class="text-xs text-slate-500">Short code for quick identification</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Address Information Section -->
+                <div class="p-8 border-b border-slate-200">
+                    <div class="flex items-center mb-8">
+                        <div class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center">
+                            <i class="ri-map-pin-line text-white text-xl"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold text-slate-800 ml-4 tracking-wide">Address Information</h2>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-6">
+                        <!-- Address Line 1 -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-semibold text-slate-700 tracking-wide">
+                                Address Line 1 <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <i class="ri-road-map-line absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                                <input type="text" name="address_line1"
+                                       class="w-full pl-12 pr-4 py-3 bg-white/70 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-300 font-medium"
+                                       placeholder="Street address, building name, floor" required>
+                            </div>
+                        </div>
+
+                        <!-- Address Line 2 -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-semibold text-slate-700 tracking-wide">Address Line 2</label>
+                            <div class="relative">
+                                <i class="ri-map-2-line absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                                <input type="text" name="address_line2"
+                                       class="w-full pl-12 pr-4 py-3 bg-white/70 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-300 font-medium"
+                                       placeholder="Additional address information (optional)">
+                            </div>
+                        </div>
+
+                        <!-- City, State, Postal Code -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="space-y-2">
+                                <label class="block text-sm font-semibold text-slate-700 tracking-wide">
+                                    City <span class="text-red-500">*</span>
+                                </label>
+                                <div class="relative">
+                                    <i class="ri-building-2-line absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                                    <input type="text" name="city"
+                                           class="w-full pl-12 pr-4 py-3 bg-white/70 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-300 font-medium"
+                                           placeholder="City name" required>
+                                </div>
+                            </div>
+
+                            <div class="space-y-2">
+                                <label class="block text-sm font-semibold text-slate-700 tracking-wide">
+                                    State <span class="text-red-500">*</span>
+                                </label>
+                                <div class="relative">
+                                    <i class="ri-map-line absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                                    <input type="text" name="state"
+                                           class="w-full pl-12 pr-4 py-3 bg-white/70 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-300 font-medium"
+                                           placeholder="State/Province" required>
+                                </div>
+                            </div>
+
+                            <div class="space-y-2">
+                                <label class="block text-sm font-semibold text-slate-700 tracking-wide">
+                                    Postal Code <span class="text-red-500">*</span>
+                                </label>
+                                <div class="relative">
+                                    <i class="ri-mail-line absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                                    <input type="text" name="postal_code"
+                                           class="w-full pl-12 pr-4 py-3 bg-white/70 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-300 font-medium"
+                                           placeholder="ZIP/Postal code" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Country -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-semibold text-slate-700 tracking-wide">Country</label>
+                            <div class="relative">
+                                <i class="ri-global-line absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                                <select name="country" class="w-full pl-12 pr-10 py-3 bg-white/70 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-300 font-medium appearance-none">
+                                    <option value="India" selected>India</option>
+                                    <option value="United States">United States</option>
+                                    <option value="United Kingdom">United Kingdom</option>
+                                    <option value="Canada">Canada</option>
+                                    <option value="Australia">Australia</option>
+                                    <option value="Singapore">Singapore</option>
+                                    <option value="United Arab Emirates">United Arab Emirates</option>
+                                </select>
+                                <i class="ri-arrow-down-s-line absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact Information Section -->
+                <div class="p-8 border-b border-slate-200">
+                    <div class="flex items-center mb-8">
+                        <div class="w-12 h-12 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center">
+                            <i class="ri-phone-line text-white text-xl"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold text-slate-800 ml-4 tracking-wide">Contact Information</h2>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Phone Number -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-semibold text-slate-700 tracking-wide">Office Phone</label>
+                            <div class="relative">
+                                <i class="ri-phone-line absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                                <input type="tel" name="phone"
+                                       class="w-full pl-12 pr-4 py-3 bg-white/70 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-300 font-medium"
+                                       placeholder="+91 12345 67890">
+                            </div>
+                        </div>
+
+                        <!-- Email Address -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-semibold text-slate-700 tracking-wide">Office Email</label>
+                            <div class="relative">
+                                <i class="ri-mail-line absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                                <input type="email" name="email"
+                                       class="w-full pl-12 pr-4 py-3 bg-white/70 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-300 font-medium"
+                                       placeholder="office@company.com">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Operational Details Section -->
+                <div class="p-8 border-b border-slate-200">
+                    <div class="flex items-center mb-8">
+                        <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
+                            <i class="ri-time-line text-white text-xl"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold text-slate-800 ml-4 tracking-wide">Operational Details</h2>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Timezone -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-semibold text-slate-700 tracking-wide">Timezone</label>
+                            <div class="relative">
+                                <i class="ri-global-line absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                                <select name="timezone" class="w-full pl-12 pr-10 py-3 bg-white/70 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-300 font-medium appearance-none">
+                                    <option value="Asia/Kolkata" selected>Asia/Kolkata (IST)</option>
+                                    <option value="America/New_York">America/New_York (EST)</option>
+                                    <option value="Europe/London">Europe/London (GMT)</option>
+                                    <option value="Asia/Singapore">Asia/Singapore (SGT)</option>
+                                    <option value="Australia/Sydney">Australia/Sydney (AEST)</option>
+                                    <option value="Asia/Dubai">Asia/Dubai (GST)</option>
+                                </select>
+                                <i class="ri-arrow-down-s-line absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+                            </div>
+                        </div>
+
+                        <!-- Status -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-semibold text-slate-700 tracking-wide">Status</label>
+                            <div class="relative">
+                                <label class="inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" name="is_active" checked class="sr-only peer">
+                                    <div class="relative w-14 h-7 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-emerald-500"></div>
+                                    <span class="ml-3 text-sm font-medium text-slate-700">Active</span>
+                                </label>
+                            </div>
+                            <p class="text-xs text-slate-500">Enable this location for operations</p>
+                        </div>
+                    </div>
+
+                    <!-- Working Hours -->
+                    <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label class="block text-sm font-semibold text-slate-700 tracking-wide">Working Hours Start</label>
+                            <div class="relative">
+                                <i class="ri-sun-line absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                                <input type="time" name="working_hours_start" value="09:00"
+                                       class="w-full pl-12 pr-4 py-3 bg-white/70 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-300 font-medium">
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="block text-sm font-semibold text-slate-700 tracking-wide">Working Hours End</label>
+                            <div class="relative">
+                                <i class="ri-moon-line absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                                <input type="time" name="working_hours_end" value="18:00"
+                                       class="w-full pl-12 pr-4 py-3 bg-white/70 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-300 font-medium">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="p-8 bg-gradient-to-r from-slate-50/50 to-slate-100/50">
+                    <div class="flex flex-col sm:flex-row gap-4 justify-end">
+                        <a href="{% url 'core:manage_locations' %}"
+                           class="px-8 py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 hover:text-slate-900 rounded-xl transition-all duration-300 font-semibold tracking-wide text-center">
+                            <i class="ri-close-line mr-2"></i>Cancel
+                        </a>
+                        <button type="submit"
+                                class="px-8 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-xl transition-all duration-300 font-semibold tracking-wide shadow-lg hover:shadow-xl transform hover:scale-105">
+                            <i class="ri-save-line mr-2"></i>Create Location
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto uppercase location code
+    const codeInput = document.querySelector('input[name="code"]');
+    if (codeInput) {
+        codeInput.addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+        });
+    }
+
+    // Form validation
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const requiredFields = form.querySelectorAll('[required]');
+            let isValid = true;
+
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    field.classList.add('border-red-500', 'bg-red-50');
+                    isValid = false;
+                } else {
+                    field.classList.remove('border-red-500', 'bg-red-50');
+                }
+            });
+
+            if (!isValid) {
+                e.preventDefault();
+                alert('Please fill in all required fields.');
+            }
+        });
+    }
+});
+</script>
+
+<style>
+.hover\:scale-105:hover {
+    transform: scale(1.05);
+}
+
+.transform {
+    transition-property: transform;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 300ms;
+}
+
+.backdrop-blur-sm {
+    backdrop-filter: blur(4px);
+}
+
+/* Custom toggle switch animation */
+.peer:checked ~ .peer-checked\:bg-emerald-500 {
+    background-color: #10b981;
+}
+
+.peer:checked ~ .peer-checked\:after\:translate-x-full:after {
+    transform: translateX(100%);
+}
+</style>
+{% endblock %}

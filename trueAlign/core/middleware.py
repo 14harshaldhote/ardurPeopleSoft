@@ -116,7 +116,7 @@ class OptimizedSessionTrackingMiddleware:
         """Get or create session with throttling"""
         # Import here to avoid circular imports
         from trueAlign.models import UserSession
-        
+
         tab_id = request.headers.get('X-Tab-ID') or request.GET.get('tab_id')
         cache_key = f"session_lookup_{user.id}_{tab_id or 'default'}"
 
@@ -189,6 +189,9 @@ class OptimizedSessionTrackingMiddleware:
 
     def _create_new_session_throttled(self, request, user, tab_id):
         """Create new session with minimal data and security checks using improved session management"""
+        # Import here to avoid circular imports
+        from trueAlign.models import UserSession
+
         try:
             client_info = self._extract_client_info(request)
 
@@ -244,9 +247,6 @@ class OptimizedSessionTrackingMiddleware:
             if location_info:
                 client_data['location_data'] = location_info
 
-            # Import here to avoid circular imports
-            from trueAlign.models import UserSession
-            
             # Use the improved get_or_create_session method
             session, created = UserSession.get_or_create_session(
                 user=user,
@@ -550,7 +550,7 @@ class OptimizedSessionTrackingMiddleware:
         """Force flush buffer for specific user session"""
         # Import here to avoid circular imports
         from trueAlign.models import UserSession
-        
+
         buffer_key = f"activity_{user_id}_{session_id}"
 
         if buffer_key in cls._activity_buffer:
@@ -691,7 +691,7 @@ class OptimizedGlobalAuthenticationMiddleware:
         """Check session expiry with optimized queries"""
         # Import here to avoid circular imports
         from trueAlign.models import UserSession
-        
+
         user = request.user
 
         try:
@@ -735,7 +735,7 @@ class OptimizedGlobalAuthenticationMiddleware:
         """Handle expired session"""
         # Import here to avoid circular imports
         from trueAlign.models import UserSession
-        
+
         # Mark session as inactive and clear caches
         if hasattr(request, 'user') and request.user.is_authenticated:
             UserSession.objects.filter(

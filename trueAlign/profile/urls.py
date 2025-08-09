@@ -27,11 +27,13 @@ urlpatterns = [
     # User profile views
     path('my-profile/', views.my_profile, name='my-profile'),
     path('my-profile/edit/', views.edit_my_profile, name='edit-my-profile'),
-    
+
     # Analytics API endpoints
     path('api/dashboard-analytics/', views.dashboard_analytics_api, name='dashboard-analytics-api'),
     path('api/user-activity/<int:user_id>/', views.user_activity_analytics_api, name='user-activity-api'),
-    
+    path('api/dashboard-stats/', views.dashboard_stats_api, name='dashboard-stats-api'),
+    path('api/save-dashboard-layout/', views.save_dashboard_layout, name='save-dashboard-layout'),
+
     # Layout preference API endpoints
     path('api/layout-preferences/', LayoutPreferenceAPIView.as_view(), name='layout-preferences-api'),
     path('api/layout-preferences-fallback/', layout_preference_view, name='layout-preferences-fallback'),

@@ -1,31 +1,365 @@
-{% extends 'base.html' %}
-{% load static %}
+{% extends 'base.html' %} {% load static %} {% block title %}Bulk Upload Users -
+TrueAlign Portal{% endblock %} {% block content %}
 
-{% block title %}Bulk Upload Users{% endblock %}
-
-{% block content %}
-<div class="container mx-auto px-4 py-6">
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-3xl font-bold text-gray-900">Bulk Upload Users</h1>
-        <a href="{% url 'profile:user-list' %}" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition duration-200">
-            <i class="fas fa-arrow-left mr-2"></i>Back to List
-        </a>
-    </div>
-
-    <div class="bg-white rounded-lg shadow-sm p-6">
-        <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            <div class="flex justify-between items-center mb-4">
-                <label class="block text-sm font-medium text-gray-700 mr-4">Select CSV File:</label>
-                <input type="file" name="csv_file" class="border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                {% if form.csv_file.errors %}
-                    <p class="mt-1 text-sm text-red-600">{{ form.csv_file.errors.0 }}</p>
-                {% endif %}
+<div
+    class="min-h-screen py-6 px-4 lg:px-8 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100"
+>
+    <div class="max-w-5xl mx-auto">
+        <!-- Header Section -->
+        <div
+            class="relative overflow-hidden mb-8 rounded-2xl bg-white/80 backdrop-blur-sm border border-white/20 shadow-xl"
+        >
+            <div
+                class="absolute inset-0 bg-gradient-to-r from-indigo-500/10 via-purple-500/5 to-pink-500/10"
+            ></div>
+            <div class="relative p-8">
+                <div
+                    class="flex flex-col lg:flex-row justify-between items-start lg:items-center"
+                >
+                    <div class="flex items-center space-x-6">
+                        <div
+                            class="w-20 h-20 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center text-white font-bold text-2xl shadow-lg"
+                        >
+                            <i class="fas fa-upload"></i>
+                        </div>
+                        <div>
+                            <h1
+                                class="text-4xl font-bold text-slate-800 mb-2 tracking-wide"
+                            >
+                                Bulk Upload Users
+                            </h1>
+                            <p class="text-slate-600 text-lg">
+                                Import multiple user profiles from CSV file
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-3 mt-6 lg:mt-0">
+                        <a
+                            href="{% url 'profile:user-list' %}"
+                            class="bg-white/80 backdrop-blur-sm hover:bg-white text-slate-700 hover:text-slate-900 px-6 py-3 rounded-xl border border-slate-200 transition-all duration-300 font-semibold tracking-wide shadow-md hover:shadow-lg"
+                        >
+                            <i class="fas fa-arrow-left mr-2"></i>Back to List
+                        </a>
+                        <a
+                            href="{% url 'profile:user-create' %}"
+                            class="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white px-6 py-3 rounded-xl transition-all duration-300 font-semibold tracking-wide shadow-lg hover:shadow-xl transform hover:scale-105"
+                        >
+                            <i class="fas fa-plus mr-2"></i>Add Single User
+                        </a>
+                    </div>
+                </div>
             </div>
-            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md transition duration-200">
-                <i class="fas fa-upload mr-2"></i>Upload
-            </button>
-        </form>
+        </div>
+
+        <!-- Upload Form -->
+        <div
+            class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 overflow-hidden transition-all duration-300 hover:shadow-2xl"
+        >
+            <div
+                class="bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-green-500/10 px-8 py-6 border-b border-white/20"
+            >
+                <h3 class="text-2xl font-bold text-slate-800 flex items-center">
+                    <i class="fas fa-file-csv mr-3 text-emerald-600"></i>CSV
+                    File Upload
+                </h3>
+                <p class="text-slate-600 mt-2">
+                    Select a CSV file containing user information to import
+                    multiple users at once
+                </p>
+            </div>
+
+            <div class="p-8">
+                <form
+                    method="post"
+                    enctype="multipart/form-data"
+                    class="space-y-6"
+                >
+                    {% csrf_token %}
+
+                    <!-- File Input Section -->
+                    <div class="relative">
+                        <label
+                            class="block text-sm font-semibold text-slate-600 uppercase tracking-wide mb-3"
+                        >
+                            <i class="fas fa-paperclip mr-2"></i>Select CSV File
+                        </label>
+                        <div class="relative">
+                            <input
+                                type="file"
+                                name="csv_file"
+                                accept=".csv"
+                                class="block w-full text-slate-600 file:mr-4 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-gradient-to-r file:from-emerald-500 file:to-teal-600 file:text-white hover:file:from-emerald-600 hover:file:to-teal-700 file:shadow-lg hover:file:shadow-xl file:transition-all file:duration-300 file:cursor-pointer bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500"
+                                required
+                            />
+                            <div
+                                class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none"
+                            >
+                                <i
+                                    class="fas fa-cloud-upload-alt text-slate-400 text-lg"
+                                ></i>
+                            </div>
+                        </div>
+                        {% if form.csv_file.errors %}
+                        <div
+                            class="mt-2 bg-red-100 border border-red-200 rounded-lg p-3"
+                        >
+                            <p
+                                class="text-sm text-red-700 font-medium flex items-center"
+                            >
+                                <i class="fas fa-exclamation-triangle mr-2"></i>
+                                {{ form.csv_file.errors.0 }}
+                            </p>
+                        </div>
+                        {% endif %}
+                        <p class="mt-2 text-sm text-slate-500">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Only CSV files are accepted. Maximum file size: 10MB
+                        </p>
+                    </div>
+
+                    <!-- Upload Button -->
+                    <div class="flex justify-center pt-4">
+                        <button
+                            type="submit"
+                            class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-8 py-4 rounded-xl transition-all duration-300 font-bold text-lg tracking-wide shadow-lg hover:shadow-xl transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-emerald-500/20"
+                        >
+                            <i class="fas fa-upload mr-3"></i>Upload and Process
+                            CSV
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Instructions Section -->
+        <div
+            class="mt-8 bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 overflow-hidden"
+        >
+            <div
+                class="bg-gradient-to-r from-blue-500/10 via-indigo-500/5 to-purple-500/10 px-8 py-6 border-b border-white/20"
+            >
+                <h3 class="text-2xl font-bold text-slate-800 flex items-center">
+                    <i class="fas fa-lightbulb mr-3 text-blue-600"></i>Upload
+                    Instructions
+                </h3>
+            </div>
+
+            <div class="p-8">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- CSV Format Requirements -->
+                    <div class="space-y-6">
+                        <div>
+                            <h4
+                                class="text-lg font-semibold text-slate-800 mb-4 flex items-center"
+                            >
+                                <i class="fas fa-table mr-2 text-indigo-600"></i
+                                >CSV Format Requirements
+                            </h4>
+                            <div class="space-y-3">
+                                <div class="flex items-start space-x-3">
+                                    <div
+                                        class="w-2 h-2 bg-emerald-500 rounded-full mt-2 flex-shrink-0"
+                                    ></div>
+                                    <p class="text-slate-600">
+                                        The CSV file must contain a header row
+                                        with column names
+                                    </p>
+                                </div>
+                                <div class="flex items-start space-x-3">
+                                    <div
+                                        class="w-2 h-2 bg-emerald-500 rounded-full mt-2 flex-shrink-0"
+                                    ></div>
+                                    <p class="text-slate-600">
+                                        Each row should represent one user's
+                                        information
+                                    </p>
+                                </div>
+                                <div class="flex items-start space-x-3">
+                                    <div
+                                        class="w-2 h-2 bg-emerald-500 rounded-full mt-2 flex-shrink-0"
+                                    ></div>
+                                    <p class="text-slate-600">
+                                        Use UTF-8 encoding to prevent character
+                                        issues
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Required Columns -->
+                    <div class="space-y-6">
+                        <div>
+                            <h4
+                                class="text-lg font-semibold text-slate-800 mb-4 flex items-center"
+                            >
+                                <i
+                                    class="fas fa-list-check mr-2 text-teal-600"
+                                ></i
+                                >Required Columns
+                            </h4>
+                            <div class="bg-slate-50 rounded-xl p-6">
+                                <div class="space-y-3 text-sm">
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <span
+                                            class="font-semibold text-slate-700"
+                                            >first_name</span
+                                        >
+                                        <span class="text-slate-600"
+                                            >First Name</span
+                                        >
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <span
+                                            class="font-semibold text-slate-700"
+                                            >last_name</span
+                                        >
+                                        <span class="text-slate-600"
+                                            >Last Name</span
+                                        >
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <span
+                                            class="font-semibold text-slate-700"
+                                            >email</span
+                                        >
+                                        <span class="text-slate-600"
+                                            >Email Address</span
+                                        >
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <span
+                                            class="font-semibold text-slate-700"
+                                            >username</span
+                                        >
+                                        <span class="text-slate-600"
+                                            >Username</span
+                                        >
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <span
+                                            class="font-semibold text-slate-700"
+                                            >employee_id</span
+                                        >
+                                        <span class="text-slate-600"
+                                            >Employee ID</span
+                                        >
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sample CSV -->
+                <div class="mt-8">
+                    <div class="flex justify-between items-center mb-4">
+                        <h4
+                            class="text-lg font-semibold text-slate-800 flex items-center"
+                        >
+                            <i class="fas fa-file-code mr-2 text-purple-600"></i
+                            >Sample CSV Format
+                        </h4>
+                        <button
+                            onclick="downloadSample()"
+                            class="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white px-4 py-2 rounded-lg transition-all duration-300 font-medium shadow-md hover:shadow-lg text-sm"
+                        >
+                            <i class="fas fa-download mr-2"></i>Download Sample
+                        </button>
+                    </div>
+                    <div class="bg-slate-50 rounded-xl p-6 overflow-x-auto">
+                        <pre
+                            class="text-sm text-slate-700 whitespace-pre"
+                        ><code>first_name,last_name,email,username,employee_id,department,position
+John,Doe,john.doe@company.com,johndoe,EMP001,Engineering,Developer
+Jane,Smith,jane.smith@company.com,janesmith,EMP002,Marketing,Manager
+Bob,Johnson,bob.johnson@company.com,bobjohnson,EMP003,Sales,Representative</code></pre>
+                    </div>
+                </div>
+
+                <!-- Important Notes -->
+                <div
+                    class="mt-8 bg-amber-50 border border-amber-200 rounded-xl p-6"
+                >
+                    <h5
+                        class="text-lg font-semibold text-amber-800 mb-3 flex items-center"
+                    >
+                        <i class="fas fa-exclamation-triangle mr-2"></i
+                        >Important Notes
+                    </h5>
+                    <div class="space-y-2 text-sm text-amber-700">
+                        <div class="flex items-start space-x-2">
+                            <i
+                                class="fas fa-info-circle mt-1 text-amber-600"
+                            ></i>
+                            <p>
+                                Duplicate email addresses will be skipped
+                                automatically
+                            </p>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <i
+                                class="fas fa-info-circle mt-1 text-amber-600"
+                            ></i>
+                            <p>
+                                Users will be created with a default temporary
+                                password that they must change on first login
+                            </p>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <i
+                                class="fas fa-info-circle mt-1 text-amber-600"
+                            ></i>
+                            <p>
+                                Invalid data in any row will cause that specific
+                                user to be skipped with an error message
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+
+<script>
+    function downloadSample() {
+        const csvContent = `first_name,last_name,email,username,employee_id,department,position
+John,Doe,john.doe@company.com,johndoe,EMP001,Engineering,Developer
+Jane,Smith,jane.smith@company.com,janesmith,EMP002,Marketing,Manager
+Bob,Johnson,bob.johnson@company.com,bobjohnson,EMP003,Sales,Representative`;
+
+        const blob = new Blob([csvContent], {
+            type: "text/csv;charset=utf-8;",
+        });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", "sample_users.csv");
+        link.style.visibility = "hidden";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+</script>
+
+<style>
+    .hover\:scale-105:hover {
+        transform: scale(1.05);
+    }
+
+    .transform {
+        transition-property: transform;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        transition-duration: 300ms;
+    }
+
+    .backdrop-blur-sm {
+        backdrop-filter: blur(4px);
+    }
+
+    .file\:transition-all::file-selector-button {
+        transition: all 0.3s ease;
+    }
+</style>
 {% endblock %}

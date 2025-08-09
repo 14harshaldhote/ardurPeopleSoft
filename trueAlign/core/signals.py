@@ -152,9 +152,42 @@ def handle_session_delete(sender, instance, **kwargs):
 @receiver(post_save, sender=User)
 def handle_user_update(sender, instance, created, **kwargs):
     """
-    Handle user updates that might affect sessions
+    Handle user creation and updates that might affect sessions
     """
-    if not created:
+    if created:
+        # Auto-create UserDetails profile for new users
+        try:
+            from trueAlign.models import UserDetails
+
+            # Determine default role based on user properties
+            default_role = 'developer'  # Default role
+
+            if instance.is_superuser:
+                default_role = 'admin'
+            elif instance.is_staff:
+                default_role = 'hr'
+            elif instance.groups.filter(name__icontains='admin').exists():
+                default_role = 'admin'
+            elif instance.groups.filter(name__icontains='hr').exists():
+                default_role = 'hr'
+            elif instance.groups.filter(name__icontains='manager').exists():
+                default_role = 'manager'
+
+            # Create UserDetails profile
+            UserDetails.objects.get_or_create(
+                user=instance,
+                defaults={
+                    'role': default_role,
+                    'employee_type': 'full_time',
+                    'employment_status': 'active',
+                    'personal_email': instance.email,
+                }
+            )
+            logger.info(f"UserDetails profile created for new user: {instance.username}")
+
+        except Exception as e:
+            logger.error(f"Error creating UserDetails for user {instance.username}: {str(e)}")
+    else:
         try:
             # Clear user-related caches when user is updated
             cache_keys_to_clear = [

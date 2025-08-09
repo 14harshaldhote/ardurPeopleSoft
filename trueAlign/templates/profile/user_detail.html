@@ -1,88 +1,762 @@
-{% extends 'base.html' %}
-{% load static %}
+{% extends 'base.html' %} {% block title %}User Profile - TrueAlign Portal{%
+endblock %} {% block content %}
 
-{% block title %}User Profile{% endblock %}
+<div
+    class="min-h-screen py-6 px-4 lg:px-8 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100"
+>
+    <div class="max-w-6xl mx-auto">
+        <!-- Header Section -->
+        <div
+            class="relative overflow-hidden mb-8 rounded-2xl bg-white/80 backdrop-blur-sm border border-white/20 shadow-xl"
+        >
+            <div
+                class="absolute inset-0 bg-gradient-to-r from-indigo-500/10 via-purple-500/5 to-pink-500/10"
+            ></div>
+            <div class="relative p-8">
+                <div
+                    class="flex flex-col lg:flex-row justify-between items-start lg:items-center"
+                >
+                    <div class="flex items-center space-x-6">
+                        <div
+                            class="w-24 h-24 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center text-white font-bold text-3xl shadow-xl"
+                        >
+                            {{
+                            user_profile.user.first_name|first|default:user_profile.user.username|first|upper
+                            }}
+                        </div>
+                        <div>
+                            <h1
+                                class="text-4xl font-bold text-slate-800 mb-2 tracking-wide"
+                            >
+                                {{ user_profile.full_name }}
+                            </h1>
+                            <p class="text-slate-600 text-lg">
+                                {{ user_profile.user.email }}
+                            </p>
+                            <div class="mt-3">
+                                <span
+                                    class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold {% if user_profile.employment_status == 'active' %} bg-emerald-100 text-emerald-800 border border-emerald-200 {% elif user_profile.employment_status == 'inactive' %} bg-amber-100 text-amber-800 border border-amber-200 {% elif user_profile.employment_status == 'terminated' %} bg-red-100 text-red-800 border border-red-200 {% else %} bg-slate-100 text-slate-800 border border-slate-200 {% endif %}"
+                                >
+                                    {% if user_profile.employment_status ==
+                                    'active' %}
+                                    <i class="fas fa-check-circle mr-2"></i>
+                                    {% elif user_profile.employment_status ==
+                                    'inactive' %}
+                                    <i class="fas fa-pause-circle mr-2"></i>
+                                    {% elif user_profile.employment_status ==
+                                    'terminated' %}
+                                    <i class="fas fa-times-circle mr-2"></i>
+                                    {% else %}
+                                    <i class="fas fa-question-circle mr-2"></i>
+                                    {% endif %} {{
+                                    user_profile.get_employment_status_display
+                                    }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-3 mt-6 lg:mt-0">
+                        <a
+                            href="{% url 'profile:user-list' %}"
+                            class="bg-white/80 backdrop-blur-sm hover:bg-white text-slate-700 hover:text-slate-900 px-6 py-3 rounded-xl border border-slate-200 transition-all duration-300 font-semibold tracking-wide shadow-md hover:shadow-lg"
+                        >
+                            <i class="fas fa-arrow-left mr-2"></i>Back to List
+                        </a>
+                        {% if can_edit %}
+                        <a
+                            href="{% url 'profile:user-update' user_profile.user.id %}"
+                            class="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-6 py-3 rounded-xl transition-all duration-300 font-semibold tracking-wide shadow-lg hover:shadow-xl transform hover:scale-105"
+                        >
+                            <i class="fas fa-edit mr-2"></i>Edit Profile
+                        </a>
+                        {% endif %}
+                        <button
+                            onclick="printProfile()"
+                            class="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white px-6 py-3 rounded-xl transition-all duration-300 font-semibold tracking-wide shadow-lg hover:shadow-xl transform hover:scale-105"
+                        >
+                            <i class="fas fa-print mr-2"></i>Print
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-{% block content %}
-cdiv class="container mx-auto px-4 py-6"e
-    cdiv class="flex justify-between items-center mb-6"e
-        ch1 class="text-3xl font-bold text-gray-900"eUser Profile: {{ user_profile.full_name }}c/h1e
-        cdiv class="flex space-x-3"e
-            ca href="{% url 'profile:user-list' %}" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition duration-200"e
-                ci class="fas fa-arrow-left mr-2"ec/ieBack to List
-            c/ae
-            {% if can_edit %}
-            ca href="{% url 'profile:user-update' user_profile.user.id %}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg transition duration-200"e
-                ci class="fas fa-edit mr-2"ec/ieEdit Profile
-            c/ae
-            {% endif %}
-        c/dive
-    c/dive
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Column - Main Info -->
+            <div class="lg:col-span-2 space-y-8">
+                <!-- Personal Information -->
+                <div
+                    class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-white/20"
+                >
+                    <div class="flex items-center mb-6">
+                        <div
+                            class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center"
+                        >
+                            <i class="fas fa-user text-white text-xl"></i>
+                        </div>
+                        <h2
+                            class="text-2xl font-bold text-slate-800 ml-4 tracking-wide"
+                        >
+                            Personal Information
+                        </h2>
+                    </div>
 
-    cdiv class="bg-white rounded-lg shadow-sm p-6"e
-        ctable class="min-w-full table-fixed"e
-            ctbodye
-                ctr class="border-t"e
-                    cth class="px-6 py-3 text-left text-sm font-medium text-gray-500"eUsernamec/the
-                    ctd class="px-6 py-3 whitespace-nowrap text-sm text-gray-900"e{{ user_profile.user.username }}c/tde
-                c/tre
-                ctr class="border-t"e
-                    cth class="px-6 py-3 text-left text-sm font-medium text-gray-500"eEmailc/the
-                    ctd class="px-6 py-3 whitespace-nowrap text-sm text-gray-900"e{{ user_profile.user.email }}c/tde
-                c/tre
-                ctr class="border-t"e
-                    cth class="px-6 py-3 text-left text-sm font-medium text-gray-500"eFull Namec/the
-                    ctd class="px-6 py-3 whitespace-nowrap text-sm text-gray-900"e{{ user_profile.full_name }}c/tde
-                c/tre
-                ctr class="border-t"e
-                    cth class="px-6 py-3 text-left text-sm font-medium text-gray-500"eContact Numberc/the
-                    ctd class="px-6 py-3 whitespace-nowrap text-sm text-gray-900"e{{ user_profile.contact_number_primary|default:"Not provided" }}c/tde
-                c/tre
-                ctr class="border-t"e
-                    cth class="px-6 py-3 text-left text-sm font-medium text-gray-500"eEmployment Statusc/the
-                    ctd class="px-6 py-3 whitespace-nowrap text-sm text-gray-900"e{{ user_profile.get_employment_status_display }}c/tde
-                c/tre
-                ctr class="border-t"e
-                    cth class="px-6 py-3 text-left text-sm font-medium text-gray-500"eEmployee Typec/the
-                    ctd class="px-6 py-3 whitespace-nowrap text-sm text-gray-900"e{{ user_profile.get_employee_type_display|default:"Not specified" }}c/tde
-                c/tre
-                ctr class="border-t"e
-                    cth class="px-6 py-3 text-left text-sm font-medium text-gray-500"eRolec/the
-                    ctd class="px-6 py-3 whitespace-nowrap text-sm text-gray-900"e{{ user_profile.get_role_display|default:"Not specified" }}c/tde
-                c/tre
-                ctr class="border-t"e
-                    cth class="px-6 py-3 text-left text-sm font-medium text-gray-500"eOffice Locationc/the
-                    ctd class="px-6 py-3 whitespace-nowrap text-sm text-gray-900"e{{ user_profile.office_location.name|default:"Not assigned" }}c/tde
-                c/tre
-            c/tbodye
-        c/tablee
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label
+                                class="text-sm font-semibold text-slate-600 tracking-wider uppercase"
+                                >Full Name</label
+                            >
+                            <div
+                                class="p-4 bg-slate-50 rounded-xl border border-slate-200"
+                            >
+                                <p class="text-lg font-semibold text-slate-800">
+                                    {{ user_profile.full_name }}
+                                </p>
+                            </div>
+                        </div>
 
-        cdiv class="mt-6"e
-            ch3 class="text-lg font-semibold text-gray-700"eAction Logsc/h3e
-            ctable class="min-w-full mt-4 border-t"e
-                ctheade
-                    ctre
-                        cth class="px-6 py-3 text-left text-sm font-medium text-gray-500"eActionc/the
-                        cth class="px-6 py-3 text-left text-sm font-medium text-gray-500"eDatec/the
-                        cth class="px-6 py-3 text-left text-sm font-medium text-gray-500"eByc/the
-                    c/tre
-                c/theade
-                ctbody class="divide-y divide-gray-200"e
-                    {% for log in action_logs %}
-                    ctre
-                        ctd class="px-6 py-3 whitespace-nowrap text-sm text-gray-900"e{{ log.get_action_type_display }}c/tde
-                        ctd class="px-6 py-3 whitespace-nowrap text-sm text-gray-900"e{{ log.timestamp|date:"SHORT_DATETIME_FORMAT" }}c/tde
-                        ctd class="px-6 py-3 whitespace-nowrap text-sm text-gray-900"e{{ log.action_by.get_full_name|default:log.action_by.username }}c/tde
-                    c/tre
-                    {% empty %}
-                    ctre
-                        ctd colspan="3" class="px-6 py-3 text-center text-sm text-gray-500"eNo action logs available.c/tde
-                    c/tre
-                    {% endfor %}
-                c/tbodye
-            c/tablee
-        c/dive
-    c/dive
+                        <div class="space-y-2">
+                            <label
+                                class="text-sm font-semibold text-slate-600 tracking-wider uppercase"
+                                >Username</label
+                            >
+                            <div
+                                class="p-4 bg-slate-50 rounded-xl border border-slate-200"
+                            >
+                                <p class="text-lg font-semibold text-slate-800">
+                                    {{ user_profile.user.username }}
+                                </p>
+                            </div>
+                        </div>
 
-c/dive
+                        <div class="space-y-2">
+                            <label
+                                class="text-sm font-semibold text-slate-600 tracking-wider uppercase"
+                                >Email</label
+                            >
+                            <div
+                                class="p-4 bg-slate-50 rounded-xl border border-slate-200 flex items-center"
+                            >
+                                <i
+                                    class="fas fa-envelope text-indigo-500 mr-3"
+                                ></i>
+                                <p class="text-lg font-semibold text-slate-800">
+                                    {{ user_profile.user.email|default:"Not
+                                    provided" }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label
+                                class="text-sm font-semibold text-slate-600 tracking-wider uppercase"
+                                >Date of Birth</label
+                            >
+                            <div
+                                class="p-4 bg-slate-50 rounded-xl border border-slate-200 flex items-center"
+                            >
+                                <i
+                                    class="fas fa-birthday-cake text-rose-500 mr-3"
+                                ></i>
+                                <p class="text-lg font-semibold text-slate-800">
+                                    {% if user_profile.dob %} {{
+                                    user_profile.dob|date:"F d, Y" }}
+                                    <span class="text-sm text-slate-600"
+                                        >({{ user_profile.age }} years
+                                        old)</span
+                                    >
+                                    {% else %} Not provided {% endif %}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label
+                                class="text-sm font-semibold text-slate-600 tracking-wider uppercase"
+                                >Gender</label
+                            >
+                            <div
+                                class="p-4 bg-slate-50 rounded-xl border border-slate-200"
+                            >
+                                <p class="text-lg font-semibold text-slate-800">
+                                    {{ user_profile.gender|default:"Not
+                                    specified" }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label
+                                class="text-sm font-semibold text-slate-600 tracking-wider uppercase"
+                                >Blood Group</label
+                            >
+                            <div
+                                class="p-4 bg-slate-50 rounded-xl border border-slate-200"
+                            >
+                                <p class="text-lg font-semibold text-slate-800">
+                                    {{ user_profile.blood_group|default:"Not
+                                    specified" }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact Information -->
+                <div
+                    class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-white/20"
+                >
+                    <div class="flex items-center mb-6">
+                        <div
+                            class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center"
+                        >
+                            <i class="fas fa-phone text-white text-xl"></i>
+                        </div>
+                        <h2
+                            class="text-2xl font-bold text-slate-800 ml-4 tracking-wide"
+                        >
+                            Contact Information
+                        </h2>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label
+                                class="text-sm font-semibold text-slate-600 tracking-wider uppercase"
+                                >Primary Phone</label
+                            >
+                            <div
+                                class="p-4 bg-slate-50 rounded-xl border border-slate-200 flex items-center"
+                            >
+                                <i
+                                    class="fas fa-phone text-emerald-500 mr-3"
+                                ></i>
+                                <p class="text-lg font-semibold text-slate-800">
+                                    {{
+                                    user_profile.contact_number_primary|default:"Not
+                                    provided" }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label
+                                class="text-sm font-semibold text-slate-600 tracking-wider uppercase"
+                                >Secondary Phone</label
+                            >
+                            <div
+                                class="p-4 bg-slate-50 rounded-xl border border-slate-200 flex items-center"
+                            >
+                                <i
+                                    class="fas fa-phone text-emerald-500 mr-3"
+                                ></i>
+                                <p class="text-lg font-semibold text-slate-800">
+                                    {{
+                                    user_profile.contact_number_secondary|default:"Not
+                                    provided" }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="md:col-span-2 space-y-2">
+                            <label
+                                class="text-sm font-semibold text-slate-600 tracking-wider uppercase"
+                                >Current Address</label
+                            >
+                            <div
+                                class="p-4 bg-slate-50 rounded-xl border border-slate-200 flex items-start"
+                            >
+                                <i
+                                    class="fas fa-map-marker-alt text-rose-500 mr-3 mt-1"
+                                ></i>
+                                <div>
+                                    {% if user_profile.current_address_line1 %}
+                                    <p
+                                        class="text-lg font-semibold text-slate-800"
+                                    >
+                                        {{ user_profile.current_address_line1 }}
+                                    </p>
+                                    {% if user_profile.current_address_line2 %}
+                                    <p class="text-slate-700">
+                                        {{ user_profile.current_address_line2 }}
+                                    </p>
+                                    {% endif %}
+                                    <p class="text-slate-700">
+                                        {{ user_profile.current_city }}, {{
+                                        user_profile.current_state }} {{
+                                        user_profile.current_postal_code }}
+                                    </p>
+                                    <p class="text-slate-700">
+                                        {{ user_profile.current_country }}
+                                    </p>
+                                    {% else %}
+                                    <p class="text-lg text-slate-500 italic">
+                                        Not provided
+                                    </p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Employment Information -->
+                <div
+                    class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-white/20"
+                >
+                    <div class="flex items-center mb-6">
+                        <div
+                            class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center"
+                        >
+                            <i class="fas fa-briefcase text-white text-xl"></i>
+                        </div>
+                        <h2
+                            class="text-2xl font-bold text-slate-800 ml-4 tracking-wide"
+                        >
+                            Employment Details
+                        </h2>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="space-y-2">
+                            <label
+                                class="text-sm font-semibold text-slate-600 tracking-wider uppercase"
+                                >User Group</label
+                            >
+                            <div
+                                class="p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-blue-200"
+                            >
+                                <p class="text-lg font-semibold text-slate-800">
+                                    {% if user_profile.user.groups.all %} {% for
+                                    group in user_profile.user.groups.all %}
+                                    <span
+                                        class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 border border-blue-200 mr-2"
+                                    >
+                                        <i class="fas fa-users mr-1"></i>
+                                        {{ group.name }}
+                                    </span>
+                                    {% endfor %} {% else %}
+                                    <span class="text-slate-500 italic"
+                                        >No group assigned</span
+                                    >
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label
+                                class="text-sm font-semibold text-slate-600 tracking-wider uppercase"
+                                >Role/Position</label
+                            >
+                            <div
+                                class="p-4 bg-slate-50 rounded-xl border border-slate-200"
+                            >
+                                <p class="text-lg font-semibold text-slate-800">
+                                    {{
+                                    user_profile.get_role_display|default:"Not
+                                    assigned" }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label
+                                class="text-sm font-semibold text-slate-600 tracking-wider uppercase"
+                                >Employee Type</label
+                            >
+                            <div
+                                class="p-4 bg-slate-50 rounded-xl border border-slate-200"
+                            >
+                                <p class="text-lg font-semibold text-slate-800">
+                                    {{
+                                    user_profile.get_employee_type_display|default:"Not
+                                    specified" }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label
+                                class="text-sm font-semibold text-slate-600 tracking-wider uppercase"
+                                >Hire Date</label
+                            >
+                            <div
+                                class="p-4 bg-slate-50 rounded-xl border border-slate-200 flex items-center"
+                            >
+                                <i
+                                    class="fas fa-calendar-alt text-indigo-500 mr-3"
+                                ></i>
+                                <p class="text-lg font-semibold text-slate-800">
+                                    {% if user_profile.hire_date %} {{
+                                    user_profile.hire_date|date:"F d, Y" }}
+                                    <span class="text-sm text-slate-600"
+                                        >({{ user_profile.hire_date|timesince }}
+                                        ago)</span
+                                    >
+                                    {% else %} Not provided {% endif %}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label
+                                class="text-sm font-semibold text-slate-600 tracking-wider uppercase"
+                                >Start Date</label
+                            >
+                            <div
+                                class="p-4 bg-slate-50 rounded-xl border border-slate-200 flex items-center"
+                            >
+                                <i
+                                    class="fas fa-calendar-plus text-emerald-500 mr-3"
+                                ></i>
+                                <p class="text-lg font-semibold text-slate-800">
+                                    {% if user_profile.start_date %} {{
+                                    user_profile.start_date|date:"F d, Y" }} {%
+                                    else %} Not provided {% endif %}
+                                </p>
+                            </div>
+                        </div>
+
+                        {% if user_profile.reporting_manager %}
+                        <div class="space-y-2">
+                            <label
+                                class="text-sm font-semibold text-slate-600 tracking-wider uppercase"
+                                >Reporting Manager</label
+                            >
+                            <div
+                                class="p-4 bg-slate-50 rounded-xl border border-slate-200 flex items-center"
+                            >
+                                <i
+                                    class="fas fa-user-tie text-purple-500 mr-3"
+                                ></i>
+                                <p class="text-lg font-semibold text-slate-800">
+                                    {{
+                                    user_profile.reporting_manager.get_full_name
+                                    }}
+                                </p>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="space-y-2">
+                            <label
+                                class="text-sm font-semibold text-slate-600 tracking-wider uppercase"
+                                >Office Location</label
+                            >
+                            <div
+                                class="p-4 bg-gradient-to-r from-green-50 to-green-100 rounded-xl border border-green-200"
+                            >
+                                {% if user_profile.office_location %}
+                                <div class="flex items-start space-x-3">
+                                    <i
+                                        class="fas fa-building text-green-600 mt-1"
+                                    ></i>
+                                    <div class="flex-1">
+                                        <p
+                                            class="text-lg font-semibold text-slate-800"
+                                        >
+                                            {{ user_profile.office_location.name
+                                            }}
+                                        </p>
+                                        <p class="text-sm text-slate-600 mt-1">
+                                            <i
+                                                class="fas fa-map-marker-alt mr-1"
+                                            ></i>
+                                            {{
+                                            user_profile.office_location.full_address
+                                            }}
+                                        </p>
+                                        <p class="text-xs text-slate-500 mt-2">
+                                            <i class="fas fa-clock mr-1"></i>
+                                            {{
+                                            user_profile.office_location.working_hours_display
+                                            }} ({{
+                                            user_profile.office_location.timezone
+                                            }})
+                                        </p>
+                                    </div>
+                                </div>
+                                {% else %}
+                                <div class="flex items-center">
+                                    <i
+                                        class="fas fa-exclamation-triangle text-amber-500 mr-3"
+                                    ></i>
+                                    <p
+                                        class="text-lg font-semibold text-slate-800 italic"
+                                    >
+                                        No office location assigned
+                                    </p>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if user_profile.job_description %}
+                    <div class="mt-6 space-y-2">
+                        <label
+                            class="text-sm font-semibold text-slate-600 tracking-wider uppercase"
+                            >Job Description</label
+                        >
+                        <div
+                            class="p-4 bg-slate-50 rounded-xl border border-slate-200"
+                        >
+                            <p class="text-slate-800 leading-relaxed">
+                                {{ user_profile.job_description }}
+                            </p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Right Column - Additional Info -->
+            <div class="space-y-8">
+                <!-- Quick Stats -->
+                <div
+                    class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-white/20"
+                >
+                    <div class="flex items-center mb-6">
+                        <div
+                            class="w-12 h-12 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center"
+                        >
+                            <i class="fas fa-chart-line text-white text-xl"></i>
+                        </div>
+                        <h2
+                            class="text-2xl font-bold text-slate-800 ml-4 tracking-wide"
+                        >
+                            Quick Stats
+                        </h2>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div
+                            class="p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border border-indigo-200"
+                        >
+                            <div class="flex items-center justify-between">
+                                <span
+                                    class="text-sm font-semibold text-slate-600"
+                                    >Account Created</span
+                                >
+                                <span class="text-lg font-bold text-slate-800"
+                                    >{{ user_profile.user.date_joined|date:"M d,
+                                    Y" }}</span
+                                >
+                            </div>
+                        </div>
+
+                        <div
+                            class="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl border border-emerald-200"
+                        >
+                            <div class="flex items-center justify-between">
+                                <span
+                                    class="text-sm font-semibold text-slate-600"
+                                    >Last Login</span
+                                >
+                                <span class="text-lg font-bold text-slate-800">
+                                    {% if user_profile.user.last_login %} {{
+                                    user_profile.user.last_login|date:"M d, Y"
+                                    }} {% else %} Never {% endif %}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div
+                            class="p-4 bg-gradient-to-r from-rose-50 to-pink-50 rounded-xl border border-rose-200"
+                        >
+                            <div class="flex items-center justify-between">
+                                <span
+                                    class="text-sm font-semibold text-slate-600"
+                                    >Profile Updated</span
+                                >
+                                <span class="text-lg font-bold text-slate-800"
+                                    >{{ user_profile.updated_at|date:"M d, Y"
+                                    }}</span
+                                >
+                            </div>
+                        </div>
+
+                        {% if user_profile.salary_frequency and
+                        user_profile.base_salary %}
+                        <div
+                            class="p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-200"
+                        >
+                            <div class="flex items-center justify-between">
+                                <span
+                                    class="text-sm font-semibold text-slate-600"
+                                    >Salary</span
+                                >
+                                <span class="text-lg font-bold text-slate-800">
+                                    {{ user_profile.salary_currency }} {{
+                                    user_profile.base_salary|floatformat:0 }}
+                                    <span class="text-sm text-slate-600"
+                                        >/{{ user_profile.salary_frequency
+                                        }}</span
+                                    >
+                                </span>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Emergency Contact -->
+                {% if user_profile.emergency_contact_name %}
+                <div
+                    class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-white/20"
+                >
+                    <div class="flex items-center mb-6">
+                        <div
+                            class="w-12 h-12 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center"
+                        >
+                            <i
+                                class="fas fa-exclamation-triangle text-white text-xl"
+                            ></i>
+                        </div>
+                        <h2
+                            class="text-2xl font-bold text-slate-800 ml-4 tracking-wide"
+                        >
+                            Emergency Contact
+                        </h2>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div
+                            class="p-4 bg-red-50 rounded-xl border border-red-200"
+                        >
+                            <h4 class="font-semibold text-slate-800 mb-2">
+                                {{ user_profile.emergency_contact_name }}
+                            </h4>
+                            <p class="text-slate-600 mb-1">
+                                {{ user_profile.emergency_contact_relationship
+                                }}
+                            </p>
+                            {% if user_profile.emergency_contact_number %}
+                            <div class="flex items-center text-slate-700">
+                                <i class="fas fa-phone text-red-500 mr-2"></i>
+                                <span class="font-medium"
+                                    >{{ user_profile.emergency_contact_number
+                                    }}</span
+                                >
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        {% if user_profile.secondary_emergency_contact_name %}
+                        <div
+                            class="p-4 bg-red-50 rounded-xl border border-red-200"
+                        >
+                            <h4 class="font-semibold text-slate-800 mb-2">
+                                {{ user_profile.secondary_emergency_contact_name
+                                }}
+                            </h4>
+                            <p class="text-slate-600 mb-1">
+                                {{
+                                user_profile.secondary_emergency_contact_relationship
+                                }}
+                            </p>
+                            {% if
+                            user_profile.secondary_emergency_contact_number %}
+                            <div class="flex items-center text-slate-700">
+                                <i class="fas fa-phone text-red-500 mr-2"></i>
+                                <span class="font-medium"
+                                    >{{
+                                    user_profile.secondary_emergency_contact_number
+                                    }}</span
+                                >
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Action Buttons -->
+                <div
+                    class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-white/20"
+                >
+                    <div class="flex items-center mb-6">
+                        <div
+                            class="w-12 h-12 bg-gradient-to-br from-slate-500 to-slate-600 rounded-xl flex items-center justify-center"
+                        >
+                            <i class="fas fa-cogs text-white text-xl"></i>
+                        </div>
+                        <h2
+                            class="text-2xl font-bold text-slate-800 ml-4 tracking-wide"
+                        >
+                            Actions
+                        </h2>
+                    </div>
+
+                    <div class="space-y-4">
+                        {% if can_edit %}
+                        <a
+                            href="{% url 'profile:user-update' user_profile.user.id %}"
+                            class="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white p-4 rounded-xl transition-all duration-300 font-semibold tracking-wide shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center"
+                        >
+                            <i class="fas fa-edit mr-2"></i>Edit Profile
+                        </a>
+
+                        <a
+                            href="{% url 'profile:change-status' user_profile.user.id %}"
+                            class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white p-4 rounded-xl transition-all duration-300 font-semibold tracking-wide shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center"
+                        >
+                            <i class="fas fa-exchange-alt mr-2"></i>Change
+                            Status
+                        </a>
+
+                        <a
+                            href="{% url 'profile:reset-password' user_profile.user.id %}"
+                            class="w-full bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white p-4 rounded-xl transition-all duration-300 font-semibold tracking-wide shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center"
+                        >
+                            <i class="fas fa-key mr-2"></i>Reset Password
+                        </a>
+                        {% endif %}
+
+                        <a
+                            href="{% url 'profile:user-list' %}"
+                            class="w-full bg-white/80 backdrop-blur-sm hover:bg-white text-slate-700 hover:text-slate-900 p-4 rounded-xl border border-slate-200 transition-all duration-300 font-semibold tracking-wide shadow-md hover:shadow-lg flex items-center justify-center"
+                        >
+                            <i class="fas fa-list mr-2"></i>View All Users
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function printProfile() {
+        window.print();
+    }
+</script>
+
+<style media="print">
+    .no-print {
+        display: none !important;
+    }
+
+    body {
+        background: white !important;
+    }
+
+    .bg-gradient-to-br {
+        background: white !important;
+    }
+
+    .backdrop-blur-sm {
+        backdrop-filter: none !important;
+    }
+
+    .shadow-xl {
+        box-shadow: none !important;
+        border: 1px solid #e5e7eb !important;
+    }
+</style>
+
 {% endblock %}

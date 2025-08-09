@@ -7,7 +7,7 @@ import pandas as pd
 
 class UserDetailsCreateForm(forms.ModelForm):
     """Form for creating new user accounts with UserDetails."""
-    
+
     # User model fields
     first_name = forms.CharField(
         max_length=30,
@@ -25,26 +25,26 @@ class UserDetailsCreateForm(forms.ModelForm):
         initial='Welcome@123'
     )
     group = forms.ModelChoiceField(
-        queryset=Group.objects.all(),
+        queryset=Group.objects.all().order_by('name'),
         widget=forms.Select(attrs={'class': 'form-control'}),
-        help_text="Select user group/role"
+        help_text="Select user group/role",
+        required=True
     )
-    
+
     class Meta:
         model = UserDetails
         fields = [
             'dob', 'blood_group', 'gender', 'marital_status',
             'contact_number_primary', 'personal_email', 'company_email',
-            'current_address_line1', 'current_address_line2', 'current_city', 
+            'current_address_line1', 'current_address_line2', 'current_city',
             'current_state', 'current_postal_code', 'current_country',
             'permanent_address_line1', 'permanent_address_line2', 'permanent_city',
             'permanent_state', 'permanent_postal_code', 'permanent_country',
             'is_current_same_as_permanent',
             'emergency_contact_name', 'emergency_contact_number', 'emergency_contact_relationship',
             'employee_type', 'role', 'reporting_manager', 'hire_date', 'start_date',
-            'probation_end_date', 'notice_period_days', 'job_description',
+            'probation_end_date', 'job_description',
             'office_location', 'employment_status',
-            'salary_currency', 'base_salary', 'salary_frequency',
             'pan_number', 'aadhar_number', 'passport_number', 'passport_expiry',
             'bank_name', 'bank_account_number', 'bank_ifsc',
             'previous_company', 'previous_position', 'previous_experience_years',
@@ -100,6 +100,25 @@ class UserDetailsCreateForm(forms.ModelForm):
             'skills': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Ensure querysets are properly set
+        self.fields['office_location'].queryset = OfficeLocation.objects.filter(is_active=True).order_by('name')
+        self.fields['reporting_manager'].queryset = User.objects.filter(profile__isnull=False).order_by('first_name', 'last_name')
+
+        # Set dynamic role choices from auth_group table
+        if 'role' in self.fields:
+            group_choices = [(group.name.lower(), group.name) for group in Group.objects.all().order_by('name')]
+            self.fields['role'].choices = [('', 'Select role')] + group_choices
+            self.fields['role'].initial = 'employee'
+
+        # Set defaults for other fields
+        if 'employment_status' in self.fields:
+            self.fields['employment_status'].initial = 'probation'
+        if 'employee_type' in self.fields:
+            self.fields['employee_type'].initial = 'full_time'
+
     def clean_email(self):
         email = self.cleaned_data.get('email')
         if User.objects.filter(email=email).exists():
@@ -121,7 +140,7 @@ class UserDetailsCreateForm(forms.ModelForm):
 
 class UserDetailsUpdateForm(forms.ModelForm):
     """Form for updating existing user accounts with UserDetails."""
-    
+
     # User model fields
     first_name = forms.CharField(
         max_length=30,
@@ -137,25 +156,31 @@ class UserDetailsUpdateForm(forms.ModelForm):
         required=False,
         widget=forms.EmailInput(attrs={'class': 'form-control'})
     )
-    
+    group = forms.ModelChoiceField(
+        queryset=Group.objects.all().order_by('name'),
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        help_text="Select user group/role",
+        required=False
+    )
+
     class Meta:
         model = UserDetails
         fields = [
             'dob', 'blood_group', 'gender', 'marital_status',
             'contact_number_primary', 'personal_email', 'company_email',
-            'current_address_line1', 'current_address_line2', 'current_city', 
+            'current_address_line1', 'current_address_line2', 'current_city',
             'current_state', 'current_postal_code', 'current_country',
             'permanent_address_line1', 'permanent_address_line2', 'permanent_city',
             'permanent_state', 'permanent_postal_code', 'permanent_country',
             'is_current_same_as_permanent',
             'emergency_contact_name', 'emergency_contact_number', 'emergency_contact_relationship',
-            'secondary_emergency_contact_name', 'secondary_emergency_contact_number', 
+            'secondary_emergency_contact_name', 'secondary_emergency_contact_number',
             'secondary_emergency_contact_relationship',
             'employee_type', 'role', 'reporting_manager', 'hire_date', 'start_date',
             'probation_end_date', 'notice_period_days', 'job_description',
             'office_location', 'employment_status', 'exit_date', 'exit_reason',
             'rehire_eligibility',
-            'salary_currency', 'base_salary', 'salary_frequency',
+            'base_salary',
             'pan_number', 'aadhar_number', 'passport_number', 'passport_expiry',
             'bank_name', 'bank_account_number', 'bank_ifsc',
             'previous_company', 'previous_position', 'previous_experience_years',
@@ -217,15 +242,32 @@ class UserDetailsUpdateForm(forms.ModelForm):
             'skills': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'confidential_notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
         }
-    
+
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
-        
+
+        # Ensure querysets are properly set
+        self.fields['office_location'].queryset = OfficeLocation.objects.filter(is_active=True).order_by('name')
+        self.fields['reporting_manager'].queryset = User.objects.filter(profile__isnull=False).order_by('first_name', 'last_name')
+
+        # Set dynamic role choices from auth_group table
+        if 'role' in self.fields:
+            group_choices = [(group.name.lower(), group.name) for group in Group.objects.all().order_by('name')]
+            self.fields['role'].choices = [('', 'Select role')] + group_choices
+
         if self.user:
             self.fields['first_name'].initial = self.user.first_name
             self.fields['last_name'].initial = self.user.last_name
             self.fields['email'].initial = self.user.email
+
+            # Set the current group if user has one
+            user_groups = self.user.groups.all()
+            if user_groups.exists():
+                self.fields['group'].initial = user_groups.first()
+                # Also set role field to match the group name
+                if 'role' in self.fields:
+                    self.fields['role'].initial = user_groups.first().name.lower()
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
@@ -252,19 +294,19 @@ class UserDetailsUpdateForm(forms.ModelForm):
 
 class CSVImportForm(forms.Form):
     """Form for bulk importing users from CSV/XLSX files."""
-    
+
     csv_file = forms.FileField(
         label='CSV/XLSX File',
         help_text='Upload a CSV or XLSX file with columns: first_name, last_name, email, employee_type (optional)',
         widget=forms.FileInput(attrs={'class': 'form-control', 'accept': '.csv,.xlsx,.xls'})
     )
-    
+
     group = forms.ModelChoiceField(
-        queryset=Group.objects.all(),
+        queryset=Group.objects.all().order_by('name'),
         widget=forms.Select(attrs={'class': 'form-control'}),
         help_text="All imported users will be assigned to this group"
     )
-    
+
     office_location = forms.ModelChoiceField(
         queryset=OfficeLocation.objects.filter(is_active=True),
         widget=forms.Select(attrs={'class': 'form-control'}),
@@ -277,17 +319,17 @@ class CSVImportForm(forms.Form):
             # Check file extension
             if not csv_file.name.endswith(('.csv', '.xlsx', '.xls')):
                 raise ValidationError('Please upload a CSV or XLSX file.')
-            
+
             # Check file size (max 10MB)
             if csv_file.size > 10 * 1024 * 1024:
                 raise ValidationError('File size too large. Maximum size allowed is 10MB.')
-        
+
         return csv_file
 
 
 class UserProfileForm(forms.ModelForm):
     """Form for users to update their own profile information."""
-    
+
     # User model fields
     first_name = forms.CharField(
         max_length=30,
@@ -299,19 +341,19 @@ class UserProfileForm(forms.ModelForm):
         required=False,
         widget=forms.TextInput(attrs={'class': 'form-control'})
     )
-    
+
     class Meta:
         model = UserDetails
         fields = [
             'dob', 'blood_group', 'gender', 'marital_status',
             'contact_number_primary', 'personal_email',
-            'current_address_line1', 'current_address_line2', 'current_city', 
+            'current_address_line1', 'current_address_line2', 'current_city',
             'current_state', 'current_postal_code', 'current_country',
             'permanent_address_line1', 'permanent_address_line2', 'permanent_city',
             'permanent_state', 'permanent_postal_code', 'permanent_country',
             'is_current_same_as_permanent',
             'emergency_contact_name', 'emergency_contact_number', 'emergency_contact_relationship',
-            'secondary_emergency_contact_name', 'secondary_emergency_contact_number', 
+            'secondary_emergency_contact_name', 'secondary_emergency_contact_number',
             'secondary_emergency_contact_relationship',
             'passport_number', 'passport_expiry',
             'bank_name', 'bank_account_number', 'bank_ifsc',
@@ -354,11 +396,19 @@ class UserProfileForm(forms.ModelForm):
             'previous_experience_years': forms.NumberInput(attrs={'class': 'form-control'}),
             'skills': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
-    
+
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
-        
+
+        # Ensure office location queryset is properly set
+        self.fields['office_location'].queryset = OfficeLocation.objects.filter(is_active=True).order_by('name')
+
+        # Set dynamic role choices from auth_group table
+        if 'role' in self.fields:
+            group_choices = [(group.name.lower(), group.name) for group in Group.objects.all().order_by('name')]
+            self.fields['role'].choices = [('', 'Select role')] + group_choices
+
         if self.user:
             self.fields['first_name'].initial = self.user.first_name
             self.fields['last_name'].initial = self.user.last_name

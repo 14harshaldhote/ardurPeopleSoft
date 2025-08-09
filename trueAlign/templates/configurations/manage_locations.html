@@ -1,0 +1,363 @@
+{% extends 'base.html' %} {% load static %} {% block title %}Office Location
+Management - TrueAlign Portal{% endblock %} {% block content %}
+<div class="min-h-screen py-6 px-4 lg:px-8 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header Section -->
+        <div
+            class="relative overflow-hidden mb-8 rounded-2xl bg-white/80 backdrop-blur-sm border border-white/20 shadow-xl">
+            <div class="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-cyan-500/5 to-teal-500/10"></div>
+            <div class="relative p-8">
+                <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center">
+                    <div class="flex items-center space-x-6">
+                        <div
+                            class="w-20 h-20 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-2xl flex items-center justify-center text-white font-bold text-2xl shadow-lg">
+                            <i class="ri-building-line"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-4xl font-bold text-slate-800 mb-2 tracking-wide">
+                                Office Location Management
+                            </h1>
+                            <p class="text-slate-600 text-lg">
+                                Manage office locations, addresses, and
+                                operational details
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-3 mt-6 lg:mt-0">
+                        <a href="{% url 'core:add_location' %}"
+                            class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-6 py-3 rounded-xl transition-all duration-300 font-semibold tracking-wide shadow-lg hover:shadow-xl transform hover:scale-105">
+                            <i class="ri-add-line mr-2"></i>Add New Location
+                        </a>
+                        <a href="{% url 'core:configurations' %}"
+                            class="bg-white/80 backdrop-blur-sm hover:bg-white text-slate-700 hover:text-slate-900 px-6 py-3 rounded-xl border border-slate-200 transition-all duration-300 font-semibold tracking-wide shadow-md hover:shadow-lg">
+                            <i class="ri-arrow-left-line mr-2"></i>Back to
+                            Configurations
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Locations Grid -->
+        {% if locations %}
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+            {% for location in locations %}
+            <div
+                class="group bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 overflow-hidden transition-all duration-300 hover:shadow-2xl hover:scale-105">
+                <!-- Status Indicator -->
+                <div class="relative">
+                    <div class="absolute top-4 right-4 z-10">
+                        {% if location.is_active %}
+                        <div
+                            class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                            <div class="w-2 h-2 bg-emerald-500 rounded-full mr-2"></div>
+                            Active
+                        </div>
+                        {% else %}
+                        <div
+                            class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-bold bg-red-100 text-red-800 border border-red-200">
+                            <div class="w-2 h-2 bg-red-500 rounded-full mr-2"></div>
+                            Inactive
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Header with Gradient -->
+                    <div
+                        class="bg-gradient-to-r from-blue-500/10 via-cyan-500/5 to-teal-500/10 p-6 border-b border-white/20">
+                        <div class="flex items-center space-x-4">
+                            <div
+                                class="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center text-white font-bold shadow-md">
+                                {{ location.code }}
+                            </div>
+                            <div>
+                                <h3
+                                    class="text-xl font-bold text-slate-800 group-hover:text-slate-900 transition-colors duration-300">
+                                    {{ location.name }}
+                                </h3>
+                                <p class="text-slate-500 text-sm">
+                                    {{ location.city }}, {{ location.state }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Location Details -->
+                <div class="p-6 space-y-4">
+                    <!-- Address -->
+                    <div class="flex items-start space-x-3">
+                        <div
+                            class="w-6 h-6 bg-slate-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <i class="ri-map-pin-line text-slate-600 text-sm"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-slate-700 mb-1">
+                                Address
+                            </p>
+                            <p class="text-sm text-slate-600 leading-relaxed">
+                                {{ location.address_line1 }}{% if location.address_line2 %}, {{ location.address_line2 }}{% endif %}
+                                <br />{{ location.city }}, {{ location.state }}
+                                {{ location.postal_code }} <br />{{ location.country }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Contact Information -->
+                    <div class="grid grid-cols-1 gap-3">
+                        {% if location.phone %}
+                        <div class="flex items-center space-x-3">
+                            <div class="w-6 h-6 bg-slate-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <i class="ri-phone-line text-slate-600 text-sm"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-slate-700">
+                                    Phone
+                                </p>
+                                <p class="text-sm text-slate-600">
+                                    {{ location.phone }}
+                                </p>
+                            </div>
+                        </div>
+                        {% endif %} {% if location.email %}
+                        <div class="flex items-center space-x-3">
+                            <div class="w-6 h-6 bg-slate-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <i class="ri-mail-line text-slate-600 text-sm"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-slate-700">
+                                    Email
+                                </p>
+                                <p class="text-sm text-slate-600">
+                                    {{ location.email }}
+                                </p>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Working Hours -->
+                    <div class="flex items-center space-x-3">
+                        <div class="w-6 h-6 bg-slate-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <i class="ri-time-line text-slate-600 text-sm"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-slate-700">
+                                Working Hours
+                            </p>
+                            <p class="text-sm text-slate-600">
+                                {{ location.working_hours_start }} - {{ location.working_hours_end }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Timezone -->
+                    <div class="flex items-center space-x-3">
+                        <div class="w-6 h-6 bg-slate-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <i class="ri-global-line text-slate-600 text-sm"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-slate-700">
+                                Timezone
+                            </p>
+                            <p class="text-sm text-slate-600">
+                                {{ location.timezone }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="p-6 pt-0">
+                    <div class="flex space-x-3">
+                        <a href="{% url 'core:edit_location' location.id %}"
+                            class="flex-1 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white py-3 px-4 rounded-xl transition-all duration-300 font-semibold text-center shadow-md hover:shadow-lg transform hover:scale-105">
+                            <i class="ri-edit-line mr-2"></i>Edit
+                        </a>
+                        <button onclick="confirmDelete('{{ location.id }}', '{{ location.name }}')"
+                            class="flex-1 bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white py-3 px-4 rounded-xl transition-all duration-300 font-semibold shadow-md hover:shadow-lg transform hover:scale-105">
+                            <i class="ri-delete-bin-line mr-2"></i>Delete
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Hover Effect -->
+                <div
+                    class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out opacity-0 group-hover:opacity-100">
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Summary Stats -->
+        <div class="mt-12 bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 overflow-hidden">
+            <div
+                class="bg-gradient-to-r from-slate-500/10 via-gray-500/5 to-zinc-500/10 px-8 py-6 border-b border-white/20">
+                <h3 class="text-2xl font-bold text-slate-800 flex items-center">
+                    <i class="ri-bar-chart-line mr-3 text-slate-600"></i>Location Statistics
+                </h3>
+            </div>
+            <div class="p-8">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="text-center">
+                        <div
+                            class="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center text-white font-bold text-2xl mx-auto mb-4 shadow-lg">
+                            {{ locations|length }}
+                        </div>
+                        <h4 class="text-lg font-semibold text-slate-800 mb-2">
+                            Total Locations
+                        </h4>
+                        <p class="text-slate-600 text-sm">
+                            Office locations configured
+                        </p>
+                    </div>
+                    <!-- <div class="text-center">
+                         <div
+                            class="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white font-bold text-2xl mx-auto mb-4 shadow-lg">
+                            {% with active_count=locations|dictsort:"is_active"|last|length %}{{ active_count|default:0 }}{% endwith %}
+                        </div> 
+                        <h4 class="text-lg font-semibold text-slate-800 mb-2">
+                            Active Locations
+                        </h4>
+                        <p class="text-slate-600 text-sm">
+                            Currently operational
+                        </p>
+                    </div> -->
+                    <div class="text-center">
+                        <div
+                            class="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center text-white font-bold text-2xl mx-auto mb-4 shadow-lg">
+                            {% regroup locations by country as country_list %}{{ country_list|length }}
+                        </div>
+                        <h4 class="text-lg font-semibold text-slate-800 mb-2">
+                            Countries
+                        </h4>
+                        <p class="text-slate-600 text-sm">
+                            Geographic presence
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% else %}
+        <!-- Empty State -->
+        <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 overflow-hidden">
+            <div class="text-center py-16 px-8">
+                <div
+                    class="w-24 h-24 bg-gradient-to-br from-slate-400 to-slate-600 rounded-3xl flex items-center justify-center text-white text-3xl font-bold mx-auto mb-6">
+                    <i class="ri-building-line"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-slate-800 mb-4">
+                    No Office Locations Found
+                </h3>
+                <p class="text-slate-600 mb-8 max-w-md mx-auto">
+                    Start by adding your first office location to manage
+                    conference rooms and employee assignments.
+                </p>
+                <a href="{% url 'core:add_location' %}"
+                    class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-8 py-3 rounded-xl transition-all duration-300 font-semibold tracking-wide shadow-lg hover:shadow-xl transform hover:scale-105">
+                    <i class="ri-add-line mr-2"></i>Add Your First Location
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50">
+    <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-8 max-w-md mx-4">
+        <div class="text-center">
+            <div
+                class="w-16 h-16 bg-gradient-to-br from-red-500 to-pink-600 rounded-2xl flex items-center justify-center text-white font-bold text-2xl mx-auto mb-6">
+                <i class="ri-delete-bin-line"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-slate-800 mb-4">
+                Delete Office Location
+            </h3>
+            <p class="text-slate-600 mb-8" id="deleteMessage">
+                Are you sure you want to delete this office location? This
+                action cannot be undone.
+            </p>
+            <div class="flex space-x-4">
+                <button onclick="closeDeleteModal()"
+                    class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 py-3 px-4 rounded-xl transition-all duration-300 font-semibold">
+                    Cancel
+                </button>
+                <button onclick="deleteLocation()"
+                    class="flex-1 bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white py-3 px-4 rounded-xl transition-all duration-300 font-semibold shadow-lg hover:shadow-xl">
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let locationToDelete = null;
+
+    function confirmDelete(locationId, locationName) {
+        locationToDelete = locationId;
+        document.getElementById("deleteMessage").innerHTML =
+            `Are you sure you want to delete "<strong>${locationName}</strong>"? This action cannot be undone and may affect associated conference rooms and user assignments.`;
+        document.getElementById("deleteModal").classList.remove("hidden");
+        document.getElementById("deleteModal").classList.add("flex");
+    }
+
+    function closeDeleteModal() {
+        locationToDelete = null;
+        document.getElementById("deleteModal").classList.add("hidden");
+        document.getElementById("deleteModal").classList.remove("flex");
+    }
+
+    function deleteLocation() {
+        if (locationToDelete) {
+            window.location.href = `{% url 'core:delete_location' 0 %}`.replace(
+                "0",
+                locationToDelete,
+            );
+        }
+    }
+
+    // Close modal on escape key
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+            closeDeleteModal();
+        }
+    });
+
+    // Close modal when clicking outside
+    document
+        .getElementById("deleteModal")
+        .addEventListener("click", function (event) {
+            if (event.target === this) {
+                closeDeleteModal();
+            }
+        });
+</script>
+
+<style>
+    .hover\:scale-105:hover {
+        transform: scale(1.05);
+    }
+
+    .transform {
+        transition-property: transform;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        transition-duration: 300ms;
+    }
+
+    .backdrop-blur-sm {
+        backdrop-filter: blur(4px);
+    }
+
+    /* Custom hover animation for cards */
+    .group:hover .group-hover\:translate-x-full {
+        transform: translateX(100%);
+    }
+
+    .group:hover .group-hover\:scale-110 {
+        transform: scale(1.1);
+    }
+</style>
+{% endblock %}

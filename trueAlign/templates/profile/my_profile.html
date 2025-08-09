@@ -1,257 +1,772 @@
-{% extends 'base.html' %}
-{% load static %}
-
-{% block title %}My Profile{% endblock %}
-
-{% block content %}
-<div class="container mx-auto px-4 py-6">
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-3xl font-bold text-gray-900">My Profile</h1>
-        <a href="{% url 'profile:edit-my-profile' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200">
-            <i class="fas fa-edit mr-2"></i>Edit Profile
-        </a>
-    </div>
-
-    {% if user_profile %}
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Profile Summary Card -->
-        <div class="lg:col-span-1">
-            <div class="bg-white rounded-lg shadow-sm p-6">
-                <div class="text-center">
-                    <div class="w-24 h-24 bg-blue-500 rounded-full flex items-center justify-center text-white text-3xl font-bold mx-auto mb-4">
-                        {{ user.first_name|first|default:user.username|first }}
-                    </div>
-                    <h2 class="text-xl font-semibold text-gray-900">{{ user_profile.full_name }}</h2>
-                    <p class="text-gray-600">{{ user_profile.get_role_display|default:"Employee" }}</p>
-                    <p class="text-sm text-gray-500">{{ user_profile.get_employee_type_display|default:"" }}</p>
-                    
-                    {% with status=user_profile.status_display %}
-                    <span class="inline-flex px-3 py-1 text-sm font-semibold rounded-full bg-{{ status.color }}-100 text-{{ status.color }}-800 mt-2">
-                        {{ status.text }}
-                    </span>
-                    {% endwith %}
-                </div>
-
-                <div class="mt-6 space-y-3">
-                    <div class="flex items-center text-sm text-gray-600">
-                        <i class="fas fa-envelope w-5 mr-3"></i>
-                        <span>{{ user.email }}</span>
-                    </div>
-                    {% if user_profile.contact_number_primary %}
-                    <div class="flex items-center text-sm text-gray-600">
-                        <i class="fas fa-phone w-5 mr-3"></i>
-                        <span>{{ user_profile.contact_number_primary }}</span>
-                    </div>
-                    {% endif %}
-                    {% if user_profile.office_location %}
-                    <div class="flex items-center text-sm text-gray-600">
-                        <i class="fas fa-map-marker-alt w-5 mr-3"></i>
-                        <span>{{ user_profile.office_location.name }}</span>
-                    </div>
-                    {% endif %}
-                    {% if user_profile.hire_date %}
-                    <div class="flex items-center text-sm text-gray-600">
-                        <i class="fas fa-calendar w-5 mr-3"></i>
-                        <span>Joined {{ user_profile.hire_date|date:"M d, Y" }}</span>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Quick Stats -->
-            <div class="bg-white rounded-lg shadow-sm p-6 mt-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Stats</h3>
-                <div class="space-y-3">
-                    {% if user_profile.employment_duration %}
-                    <div class="flex justify-between">
-                        <span class="text-sm text-gray-600">Duration</span>
-                        <span class="text-sm font-medium text-gray-900">{{ user_profile.employment_duration }}</span>
-                    </div>
-                    {% endif %}
-                    {% if user_profile.age %}
-                    <div class="flex justify-between">
-                        <span class="text-sm text-gray-600">Age</span>
-                        <span class="text-sm font-medium text-gray-900">{{ user_profile.age }} years</span>
-                    </div>
-                    {% endif %}
-                    {% if user_profile.reporting_manager %}
-                    <div class="flex justify-between">
-                        <span class="text-sm text-gray-600">Reports to</span>
-                        <span class="text-sm font-medium text-gray-900">{{ user_profile.reporting_manager.get_full_name }}</span>
-                    </div>
-                    {% endif %}
-                </div>
+{% extends 'base.html' %} {% load static %} {% block title %}My Profile -
+TrueAlign Portal{% endblock %} {% block content %}
+<div class="min-h-screen py-12">
+    <div class="max-w-5xl mx-auto px-4">
+        <!-- Page Header -->
+        <div class="mb-8 flex justify-between items-center">
+            <h1 class="text-3xl font-bold text-gray-800">Employee Profile</h1>
+            <div class="flex space-x-3">
+                {% if request.user.id == user_detail.user.id or request.user.id == user.id %}
+                <button
+                    id="openResetPasswordModal"
+                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                >
+                    Reset Password
+                </button>
+                {% endif %}
+                <a
+                    href="{% url 'profile:dashboard' %}"
+                    class="px-4 py-2 bg-purple-700 text-white rounded-lg hover:bg-purple-800 transition"
+                    >Back to Dashboard</a
+                >
             </div>
         </div>
 
-        <!-- Detailed Information -->
-        <div class="lg:col-span-2 space-y-6">
-            <!-- Personal Information -->
-            <div class="bg-white rounded-lg shadow-sm p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Personal Information</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-500">Date of Birth</label>
-                        <p class="text-sm text-gray-900">{{ user_profile.dob|date:"M d, Y"|default:"Not provided" }}</p>
+        <!-- Password Reset Modal -->
+        <div
+            id="resetPasswordModal"
+            class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden"
+        >
+            <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-gray-800">
+                        Reset Your Password
+                    </h3>
+                    <button
+                        id="closeResetPasswordModal"
+                        class="text-gray-500 hover:text-gray-700"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-6 w-6"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"
+                            />
+                        </svg>
+                    </button>
+                </div>
+
+                <form
+                    method="POST"
+                    action="{% url 'profile:reset-password' pk=user.id %}"
+                >
+                    {% csrf_token %}
+                    <div class="space-y-4">
+                        <div>
+                            <label
+                                for="current_pwd"
+                                class="block text-sm font-medium text-gray-700"
+                                >Current Password</label
+                            >
+                            <input
+                                type="password"
+                                id="current_pwd"
+                                name="current_pwd"
+                                required
+                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+                            />
+                        </div>
+
+                        <div>
+                            <label
+                                for="new_pwd"
+                                class="block text-sm font-medium text-gray-700"
+                                >New Password</label
+                            >
+                            <input
+                                type="password"
+                                id="new_pwd"
+                                name="new_pwd"
+                                required
+                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+                            />
+                        </div>
+
+                        <div>
+                            <label
+                                for="confirm_pwd"
+                                class="block text-sm font-medium text-gray-700"
+                                >Confirm New Password</label
+                            >
+                            <input
+                                type="password"
+                                id="confirm_pwd"
+                                name="confirm_pwd"
+                                required
+                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+                            />
+                            <p
+                                id="password-match-message"
+                                class="text-sm mt-1 hidden text-red-500"
+                            >
+                                Passwords do not match
+                            </p>
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-500">Gender</label>
-                        <p class="text-sm text-gray-900">{{ user_profile.get_gender_display|default:"Not specified" }}</p>
+
+                    <div class="mt-6 flex justify-end">
+                        <button
+                            type="button"
+                            id="cancelResetBtn"
+                            class="mr-3 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            id="submitPasswordReset"
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                        >
+                            Update Password
+                        </button>
                     </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Profile Content -->
+        {% if user_profile or user_detail %} {% with profile=user_profile|default:user_detail %}
+        <!-- Profile Card -->
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-8">
+            <!-- Header Section with Background -->
+            <div
+                class="relative px-8 py-10"
+                style="background: linear-gradient(to right, #550c82, #f8bead)"
+            >
+                <div
+                    class="flex flex-col md:flex-row justify-between items-start md:items-center"
+                >
                     <div>
-                        <label class="block text-sm font-medium text-gray-500">Blood Group</label>
-                        <p class="text-sm text-gray-900">{{ user_profile.get_blood_group_display|default:"Not provided" }}</p>
+                        <h2 class="text-3xl font-bold text-white mb-2">
+                            {{
+                            profile.user.get_full_name|default:user.get_full_name|default:user.username
+                            }}
+                        </h2>
+                        <p class="text-purple-100 flex items-center">
+                            <span
+                                class="bg-purple-800 bg-opacity-50 px-3 py-1 rounded-full text-sm"
+                                >{{
+                                role|default:profile.get_role_display|default:"Employee"
+                                }}</span
+                            >
+                            <span class="ml-3 text-sm"
+                                >Username: {{ username|default:user.username
+                                }}</span
+                            >
+                        </p>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-500">Marital Status</label>
-                        <p class="text-sm text-gray-900">{{ user_profile.get_marital_status_display|default:"Not specified" }}</p>
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-500">Personal Email</label>
-                        <p class="text-sm text-gray-900">{{ user_profile.personal_email|default:"Not provided" }}</p>
+                    <div class="mt-4 md:mt-0">
+                        <div
+                            class="bg-white bg-opacity-20 backdrop-filter backdrop-blur-sm rounded-lg p-3"
+                        >
+                            <p class="text-white text-sm">
+                                {% if profile.employment_status %}
+                                <span class="font-semibold">Status:</span>
+                                <span
+                                    class="{% if profile.employment_status == 'active' %}text-green-200{% elif profile.employment_status == 'probation' %}text-yellow-200{% else %}text-red-200{% endif %}"
+                                >
+                                    {{ profile.employment_status|title }}
+                                </span>
+                                {% else %}
+                                <span class="font-semibold">Status:</span>
+                                <span class="text-green-200">Active</span>
+                                {% endif %}
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Address Information -->
-            <div class="bg-white rounded-lg shadow-sm p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Address Information</h3>
-                
-                <!-- Current Address -->
-                <div class="mb-6">
-                    <h4 class="text-md font-medium text-gray-700 mb-3">Current Address</h4>
-                    {% if user_profile.current_address_line1 %}
-                    <div class="text-sm text-gray-900">
-                        <p>{{ user_profile.current_address_line1 }}</p>
-                        {% if user_profile.current_address_line2 %}
-                        <p>{{ user_profile.current_address_line2 }}</p>
-                        {% endif %}
-                        <p>{{ user_profile.current_city }}{% if user_profile.current_state %}, {{ user_profile.current_state }}{% endif %} {{ user_profile.current_postal_code }}</p>
-                        {% if user_profile.current_country %}
-                        <p>{{ user_profile.current_country }}</p>
-                        {% endif %}
+            <!-- Profile Content -->
+            <div class="p-8">
+                <!-- Personal Information -->
+                <div class="mb-10">
+                    <h3
+                        class="text-xl font-semibold text-gray-800 mb-6 flex items-center"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-6 w-6 mr-2 text-purple-600"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                            />
+                        </svg>
+                        Personal Information
+                    </h3>
+                    <div
+                        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                    >
+                        <div
+                            class="bg-gray-50 rounded-lg p-4 shadow-sm border border-gray-100"
+                        >
+                            <p class="text-sm font-medium text-blue-600 mb-1">
+                                Full Name
+                            </p>
+                            <p class="text-gray-800 font-medium">
+                                {{
+                                profile.user.get_full_name|default:user.get_full_name|default:user.username
+                                }}
+                            </p>
+                        </div>
+                        <div
+                            class="bg-gray-50 rounded-lg p-4 shadow-sm border border-gray-100"
+                        >
+                            <p class="text-sm font-medium text-blue-600 mb-1">
+                                Email
+                            </p>
+                            <p class="text-gray-800 font-medium">
+                                {{
+                                profile.personal_email|default:user.email|default:"Not
+                                provided" }}
+                            </p>
+                        </div>
+                        <div
+                            class="bg-gray-50 rounded-lg p-4 shadow-sm border border-gray-100"
+                        >
+                            <p class="text-sm font-medium text-blue-600 mb-1">
+                                Company Email
+                            </p>
+                            <p class="text-gray-800 font-medium">
+                                {{ profile.company_email|default:"Not provided"
+                                }}
+                            </p>
+                        </div>
+                        <div
+                            class="bg-gray-50 rounded-lg p-4 shadow-sm border border-gray-100"
+                        >
+                            <p class="text-sm font-medium text-blue-600 mb-1">
+                                Date of Birth
+                            </p>
+                            <p class="text-gray-800 font-medium">
+                                {{ profile.dob|date:"M d, Y"|default:"Not
+                                provided" }}
+                            </p>
+                        </div>
+                        <div
+                            class="bg-gray-50 rounded-lg p-4 shadow-sm border border-gray-100"
+                        >
+                            <p class="text-sm font-medium text-blue-600 mb-1">
+                                Gender
+                            </p>
+                            <p class="text-gray-800 font-medium">
+                                {{ profile.gender|default:"Not provided" }}
+                            </p>
+                        </div>
+                        <div
+                            class="bg-gray-50 rounded-lg p-4 shadow-sm border border-gray-100"
+                        >
+                            <p class="text-sm font-medium text-blue-600 mb-1">
+                                Blood Group
+                            </p>
+                            <p class="text-gray-800 font-medium">
+                                {{ profile.blood_group|default:"Not provided" }}
+                            </p>
+                        </div>
+                        <div
+                            class="bg-gray-50 rounded-lg p-4 shadow-sm border border-gray-100"
+                        >
+                            <p class="text-sm font-medium text-blue-600 mb-1">
+                                Contact Number
+                            </p>
+                            <p class="text-gray-800 font-medium">
+                                {{ profile.contact_number_primary|default:"Not
+                                provided" }}
+                            </p>
+                        </div>
+                        <div
+                            class="bg-gray-50 rounded-lg p-4 shadow-sm border border-gray-100"
+                        >
+                            <p class="text-sm font-medium text-blue-600 mb-1">
+                                Marital Status
+                            </p>
+                            <p class="text-gray-800 font-medium">
+                                {{ profile.marital_status|title|default:"Not
+                                provided" }}
+                            </p>
+                        </div>
                     </div>
-                    {% else %}
-                    <p class="text-sm text-gray-500">Not provided</p>
-                    {% endif %}
                 </div>
 
-                <!-- Permanent Address -->
-                <div>
-                    <h4 class="text-md font-medium text-gray-700 mb-3">Permanent Address</h4>
-                    {% if user_profile.is_current_same_as_permanent %}
-                    <p class="text-sm text-gray-500 italic">Same as current address</p>
-                    {% elif user_profile.permanent_address_line1 %}
-                    <div class="text-sm text-gray-900">
-                        <p>{{ user_profile.permanent_address_line1 }}</p>
-                        {% if user_profile.permanent_address_line2 %}
-                        <p>{{ user_profile.permanent_address_line2 }}</p>
-                        {% endif %}
-                        <p>{{ user_profile.permanent_city }}{% if user_profile.permanent_state %}, {{ user_profile.permanent_state }}{% endif %} {{ user_profile.permanent_postal_code }}</p>
-                        {% if user_profile.permanent_country %}
-                        <p>{{ user_profile.permanent_country }}</p>
-                        {% endif %}
+                <!-- Government IDs -->
+                <div class="mb-10">
+                    <h3
+                        class="text-xl font-semibold text-gray-800 mb-6 flex items-center"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-6 w-6 mr-2 text-purple-600"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-3 3h6a3.001 3.001 0 00-3-3z"
+                            />
+                        </svg>
+                        Government IDs
+                    </h3>
+                    <div
+                        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                    >
+                        <div
+                            class="bg-gray-50 rounded-lg p-4 shadow-sm border border-gray-100"
+                        >
+                            <p class="text-sm font-medium text-indigo-600 mb-1">
+                                PAN Number
+                            </p>
+                            <p class="text-gray-800 font-medium">
+                                {{ profile.pan_number|default:"Not provided" }}
+                            </p>
+                        </div>
+                        <div
+                            class="bg-gray-50 rounded-lg p-4 shadow-sm border border-gray-100"
+                        >
+                            <p class="text-sm font-medium text-indigo-600 mb-1">
+                                Aadhar Number
+                            </p>
+                            <p class="text-gray-800 font-medium">
+                                {{ profile.aadhar_number|default:"Not provided"
+                                }}
+                            </p>
+                        </div>
+                        <div
+                            class="bg-gray-50 rounded-lg p-4 shadow-sm border border-gray-100"
+                        >
+                            <p class="text-sm font-medium text-indigo-600 mb-1">
+                                Passport Number
+                            </p>
+                            <p class="text-gray-800 font-medium">
+                                {{ profile.passport_number|default:"Not
+                                provided" }}
+                            </p>
+                        </div>
                     </div>
-                    {% else %}
-                    <p class="text-sm text-gray-500">Not provided</p>
-                    {% endif %}
                 </div>
-            </div>
 
-            <!-- Emergency Contact -->
-            <div class="bg-white rounded-lg shadow-sm p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Emergency Contact</h3>
-                {% if user_profile.emergency_contact_name %}
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-500">Name</label>
-                        <p class="text-sm text-gray-900">{{ user_profile.emergency_contact_name }}</p>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-500">Phone</label>
-                        <p class="text-sm text-gray-900">{{ user_profile.emergency_contact_number|default:"Not provided" }}</p>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-500">Relationship</label>
-                        <p class="text-sm text-gray-900">{{ user_profile.emergency_contact_relationship|default:"Not specified" }}</p>
+                <!-- Employment Details -->
+                <div class="mb-10">
+                    <h3
+                        class="text-xl font-semibold text-gray-800 mb-6 flex items-center"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-6 w-6 mr-2 text-purple-600"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                            />
+                        </svg>
+                        Employment Information
+                    </h3>
+                    <div
+                        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                    >
+                        <div
+                            class="bg-gray-50 rounded-lg p-4 shadow-sm border border-gray-100"
+                        >
+                            <p class="text-sm font-medium text-green-600 mb-1">
+                                Employee ID
+                            </p>
+                            <p class="text-gray-800 font-medium">
+                                {{ profile.employee_id|default:"Not assigned" }}
+                            </p>
+                        </div>
+                        <div
+                            class="bg-gray-50 rounded-lg p-4 shadow-sm border border-gray-100"
+                        >
+                            <p class="text-sm font-medium text-green-600 mb-1">
+                                Employee Type
+                            </p>
+                            <p class="text-gray-800 font-medium">
+                                {{
+                                profile.get_employee_type_display|default:"Not
+                                specified" }}
+                            </p>
+                        </div>
+                        <div
+                            class="bg-gray-50 rounded-lg p-4 shadow-sm border border-gray-100"
+                        >
+                            <p class="text-sm font-medium text-green-600 mb-1">
+                                Job Description
+                            </p>
+                            <p class="text-gray-800 font-medium">
+                                {{
+                                profile.job_description|default:profile.get_role_display|default:"Not
+                                provided" }}
+                            </p>
+                        </div>
+                        <div
+                            class="bg-gray-50 rounded-lg p-4 shadow-sm border border-gray-100"
+                        >
+                            <p class="text-sm font-medium text-green-600 mb-1">
+                                Work Location
+                            </p>
+                            <p class="text-gray-800 font-medium">
+                                {% if profile.office_location %}{{
+                                profile.office_location.name }}{% else %}Not
+                                specified{% endif %}
+                            </p>
+                        </div>
+                        <div
+                            class="bg-gray-50 rounded-lg p-4 shadow-sm border border-gray-100"
+                        >
+                            <p class="text-sm font-medium text-green-600 mb-1">
+                                Start Date
+                            </p>
+                            <p class="text-gray-800 font-medium">
+                                {{ profile.start_date|date:"M d,
+                                Y"|default:user.date_joined|date:"M d,
+                                Y"|default:"Not specified" }}
+                            </p>
+                        </div>
+                        <div
+                            class="bg-gray-50 rounded-lg p-4 shadow-sm border border-gray-100"
+                        >
+                            <p class="text-sm font-medium text-green-600 mb-1">
+                                Hire Date
+                            </p>
+                            <p class="text-gray-800 font-medium">
+                                {{ profile.hire_date|date:"M d,
+                                Y"|default:user.date_joined|date:"M d,
+                                Y"|default:"Not specified" }}
+                            </p>
+                        </div>
+                        <div
+                            class="bg-gray-50 rounded-lg p-4 shadow-sm border border-gray-100"
+                        >
+                            <p class="text-sm font-medium text-green-600 mb-1">
+                                Probation End Date
+                            </p>
+                            <p class="text-gray-800 font-medium">
+                                {{ profile.probation_end_date|date:"M d,
+                                Y"|default:"Not specified" }}
+                            </p>
+                        </div>
+                        <div
+                            class="bg-gray-50 rounded-lg p-4 shadow-sm border border-gray-100"
+                        >
+                            <p class="text-sm font-medium text-green-600 mb-1">
+                                Reporting Manager
+                            </p>
+                            <p class="text-gray-800 font-medium">
+                                {% if profile.reporting_manager %} {{
+                                profile.reporting_manager.get_full_name }} {%
+                                else %} Not assigned {% endif %}
+                            </p>
+                        </div>
+                        <div
+                            class="bg-gray-50 rounded-lg p-4 shadow-sm border border-gray-100"
+                        >
+                            <p class="text-sm font-medium text-green-600 mb-1">
+                                Notice Period
+                            </p>
+                            <p class="text-gray-800 font-medium">
+                                {{ profile.notice_period_days|default:"30" }}
+                                days
+                            </p>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Secondary Emergency Contact -->
-                {% if user_profile.secondary_emergency_contact_name %}
-                <div class="mt-6">
-                    <h4 class="text-md font-medium text-gray-700 mb-3">Secondary Emergency Contact</h4>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-500">Name</label>
-                            <p class="text-sm text-gray-900">{{ user_profile.secondary_emergency_contact_name }}</p>
+                <!-- Emergency Contact -->
+                <div class="mb-10">
+                    <h3
+                        class="text-xl font-semibold text-gray-800 mb-6 flex items-center"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-6 w-6 mr-2 text-purple-600"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"
+                            />
+                        </svg>
+                        Emergency Contact
+                    </h3>
+                    <div
+                        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                    >
+                        <div
+                            class="bg-gray-50 rounded-lg p-4 shadow-sm border border-gray-100"
+                        >
+                            <p class="text-sm font-medium text-red-600 mb-1">
+                                Contact Name
+                            </p>
+                            <p class="text-gray-800 font-medium">
+                                {{ profile.emergency_contact_name|default:"Not
+                                provided" }}
+                            </p>
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-500">Phone</label>
-                            <p class="text-sm text-gray-900">{{ user_profile.secondary_emergency_contact_number|default:"Not provided" }}</p>
+                        <div
+                            class="bg-gray-50 rounded-lg p-4 shadow-sm border border-gray-100"
+                        >
+                            <p class="text-sm font-medium text-red-600 mb-1">
+                                Contact Number
+                            </p>
+                            <p class="text-gray-800 font-medium">
+                                {{ profile.emergency_contact_number|default:"Not
+                                provided" }}
+                            </p>
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-500">Relationship</label>
-                            <p class="text-sm text-gray-900">{{ user_profile.secondary_emergency_contact_relationship|default:"Not specified" }}</p>
+                        <div
+                            class="bg-gray-50 rounded-lg p-4 shadow-sm border border-gray-100"
+                        >
+                            <p class="text-sm font-medium text-red-600 mb-1">
+                                Relationship
+                            </p>
+                            <p class="text-gray-800 font-medium">
+                                {{
+                                profile.emergency_contact_relationship|default:"Not
+                                specified" }}
+                            </p>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Address Information -->
+                {% if profile.current_address_line1 %}
+                <div class="mb-10">
+                    <h3
+                        class="text-xl font-semibold text-gray-800 mb-6 flex items-center"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-6 w-6 mr-2 text-purple-600"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                            />
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                            />
+                        </svg>
+                        Address Information
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div
+                            class="bg-gray-50 rounded-lg p-4 shadow-sm border border-gray-100"
+                        >
+                            <p class="text-sm font-medium text-purple-600 mb-2">
+                                Current Address
+                            </p>
+                            <div class="text-gray-800 font-medium space-y-1">
+                                <p>{{ profile.current_address_line1 }}</p>
+                                {% if profile.current_address_line2 %}
+                                <p>{{ profile.current_address_line2 }}</p>
+                                {% endif %}
+                                <p>
+                                    {{ profile.current_city }}, {{
+                                    profile.current_state }} {{
+                                    profile.current_postal_code }}
+                                </p>
+                                <p>{{ profile.current_country }}</p>
+                            </div>
+                        </div>
+                        {% if profile.permanent_address_line1 and not profile.is_current_same_as_permanent %}
+                        <div
+                            class="bg-gray-50 rounded-lg p-4 shadow-sm border border-gray-100"
+                        >
+                            <p class="text-sm font-medium text-purple-600 mb-2">
+                                Permanent Address
+                            </p>
+                            <div class="text-gray-800 font-medium space-y-1">
+                                <p>{{ profile.permanent_address_line1 }}</p>
+                                {% if profile.permanent_address_line2 %}
+                                <p>{{ profile.permanent_address_line2 }}</p>
+                                {% endif %}
+                                <p>
+                                    {{ profile.permanent_city }}, {{
+                                    profile.permanent_state }} {{
+                                    profile.permanent_postal_code }}
+                                </p>
+                                <p>{{ profile.permanent_country }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
                 {% endif %}
-                {% else %}
-                <p class="text-sm text-gray-500">No emergency contact information provided</p>
-                {% endif %}
-            </div>
 
-            <!-- Professional Information -->
-            <div class="bg-white rounded-lg shadow-sm p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Professional Information</h3>
-                <div class="space-y-4">
-                    {% if user_profile.job_description %}
-                    <div>
-                        <label class="block text-sm font-medium text-gray-500">Job Description</label>
-                        <p class="text-sm text-gray-900">{{ user_profile.job_description }}</p>
-                    </div>
-                    {% endif %}
-                    
-                    {% if user_profile.skills %}
-                    <div>
-                        <label class="block text-sm font-medium text-gray-500">Skills</label>
-                        <p class="text-sm text-gray-900">{{ user_profile.skills }}</p>
-                    </div>
-                    {% endif %}
-
-                    {% if user_profile.previous_company %}
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-500">Previous Company</label>
-                            <p class="text-sm text-gray-900">{{ user_profile.previous_company }}</p>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-500">Previous Position</label>
-                            <p class="text-sm text-gray-900">{{ user_profile.previous_position|default:"Not specified" }}</p>
-                        </div>
-                        {% if user_profile.previous_experience_years %}
-                        <div>
-                            <label class="block text-sm font-medium text-gray-500">Years of Experience</label>
-                            <p class="text-sm text-gray-900">{{ user_profile.previous_experience_years }} years</p>
-                        </div>
-                        {% endif %}
-                    </div>
-                    {% endif %}
+                <!-- Action Buttons -->
+                <div class="text-center mt-8">
+                    <a
+                        href="{% url 'profile:edit-my-profile' %}"
+                        class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-5 w-5 mr-2"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                            />
+                        </svg>
+                        Edit Profile
+                    </a>
                 </div>
             </div>
         </div>
+        {% endwith %} {% else %}
+        <!-- Profile Creation Message -->
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="text-center py-16 px-8">
+                <div
+                    class="w-24 h-24 bg-gradient-to-br from-blue-400 to-blue-600 rounded-3xl flex items-center justify-center text-white text-3xl font-bold mx-auto mb-6"
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="h-12 w-12"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                        />
+                    </svg>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-800 mb-4">
+                    Welcome, {{ user.get_full_name|default:user.username }}!
+                </h3>
+                <p class="text-gray-600 mb-8 max-w-md mx-auto">
+                    Your profile is being set up. Please refresh the page or
+                    contact your administrator if this message persists.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                    <button
+                        onclick="window.location.reload()"
+                        class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-8 py-3 rounded-xl transition-all duration-300 font-semibold tracking-wide shadow-lg hover:shadow-xl"
+                    >
+                        <i class="fas fa-sync-alt mr-2"></i>Refresh Page
+                    </button>
+                    <a
+                        href="{% url 'profile:dashboard' %}"
+                        class="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white px-8 py-3 rounded-xl transition-all duration-300 font-semibold tracking-wide shadow-lg hover:shadow-xl"
+                    >
+                        <i class="fas fa-tachometer-alt mr-2"></i>Go to
+                        Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
     </div>
-    {% else %}
-    <!-- No Profile Found -->
-    <div class="bg-white rounded-lg shadow-sm p-12 text-center">
-        <i class="fas fa-user-circle text-6xl text-gray-300 mb-4"></i>
-        <h2 class="text-xl font-semibold text-gray-900 mb-2">Profile Not Found</h2>
-        <p class="text-gray-600 mb-6">It looks like your profile hasn't been set up yet.</p>
-        <a href="{% url 'profile:edit-my-profile' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition duration-200">
-            <i class="fas fa-plus mr-2"></i>Create Profile
-        </a>
-    </div>
-    {% endif %}
 </div>
+
+<script>
+    // Get modal elements
+    const modal = document.getElementById("resetPasswordModal");
+    const openModalBtn = document.getElementById("openResetPasswordModal");
+    const closeModalBtn = document.getElementById("closeResetPasswordModal");
+    const cancelBtn = document.getElementById("cancelResetBtn");
+    const newPasswordInput = document.getElementById("new_pwd");
+    const confirmPasswordInput = document.getElementById("confirm_pwd");
+    const passwordMatchMessage = document.getElementById(
+        "password-match-message",
+    );
+    const submitBtn = document.getElementById("submitPasswordReset");
+
+    // Open modal
+    if (openModalBtn) {
+        openModalBtn.addEventListener("click", function () {
+            modal.classList.remove("hidden");
+        });
+    }
+
+    // Close modal functions
+    function closeModal() {
+        modal.classList.add("hidden");
+        // Reset form
+        const form = modal.querySelector("form");
+        if (form) form.reset();
+        passwordMatchMessage.classList.add("hidden");
+    }
+
+    // Close on X button click
+    if (closeModalBtn) {
+        closeModalBtn.addEventListener("click", closeModal);
+    }
+
+    // Close on Cancel button click
+    if (cancelBtn) {
+        cancelBtn.addEventListener("click", closeModal);
+    }
+
+    // Close on click outside
+    window.addEventListener("click", function (event) {
+        if (event.target === modal) {
+            closeModal();
+        }
+    });
+
+    // Password matching validation
+    if (confirmPasswordInput && newPasswordInput) {
+        function validatePasswords() {
+            if (confirmPasswordInput.value && newPasswordInput.value) {
+                if (confirmPasswordInput.value !== newPasswordInput.value) {
+                    passwordMatchMessage.classList.remove("hidden");
+                    submitBtn.disabled = true;
+                    submitBtn.classList.add("opacity-50", "cursor-not-allowed");
+                } else {
+                    passwordMatchMessage.classList.add("hidden");
+                    submitBtn.disabled = false;
+                    submitBtn.classList.remove(
+                        "opacity-50",
+                        "cursor-not-allowed",
+                    );
+                }
+            }
+        }
+
+        newPasswordInput.addEventListener("input", validatePasswords);
+        confirmPasswordInput.addEventListener("input", validatePasswords);
+    }
+</script>
 {% endblock %}

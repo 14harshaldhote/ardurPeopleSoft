@@ -149,8 +149,7 @@
                         Profile
                     </a>
                 </li>
-                {% endif %}
-                {% if is_employee %}
+                {% endif %} {% if is_employee %}
                 <li class="pt-4 pb-2">
                     <p
                         class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider"
@@ -200,7 +199,7 @@
                         Attendance
                     </a>
                 </li>
-               
+
                 <li>
                     <a
                         href="#"
@@ -222,8 +221,7 @@
                         Leave Management
                     </a>
                 </li>
-                
-           
+
                 <li>
                     <a
                         href="#"
@@ -272,8 +270,7 @@
                         Entertainment
                     </a>
                 </li>
-                {% endif %} 
-                {% if is_hr %}
+                {% endif %} {% if is_hr %}
                 <li class="pt-4 pb-2">
                     <p
                         class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider"
@@ -761,7 +758,7 @@
                 </li>
                 <li>
                     <a
-                        href="#"
+                        href="{% url 'core:configurations' %}"
                         class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
@@ -1079,7 +1076,7 @@
                 <!-- Profile -->
                 <li>
                     <a
-                        href="#"
+                        href="{% url 'profile:my-profile' %}"
                         class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-green-50 hover:text-green-700"
                         :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
                         title="Profile"
@@ -1193,7 +1190,6 @@
                     </a>
                 </li>
 
-              
                 <!-- Leave Management -->
                 <li>
                     <a
@@ -1229,7 +1225,6 @@
                         >
                     </a>
                 </li>
-
 
                 <!-- My Appraisals -->
                 <li>
@@ -2058,7 +2053,7 @@
 
                 <li>
                     <a
-                        href="#"
+                        href="{% url 'core:configurations' %}"
                         class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
                         :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
                         title="Configurations"

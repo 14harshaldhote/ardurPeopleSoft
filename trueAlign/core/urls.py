@@ -41,4 +41,10 @@ urlpatterns = [
     path('dashboard/', views.dashboard_view, name='dashboard'),
     path('configurations/', views.configurations_view, name='configurations'),
 
+    # Office Location Management URLs
+    path('locations/', views.manage_locations, name='manage_locations'),
+    path('locations/add/', views.add_location, name='add_location'),
+    path('locations/edit/<int:location_id>/', views.edit_location, name='edit_location'),
+    path('locations/delete/<int:location_id>/', views.delete_location, name='delete_location'),
+
 ]

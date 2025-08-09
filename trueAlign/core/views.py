@@ -21,7 +21,7 @@ from django.db import transaction
 from django.conf import settings
 from django.contrib import messages
 from django.urls import reverse_lazy
-from trueAlign.models import UserSession
+from trueAlign.models import UserSession, OfficeLocation
 from .middleware import OptimizedSessionTrackingMiddleware
 from .session_config import CONFIG
 from .signals import (
@@ -308,9 +308,9 @@ def optimized_batch_activity_update(request):
     """
     from trueAlign.core import get_batch_writer, get_session_manager, get_session_logger
     import hashlib
-    
+
     start_time = time.time()
-    
+
     try:
         # Handle both JSON and form data
         try:
@@ -351,7 +351,7 @@ def optimized_batch_activity_update(request):
             'activity_count': len(activities),
             'timestamp': int(time.time())
         }, sort_keys=True).encode()).hexdigest()
-        
+
         dedup_key = f"batch_request_dedup_{request_hash}"
         if cache.get(dedup_key):
             session_logger.log_error(
@@ -361,7 +361,7 @@ def optimized_batch_activity_update(request):
                 details={'tab_id': tab_id, 'activity_count': len(activities)}
             )
             return JsonResponse({'status': 'duplicate', 'message': 'Duplicate request blocked'})
-        
+
         cache.set(dedup_key, True, 10)  # 10 second deduplication window
 
         # Enhanced throttling
@@ -372,7 +372,7 @@ def optimized_batch_activity_update(request):
 
         if last_update and (current_time - last_update) < throttle_interval:
             return JsonResponse({
-                'status': 'throttled', 
+                'status': 'throttled',
                 'retry_after': throttle_interval,
                 'message': 'Request throttled'
             })
@@ -407,7 +407,7 @@ def optimized_batch_activity_update(request):
         # Use enhanced batch writer for activities
         batch_writer = get_batch_writer()
         processed_count = 0
-        
+
         for activity in activities:
             try:
                 activity_type = activity.get('type', 'heartbeat')
@@ -427,7 +427,7 @@ def optimized_batch_activity_update(request):
                     title=title
                 )
                 processed_count += 1
-                
+
             except Exception as activity_error:
                 logger.warning(f"Error queuing activity: {activity_error}")
                 session_logger.log_error(
@@ -440,7 +440,7 @@ def optimized_batch_activity_update(request):
 
         # Update throttle cache
         cache.set(throttle_key, current_time, throttle_interval * 2)
-        
+
         # Log batch performance
         duration_ms = (time.time() - start_time) * 1000
         session_logger.log_batch_write_performance(
@@ -464,11 +464,11 @@ def optimized_batch_activity_update(request):
         duration_ms = (time.time() - start_time) * 1000
         session_logger = get_session_logger()
         session_logger.log_batch_write_performance(
-            user_id if 'user_id' in locals() else None, 
-            len(activities) if 'activities' in locals() else 0, 
+            user_id if 'user_id' in locals() else None,
+            len(activities) if 'activities' in locals() else 0,
             duration_ms, success=False, error=str(e)
         )
-        
+
         logger.error(f"Error in batch activity update: {str(e)}", exc_info=True)
         return JsonResponse({'error': 'Internal server error'}, status=500)
 
@@ -1339,42 +1339,42 @@ def configurations_view(request):
             'name': 'Conference Room Settings',
             'description': 'Manage office locations, conference rooms, and booking settings',
             'icon': 'ri-building-line',
-            'url': 'conf_booking:manage_locations',
+            'url': 'core:manage_locations',
             'color': 'bg-blue-500',
             'hover_color': 'hover:bg-blue-600'
         },
-        {
-            'name': 'Conference Room Management',
-            'description': 'Add, edit, and manage conference rooms across all locations',
-            'icon': 'ri-door-open-line',
-            'url': 'conf_booking:manage_rooms',
-            'color': 'bg-purple-500',
-            'hover_color': 'hover:bg-purple-600'
-        },
-        {
-            'name': 'Attendance Dashboard',
-            'description': 'View and manage employee attendance tracking',
-            'icon': 'ri-time-line',
-            'url': 'attendance:dashboard',
-            'color': 'bg-green-500',
-            'hover_color': 'hover:bg-green-600'
-        },
-        {
-            'name': 'Support Dashboard',
-            'description': 'Manage support tickets and customer service',
-            'icon': 'ri-customer-service-line',
-            'url': 'support:dashboard',
-            'color': 'bg-orange-500',
-            'hover_color': 'hover:bg-orange-600'
-        },
-        {
-            'name': 'Conference Room Booking',
-            'description': 'Book and manage conference room reservations',
-            'icon': 'ri-calendar-line',
-            'url': 'conf_booking:booking_room',
-            'color': 'bg-indigo-500',
-            'hover_color': 'hover:bg-indigo-600'
-        }
+        # {
+        #     'name': 'Conference Room Management',
+        #     'description': 'Add, edit, and manage conference rooms across all locations',
+        #     'icon': 'ri-door-open-line',
+        #     'url': 'conf_booking:manage_rooms',
+        #     'color': 'bg-purple-500',
+        #     'hover_color': 'hover:bg-purple-600'
+        # },
+        # {
+        #     'name': 'Attendance Dashboard',
+        #     'description': 'View and manage employee attendance tracking',
+        #     'icon': 'ri-time-line',
+        #     'url': 'attendance:dashboard',
+        #     'color': 'bg-green-500',
+        #     'hover_color': 'hover:bg-green-600'
+        # },
+        # {
+        #     'name': 'Support Dashboard',
+        #     'description': 'Manage support tickets and customer service',
+        #     'icon': 'ri-customer-service-line',
+        #     'url': 'support:dashboard',
+        #     'color': 'bg-orange-500',
+        #     'hover_color': 'hover:bg-orange-600'
+        # },
+        # {
+        #     'name': 'Conference Room Booking',
+        #     'description': 'Book and manage conference room reservations',
+        #     'icon': 'ri-calendar-line',
+        #     'url': 'conf_booking:booking_room',
+        #     'color': 'bg-indigo-500',
+        #     'hover_color': 'hover:bg-indigo-600'
+        # }
     ]
 
     context = {
@@ -1384,3 +1384,159 @@ def configurations_view(request):
     }
 
     return render(request, 'configurations.html', context)
+
+
+# =============================================================================
+# OFFICE LOCATION MANAGEMENT VIEWS
+# =============================================================================
+
+@login_required
+def manage_locations(request):
+    """
+    Manage office locations - list all locations with add/edit options.
+    Only accessible by Admin group members or superusers.
+    """
+    # Check if user is admin/superuser
+    user_groups = request.user.groups.all()
+    is_admin = request.user.is_superuser or user_groups.filter(name='Admin').exists()
+
+    if not is_admin:
+        messages.error(request, 'You do not have permission to access office location management.')
+        return redirect('core:dashboard')
+
+    # Get all office locations
+    locations = OfficeLocation.objects.all().order_by('name')
+
+    context = {
+        'locations': locations,
+        'page_title': 'Office Location Management',
+        'is_admin': is_admin,
+    }
+
+    return render(request, 'configurations/manage_locations.html', context)
+
+
+@login_required
+def add_location(request):
+    """
+    Add new office location.
+    Only accessible by Admin group members or superusers.
+    """
+    # Check if user is admin/superuser
+    user_groups = request.user.groups.all()
+    is_admin = request.user.is_superuser or user_groups.filter(name='Admin').exists()
+
+    if not is_admin:
+        messages.error(request, 'You do not have permission to add office locations.')
+        return redirect('core:dashboard')
+
+    if request.method == 'POST':
+        try:
+            # Create new office location
+            location = OfficeLocation(
+                name=request.POST.get('name'),
+                code=request.POST.get('code').upper(),
+                address_line1=request.POST.get('address_line1'),
+                address_line2=request.POST.get('address_line2', ''),
+                city=request.POST.get('city'),
+                state=request.POST.get('state'),
+                postal_code=request.POST.get('postal_code'),
+                country=request.POST.get('country', 'India'),
+                phone=request.POST.get('phone', ''),
+                email=request.POST.get('email', ''),
+                timezone=request.POST.get('timezone', 'Asia/Kolkata'),
+                working_hours_start=request.POST.get('working_hours_start', '09:00'),
+                working_hours_end=request.POST.get('working_hours_end', '18:00'),
+                is_active=request.POST.get('is_active') == 'on'
+            )
+            location.save()
+            messages.success(request, f'Office location "{location.name}" has been added successfully.')
+            return redirect('core:manage_locations')
+        except Exception as e:
+            messages.error(request, f'Error adding office location: {str(e)}')
+
+    context = {
+        'page_title': 'Add Office Location',
+        'is_admin': is_admin,
+    }
+
+    return render(request, 'configurations/add_location.html', context)
+
+
+@login_required
+def edit_location(request, location_id):
+    """
+    Edit existing office location.
+    Only accessible by Admin group members or superusers.
+    """
+    # Check if user is admin/superuser
+    user_groups = request.user.groups.all()
+    is_admin = request.user.is_superuser or user_groups.filter(name='Admin').exists()
+
+    if not is_admin:
+        messages.error(request, 'You do not have permission to edit office locations.')
+        return redirect('core:dashboard')
+
+    try:
+        location = OfficeLocation.objects.get(id=location_id)
+    except OfficeLocation.DoesNotExist:
+        messages.error(request, 'Office location not found.')
+        return redirect('core:manage_locations')
+
+    if request.method == 'POST':
+        try:
+            # Update office location
+            location.name = request.POST.get('name')
+            location.code = request.POST.get('code').upper()
+            location.address_line1 = request.POST.get('address_line1')
+            location.address_line2 = request.POST.get('address_line2', '')
+            location.city = request.POST.get('city')
+            location.state = request.POST.get('state')
+            location.postal_code = request.POST.get('postal_code')
+            location.country = request.POST.get('country', 'India')
+            location.phone = request.POST.get('phone', '')
+            location.email = request.POST.get('email', '')
+            location.timezone = request.POST.get('timezone', 'Asia/Kolkata')
+            location.working_hours_start = request.POST.get('working_hours_start', '09:00')
+            location.working_hours_end = request.POST.get('working_hours_end', '18:00')
+            location.is_active = request.POST.get('is_active') == 'on'
+            location.save()
+            messages.success(request, f'Office location "{location.name}" has been updated successfully.')
+            return redirect('core:manage_locations')
+        except Exception as e:
+            messages.error(request, f'Error updating office location: {str(e)}')
+
+    context = {
+        'location': location,
+        'page_title': f'Edit Office Location - {location.name}',
+        'is_admin': is_admin,
+    }
+
+    return render(request, 'configurations/edit_location.html', context)
+
+
+@login_required
+def delete_location(request, location_id):
+    """
+    Delete office location.
+    Only accessible by Admin group members or superusers.
+    """
+    # Check if user is admin/superuser
+    user_groups = request.user.groups.all()
+    is_admin = request.user.is_superuser or user_groups.filter(name='Admin').exists()
+
+    if not is_admin:
+        messages.error(request, 'You do not have permission to delete office locations.')
+        return redirect('core:dashboard')
+
+    try:
+        location = OfficeLocation.objects.get(id=location_id)
+        location_name = location.name
+        location.delete()
+        messages.success(request, f'Office location "{location_name}" has been deleted successfully.')
+    except OfficeLocation.DoesNotExist:
+        messages.error(request, 'Office location not found.')
+    except Exception as e:
+        messages.error(request, f'Error deleting office location: {str(e)}')
+
+    return redirect('core:manage_locations')

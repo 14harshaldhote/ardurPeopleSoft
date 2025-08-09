@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.contrib import messages
 from django.views.generic import ListView, DetailView, UpdateView, CreateView
 from django.http import HttpResponse, JsonResponse
@@ -47,7 +47,7 @@ def hr_dashboard(request):
     """HR Dashboard with user statistics"""
     if not is_hr_or_admin(request.user):
         messages.error(request, "You don't have permission to access the HR dashboard.")
-        return redirect('home')
+        return redirect('core:home')
 
     from datetime import datetime, timedelta
     from django.utils import timezone
@@ -229,6 +229,7 @@ class UserCreateView(LoginRequiredMixin, HRAdminRequiredMixin, CreateView):
         last_name = form.cleaned_data.get('last_name')
         work_location = form.cleaned_data.get('office_location')
         group = form.cleaned_data.get('group')
+        role = form.cleaned_data.get('role')
 
         try:
             # Generate employee ID based on location and role
@@ -251,6 +252,13 @@ class UserCreateView(LoginRequiredMixin, HRAdminRequiredMixin, CreateView):
             user_profile = form.save(commit=False)
             user_profile.user = user
             user_profile.onboarded_by = self.request.user
+
+            # Sync role with selected group
+            if group and not role:
+                user_profile.role = group.name.lower()
+            elif role:
+                user_profile.role = role
+
             user_profile.save()
 
             # Send welcome email
@@ -276,6 +284,10 @@ class UserCreateView(LoginRequiredMixin, HRAdminRequiredMixin, CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Create New User'
+        # Add office locations for the dropdown
+        context['office_locations'] = OfficeLocation.objects.filter(is_active=True).order_by('name')
+        # Add available groups
+        context['groups'] = Group.objects.all().order_by('name')
         return context
 
 # User Update View
@@ -300,6 +312,8 @@ class UserUpdateView(LoginRequiredMixin, HRAdminRequiredMixin, UpdateView):
         first_name = form.cleaned_data.get('first_name')
         last_name = form.cleaned_data.get('last_name')
         email = form.cleaned_data.get('email')
+        group = form.cleaned_data.get('group')
+        role = form.cleaned_data.get('role')
 
         if first_name:
             user.first_name = first_name
@@ -308,7 +322,20 @@ class UserUpdateView(LoginRequiredMixin, HRAdminRequiredMixin, UpdateView):
         if email:
             user.email = email
 
+        # Update user group if provided
+        if group:
+            user.groups.clear()  # Remove all existing groups
+            user.groups.add(group)  # Add the new group
+
         user.save()
+
+        # Sync role with selected group
+        user_profile = form.save(commit=False)
+        if group and not role:
+            user_profile.role = group.name.lower()
+        elif role:
+            user_profile.role = role
+        user_profile.save()
 
         # Log the action
         UserActionLog.objects.create(
@@ -326,6 +353,10 @@ class UserUpdateView(LoginRequiredMixin, HRAdminRequiredMixin, UpdateView):
         context['title'] = 'Update User'
         user_profile = self.get_object()
         context['user_data'] = user_profile.user
+        # Add office locations for the dropdown
+        context['office_locations'] = OfficeLocation.objects.filter(is_active=True).order_by('name')
+        # Add available groups
+        context['groups'] = Group.objects.all().order_by('name')
         return context
 
 # User Status Change View
@@ -685,11 +716,20 @@ def my_profile(request):
     try:
         user_profile = UserDetails.objects.get(user=request.user)
     except UserDetails.DoesNotExist:
-        user_profile = None
-    
+        # Auto-create UserDetails if it doesn't exist
+        user_profile = UserDetails.objects.create(
+            user=request.user,
+            role='developer',  # Default role
+            employee_type='full_time',  # Default employee type
+            employment_status='active'  # Default status
+        )
+
     context = {
         'user_profile': user_profile,
-        'user': request.user
+        'user': request.user,
+        'user_detail': user_profile,  # For template compatibility
+        'username': request.user.username,
+        'role': user_profile.get_role_display() if user_profile else 'Employee'
     }
     return render(request, 'profile/my_profile.html', context)
 
@@ -702,24 +742,24 @@ def edit_my_profile(request):
     except Exception as e:
         messages.error(request, f"Error loading profile: {str(e)}")
         return redirect('profile:my-profile')
-    
+
     if request.method == 'POST':
         form = UserProfileForm(request.POST, instance=user_profile, user=request.user)
         if form.is_valid():
             # Update UserDetails
             form.save()
-            
+
             # Update User model fields if provided
             first_name = form.cleaned_data.get('first_name')
             last_name = form.cleaned_data.get('last_name')
-            
+
             if first_name:
                 request.user.first_name = first_name
             if last_name:
                 request.user.last_name = last_name
-            
+
             request.user.save()
-            
+
             # Log the action
             UserActionLog.objects.create(
                 user=request.user,
@@ -727,12 +767,12 @@ def edit_my_profile(request):
                 action_by=request.user,
                 details="Profile updated by user"
             )
-            
+
             messages.success(request, 'Your profile has been updated successfully.')
             return redirect('profile:my-profile')
     else:
         form = UserProfileForm(instance=user_profile, user=request.user)
-    
+
     context = {
         'form': form,
         'user_profile': user_profile
@@ -746,47 +786,47 @@ def dashboard_analytics_api(request):
     """API endpoint for dashboard analytics data"""
     if not is_hr_or_admin(request.user):
         return JsonResponse({'error': 'Permission denied'}, status=403)
-    
+
     # Time periods
     now = timezone.now()
     thirty_days_ago = now - timedelta(days=30)
     six_months_ago = now - timedelta(days=180)
-    
+
     # Employee status distribution
     status_data = list(UserDetails.objects.values('employment_status').annotate(
         count=Count('id')
     ).order_by('-count'))
-    
+
     # Location distribution
     location_data = list(UserDetails.objects.filter(
         office_location__isnull=False
     ).values('office_location__name').annotate(
         count=Count('id')
     ).order_by('-count'))
-    
+
     # Employee type distribution
     type_data = list(UserDetails.objects.values('employee_type').annotate(
         count=Count('id')
     ).order_by('-count'))
-    
+
     # Monthly hiring trends (last 6 months)
     monthly_hires = []
     for i in range(6):
         month_start = (now - timedelta(days=30*i)).replace(day=1)
         month_end = (month_start.replace(month=month_start.month+1) - timedelta(days=1)) if month_start.month < 12 else month_start.replace(year=month_start.year+1, month=1) - timedelta(days=1)
-        
+
         count = UserDetails.objects.filter(
             hire_date__gte=month_start,
             hire_date__lte=month_end
         ).count()
-        
+
         monthly_hires.append({
             'month': month_start.strftime('%B %Y'),
             'count': count
         })
-    
+
     monthly_hires.reverse()
-    
+
     # User session analytics (if available)
     session_analytics = {}
     try:
@@ -796,24 +836,24 @@ def dashboard_analytics_api(request):
             created_at__date=today,
             is_active=True
         ).count()
-        
+
         # Average session duration
         avg_session_duration = UserSession.objects.filter(
             created_at__gte=thirty_days_ago,
             session_duration__isnull=False
         ).aggregate(avg_duration=Avg('session_duration'))['avg_duration']
-        
+
         session_analytics['avg_session_duration'] = round(avg_session_duration or 0, 2)
-        
+
         # Top active users (by session count)
         top_users = list(UserSession.objects.filter(
             created_at__gte=thirty_days_ago
         ).values('user__username', 'user__first_name', 'user__last_name').annotate(
             session_count=Count('id')
         ).order_by('-session_count')[:5])
-        
+
         session_analytics['top_users'] = top_users
-        
+
     except Exception as e:
         # If UserSession model is not available or has issues
         session_analytics = {
@@ -821,14 +861,14 @@ def dashboard_analytics_api(request):
             'avg_session_duration': 0,
             'top_users': []
         }
-    
+
     # Recent activities summary
     recent_activities = list(UserActionLog.objects.filter(
         timestamp__gte=thirty_days_ago
     ).values('action_type').annotate(
         count=Count('id')
     ).order_by('-count'))
-    
+
     return JsonResponse({
         'status_distribution': status_data,
         'location_distribution': location_data,
@@ -844,40 +884,40 @@ def user_activity_analytics_api(request, user_id):
     """API endpoint for individual user activity analytics"""
     if not is_hr_or_admin(request.user) and request.user.id != user_id:
         return JsonResponse({'error': 'Permission denied'}, status=403)
-    
+
     try:
         user = get_object_or_404(User, id=user_id)
         user_profile = get_object_or_404(UserDetails, user=user)
-        
+
         # Time periods
         now = timezone.now()
         thirty_days_ago = now - timedelta(days=30)
-        
+
         # User sessions data
         user_sessions = UserSession.objects.filter(
             user=user,
             created_at__gte=thirty_days_ago
         ).order_by('created_at')
-        
+
         # Daily activity data
         daily_activity = []
         for i in range(30):
             day = (now - timedelta(days=i)).date()
             sessions_count = user_sessions.filter(created_at__date=day).count()
-            
+
             avg_duration = user_sessions.filter(
                 created_at__date=day,
                 session_duration__isnull=False
             ).aggregate(avg_duration=Avg('session_duration'))['avg_duration']
-            
+
             daily_activity.append({
                 'date': day.strftime('%Y-%m-%d'),
                 'sessions': sessions_count,
                 'avg_duration': round(avg_duration or 0, 2)
             })
-        
+
         daily_activity.reverse()
-        
+
         # Activity breakdown
         activity_breakdown = list(SessionActivity.objects.filter(
             user=user,
@@ -885,7 +925,7 @@ def user_activity_analytics_api(request, user_id):
         ).values('activity_type').annotate(
             count=Count('id')
         ).order_by('-count'))
-        
+
         # Productivity metrics
         productivity_data = user_sessions.filter(
             productivity_score__isnull=False
@@ -893,7 +933,7 @@ def user_activity_analytics_api(request, user_id):
             avg_productivity=Avg('productivity_score'),
             avg_engagement=Avg('engagement_score')
         )
-        
+
         return JsonResponse({
             'user_info': {
                 'username': user.username,
@@ -907,6 +947,76 @@ def user_activity_analytics_api(request, user_id):
                 'avg_engagement': round(productivity_data['avg_engagement'] or 0, 2)
             }
         })
-        
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@require_POST
+def save_dashboard_layout(request):
+    """Save user's dashboard layout preferences"""
+    if not is_hr_or_admin(request.user):
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+
+    try:
+        import json
+        data = json.loads(request.body)
+        layout_data = data.get('layout', {})
+
+        layout_preference, created = LayoutPreference.objects.get_or_create(
+            user=request.user,
+            defaults={'layout': layout_data}
+        )
+
+        if not created:
+            layout_preference.layout = layout_data
+            layout_preference.save()
+
+        return JsonResponse({'success': True, 'message': 'Layout saved successfully'})
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+def dashboard_stats_api(request):
+    """API endpoint for real-time dashboard stats"""
+    if not is_hr_or_admin(request.user):
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+
+    try:
+        from datetime import timedelta
+        from django.utils import timezone
+
+        # Get overall stats
+        total_users = User.objects.filter(is_active=True).count()
+        user_details_count = UserDetails.objects.count()
+
+        if user_details_count > total_users:
+            total_users = user_details_count
+
+        # Get active users based on employment status
+        active_users = UserDetails.objects.filter(employment_status='active').count()
+        if active_users == 0:
+            active_users = User.objects.filter(is_active=True).count()
+
+        # Calculate inactive users
+        inactive_users = total_users - active_users if total_users > active_users else 0
+
+        # Get new users this month
+        thirty_days_ago = timezone.now() - timedelta(days=30)
+        new_hires_count = UserDetails.objects.filter(created_at__gte=thirty_days_ago).count()
+        if new_hires_count == 0:
+            new_hires_count = User.objects.filter(date_joined__gte=thirty_days_ago).count()
+
+        return JsonResponse({
+            'total_users': total_users,
+            'active_users': active_users,
+            'inactive_users': inactive_users,
+            'new_hires_count': new_hires_count,
+            'timestamp': timezone.now().isoformat()
+        })
+
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
