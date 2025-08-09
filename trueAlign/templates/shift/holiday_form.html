@@ -1,0 +1,25 @@
+{% extends 'base.html' %} {% block title %}{{ page_title }}{% endblock %} {%
+block content %}
+<script>
+    // This page is just a placeholder that redirects to the holidays list page
+    // All form operations are now handled via modals in the holiday_list.html page
+    window.onload = function () {
+        // Save form data in session storage to show the correct modal when redirected
+        sessionStorage.setItem("show_holiday_modal", "true");
+
+        // Redirect to the holidays list page
+        window.location.href = "{% url 'shift:holidays' %}";
+    };
+</script>
+
+<div class="min-h-screen bg-slate-50 flex items-center justify-center">
+    <div class="text-center">
+        <div
+            class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500 mx-auto"
+        ></div>
+        <p class="mt-4 text-lg text-slate-600">
+            Redirecting to holidays page...
+        </p>
+    </div>
+</div>
+{% endblock %}

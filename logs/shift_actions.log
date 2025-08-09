@@ -2,3 +2,726 @@ INFO|2025-07-20 21:38:36,117|views|16883|6212579328|[6c6f95ac] ACTION_START - SH
 ERROR|2025-07-20 21:38:36,180|services|16883|6212579328|Error getting shift statistics: Cannot resolve keyword 'shiftassignment' into field. Choices are: appraisalattachment, appraisals, approved_bookings, approved_fin_parameters, approved_invoices, approved_payments, assigned_tickets, attendance_modifications, attendance_records, auditlog, bankpayment, break, cancelled_bookings, cc_tickets, client_invoices, client_participations, client_profile, commentattachment, comp_off_approvals, comp_off_requests, conference_bookings, created_fin_parameters, created_games, created_groups, created_icons, created_vouchers, date_joined, dept_approved_vouchers, direct_messages, direct_reports, email, expenses_approved, expenses_paid, failedloginattempt, finance_approved_vouchers, first_name, game_stats, games_turn, globalupdate, group_memberships, groups, id, invited_games, is_active, is_staff, is_superuser, last_login, last_name, leave_approvals, leave_balances, leave_requests, logentry, managed_appraisals, messageread, notifications, onboarded_users, password, passwordchange, performed_actions, presence_marked, presences, profile, projectassignment, projects_as_client, projects_assigned, projectupdate, role_assigned_by, roleassignmentaudit, sent_messages, sessions, shift_assignments, spectating_games, statuslog, ticketactivity, ticketattachment, ticketcomment, tickets, timesheets, updated_fin_parameters, user_logs, user_permissions, username, verified_payments, won_games, workflow_actions
 ERROR|2025-07-20 21:38:36,180|views|16883|6212579328|Error in shift dashboard: Cannot resolve keyword 'shiftassignment' into field. Choices are: appraisalattachment, appraisals, approved_bookings, approved_fin_parameters, approved_invoices, approved_payments, assigned_tickets, attendance_modifications, attendance_records, auditlog, bankpayment, break, cancelled_bookings, cc_tickets, client_invoices, client_participations, client_profile, commentattachment, comp_off_approvals, comp_off_requests, conference_bookings, created_fin_parameters, created_games, created_groups, created_icons, created_vouchers, date_joined, dept_approved_vouchers, direct_messages, direct_reports, email, expenses_approved, expenses_paid, failedloginattempt, finance_approved_vouchers, first_name, game_stats, games_turn, globalupdate, group_memberships, groups, id, invited_games, is_active, is_staff, is_superuser, last_login, last_name, leave_approvals, leave_balances, leave_requests, logentry, managed_appraisals, messageread, notifications, onboarded_users, password, passwordchange, performed_actions, presence_marked, presences, profile, projectassignment, projects_as_client, projects_assigned, projectupdate, role_assigned_by, roleassignmentaudit, sent_messages, sessions, shift_assignments, spectating_games, statuslog, ticketactivity, ticketattachment, ticketcomment, tickets, timesheets, updated_fin_parameters, user_logs, user_permissions, username, verified_payments, won_games, workflow_actions
 INFO|2025-07-20 21:38:36,206|views|16883|6212579328|[6c6f95ac] ACTION_SUCCESS - SHIFT_DASHBOARD_VIEW completed in 89.32ms
+INFO|2025-08-09 16:46:13,935|views|63696|6162067456|[9491d03f] ACTION_START - SHIFT_DASHBOARD_VIEW
+ERROR|2025-08-09 16:46:13,969|views|63696|6162067456|Error in shift dashboard: (1054, "Unknown column 'trueAlign_shiftassignment.created_by_id' in 'field list'")
+ERROR|2025-08-09 16:46:13,979|views|63696|6162067456|[9491d03f] ACTION_ERROR - SHIFT_DASHBOARD_VIEW failed after 43.73ms: Unclosed tag on line 1: 'block'. Looking for one of: endblock.
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/mysql/base.py", line 76, in execute
+    return self.cursor.execute(query, args)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/cursors.py", line 330, in _query
+    db.query(q)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/connections.py", line 280, in query
+    _mysql.connection.query(self, query)
+MySQLdb.OperationalError: (1054, "Unknown column 'trueAlign_shiftassignment.created_by_id' in 'field list'")
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/shift/views.py", line 186, in shift_dashboard
+    current_shift = shift_service.get_current_shift(request.user)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/shift/services.py", line 769, in get_current_shift
+    return ShiftAssignment.get_user_current_shift(user, date)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/models.py", line 2682, in get_user_current_shift
+    ).select_related('shift').first()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 1097, in first
+    for obj in queryset[:1]:
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 400, in __iter__
+    self._fetch_all()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 1928, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/sql/compiler.py", line 1562, in execute_sql
+    cursor.execute(sql, params)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 122, in execute
+    return super().execute(sql, params)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/backends/mysql/base.py", line 76, in execute
+    return self.cursor.execute(query, args)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/cursors.py", line 330, in _query
+    db.query(q)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/MySQLdb/connections.py", line 280, in query
+    _mysql.connection.query(self, query)
+django.db.utils.OperationalError: (1054, "Unknown column 'trueAlign_shiftassignment.created_by_id' in 'field list'")
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/shift/views.py", line 79, in wrapper
+    result = func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/shift/views.py", line 257, in shift_dashboard
+    return render(request, 'shift/dashboard.html', {'error': True})
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 515, in parse
+    self.unclosed_block_tag(parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 578, in unclosed_block_tag
+    raise self.error(token, msg)
+django.template.exceptions.TemplateSyntaxError: Unclosed tag on line 1: 'block'. Looking for one of: endblock.
+INFO|2025-08-09 16:46:33,367|views|63696|6162067456|[d249e800] ACTION_START - SHIFT_DASHBOARD_VIEW
+ERROR|2025-08-09 16:46:33,441|services|63696|6162067456|Error getting shift statistics: Cannot resolve keyword 'shiftassignment' into field. Choices are: client_profile, created_assignments, date_joined, direct_reports, email, first_name, groups, id, is_active, is_staff, is_superuser, last_login, last_name, layout_preference, logentry, onboarded_users, password, performed_actions, profile, session_activities, sessions, shift_assignments, system_notifications, user_logs, user_permissions, username
+ERROR|2025-08-09 16:46:33,442|views|63696|6162067456|Error in shift dashboard: Cannot resolve keyword 'shiftassignment' into field. Choices are: client_profile, created_assignments, date_joined, direct_reports, email, first_name, groups, id, is_active, is_staff, is_superuser, last_login, last_name, layout_preference, logentry, onboarded_users, password, performed_actions, profile, session_activities, sessions, shift_assignments, system_notifications, user_logs, user_permissions, username
+INFO|2025-08-09 16:46:33,480|views|63696|6162067456|[d249e800] ACTION_SUCCESS - SHIFT_DASHBOARD_VIEW completed in 113.77ms
+INFO|2025-08-09 16:46:33,711|views|63696|6162067456|USER_ACTION - managerTest: api_suggestions_retrieved
+INFO|2025-08-09 16:46:37,524|views|63696|6162067456|[9b3fd10e] ACTION_START - ASSIGNMENT_LIST_VIEW
+INFO|2025-08-09 16:46:37,532|views|63696|6162067456|USER_ACTION - managerTest: assignment_list_access
+INFO|2025-08-09 16:46:37,613|views|63696|6162067456|[9b3fd10e] ACTION_SUCCESS - ASSIGNMENT_LIST_VIEW completed in 88.36ms
+INFO|2025-08-09 16:46:40,857|views|63696|6162067456|USER_ACTION - managerTest: api_suggestions_retrieved
+INFO|2025-08-09 16:46:50,843|views|63696|6162067456|[b70f8c78] ACTION_START - API_UPCOMING_CHANGES
+INFO|2025-08-09 16:46:50,844|views|63696|6162067456|USER_ACTION - managerTest: api_upcoming_changes_request
+INFO|2025-08-09 16:46:50,847|views|63696|6162067456|USER_ACTION - managerTest: api_upcoming_changes_success
+INFO|2025-08-09 16:46:50,848|views|63696|6162067456|[b70f8c78] ACTION_SUCCESS - API_UPCOMING_CHANGES completed in 5.36ms
+INFO|2025-08-09 16:47:13,728|views|63696|6162067456|[96b37d82] ACTION_START - SHIFT_LIST_VIEW
+ERROR|2025-08-09 16:47:13,739|services|63696|6162067456|Error getting all shifts: Cannot resolve keyword 'shiftassignment' into field. Choices are: assignments, break_duration, created_at, custom_work_days, end_time, grace_period, id, is_active, name, shift_duration, start_time, updated_at, work_days
+ERROR|2025-08-09 16:47:13,739|views|63696|6162067456|Error in shift list: Cannot resolve keyword 'shiftassignment' into field. Choices are: assignments, break_duration, created_at, custom_work_days, end_time, grace_period, id, is_active, name, shift_duration, start_time, updated_at, work_days
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/shift/views.py", line 456, in shift_list
+    shifts_data = shift_service.get_all_shifts(
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/shift/services.py", line 51, in get_all_shifts
+    query = query.annotate(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 1630, in annotate
+    return self._annotate(args, kwargs, select=True)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 1680, in _annotate
+    clone.query.add_annotation(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/sql/query.py", line 1198, in add_annotation
+    annotation = annotation.resolve_expression(self, allow_joins=True, reuse=None)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/aggregates.py", line 65, in resolve_expression
+    c = super().resolve_expression(query, allow_joins, reuse, summarize)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/expressions.py", line 975, in resolve_expression
+    c.source_expressions[pos] = arg.resolve_expression(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/expressions.py", line 854, in resolve_expression
+    return query.resolve_ref(self.name, allow_joins, reuse, summarize)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/sql/query.py", line 2014, in resolve_ref
+    join_info = self.setup_joins(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/sql/query.py", line 1867, in setup_joins
+    path, final_field, targets, rest = self.names_to_path(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/sql/query.py", line 1772, in names_to_path
+    raise FieldError(
+django.core.exceptions.FieldError: Cannot resolve keyword 'shiftassignment' into field. Choices are: assignments, break_duration, created_at, custom_work_days, end_time, grace_period, id, is_active, name, shift_duration, start_time, updated_at, work_days
+ERROR|2025-08-09 16:47:13,768|views|63696|6162067456|[96b37d82] ACTION_ERROR - SHIFT_LIST_VIEW failed after 40.22ms: 'math_filters' is not a registered tag library. Must be one of:
+admin_list
+admin_modify
+admin_urls
+cache
+i18n
+l10n
+log
+rest_framework
+sessions_extras
+static
+tz
+widget_tweaks
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/shift/views.py", line 456, in shift_list
+    shifts_data = shift_service.get_all_shifts(
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/shift/services.py", line 51, in get_all_shifts
+    query = query.annotate(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 1630, in annotate
+    return self._annotate(args, kwargs, select=True)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 1680, in _annotate
+    clone.query.add_annotation(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/sql/query.py", line 1198, in add_annotation
+    annotation = annotation.resolve_expression(self, allow_joins=True, reuse=None)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/aggregates.py", line 65, in resolve_expression
+    c = super().resolve_expression(query, allow_joins, reuse, summarize)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/expressions.py", line 975, in resolve_expression
+    c.source_expressions[pos] = arg.resolve_expression(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/expressions.py", line 854, in resolve_expression
+    return query.resolve_ref(self.name, allow_joins, reuse, summarize)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/sql/query.py", line 2014, in resolve_ref
+    join_info = self.setup_joins(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/sql/query.py", line 1867, in setup_joins
+    path, final_field, targets, rest = self.names_to_path(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/sql/query.py", line 1772, in names_to_path
+    raise FieldError(
+django.core.exceptions.FieldError: Cannot resolve keyword 'shiftassignment' into field. Choices are: assignments, break_duration, created_at, custom_work_days, end_time, grace_period, id, is_active, name, shift_duration, start_time, updated_at, work_days
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1034, in find_library
+    return parser.libraries[name]
+KeyError: 'math_filters'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/shift/views.py", line 79, in wrapper
+    result = func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/shift/views.py", line 620, in shift_list
+    return render(request, 'shift/shift_list.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1096, in load
+    lib = find_library(parser, name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1036, in find_library
+    raise TemplateSyntaxError(
+django.template.exceptions.TemplateSyntaxError: 'math_filters' is not a registered tag library. Must be one of:
+admin_list
+admin_modify
+admin_urls
+cache
+i18n
+l10n
+log
+rest_framework
+sessions_extras
+static
+tz
+widget_tweaks
+INFO|2025-08-09 16:48:21,291|views|63696|6162067456|[a7909cc9] ACTION_START - SHIFT_LIST_VIEW
+ERROR|2025-08-09 16:48:21,302|services|63696|6162067456|Error getting all shifts: Cannot resolve keyword 'shiftassignment' into field. Choices are: assignments, break_duration, created_at, custom_work_days, end_time, grace_period, id, is_active, name, shift_duration, start_time, updated_at, work_days
+ERROR|2025-08-09 16:48:21,303|views|63696|6162067456|Error in shift list: Cannot resolve keyword 'shiftassignment' into field. Choices are: assignments, break_duration, created_at, custom_work_days, end_time, grace_period, id, is_active, name, shift_duration, start_time, updated_at, work_days
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/shift/views.py", line 456, in shift_list
+    shifts_data = shift_service.get_all_shifts(
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/shift/services.py", line 51, in get_all_shifts
+    query = query.annotate(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 1630, in annotate
+    return self._annotate(args, kwargs, select=True)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 1680, in _annotate
+    clone.query.add_annotation(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/sql/query.py", line 1198, in add_annotation
+    annotation = annotation.resolve_expression(self, allow_joins=True, reuse=None)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/aggregates.py", line 65, in resolve_expression
+    c = super().resolve_expression(query, allow_joins, reuse, summarize)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/expressions.py", line 975, in resolve_expression
+    c.source_expressions[pos] = arg.resolve_expression(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/expressions.py", line 854, in resolve_expression
+    return query.resolve_ref(self.name, allow_joins, reuse, summarize)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/sql/query.py", line 2014, in resolve_ref
+    join_info = self.setup_joins(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/sql/query.py", line 1867, in setup_joins
+    path, final_field, targets, rest = self.names_to_path(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/sql/query.py", line 1772, in names_to_path
+    raise FieldError(
+django.core.exceptions.FieldError: Cannot resolve keyword 'shiftassignment' into field. Choices are: assignments, break_duration, created_at, custom_work_days, end_time, grace_period, id, is_active, name, shift_duration, start_time, updated_at, work_days
+ERROR|2025-08-09 16:48:21,325|views|63696|6162067456|[a7909cc9] ACTION_ERROR - SHIFT_LIST_VIEW failed after 34.47ms: 'math_filters' is not a registered tag library. Must be one of:
+admin_list
+admin_modify
+admin_urls
+cache
+i18n
+l10n
+log
+rest_framework
+sessions_extras
+static
+tz
+widget_tweaks
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/shift/views.py", line 456, in shift_list
+    shifts_data = shift_service.get_all_shifts(
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/shift/services.py", line 51, in get_all_shifts
+    query = query.annotate(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 1630, in annotate
+    return self._annotate(args, kwargs, select=True)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 1680, in _annotate
+    clone.query.add_annotation(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/sql/query.py", line 1198, in add_annotation
+    annotation = annotation.resolve_expression(self, allow_joins=True, reuse=None)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/aggregates.py", line 65, in resolve_expression
+    c = super().resolve_expression(query, allow_joins, reuse, summarize)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/expressions.py", line 975, in resolve_expression
+    c.source_expressions[pos] = arg.resolve_expression(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/expressions.py", line 854, in resolve_expression
+    return query.resolve_ref(self.name, allow_joins, reuse, summarize)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/sql/query.py", line 2014, in resolve_ref
+    join_info = self.setup_joins(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/sql/query.py", line 1867, in setup_joins
+    path, final_field, targets, rest = self.names_to_path(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/sql/query.py", line 1772, in names_to_path
+    raise FieldError(
+django.core.exceptions.FieldError: Cannot resolve keyword 'shiftassignment' into field. Choices are: assignments, break_duration, created_at, custom_work_days, end_time, grace_period, id, is_active, name, shift_duration, start_time, updated_at, work_days
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1034, in find_library
+    return parser.libraries[name]
+KeyError: 'math_filters'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/shift/views.py", line 79, in wrapper
+    result = func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/shift/views.py", line 620, in shift_list
+    return render(request, 'shift/shift_list.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1096, in load
+    lib = find_library(parser, name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1036, in find_library
+    raise TemplateSyntaxError(
+django.template.exceptions.TemplateSyntaxError: 'math_filters' is not a registered tag library. Must be one of:
+admin_list
+admin_modify
+admin_urls
+cache
+i18n
+l10n
+log
+rest_framework
+sessions_extras
+static
+tz
+widget_tweaks
+INFO|2025-08-09 16:48:39,309|views|64888|6191493120|[eaff96e1] ACTION_START - SHIFT_DASHBOARD_VIEW
+ERROR|2025-08-09 16:48:39,359|services|64888|6191493120|Error getting shift statistics: Cannot resolve keyword 'shiftassignment' into field. Choices are: client_profile, created_assignments, date_joined, direct_reports, email, first_name, groups, id, is_active, is_staff, is_superuser, last_login, last_name, layout_preference, logentry, onboarded_users, password, performed_actions, profile, session_activities, sessions, shift_assignments, system_notifications, user_logs, user_permissions, username
+ERROR|2025-08-09 16:48:39,360|views|64888|6191493120|Error in shift dashboard: Cannot resolve keyword 'shiftassignment' into field. Choices are: client_profile, created_assignments, date_joined, direct_reports, email, first_name, groups, id, is_active, is_staff, is_superuser, last_login, last_name, layout_preference, logentry, onboarded_users, password, performed_actions, profile, session_activities, sessions, shift_assignments, system_notifications, user_logs, user_permissions, username
+INFO|2025-08-09 16:48:39,387|views|64888|6191493120|[eaff96e1] ACTION_SUCCESS - SHIFT_DASHBOARD_VIEW completed in 78.02ms
+INFO|2025-08-09 16:48:39,555|views|64888|6191493120|USER_ACTION - managerTest: api_suggestions_retrieved
+INFO|2025-08-09 16:48:41,595|views|64888|6191493120|[78950d77] ACTION_START - SHIFT_LIST_VIEW
+ERROR|2025-08-09 16:48:41,605|services|64888|6191493120|Error getting all shifts: Cannot resolve keyword 'shiftassignment' into field. Choices are: assignments, break_duration, created_at, custom_work_days, end_time, grace_period, id, is_active, name, shift_duration, start_time, updated_at, work_days
+ERROR|2025-08-09 16:48:41,606|views|64888|6191493120|Error in shift list: Cannot resolve keyword 'shiftassignment' into field. Choices are: assignments, break_duration, created_at, custom_work_days, end_time, grace_period, id, is_active, name, shift_duration, start_time, updated_at, work_days
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/shift/views.py", line 456, in shift_list
+    shifts_data = shift_service.get_all_shifts(
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/shift/services.py", line 51, in get_all_shifts
+    query = query.annotate(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 1630, in annotate
+    return self._annotate(args, kwargs, select=True)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 1680, in _annotate
+    clone.query.add_annotation(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/sql/query.py", line 1198, in add_annotation
+    annotation = annotation.resolve_expression(self, allow_joins=True, reuse=None)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/aggregates.py", line 65, in resolve_expression
+    c = super().resolve_expression(query, allow_joins, reuse, summarize)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/expressions.py", line 975, in resolve_expression
+    c.source_expressions[pos] = arg.resolve_expression(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/expressions.py", line 854, in resolve_expression
+    return query.resolve_ref(self.name, allow_joins, reuse, summarize)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/sql/query.py", line 2014, in resolve_ref
+    join_info = self.setup_joins(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/sql/query.py", line 1867, in setup_joins
+    path, final_field, targets, rest = self.names_to_path(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/sql/query.py", line 1772, in names_to_path
+    raise FieldError(
+django.core.exceptions.FieldError: Cannot resolve keyword 'shiftassignment' into field. Choices are: assignments, break_duration, created_at, custom_work_days, end_time, grace_period, id, is_active, name, shift_duration, start_time, updated_at, work_days
+ERROR|2025-08-09 16:48:41,628|views|64888|6191493120|[78950d77] ACTION_ERROR - SHIFT_LIST_VIEW failed after 32.99ms: 'math_filters' is not a registered tag library. Must be one of:
+admin_list
+admin_modify
+admin_urls
+cache
+i18n
+l10n
+log
+rest_framework
+sessions_extras
+static
+tz
+widget_tweaks
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/shift/views.py", line 456, in shift_list
+    shifts_data = shift_service.get_all_shifts(
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/shift/services.py", line 51, in get_all_shifts
+    query = query.annotate(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 1630, in annotate
+    return self._annotate(args, kwargs, select=True)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 1680, in _annotate
+    clone.query.add_annotation(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/sql/query.py", line 1198, in add_annotation
+    annotation = annotation.resolve_expression(self, allow_joins=True, reuse=None)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/aggregates.py", line 65, in resolve_expression
+    c = super().resolve_expression(query, allow_joins, reuse, summarize)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/expressions.py", line 975, in resolve_expression
+    c.source_expressions[pos] = arg.resolve_expression(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/expressions.py", line 854, in resolve_expression
+    return query.resolve_ref(self.name, allow_joins, reuse, summarize)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/sql/query.py", line 2014, in resolve_ref
+    join_info = self.setup_joins(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/sql/query.py", line 1867, in setup_joins
+    path, final_field, targets, rest = self.names_to_path(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/sql/query.py", line 1772, in names_to_path
+    raise FieldError(
+django.core.exceptions.FieldError: Cannot resolve keyword 'shiftassignment' into field. Choices are: assignments, break_duration, created_at, custom_work_days, end_time, grace_period, id, is_active, name, shift_duration, start_time, updated_at, work_days
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1034, in find_library
+    return parser.libraries[name]
+KeyError: 'math_filters'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/shift/views.py", line 79, in wrapper
+    result = func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/shift/views.py", line 620, in shift_list
+    return render(request, 'shift/shift_list.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1096, in load
+    lib = find_library(parser, name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1036, in find_library
+    raise TemplateSyntaxError(
+django.template.exceptions.TemplateSyntaxError: 'math_filters' is not a registered tag library. Must be one of:
+admin_list
+admin_modify
+admin_urls
+cache
+i18n
+l10n
+log
+rest_framework
+sessions_extras
+static
+tz
+widget_tweaks
+INFO|2025-08-09 16:49:40,506|views|65328|6341865472|[51f0d5c9] ACTION_START - SHIFT_DASHBOARD_VIEW
+ERROR|2025-08-09 16:49:40,556|services|65328|6341865472|Error getting shift statistics: Cannot resolve keyword 'shiftassignment' into field. Choices are: client_profile, created_assignments, date_joined, direct_reports, email, first_name, groups, id, is_active, is_staff, is_superuser, last_login, last_name, layout_preference, logentry, onboarded_users, password, performed_actions, profile, session_activities, sessions, shift_assignments, system_notifications, user_logs, user_permissions, username
+ERROR|2025-08-09 16:49:40,556|views|65328|6341865472|Error in shift dashboard: Cannot resolve keyword 'shiftassignment' into field. Choices are: client_profile, created_assignments, date_joined, direct_reports, email, first_name, groups, id, is_active, is_staff, is_superuser, last_login, last_name, layout_preference, logentry, onboarded_users, password, performed_actions, profile, session_activities, sessions, shift_assignments, system_notifications, user_logs, user_permissions, username
+INFO|2025-08-09 16:49:40,583|views|65328|6341865472|[51f0d5c9] ACTION_SUCCESS - SHIFT_DASHBOARD_VIEW completed in 76.99ms
+INFO|2025-08-09 16:49:40,740|views|65328|6341865472|USER_ACTION - managerTest: api_suggestions_retrieved
+INFO|2025-08-09 16:49:43,296|views|65328|6341865472|[d458956a] ACTION_START - ASSIGNMENT_LIST_VIEW
+INFO|2025-08-09 16:49:43,304|views|65328|6341865472|USER_ACTION - managerTest: assignment_list_access
+INFO|2025-08-09 16:49:43,388|views|65328|6341865472|[d458956a] ACTION_SUCCESS - ASSIGNMENT_LIST_VIEW completed in 92.43ms
+INFO|2025-08-09 16:49:45,590|views|65328|6341865472|[f9070817] ACTION_START - HOLIDAY_LIST_VIEW
+INFO|2025-08-09 16:49:45,600|views|65328|6341865472|USER_ACTION - managerTest: holiday_list_access
+INFO|2025-08-09 16:49:45,629|views|65328|6341865472|[f9070817] ACTION_SUCCESS - HOLIDAY_LIST_VIEW completed in 39.1ms
+INFO|2025-08-09 16:49:51,376|views|65328|6341865472|[07488e14] ACTION_START - SHIFT_STATISTICS_VIEW
+ERROR|2025-08-09 16:49:51,384|services|65328|6341865472|Error getting shift statistics: Cannot resolve keyword 'shiftassignment' into field. Choices are: client_profile, created_assignments, date_joined, direct_reports, email, first_name, groups, id, is_active, is_staff, is_superuser, last_login, last_name, layout_preference, logentry, onboarded_users, password, performed_actions, profile, session_activities, sessions, shift_assignments, system_notifications, user_logs, user_permissions, username
+ERROR|2025-08-09 16:49:51,384|views|65328|6341865472|Error in shift statistics: Cannot resolve keyword 'shiftassignment' into field. Choices are: client_profile, created_assignments, date_joined, direct_reports, email, first_name, groups, id, is_active, is_staff, is_superuser, last_login, last_name, layout_preference, logentry, onboarded_users, password, performed_actions, profile, session_activities, sessions, shift_assignments, system_notifications, user_logs, user_permissions, username
+INFO|2025-08-09 16:49:51,385|views|65328|6341865472|[07488e14] ACTION_SUCCESS - SHIFT_STATISTICS_VIEW completed in 9.33ms
+INFO|2025-08-09 16:49:51,423|views|65328|6341865472|[cedcce85] ACTION_START - SHIFT_DASHBOARD_VIEW
+ERROR|2025-08-09 16:49:51,466|services|65328|6341865472|Error getting shift statistics: Cannot resolve keyword 'shiftassignment' into field. Choices are: client_profile, created_assignments, date_joined, direct_reports, email, first_name, groups, id, is_active, is_staff, is_superuser, last_login, last_name, layout_preference, logentry, onboarded_users, password, performed_actions, profile, session_activities, sessions, shift_assignments, system_notifications, user_logs, user_permissions, username
+ERROR|2025-08-09 16:49:51,466|views|65328|6341865472|Error in shift dashboard: Cannot resolve keyword 'shiftassignment' into field. Choices are: client_profile, created_assignments, date_joined, direct_reports, email, first_name, groups, id, is_active, is_staff, is_superuser, last_login, last_name, layout_preference, logentry, onboarded_users, password, performed_actions, profile, session_activities, sessions, shift_assignments, system_notifications, user_logs, user_permissions, username
+INFO|2025-08-09 16:49:51,485|views|65328|6341865472|[cedcce85] ACTION_SUCCESS - SHIFT_DASHBOARD_VIEW completed in 62.12ms
+INFO|2025-08-09 16:49:51,661|views|65328|6341865472|USER_ACTION - managerTest: api_suggestions_retrieved
+INFO|2025-08-09 16:49:54,556|views|65328|6341865472|[819274b9] ACTION_START - ASSIGNMENT_LIST_VIEW
+INFO|2025-08-09 16:49:54,565|views|65328|6341865472|USER_ACTION - managerTest: assignment_list_access
+INFO|2025-08-09 16:49:54,649|views|65328|6341865472|[819274b9] ACTION_SUCCESS - ASSIGNMENT_LIST_VIEW completed in 93.34ms
+INFO|2025-08-09 16:49:56,086|views|65328|6341865472|[45179b45] ACTION_START - SHIFT_LIST_VIEW
+ERROR|2025-08-09 16:49:56,108|views|65328|6341865472|Error in shift list: 'math_filters' is not a registered tag library. Must be one of:
+admin_list
+admin_modify
+admin_urls
+cache
+i18n
+l10n
+log
+rest_framework
+sessions_extras
+static
+tz
+widget_tweaks
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1034, in find_library
+    return parser.libraries[name]
+KeyError: 'math_filters'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/shift/views.py", line 566, in shift_list
+    return render(request, 'shift/shift_list.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1096, in load
+    lib = find_library(parser, name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1036, in find_library
+    raise TemplateSyntaxError(
+django.template.exceptions.TemplateSyntaxError: 'math_filters' is not a registered tag library. Must be one of:
+admin_list
+admin_modify
+admin_urls
+cache
+i18n
+l10n
+log
+rest_framework
+sessions_extras
+static
+tz
+widget_tweaks
+ERROR|2025-08-09 16:49:56,125|views|65328|6341865472|[45179b45] ACTION_ERROR - SHIFT_LIST_VIEW failed after 39.0ms: 'math_filters' is not a registered tag library. Must be one of:
+admin_list
+admin_modify
+admin_urls
+cache
+i18n
+l10n
+log
+rest_framework
+sessions_extras
+static
+tz
+widget_tweaks
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1034, in find_library
+    return parser.libraries[name]
+KeyError: 'math_filters'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/shift/views.py", line 566, in shift_list
+    return render(request, 'shift/shift_list.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1096, in load
+    lib = find_library(parser, name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1036, in find_library
+    raise TemplateSyntaxError(
+django.template.exceptions.TemplateSyntaxError: 'math_filters' is not a registered tag library. Must be one of:
+admin_list
+admin_modify
+admin_urls
+cache
+i18n
+l10n
+log
+rest_framework
+sessions_extras
+static
+tz
+widget_tweaks
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1034, in find_library
+    return parser.libraries[name]
+KeyError: 'math_filters'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/shift/views.py", line 79, in wrapper
+    result = func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/shift/views.py", line 620, in shift_list
+    return render(request, 'shift/shift_list.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1096, in load
+    lib = find_library(parser, name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1036, in find_library
+    raise TemplateSyntaxError(
+django.template.exceptions.TemplateSyntaxError: 'math_filters' is not a registered tag library. Must be one of:
+admin_list
+admin_modify
+admin_urls
+cache
+i18n
+l10n
+log
+rest_framework
+sessions_extras
+static
+tz
+widget_tweaks

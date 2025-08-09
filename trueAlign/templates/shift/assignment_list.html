@@ -1,0 +1,1796 @@
+{% extends "base.html" %} {% block title %}Shift Assignments - {{ page_title}}{% endblock %} {% block content %}
+<div class="min-h-screen bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header Section -->
+        <div class="mb-8">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                <div class="mb-4 md:mb-0">
+                    <h1 class="text-3xl font-bold text-gray-900">
+                        Shift Assignments
+                    </h1>
+                    <p class="text-gray-600 mt-2">
+                        Manage user shift assignments and schedules
+                    </p>
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    {% if assign_form %}
+                    <button onclick="openAssignModal()"
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        aria-label="Assign a shift to a user">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4">
+                            </path>
+                        </svg>
+                        Assign Shift
+                    </button>
+                    {% endif %} {% if bulk_assign_form %}
+                    <button onclick="openBulkAssignModal()"
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                        aria-label="Bulk assign shifts to multiple users">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
+                            </path>
+                        </svg>
+                        Bulk Assign
+                    </button>
+                    {% endif %} {% if csv_form %}
+                    <button onclick="openCSVUploadModal()"
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+                        aria-label="Upload CSV file for bulk assignments">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12">
+                            </path>
+                        </svg>
+                        Upload CSV
+                    </button>
+                    {% endif %}
+                    <a href="{% url 'shift:dashboard' %}"
+                    class="btn-secondary inline-flex items-center"> {# Using btn-secondary class #}
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
+                        </path>
+                    </svg>
+                    Dashboard
+                </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Flash Messages -->
+        {% if messages %}
+        <div class="mb-6 space-y-2">
+            {% for message in messages %}
+            <div class="rounded-md p-4 {% if message.level_tag == 'success' %}bg-green-50 border border-green-200{% elif message.level_tag == 'error' %}bg-red-50 border border-red-200{% elif message.level_tag == 'warning' %}bg-yellow-50 border border-yellow-200{% else %}bg-blue-50 border border-blue-200{% endif %}"
+                role="alert" aria-live="polite">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        {% if message.level_tag == 'success' %}
+                        <svg class="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                clip-rule="evenodd"></path>
+                        </svg>
+                        {% elif message.level_tag == 'error' %}
+                        <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                clip-rule="evenodd"></path>
+                        </svg>
+                        {% elif message.level_tag == 'warning' %}
+                        <svg class="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd"
+                                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                clip-rule="evenodd"></path>
+                        </svg>
+                        {% else %}
+                        <svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd"
+                                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                                clip-rule="evenodd"></path>
+                        </svg>
+                        {% endif %}
+                    </div>
+                    <div class="ml-3">
+                        <p
+                            class="text-sm {% if message.level_tag == 'success' %}text-green-800{% elif message.level_tag == 'error' %}text-red-800{% elif message.level_tag == 'warning' %}text-yellow-800{% else %}text-blue-800{% endif %}">
+                            {{ message }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Filter Section -->
+        <!-- Filter Section -->
+        <div class="bg-white shadow rounded-lg mb-6">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">
+                    Filter Assignments
+                </h3>
+            </div>
+            <div class="p-6">
+                <form method="GET" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                    <div>
+                        {{ filter_form.user.label_tag }} {{ filter_form.user }}
+                    </div>
+
+                    <div>
+                        {{ filter_form.shift.label_tag }} {{ filter_form.shift}}
+                    </div>
+
+                    <div>
+                        {{ filter_form.status.label_tag }} {{ filter_form.status }}
+                    </div>
+
+                    <div>
+                        {{ filter_form.date_from.label_tag }} {{ filter_form.date_from }}
+                    </div>
+
+                    <div>
+                        {{ filter_form.date_to.label_tag }} {{ filter_form.date_to }}
+                    </div>
+
+                    <div class="lg:col-span-5 flex justify-end space-x-3">
+                        <button type="submit"
+                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z">
+                                </path>
+                            </svg>
+                            Apply Filters
+                        </button>
+                        <a href="{% url 'shift:assignments' %}"
+                            class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Clear Filters
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Assignments Table -->
+        <div class="bg-white shadow rounded-lg overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-medium text-gray-900">
+                        Assignment List
+                    </h3>
+                    {% if assignments_data.assignments %}
+                    <p class="text-sm text-gray-500">
+                        Showing {{ assignments_data.start_index }} to {{ assignments_data.end_index }} of {{ assignments_data.total_count }} assignments
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if assignments_data.assignments %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                User
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Shift Name
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Effective From
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Effective To
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Status
+                            </th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for assignment in assignments_data.assignments %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="h-8 w-8 flex-shrink-0">
+                                        <div class="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
+                                            <span class="text-sm font-medium text-gray-700">{{ assignment.user.first_name.0|default:assignment.user.username.0 }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-gray-900">
+                                            {{ assignment.user.get_full_name|default:assignment.user.username}}
+                                        </div>
+                                        <div class="text-sm text-gray-500">
+                                            {{ assignment.user.email }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">
+                                    {{ assignment.shift.name }}
+                                </div>
+                                <div class="text-sm text-gray-500">
+                                    {{ assignment.shift.start_time }} - {{ assignment.shift.end_time }}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {{ assignment.effective_from|date:"M d, Y" }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {% if assignment.effective_to %} {{  assignment.effective_to|date:"M d, Y" }} {% else %}
+                                <span class="text-gray-400">Ongoing</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {% if assignment.is_current %}
+                                <span
+                                    class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                    Current
+                                </span>
+                                {% else %}
+                                <span
+                                    class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                                    Ended
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                {% if assignment.is_current and can_assign %}
+                                <button
+                                    onclick="openEndAssignmentModal({{ assignment.id }}, '{{ assignment.user.get_full_name|default:assignment.user.username }}', '{{ assignment.shift.name }}')"
+                                    class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                                    aria-label="End assignment for {{ assignment.user.get_full_name|default:assignment.user.username }}">
+                                    End Assignment
+                                </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if assignments_data.has_other_pages %}
+            <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+                <div class="flex-1 flex justify-between sm:hidden">
+                    {% if assignments_data.has_previous %}
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ assignments_data.previous_page_number }}"
+                        class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Previous
+                    </a>
+                    {% endif %} {% if assignments_data.has_next %}
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ assignments_data.next_page_number }}"
+                        class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Next
+                    </a>
+                    {% endif %}
+                </div>
+                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                    <div>
+                        <p class="text-sm text-gray-700">
+                            Showing
+                            <span class="font-medium">{{ assignments_data.start_index }}</span>
+                            to
+                            <span class="font-medium">{{ assignments_data.end_index }}</span>
+                            of
+                            <span class="font-medium">{{ assignments_data.total_count }}</span>
+                            results
+                        </p>
+                    </div>
+                    <div>
+                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                            {% if assignments_data.has_previous %}
+                            <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ assignments_data.previous_page_number }}"
+                                class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                <span class="sr-only">Previous</span>
+                                <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd"
+                                        d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                            </a>
+                            {% endif %} {% for page_num in assignments_data.page_range %} {% if page_num == assignments_data.current_page %}
+                            <span
+                                class="relative inline-flex items-center px-4 py-2 border border-blue-500 bg-blue-50 text-sm font-medium text-blue-600">
+                                {{ page_num }}
+                            </span>
+                            {% else %}
+                            <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_num }}"
+                                class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                {{ page_num }}
+                            </a>
+                            {% endif %} {% endfor %} {% if assignments_data.has_next %}
+                            <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ assignments_data.next_page_number }}"
+                                class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                <span class="sr-only">Next</span>
+                                <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd"
+                                        d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                            </a>
+                            {% endif %}
+                        </nav>
+                    </div>
+                </div>
+            </div>
+            {% endif %} {% else %}
+            <div class="text-center py-12">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01">
+                    </path>
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">
+                    No assignments found
+                </h3>
+                <p class="mt-1 text-sm text-gray-500">
+                    No shift assignments match your current filters.
+                </p>
+                {% if assign_form %}
+                <div class="mt-6">
+                    <button onclick="openAssignModal()"
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4">
+                            </path>
+                        </svg>
+                        Assign First Shift
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Assign Shift Modal -->
+{% if assign_form %}
+<div id="assignModal" class="fixed inset-0 z-50 bg-black bg-opacity-50 overflow-y-auto hidden" role="dialog"
+    aria-modal="true" aria-labelledby="assignModalTitle">
+    <div class="relative top-24 mx-auto w-full max-w-lg px-4 sm:px-6 lg:px-8">
+        <div class="bg-white rounded-2xl shadow-xl p-6">
+            <div class="flex items-center justify-between border-b pb-3 mb-4">
+                <h3 class="text-xl font-semibold text-gray-900" id="assignModalTitle">
+                    Assign a Shift
+                </h3>
+                <button onclick="closeAssignModal()" aria-label="Close modal"
+                    class="text-gray-400 hover:text-gray-600 transition duration-150 ease-in-out">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <form method="POST" action="{% url 'shift:assign' %}" class="space-y-5">
+                {% csrf_token %}
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">{{ assign_form.user.label }}</label>
+                    {{ assign_form.user }} {% if assign_form.user.help_text %}
+                    <p class="text-xs text-gray-500 mt-1">
+                        {{ assign_form.user.help_text }}
+                    </p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">{{ assign_form.shift.label }}</label>
+                    {{ assign_form.shift }} {% if assign_form.shift.help_text %}
+                    <p class="text-xs text-gray-500 mt-1">
+                        {{ assign_form.shift.help_text }}
+                    </p>
+                    {% endif %}
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">{{ assign_form.effective_from.label }}</label>
+                        {{ assign_form.effective_from }} {% if assign_form.effective_from.help_text %}
+                        <p class="text-xs text-gray-500 mt-1">
+                            {{ assign_form.effective_from.help_text }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">{{ assign_form.effective_to.label }}</label>
+                        {{ assign_form.effective_to }} {% if assign_form.effective_to.help_text %}
+                        <p class="text-xs text-gray-500 mt-1">
+                            {{ assign_form.effective_to.help_text }}
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="flex justify-end pt-4 space-x-3">
+                    <button type="button" onclick="closeAssignModal()"
+                        class="px-4 py-2 rounded-md text-sm font-medium text-gray-700 border border-gray-300 hover:bg-gray-100 transition">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                        class="px-4 py-2 rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition">
+                        Assign Shift
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Bulk Assignment Modal -->
+<!-- Enhanced Bulk Assignment Modal -->
+{% if bulk_assign_form %}
+<div id="bulkAssignModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50"
+    role="dialog" aria-modal="true" aria-labelledby="bulkAssignModalTitle">
+    <div class="relative top-5 mx-auto p-5 border w-full max-w-7xl shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900" id="bulkAssignModalTitle">
+                    Bulk Assign Shifts -
+                    <span id="modalSelectedCount" class="text-blue-600">0 selected</span>
+                </h3>
+                <button onclick="closeBulkAssignModal()" class="text-gray-400 hover:text-gray-600 focus:outline-none"
+                    aria-label="Close modal">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+
+            <form method="POST" action="{% url 'shift:bulk_assign' %}" class="space-y-4" id="bulkAssignForm">
+                {% csrf_token %} {{ bulk_assign_form.users }}
+
+                <!-- Filter Controls -->
+                <div class="bg-gray-50 p-4 rounded-lg mb-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            {{ bulk_assign_form.group_filter.label_tag }} {{ bulk_assign_form.group_filter }} {% if bulk_assign_form.group_filter.help_text %}
+                            <p class="mt-1 text-sm text-gray-500">
+                                {{ bulk_assign_form.group_filter.help_text }}
+                            </p>
+                            {% endif %}
+                        </div>
+                        <div class="flex items-end space-x-2">
+                            <button type="button" onclick="clearAllSelections()"
+                                class="px-3 py-2 text-sm border border-red-300 text-red-700 rounded-md hover:bg-red-50">
+                                Clear All
+                            </button>
+                            <button type="button" onclick="selectAllVisible()"
+                                class="px-3 py-2 text-sm border border-green-300 text-green-700 rounded-md hover:bg-green-50">
+                                Select All Visible
+                            </button>
+                            <!-- Debug buttons - remove in production -->
+                            <button type="button" onclick="debugBulkAssign()"
+                                class="px-3 py-2 text-sm border border-blue-300 text-blue-700 rounded-md hover:bg-blue-50">
+                                Debug
+                            </button>
+                            <button type="button" onclick="testSelectFirst()"
+                                class="px-3 py-2 text-sm border border-purple-300 text-purple-700 rounded-md hover:bg-purple-50">
+                                Test Select
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Employee Selection Interface -->
+                <div class="grid grid-cols-2 gap-6">
+                    <!-- Available Employees -->
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <label class="font-semibold text-gray-700">
+                                Available Employees
+                                <span id="availableCount" class="text-sm text-gray-500">(0)</span>
+                            </label>
+                        </div>
+
+                        <div class="relative">
+                            <input type="text" id="availableSearch" placeholder="Search available employees..."
+                                class="w-full px-3 py-2 pl-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <div id="availableUsers" class="border rounded-md h-80 overflow-y-auto bg-white">
+                            <div class="p-3 space-y-2" id="availableUsersList">
+                                <!-- Users will be populated by JavaScript -->
+                            </div>
+                            <div id="availableNoResults" class="hidden p-4 text-center text-gray-500">
+                                No employees found matching your search.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Selected Employees -->
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <label class="font-semibold text-gray-700">
+                                Selected Employees
+                                <span id="selectedCount" class="text-sm font-medium text-blue-600">(0)</span>
+                            </label>
+                        </div>
+
+                        <div class="relative">
+                            <input type="text" id="selectedSearch" placeholder="Search selected employees..."
+                                class="w-full px-3 py-2 pl-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <div id="selectedUsers" class="border rounded-md h-80 overflow-y-auto bg-gray-50">
+                            <div class="p-3 space-y-2" id="selectedUsersList">
+                                <!-- Selected users will appear here -->
+                            </div>
+                            <div id="selectedEmpty" class="p-4 text-center text-gray-500">
+                                No employees selected. Click on employees from
+                                the left to select them.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assignment Details -->
+                <div class="border-t pt-6">
+                    <h4 class="text-md font-medium text-gray-900 mb-4">
+                        Assignment Details
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            {{ bulk_assign_form.shift.label_tag }} {{ bulk_assign_form.shift }} {% if bulk_assign_form.shift.help_text %}
+                            <p class="mt-1 text-sm text-gray-500">
+                                {{ bulk_assign_form.shift.help_text }}
+                            </p>
+                            {% endif %}
+                        </div>
+                        <div>
+                            {{ bulk_assign_form.effective_from.label_tag }} {{ bulk_assign_form.effective_from }} {% if bulk_assign_form.effective_from.help_text %}
+                            <p class="mt-1 text-sm text-gray-500">
+                                {{ bulk_assign_form.effective_from.help_text }}
+                            </p>
+                            {% endif %}
+                        </div>
+                        <div>
+                            {{ bulk_assign_form.effective_to.label_tag }} {{ bulk_assign_form.effective_to }} {% if bulk_assign_form.effective_to.help_text %}
+                            <p class="mt-1 text-sm text-gray-500">
+                                {{ bulk_assign_form.effective_to.help_text }}
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex justify-between items-center pt-6 border-t">
+                    <div class="text-sm text-gray-600">
+                        <span id="selectionSummary">Select employees to assign shifts</span>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button type="button" onclick="closeBulkAssignModal()"
+                            class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Cancel
+                        </button>
+                        <button type="submit" id="bulkAssignSubmit" disabled
+                            class="px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                            Assign to <span id="submitCount">0</span> Employees
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- Replace the current users data script with this: -->
+{{ users_data|json_script:"users-data" }}
+
+<script>
+    // Enhanced Bulk Assignment JavaScript
+    class BulkAssignmentManager {
+        constructor() {
+            this.availableUsers = [];
+            this.selectedUsers = new Set();
+            this.allUsers = [];
+            this.filteredAvailable = [];
+
+            console.log("BulkAssignmentManager constructor called");
+            this.initializeUsers();
+            this.bindEvents();
+        }
+
+        initializeUsers() {
+            try {
+                console.log("Initializing users...");
+
+                // Method 1: Try to get from Django's json_script
+                const usersDataElement = document.getElementById("users-data");
+                let usersData = [];
+
+                if (usersDataElement) {
+                    try {
+                        // Django's json_script puts data directly as JSON
+                        usersData = JSON.parse(usersDataElement.textContent);
+                        console.log(
+                            "Successfully parsed users data:",
+                            usersData.length,
+                            "users",
+                        );
+                    } catch (parseError) {
+                        console.error("JSON parse error:", parseError);
+                        console.log(
+                            "Failed JSON text:",
+                            usersDataElement.textContent.substring(0, 500),
+                        );
+                    }
+                } else {
+                    console.log("users-data script element not found");
+                }
+
+                // Method 2: Fallback to form field options
+                if (!usersData || usersData.length === 0) {
+                    console.log(
+                        "Trying fallback method - extracting from form field...",
+                    );
+                    const userSelect = document.querySelector("#id_users");
+                    if (userSelect && userSelect.options) {
+                        console.log(
+                            "Found user select with options:",
+                            userSelect.options.length,
+                        );
+                        usersData = [];
+                        Array.from(userSelect.options).forEach((option) => {
+                            if (option.value && option.value !== "") {
+                                const userData = {
+                                    id: parseInt(option.value),
+                                    username:
+                                        option.text.replace(
+                                            /^\s*\d+\s*-\s*/,
+                                            "",
+                                        ) || "", // Remove ID prefix
+                                    first_name: "",
+                                    last_name: "",
+                                    display_name: option.text || "",
+                                    email: "",
+                                    groups: [],
+                                    groups_string: "",
+                                };
+                                usersData.push(userData);
+                            }
+                        });
+                        console.log(
+                            "Fallback users data created:",
+                            usersData.length,
+                            "users",
+                        );
+                    }
+                }
+
+                // Validate and set data
+                this.allUsers = usersData.filter(
+                    (user) => user && user.id && !isNaN(user.id),
+                );
+                this.filteredAvailable = [...this.allUsers];
+
+                console.log("Final initialized users:", this.allUsers.length);
+                if (this.allUsers.length > 0) {
+                    console.log("Sample user:", this.allUsers[0]);
+                }
+
+                // Initial render with a small delay to ensure DOM is ready
+                setTimeout(() => {
+                    this.renderAvailableUsers();
+                    this.renderSelectedUsers();
+                    this.updateCounts();
+                }, 100);
+            } catch (error) {
+                console.error("Error initializing users:", error);
+                this.allUsers = [];
+                this.filteredAvailable = [];
+
+                // Show error message to user
+                const container = document.getElementById("availableUsersList");
+                if (container) {
+                    container.innerHTML =
+                        '<div class="p-4 text-red-600">Error loading employee data. Please refresh the page.</div>';
+                }
+            }
+        }
+
+        bindEvents() {
+            console.log("Binding events...");
+
+            // Available search
+            const availableSearch = document.getElementById("availableSearch");
+            if (availableSearch) {
+                availableSearch.addEventListener("input", (e) => {
+                    console.log("Available search:", e.target.value);
+                    this.filterAvailableUsers(e.target.value);
+                });
+            }
+
+            // Selected search
+            const selectedSearch = document.getElementById("selectedSearch");
+            if (selectedSearch) {
+                selectedSearch.addEventListener("input", (e) => {
+                    console.log("Selected search:", e.target.value);
+                    this.filterSelectedUsers(e.target.value);
+                });
+            }
+
+            // Group filter - Fix the ID
+            const groupFilter =
+                document.querySelector('[name="group_filter"]') ||
+                document.getElementById("id_group_filter");
+            if (groupFilter) {
+                groupFilter.addEventListener("change", (e) => {
+                    console.log("Group filter changed:", e.target.value);
+                    this.filterByGroup(e.target.value);
+                });
+            }
+        }
+
+        filterAvailableUsers(searchTerm) {
+            const term = searchTerm.toLowerCase().trim();
+            console.log("Filtering available users with term:", term);
+
+            if (!term) {
+                this.filteredAvailable = this.allUsers.filter(
+                    (user) => !this.selectedUsers.has(user.id),
+                );
+            } else {
+                this.filteredAvailable = this.allUsers.filter((user) => {
+                    if (this.selectedUsers.has(user.id)) return false;
+
+                    const searchableText = [
+                        user.display_name || "",
+                        user.username || "",
+                        user.first_name || "",
+                        user.last_name || "",
+                        user.email || "",
+                        user.groups_string || "",
+                        user.id.toString(),
+                    ]
+                        .join(" ")
+                        .toLowerCase();
+
+                    return searchableText.includes(term);
+                });
+            }
+
+            console.log(
+                "Filtered to",
+                this.filteredAvailable.length,
+                "available users",
+            );
+            this.renderAvailableUsers();
+        }
+
+        filterSelectedUsers(searchTerm) {
+            this.renderSelectedUsers(searchTerm.toLowerCase().trim());
+        }
+
+        filterByGroup(groupName) {
+            console.log("Filtering by group:", groupName);
+            const currentSearch = document
+                .getElementById("availableSearch")
+                .value.toLowerCase()
+                .trim();
+
+            if (!groupName) {
+                this.filteredAvailable = this.allUsers.filter(
+                    (user) => !this.selectedUsers.has(user.id),
+                );
+            } else {
+                this.filteredAvailable = this.allUsers.filter((user) => {
+                    if (this.selectedUsers.has(user.id)) return false;
+                    return user.groups && user.groups.includes(groupName);
+                });
+            }
+
+            // Apply search filter if there's a current search term
+            if (currentSearch) {
+                this.filterAvailableUsers(currentSearch);
+                return; // filterAvailableUsers will call renderAvailableUsers
+            }
+
+            console.log(
+                "Group filtered to",
+                this.filteredAvailable.length,
+                "users",
+            );
+            this.renderAvailableUsers();
+        }
+
+        renderAvailableUsers() {
+            const container = document.getElementById("availableUsersList");
+            const noResults = document.getElementById("availableNoResults");
+
+            console.log(
+                "Rendering available users, container found:",
+                !!container,
+            );
+
+            if (!container) {
+                console.error("Available users container not found");
+                return;
+            }
+
+            console.log(
+                "Rendering",
+                this.filteredAvailable.length,
+                "available users",
+            );
+
+            if (this.filteredAvailable.length === 0) {
+                container.innerHTML = "";
+                if (noResults) noResults.classList.remove("hidden");
+            } else {
+                if (noResults) noResults.classList.add("hidden");
+
+                const html = this.filteredAvailable
+                    .map((user) => {
+                        const displayName =
+                            user.first_name && user.last_name
+                                ? `${user.first_name} ${user.last_name}`
+                                : user.display_name || user.username;
+
+                        return `
+                        <div class="flex items-center justify-between p-3 hover:bg-blue-50 rounded-lg cursor-pointer user-item border-b border-gray-100 transition-colors"
+                             onclick="bulkAssignManager.selectUser(${user.id})"
+                             data-user-id="${user.id}">
+                            <div class="flex-1 min-w-0">
+                                <div class="font-medium text-gray-900 truncate">
+                                    ID: ${user.id} - ${displayName}
+                                </div>
+                                <div class="text-sm text-gray-500 truncate">@${user.username}</div>
+                                ${user.email ? `<div class="text-xs text-gray-400 truncate">${user.email}</div>` : ""}
+                                ${user.groups_string ? `<div class="text-xs text-blue-600 mt-1 truncate">Groups: ${user.groups_string}</div>` : ""}
+                            </div>
+                            <div class="text-green-600 ml-2 flex-shrink-0">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    `;
+                    })
+                    .join("");
+
+                container.innerHTML = html;
+            }
+
+            this.updateAvailableCount();
+        }
+
+        renderSelectedUsers(searchTerm = "") {
+            console.log("=== RENDER SELECTED USERS ===");
+            const container = document.getElementById("selectedUsersList");
+            const emptyMsg = document.getElementById("selectedEmpty");
+
+            if (!container) {
+                console.error("Selected users container not found");
+                return;
+            }
+
+            console.log("selectedUsers Set:", Array.from(this.selectedUsers));
+            console.log("allUsers array length:", this.allUsers.length);
+
+            // Get selected users from allUsers array
+            const selectedArray = [];
+            this.selectedUsers.forEach((userId) => {
+                const user = this.allUsers.find((u) => u.id === userId);
+                if (user) {
+                    selectedArray.push(user);
+                    console.log(
+                        "Found selected user:",
+                        user.display_name || user.username,
+                    );
+                } else {
+                    console.warn(
+                        "Selected user ID not found in allUsers:",
+                        userId,
+                    );
+                }
+            });
+
+            console.log("selectedArray:", selectedArray.length, "users");
+
+            let filteredSelected = selectedArray;
+            if (searchTerm) {
+                filteredSelected = selectedArray.filter((user) => {
+                    const searchableText = [
+                        user.display_name || "",
+                        user.username || "",
+                        user.first_name || "",
+                        user.last_name || "",
+                        user.email || "",
+                        user.groups_string || "",
+                        user.id.toString(),
+                    ]
+                        .join(" ")
+                        .toLowerCase();
+
+                    return searchableText.includes(searchTerm);
+                });
+            }
+
+            console.log("filteredSelected:", filteredSelected.length, "users");
+
+            if (filteredSelected.length === 0) {
+                container.innerHTML = "";
+                if (emptyMsg) {
+                    emptyMsg.classList.remove("hidden");
+                    console.log("Showing empty message");
+                }
+            } else {
+                if (emptyMsg) {
+                    emptyMsg.classList.add("hidden");
+                    console.log("Hiding empty message");
+                }
+
+                const html = filteredSelected
+                    .map((user) => {
+                        const displayName =
+                            user.first_name && user.last_name
+                                ? `${user.first_name} ${user.last_name}`
+                                : user.display_name || user.username;
+
+                        console.log(
+                            "Rendering selected user:",
+                            displayName,
+                            "ID:",
+                            user.id,
+                        );
+
+                        return `
+                        <div class="flex items-center justify-between p-3 bg-white hover:bg-red-50 rounded-lg border border-gray-200 user-item mb-2 transition-colors"
+                             data-user-id="${user.id}">
+                            <div class="flex-1 min-w-0">
+                                <div class="font-medium text-gray-900 truncate">
+                                    ID: ${user.id} - ${displayName}
+                                </div>
+                                <div class="text-sm text-gray-500 truncate">@${user.username}</div>
+                                ${user.email ? `<div class="text-xs text-gray-400 truncate">${user.email}</div>` : ""}
+                                ${user.groups_string ? `<div class="text-xs text-blue-600 mt-1 truncate">Groups: ${user.groups_string}</div>` : ""}
+                            </div>
+                            <button type="button" onclick="bulkAssignManager.removeUser(${user.id})"
+                                    class="text-red-600 hover:text-red-800 ml-2 p-2 rounded-lg hover:bg-red-100 flex-shrink-0 transition-colors">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    `;
+                    })
+                    .join("");
+
+                container.innerHTML = html;
+                console.log("Set container HTML, length:", html.length);
+            }
+
+            this.updateCounts();
+            console.log("=== RENDER SELECTED USERS COMPLETE ===");
+        }
+
+        selectUser(userId) {
+            console.log("=== SELECT USER DEBUG ===");
+            console.log(
+                "Attempting to select user ID:",
+                userId,
+                "Type:",
+                typeof userId,
+            );
+
+            // Ensure userId is a number
+            const userIdNum = parseInt(userId);
+            if (isNaN(userIdNum)) {
+                console.error("Invalid user ID:", userId);
+                return;
+            }
+
+            if (this.selectedUsers.size >= 500) {
+                alert("Maximum 500 employees can be selected at once.");
+                return;
+            }
+
+            // Check if user exists in allUsers
+            const user = this.allUsers.find((u) => u.id === userIdNum);
+            console.log("Found user in allUsers:", user);
+
+            if (!user) {
+                console.error("User not found in allUsers array:", userIdNum);
+                return;
+            }
+
+            // Add to selected set
+            this.selectedUsers.add(userIdNum);
+            console.log(
+                "Added to selectedUsers. Current set:",
+                Array.from(this.selectedUsers),
+            );
+
+            // Remove from filtered available
+            this.filteredAvailable = this.filteredAvailable.filter(
+                (availableUser) => availableUser.id !== userIdNum,
+            );
+            console.log(
+                "Removed from filteredAvailable. Remaining count:",
+                this.filteredAvailable.length,
+            );
+
+            // Update UI
+            this.renderAvailableUsers();
+            this.renderSelectedUsers();
+            this.updateFormField();
+
+            console.log("=== SELECT USER COMPLETE ===");
+        }
+
+        removeUser(userId) {
+            console.log("Removing user:", userId);
+
+            const userIdNum = parseInt(userId);
+            this.selectedUsers.delete(userIdNum);
+            const user = this.allUsers.find((u) => u.id === userIdNum);
+            if (
+                user &&
+                !this.filteredAvailable.find((u) => u.id === userIdNum)
+            ) {
+                this.filteredAvailable.push(user);
+                this.filteredAvailable.sort((a, b) =>
+                    (a.display_name || a.username).localeCompare(
+                        b.display_name || b.username,
+                    ),
+                );
+            }
+
+            this.renderAvailableUsers();
+            this.renderSelectedUsers();
+            this.updateFormField();
+
+            console.log(
+                "User removed. Total selected:",
+                this.selectedUsers.size,
+            );
+        }
+
+        updateAvailableCount() {
+            const availableCount = document.getElementById("availableCount");
+            if (availableCount) {
+                availableCount.textContent = `(${this.filteredAvailable.length})`;
+            }
+        }
+
+        updateCounts() {
+            const count = this.selectedUsers.size;
+            console.log("=== UPDATE COUNTS ===");
+            console.log("Selected users count:", count);
+            console.log("Selected user IDs:", Array.from(this.selectedUsers));
+
+            const elements = {
+                selectedCount: document.getElementById("selectedCount"),
+                modalSelectedCount:
+                    document.getElementById("modalSelectedCount"),
+                submitCount: document.getElementById("submitCount"),
+                submitBtn: document.getElementById("bulkAssignSubmit"),
+                summary: document.getElementById("selectionSummary"),
+            };
+
+            // Log which elements are found
+            Object.entries(elements).forEach(([key, element]) => {
+                console.log(`Element ${key}:`, element ? "Found" : "NOT FOUND");
+            });
+
+            if (elements.selectedCount) {
+                elements.selectedCount.textContent = `(${count}/500)`;
+                console.log("Updated selectedCount to:", `(${count}/500)`);
+            }
+
+            if (elements.modalSelectedCount) {
+                elements.modalSelectedCount.textContent = `${count} selected`;
+                console.log(
+                    "Updated modalSelectedCount to:",
+                    `${count} selected`,
+                );
+            }
+
+            if (elements.submitCount) {
+                elements.submitCount.textContent = count;
+                console.log("Updated submitCount to:", count);
+            }
+
+            if (elements.submitBtn) {
+                elements.submitBtn.disabled = count === 0;
+                console.log("Submit button disabled:", count === 0);
+            }
+
+            if (elements.summary) {
+                const summaryText =
+                    count === 0
+                        ? "Select employees to assign shifts"
+                        : `Ready to assign shift to ${count} employee${count > 1 ? "s" : ""}`;
+                elements.summary.textContent = summaryText;
+                console.log("Updated summary to:", summaryText);
+            }
+
+            console.log("=== UPDATE COUNTS COMPLETE ===");
+        }
+
+        updateFormField() {
+            console.log(
+                "Updating form field with selections:",
+                Array.from(this.selectedUsers),
+            );
+
+            const userSelect = document.querySelector("#id_users");
+            if (userSelect) {
+                // Clear all selections first
+                Array.from(userSelect.options).forEach((option) => {
+                    option.selected = false;
+                });
+
+                // Set selected users
+                Array.from(userSelect.options).forEach((option) => {
+                    const userId = parseInt(option.value);
+                    if (!isNaN(userId) && this.selectedUsers.has(userId)) {
+                        option.selected = true;
+                    }
+                });
+
+                console.log(
+                    "Form field updated. Selected options:",
+                    Array.from(userSelect.selectedOptions).map(
+                        (opt) => opt.value,
+                    ),
+                );
+
+                // Trigger change event to notify any listeners
+                userSelect.dispatchEvent(
+                    new Event("change", { bubbles: true }),
+                );
+            } else {
+                console.error("User select field not found!");
+            }
+        }
+
+        selectAllVisible() {
+            console.log("Selecting all visible users...");
+
+            const remainingSlots = 500 - this.selectedUsers.size;
+            const toSelect = this.filteredAvailable.slice(0, remainingSlots);
+
+            toSelect.forEach((user) => this.selectedUsers.add(user.id));
+            this.filteredAvailable = this.filteredAvailable.filter(
+                (user) => !this.selectedUsers.has(user.id),
+            );
+
+            this.renderAvailableUsers();
+            this.renderSelectedUsers();
+            this.updateFormField();
+
+            if (remainingSlots < this.filteredAvailable.length) {
+                alert(
+                    `Selected ${toSelect.length} employees. Maximum limit of 500 reached.`,
+                );
+            }
+
+            console.log("Selected all visible:", toSelect.length, "users");
+        }
+
+        clearAllSelections() {
+            console.log("Clearing all selections...");
+
+            this.selectedUsers.clear();
+            this.filteredAvailable = [...this.allUsers];
+
+            // Clear search fields
+            const availableSearch = document.getElementById("availableSearch");
+            const selectedSearch = document.getElementById("selectedSearch");
+            const groupFilter =
+                document.querySelector('[name="group_filter"]') ||
+                document.getElementById("id_group_filter");
+
+            if (availableSearch) availableSearch.value = "";
+            if (selectedSearch) selectedSearch.value = "";
+            if (groupFilter) groupFilter.selectedIndex = 0;
+
+            this.renderAvailableUsers();
+            this.renderSelectedUsers();
+            this.updateFormField();
+
+            console.log("All selections cleared");
+        }
+    }
+
+    // Bulk Assignment Manager Instance
+    let bulkAssignManager;
+
+    // Bulk Assignment Modal Functions
+    function openBulkAssignModal() {
+        console.log("=== OPENING BULK ASSIGN MODAL ===");
+        const modal = document.getElementById("bulkAssignModal");
+        if (modal) {
+            modal.classList.remove("hidden");
+
+            // Small delay to ensure modal is visible before initializing
+            setTimeout(() => {
+                console.log("Creating new BulkAssignmentManager...");
+                bulkAssignManager = new BulkAssignmentManager();
+            }, 100);
+
+            console.log("=== MODAL OPENED ===");
+        } else {
+            console.error("Bulk assign modal not found");
+        }
+    }
+
+    function closeBulkAssignModal() {
+        console.log("Closing bulk assign modal...");
+        const modal = document.getElementById("bulkAssignModal");
+        if (modal) {
+            modal.classList.add("hidden");
+        }
+    }
+
+    // Bulk Assignment Helper Functions
+    function clearAllSelections() {
+        if (bulkAssignManager) {
+            bulkAssignManager.clearAllSelections();
+        }
+    }
+
+    function selectAllVisible() {
+        if (bulkAssignManager) {
+            bulkAssignManager.selectAllVisible();
+        }
+    }
+
+    // Enhanced debug function
+    function debugBulkAssign() {
+        console.log("=== BULK ASSIGNMENT DEBUG ===");
+        console.log("bulkAssignManager exists:", !!bulkAssignManager);
+
+        if (bulkAssignManager) {
+            console.log("All users loaded:", bulkAssignManager.allUsers.length);
+            console.log(
+                "Sample users:",
+                bulkAssignManager.allUsers.slice(0, 3),
+            );
+            console.log(
+                "Filtered available:",
+                bulkAssignManager.filteredAvailable.length,
+            );
+            console.log(
+                "Selected users:",
+                Array.from(bulkAssignManager.selectedUsers),
+            );
+
+            // Check form field
+            const userSelect = document.querySelector("#id_users");
+            if (userSelect) {
+                const selectedOptions = Array.from(userSelect.selectedOptions);
+                console.log(
+                    "Form field selected options:",
+                    selectedOptions.map((opt) => ({
+                        value: opt.value,
+                        text: opt.text,
+                    })),
+                );
+            }
+
+            // Check DOM elements
+            const container = document.getElementById("selectedUsersList");
+            console.log("selectedUsersList container exists:", !!container);
+            if (container) {
+                console.log(
+                    "Container innerHTML length:",
+                    container.innerHTML.length,
+                );
+                console.log(
+                    "Container children count:",
+                    container.children.length,
+                );
+            }
+
+            // Check actual selected users data
+            const selectedUsersData = [];
+            bulkAssignManager.selectedUsers.forEach((userId) => {
+                const user = bulkAssignManager.allUsers.find(
+                    (u) => u.id === userId,
+                );
+                if (user) {
+                    selectedUsersData.push({
+                        id: user.id,
+                        name: user.display_name || user.username,
+                    });
+                }
+            });
+            console.log("Selected users data:", selectedUsersData);
+        } else {
+            console.log("Bulk assign manager not initialized");
+        }
+
+        console.log("=== END DEBUG ===");
+    }
+
+    // Test function to manually add users
+    function debugAddUser(userId) {
+        if (bulkAssignManager) {
+            console.log("Manually adding user:", userId);
+            bulkAssignManager.selectUser(userId);
+        }
+    }
+
+    // Step-by-step test function
+    function testSelectFirst() {
+        console.log("=== TESTING FIRST USER SELECTION ===");
+
+        if (!bulkAssignManager) {
+            console.error("Bulk assign manager not found!");
+            return;
+        }
+
+        if (bulkAssignManager.allUsers.length === 0) {
+            console.error("No users loaded!");
+            return;
+        }
+
+        const firstUser = bulkAssignManager.allUsers[0];
+        console.log("First user:", firstUser);
+
+        console.log("Before selection:");
+        console.log("- Selected count:", bulkAssignManager.selectedUsers.size);
+        console.log(
+            "- Available count:",
+            bulkAssignManager.filteredAvailable.length,
+        );
+
+        // Try to select first user
+        bulkAssignManager.selectUser(firstUser.id);
+
+        console.log("After selection:");
+        console.log("- Selected count:", bulkAssignManager.selectedUsers.size);
+        console.log(
+            "- Available count:",
+            bulkAssignManager.filteredAvailable.length,
+        );
+        console.log(
+            "- Selected IDs:",
+            Array.from(bulkAssignManager.selectedUsers),
+        );
+
+        // Check DOM elements
+        const selectedContainer = document.getElementById("selectedUsersList");
+        const selectedCountEl = document.getElementById("selectedCount");
+
+        console.log("DOM check:");
+        console.log(
+            "- Selected container children:",
+            selectedContainer ? selectedContainer.children.length : "not found",
+        );
+        console.log(
+            "- Selected count text:",
+            selectedCountEl ? selectedCountEl.textContent : "not found",
+        );
+
+        console.log("=== TEST COMPLETE ===");
+    }
+
+    // Manual reset function
+    function resetBulkAssign() {
+        if (bulkAssignManager) {
+            console.log("Resetting bulk assignment...");
+            bulkAssignManager.clearAllSelections();
+            console.log("Reset complete");
+        }
+    }
+</script>
+
+{% endif %}
+
+<!-- CSV Upload Modal -->
+{% if csv_form %}
+<div id="csvUploadModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden"
+    role="dialog" aria-modal="true" aria-labelledby="csvUploadModalTitle">
+    <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900" id="csvUploadModalTitle">
+                    Upload CSV
+                </h3>
+                <button onclick="closeCSVUploadModal()"
+                    class="text-gray-400 hover:text-gray-600 focus:outline-none focus:text-gray-600"
+                    aria-label="Close modal">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+            <form method="POST" action="{% url 'shift:csv_upload' %}" enctype="multipart/form-data" class="space-y-4">
+                {% csrf_token %}
+                <div>
+                    {{ csv_form.csv_file.label_tag }} {{ csv_form.csv_file }} {% if csv_form.csv_file.help_text %}
+                    <p class="mt-1 text-sm text-gray-500">
+                        {{ csv_form.csv_file.help_text }}
+                    </p>
+                    {% endif %}
+                    <p class="mt-1 text-sm text-gray-500">
+                        CSV should contain columns: user_id, shift_id,
+                        effective_from, effective_to
+                    </p>
+                </div>
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeCSVUploadModal()"
+                        class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                        class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+                        Upload CSV
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- End Assignment Modal -->
+<div id="endAssignmentModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden"
+    role="dialog" aria-modal="true" aria-labelledby="endAssignmentModalTitle">
+    <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900" id="endAssignmentModalTitle">
+                    End Assignment
+                </h3>
+                <button onclick="closeEndAssignmentModal()"
+                    class="text-gray-400 hover:text-gray-600 focus:outline-none focus:text-gray-600"
+                    aria-label="Close modal">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+            <div class="mb-4">
+                <p class="text-sm text-gray-600">
+                    Are you sure you want to end the assignment for
+                    <span id="endAssignmentUser" class="font-semibold"></span>
+                    to
+                    <span id="endAssignmentShift" class="font-semibold"></span>?
+                </p>
+            </div>
+            <form method="POST" id="endAssignmentForm" class="space-y-4">
+                {% csrf_token %}
+                <div>
+                    <label for="end_date" class="block text-sm font-medium text-gray-700">End Date (optional)</label>
+                    <input type="date" name="end_date" id="end_date"
+                        class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" />
+                    <p class="mt-1 text-sm text-gray-500">
+                        Leave blank to end assignment today
+                    </p>
+                </div>
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeEndAssignmentModal()"
+                        class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                        class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                        End Assignment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Form validation before submission
+    document.addEventListener("DOMContentLoaded", function () {
+        const bulkAssignForm = document.getElementById("bulkAssignForm");
+        if (bulkAssignForm) {
+            bulkAssignForm.addEventListener("submit", function (e) {
+                console.log("=== FORM VALIDATION DEBUG ===");
+                console.log("Form found:", bulkAssignForm);
+
+                // Debug: List all form elements with more detail
+                const allFormElements = bulkAssignForm.querySelectorAll(
+                    "input, select, textarea",
+                );
+                console.log("Total form elements found:", allFormElements.length);
+                console.log("All form elements found:");
+                allFormElements.forEach((element) => {
+                    console.log(
+                        `- ${element.tagName} with id: "${element.id}", name: "${element.name}", value: "${element.value}", type: "${element.type || 'N/A'}"`,
+                    );
+                });
+
+                // Get selected users from form field
+                const userSelect =
+                    bulkAssignForm.querySelector("[name='users']");
+
+                console.log("User select element found:", !!userSelect);
+                if (userSelect) {
+                    console.log("User select element:", userSelect);
+                    console.log(
+                        "Selected options:",
+                        userSelect.selectedOptions.length,
+                    );
+                }
+
+                const selectedUserIds = userSelect
+                    ? Array.from(userSelect.selectedOptions)
+                        .map((opt) => parseInt(opt.value))
+                        .filter((id) => !isNaN(id))
+                    : [];
+
+                console.log("Selected user IDs:", selectedUserIds);
+
+                if (selectedUserIds.length === 0) {
+                    e.preventDefault();
+                    alert(
+                        "Please select at least one employee before submitting.",
+                    );
+                    return false;
+                }
+
+                // Try multiple ways to find the shift select
+                let shiftSelect = bulkAssignForm.querySelector("[name='shift']");
+
+                if (!shiftSelect) {
+                    // Try finding by ID if the Django form uses an ID
+                    shiftSelect = bulkAssignForm.querySelector("#id_shift");
+                    console.log("Found shift by ID:", !!shiftSelect);
+                }
+
+                if (!shiftSelect) {
+                    // Look for any select in the Assignment Details section
+                    const assignmentDetailsSection = bulkAssignForm.querySelector(".border-t");
+                    if (assignmentDetailsSection) {
+                        const selects = assignmentDetailsSection.querySelectorAll("select");
+                        console.log("Found selects in assignment details:", selects.length);
+                        if (selects.length > 0) {
+                            shiftSelect = selects[0]; // Take the first select (should be shift)
+                            console.log("Using first select as shift:", shiftSelect);
+                        }
+                    }
+                }
+
+                console.log("Shift select element:", shiftSelect);
+
+                if (shiftSelect) {
+                    console.log("Shift select ID:", shiftSelect.id);
+                    console.log("Shift select name:", shiftSelect.name);
+                    console.log(
+                        "Shift select options count:",
+                        shiftSelect.options.length,
+                    );
+                    console.log(
+                        "Shift select selected index:",
+                        shiftSelect.selectedIndex,
+                    );
+                    console.log("Shift select value:", shiftSelect.value);
+                }
+
+                // Try multiple ways to find the effective_from input
+                let effectiveFromInput = bulkAssignForm.querySelector("[name='effective_from']");
+
+                if (!effectiveFromInput) {
+                    // Try finding by ID if the Django form uses an ID
+                    effectiveFromInput = bulkAssignForm.querySelector("#id_effective_from");
+                    console.log("Found effective_from by ID:", !!effectiveFromInput);
+                }
+
+                if (!effectiveFromInput) {
+                    // Look for any date input in the Assignment Details section
+                    const assignmentDetailsSection = bulkAssignForm.querySelector(".border-t");
+                    if (assignmentDetailsSection) {
+                        const dateInputs = assignmentDetailsSection.querySelectorAll("input[type='date']");
+                        console.log("Found date inputs in assignment details:", dateInputs.length);
+                        if (dateInputs.length > 0) {
+                            effectiveFromInput = dateInputs[0]; // Take the first date input
+                            console.log("Using first date input as effective_from:", effectiveFromInput);
+                        }
+                    }
+                }
+
+                console.log("Effective from input:", effectiveFromInput);
+
+                if (effectiveFromInput) {
+                    console.log("Effective from ID:", effectiveFromInput.id);
+                    console.log(
+                        "Effective from name:",
+                        effectiveFromInput.name,
+                    );
+                    console.log(
+                        "Effective from value:",
+                        effectiveFromInput.value,
+                    );
+                }
+
+                const shift = shiftSelect ? shiftSelect.value : "";
+                const effectiveFrom = effectiveFromInput
+                    ? effectiveFromInput.value
+                    : "";
+
+                console.log("Final shift value:", shift);
+                console.log("Final effective from value:", effectiveFrom);
+
+                if (!shift) {
+                    e.preventDefault();
+                    alert("Please select a shift.");
+                    console.log("Validation failed: No shift selected");
+
+                    // Highlight the shift field if found
+                    if (shiftSelect) {
+                        shiftSelect.focus();
+                        shiftSelect.style.border = "2px solid red";
+                        setTimeout(() => {
+                            shiftSelect.style.border = "";
+                        }, 3000);
+                    }
+                    return false;
+                }
+
+                if (!effectiveFrom) {
+                    e.preventDefault();
+                    alert("Please select an effective from date.");
+                    console.log("Validation failed: No effective from date");
+
+                    // Highlight the date field if found
+                    if (effectiveFromInput) {
+                        effectiveFromInput.focus();
+                        effectiveFromInput.style.border = "2px solid red";
+                        setTimeout(() => {
+                            effectiveFromInput.style.border = "";
+                        }, 3000);
+                    }
+                    return false;
+                }
+
+                // Show confirmation
+                const confirmMsg = `Are you sure you want to assign the shift to ${selectedUserIds.length} employee(s)?`;
+                if (!confirm(confirmMsg)) {
+                    e.preventDefault();
+                    return false;
+                }
+
+                console.log("Form validation passed, submitting...");
+                console.log("=== END FORM VALIDATION DEBUG ===");
+                return true;
+            });
+        } else {
+            console.error("bulkAssignForm not found!");
+        }
+    });
+
+    let currentAssignmentId = null;
+
+    // Modal Functions
+    function openAssignModal() {
+        document.getElementById("assignModal").classList.remove("hidden");
+    }
+
+    function closeAssignModal() {
+        document.getElementById("assignModal").classList.add("hidden");
+    }
+
+    function openCSVUploadModal() {
+        document.getElementById("csvUploadModal").classList.remove("hidden");
+    }
+
+    function closeCSVUploadModal() {
+        document.getElementById("csvUploadModal").classList.add("hidden");
+    }
+
+    function openEndAssignmentModal(assignmentId, userName, shiftName) {
+        currentAssignmentId = assignmentId;
+        document.getElementById("endAssignmentUser").textContent = userName;
+        document.getElementById("endAssignmentShift").textContent = shiftName;
+        document.getElementById("endAssignmentForm").action =
+            `{% url 'shift:end_assignment' 0 %}`.replace("0", assignmentId);
+        document
+            .getElementById("endAssignmentModal")
+            .classList.remove("hidden");
+    }
+
+    function closeEndAssignmentModal() {
+        document.getElementById("endAssignmentModal").classList.add("hidden");
+        currentAssignmentId = null;
+    }
+
+    // Global Modal Event Handlers
+    document.addEventListener("click", function (event) {
+        const modals = [
+            "assignModal",
+            "bulkAssignModal",
+            "csvUploadModal",
+            "endAssignmentModal",
+        ];
+        modals.forEach((modalId) => {
+            const modal = document.getElementById(modalId);
+            if (modal && event.target === modal) {
+                modal.classList.add("hidden");
+            }
+        });
+    });
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+            const modals = [
+                "assignModal",
+                "bulkAssignModal",
+                "csvUploadModal",
+                "endAssignmentModal",
+            ];
+            modals.forEach((modalId) => {
+                const modal = document.getElementById(modalId);
+                if (modal && !modal.classList.contains("hidden")) {
+                    modal.classList.add("hidden");
+                }
+            });
+        }
+    });
+
+    // Form Styling and Initialization
+    document.addEventListener("DOMContentLoaded", function () {
+        // Apply Tailwind classes to form fields
+        const formFields = document.querySelectorAll(
+            'select, input[type="text"], input[type="email"], input[type="date"], input[type="file"], textarea',
+        );
+        formFields.forEach((field) => {
+            if (!field.classList.contains("focus:ring-blue-500")) {
+                field.classList.add(
+                    "focus:ring-blue-500",
+                    "focus:border-blue-500",
+                    "block",
+                    "w-full",
+                    "shadow-sm",
+                    "sm:text-sm",
+                    "border-gray-300",
+                    "rounded-md",
+                );
+            }
+        });
+
+        // Apply styling to labels
+        const labels = document.querySelectorAll("label");
+        labels.forEach((label) => {
+            if (!label.classList.contains("block")) {
+                label.classList.add(
+                    "block",
+                    "text-sm",
+                    "font-medium",
+                    "text-gray-700",
+                    "mb-1",
+                );
+            }
+        });
+    });
+</script>
+
+{% endblock %}

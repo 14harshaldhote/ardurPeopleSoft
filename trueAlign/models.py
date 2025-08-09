@@ -16,6 +16,9 @@ import geoip2.database
 import os
 from django.core.exceptions import ValidationError
 from django.core.cache import cache
+from django.core.validators import MinValueValidator
+from decimal import Decimal
+
 
 
 # Set up logging
@@ -280,7 +283,7 @@ class UserSession(models.Model):
         Original fallback session creation method
         """
         logger.info(f"Using fallback session creation for user {user.username}")
-        
+
         # Simple session creation without enhanced features
         if tab_id:
             try:
@@ -290,7 +293,7 @@ class UserSession(models.Model):
                 return session, False
             except cls.DoesNotExist:
                 pass
-        
+
         # Create new session
         session_data = {
             'user': user,
@@ -301,7 +304,7 @@ class UserSession(models.Model):
             'login_time': timezone.now(),
             'last_activity': timezone.now(),
         }
-        
+
         if client_data:
             session_data.update({
                 'ip_address': client_data.get('ip_address'),
@@ -309,7 +312,7 @@ class UserSession(models.Model):
                 'browser_fingerprint': client_data.get('browser_fingerprint'),
                 'session_fingerprint': client_data.get('session_fingerprint'),
             })
-        
+
         new_session = cls.objects.create(**session_data)
         return new_session, True
 
@@ -324,18 +327,18 @@ class UserSession(models.Model):
             logger.warning(f"Enhanced session components not available: {e}")
             # Fall back to original implementation
             return cls._original_get_or_create_session(user, tab_id, parent_session_id, client_data, session_key, ip_address, user_agent, browser_fingerprint, device_type, screen_resolution, timezone_offset, language, url, title, referrer)
-        
+
         import time as time_module
         start_time = time_module.time()
         session_manager = get_session_manager()
         session_logger = get_session_logger()
         session_validator = get_session_validator()
-        
+
         try:
             # Prepare client data if not provided
             if client_data is None:
                 client_data = {}
-            
+
             # Add standalone parameters to client_data if they're provided
             if ip_address is not None:
                 client_data['ip_address'] = ip_address
@@ -358,7 +361,7 @@ class UserSession(models.Model):
                 client_data['title'] = title
             if referrer is not None:
                 client_data['referrer'] = referrer
-            
+
             # Use enhanced session manager
             session, created = session_manager.get_or_create_session(
                 user=user,
@@ -367,19 +370,19 @@ class UserSession(models.Model):
                 client_data=client_data,
                 session_key=session_key
             )
-            
+
             # Log session creation
             duration_ms = (time_module.time() - start_time) * 1000
             session_logger.log_session_creation(
                 user, session.id, tab_id, duration_ms, created=created
             )
-            
+
             # Register session for validation if newly created
             if created:
                 session_validator.register_session(session)
-            
+
             return session, created
-            
+
         except Exception as e:
             # Log error
             session_logger.log_error(
@@ -1412,23 +1415,23 @@ class SessionActivity(models.Model):
         Record a user activity using enhanced batch writer and location synchronizer
         """
         from trueAlign.core import get_batch_writer, get_location_synchronizer, get_session_logger
-        
+
         try:
             # Validate required parameters
             if not session:
                 logger.error("Cannot record activity: session is required")
                 return None
-            
+
             if not activity_type:
                 logger.warning("Cannot record activity: activity_type is required")
                 return None
-            
+
             # Validate activity_type is in allowed list
             allowed_types = [choice[0] for choice in cls.ACTIVITY_TYPES]
             if activity_type not in allowed_types:
                 logger.warning(f"Unknown activity type: {activity_type}. Using 'heartbeat' as fallback.")
                 activity_type = 'heartbeat'
-            
+
             # Ensure activity_data is a dict
             if activity_data is None:
                 activity_data = {}
@@ -1441,26 +1444,26 @@ class SessionActivity(models.Model):
                         activity_data = {'data': str(activity_data)}
                 except json.JSONDecodeError:
                     activity_data = {'raw_data': str(activity_data)}
-            
+
             # Validate and truncate URL if too long
             if url and len(url) > 2000:
                 logger.warning(f"URL too long ({len(url)} chars), truncating to 2000 chars")
                 url = url[:2000]
-            
+
             # Validate and truncate title if too long
             if title and len(title) > 500:
                 logger.warning(f"Title too long ({len(title)} chars), truncating to 500 chars")
                 title = title[:500]
-            
+
             # Add timestamp to activity_data if not present
             if 'timestamp' not in activity_data:
                 activity_data['timestamp'] = timezone.now().isoformat()
-            
+
             # Get enhanced components
             batch_writer = get_batch_writer()
             location_sync = get_location_synchronizer()
             session_logger = get_session_logger()
-            
+
             # Use batch writer for efficient activity recording
             batch_writer.add_activity(
                 user_id=session.user.id,
@@ -1471,18 +1474,18 @@ class SessionActivity(models.Model):
                 url=url,
                 title=title
             )
-            
+
             # Queue location update for synchronization if location data exists
             if location_data and isinstance(location_data, dict):
                 try:
                     # Validate basic location data structure
                     lat = location_data.get('latitude')
                     lng = location_data.get('longitude')
-                    
+
                     if lat is not None and lng is not None:
                         lat = float(lat)
                         lng = float(lng)
-                        
+
                         # Validate coordinate ranges
                         if -90 <= lat <= 90 and -180 <= lng <= 180:
                             # Queue for location synchronization
@@ -1492,7 +1495,7 @@ class SessionActivity(models.Model):
                                 location_data=location_data,
                                 timestamp=timezone.now()
                             )
-                            
+
                             logger.debug(f"Queued location update for session {session.id}: lat={lat}, lng={lng}")
                         else:
                             logger.warning(f"Invalid coordinates: lat={lat}, lng={lng}")
@@ -1502,24 +1505,24 @@ class SessionActivity(models.Model):
                             )
                     else:
                         logger.warning("Missing latitude or longitude in location data")
-                        
+
                 except (ValueError, TypeError) as e:
                     logger.warning(f"Error processing location data: {e}")
                     session_logger.log_location_update(
                         session.user, session.id, location_data, success=False, error=str(e)
                     )
-            
+
             # Update session's last activity timestamp using cache
             cache_key = f"session_last_activity_{session.id}"
             cache.set(cache_key, timezone.now().isoformat(), 300)  # 5 minutes
-            
+
             # Immediate database update only for critical activities
             if activity_type in ['session_end', 'logout', 'error']:
                 session.last_activity = timezone.now()
                 session.save(update_fields=['last_activity'])
-            
+
             logger.debug(f"Queued {activity_type} activity for session {session.id} (batched)")
-            
+
             # Return a mock activity object for compatibility
             # Note: The actual activity will be created by the batch writer
             from types import SimpleNamespace
@@ -1534,9 +1537,9 @@ class SessionActivity(models.Model):
                 timestamp=timezone.now(),
                 location_data=location_data
             )
-            
+
             return mock_activity
-            
+
         except Exception as e:
             # Log error using enhanced logger
             session_logger.log_error(
@@ -2100,12 +2103,12 @@ class LayoutPreference(models.Model):
     Model to store user's dashboard layout preferences
     """
     user = models.OneToOneField(
-        User, 
-        on_delete=models.CASCADE, 
+        User,
+        on_delete=models.CASCADE,
         related_name='layout_preference'
     )
     layout = JSONField(
-        default=dict, 
+        default=dict,
         help_text="JSON data storing card positions, sizes, and order"
     )
     updated_at = models.DateTimeField(auto_now=True)
@@ -2117,3 +2120,623 @@ class LayoutPreference(models.Model):
 
     def __str__(self):
         return f"{self.user.username}'s Layout Preference"
+
+
+
+
+class ShiftMaster(models.Model):
+    SHIFT_CHOICES = [
+        ('Day Shift', 'Day Shift'),  # 9:00 AM to 5:30 PM (8.5 hours)
+        ('Night Shift', 'Night Shift'),  # After 6:30 PM (9 hours)
+        ('Custom Shift', 'Custom Shift')  # For any other shift pattern
+    ]
+    WORK_DAYS_CHOICES = [
+        ('Weekdays', 'Monday to Friday'),
+        ('All Days', 'Monday to Saturday'),
+        ('Custom', 'Custom Days')
+    ]
+
+    # Validation constants
+    MIN_SHIFT_DURATION = 0.5  # 30 minutes minimum
+    MAX_SHIFT_DURATION = 24.0  # 24 hours maximum
+    MAX_BREAK_HOURS = 8.0  # 8 hours maximum break
+    MAX_GRACE_MINUTES = 120  # 2 hours maximum grace period
+    name = models.CharField(max_length=50)
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+    shift_duration = models.DecimalField(max_digits=5, decimal_places=2, default=8.0)
+    break_duration = models.DurationField(default=timedelta(minutes=30))
+    grace_period = models.DurationField(default=timedelta(minutes=15))
+    work_days = models.CharField(max_length=20, choices=WORK_DAYS_CHOICES, default='Weekdays')
+    # Increased max_length to 255 to handle longer custom day lists
+    custom_work_days = models.CharField(max_length=255, null=True, blank=True, help_text="Comma-separated day names (Monday,Tuesday,etc.)")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Shift"
+        verbose_name_plural = "Shifts"
+        constraints = [
+            # Ensure shift duration is reasonable
+            models.CheckConstraint(
+                check=models.Q(shift_duration__gte=0.5) & models.Q(shift_duration__lte=24.0),
+                name='shift_duration_range'
+            ),
+            # Ensure unique shift names
+            models.UniqueConstraint(
+                fields=['name'],
+                name='unique_shift_name'
+            ),
+        ]
+        indexes = [
+            models.Index(fields=['name', 'is_active']),
+            models.Index(fields=['start_time', 'end_time']),
+            models.Index(fields=['is_active']),
+        ]
+
+    @property
+    def crosses_midnight(self):
+        """Determine if the shift crosses midnight"""
+        return self.end_time < self.start_time
+
+    def clean(self):
+        """Comprehensive model validation"""
+        from django.core.exceptions import ValidationError
+        errors = {}
+
+        # Validate shift name
+        if not self.name or not self.name.strip():
+            errors['name'] = 'Shift name is required.'
+        elif len(self.name.strip()) > 50:
+            errors['name'] = 'Shift name cannot exceed 50 characters.'
+
+        # Check for duplicate names (case-insensitive)
+        if self.name:
+            existing = ShiftMaster.objects.filter(
+                name__iexact=self.name.strip()
+            )
+            if self.pk:
+                existing = existing.exclude(pk=self.pk)
+            if existing.exists():
+                errors['name'] = f'A shift with the name "{self.name}" already exists.'
+
+        # Validate times
+        if not self.start_time:
+            errors['start_time'] = 'Start time is required.'
+        if not self.end_time:
+            errors['end_time'] = 'End time is required.'
+
+        # Validate shift duration
+        if self.shift_duration is not None:
+            if self.shift_duration < self.MIN_SHIFT_DURATION:
+                errors['shift_duration'] = f'Shift duration must be at least {self.MIN_SHIFT_DURATION} hours.'
+            elif self.shift_duration > self.MAX_SHIFT_DURATION:
+                errors['shift_duration'] = f'Shift duration cannot exceed {self.MAX_SHIFT_DURATION} hours.'
+
+        # Validate break duration
+        if self.break_duration:
+            break_hours = self.break_duration.total_seconds() / 3600
+            if break_hours > self.MAX_BREAK_HOURS:
+                errors['break_duration'] = f'Break duration cannot exceed {self.MAX_BREAK_HOURS} hours.'
+
+            # Break cannot exceed shift duration
+            if self.shift_duration and break_hours >= float(self.shift_duration):
+                errors['break_duration'] = 'Break duration must be less than shift duration.'
+
+        # Validate grace period
+        if self.grace_period:
+            grace_minutes = self.grace_period.total_seconds() / 60
+            if grace_minutes > self.MAX_GRACE_MINUTES:
+                errors['grace_period'] = f'Grace period cannot exceed {self.MAX_GRACE_MINUTES} minutes.'
+
+        # Validate custom work days
+        if self.work_days == 'Custom':
+            if not self.custom_work_days:
+                errors['custom_work_days'] = 'Custom work days are required when "Custom" is selected.'
+            else:
+                try:
+                    self._validate_custom_work_days()
+                except ValidationError as e:
+                    errors['custom_work_days'] = str(e)
+
+        # Time consistency validation
+        if self.start_time and self.end_time:
+            # For same-day shifts, end time should be after start time
+            if not self.crosses_midnight and self.start_time >= self.end_time:
+                if self.start_time == self.end_time:
+                    errors['__all__'] = 'Shift duration must be greater than zero.'
+                else:
+                    errors['__all__'] = 'End time must be after start time for same-day shifts. For overnight shifts, end time should be earlier than start time.'
+
+        # Check for overlapping shifts with same work pattern
+        if self.start_time and self.end_time and self.work_days:
+            overlapping = self._check_shift_overlap()
+            if overlapping:
+                errors['__all__'] = f'This shift overlaps with existing shift: {overlapping.name}'
+
+        if errors:
+            raise ValidationError(errors)
+
+    def _validate_custom_work_days(self):
+        """Validate custom work days format"""
+        from django.core.exceptions import ValidationError
+
+        if not self.custom_work_days:
+            return
+
+        valid_days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        day_names = [day.strip() for day in self.custom_work_days.split(',') if day.strip()]
+
+        if not day_names:
+            raise ValidationError('At least one work day must be specified.')
+
+        # Check for invalid day names
+        invalid_days = [day for day in day_names if day not in valid_days]
+        if invalid_days:
+            raise ValidationError(f'Invalid day names: {", ".join(invalid_days)}. Valid days: {", ".join(valid_days)}')
+
+        # Check for duplicates
+        if len(day_names) != len(set(day_names)):
+            raise ValidationError('Duplicate day names found in custom work days.')
+
+        # Ensure at least one working day
+        if len(day_names) == 0:
+            raise ValidationError('At least one working day must be specified.')
+
+    def _check_shift_overlap(self):
+        """Check for overlapping shifts with similar work patterns"""
+        # Get other active shifts
+        other_shifts = ShiftMaster.objects.filter(is_active=True)
+        if self.pk:
+            other_shifts = other_shifts.exclude(pk=self.pk)
+
+        my_work_days = set(self.working_days_list)
+
+        for shift in other_shifts:
+            other_work_days = set(shift.working_days_list)
+
+            # Check if work days overlap
+            if my_work_days.intersection(other_work_days):
+                # Check time overlap
+                if self._times_overlap(shift):
+                    return shift
+
+        return None
+
+    def _times_overlap(self, other_shift):
+        """Check if two shifts have overlapping times"""
+        # Convert times to minutes for easier comparison
+        my_start = self.start_time.hour * 60 + self.start_time.minute
+        my_end = self.end_time.hour * 60 + self.end_time.minute
+
+        other_start = other_shift.start_time.hour * 60 + other_shift.start_time.minute
+        other_end = other_shift.end_time.hour * 60 + other_shift.end_time.minute
+
+        # Handle midnight crossover
+        if self.crosses_midnight:
+            my_end += 24 * 60  # Add 24 hours in minutes
+
+        if other_shift.crosses_midnight:
+            other_end += 24 * 60
+
+        # Check for overlap
+        return not (my_end <= other_start or other_end <= my_start)
+
+    def get_working_days(self):
+        """Return a list of working day names"""
+        day_names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        working_day_indices = self.working_days_list
+        return [day_names[i] for i in working_day_indices]
+
+
+    @property
+    def working_days_list(self):
+        """Return a list of working days (0=Monday, 6=Sunday)"""
+        weekday_map = {
+            'Monday': 0, 'Tuesday': 1, 'Wednesday': 2,
+            'Thursday': 3, 'Friday': 4, 'Saturday': 5, 'Sunday': 6
+        }
+
+        if self.work_days == 'Weekdays':
+            return [0, 1, 2, 3, 4]  # Monday to Friday
+        elif self.work_days == 'All Days':
+            return [0, 1, 2, 3, 4, 5]  # Monday to Saturday
+        elif self.work_days == 'Custom' and self.custom_work_days:
+            try:
+                # Parse day names from custom_work_days
+                day_names = [day.strip() for day in self.custom_work_days.split(',')]
+                return [weekday_map[day] for day in day_names if day in weekday_map]
+            except (ValueError, KeyError):
+                return [0, 1, 2, 3, 4]  # Default to weekdays if parsing fails
+        return [0, 1, 2, 3, 4]  # Default to weekdays
+
+    def is_night_shift(self):
+        """
+        Determine if this is a night shift based on timing
+        """
+        # If end time is before start time, it crosses midnight (night shift)
+        if self.crosses_midnight:
+            return True
+
+        # If shift starts after 6 PM, consider it a night shift
+        if self.start_time.hour >= 18:
+            return True
+
+        # If shift name explicitly contains "Night"
+        if 'night' in self.name.lower():
+            return True
+
+        return False
+
+    def is_working_day(self, date):
+        """Check if the given date is a working day for this shift"""
+        return date.weekday() in self.working_days_list
+
+    def is_within_shift_hours(self, datetime_obj, date):
+        """Check if a datetime is within shift hours considering date boundaries"""
+        # Create datetime objects for shift start and end on the given date
+        start_datetime = timezone.make_aware(
+            timezone.datetime.combine(date, self.start_time)
+        )
+
+        # If shift crosses midnight, end_datetime should be on the next day
+        end_date = date
+        if self.crosses_midnight:
+            end_date = date + timedelta(days=1)
+
+        end_datetime = timezone.make_aware(
+            timezone.datetime.combine(end_date, self.end_time)
+        )
+
+        return start_datetime <= datetime_obj <= end_datetime
+
+    from decimal import Decimal
+
+    # Inside your Django model class
+
+    def expected_hours(self) -> Decimal:
+        """
+        Calculates the expected work hours by subtracting the break duration
+        from the total shift duration.
+        """
+        # self.break_duration is a timedelta object on a model instance
+        break_seconds = self.break_duration.total_seconds()
+
+        # Convert break_seconds to hours as a Decimal
+        break_hours = Decimal(break_seconds) / Decimal(3600)
+
+        # self.shift_duration is already a Decimal object
+        # No need to cast it again with Decimal()
+        return self.shift_duration - break_hours
+
+
+    def __str__(self):
+        return f"{self.name} ({self.start_time.strftime('%H:%M')} - {self.end_time.strftime('%H:%M')})"
+
+    def save(self, *args, **kwargs):
+        # Clean the model before saving
+        self.full_clean()
+
+        # Check if this is a new object (not yet saved to database)
+        is_new = self.pk is None
+
+        # Set default times and durations based on shift type for new objects
+        if is_new:
+            if self.name == 'Day Shift' and not hasattr(self, '_start_time_set'):
+                self.start_time = time(9, 0)  # 9:00 AM
+                self.end_time = time(17, 30)  # 5:30 PM (8.5 hours)
+                self.shift_duration = Decimal('8.5')
+                self.work_days = 'All Days'  # Monday to Saturday
+                self._start_time_set = True
+            elif self.name == 'Night Shift' and not hasattr(self, '_start_time_set'):
+                self.start_time = time(18, 30)  # 6:30 PM
+                self.end_time = time(3, 30)    # 3:30 AM (9 hours)
+                self.shift_duration = Decimal('9.0')
+                self.work_days = 'Weekdays'  # Monday to Friday
+                self._start_time_set = True
+
+        # Calculate shift duration if not provided
+        if not self.shift_duration or self.shift_duration == Decimal('0.0'):
+            # Check if we have valid start and end times
+            if self.start_time and self.end_time:
+                # Calculate hours between start and end time
+                if self.crosses_midnight:
+                    # For shifts crossing midnight
+                    hours_before_midnight = Decimal(str(24 - self.start_time.hour - self.start_time.minute/60))
+                    hours_after_midnight = Decimal(str(self.end_time.hour + self.end_time.minute/60))
+                    self.shift_duration = round(hours_before_midnight + hours_after_midnight, 2)
+                else:
+                    # For regular shifts
+                    hours = Decimal(str(self.end_time.hour - self.start_time.hour))
+                    minutes = Decimal(str(self.end_time.minute - self.start_time.minute)) / Decimal('60')
+                    self.shift_duration = round(hours + minutes, 2)
+
+        # Set default break and grace periods if not set
+        if not self.break_duration:
+            self.break_duration = timedelta(minutes=30)
+        if not self.grace_period:
+            self.grace_period = timedelta(minutes=15)
+
+        super().save(*args, **kwargs)
+
+
+# Now, let's add a holiday model to properly track holidays
+class Holiday(models.Model):
+    name = models.CharField(max_length=100)
+    date = models.DateField()
+    recurring_yearly = models.BooleanField(default=True, help_text="If True, this holiday occurs on the same date every year")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Holiday"
+        verbose_name_plural = "Holidays"
+
+    def __str__(self):
+        return f"{self.name} ({self.date.strftime('%d-%b')})"
+
+    @classmethod
+    def is_holiday(cls, date):
+        """Check if a given date is a holiday"""
+        # Check for exact date match
+        if cls.objects.filter(date=date).exists():
+            return True
+
+        # Check for recurring yearly holidays (same month and day)
+        if cls.objects.filter(
+            recurring_yearly=True,
+            date__month=date.month,
+            date__day=date.day
+        ).exists():
+            return True
+
+        return False
+
+class ShiftAssignment(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='shift_assignments')
+    shift = models.ForeignKey(ShiftMaster, on_delete=models.PROTECT, related_name='assignments')
+    effective_from = models.DateField()
+    effective_to = models.DateField(null=True, blank=True)
+    is_current = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    # Additional fields for better tracking
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_assignments',
+        help_text="User who created this assignment"
+    )
+    notes = models.TextField(
+        blank=True,
+        help_text="Additional notes about this assignment"
+    )
+
+    class Meta:
+        verbose_name = "Shift Assignment"
+        verbose_name_plural = "Shift Assignments"
+        constraints = [
+            # Prevent overlapping assignments for same user
+            models.UniqueConstraint(
+                fields=['user', 'effective_from'],
+                condition=models.Q(is_current=True),
+                name='unique_current_assignment_per_user'
+            ),
+            # Ensure effective_to is after effective_from
+            models.CheckConstraint(
+                check=models.Q(effective_to__isnull=True) | models.Q(effective_to__gt=models.F('effective_from')),
+                name='valid_date_range'
+            ),
+        ]
+        indexes = [
+            models.Index(fields=['user', 'effective_from']),
+            models.Index(fields=['is_current']),
+            models.Index(fields=['effective_from', 'effective_to']),
+            models.Index(fields=['shift', 'effective_from']),
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} - {self.shift.name} (from {self.effective_from})"
+
+    def clean(self):
+        """Comprehensive validation for shift assignments"""
+        from django.core.exceptions import ValidationError
+        errors = {}
+
+        # Validate required fields
+        if not self.user:
+            errors['user'] = 'User is required.'
+        if not self.shift:
+            errors['shift'] = 'Shift is required.'
+        if not self.effective_from:
+            errors['effective_from'] = 'Effective from date is required.'
+
+        # Validate date range
+        if self.effective_from and self.effective_to:
+            if self.effective_to <= self.effective_from:
+                errors['effective_to'] = 'Effective to date must be after effective from date.'
+
+        # Prevent assignments in the past (with some flexibility for admin users)
+        if self.effective_from:
+            today = timezone.now().date()
+            if self.effective_from < today:
+                # Allow past dates only if this is an update to existing assignment
+                if not self.pk:
+                    errors['effective_from'] = 'Cannot create new assignments with past effective dates.'
+
+        # Check for overlapping assignments
+        if self.user and self.effective_from:
+            overlapping = self._check_assignment_overlap()
+            if overlapping:
+                errors['__all__'] = f'This assignment overlaps with existing assignment: {overlapping.shift.name} ({overlapping.effective_from} - {overlapping.effective_to or "ongoing"})'
+
+        # Validate shift is active
+        if self.shift and not self.shift.is_active:
+            errors['shift'] = 'Cannot assign inactive shift to user.'
+
+        # Validate user is active
+        if self.user and not self.user.is_active:
+            errors['user'] = 'Cannot assign shift to inactive user.'
+
+        if errors:
+            raise ValidationError(errors)
+
+    def _check_assignment_overlap(self):
+        """Check for overlapping assignments for the same user"""
+        assignments = ShiftAssignment.objects.filter(user=self.user)
+        if self.pk:
+            assignments = assignments.exclude(pk=self.pk)
+
+        for assignment in assignments:
+            if self._dates_overlap(assignment):
+                return assignment
+        return None
+
+    def _dates_overlap(self, other_assignment):
+        """Check if two assignments have overlapping date ranges"""
+        # This assignment's range
+        my_start = self.effective_from
+        my_end = self.effective_to  # Can be None
+
+        # Other assignment's range
+        other_start = other_assignment.effective_from
+        other_end = other_assignment.effective_to  # Can be None
+
+        # If either assignment has no end date, check if starts overlap
+        if my_end is None and other_end is None:
+            return my_start == other_start
+
+        if my_end is None:
+            return my_start <= (other_end or other_start)
+
+        if other_end is None:
+            return other_start <= my_end
+
+        # Both have end dates - check for overlap
+        return not (my_end < other_start or other_end < my_start)
+
+    def save(self, *args, **kwargs):
+        # Clean the model before saving
+        self.full_clean()
+
+        if isinstance(self.effective_from, str):
+            self.effective_from = timezone.datetime.strptime(self.effective_from, '%Y-%m-%d').date()
+
+        # Handle current assignment logic
+        if self.is_current:
+            # End other current assignments for this user
+            other_assignments = ShiftAssignment.objects.filter(
+                user=self.user,
+                is_current=True
+            ).exclude(id=self.id if self.id else None)
+
+            for assignment in other_assignments:
+                assignment.is_current = False
+                if not assignment.effective_to:
+                    # Set end date to day before new assignment starts
+                    assignment.effective_to = self.effective_from - timedelta(days=1)
+                assignment.save(update_fields=['is_current', 'effective_to'])
+
+        super().save(*args, **kwargs)
+
+    def is_active_on(self, date):
+        """Check if this shift assignment is active on a given date"""
+        if self.effective_from <= date and (not self.effective_to or date <= self.effective_to):
+            return True
+        return False
+
+    def days_remaining(self):
+        """Return number of days left in this shift assignment"""
+        today = timezone.now().date()
+        if self.effective_to:
+            remaining = (self.effective_to - today).days
+            return max(remaining, 0)
+        return None  # Open-ended shift
+
+    def total_duration(self):
+        """Return total duration in days of the shift assignment"""
+        if self.effective_to:
+            return (self.effective_to - self.effective_from).days + 1
+        return None
+
+    def has_ended(self):
+        """Check if this shift assignment has ended"""
+        if self.effective_to and self.effective_to < timezone.now().date():
+            return True
+        return False
+
+    @classmethod
+    def get_user_current_shift(cls, user, date=None):
+        """Get the user's assigned shift for a specific date or current date if not specified"""
+        if date is None:
+            date = timezone.now().date()
+
+        # Try to find an active assignment for the given date
+        assignment = cls.objects.filter(
+            user=user,
+            effective_from__lte=date,
+            effective_to__isnull=True
+        ).select_related('shift').first()
+
+        if not assignment:
+            # Try with effective_to date for completed assignments
+            assignment = cls.objects.filter(
+                user=user,
+                effective_from__lte=date,
+                effective_to__gte=date
+            ).select_related('shift').first()
+
+        if not assignment:
+            # If no assignment found, get most recent assignment
+            assignment = cls.objects.filter(
+                user=user,
+                effective_from__lte=date
+            ).order_by('-effective_from').select_related('shift').first()
+
+        # If still no assignment, return default Day Shift
+        if not assignment:
+            day_shift = ShiftMaster.objects.filter(name='Day Shift').first()
+            if not day_shift:
+                day_shift = ShiftMaster.objects.create(
+                    name='Day Shift',
+                    start_time=time(9, 0),
+                    end_time=time(17, 30),
+                    shift_duration=8.5,
+                    work_days='All Days'
+                )
+            return day_shift
+
+        return assignment.shift
+
+    @classmethod
+    def current_assignment_for_user(cls, user):
+        """Get current active assignment for user"""
+        today = timezone.now().date()
+        return cls.objects.filter(
+            user=user,
+            effective_from__lte=today
+        ).filter(
+            models.Q(effective_to__gte=today) | models.Q(effective_to__isnull=True)
+        ).order_by('-effective_from').first()
+
+    @classmethod
+    def upcoming_shift_endings(cls, days=7):
+        """Find shift assignments ending in next N days"""
+        today = timezone.now().date()
+        end_limit = today + timedelta(days=days)
+        return cls.objects.filter(
+            effective_to__range=(today, end_limit)
+        ).select_related('user', 'shift')
+
+    @classmethod
+    def get_shift_history(cls, user, start_date=None, end_date=None):
+        """Get shift assignment history for a user within date range"""
+        query = cls.objects.filter(user=user)
+        if start_date:
+            query = query.filter(effective_from__gte=start_date)
+        if end_date:
+            query = query.filter(effective_to__lte=end_date)
+        return query.order_by('-effective_from')
