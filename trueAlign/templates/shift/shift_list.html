@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
-{% load math_filters %}
+{% load mathfilters %}
 
 {% block title %}Shifts - TrueAlign{% endblock %}
 
@@ -95,7 +95,7 @@
                 </button>
             </div>
             {% endfor %}
-            
+
         </div>
         {% endif %}
 
@@ -581,12 +581,12 @@ let isSubmitting = false;
 function openCreateModal() {
     document.getElementById('createModal').classList.remove('hidden');
     document.body.style.overflow = 'hidden';
-    
+
     // Reset form
     document.getElementById('createForm').reset();
     document.getElementById('create_is_active').checked = true;
     document.getElementById('customWorkDaysCreate').classList.add('hidden');
-    
+
     // Focus on first input
     setTimeout(() => {
         document.getElementById('create_name').focus();
@@ -595,7 +595,7 @@ function openCreateModal() {
 
 function closeCreateModal() {
     if (isSubmitting) return;
-    
+
     document.getElementById('createModal').classList.add('hidden');
     document.body.style.overflow = '';
 }
@@ -622,7 +622,7 @@ function openEditModal(shiftId, name, startTime, endTime, duration, workDays, cu
 
     document.getElementById('editModal').classList.remove('hidden');
     document.body.style.overflow = 'hidden';
-    
+
     // Focus on first input
     setTimeout(() => {
         document.getElementById('edit_name').focus();
@@ -631,7 +631,7 @@ function openEditModal(shiftId, name, startTime, endTime, duration, workDays, cu
 
 function closeEditModal() {
     if (isSubmitting) return;
-    
+
     document.getElementById('editModal').classList.add('hidden');
     document.body.style.overflow = '';
 }
@@ -645,7 +645,7 @@ function openDeleteModal(shiftId, shiftName) {
 
 function closeDeleteModal() {
     if (isSubmitting) return;
-    
+
     document.getElementById('deleteModal').classList.add('hidden');
     document.body.style.overflow = '';
 }
@@ -668,10 +668,10 @@ function toggleCustomWorkDays(prefix) {
 function setLoadingState(buttonId, isLoading) {
     const button = document.getElementById(buttonId);
     if (!button) return;
-    
+
     const submitText = button.querySelector('.submit-text');
     const spinner = button.querySelector('.loading-spinner');
-    
+
     if (isLoading) {
         button.disabled = true;
         submitText.textContent = 'Processing...';
@@ -694,16 +694,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 e.preventDefault();
                 return;
             }
-            
+
             isSubmitting = true;
             setLoadingState('createSubmitBtn', true);
-            
+
             // Reset submit button text
             const submitText = document.querySelector('#createSubmitBtn .submit-text');
             if (submitText) submitText.textContent = 'Creating...';
         });
     }
-    
+
     // Edit form submission
     const editForm = document.getElementById('editForm');
     if (editForm) {
@@ -712,16 +712,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 e.preventDefault();
                 return;
             }
-            
+
             isSubmitting = true;
             setLoadingState('editSubmitBtn', true);
-            
+
             // Reset submit button text
             const submitText = document.querySelector('#editSubmitBtn .submit-text');
             if (submitText) submitText.textContent = 'Updating...';
         });
     }
-    
+
     // Delete form submission
     const deleteForm = document.getElementById('deleteForm');
     if (deleteForm) {
@@ -730,10 +730,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 e.preventDefault();
                 return;
             }
-            
+
             isSubmitting = true;
             setLoadingState('deleteSubmitBtn', true);
-            
+
             // Reset submit button text
             const submitText = document.querySelector('#deleteSubmitBtn .submit-text');
             if (submitText) submitText.textContent = 'Deleting...';
@@ -765,12 +765,12 @@ window.addEventListener('load', function() {
     setLoadingState('createSubmitBtn', false);
     setLoadingState('editSubmitBtn', false);
     setLoadingState('deleteSubmitBtn', false);
-    
+
     // Reset submit button texts
     const createSubmitText = document.querySelector('#createSubmitBtn .submit-text');
     const editSubmitText = document.querySelector('#editSubmitBtn .submit-text');
     const deleteSubmitText = document.querySelector('#deleteSubmitBtn .submit-text');
-    
+
     if (createSubmitText) createSubmitText.textContent = 'Create Shift';
     if (editSubmitText) editSubmitText.textContent = 'Update Shift';
     if (deleteSubmitText) deleteSubmitText.textContent = 'Delete Shift';

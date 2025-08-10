@@ -1,0 +1,312 @@
+{
+  "timestamp": "2025-08-10T13:24:22.007660+00:00",
+  "timezone": "Asia/Kolkata",
+  "django_version": "(5, 0, 2, 'final', 0)",
+  "database": "mysql (Connected)",
+  "summary": {
+    "total_tests": 28,
+    "passed_tests": 11,
+    "failed_tests": 17,
+    "warning_tests": 0,
+    "skipped_tests": 0,
+    "success_rate": 39.285714285714285
+  },
+  "results": [
+    {
+      "category": "Setup",
+      "test_name": "Test Data Creation",
+      "status": "PASS",
+      "details": "",
+      "execution_time": 0.0,
+      "timestamp": "2025-08-10T13:24:20.628261+00:00"
+    },
+    {
+      "category": "Model",
+      "test_name": "ShiftMaster Creation",
+      "status": "FAIL",
+      "details": "{'__all__': ['This shift overlaps with existing shift: Day Shift']}",
+      "execution_time": 0.005544900894165039,
+      "timestamp": "2025-08-10T13:24:20.633858+00:00"
+    },
+    {
+      "category": "Model",
+      "test_name": "Custom Working Days",
+      "status": "FAIL",
+      "details": "{'__all__': ['This shift overlaps with existing shift: Day Shift']}",
+      "execution_time": 0.002257108688354492,
+      "timestamp": "2025-08-10T13:24:20.636163+00:00"
+    },
+    {
+      "category": "Model",
+      "test_name": "Midnight Crossover Detection",
+      "status": "PASS",
+      "details": "",
+      "execution_time": 0.003381013870239258,
+      "timestamp": "2025-08-10T13:24:20.639581+00:00"
+    },
+    {
+      "category": "Validation",
+      "test_name": "Empty Name Validation",
+      "status": "PASS",
+      "details": "",
+      "execution_time": 0.0013470649719238281,
+      "timestamp": "2025-08-10T13:24:20.640954+00:00"
+    },
+    {
+      "category": "Form",
+      "test_name": "Valid ShiftForm",
+      "status": "FAIL",
+      "details": "unsupported operand type(s) for *: 'decimal.Decimal' and 'float'",
+      "execution_time": 0.00482487678527832,
+      "timestamp": "2025-08-10T13:24:20.645801+00:00"
+    },
+    {
+      "category": "Form",
+      "test_name": "Invalid ShiftForm (Empty Name)",
+      "status": "PASS",
+      "details": "",
+      "execution_time": 0.0017039775848388672,
+      "timestamp": "2025-08-10T13:24:20.647533+00:00"
+    },
+    {
+      "category": "Form",
+      "test_name": "Valid HolidayForm",
+      "status": "PASS",
+      "details": "",
+      "execution_time": 0.0016679763793945312,
+      "timestamp": "2025-08-10T13:24:20.649219+00:00"
+    },
+    {
+      "category": "View",
+      "test_name": "Admin Login",
+      "status": "PASS",
+      "details": "",
+      "execution_time": 0.2523808479309082,
+      "timestamp": "2025-08-10T13:24:20.901624+00:00"
+    },
+    {
+      "category": "View",
+      "test_name": "Dashboard View",
+      "status": "FAIL",
+      "details": "Status: 400",
+      "execution_time": 0.8618710041046143,
+      "timestamp": "2025-08-10T13:24:21.763536+00:00"
+    },
+    {
+      "category": "View",
+      "test_name": "Shift List View",
+      "status": "FAIL",
+      "details": "Status: 400",
+      "execution_time": 0.017069101333618164,
+      "timestamp": "2025-08-10T13:24:21.780643+00:00"
+    },
+    {
+      "category": "View",
+      "test_name": "Shift Create View (GET)",
+      "status": "FAIL",
+      "details": "Status: 400",
+      "execution_time": 0.017563819885253906,
+      "timestamp": "2025-08-10T13:24:21.798240+00:00"
+    },
+    {
+      "category": "View",
+      "test_name": "Shift Create View (POST)",
+      "status": "FAIL",
+      "details": "Status: 400",
+      "execution_time": 0.04734206199645996,
+      "timestamp": "2025-08-10T13:24:21.845615+00:00"
+    },
+    {
+      "category": "View",
+      "test_name": "Assignments List View",
+      "status": "FAIL",
+      "details": "Status: 400",
+      "execution_time": 0.016479969024658203,
+      "timestamp": "2025-08-10T13:24:21.862131+00:00"
+    },
+    {
+      "category": "View",
+      "test_name": "Assign Shift View",
+      "status": "FAIL",
+      "details": "Status: 400",
+      "execution_time": 0.0169219970703125,
+      "timestamp": "2025-08-10T13:24:21.879086+00:00"
+    },
+    {
+      "category": "View",
+      "test_name": "Holiday List View",
+      "status": "FAIL",
+      "details": "Status: 400",
+      "execution_time": 0.016530990600585938,
+      "timestamp": "2025-08-10T13:24:21.895652+00:00"
+    },
+    {
+      "category": "View",
+      "test_name": "User Calendar View",
+      "status": "FAIL",
+      "details": "Status: 400",
+      "execution_time": 0.016485929489135742,
+      "timestamp": "2025-08-10T13:24:21.912174+00:00"
+    },
+    {
+      "category": "View",
+      "test_name": "Statistics View",
+      "status": "FAIL",
+      "details": "Status: 400",
+      "execution_time": 0.016450881958007812,
+      "timestamp": "2025-08-10T13:24:21.928660+00:00"
+    },
+    {
+      "category": "API",
+      "test_name": "Dashboard Stats API",
+      "status": "FAIL",
+      "details": "Status: 400",
+      "execution_time": 0.01668095588684082,
+      "timestamp": "2025-08-10T13:24:21.945380+00:00"
+    },
+    {
+      "category": "API",
+      "test_name": "User Shift Status API",
+      "status": "FAIL",
+      "details": "Status: 400",
+      "execution_time": 0.0164029598236084,
+      "timestamp": "2025-08-10T13:24:21.961816+00:00"
+    },
+    {
+      "category": "API",
+      "test_name": "Upcoming Changes API",
+      "status": "FAIL",
+      "details": "Status: 400",
+      "execution_time": 0.016520977020263672,
+      "timestamp": "2025-08-10T13:24:21.978368+00:00"
+    },
+    {
+      "category": "BusinessLogic",
+      "test_name": "Shift Overlap Prevention",
+      "status": "PASS",
+      "details": "",
+      "execution_time": 0.002277851104736328,
+      "timestamp": "2025-08-10T13:24:21.980692+00:00"
+    },
+    {
+      "category": "Timezone",
+      "test_name": "IST Timezone Active",
+      "status": "PASS",
+      "details": "",
+      "execution_time": 1.1920928955078125e-05,
+      "timestamp": "2025-08-10T13:24:21.980728+00:00"
+    },
+    {
+      "category": "Timezone",
+      "test_name": "IST Time Calculations",
+      "status": "PASS",
+      "details": "",
+      "execution_time": 2.5987625122070312e-05,
+      "timestamp": "2025-08-10T13:24:21.980762+00:00"
+    },
+    {
+      "category": "Performance",
+      "test_name": "Query Performance",
+      "status": "PASS",
+      "details": "Queries completed in 0.003s",
+      "execution_time": 0.0027511119842529297,
+      "timestamp": "2025-08-10T13:24:21.983531+00:00"
+    },
+    {
+      "category": "Performance",
+      "test_name": "Form Processing Performance",
+      "status": "PASS",
+      "details": "5 forms processed in 0.020s",
+      "execution_time": 0.019572973251342773,
+      "timestamp": "2025-08-10T13:24:22.003131+00:00"
+    },
+    {
+      "category": "EdgeCase",
+      "test_name": "Minimum Duration Shift",
+      "status": "FAIL",
+      "details": "{'break_duration': ['Break duration must be less than shift duration.'], '__all__': ['This shift overlaps with existing shift: Day Shift']}",
+      "execution_time": 0.0023288726806640625,
+      "timestamp": "2025-08-10T13:24:22.005513+00:00"
+    },
+    {
+      "category": "EdgeCase",
+      "test_name": "Weekend-Only Shift",
+      "status": "FAIL",
+      "details": "{'__all__': ['This shift overlaps with existing shift: Day Shift']}",
+      "execution_time": 0.001857757568359375,
+      "timestamp": "2025-08-10T13:24:22.007406+00:00"
+    }
+  ],
+  "categories": {
+    "Setup": {
+      "total": 1,
+      "passed": 1,
+      "failed": 0,
+      "warnings": 0,
+      "skipped": 0
+    },
+    "Model": {
+      "total": 3,
+      "passed": 1,
+      "failed": 2,
+      "warnings": 0,
+      "skipped": 0
+    },
+    "Validation": {
+      "total": 1,
+      "passed": 1,
+      "failed": 0,
+      "warnings": 0,
+      "skipped": 0
+    },
+    "Form": {
+      "total": 3,
+      "passed": 2,
+      "failed": 1,
+      "warnings": 0,
+      "skipped": 0
+    },
+    "View": {
+      "total": 10,
+      "passed": 1,
+      "failed": 9,
+      "warnings": 0,
+      "skipped": 0
+    },
+    "API": {
+      "total": 3,
+      "passed": 0,
+      "failed": 3,
+      "warnings": 0,
+      "skipped": 0
+    },
+    "BusinessLogic": {
+      "total": 1,
+      "passed": 1,
+      "failed": 0,
+      "warnings": 0,
+      "skipped": 0
+    },
+    "Timezone": {
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "warnings": 0,
+      "skipped": 0
+    },
+    "Performance": {
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "warnings": 0,
+      "skipped": 0
+    },
+    "EdgeCase": {
+      "total": 2,
+      "passed": 0,
+      "failed": 2,
+      "warnings": 0,
+      "skipped": 0
+    }
+  }
+}

@@ -82,7 +82,7 @@ class ShiftMasterAdmin(admin.ModelAdmin):
 
     def duration_display(self, obj):
         """Display shift duration with expected hours."""
-        return f"{obj.shift_duration}h (work: {obj.expected_hours()}h)"
+        return f"{obj.shift_duration}h (work: {obj.expected_hours}h)"
     duration_display.short_description = 'Duration'
     duration_display.admin_order_field = 'shift_duration'
 

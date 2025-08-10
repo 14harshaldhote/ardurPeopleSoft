@@ -1,0 +1,37 @@
+<div class="bg-white shadow-xl rounded-xl p-6">
+    <h3 class="text-lg font-semibold text-gray-800 mb-4">Billing Summary</h3>
+    <div class="grid grid-cols-2 gap-4">
+        <div class="bg-green-50 p-4 rounded-lg text-center">
+            <p class="text-xs text-gray-600">Paid</p>
+            <p class="text-2xl font-bold text-green-600" id="paid-amount">
+                $12,500
+            </p>
+        </div>
+        <div class="bg-red-50 p-4 rounded-lg text-center">
+            <p class="text-xs text-gray-600">Due</p>
+            <p class="text-2xl font-bold text-red-600" id="due-amount">
+                $3,200
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Optional number animation
+    function animateValue(id, start, end, duration) {
+        let obj = document.getElementById(id);
+        let range = end - start;
+        let current = start;
+        let increment = end > start ? 1 : -1;
+        let stepTime = Math.abs(Math.floor(duration / range));
+        let timer = setInterval(function () {
+            current += increment;
+            obj.innerText = `$${current.toLocaleString()}`;
+            if (current == end) {
+                clearInterval(timer);
+            }
+        }, stepTime);
+    }
+    animateValue("paid-amount", 0, 12500, 800);
+    animateValue("due-amount", 0, 3200, 800);
+</script>

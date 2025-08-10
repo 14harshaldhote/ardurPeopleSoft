@@ -1,0 +1,181 @@
+{
+  "timestamp": "2025-08-10T13:16:42.155063+00:00",
+  "timezone": "Asia/Kolkata",
+  "test_results": {
+    "model_tests": [
+      {
+        "test_name": "Basic ShiftMaster Creation",
+        "status": "FAIL",
+        "details": "{'__all__': ['This shift overlaps with existing shift: Day Shift']}",
+        "timestamp": "2025-08-10T13:16:40.790746+00:00"
+      },
+      {
+        "test_name": "Custom Working Days Shift",
+        "status": "FAIL",
+        "details": "{'__all__': ['This shift overlaps with existing shift: Day Shift']}",
+        "timestamp": "2025-08-10T13:16:40.793343+00:00"
+      },
+      {
+        "test_name": "Midnight Crossover Detection",
+        "status": "PASS",
+        "details": "",
+        "timestamp": "2025-08-10T13:16:40.796830+00:00"
+      },
+      {
+        "test_name": "Empty Name Validation",
+        "status": "PASS",
+        "details": "",
+        "timestamp": "2025-08-10T13:16:40.798283+00:00"
+      },
+      {
+        "test_name": "Duplicate Name Validation",
+        "status": "PASS",
+        "details": "",
+        "timestamp": "2025-08-10T13:16:40.800367+00:00"
+      },
+      {
+        "test_name": "Get User Current Shift",
+        "status": "PASS",
+        "details": "",
+        "timestamp": "2025-08-10T13:16:40.805094+00:00"
+      }
+    ],
+    "form_tests": [
+      {
+        "test_name": "Valid ShiftForm",
+        "status": "FAIL",
+        "details": "unsupported operand type(s) for -: 'decimal.Decimal' and 'float'",
+        "timestamp": "2025-08-10T13:16:40.810471+00:00"
+      },
+      {
+        "test_name": "Invalid ShiftForm (Empty Name)",
+        "status": "PASS",
+        "details": "",
+        "timestamp": "2025-08-10T13:16:40.811999+00:00"
+      },
+      {
+        "test_name": "Valid HolidayForm",
+        "status": "PASS",
+        "details": "",
+        "timestamp": "2025-08-10T13:16:40.813048+00:00"
+      }
+    ],
+    "view_tests": [
+      {
+        "test_name": "Admin Login",
+        "status": "PASS",
+        "details": "",
+        "timestamp": "2025-08-10T13:16:41.057756+00:00"
+      },
+      {
+        "test_name": "Dashboard View",
+        "status": "FAIL",
+        "details": "Status code: 400",
+        "timestamp": "2025-08-10T13:16:41.966869+00:00"
+      },
+      {
+        "test_name": "Shift List View",
+        "status": "FAIL",
+        "details": "Status code: 400",
+        "timestamp": "2025-08-10T13:16:41.983496+00:00"
+      },
+      {
+        "test_name": "Create Shift View",
+        "status": "FAIL",
+        "details": "GET status code: 400",
+        "timestamp": "2025-08-10T13:16:42.000426+00:00"
+      },
+      {
+        "test_name": "Assignments View",
+        "status": "FAIL",
+        "details": "Status code: 400",
+        "timestamp": "2025-08-10T13:16:42.047609+00:00"
+      },
+      {
+        "test_name": "Assign Shift View",
+        "status": "FAIL",
+        "details": "Status code: 400",
+        "timestamp": "2025-08-10T13:16:42.064305+00:00"
+      },
+      {
+        "test_name": "Holidays View",
+        "status": "FAIL",
+        "details": "Status code: 400",
+        "timestamp": "2025-08-10T13:16:42.081560+00:00"
+      },
+      {
+        "test_name": "Calendar View",
+        "status": "FAIL",
+        "details": "Status code: 400",
+        "timestamp": "2025-08-10T13:16:42.097835+00:00"
+      },
+      {
+        "test_name": "Dashboard Stats API",
+        "status": "FAIL",
+        "details": "Status code: 400",
+        "timestamp": "2025-08-10T13:16:42.114944+00:00"
+      },
+      {
+        "test_name": "User Shift Status API",
+        "status": "FAIL",
+        "details": "Status code: 400",
+        "timestamp": "2025-08-10T13:16:42.132064+00:00"
+      },
+      {
+        "test_name": "Validate Shift Name API",
+        "status": "FAIL",
+        "details": "Status code: 400",
+        "timestamp": "2025-08-10T13:16:42.149263+00:00"
+      }
+    ],
+    "business_logic_tests": [],
+    "edge_case_tests": [
+      {
+        "test_name": "Minimum Duration Shift",
+        "status": "FAIL",
+        "details": "{'break_duration': ['Break duration must be less than shift duration.'], '__all__': ['This shift overlaps with existing shift: Day Shift']}",
+        "timestamp": "2025-08-10T13:16:42.151620+00:00"
+      },
+      {
+        "test_name": "Weekend-Only Shift",
+        "status": "FAIL",
+        "details": "{'__all__': ['This shift overlaps with existing shift: Day Shift']}",
+        "timestamp": "2025-08-10T13:16:42.153548+00:00"
+      }
+    ],
+    "timezone_tests": [
+      {
+        "test_name": "IST Timezone Active",
+        "status": "PASS",
+        "details": "",
+        "timestamp": "2025-08-10T13:16:42.149315+00:00"
+      },
+      {
+        "test_name": "IST Time Calculations",
+        "status": "PASS",
+        "details": "",
+        "timestamp": "2025-08-10T13:16:42.149350+00:00"
+      }
+    ],
+    "integration_tests": [
+      {
+        "test_name": "Complete Workflow",
+        "status": "FAIL",
+        "details": "unsupported operand type(s) for -: 'decimal.Decimal' and 'float'",
+        "timestamp": "2025-08-10T13:16:42.154465+00:00"
+      },
+      {
+        "test_name": "Holiday Integration",
+        "status": "PASS",
+        "details": "",
+        "timestamp": "2025-08-10T13:16:42.154891+00:00"
+      }
+    ]
+  },
+  "summary": {
+    "total_tests": 26,
+    "passed_tests": 10,
+    "failed_tests": 16,
+    "success_rate": 38.46153846153847
+  }
+}

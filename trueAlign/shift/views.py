@@ -1447,7 +1447,7 @@ def api_shift_details(request, shift_id):
             'custom_work_days': shift.custom_work_days,
             'is_active': shift.is_active,
             'crosses_midnight': shift.crosses_midnight,
-            'expected_hours': shift.expected_hours(),
+            'expected_hours': shift.expected_hours,
             'break_minutes': int(shift.break_duration.total_seconds() // 60),
             'grace_minutes': int(shift.grace_period.total_seconds() // 60),
             'current_assignments': list(current_assignments),
@@ -1837,7 +1837,7 @@ def api_shift_recommendations(request, shift_id):
 def api_dashboard_stats(request):
     """API endpoint for refreshing dashboard statistics."""
     try:
-        if not request.user.groups.filter(name__in=['Manager', 'HR']).exists():
+        if not (request.user.is_superuser or request.user.groups.filter(name__in=['Manager', 'HR']).exists()):
             return JsonResponse({
                 'status': 'error',
                 'message': 'Insufficient permissions'

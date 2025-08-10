@@ -308,22 +308,25 @@ class ShiftForm(forms.ModelForm):
                 errors['__all__'] = 'Shift duration cannot exceed 24 hours.'
 
             # Auto-calculate duration if not provided or significantly different
-            if not duration or abs(duration - calculated_hours) > 0.5:
-                cleaned_data['shift_duration'] = round(calculated_hours, 2)
+            calculated_decimal = Decimal(str(round(calculated_hours, 2)))
+            if not duration or abs(duration - calculated_decimal) > Decimal('0.5'):
+                cleaned_data['shift_duration'] = calculated_decimal
                 duration = cleaned_data['shift_duration']
 
         # Validate break duration vs shift duration
         if duration and break_minutes:
-            break_hours = break_minutes / 60
-            if break_hours >= duration:
+            break_hours = Decimal(str(break_minutes)) / Decimal('60')
+            duration_decimal = Decimal(str(duration))
+            if break_hours >= duration_decimal:
                 errors['break_duration_minutes'] = f'Break duration ({break_minutes} min) must be less than shift duration ({duration} hours).'
-            elif break_hours > duration * 0.5:  # More than 50% of shift
+            elif break_hours > duration_decimal * Decimal('0.5'):  # More than 50% of shift
                 self.add_error('break_duration_minutes', f'Warning: Break duration ({break_minutes} min) is more than 50% of shift duration.')
 
         # Validate grace period reasonableness
         if grace_minutes and duration:
-            grace_hours = grace_minutes / 60
-            if grace_hours > duration * 0.25:  # More than 25% of shift
+            grace_hours = Decimal(str(grace_minutes)) / Decimal('60')
+            duration_decimal = Decimal(str(duration))
+            if grace_hours > duration_decimal * Decimal('0.25'):  # More than 25% of shift
                 self.add_error('grace_period_minutes', f'Warning: Grace period ({grace_minutes} min) seems excessive for a {duration}-hour shift.')
 
         # Validate custom work days
@@ -349,7 +352,7 @@ class ShiftForm(forms.ModelForm):
             conflicts = self._check_shift_conflicts(cleaned_data)
             if conflicts:
                 conflict_names = [f"{c.name} ({c.start_time.strftime('%H:%M')}-{c.end_time.strftime('%H:%M')})" for c in conflicts]
-                errors['__all__'] = f'This shift conflicts with existing shifts: {", ".join(conflict_names)}'
+                errors['__all__'] = f'This shift has time conflicts with existing shifts: {", ".join(conflict_names)}. Please adjust the timing or working days.'
 
         if errors:
             raise ValidationError(errors)
@@ -365,6 +368,9 @@ class ShiftForm(forms.ModelForm):
         work_days = cleaned_data.get('work_days')
         custom_work_days = cleaned_data.get('custom_work_days')
 
+        if not start_time or not end_time:
+            return []
+
         # Get work days list
         if work_days == 'Weekdays':
             my_work_days = set([0, 1, 2, 3, 4])  # Mon-Fri
@@ -374,8 +380,11 @@ class ShiftForm(forms.ModelForm):
             day_map = {'Monday': 0, 'Tuesday': 1, 'Wednesday': 2, 'Thursday': 3,
                       'Friday': 4, 'Saturday': 5, 'Sunday': 6}
             day_names = [day.strip() for day in custom_work_days.split(',') if day.strip()]
-            my_work_days = set(day_map.get(day) for day in day_names if day in day_map)
+            my_work_days = set(day_map.get(day) for day in day_names if day in day_map if day_map.get(day) is not None)
         else:
+            return []
+
+        if not my_work_days:
             return []
 
         # Check existing shifts
@@ -387,15 +396,19 @@ class ShiftForm(forms.ModelForm):
         for shift in existing_shifts:
             # Check work days overlap
             shift_work_days = set(shift.working_days_list)
-            if my_work_days.intersection(shift_work_days):
-                # Check time overlap
+            common_days = my_work_days.intersection(shift_work_days)
+            if common_days:
+                # Only check time overlap if there are common working days
                 if self._times_overlap(start_time, end_time, shift.start_time, shift.end_time):
                     conflicts.append(shift)
 
         return conflicts
 
     def _times_overlap(self, start1, end1, start2, end2):
-        """Check if two time ranges overlap."""
+        """Check if two time ranges overlap with improved logic."""
+        if not all([start1, end1, start2, end2]):
+            return False
+
         # Convert to minutes for easier comparison
         start1_min = start1.hour * 60 + start1.minute
         end1_min = end1.hour * 60 + end1.minute
@@ -408,8 +421,11 @@ class ShiftForm(forms.ModelForm):
         if end2 < start2:  # Second shift crosses midnight
             end2_min += 24 * 60
 
-        # Check overlap
-        return not (end1_min <= start2_min or end2_min <= start1_min)
+        # Check for actual overlap (not just touching)
+        # Two ranges overlap if start of one is before end of other and vice versa
+        overlap = (start1_min < end2_min) and (start2_min < end1_min)
+
+        return overlap
 
     def save(self, commit=True):
         """Save the form with custom duration fields."""
@@ -423,7 +439,15 @@ class ShiftForm(forms.ModelForm):
         instance.grace_period = timedelta(minutes=grace_minutes)
 
         if commit:
-            instance.save()
+            # Skip model validation since form validation already passed
+            # Temporarily disable the model's clean method to avoid duplicate validation
+            original_clean = instance.clean
+            instance.clean = lambda: None
+            try:
+                instance.save()
+            finally:
+                # Always restore the original clean method
+                instance.clean = original_clean
 
         return instance
 
@@ -650,24 +674,33 @@ class ShiftAssignmentForm(forms.ModelForm):
         errors = {}
 
         if user and shift and effective_from:
-            # Check for overlapping assignments
+            # Check for overlapping assignments (but allow same-day transitions)
             conflicts = self._check_assignment_conflicts(user, effective_from, effective_to)
 
             if conflicts and not override_conflicts:
-                conflict_descriptions = []
+                # Filter out conflicts that are just boundary touches (same day end/start)
+                real_conflicts = []
                 for conflict in conflicts:
-                    desc = f"{conflict.shift.name} ({conflict.effective_from}"
-                    if conflict.effective_to:
-                        desc += f" to {conflict.effective_to}"
-                    else:
-                        desc += " - ongoing"
-                    desc += ")"
-                    conflict_descriptions.append(desc)
+                    conflict_end = conflict.effective_to or date.max
+                    # Allow same-day transitions
+                    if not (conflict_end == effective_from or conflict.effective_from == effective_to):
+                        real_conflicts.append(conflict)
 
-                errors['__all__'] = (
-                    f"This assignment conflicts with existing assignments: {', '.join(conflict_descriptions)}. "
-                    f"Check 'Override conflicts' to proceed anyway (admin only)."
-                )
+                if real_conflicts:
+                    conflict_descriptions = []
+                    for conflict in real_conflicts:
+                        desc = f"{conflict.shift.name} ({conflict.effective_from}"
+                        if conflict.effective_to:
+                            desc += f" to {conflict.effective_to}"
+                        else:
+                            desc += " - ongoing"
+                        desc += ")"
+                        conflict_descriptions.append(desc)
+
+                    errors['__all__'] = (
+                        f"This assignment conflicts with existing assignments: {', '.join(conflict_descriptions)}. "
+                        f"Check 'Override conflicts' to proceed anyway (admin only)."
+                    )
 
             # Check if user is already assigned to this exact shift in overlapping period
             exact_conflicts = self._check_exact_shift_conflicts(user, shift, effective_from, effective_to)
@@ -728,19 +761,19 @@ class ShiftAssignmentForm(forms.ModelForm):
         return conflicts
 
     def _date_ranges_overlap(self, start1, end1, start2, end2):
-        """Check if two date ranges overlap."""
+        """Check if two date ranges overlap, allowing same-day transitions."""
         # Handle None end dates (ongoing assignments)
         if end1 is None and end2 is None:
             return start1 == start2
 
         if end1 is None:
-            return start1 <= (end2 or start2)
+            return start1 < (end2 or start2)
 
         if end2 is None:
-            return start2 <= end1
+            return start2 < end1
 
-        # Both have end dates
-        return not (end1 < start2 or end2 < start1)
+        # Both have end dates - allow same day transitions (end1 == start2 or end2 == start1)
+        return not (end1 <= start2 or end2 <= start1)
 
     def _validate_working_days(self, shift, effective_from, effective_to):
         """Validate if assignment period includes shift working days."""

@@ -73,7 +73,7 @@ class ShiftService:
                     'crosses_midnight': shift.crosses_midnight,
                     'assignment_count': shift.assignment_count,
                     'active_assignment_count': shift.active_assignment_count,
-                    'expected_hours': shift.expected_hours(),
+                    'expected_hours': shift.expected_hours,
                     'break_minutes': shift.break_duration.total_seconds() // 60,
                     'grace_minutes': shift.grace_period.total_seconds() // 60,
                     'created_at': shift.created_at,
@@ -1438,7 +1438,7 @@ class ShiftService:
                                         'name': shift.name,
                                         'start_time': shift.start_time.strftime('%H:%M'),
                                         'end_time': shift.end_time.strftime('%H:%M'),
-                                        'expected_hours': shift.expected_hours()
+                                        'expected_hours': shift.expected_hours
                                     },
                                     'users': []
                                 }
@@ -1504,7 +1504,7 @@ class ShiftService:
             if not shift:
                 return 0.0
 
-            return shift.expected_hours()
+            return shift.expected_hours
 
         except Exception as e:
             self.logger.error(f"Error calculating expected hours: {str(e)}")
@@ -1538,7 +1538,7 @@ class ShiftService:
                         'duration': float(shift.shift_duration),
                         'work_days': shift.work_days,
                         'crosses_midnight': shift.crosses_midnight,
-                        'expected_hours': shift.expected_hours()
+                        'expected_hours': shift.expected_hours
                     })
 
             return available_shifts

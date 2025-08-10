@@ -30890,3 +30890,1083 @@ sessions_extras
 static
 tz
 widget_tweaks
+[2025-08-10 17:59:07] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-08-10 17:59:32] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-08-10 18:04:13] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/core/enhanced_logger.py changed, reloading.
+[2025-08-10 18:04:14] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-08-10 18:18:32] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-08-10 18:25:40] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-08-10 18:29:05] INFO - trueAlign.shift - wrapper:75 - [47969e6c] ACTION_START - SHIFT_DASHBOARD_VIEW
+[2025-08-10 18:29:05] ERROR - trueAlign.shift - get_shift_statistics:1263 - Error getting shift statistics: Cannot resolve keyword 'shiftassignment' into field. Choices are: client_profile, created_assignments, date_joined, direct_reports, email, first_name, groups, id, is_active, is_staff, is_superuser, last_login, last_name, layout_preference, logentry, onboarded_users, password, performed_actions, profile, session_activities, sessions, shift_assignments, system_notifications, user_logs, user_permissions, username
+[2025-08-10 18:29:05] ERROR - trueAlign.shift - shift_dashboard:255 - Error in shift dashboard: Cannot resolve keyword 'shiftassignment' into field. Choices are: client_profile, created_assignments, date_joined, direct_reports, email, first_name, groups, id, is_active, is_staff, is_superuser, last_login, last_name, layout_preference, logentry, onboarded_users, password, performed_actions, profile, session_activities, sessions, shift_assignments, system_notifications, user_logs, user_permissions, username
+[2025-08-10 18:29:05] INFO - trueAlign.shift - wrapper:87 - [47969e6c] ACTION_SUCCESS - SHIFT_DASHBOARD_VIEW completed in 69.53ms
+[2025-08-10 18:29:05] INFO - trueAlign.shift - log_user_action:120 - USER_ACTION - managerTest: api_suggestions_retrieved
+[2025-08-10 18:46:41] ERROR - django.security.DisallowedHost - response_for_exception:124 - Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/http/request.py", line 151, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+[2025-08-10 18:46:41] ERROR - django.security.DisallowedHost - response_for_exception:124 - Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/http/request.py", line 151, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+[2025-08-10 18:46:41] ERROR - django.security.DisallowedHost - response_for_exception:124 - Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/http/request.py", line 151, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+[2025-08-10 18:46:42] ERROR - django.security.DisallowedHost - response_for_exception:124 - Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/http/request.py", line 151, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+[2025-08-10 18:46:42] ERROR - django.security.DisallowedHost - response_for_exception:124 - Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/http/request.py", line 151, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+[2025-08-10 18:46:42] ERROR - django.security.DisallowedHost - response_for_exception:124 - Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/http/request.py", line 151, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+[2025-08-10 18:46:42] ERROR - django.security.DisallowedHost - response_for_exception:124 - Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/http/request.py", line 151, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+[2025-08-10 18:46:42] ERROR - django.security.DisallowedHost - response_for_exception:124 - Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/http/request.py", line 151, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+[2025-08-10 18:46:42] ERROR - django.security.DisallowedHost - response_for_exception:124 - Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/http/request.py", line 151, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+[2025-08-10 18:46:42] ERROR - django.security.DisallowedHost - response_for_exception:124 - Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/http/request.py", line 151, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+[2025-08-10 18:54:21] ERROR - django.security.DisallowedHost - response_for_exception:124 - Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/http/request.py", line 151, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+[2025-08-10 18:54:21] ERROR - django.security.DisallowedHost - response_for_exception:124 - Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/http/request.py", line 151, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+[2025-08-10 18:54:21] ERROR - django.security.DisallowedHost - response_for_exception:124 - Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/http/request.py", line 151, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+[2025-08-10 18:54:21] ERROR - django.security.DisallowedHost - response_for_exception:124 - Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/http/request.py", line 151, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+[2025-08-10 18:54:21] ERROR - django.security.DisallowedHost - response_for_exception:124 - Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/http/request.py", line 151, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+[2025-08-10 18:54:21] ERROR - django.security.DisallowedHost - response_for_exception:124 - Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/http/request.py", line 151, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+[2025-08-10 18:54:21] ERROR - django.security.DisallowedHost - response_for_exception:124 - Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/http/request.py", line 151, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+[2025-08-10 18:54:21] ERROR - django.security.DisallowedHost - response_for_exception:124 - Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/http/request.py", line 151, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+[2025-08-10 18:54:21] ERROR - django.security.DisallowedHost - response_for_exception:124 - Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/http/request.py", line 151, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+[2025-08-10 18:54:21] ERROR - django.security.DisallowedHost - response_for_exception:124 - Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/http/request.py", line 151, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+[2025-08-10 18:54:21] ERROR - django.security.DisallowedHost - response_for_exception:124 - Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/http/request.py", line 151, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+[2025-08-10 18:54:21] ERROR - django.security.DisallowedHost - response_for_exception:124 - Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/http/request.py", line 151, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+[2025-08-10 19:10:09] ERROR - django.security.DisallowedHost - response_for_exception:124 - Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/http/request.py", line 151, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+[2025-08-10 19:10:09] ERROR - django.security.DisallowedHost - response_for_exception:124 - Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/http/request.py", line 151, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+[2025-08-10 19:10:09] ERROR - django.security.DisallowedHost - response_for_exception:124 - Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/http/request.py", line 151, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+[2025-08-10 19:11:08] ERROR - django.security.DisallowedHost - response_for_exception:124 - Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/http/request.py", line 151, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+[2025-08-10 19:11:08] ERROR - django.security.DisallowedHost - response_for_exception:124 - Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/http/request.py", line 151, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'testserver'. You may need to add 'testserver' to ALLOWED_HOSTS.
+[2025-08-10 19:13:19] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-08-10 19:13:19] INFO - trueAlign.shift - wrapper:75 - [4f6934cd] ACTION_START - SHIFT_DASHBOARD_VIEW
+[2025-08-10 19:13:19] ERROR - trueAlign.shift - shift_dashboard:255 - Error in shift dashboard: {'__all__': ['This shift overlaps with existing shift: Morning Base']}
+[2025-08-10 19:13:19] INFO - trueAlign.shift - wrapper:87 - [4f6934cd] ACTION_SUCCESS - SHIFT_DASHBOARD_VIEW completed in 67.3ms
+[2025-08-10 19:13:19] INFO - trueAlign.shift - wrapper:75 - [2f65f2cc] ACTION_START - SHIFT_LIST_VIEW
+[2025-08-10 19:13:19] ERROR - trueAlign.shift - shift_list:569 - Error in shift list: 'math_filters' is not a registered tag library. Must be one of:
+admin_list
+admin_modify
+admin_urls
+cache
+i18n
+l10n
+log
+rest_framework
+sessions_extras
+static
+tz
+widget_tweaks
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1034, in find_library
+    return parser.libraries[name]
+KeyError: 'math_filters'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/shift/views.py", line 566, in shift_list
+    return render(request, 'shift/shift_list.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1096, in load
+    lib = find_library(parser, name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1036, in find_library
+    raise TemplateSyntaxError(
+django.template.exceptions.TemplateSyntaxError: 'math_filters' is not a registered tag library. Must be one of:
+admin_list
+admin_modify
+admin_urls
+cache
+i18n
+l10n
+log
+rest_framework
+sessions_extras
+static
+tz
+widget_tweaks
+[2025-08-10 19:13:19] ERROR - trueAlign.shift - wrapper:99 - [2f65f2cc] ACTION_ERROR - SHIFT_LIST_VIEW failed after 77.42ms: 'math_filters' is not a registered tag library. Must be one of:
+admin_list
+admin_modify
+admin_urls
+cache
+i18n
+l10n
+log
+rest_framework
+sessions_extras
+static
+tz
+widget_tweaks
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1034, in find_library
+    return parser.libraries[name]
+KeyError: 'math_filters'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/shift/views.py", line 566, in shift_list
+    return render(request, 'shift/shift_list.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1096, in load
+    lib = find_library(parser, name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1036, in find_library
+    raise TemplateSyntaxError(
+django.template.exceptions.TemplateSyntaxError: 'math_filters' is not a registered tag library. Must be one of:
+admin_list
+admin_modify
+admin_urls
+cache
+i18n
+l10n
+log
+rest_framework
+sessions_extras
+static
+tz
+widget_tweaks
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1034, in find_library
+    return parser.libraries[name]
+KeyError: 'math_filters'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/shift/views.py", line 79, in wrapper
+    result = func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/shift/views.py", line 620, in shift_list
+    return render(request, 'shift/shift_list.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1096, in load
+    lib = find_library(parser, name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1036, in find_library
+    raise TemplateSyntaxError(
+django.template.exceptions.TemplateSyntaxError: 'math_filters' is not a registered tag library. Must be one of:
+admin_list
+admin_modify
+admin_urls
+cache
+i18n
+l10n
+log
+rest_framework
+sessions_extras
+static
+tz
+widget_tweaks
+[2025-08-10 19:13:19] ERROR - django.request - log_response:241 - Internal Server Error: /shift/shifts/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1034, in find_library
+    return parser.libraries[name]
+KeyError: 'math_filters'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/shift/views.py", line 566, in shift_list
+    return render(request, 'shift/shift_list.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1096, in load
+    lib = find_library(parser, name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1036, in find_library
+    raise TemplateSyntaxError(
+django.template.exceptions.TemplateSyntaxError: 'math_filters' is not a registered tag library. Must be one of:
+admin_list
+admin_modify
+admin_urls
+cache
+i18n
+l10n
+log
+rest_framework
+sessions_extras
+static
+tz
+widget_tweaks
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1034, in find_library
+    return parser.libraries[name]
+KeyError: 'math_filters'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/shift/decorators.py", line 44, in wrapper_func
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/shift/views.py", line 79, in wrapper
+    result = func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/shift/views.py", line 620, in shift_list
+    return render(request, 'shift/shift_list.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1096, in load
+    lib = find_library(parser, name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1036, in find_library
+    raise TemplateSyntaxError(
+django.template.exceptions.TemplateSyntaxError: 'math_filters' is not a registered tag library. Must be one of:
+admin_list
+admin_modify
+admin_urls
+cache
+i18n
+l10n
+log
+rest_framework
+sessions_extras
+static
+tz
+widget_tweaks
+[2025-08-10 19:13:19] INFO - trueAlign.shift - wrapper:75 - [56dea777] ACTION_START - ASSIGNMENT_LIST_VIEW
+[2025-08-10 19:13:19] INFO - trueAlign.shift - log_user_action:120 - USER_ACTION - testadmin: assignment_list_access
+[2025-08-10 19:13:20] INFO - trueAlign.shift - wrapper:87 - [56dea777] ACTION_SUCCESS - ASSIGNMENT_LIST_VIEW completed in 60.47ms
+[2025-08-10 19:13:20] INFO - trueAlign.shift - log_user_action:120 - USER_ACTION - testadmin: api_suggestions_retrieved
+[2025-08-10 19:15:43] INFO - trueAlign.shift - wrapper:75 - [154ea3de] ACTION_START - SHIFT_DASHBOARD_VIEW
+[2025-08-10 19:15:43] ERROR - trueAlign.shift - shift_dashboard:255 - Error in shift dashboard: {'__all__': ['This shift overlaps with existing shift: Morning Base']}
+[2025-08-10 19:15:43] INFO - trueAlign.shift - wrapper:87 - [154ea3de] ACTION_SUCCESS - SHIFT_DASHBOARD_VIEW completed in 59.99ms
+[2025-08-10 19:15:43] INFO - trueAlign.shift - wrapper:75 - [c973b787] ACTION_START - SHIFT_LIST_VIEW
+[2025-08-10 19:15:43] ERROR - trueAlign.shift - shift_list:569 - Error in shift list: 'math_filters' is not a registered tag library. Must be one of:
+admin_list
+admin_modify
+admin_urls
+cache
+i18n
+l10n
+log
+mathfilters
+rest_framework
+sessions_extras
+static
+tz
+widget_tweaks
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1034, in find_library
+    return parser.libraries[name]
+KeyError: 'math_filters'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/shift/views.py", line 566, in shift_list
+    return render(request, 'shift/shift_list.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1096, in load
+    lib = find_library(parser, name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1036, in find_library
+    raise TemplateSyntaxError(
+django.template.exceptions.TemplateSyntaxError: 'math_filters' is not a registered tag library. Must be one of:
+admin_list
+admin_modify
+admin_urls
+cache
+i18n
+l10n
+log
+mathfilters
+rest_framework
+sessions_extras
+static
+tz
+widget_tweaks
+[2025-08-10 19:15:43] ERROR - trueAlign.shift - wrapper:99 - [c973b787] ACTION_ERROR - SHIFT_LIST_VIEW failed after 72.88ms: 'math_filters' is not a registered tag library. Must be one of:
+admin_list
+admin_modify
+admin_urls
+cache
+i18n
+l10n
+log
+mathfilters
+rest_framework
+sessions_extras
+static
+tz
+widget_tweaks
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1034, in find_library
+    return parser.libraries[name]
+KeyError: 'math_filters'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/shift/views.py", line 566, in shift_list
+    return render(request, 'shift/shift_list.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1096, in load
+    lib = find_library(parser, name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1036, in find_library
+    raise TemplateSyntaxError(
+django.template.exceptions.TemplateSyntaxError: 'math_filters' is not a registered tag library. Must be one of:
+admin_list
+admin_modify
+admin_urls
+cache
+i18n
+l10n
+log
+mathfilters
+rest_framework
+sessions_extras
+static
+tz
+widget_tweaks
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1034, in find_library
+    return parser.libraries[name]
+KeyError: 'math_filters'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/shift/views.py", line 79, in wrapper
+    result = func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/shift/views.py", line 620, in shift_list
+    return render(request, 'shift/shift_list.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1096, in load
+    lib = find_library(parser, name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1036, in find_library
+    raise TemplateSyntaxError(
+django.template.exceptions.TemplateSyntaxError: 'math_filters' is not a registered tag library. Must be one of:
+admin_list
+admin_modify
+admin_urls
+cache
+i18n
+l10n
+log
+mathfilters
+rest_framework
+sessions_extras
+static
+tz
+widget_tweaks
+[2025-08-10 19:15:44] ERROR - django.request - log_response:241 - Internal Server Error: /shift/shifts/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1034, in find_library
+    return parser.libraries[name]
+KeyError: 'math_filters'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/shift/views.py", line 566, in shift_list
+    return render(request, 'shift/shift_list.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1096, in load
+    lib = find_library(parser, name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1036, in find_library
+    raise TemplateSyntaxError(
+django.template.exceptions.TemplateSyntaxError: 'math_filters' is not a registered tag library. Must be one of:
+admin_list
+admin_modify
+admin_urls
+cache
+i18n
+l10n
+log
+mathfilters
+rest_framework
+sessions_extras
+static
+tz
+widget_tweaks
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1034, in find_library
+    return parser.libraries[name]
+KeyError: 'math_filters'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/shift/decorators.py", line 44, in wrapper_func
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/shift/views.py", line 79, in wrapper
+    result = func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/shift/views.py", line 620, in shift_list
+    return render(request, 'shift/shift_list.html', context)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1096, in load
+    lib = find_library(parser, name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1036, in find_library
+    raise TemplateSyntaxError(
+django.template.exceptions.TemplateSyntaxError: 'math_filters' is not a registered tag library. Must be one of:
+admin_list
+admin_modify
+admin_urls
+cache
+i18n
+l10n
+log
+mathfilters
+rest_framework
+sessions_extras
+static
+tz
+widget_tweaks
+[2025-08-10 19:15:44] INFO - trueAlign.shift - wrapper:75 - [036b3d93] ACTION_START - ASSIGNMENT_LIST_VIEW
+[2025-08-10 19:15:44] INFO - trueAlign.shift - log_user_action:120 - USER_ACTION - testadmin: assignment_list_access
+[2025-08-10 19:15:44] INFO - trueAlign.shift - wrapper:87 - [036b3d93] ACTION_SUCCESS - ASSIGNMENT_LIST_VIEW completed in 71.21ms
+[2025-08-10 19:15:44] INFO - trueAlign.shift - log_user_action:120 - USER_ACTION - testadmin: api_suggestions_retrieved
+[2025-08-10 19:17:33] INFO - trueAlign.shift - wrapper:75 - [40bcd64c] ACTION_START - SHIFT_DASHBOARD_VIEW
+[2025-08-10 19:17:33] ERROR - trueAlign.shift - shift_dashboard:255 - Error in shift dashboard: {'__all__': ['This shift overlaps with existing shift: Morning_Base_5cf1be06']}
+[2025-08-10 19:17:33] INFO - trueAlign.shift - wrapper:87 - [40bcd64c] ACTION_SUCCESS - SHIFT_DASHBOARD_VIEW completed in 52.33ms
+[2025-08-10 19:17:33] INFO - trueAlign.shift - wrapper:75 - [40acdf4b] ACTION_START - SHIFT_LIST_VIEW
+[2025-08-10 19:17:34] INFO - trueAlign.shift - wrapper:87 - [40acdf4b] ACTION_SUCCESS - SHIFT_LIST_VIEW completed in 68.13ms
+[2025-08-10 19:17:34] INFO - trueAlign.shift - wrapper:75 - [b320d1d9] ACTION_START - ASSIGNMENT_LIST_VIEW
+[2025-08-10 19:17:34] INFO - trueAlign.shift - log_user_action:120 - USER_ACTION - testadmin: assignment_list_access
+[2025-08-10 19:17:34] INFO - trueAlign.shift - wrapper:87 - [b320d1d9] ACTION_SUCCESS - ASSIGNMENT_LIST_VIEW completed in 73.8ms
+[2025-08-10 19:17:34] INFO - trueAlign.shift - log_user_action:120 - USER_ACTION - testadmin: api_suggestions_retrieved
+[2025-08-10 19:22:53] INFO - trueAlign.shift - wrapper:75 - [7154f5dd] ACTION_START - SHIFT_DASHBOARD_VIEW
+[2025-08-10 19:22:53] ERROR - trueAlign.shift - shift_dashboard:255 - Error in shift dashboard: {'__all__': ['This shift overlaps with existing shift: Morning_Base_0b5a0c39']}
+[2025-08-10 19:22:53] INFO - trueAlign.shift - wrapper:87 - [7154f5dd] ACTION_SUCCESS - SHIFT_DASHBOARD_VIEW completed in 48.59ms
+[2025-08-10 19:22:53] INFO - trueAlign.shift - wrapper:75 - [eb96ae6c] ACTION_START - SHIFT_LIST_VIEW
+[2025-08-10 19:22:53] INFO - trueAlign.shift - wrapper:87 - [eb96ae6c] ACTION_SUCCESS - SHIFT_LIST_VIEW completed in 59.37ms
+[2025-08-10 19:22:53] INFO - trueAlign.shift - wrapper:75 - [a1b00a50] ACTION_START - ASSIGNMENT_LIST_VIEW
+[2025-08-10 19:22:53] INFO - trueAlign.shift - log_user_action:120 - USER_ACTION - testadmin: assignment_list_access
+[2025-08-10 19:22:53] INFO - trueAlign.shift - wrapper:87 - [a1b00a50] ACTION_SUCCESS - ASSIGNMENT_LIST_VIEW completed in 50.73ms
+[2025-08-10 19:22:53] INFO - trueAlign.shift - log_user_action:120 - USER_ACTION - testadmin: api_suggestions_retrieved
+[2025-08-10 19:25:05] INFO - trueAlign.shift - wrapper:75 - [ac65b5d2] ACTION_START - SHIFT_DASHBOARD_VIEW
+[2025-08-10 19:25:05] ERROR - trueAlign.shift - shift_dashboard:255 - Error in shift dashboard: {'__all__': ['This shift overlaps with existing shift: Morning_Base_99fec990']}
+[2025-08-10 19:25:05] INFO - trueAlign.shift - wrapper:87 - [ac65b5d2] ACTION_SUCCESS - SHIFT_DASHBOARD_VIEW completed in 84.24ms
+[2025-08-10 19:25:05] INFO - trueAlign.shift - wrapper:75 - [cc7d12c0] ACTION_START - SHIFT_LIST_VIEW
+[2025-08-10 19:25:05] INFO - trueAlign.shift - wrapper:87 - [cc7d12c0] ACTION_SUCCESS - SHIFT_LIST_VIEW completed in 109.59ms
+[2025-08-10 19:25:05] INFO - trueAlign.shift - wrapper:75 - [d0ee2bb0] ACTION_START - ASSIGNMENT_LIST_VIEW
+[2025-08-10 19:25:05] INFO - trueAlign.shift - log_user_action:120 - USER_ACTION - testadmin: assignment_list_access
+[2025-08-10 19:25:05] INFO - trueAlign.shift - wrapper:87 - [d0ee2bb0] ACTION_SUCCESS - ASSIGNMENT_LIST_VIEW completed in 90.32ms
+[2025-08-10 19:25:05] INFO - trueAlign.shift - log_user_action:120 - USER_ACTION - testadmin: api_suggestions_retrieved
+[2025-08-10 19:27:37] INFO - trueAlign.shift - wrapper:75 - [d7bfc991] ACTION_START - SHIFT_DASHBOARD_VIEW
+[2025-08-10 19:27:37] ERROR - trueAlign.shift - get_shift_statistics:1263 - Error getting shift statistics: Cannot resolve keyword 'shiftassignment' into field. Choices are: client_profile, created_assignments, date_joined, direct_reports, email, first_name, groups, id, is_active, is_staff, is_superuser, last_login, last_name, layout_preference, logentry, onboarded_users, password, performed_actions, profile, session_activities, sessions, shift_assignments, system_notifications, user_logs, user_permissions, username
+[2025-08-10 19:27:37] ERROR - trueAlign.shift - shift_dashboard:255 - Error in shift dashboard: Cannot resolve keyword 'shiftassignment' into field. Choices are: client_profile, created_assignments, date_joined, direct_reports, email, first_name, groups, id, is_active, is_staff, is_superuser, last_login, last_name, layout_preference, logentry, onboarded_users, password, performed_actions, profile, session_activities, sessions, shift_assignments, system_notifications, user_logs, user_permissions, username
+[2025-08-10 19:27:37] INFO - trueAlign.shift - wrapper:87 - [d7bfc991] ACTION_SUCCESS - SHIFT_DASHBOARD_VIEW completed in 54.65ms
+[2025-08-10 19:27:37] INFO - trueAlign.shift - wrapper:75 - [a3261ca5] ACTION_START - SHIFT_LIST_VIEW
+[2025-08-10 19:27:37] INFO - trueAlign.shift - wrapper:87 - [a3261ca5] ACTION_SUCCESS - SHIFT_LIST_VIEW completed in 55.36ms
+[2025-08-10 19:27:37] INFO - trueAlign.shift - wrapper:75 - [cc1d0218] ACTION_START - ASSIGNMENT_LIST_VIEW
+[2025-08-10 19:27:37] INFO - trueAlign.shift - log_user_action:120 - USER_ACTION - testadmin: assignment_list_access
+[2025-08-10 19:27:37] INFO - trueAlign.shift - wrapper:87 - [cc1d0218] ACTION_SUCCESS - ASSIGNMENT_LIST_VIEW completed in 49.65ms
+[2025-08-10 19:27:37] INFO - trueAlign.shift - log_user_action:120 - USER_ACTION - testadmin: api_suggestions_retrieved
+[2025-08-10 19:29:56] INFO - trueAlign.shift - wrapper:75 - [48517583] ACTION_START - SHIFT_DASHBOARD_VIEW
+[2025-08-10 19:29:56] ERROR - trueAlign.shift - get_shift_statistics:1263 - Error getting shift statistics: Cannot resolve keyword 'shiftassignment' into field. Choices are: client_profile, created_assignments, date_joined, direct_reports, email, first_name, groups, id, is_active, is_staff, is_superuser, last_login, last_name, layout_preference, logentry, onboarded_users, password, performed_actions, profile, session_activities, sessions, shift_assignments, system_notifications, user_logs, user_permissions, username
+[2025-08-10 19:29:56] ERROR - trueAlign.shift - shift_dashboard:255 - Error in shift dashboard: Cannot resolve keyword 'shiftassignment' into field. Choices are: client_profile, created_assignments, date_joined, direct_reports, email, first_name, groups, id, is_active, is_staff, is_superuser, last_login, last_name, layout_preference, logentry, onboarded_users, password, performed_actions, profile, session_activities, sessions, shift_assignments, system_notifications, user_logs, user_permissions, username
+[2025-08-10 19:29:56] INFO - trueAlign.shift - wrapper:87 - [48517583] ACTION_SUCCESS - SHIFT_DASHBOARD_VIEW completed in 54.56ms
+[2025-08-10 19:29:56] INFO - trueAlign.shift - wrapper:75 - [60b8e017] ACTION_START - SHIFT_LIST_VIEW
+[2025-08-10 19:29:56] ERROR - trueAlign.shift - get_all_shifts:101 - Error getting all shifts: 'decimal.Decimal' object is not callable
+[2025-08-10 19:29:56] ERROR - trueAlign.shift - shift_list:569 - Error in shift list: 'decimal.Decimal' object is not callable
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/shift/views.py", line 456, in shift_list
+    shifts_data = shift_service.get_all_shifts(
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/shift/services.py", line 76, in get_all_shifts
+    'expected_hours': shift.expected_hours(),
+TypeError: 'decimal.Decimal' object is not callable
+[2025-08-10 19:29:56] INFO - trueAlign.shift - wrapper:87 - [60b8e017] ACTION_SUCCESS - SHIFT_LIST_VIEW completed in 57.38ms
+[2025-08-10 19:29:56] INFO - trueAlign.shift - wrapper:75 - [4f1a9894] ACTION_START - ASSIGNMENT_LIST_VIEW
+[2025-08-10 19:29:56] INFO - trueAlign.shift - log_user_action:120 - USER_ACTION - testadmin: assignment_list_access
+[2025-08-10 19:29:56] INFO - trueAlign.shift - wrapper:87 - [4f1a9894] ACTION_SUCCESS - ASSIGNMENT_LIST_VIEW completed in 48.96ms
+[2025-08-10 19:29:56] INFO - trueAlign.shift - log_user_action:120 - USER_ACTION - testadmin: api_suggestions_retrieved
+[2025-08-10 19:30:47] INFO - trueAlign.shift - wrapper:75 - [c58d78e3] ACTION_START - SHIFT_DASHBOARD_VIEW
+[2025-08-10 19:30:47] ERROR - trueAlign.shift - get_shift_statistics:1263 - Error getting shift statistics: Cannot resolve keyword 'shiftassignment' into field. Choices are: client_profile, created_assignments, date_joined, direct_reports, email, first_name, groups, id, is_active, is_staff, is_superuser, last_login, last_name, layout_preference, logentry, onboarded_users, password, performed_actions, profile, session_activities, sessions, shift_assignments, system_notifications, user_logs, user_permissions, username
+[2025-08-10 19:30:47] ERROR - trueAlign.shift - shift_dashboard:255 - Error in shift dashboard: Cannot resolve keyword 'shiftassignment' into field. Choices are: client_profile, created_assignments, date_joined, direct_reports, email, first_name, groups, id, is_active, is_staff, is_superuser, last_login, last_name, layout_preference, logentry, onboarded_users, password, performed_actions, profile, session_activities, sessions, shift_assignments, system_notifications, user_logs, user_permissions, username
+[2025-08-10 19:30:48] INFO - trueAlign.shift - wrapper:87 - [c58d78e3] ACTION_SUCCESS - SHIFT_DASHBOARD_VIEW completed in 55.23ms
+[2025-08-10 19:30:48] INFO - trueAlign.shift - wrapper:75 - [5bdb14e5] ACTION_START - SHIFT_LIST_VIEW
+[2025-08-10 19:30:48] INFO - trueAlign.shift - wrapper:87 - [5bdb14e5] ACTION_SUCCESS - SHIFT_LIST_VIEW completed in 60.52ms
+[2025-08-10 19:30:48] INFO - trueAlign.shift - wrapper:75 - [38349e7f] ACTION_START - ASSIGNMENT_LIST_VIEW
+[2025-08-10 19:30:48] INFO - trueAlign.shift - log_user_action:120 - USER_ACTION - testadmin: assignment_list_access
+[2025-08-10 19:30:48] INFO - trueAlign.shift - wrapper:87 - [38349e7f] ACTION_SUCCESS - ASSIGNMENT_LIST_VIEW completed in 51.94ms
+[2025-08-10 19:30:48] INFO - trueAlign.shift - log_user_action:120 - USER_ACTION - testadmin: api_suggestions_retrieved
+[2025-08-10 19:31:28] INFO - trueAlign.shift - wrapper:75 - [5aa9549a] ACTION_START - SHIFT_DASHBOARD_VIEW
+[2025-08-10 19:31:28] ERROR - trueAlign.shift - get_shift_statistics:1263 - Error getting shift statistics: Cannot resolve keyword 'shiftassignment' into field. Choices are: client_profile, created_assignments, date_joined, direct_reports, email, first_name, groups, id, is_active, is_staff, is_superuser, last_login, last_name, layout_preference, logentry, onboarded_users, password, performed_actions, profile, session_activities, sessions, shift_assignments, system_notifications, user_logs, user_permissions, username
+[2025-08-10 19:31:28] ERROR - trueAlign.shift - shift_dashboard:255 - Error in shift dashboard: Cannot resolve keyword 'shiftassignment' into field. Choices are: client_profile, created_assignments, date_joined, direct_reports, email, first_name, groups, id, is_active, is_staff, is_superuser, last_login, last_name, layout_preference, logentry, onboarded_users, password, performed_actions, profile, session_activities, sessions, shift_assignments, system_notifications, user_logs, user_permissions, username
+[2025-08-10 19:31:28] INFO - trueAlign.shift - wrapper:87 - [5aa9549a] ACTION_SUCCESS - SHIFT_DASHBOARD_VIEW completed in 99.5ms
+[2025-08-10 19:31:28] INFO - trueAlign.shift - wrapper:75 - [3c1103dd] ACTION_START - SHIFT_LIST_VIEW
+[2025-08-10 19:31:28] INFO - trueAlign.shift - wrapper:87 - [3c1103dd] ACTION_SUCCESS - SHIFT_LIST_VIEW completed in 106.83ms
+[2025-08-10 19:31:28] INFO - trueAlign.shift - wrapper:75 - [4c79c49e] ACTION_START - ASSIGNMENT_LIST_VIEW
+[2025-08-10 19:31:28] INFO - trueAlign.shift - log_user_action:120 - USER_ACTION - testadmin: assignment_list_access
+[2025-08-10 19:31:28] INFO - trueAlign.shift - wrapper:87 - [4c79c49e] ACTION_SUCCESS - ASSIGNMENT_LIST_VIEW completed in 79.22ms
+[2025-08-10 19:31:28] INFO - trueAlign.shift - log_user_action:120 - USER_ACTION - testadmin: api_suggestions_retrieved
+[2025-08-10 19:32:23] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-08-10 19:32:23] INFO - trueAlign.shift - wrapper:75 - [90d48741] ACTION_START - SHIFT_DASHBOARD_VIEW
+[2025-08-10 19:32:23] ERROR - trueAlign.shift - get_shift_statistics:1263 - Error getting shift statistics: Cannot resolve keyword 'shiftassignment' into field. Choices are: client_profile, created_assignments, date_joined, direct_reports, email, first_name, groups, id, is_active, is_staff, is_superuser, last_login, last_name, layout_preference, logentry, onboarded_users, password, performed_actions, profile, session_activities, sessions, shift_assignments, system_notifications, user_logs, user_permissions, username
+[2025-08-10 19:32:23] ERROR - trueAlign.shift - shift_dashboard:255 - Error in shift dashboard: Cannot resolve keyword 'shiftassignment' into field. Choices are: client_profile, created_assignments, date_joined, direct_reports, email, first_name, groups, id, is_active, is_staff, is_superuser, last_login, last_name, layout_preference, logentry, onboarded_users, password, performed_actions, profile, session_activities, sessions, shift_assignments, system_notifications, user_logs, user_permissions, username
+[2025-08-10 19:32:23] INFO - trueAlign.shift - wrapper:87 - [90d48741] ACTION_SUCCESS - SHIFT_DASHBOARD_VIEW completed in 57.79ms
+[2025-08-10 19:32:23] INFO - trueAlign.shift - wrapper:75 - [26a9c298] ACTION_START - SHIFT_LIST_VIEW
+[2025-08-10 19:32:23] INFO - trueAlign.shift - wrapper:87 - [26a9c298] ACTION_SUCCESS - SHIFT_LIST_VIEW completed in 50.84ms
+[2025-08-10 19:32:23] INFO - trueAlign.shift - wrapper:75 - [89cdaf0f] ACTION_START - ASSIGNMENT_LIST_VIEW
+[2025-08-10 19:32:23] INFO - trueAlign.shift - log_user_action:120 - USER_ACTION - finaltest_admin: assignment_list_access
+[2025-08-10 19:32:23] INFO - trueAlign.shift - wrapper:87 - [89cdaf0f] ACTION_SUCCESS - ASSIGNMENT_LIST_VIEW completed in 47.87ms
+[2025-08-10 19:32:23] INFO - trueAlign.shift - log_user_action:120 - USER_ACTION - finaltest_admin: api_suggestions_retrieved
+[2025-08-10 19:32:23] INFO - trueAlign.shift - wrapper:75 - [5b3f3804] ACTION_START - SHIFT_LIST_VIEW
+[2025-08-10 19:32:23] INFO - trueAlign.shift - wrapper:87 - [5b3f3804] ACTION_SUCCESS - SHIFT_LIST_VIEW completed in 15.55ms

@@ -42,7 +42,15 @@ SECRET_KEY = get_env_variable('SECRET_KEY', 'django-insecure-wt0_%27ipo5)5q$w^q0
 DEBUG = get_env_variable('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
 # ALLOWED_HOSTS configuration
-ALLOWED_HOSTS = get_env_variable('ALLOWED_HOSTS', 'localhost,127.0.0.1,testserver').split(',')
+allowed_hosts_env = get_env_variable('ALLOWED_HOSTS', 'localhost,127.0.0.1,testserver')
+ALLOWED_HOSTS = allowed_hosts_env.split(',')
+
+# Ensure testserver is always included for testing
+if 'testserver' not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append('testserver')
+
+# Clean up any whitespace
+ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS if host.strip()]
 
 # Security Settings for Production
 if not DEBUG:
@@ -105,6 +113,7 @@ INSTALLED_APPS = [
     'trueAlign.notifications',  # New notification system
     'rest_framework',  # Temporarily disabled - missing dependency
     'widget_tweaks',   # Temporarily disabled - missing dependency
+    'mathfilters',     # Math filters for templates
     'django_cron',  # Temporarily disabled - missing dependency
     'django_celery_beat',  # Temporarily disabled - missing dependency
 ]

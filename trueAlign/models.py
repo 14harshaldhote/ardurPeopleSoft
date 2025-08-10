@@ -2320,8 +2320,9 @@ class ShiftMaster(models.Model):
         if other_shift.crosses_midnight:
             other_end += 24 * 60
 
-        # Check for overlap
-        return not (my_end <= other_start or other_end <= my_start)
+        # Check for actual overlap (not just touching)
+        # Two shifts overlap only if one starts before the other ends AND vice versa
+        return (my_start < other_end) and (other_start < my_end)
 
     def get_working_days(self):
         """Return a list of working day names"""
@@ -2395,6 +2396,7 @@ class ShiftMaster(models.Model):
 
     # Inside your Django model class
 
+    @property
     def expected_hours(self) -> Decimal:
         """
         Calculates the expected work hours by subtracting the break duration
@@ -2615,8 +2617,8 @@ class ShiftAssignment(models.Model):
         if other_end is None:
             return other_start <= my_end
 
-        # Both have end dates - check for overlap
-        return not (my_end < other_start or other_end < my_start)
+        # Both have end dates - allow same-day transitions (end date == start date)
+        return not (my_end <= other_start or other_end <= my_start)
 
     def save(self, *args, **kwargs):
         # Clean the model before saving

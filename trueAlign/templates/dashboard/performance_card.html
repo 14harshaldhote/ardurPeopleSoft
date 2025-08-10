@@ -1,0 +1,73 @@
+<style>
+    @keyframes pulse-glow {
+        0%,
+        100% {
+            box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
+        }
+        50% {
+            box-shadow: 0 0 16px rgba(34, 197, 94, 0.7);
+        }
+    }
+    .animate-pulse-glow {
+        animation: pulse-glow 3s ease-in-out infinite;
+    }
+</style>
+
+<div
+    class="bg-white shadow-2xl rounded-2xl p-6 transform transition-all duration-300 hover:scale-105 border border-gray-100"
+>
+    <div class="flex flex-col items-center">
+        <div class="w-full flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold text-slate-800">
+                Performance Overview
+            </h3>
+            <span
+                class="bg-green-100 text-green-800 py-1 px-3 rounded-full text-xs font-semibold uppercase tracking-wide animate-pulse-glow"
+                >On Track</span
+            >
+        </div>
+        <div class="relative w-full max-w-[280px] aspect-square">
+            <canvas id="speedometer"></canvas>
+            <div
+                class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[40%] text-center z-10"
+            >
+                <p class="text-6xl font-bold m-0" id="percentage">75%</p>
+                <p
+                    class="text-sm text-slate-500 uppercase tracking-widest -mt-1"
+                >
+                    Efficiency
+                </p>
+            </div>
+        </div>
+        <div class="w-full flex justify-between mt-6 gap-4">
+            <div
+                class="bg-slate-50 rounded-xl p-4 w-1/2 text-center border border-slate-200"
+            >
+                <p class="text-slate-600 text-xs mb-1 uppercase">Projects</p>
+                <p class="text-2xl font-semibold m-0 text-slate-800">12</p>
+            </div>
+            <div
+                class="bg-slate-50 rounded-xl p-4 w-1/2 text-center border border-slate-200"
+            >
+                <p class="text-slate-600 text-xs mb-1 uppercase">Goals Met</p>
+                <p class="text-2xl font-semibold m-0 text-slate-800">8</p>
+            </div>
+        </div>
+        <div class="w-full mt-6">
+            <div class="flex justify-between items-center mb-2">
+                <h4 class="text-sm font-medium text-slate-700 m-0">
+                    Key Performance Index
+                </h4>
+                <span class="text-sm text-slate-500 font-semibold"
+                    >120 points</span
+                >
+            </div>
+            <div class="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
+                <div
+                    class="h-full rounded-full bg-gradient-to-r from-orange-400 via-green-500 to-teal-400"
+                    style="width: 75%"
+                ></div>
+            </div>
+        </div>
+    </div>
+</div>
