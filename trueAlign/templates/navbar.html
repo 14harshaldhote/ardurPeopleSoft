@@ -202,7 +202,7 @@
 
                 <li>
                     <a
-                        href="#"
+                        href="{% url 'leave_management:employee_dashboard' %}"
                         class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
@@ -280,7 +280,7 @@
                 </li>
                 <li>
                     <a
-                        href="#"
+                        href="{% url 'leave_management:hr_dashboard' %}"
                         class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
@@ -570,7 +570,7 @@
                 </li>
                 <li>
                     <a
-                        href="#"
+                        href="{% url 'leave_management:manager_dashboard' %}"
                         class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-amber-50 hover:text-amber-600 transition-all"
                     >
                         <svg
@@ -586,7 +586,7 @@
                                 d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                             />
                         </svg>
-                        Team Leave Management
+                        Leave Management
                     </a>
                 </li>
                 <li>
@@ -674,7 +674,7 @@
                 </li>
                 <li>
                     <a
-                        href="#"
+                        href="{% url 'leave_management:admin_dashboard' %}"
                         class="flex items-center px-4 py-3 text-sm font-medium text-gray-900 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                     >
                         <svg
@@ -1193,7 +1193,7 @@
                 <!-- Leave Management -->
                 <li>
                     <a
-                        href="#"
+                        href="{% url 'leave_management:employee_dashboard' %}"
                         class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
                         :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
                         title="Leave Management"
@@ -1316,7 +1316,7 @@
                 </li>
                 <li>
                     <a
-                        href="#"
+                        href="{% url 'leave_management:hr_dashboard' %}"
                         class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600"
                         :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
                         title="Leave Management"
@@ -1709,7 +1709,7 @@
 
                 <li>
                     <a
-                        href="#"
+                        href="{% url 'leave_management:manager_dashboard' %}"
                         class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-amber-50 hover:text-amber-600"
                         :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
                         title="Team Leave Management"
@@ -1737,7 +1737,7 @@
                             x-transition:leave-start="opacity-100"
                             x-transition:leave-end="opacity-0"
                             class="text-sm font-medium text-gray-900"
-                            >Team Leave Management</span
+                            >Leave Management</span
                         >
                     </a>
                 </li>
@@ -1913,7 +1913,7 @@
 
                 <li>
                     <a
-                        href="#"
+                        href="{% url 'leave_management:admin_dashboard' %}"
                         class="nav-item group flex items-center rounded-lg transition-all duration-200 hover:bg-rose-50 hover:text-rose-600"
                         :class="isExpanded ? 'px-4 py-3' : 'px-3 py-3 justify-center'"
                         title="Leave Management System"

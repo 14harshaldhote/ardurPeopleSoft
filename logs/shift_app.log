@@ -31970,3 +31970,34 @@ TypeError: 'decimal.Decimal' object is not callable
 [2025-08-10 19:32:23] INFO - trueAlign.shift - log_user_action:120 - USER_ACTION - finaltest_admin: api_suggestions_retrieved
 [2025-08-10 19:32:23] INFO - trueAlign.shift - wrapper:75 - [5b3f3804] ACTION_START - SHIFT_LIST_VIEW
 [2025-08-10 19:32:23] INFO - trueAlign.shift - wrapper:87 - [5b3f3804] ACTION_SUCCESS - SHIFT_LIST_VIEW completed in 15.55ms
+[2025-08-10 20:29:26] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-08-10 20:29:27] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-08-10 20:29:27] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-08-10 20:47:38] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-08-10 20:48:22] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-08-10 20:50:22] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-08-10 20:52:42] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/ardurTrueAlign/settings.py changed, reloading.
+[2025-08-10 20:52:43] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-08-10 20:53:23] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-08-10 20:57:38] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-08-10 20:58:58] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-08-10 20:58:59] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-08-10 20:58:59] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-08-10 21:08:50] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-08-10 21:14:34] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-08-10 21:15:45] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-08-10 21:32:32] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-08-10 21:36:38] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-08-10 21:38:32] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-08-10 23:59:30] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-08-10 23:59:30] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-08-11 00:12:12] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-08-11 00:16:53] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-08-11 00:19:28] INFO - django.utils.autoreload - trigger_reload:266 - /Users/harshalsmac/WORK/ardur/ardurHome/ardurTrueAlign/urls.py changed, reloading.
+[2025-08-11 00:19:29] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-08-11 00:22:31] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-08-11 00:25:24] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-08-11 00:32:42] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-08-11 00:32:58] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-08-11 00:34:02] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-08-11 01:37:42] INFO - trueAlign.core.middleware - _cleanup_old_buffers:546 - Cleaned up 1 old buffers

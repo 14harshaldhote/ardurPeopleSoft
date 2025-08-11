@@ -1,0 +1,123 @@
+{
+  "timestamp": "2025-08-10T21:38:35.225151",
+  "overall_score": 101.66666666666666,
+  "verdict": "\ud83c\udf1f EXCELLENT - System is production-ready with minor improvements needed",
+  "test_results": {
+    "policy_creation": {
+      "status": "PASS",
+      "tests": [
+        "\u2713 LeaveType model exists and has data",
+        "\u2713 LeavePolicy model exists (4 policies found)",
+        "\u2713 UserLeaveBalance exists (36 balances)",
+        "\u2713 Policies assigned to groups: Manager, Employee, Trainee, Senior Employee",
+        "\u2713 Leave allocations exist (16 allocations)"
+      ],
+      "score": 100
+    },
+    "role_based_flows": {
+      "status": "PASS",
+      "tests": [
+        "\u2713 Employee can access leave dashboard",
+        "\u2713 Employee-specific dashboard accessible",
+        "\u2713 Manager dashboard accessible",
+        "\u2713 HR dashboard accessible",
+        "\u2713 Leave application form accessible",
+        "\u2713 Leave requests exist in system (3 found)",
+        "  Status distribution: {'Pending': 2, 'Approved': 1}"
+      ],
+      "score": 90
+    },
+    "service_logic": {
+      "status": "PASS",
+      "tests": [
+        "\u2713 LeaveService module exists",
+        "\u2713 Service methods found: apply_leave, approve_leave, reject_leave, cancel_leave",
+        "\u2713 Leave requests have proper relationships (3 valid)",
+        "\u2713 Balance calculations appear valid (5 checked)"
+      ],
+      "score": 110
+    },
+    "input_validation": {
+      "status": "PASS",
+      "tests": [
+        "\u2713 LeaveApplicationForm exists",
+        "\u2713 LeaveRequest has all required fields",
+        "\u2713 Date validation appears strong (100% valid)",
+        "\u2713 No overlapping leaves detected"
+      ],
+      "score": 100
+    },
+    "api_endpoints": {
+      "status": "PASS",
+      "tests": [
+        "\u2713 /api/leave_balance/ returns proper JSON structure",
+        "\u2713 /api/leave_types/ returns proper JSON structure",
+        "\u2713 /leave_management/api/balance/ returns proper JSON structure",
+        "\u2713 /leave_management/api/types/ returns proper JSON structure",
+        "\u2713 Working endpoints: 4",
+        "\u2713 API properly requires authentication"
+      ],
+      "score": 125
+    },
+    "frontend_ui": {
+      "status": "PASS",
+      "tests": [
+        "\u2713 Dashboard page accessible",
+        "  \u2713 Dashboard has UI elements",
+        "\u2713 Apply Leave Form page accessible",
+        "  \u2713 Apply Leave Form has UI elements",
+        "\u2713 My Leaves page accessible",
+        "  \u2713 My Leaves has UI elements",
+        "\u2713 Leave Balance page accessible",
+        "  \u2713 Leave Balance has UI elements",
+        "\u2713 Comp Off page accessible",
+        "  \u2713 Comp Off has UI elements",
+        "\u2713 5/5 pages accessible",
+        "\u2713 Form has proper elements: ['input', 'select', 'textarea', 'button']"
+      ],
+      "score": 120
+    },
+    "notifications": {
+      "status": "PASS",
+      "tests": [
+        "\u2713 Notification system exists (20 notifications)",
+        "\u2713 Notification types: BROWSER, EMAIL",
+        "  Read: 0, Unread: 20",
+        "\u2713 Leave-related notifications exist (20)",
+        "\u2713 Leave requests trigger notifications (1/3)",
+        "\u2713 Notifications sent to: {'HR': 14, 'Manager': 6}"
+      ],
+      "score": 110
+    },
+    "dashboard_rendering": {
+      "status": "PASS",
+      "tests": [
+        "\u2713 Main dashboard accessible",
+        "\u2713 Dashboard has notification elements: ['notification', 'message']",
+        "\u2713 Dashboard includes leave-related content",
+        "\u2713 Dashboard has interactive elements: ['button', 'form', 'link']",
+        "\u2713 Dashboard shows time/date information",
+        "\u26a0 Test notification not found in dashboard"
+      ],
+      "score": 90
+    },
+    "performance": {
+      "status": "PASS",
+      "tests": [
+        "\u26a0 Dashboard query count acceptable (29)",
+        "Data volume: 9 users, 3 requests, 36 balances",
+        "\u26a0 System has limited test data",
+        "\u2713 Fast response time (0.03s)",
+        "\u2713 Caching system functional"
+      ],
+      "score": 70
+    }
+  },
+  "summary": {
+    "total_categories": 9,
+    "passing": 9,
+    "partial": 0,
+    "failing": 0,
+    "unknown": 0
+  }
+}

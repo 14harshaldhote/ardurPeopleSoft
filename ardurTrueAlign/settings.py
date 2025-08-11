@@ -109,6 +109,7 @@ INSTALLED_APPS = [
     'trueAlign',
     'trueAlign.core',
     'trueAlign.sessions',
+    'trueAlign.leave_management',
     'trueAlign.profile',  # Profile management app
     'trueAlign.notifications',  # New notification system
     'rest_framework',  # Temporarily disabled - missing dependency
@@ -172,7 +173,7 @@ WSGI_APPLICATION = 'ardurTrueAlign.wsgi.application'
 db_engine = get_env_variable('DB_ENGINE', 'django.db.backends.mysql')
 db_config = {
     'ENGINE': db_engine,
-    'NAME': get_env_variable('DB_NAME', 'ardurTrueAlign'),
+    'NAME': get_env_variable('DB_NAME', 'ardurHome'),
 }
 
 # Add connection details only for non-SQLite databases
@@ -482,6 +483,7 @@ NOTIFICATION_CONFIG = {
     'POLLING_INTERVAL_SECONDS': int(get_env_variable('NOTIFICATION_POLLING_INTERVAL', '30')),
     'MAX_NOTIFICATIONS_PER_USER': 100,
     'NOTIFICATION_RETENTION_DAYS': 30,
+    'USE_ASYNC_PROCESSING': get_env_variable('USE_ASYNC_NOTIFICATIONS', 'False').lower() in ('true', '1', 'yes'),
     'REAL_TIME_EVENTS': {
         'leave_request_created': True,
         'leave_request_approved': True,
@@ -554,7 +556,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 os.makedirs(os.path.join(BASE_DIR, 'logs'), exist_ok=True)
 
 
-LOGIN_URL = '/login/'
+# LOGIN_URL = '/login/'  # Commented out to allow Django admin default login
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/login/'
 

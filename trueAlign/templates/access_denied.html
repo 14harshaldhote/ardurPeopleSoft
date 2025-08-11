@@ -1,0 +1,33 @@
+{% extends 'base.html' %} {% load static %} {% block title %}Access Denied -
+TrueAlign{% endblock %} {% block content %}
+<div
+    class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8"
+>
+    <div class="max-w-md w-full space-y-8">
+        <div class="text-center">
+            <i
+                class="fas fa-exclamation-triangle text-6xl text-amber-500 mb-4"
+            ></i>
+            <h2 class="text-3xl font-bold text-gray-900 mb-4">Access Denied</h2>
+            <p class="text-gray-600 mb-6">
+                You don't have permission to access this page. Please check your
+                role permissions or contact your administrator.
+            </p>
+            <div class="space-y-4">
+                <a
+                    href="{% url 'leave_management:dashboard' %}"
+                    class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500"
+                >
+                    Return to Dashboard
+                </a>
+                <a
+                    href="{% url 'core:logout' %}"
+                    class="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500"
+                >
+                    Logout
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
