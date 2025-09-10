@@ -1,5 +1,5 @@
 # attendance/urls.py
-from django.urls import path
+from django.urls import path, include
 from . import views
 
 app_name = 'attendance'
@@ -40,4 +40,7 @@ urlpatterns = [
 
     path('api/verify-session-status/', views.verify_session_status, name='verify_session_status'),
     path('api/update-activity/', views.update_activity, name='update_activity'),
+
+    # Include new API endpoints
+    path('api/', include('trueAlign.attendance.api_urls')),
 ]

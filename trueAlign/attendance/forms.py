@@ -384,34 +384,7 @@ class AttendanceSearchForm(forms.Form):
     )
 
 
-class QuickAttendanceForm(forms.Form):
-    """
-    Quick form for marking today's attendance
-    """
-    status = forms.ChoiceField(
-        choices=[
-            ('Present', 'Present'),
-            ('Present & Late', 'Present & Late'),
-            ('Work From Home', 'Work From Home'),
-            ('On Leave', 'On Leave'),
-            ('Absent', 'Absent'),
-        ],
-        widget=forms.Select(attrs={'class': 'form-control'})
-    )
-
-    location = forms.ChoiceField(
-        choices=Attendance.LOCATION_CHOICES,
-        initial='Office',
-        widget=forms.Select(attrs={'class': 'form-control'})
-    )
-
-    remarks = forms.CharField(
-        required=False,
-        widget=forms.TextInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'Optional remarks...'
-        })
-    )
+# QuickAttendanceForm removed - attendance is now fully automatic based on sessions
 
 
 class AttendanceImportForm(forms.Form):
@@ -494,54 +467,4 @@ class AttendanceSettingsForm(forms.Form):
     )
 
 
-class SessionAttendanceForm(forms.Form):
-    """
-    Form for manual session-based attendance marking
-    """
-    user = forms.ModelChoiceField(
-        queryset=User.objects.filter(is_active=True),
-        widget=forms.Select(attrs={'class': 'form-control'}),
-        label="Employee"
-    )
-
-    login_time = forms.DateTimeField(
-        widget=forms.DateTimeInput(attrs={
-            'type': 'datetime-local',
-            'class': 'form-control'
-        }),
-        label="Login Time"
-    )
-
-    logout_time = forms.DateTimeField(
-        required=False,
-        widget=forms.DateTimeInput(attrs={
-            'type': 'datetime-local',
-            'class': 'form-control'
-        }),
-        label="Logout Time"
-    )
-
-    location = forms.ChoiceField(
-        choices=Attendance.LOCATION_CHOICES,
-        widget=forms.Select(attrs={'class': 'form-control'}),
-        initial='Office'
-    )
-
-    ip_address = forms.GenericIPAddressField(
-        required=False,
-        widget=forms.TextInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'IP Address'
-        })
-    )
-
-    def clean(self):
-        cleaned_data = super().clean()
-        login_time = cleaned_data.get('login_time')
-        logout_time = cleaned_data.get('logout_time')
-
-        if login_time and logout_time:
-            if logout_time <= login_time:
-                raise ValidationError("Logout time must be after login time")
-
-        return cleaned_data
+# SessionAttendanceForm removed - attendance is now fully automatic based on sessions

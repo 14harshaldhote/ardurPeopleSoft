@@ -1,1233 +1,1103 @@
 # attendance/services.py
-from django.utils import timezone
+"""
+Optimized Attendance Services Module
+
+This module provides comprehensive services for attendance management with:
+- Clear separation of concerns
+- Performance optimization
+- Consistent error handling
+- Comprehensive logging
+- Caching support
+- Transaction safety
+"""
+
+import logging
+from datetime import timedelta, date
+from decimal import Decimal
+from typing import List, Dict, Optional, Any, TYPE_CHECKING
+from collections import defaultdict
+
+from django.db import transaction
 from django.contrib.auth import get_user_model
-from django.db import transaction, models
-from django.core.exceptions import ValidationError
+from django.utils import timezone
+from django.core.cache import cache
 from django.core.mail import send_mail
 from django.conf import settings
-from datetime import datetime, timedelta, date
+from django.db.models import Q, Count, Avg
+
 import pytz
-import logging
-from decimal import Decimal
-from trueAlign.models import (
-    Attendance, UserSession, Holiday, ShiftAssignment,
-    LeaveRequest, ShiftMaster
+
+from .logging import (
+    get_attendance_logger,
+    log_attendance_action,
+    log_attendance_error,
+    log_performance_metric,
+    log_data_access,
+    AttendanceLoggerMixin
+)
+from .logging.utils import (
+    log_attendance_operation,
+    log_cron_job_execution,
+    log_bulk_operation,
+    AttendanceOperationLogger
 )
 
-logger = logging.getLogger(__name__)
+from trueAlign.models import (
+    Attendance, UserSession, Holiday, ShiftAssignment,
+    LeaveRequest
+)
+from .config import PRESENT_STATUSES
+
 User = get_user_model()
+IST = pytz.timezone('Asia/Kolkata')
+
+if TYPE_CHECKING:
+    from django.contrib.auth.models import User as UserType
+else:
+    UserType = User
+
+logger = logging.getLogger('trueAlign.attendance.services')
 
 
-class AttendanceAutoMarkingService:
-    """
-    Service to handle automatic attendance marking and updates
-    """
+class ServiceResult:
+    """Standard result class for service operations"""
+
+    def __init__(self, success: bool = True, message: str = '', data: Any = None, errors: Optional[List[str]] = None):
+        self.success = success
+        self.message = message
+        self.data = data
+        self.errors = errors or []
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            'success': self.success,
+            'message': self.message,
+            'data': self.data,
+            'errors': self.errors
+        }
+
+
+class BaseAttendanceService:
+    """Base service class with common functionality"""
 
     def __init__(self):
-        self.IST = pytz.timezone('Asia/Kolkata')
-        self.today = timezone.now().astimezone(self.IST).date()
-        self.current_time = timezone.now().astimezone(self.IST).time()
+        self.ist = IST
+        self.today = timezone.now().astimezone(self.ist).date()
+        self.current_time = timezone.now().astimezone(self.ist)
 
-    def run_auto_marking(self, date=None):
-        """
-        Main method to run automatic attendance marking
-        """
-        if not date:
-            date = self.today
+    def _log_operation(self, operation: str, user: Optional[str] = None, details: Optional[str] = None):
+        """Log service operations"""
+        log_msg = f"[{operation}]"
+        if user:
+            log_msg += f" User: {user}"
+        if details:
+            log_msg += f" - {details}"
+        logger.info(log_msg)
 
-        logger.info(f"Starting auto attendance marking for {date}")
+    def _handle_exception(self, operation: str, error: Exception, user: Optional[str] = None) -> ServiceResult:
+        """Handle exceptions consistently"""
+        error_msg = f"Error in {operation}: {str(error)}"
+        if user:
+            error_msg = f"Error in {operation} for {user}: {str(error)}"
+
+        logger.error(error_msg, exc_info=True)
+        return ServiceResult(success=False, message="An error occurred", errors=[error_msg])
+
+    def _get_cache_key(self, *args) -> str:
+        """Generate cache key from arguments"""
+        return "_".join(str(arg) for arg in args)
+
+    def _invalidate_user_cache(self, user_id: int, target_date: Optional[date] = None):
+        """Invalidate user-specific caches"""
+        if not target_date:
+            target_date = self.today
+
+        cache_keys = [
+            f"attendance_today_{user_id}_{target_date}",
+            f"user_attendance_{user_id}_{target_date}",
+            f"user_monthly_summary_{user_id}_{target_date.year}_{target_date.month}"
+        ]
+        cache.delete_many(cache_keys)
+
+
+class AttendanceAutoMarkingService(BaseAttendanceService):
+    """
+    Service for automatic attendance marking based on sessions, shifts, and business rules
+    """
+
+    def run_auto_marking(self, target_date: Optional[date] = None) -> ServiceResult:
+        """
+        Enhanced automatic attendance marking with real-time session integration
+        """
+        if not target_date:
+            target_date = self.today
+
+        self._log_operation("AUTO_MARKING_START", details=f"Date: {target_date}")
 
         try:
             with transaction.atomic():
-                # Step 1: Create missing attendance records
-                created_count = self._create_missing_attendance_records(date)
-
-                # Step 2: Update existing records with session data
-                updated_count = self._update_attendance_with_sessions(date)
-
-                # Step 3: Process "Yet to Clock In" statuses
-                processed_count = self._process_yet_to_clock_in_statuses(date)
-
-                # Step 4: Calculate final statuses and hours
-                calculated_count = self._recalculate_attendance_statuses(date)
-
-                logger.info(
-                    f"Auto marking completed for {date}: "
-                    f"Created: {created_count}, Updated: {updated_count}, "
-                    f"Processed: {processed_count}, Calculated: {calculated_count}"
-                )
-
-                return {
-                    'success': True,
-                    'date': date,
-                    'created': created_count,
-                    'updated': updated_count,
-                    'processed': processed_count,
-                    'calculated': calculated_count
+                results = {
+                    'date': str(target_date),
+                    'created': 0,
+                    'updated': 0,
+                    'processed': 0,
+                    'calculated': 0,
+                    'errors': []
                 }
 
+                # Step 1: Create missing attendance records for all active users
+                created_count = self._create_missing_records(target_date)
+                results['created'] = created_count
+
+                # Step 2: Update records with current and historical session data
+                updated_count = self._update_with_sessions(target_date)
+                results['updated'] = updated_count
+
+                # Step 3: Process pending statuses based on business rules
+                processed_count = self._process_pending_statuses(target_date)
+                results['processed'] = processed_count
+
+                # Step 4: Calculate final statuses for all records
+                calculated_count = self._recalculate_all_statuses(target_date)
+                results['calculated'] = calculated_count
+
+                # Step 5: Handle real-time updates for current day
+                if target_date == self.today:
+                    self._update_real_time_attendance()
+
+                self._log_operation("AUTO_MARKING_COMPLETE",
+                                  details=f"Created: {created_count}, Updated: {updated_count}, "
+                                         f"Processed: {processed_count}, Calculated: {calculated_count}")
+
+                return ServiceResult(
+                    success=True,
+                    message=f"Enhanced auto marking completed for {target_date}",
+                    data=results
+                )
+
         except Exception as e:
-            logger.error(f"Error in auto attendance marking: {e}")
-            return {
-                'success': False,
-                'error': str(e)
-            }
+            return self._handle_exception("AUTO_MARKING", e)
 
-    def _create_missing_attendance_records(self, date):
-        """
-        Create attendance records for users who don't have them
-        """
-        users_without_attendance = Attendance.objects.get_users_without_attendance_today(date)
-        created_count = 0
+    def _create_missing_records(self, target_date: date) -> int:
+        """Create attendance records for users without existing records"""
+        try:
+            # Get all active users without attendance records for the date
+            users_with_attendance = Attendance.objects.filter(date=target_date).values_list('user_id', flat=True)
+            users_without_attendance = User.objects.filter(
+                is_active=True
+            ).exclude(id__in=users_with_attendance)
 
-        for user in users_without_attendance:
-            try:
-                self._create_attendance_for_user(user, date)
-                created_count += 1
-            except Exception as e:
-                logger.error(f"Error creating attendance for {user.username}: {e}")
+            if not users_without_attendance.exists():
+                return 0
 
-        return created_count
+            created_records = []
+            for user in users_without_attendance:
+                try:
+                    defaults = self._get_attendance_defaults(user, target_date)
+                    record = Attendance(user=user, date=target_date, **defaults)
+                    created_records.append(record)
 
-    def _create_attendance_for_user(self, user, date):
-        """
-        Create attendance record for a specific user based on various conditions
-        """
-        # Check if user has any sessions for the date
-        sessions = UserSession.objects.filter(
-            user=user,
-            login_time__date=date
-        ).order_by('login_time')
+                except Exception as e:
+                    logger.error(f"Error preparing attendance for {user.username}: {e}")
 
-        if sessions.exists():
-            # User has sessions, create attendance based on first session
-            first_session = sessions.first()
-            attendance = Attendance.create_attendance_record(
+            if created_records:
+                Attendance.objects.bulk_create(created_records, batch_size=100)
+                self._log_operation("CREATED_MISSING_RECORDS", details=f"Count: {len(created_records)}")
+
+            return len(created_records)
+        except Exception as e:
+            logger.error(f"Error creating missing records: {e}")
+            return 0
+
+    def _get_attendance_defaults(self, user: 'UserType', target_date: date) -> Dict[str, Any]:
+        """Get default attendance values based on business rules"""
+        defaults: Dict[str, Any] = {
+            'status': 'Not Marked',
+            'regularization_reason': 'Auto-created attendance record'
+        }
+
+        # Check for leave
+        if self._is_user_on_leave(user, target_date):
+            leave_request = LeaveRequest.objects.filter(
                 user=user,
-                clock_in_time=first_session.login_time,
-                location=getattr(first_session, 'location', 'Office'),
-                ip_address=getattr(first_session, 'ip_address', None),
-                device_info=getattr(first_session, 'device_info', None)
-            )
+                status='Approved',
+                start_date__lte=target_date,
+                end_date__gte=target_date
+            ).select_related('leave_type').first()
 
-            # Update with all session data
-            self._update_attendance_with_user_sessions(attendance, sessions)
+            leave_update: Dict[str, Any] = {
+                'status': 'On Leave',
+                'leave_type': leave_request.leave_type.name if leave_request else 'Leave',
+                'regularization_reason': f'On {leave_request.leave_type.name} leave' if leave_request else 'On Leave'
+            }
+            defaults.update(leave_update)
+            return defaults
 
-        else:
-            # No sessions, determine status based on other factors
-            self._create_attendance_without_session(user, date)
+        # Check for holiday
+        if self._is_holiday(target_date):
+            try:
+                holiday = Holiday.objects.get(date=target_date)
+                holiday_update: Dict[str, Any] = {
+                    'status': 'Holiday',
+                    'is_holiday': True,
+                    'holiday_name': str(holiday.name),
+                    'regularization_reason': f'Holiday: {holiday.name}'
+                }
+                defaults.update(holiday_update)
+            except Exception:  # Handle DoesNotExist safely
+                holiday_update: Dict[str, Any] = {
+                    'status': 'Holiday',
+                    'is_holiday': True,
+                    'holiday_name': 'Holiday',
+                    'regularization_reason': 'Holiday'
+                }
+                defaults.update(holiday_update)
+            return defaults
 
-    # In ardurPeopleSoft/trueAlign/attendance/services.py - Replace the method
+        # Check for weekend
+        if self._is_weekend(user, target_date):
+            weekend_update: Dict[str, Any] = {
+                'status': 'Weekend',
+                'is_weekend': True,
+                'regularization_reason': 'Weekend'
+            }
+            defaults.update(weekend_update)
+            return defaults
 
-    def _create_attendance_without_session(self, user, date):
-        """Create attendance record for user without any sessions"""
-        # Check conditions in order of priority
-        if self._should_mark_on_leave(user, date):
-            return self._create_leave_attendance(user, date)
+        # Set shift information
+        try:
+            shift = ShiftAssignment.objects.filter(
+                user=user,
+                start_date__lte=target_date,
+                end_date__gte=target_date
+            ).select_related('shift').first()
 
-        if self._should_mark_holiday(date):
-            return self._create_holiday_attendance(user, date)
+            if shift:
+                shift_update: Dict[str, Any] = {
+                    'shift': shift.shift,
+                    'expected_hours': Decimal('8.0')  # Default expected hours
+                }
+                defaults.update(shift_update)
+        except Exception as e:
+            logger.warning(f"Could not set shift for {user.username}: {e}")
 
-        current_shift = ShiftAssignment.get_user_current_shift(user, date)
+        return defaults
 
-        if self._should_mark_weekend(date, current_shift):
-            return self._create_weekend_attendance(user, date, current_shift)
+    def _update_with_sessions(self, target_date: date) -> int:
+        """Update attendance records with session data"""
+        sessions_for_date = UserSession.objects.filter(
+            login_time__date=target_date
+        ).select_related('user').order_by('user_id', 'login_time')
 
-        return self._create_regular_attendance(user, date, current_shift)
-
-    def _should_mark_on_leave(self, user, date):
-        """Check if user should be marked on leave"""
-        return LeaveRequest.objects.filter(
-            user=user,
-            status='Approved',
-            start_date__lte=date,
-            end_date__gte=date
-        ).exists()
-
-    def _should_mark_holiday(self, date):
-        """Check if date is a holiday"""
-        return Holiday.get_holiday(date) is not None
-
-    def _should_mark_weekend(self, date, shift):
-        """Check if date is a weekend"""
-        return self._is_weekend(date, shift)
-
-    def _create_leave_attendance(self, user, date):
-        """Create leave attendance record"""
-        leave_request = LeaveRequest.objects.filter(
-            user=user,
-            status='Approved',
-            start_date__lte=date,
-            end_date__gte=date
-        ).select_related('leave_type').first()
-
-        Attendance.objects.create(
-            user=user,
-            date=date,
-            status='On Leave',
-            leave_type=leave_request.leave_type.name,
-            regularization_reason=f"Auto-marked: On {leave_request.leave_type.name} leave"
-        )
-
-    def _create_holiday_attendance(self, user, date):
-        """Create holiday attendance record"""
-        holiday = Holiday.get_holiday(date)
-        Attendance.objects.create(
-            user=user,
-            date=date,
-            status='Holiday',
-            is_holiday=True,
-            holiday_name=holiday.name,
-            regularization_reason=f"Auto-marked: Holiday - {holiday.name}"
-        )
-
-    def _create_weekend_attendance(self, user, date, shift):
-        """Create weekend attendance record"""
-        Attendance.objects.create(
-            user=user,
-            date=date,
-            status='Weekend',
-            is_weekend=True,
-            shift=shift,
-            regularization_reason="Auto-marked: Weekend"
-        )
-
-    def _create_regular_attendance(self, user, date, shift):
-        """Create regular day attendance record"""
-        if shift:
-            status = self._determine_regular_status(date, shift)
-            reason = self._get_regular_reason(status)
-        else:
-            status = 'Not Marked'
-            reason = "Auto-marked: No shift assigned"
-
-        Attendance.objects.create(
-            user=user,
-            date=date,
-            status=status,
-            shift=shift,
-            regularization_reason=reason
-        )
-
-    def _determine_regular_status(self, date, shift):
-        """Determine status for regular working day"""
-        if date == self.today and not self._is_shift_ended(self.current_time, shift):
-            return 'Yet to Clock In'
-        return 'Absent'
-
-    def _get_regular_reason(self, status):
-        """Get reason for regular attendance status"""
-        if status == 'Yet to Clock In':
-            return "Auto-marked: Yet to clock in (shift in progress)"
-        return "Auto-marked: Absent (no activity)"
-
-
-    def _update_attendance_with_sessions(self, date):
-        """
-        Update existing attendance records with session data
-        """
-        attendances_to_update = Attendance.objects.filter(
-            date=date,
-            status__in=['Not Marked', 'Yet to Clock In']
-        ).select_related('user')
+        if not sessions_for_date.exists():
+            return 0
 
         updated_count = 0
 
-        for attendance in attendances_to_update:
-            sessions = UserSession.objects.filter(
-                user=attendance.user,
-                login_time__date=date
-            ).order_by('login_time')
+        # Group sessions by user
+        user_sessions = defaultdict(list)
+        for session in sessions_for_date:
+            user_sessions[session.user.id].append(session)
 
-            if sessions.exists():
-                self._update_attendance_with_user_sessions(attendance, sessions)
-                updated_count += 1
+        # Update attendance for each user
+        for user_id, sessions in user_sessions.items():
+            try:
+                attendance = Attendance.objects.get(user_id=user_id, date=target_date)
+
+                if self._update_attendance_with_sessions(attendance, sessions):
+                    updated_count += 1
+
+            except Attendance.DoesNotExist:
+                logger.warning(f"No attendance record found for user {user_id} on {target_date}")
+            except Exception as e:
+                logger.error(f"Error updating attendance with sessions for user {user_id}: {e}")
 
         return updated_count
 
-    def _update_attendance_with_user_sessions(self, attendance, sessions):
-        """
-        Update single attendance record with session data
-        """
-        first_session = sessions.first()
-        last_session = sessions.last()
+    def _update_attendance_with_sessions(self, attendance: Attendance, sessions: List[UserSession]) -> bool:
+        """Enhanced session-based attendance update with real-time accuracy"""
+        if not sessions or attendance.status in ['On Leave', 'Holiday', 'Weekend']:
+            return False
 
-        # Update session references
-        attendance.first_session = first_session
-        attendance.last_session = last_session
-        attendance.total_sessions = sessions.count()
+        try:
+            # Sort sessions by login time for accurate processing
+            sessions = sorted(sessions, key=lambda s: s.login_time)
 
-        # Update clock times
-        attendance.clock_in_time = first_session.login_time
+            # Find first login and last logout
+            first_session = sessions[0]
+            last_session = sessions[-1]
 
-        # Set clock out time based on last session
-        if last_session.logout_time:
-            attendance.clock_out_time = last_session.logout_time
-        elif last_session.last_activity and not last_session.is_active:
-            attendance.clock_out_time = last_session.last_activity
+            # Get the latest logout time from all sessions
+            latest_logout = None
+            for session in sessions:
+                if session.logout_time:
+                    if not latest_logout or session.logout_time > latest_logout:
+                        latest_logout = session.logout_time
 
-        # Calculate total idle time
-        total_idle_time = timedelta(0)
-        for session in sessions:
-            if hasattr(session, 'idle_time') and session.idle_time:
-                total_idle_time += session.idle_time
+            updated = False
 
-        attendance.idle_time = total_idle_time
+            # Update clock-in time (earliest login)
+            if not attendance.clock_in_time or first_session.login_time < attendance.clock_in_time:
+                attendance.clock_in_time = first_session.login_time
+                attendance.first_session = first_session
+                updated = True
 
-        # Update location and device info from latest session
-        if hasattr(last_session, 'location'):
-            attendance.location = last_session.location
-        if hasattr(last_session, 'ip_address'):
-            attendance.ip_address = last_session.ip_address
-        if hasattr(last_session, 'device_info'):
-            attendance.device_info = last_session.device_info
+            # Update clock-out time (latest logout)
+            if latest_logout:
+                if not attendance.clock_out_time or latest_logout > attendance.clock_out_time:
+                    attendance.clock_out_time = latest_logout
+                    attendance.last_session = last_session
+                    updated = True
 
-        attendance.save()
+            # Update session statistics
+            attendance.total_sessions = len(sessions)
 
-    def _process_yet_to_clock_in_statuses(self, date):
-        """
-        Process "Yet to Clock In" statuses and update to "Absent" if shift ended
-        """
-        if date != self.today:
-            # For past dates, mark all "Yet to Clock In" as "Absent"
-            return Attendance.objects.filter(
-                date=date,
+            # Calculate total session time
+            total_session_time = timedelta(0)
+            for session in sessions:
+                if session.logout_time:
+                    total_session_time += session.logout_time - session.login_time
+
+            # Set location from most recent session
+            if sessions:
+                # Handle location attribute safely - may not exist on UserSession model
+                session_location = getattr(sessions[-1], 'location', None)
+                attendance.location = session_location or 'Office'
+
+            # Auto-determine status based on sessions
+            if attendance.status in ['Not Marked', 'Yet to Clock In']:
+                attendance.status = self._determine_status_from_sessions(attendance, sessions)
+                updated = True
+
+            if updated:
+                attendance.save()
+                self._invalidate_user_cache(attendance.user.pk, target_date)
+
+            return updated
+
+        except Exception as e:
+            logger.error(f"Error updating attendance {attendance.id} with sessions: {e}")
+            return False
+
+    def _process_pending_statuses(self, target_date: date) -> int:
+        """Process pending attendance statuses"""
+        try:
+            pending_records = Attendance.objects.filter(
+                date=target_date,
                 status='Yet to Clock In'
-            ).update(
-                status='Absent',
-                regularization_reason='Auto-updated: Absent (past date, no activity)'
             )
 
-        # For today, check if shifts have ended
-        yet_to_clock_in_attendances = Attendance.objects.filter(
-            date=date,
-            status='Yet to Clock In'
-        ).select_related('shift')
+            processed_count = 0
+            for record in pending_records:
+                if self._should_mark_absent(record):
+                    record.status = 'Absent'
+                    record.save()
+                    processed_count += 1
 
-        processed_count = 0
+            return processed_count
+        except Exception as e:
+            logger.error(f"Error processing pending statuses: {e}")
+            return 0
 
-        for attendance in yet_to_clock_in_attendances:
-            if attendance.shift and self._is_shift_ended(self.current_time, attendance.shift):
-                attendance.status = 'Absent'
-                attendance.regularization_reason = 'Auto-updated: Absent (shift ended, no activity)'
-                attendance.save()
-                processed_count += 1
-                logger.info(f"Updated {attendance.user.username} from 'Yet to Clock In' to 'Absent'")
-
-        return processed_count
-
-    def _recalculate_attendance_statuses(self, date):
-        """
-        Recalculate attendance statuses based on updated data
-        """
-        attendances_to_recalculate = Attendance.objects.filter(
-            date=date,
-            clock_in_time__isnull=False
-        ).exclude(status__in=['On Leave', 'Holiday', 'Weekend'])
-
-        calculated_count = 0
-
-        for attendance in attendances_to_recalculate:
-            old_status = attendance.status
-            # This will trigger the status calculation logic
-            attendance.save()
-
-            if attendance.status != old_status:
-                calculated_count += 1
-                logger.info(f"Updated {attendance.user.username} status from {old_status} to {attendance.status}")
-
-        return calculated_count
-
-    def _is_weekend(self, date, shift):
-        """
-        Check if date is weekend based on shift configuration
-        """
-        weekday = date.weekday()
-
-        if shift:
-            working_days = shift.get_working_days()
-            day_names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-            current_day = day_names[weekday]
-            return current_day not in working_days
-
-        # Default weekend logic (Saturday, Sunday)
-        return weekday >= 5
-
-    def _is_shift_ended(self, current_time, shift):
-        """
-        Check if shift has ended
-        """
-        current_minutes = current_time.hour * 60 + current_time.minute
-        start_minutes = shift.start_time.hour * 60 + shift.start_time.minute
-        end_minutes = shift.end_time.hour * 60 + shift.end_time.minute
-
-        # Handle night shifts (crosses midnight)
-        if end_minutes < start_minutes:
-            end_minutes += 24 * 60
-            if current_minutes < start_minutes:
-                current_minutes += 24 * 60
-
-        return current_minutes > end_minutes
-
-class AttendanceIntegrationService:
-    """
-    Enhanced service to handle integration with sessions, leaves, and other systems
-    """
-
-    def __init__(self):
-        self.IST = pytz.timezone('Asia/Kolkata')
-
-    def process_session_login(self, user, session):
-        """
-        Process user login session and create/update attendance
-        """
+    def _recalculate_all_statuses(self, target_date: date) -> int:
+        """Enhanced status recalculation with improved business logic"""
         try:
-            login_time = session.login_time.astimezone(self.IST)
-            attendance_date = login_time.date()
+            records = Attendance.objects.filter(date=target_date).select_related('user', 'shift')
+            calculated_count = 0
 
-            logger.info(f"Processing login for {user.username} at {login_time}")
+            for record in records:
+                if self._calculate_attendance_status(record):
+                    calculated_count += 1
 
-            # Determine location from session data
-            location = self._determine_location_from_session(session)
+            self._log_operation("STATUS_RECALCULATION", details=f"Calculated {calculated_count} records")
+            return calculated_count
+        except Exception as e:
+            logger.error(f"Error recalculating statuses: {e}")
+            return 0
+
+    def _update_real_time_attendance(self):
+        """Update attendance for currently active sessions in real-time"""
+        try:
+            # Get all active sessions for today
+            active_sessions = UserSession.objects.filter(
+                is_active=True,
+                login_time__date=self.today
+            ).select_related('user')
+
+            for session in active_sessions:
+                try:
+                    attendance, created = Attendance.objects.get_or_create(
+                        user=session.user,
+                        date=self.today,
+                        defaults={
+                            'status': 'Present',
+                            'regularization_reason': 'Auto-created from active session'
+                        }
+                    )
+
+                    # Update with current session data
+                    if not attendance.clock_in_time or session.login_time < attendance.clock_in_time:
+                        attendance.clock_in_time = session.login_time
+                        attendance.status = 'Present'
+                        attendance.save()
+
+                except Exception as e:
+                    logger.error(f"Error updating real-time attendance for {session.user.username}: {e}")
+
+        except Exception as e:
+            logger.error(f"Error in real-time attendance update: {e}")
+
+    def _is_user_on_leave(self, user: 'UserType', target_date: date) -> bool:
+        """Check if user is on approved leave"""
+        return LeaveRequest.objects.filter(
+            user=user,
+            status='Approved',
+            start_date__lte=target_date,
+            end_date__gte=target_date
+        ).exists()
+
+    def _is_holiday(self, target_date: date) -> bool:
+        """Check if date is a holiday"""
+        return Holiday.objects.filter(date=target_date).exists()
+
+    def _is_weekend(self, user: 'UserType', target_date: date) -> bool:
+        """Check if date is weekend for user"""
+        return target_date.weekday() >= 5  # Saturday (5) or Sunday (6)
+
+    def _should_mark_absent(self, attendance: Attendance) -> bool:
+        """Determine if attendance should be marked as absent"""
+        # If it's past business hours and no clock-in, mark as absent
+        current_time = timezone.now().astimezone(self.ist)
+        if attendance.date < current_time.date():
+            return not attendance.clock_in_time
+        return False
+
+    def _calculate_attendance_status(self, attendance: Attendance) -> bool:
+        """Enhanced attendance status calculation with comprehensive business rules"""
+        try:
+            # Skip if already on fixed statuses
+            if attendance.status in ['On Leave', 'Holiday', 'Weekend']:
+                return False
+
+            original_status = attendance.status
+
+            # Determine status based on session data
+            if not attendance.clock_in_time:
+                # No session found - determine if should be absent
+                if self._should_mark_absent(attendance):
+                    attendance.status = 'Absent'
+                else:
+                    attendance.status = 'Yet to Clock In'
+            else:
+                # Has session - determine presence status
+                attendance.status = self._determine_presence_status(attendance)
+
+            # Calculate time-related fields
+            self._calculate_time_metrics(attendance)
+
+            # Save if status changed
+            if attendance.status != original_status or attendance.pk is None:
+                attendance.save()
+                return True
+
+            return False
+
+        except Exception as e:
+            logger.error(f"Error calculating status for attendance {attendance.id}: {e}")
+            return False
+
+    def _determine_status_from_sessions(self, attendance: Attendance, sessions: List[UserSession]) -> str:
+        """Determine attendance status from session data"""
+        if not sessions:
+            return 'Absent' if self._should_mark_absent(attendance) else 'Yet to Clock In'
+
+        # Has sessions, determine presence status
+        first_session = min(sessions, key=lambda s: s.login_time)
+
+        # Check if late based on shift
+        if attendance.shift:
+            shift_start_time = attendance.shift.start_time
+            login_time = first_session.login_time.astimezone(self.ist).time()
+
+            # Apply grace period
+            grace_period = getattr(attendance.shift, 'grace_period', timedelta(minutes=10))
+            grace_minutes = int(grace_period.total_seconds() / 60)
+
+            shift_start_minutes = shift_start_time.hour * 60 + shift_start_time.minute
+            login_minutes = login_time.hour * 60 + login_time.minute
+
+            if login_minutes > (shift_start_minutes + grace_minutes):
+                return 'Present & Late'
+
+        return 'Present'
+
+    def _determine_presence_status(self, attendance: Attendance) -> str:
+        """Determine presence status based on clock-in time and shift"""
+        if not attendance.clock_in_time:
+            return 'Absent'
+
+        # Check against shift timing if available
+        if attendance.shift:
+            clock_in_time = attendance.clock_in_time.astimezone(self.ist).time()
+            shift_start = attendance.shift.start_time
+
+            # Calculate grace period
+            grace_period = getattr(attendance.shift, 'grace_period', timedelta(minutes=10))
+            grace_minutes = int(grace_period.total_seconds() / 60)
+
+            shift_start_minutes = shift_start.hour * 60 + shift_start.minute
+            clock_in_minutes = clock_in_time.hour * 60 + clock_in_time.minute
+
+            if clock_in_minutes > (shift_start_minutes + grace_minutes):
+                # Calculate late minutes
+                attendance.late_minutes = clock_in_minutes - shift_start_minutes
+                return 'Present & Late'
+
+        return 'Present'
+
+    def _calculate_time_metrics(self, attendance: Attendance):
+        """Calculate time-related metrics for attendance"""
+        try:
+            # Calculate total hours if both times are available
+            if attendance.clock_in_time and attendance.clock_out_time:
+                duration = attendance.clock_out_time - attendance.clock_in_time
+                total_hours = duration.total_seconds() / 3600
+                attendance.total_hours = Decimal(str(round(total_hours, 2)))
+
+                # Calculate overtime if applicable
+                if attendance.shift:
+                    # Handle duration attribute safely - may not exist on ShiftMaster model
+                    shift_duration = getattr(attendance.shift, 'duration', None)
+                    if shift_duration:
+                        shift_hours = shift_duration.total_seconds() / 3600
+                        if total_hours > shift_hours:
+                            attendance.overtime_hours = Decimal(str(round(total_hours - shift_hours, 2)))
+                    else:
+                        # Fallback to default 8-hour shift if duration not available
+                        default_shift_hours = 8.0
+                        if total_hours > default_shift_hours:
+                            attendance.overtime_hours = Decimal(str(round(total_hours - default_shift_hours, 2)))
+
+        except Exception as e:
+            logger.error(f"Error calculating time metrics for attendance {attendance.id}: {e}")
+
+
+class AttendanceRegularizationService(BaseAttendanceService):
+    """Service for handling attendance regularization requests"""
+
+    def submit_regularization_request(self, attendance: Attendance, requested_status: str,
+                                    reason: str, requested_by: User) -> ServiceResult:
+        """Submit regularization request"""
+        try:
+            with transaction.atomic():
+                attendance.regularization_status = 'Pending'
+                attendance.regularization_reason = reason
+                # These fields may not exist in the model, handle gracefully
+                if hasattr(attendance, 'regularization_requested_by'):
+                    attendance.regularization_requested_by = requested_by
+                if hasattr(attendance, 'regularization_requested_at'):
+                    attendance.regularization_requested_at = timezone.now()
+                attendance.save()
+
+                # Send notification to HR
+                self._notify_hr_regularization_request(attendance, requested_by)
+
+                return ServiceResult(
+                    success=True,
+                    message="Regularization request submitted successfully",
+                    data={'attendance_id': attendance.pk}
+                )
+
+        except Exception as e:
+            return self._handle_exception("SUBMIT_REGULARIZATION", e, requested_by.username)
+
+    def process_regularization_request(self, attendance: Attendance, action: str,
+                                     processed_by: 'UserType', remarks: Optional[str] = None) -> ServiceResult:
+        """Process regularization request (approve/reject)"""
+        try:
+            with transaction.atomic():
+                if action == 'approve':
+                    attendance.regularization_status = 'Approved'
+                    # Handle regularization_requested_status safely - may not exist in model
+                    requested_status = getattr(attendance, 'regularization_requested_status', None)
+                    attendance.status = requested_status or attendance.status
+                elif action == 'reject':
+                    attendance.regularization_status = 'Rejected'
+
+                # Handle regularization fields that may not exist in the model
+                if hasattr(attendance, 'regularization_processed_by'):
+                    attendance.regularization_processed_by = processed_by
+                if hasattr(attendance, 'regularization_processed_at'):
+                    attendance.regularization_processed_at = timezone.now()
+                if hasattr(attendance, 'regularization_remarks'):
+                    attendance.regularization_remarks = remarks
+                attendance.save()
+
+                # Notify employee
+                self._notify_employee_regularization_status(attendance, action)
+
+                return ServiceResult(
+                    success=True,
+                    message=f"Regularization request {action}d successfully",
+                    data={'attendance_id': attendance.pk, 'action': action}
+                )
+
+        except Exception as e:
+            return self._handle_exception("PROCESS_REGULARIZATION", e, processed_by.username)
+
+    def get_pending_regularizations(self, user: Optional[User] = None) -> ServiceResult:
+        """Get pending regularization requests"""
+        try:
+            queryset = Attendance.objects.filter(regularization_status='Pending')
+
+            if user and not user.groups.filter(name__in=['HR', 'Admin']).exists():
+                queryset = queryset.filter(user=user)
+
+            pending_requests = queryset.select_related(
+                'user', 'regularization_requested_by'
+            ).order_by('-regularization_requested_at')
+
+            data = []
+            for attendance in pending_requests:
+                # Handle regularization attributes safely - may not exist in model
+                requested_status = getattr(attendance, 'regularization_requested_status', None)
+                requested_by = getattr(attendance, 'regularization_requested_by', None)
+                requested_at = getattr(attendance, 'regularization_requested_at', None)
+
+                data.append({
+                    'id': attendance.pk,
+                    'user': attendance.user.get_full_name(),
+                    'date': attendance.date,
+                    'current_status': attendance.status,
+                    'requested_status': requested_status,
+                    'reason': attendance.regularization_reason,
+                    'requested_by': requested_by.get_full_name() if requested_by and hasattr(requested_by, 'get_full_name') else '',
+                    'requested_at': requested_at
+                })
+
+            return ServiceResult(success=True, data=data)
+
+        except Exception as e:
+            return self._handle_exception("GET_PENDING_REGULARIZATIONS", e)
+
+    def _notify_hr_regularization_request(self, attendance: Attendance, requested_by: User):
+        """Notify HR about regularization request"""
+        try:
+            hr_users = User.objects.filter(groups__name='HR', is_active=True)
+
+            for hr_user in hr_users:
+                subject = f"Attendance Regularization Request - {attendance.user.get_full_name()}"
+                message = f"""
+                A new attendance regularization request has been submitted.
+
+                Employee: {attendance.user.get_full_name()}
+                Date: {attendance.date}
+                Current Status: {attendance.status}
+                Reason: {attendance.regularization_reason}
+                Requested by: {requested_by.get_full_name()}
+                """
+
+                send_mail(
+                    subject=subject,
+                    message=message,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[hr_user.email],
+                    fail_silently=True
+                )
+        except Exception as e:
+            logger.error(f"Error sending HR notification: {e}")
+
+    def _notify_employee_regularization_status(self, attendance: Attendance, action: str, processed_by: 'UserType'):
+        """Notify employee about regularization status"""
+        try:
+            subject = f"Attendance Regularization {action.title()} - {attendance.date}"
+            remarks = getattr(attendance, 'regularization_remarks', None)
+            message = f"""
+            Your attendance regularization request has been {action}d.
+
+            Date: {attendance.date}
+            Status: {attendance.status}
+            Remarks: {remarks or 'None'}
+            """
+
+            send_mail(
+                subject=subject,
+                message=message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[attendance.user.email],
+                fail_silently=True
+            )
+        except Exception as e:
+            logger.error(f"Error sending employee notification: {e}")
+
+
+class AttendanceAnalyticsService(BaseAttendanceService):
+    """Service for attendance analytics and reporting"""
+
+    def get_attendance_trends(self, start_date: date, end_date: date,
+                            users: Optional[List[User]] = None, department: Optional[str] = None) -> ServiceResult:
+        """Get attendance trends for date range"""
+        try:
+            queryset = Attendance.objects.filter(date__range=[start_date, end_date])
+
+            if users:
+                queryset = queryset.filter(user__in=users)
+
+            if department:
+                queryset = queryset.filter(user__profile__department=department)
+
+            # Calculate trends
+            trends = queryset.values('date').annotate(
+                total=Count('id'),
+                present=Count('id', filter=Q(status__in=PRESENT_STATUSES)),
+                absent=Count('id', filter=Q(status='Absent')),
+                late=Count('id', filter=Q(status__contains='Late'))
+            ).order_by('date')
+
+            return ServiceResult(success=True, data=list(trends))
+
+        except Exception as e:
+            return self._handle_exception("GET_ATTENDANCE_TRENDS", e)
+
+    def get_department_analytics(self, target_date: Optional[date] = None) -> ServiceResult:
+        """Get department-wise attendance analytics"""
+        try:
+            if not target_date:
+                target_date = self.today
+
+            analytics = Attendance.objects.filter(date=target_date).values(
+                'user__profile__department'
+            ).annotate(
+                total_employees=Count('id'),
+                present_count=Count('id', filter=Q(status__in=PRESENT_STATUSES)),
+                absent_count=Count('id', filter=Q(status='Absent')),
+                late_count=Count('id', filter=Q(status__contains='Late')),
+                on_leave_count=Count('id', filter=Q(status='On Leave'))
+            ).order_by('user__profile__department')
+
+            return ServiceResult(success=True, data=list(analytics))
+
+        except Exception as e:
+            return self._handle_exception("GET_DEPARTMENT_ANALYTICS", e)
+
+    def get_late_arrival_analysis(self, start_date: date, end_date: date) -> ServiceResult:
+        """Analyze late arrival patterns"""
+        try:
+            late_patterns = Attendance.objects.filter(
+                date__range=[start_date, end_date],
+                status__contains='Late'
+            ).values('user__username', 'user__first_name', 'user__last_name').annotate(
+                late_count=Count('id'),
+                avg_late_minutes=Avg('late_minutes')
+            ).order_by('-late_count')
+
+            return ServiceResult(success=True, data=list(late_patterns))
+
+        except Exception as e:
+            return self._handle_exception("GET_LATE_ARRIVAL_ANALYSIS", e)
+
+
+class AttendanceBulkOperationService(BaseAttendanceService):
+    """Service for bulk attendance operations"""
+
+    def bulk_mark_attendance(self, users: List['UserType'], target_date: date,
+                           status: str, remarks: Optional[str] = None) -> ServiceResult:
+        """Bulk mark attendance for multiple users"""
+        try:
+            with transaction.atomic():
+                updated_count = 0
+                errors = []
+
+                for user in users:
+                    try:
+                        attendance, created = Attendance.objects.get_or_create(
+                            user=user,
+                            date=target_date,
+                            defaults={'status': status, 'remarks': remarks}
+                        )
+
+                        if not created:
+                            attendance.status = status
+                            attendance.remarks = remarks
+                            attendance.save()
+
+                        updated_count += 1
+
+                    except Exception as e:
+                        errors.append(f"Error updating {user.username}: {str(e)}")
+
+                return ServiceResult(
+                    success=len(errors) == 0,
+                    message=f"Bulk operation completed. Updated: {updated_count}",
+                    data={'updated_count': updated_count},
+                    errors=errors
+                )
+
+        except Exception as e:
+            return self._handle_exception("BULK_MARK_ATTENDANCE", e)
+
+
+class AttendanceReportService(BaseAttendanceService):
+    """Service for attendance reports generation"""
+
+    def generate_user_summary(self, user: User, start_date: date, end_date: date) -> ServiceResult:
+        """Generate attendance summary for user"""
+        try:
+            attendance_records = Attendance.objects.filter(
+                user=user,
+                date__range=[start_date, end_date]
+            ).order_by('date')
+
+            summary = {
+                'user': user.get_full_name(),
+                'period': f"{start_date} to {end_date}",
+                'total_days': attendance_records.count(),
+                'present_days': attendance_records.filter(status__in=PRESENT_STATUSES).count(),
+                'absent_days': attendance_records.filter(status='Absent').count(),
+                'late_days': attendance_records.filter(status__contains='Late').count(),
+                'leave_days': attendance_records.filter(status='On Leave').count(),
+                'total_hours': sum([r.total_hours or Decimal('0') for r in attendance_records]),
+                'records': []
+            }
+
+            for record in attendance_records:
+                summary['records'].append({
+                    'date': record.date,
+                    'status': record.status,
+                    'clock_in': record.clock_in_time.strftime('%H:%M') if record.clock_in_time else None,
+                    'clock_out': record.clock_out_time.strftime('%H:%M') if record.clock_out_time else None,
+                    'total_hours': float(record.total_hours or 0),
+                    'late_minutes': record.late_minutes or 0
+                })
+
+            return ServiceResult(success=True, data=summary)
+
+        except Exception as e:
+            return self._handle_exception("GENERATE_USER_SUMMARY", e, user.username)
+
+    def generate_monthly_report(self, year: int, month: int, department: Optional[str] = None) -> ServiceResult:
+        """Generate monthly attendance report"""
+        try:
+            queryset = Attendance.objects.filter(date__year=year, date__month=month)
+
+            if department:
+                queryset = queryset.filter(user__profile__department=department)
+
+            report_data = {
+                'period': f"{year}-{month:02d}",
+                'department': department or 'All Departments',
+                'summary': {
+                    'total_records': queryset.count(),
+                    'present_count': queryset.filter(status__in=PRESENT_STATUSES).count(),
+                    'absent_count': queryset.filter(status='Absent').count(),
+                    'late_count': queryset.filter(status__contains='Late').count(),
+                    'leave_count': queryset.filter(status='On Leave').count()
+                },
+                'daily_stats': []
+            }
+
+            # Daily statistics
+            daily_stats = queryset.values('date').annotate(
+                total=Count('id'),
+                present=Count('id', filter=Q(status__in=PRESENT_STATUSES)),
+                absent=Count('id', filter=Q(status='Absent')),
+                late=Count('id', filter=Q(status__contains='Late'))
+            ).order_by('date')
+
+            report_data['daily_stats'] = list(daily_stats)
+
+            return ServiceResult(success=True, data=report_data)
+
+        except Exception as e:
+            return self._handle_exception("GENERATE_MONTHLY_REPORT", e)
+
+
+class AttendanceIntegrationService(BaseAttendanceService):
+    """Service for integrating attendance with sessions and other systems"""
+
+    def process_session_login(self, user: User, session: UserSession) -> ServiceResult:
+        """Process session login and update attendance"""
+        try:
+            # Handle login_time attribute safely
+            login_time = getattr(session, 'login_time', timezone.now())
+            login_date = login_time.astimezone(IST).date()
 
             # Get or create attendance record
             attendance, created = Attendance.objects.get_or_create(
                 user=user,
-                date=attendance_date,
-                defaults={
-                    'status': 'Yet to Clock In',
-                    'clock_in_time': login_time,
-                    'location': location,
-                    'ip_address': session.ip_address,
-                    'device_info': self._extract_device_info(session)
-                }
+                date=login_date,
+                defaults=self._get_attendance_defaults(user, login_date)
             )
 
-            if not created:
-                # Update existing attendance with earlier clock-in time if applicable
-                if not attendance.clock_in_time or login_time < attendance.clock_in_time:
-                    attendance.clock_in_time = login_time
-                    attendance.ip_address = session.ip_address
-                    attendance.device_info = self._extract_device_info(session)
-                    attendance.location = location  # Update location as well
-                    attendance.save()
-                    logger.info(f"Updated clock-in time for {user.username}")
-            else:
-                logger.info(f"Created new attendance record for {user.username}")
+            # Update with session data
+            if not attendance.first_session or session.login_time < attendance.first_session.login_time:
+                attendance.first_session = session
+                attendance.clock_in_time = session.login_time
 
-            # Update session reference and shift information
-            self._update_attendance_with_shift(attendance)
-            Attendance.update_session_data(user, session, attendance_date)
+            if not attendance.clock_in_time:
+                attendance.clock_in_time = session.login_time
 
-            return attendance
+            # Determine location from IP
+            location = self._determine_location_from_ip(session.ip_address)
+            if location and hasattr(attendance, 'location'):
+                attendance.location = location
+
+            attendance.save()
+            self._invalidate_user_cache(user.pk, login_date)
+
+            return ServiceResult(success=True, message="Session login processed", data={'attendance_id': attendance.pk})
 
         except Exception as e:
-            logger.error(f"Error processing session login for {user.username}: {e}", exc_info=True)
-            return None
+            return self._handle_exception("PROCESS_SESSION_LOGOUT", e, user.username)
 
-    def _determine_location_from_session(self, session):
-        """
-        Determine location string from session data for attendance record
-        """
+    def _determine_location_from_ip(self, ip_address: str) -> str:
+        """Determine work location from IP address"""
         try:
-            # Check if user is working from home based on location data
-            if session.location_type == 'home' or session.location_type == 'remote':
-                return 'Home'
+            # Define office IP ranges (this should come from settings)
+            office_ranges = getattr(settings, 'OFFICE_IP_RANGES', [
+                '192.168.1.0/24',  # Example office network
+                '10.0.0.0/16'      # Example VPN range
+            ])
 
-            # Check if it's a client site based on location data
-            if session.location_type == 'client_site':
-                return 'Client Site'
+            import ipaddress
+            ip = ipaddress.ip_address(ip_address)
 
-            # First check if we have GPS coordinates (more accurate)
-            if session.location_latitude and session.location_longitude:
-                # You can add office coordinates checking here
-                # Example office coordinates (Mumbai: 19.0760, 72.8777)
-                office_locations = [
-                    {'lat': 19.0760, 'lng': 72.8777, 'radius': 0.01, 'name': 'Mumbai Office'},
-                    {'lat': 28.6139, 'lng': 77.2090, 'radius': 0.01, 'name': 'Delhi Office'},
-                    # Add more office locations as needed
-                ]
-
-                # Check if location is near any office
-                for office in office_locations:
-                    lat_diff = abs(float(session.location_latitude) - office['lat'])
-                    lng_diff = abs(float(session.location_longitude) - office['lng'])
-
-                    if lat_diff < office['radius'] and lng_diff < office['radius']:
-                        logger.info(f"Location detected as {office['name']} based on GPS coordinates")
-                        return 'Office'
-
-                # If not near any office, consider it remote
-                logger.info(f"Location detected as Remote based on GPS coordinates: {session.location_latitude}, {session.location_longitude}")
-                return 'Remote'
-
-            # If we have city/country but no GPS coordinates
-            if session.location_city and session.location_country:
-                # You can customize this logic based on your office locations
-                office_cities = ['Mumbai', 'Delhi', 'Bangalore', 'Chennai', 'Hyderabad', 'Pune']  # Add your office cities
-
-                if session.location_city in office_cities:
-                    logger.info(f"Location detected as Office based on city: {session.location_city}")
+            for ip_range in office_ranges:
+                if ip in ipaddress.ip_network(ip_range):
                     return 'Office'
-                else:
-                    logger.info(f"Location detected as Remote based on city: {session.location_city}")
-                    return 'Remote'
 
-            # Default location if no specific information is available
-            logger.warning(f"No specific location information found in session, defaulting to Office")
-            return 'Office'
+            return 'Remote'
 
         except Exception as e:
-            logger.error(f"Error determining location from session: {e}")
-            return 'Office'  # Safe default
+            logger.warning(f"Could not determine location from IP {ip_address}: {e}")
+            return 'Unknown'
 
+    def create_daily_attendance_records(self, target_date: Optional[date] = None) -> ServiceResult:
+        """Create daily attendance records for all active users"""
+        if not target_date:
+            target_date = self.today
 
-
-    def process_session_logout(self, user, session):
-        """
-        Process user logout session and update attendance
-        """
         try:
-            if not session.logout_time:
-                return None
-
-            logout_time = session.logout_time.astimezone(self.IST)
-            attendance_date = logout_time.date()
-
-            logger.info(f"Processing logout for {user.username} at {logout_time}")
-
-            try:
-                attendance = Attendance.objects.get(user=user, date=attendance_date)
-
-                # Update clock-out time if this is later than existing
-                if not attendance.clock_out_time or logout_time > attendance.clock_out_time:
-                    attendance.clock_out_time = logout_time
-                    attendance.save()  # This will trigger recalculation
-                    logger.info(f"Updated clock-out time for {user.username}")
-
-                # Update session reference
-                Attendance.update_session_data(user, session, attendance_date)
-
-                return attendance
-
-            except Attendance.DoesNotExist:
-                # Create attendance record if missing (shouldn't happen, but handle gracefully)
-                logger.warning(f"No attendance record found for logout - creating new one for {user.username}")
-                return self.process_session_login(user, session)
-
-        except Exception as e:
-            logger.error(f"Error processing session logout for {user.username}: {e}", exc_info=True)
-            return None
-
-    def _update_attendance_with_shift(self, attendance):
-        """
-        Update attendance record with appropriate shift information
-        """
-        try:
-            if not attendance.shift:
-                # Get current shift assignment for this user and date
-                shift_assignment = ShiftAssignment.get_user_current_shift(attendance.user, attendance.date)
-                if shift_assignment:
-                    attendance.shift = shift_assignment.shift
-                    attendance.expected_hours = attendance.shift.shift_duration
-                    attendance.save()
-                    logger.debug(f"Assigned shift {attendance.shift.name} to attendance for {attendance.user.username}")
-                else:
-                    logger.warning(f"No shift assignment found for {attendance.user.username} on {attendance.date}")
-
-        except Exception as e:
-            logger.error(f"Error updating attendance with shift: {e}", exc_info=True)
-
-    def _extract_device_info(self, session):
-        """
-        Extract device information from session for attendance record
-        """
-        try:
-            device_info = {
-                'device_type': session.device_type,
-                'user_agent': session.user_agent[:200] if session.user_agent else None,
-                'screen_resolution': session.screen_resolution,
-                'browser_fingerprint': session.browser_fingerprint[:100] if session.browser_fingerprint else None,
-                'timezone_offset': session.timezone_offset,
-                'language': session.language
-            }
-
-            # Add location information if available
-            if session.location_city:
-                device_info.update({
-                    'location_city': session.location_city,
-                    'location_country': session.location_country,
-                    'location_type': session.location_type
-                })
-
-            return device_info
-
-        except Exception as e:
-            logger.error(f"Error extracting device info: {e}")
-            return {}
-
-    def create_daily_attendance_records(self, date=None):
-        """
-        Create attendance records for all users for a specific date
-        This can be run as a daily job
-        """
-        try:
-            if not date:
-                date = timezone.now().astimezone(self.IST).date()
-
-            from django.contrib.auth import get_user_model
-            User = get_user_model()
-
-            # Get all active users with shift assignments
-            users_with_shifts = User.objects.filter(
-                is_active=True,
-                shift_assignments__effective_from__lte=date,
-                shift_assignments__is_current=True
-            ).distinct()
-
+            # Get all active users
+            active_users = User.objects.filter(is_active=True)
             created_count = 0
 
-            for user in users_with_shifts:
-                # Check if attendance already exists
-                if not Attendance.objects.filter(user=user, date=date).exists():
-                    # Create base attendance record
-                    attendance = Attendance.objects.create(
+            for user in active_users:
+                try:
+                    attendance, created = Attendance.objects.get_or_create(
                         user=user,
-                        date=date,
-                        status='Yet to Clock In'
+                        date=target_date,
+                        defaults=self._get_attendance_defaults(user, target_date)
                     )
 
-                    # Update with shift information
-                    self._update_attendance_with_shift(attendance)
-                    created_count += 1
+                    if created:
+                        created_count += 1
 
-            logger.info(f"Created {created_count} attendance records for {date}")
-            return created_count
+                except Exception as e:
+                    logger.error(f"Error creating attendance for {user.username}: {e}")
 
-        except Exception as e:
-            logger.error(f"Error creating daily attendance records: {e}", exc_info=True)
-            return 0
+            self._log_operation("DAILY_RECORDS_CREATED",
+                              details=f"Date: {target_date}, Created: {created_count}")
 
-    def sync_leave_with_attendance(self, user, leave_request):
-        """
-        Update attendance records when leave is approved/cancelled
-        """
-        try:
-            # Get attendance records in the leave date range
-            attendances = Attendance.objects.filter(
-                user=user,
-                date__range=[leave_request.start_date, leave_request.end_date]
+            return ServiceResult(
+                success=True,
+                message=f"Created {created_count} daily attendance records",
+                data={'created_count': created_count, 'date': str(target_date)}
             )
 
-            if leave_request.status == 'Approved':
-                # Mark as on leave
-                updated_count = attendances.update(
-                    status='On Leave',
-                    leave_type=leave_request.leave_type.name,
-                    regularization_reason=f"On {leave_request.leave_type.name} leave"
-                )
-                logger.info(f"Updated {updated_count} attendance records for approved leave")
-
-            elif leave_request.status in ['Rejected', 'Cancelled']:
-                # Revert leave status - let the system recalculate based on sessions
-                for attendance in attendances.filter(status='On Leave'):
-                    attendance.status = 'Yet to Clock In'
-                    attendance.leave_type = None
-                    attendance.regularization_reason = None
-                    attendance.save()  # This will trigger recalculation
-
-                logger.info(f"Reverted leave status for {attendances.count()} attendance records")
-
         except Exception as e:
-            logger.error(f"Error syncing leave with attendance: {e}", exc_info=True)
+            return self._handle_exception("CREATE_DAILY_RECORDS", e)
 
-    def sync_holiday_with_attendance(self, holiday_date, holiday_name):
-        """
-        Update attendance records for holiday dates
-        """
-        try:
-            from django.contrib.auth import get_user_model
-            User = get_user_model()
 
-            # Get all users who don't have leave on this date
-            users_to_update = User.objects.filter(
-                is_active=True
-            ).exclude(
-                attendance_records__date=holiday_date,
-                attendance_records__status='On Leave'
-            )
-
-            updated_count = 0
-
-            for user in users_to_update:
-                attendance, created = Attendance.objects.get_or_create(
-                    user=user,
-                    date=holiday_date,
-                    defaults={
-                        'status': 'Holiday',
-                        'is_holiday': True,
-                        'holiday_name': holiday_name,
-                        'regularization_reason': f"Holiday: {holiday_name}"
-                    }
-                )
-
-                if not created and attendance.status not in ['On Leave', 'Holiday']:
-                    attendance.status = 'Holiday'
-                    attendance.is_holiday = True
-                    attendance.holiday_name = holiday_name
-                    attendance.regularization_reason = f"Holiday: {holiday_name}"
-                    attendance.save()
-
-                updated_count += 1
-
-            logger.info(f"Updated {updated_count} attendance records for holiday: {holiday_name}")
-
-        except Exception as e:
-            logger.error(f"Error syncing holiday with attendance: {e}", exc_info=True)
-
-class AttendanceRegularizationService:
-    """
-    Service to handle attendance regularization requests
-    """
-
-    def __init__(self):
-        self.notification_service = AttendanceNotificationService()
-
-    def submit_regularization_request(self, attendance, requested_status, reason, requested_by=None):
-        """
-        Submit a regularization request
-        """
-        try:
-            attendance.request_regularization(requested_status, reason, requested_by)
-
-            # Send notification to HR
-            self.notification_service.send_regularization_notification(
-                attendance, 'new_request'
-            )
-
-            logger.info(f"Regularization request submitted for {attendance.user.username} on {attendance.date}")
-            return {'success': True, 'message': 'Regularization request submitted successfully'}
-
-        except ValidationError as e:
-            logger.warning(f"Validation error in regularization request: {e}")
-            return {'success': False, 'error': str(e)}
-        except Exception as e:
-            logger.error(f"Error submitting regularization request: {e}")
-            return {'success': False, 'error': 'An error occurred while submitting the request'}
-
-    def process_regularization_request(self, attendance, action, processed_by, comments=None):
-        """
-        Process (approve/reject) a regularization request
-        """
-        try:
-            if action == 'approve':
-                attendance.approve_regularization(processed_by, comments)
-                message = 'Regularization request approved'
-            elif action == 'reject':
-                attendance.reject_regularization(processed_by, comments)
-                message = 'Regularization request rejected'
-            else:
-                return {'success': False, 'error': 'Invalid action'}
-
-            # Send notification to employee
-            self.notification_service.send_regularization_notification(
-                attendance, action
-            )
-
-            logger.info(f"Regularization request {action}ed for {attendance.user.username} on {attendance.date}")
-            return {'success': True, 'message': message}
-
-        except ValidationError as e:
-            logger.warning(f"Validation error in processing regularization: {e}")
-            return {'success': False, 'error': str(e)}
-        except Exception as e:
-            logger.error(f"Error processing regularization request: {e}")
-            return {'success': False, 'error': 'An error occurred while processing the request'}
-
-    def get_pending_regularizations(self, manager=None):
-        """
-        Get pending regularization requests
-        """
-        try:
-            queryset = Attendance.objects.get_regularization_requests(status='Pending')
-
-            if manager and not manager.is_superuser:
-                # Filter by team members if manager is specified
-                team_members = User.objects.filter(
-                    profile__manager=manager,
-                    is_active=True
-                )
-                queryset = queryset.filter(user__in=team_members)
-
-            return list(queryset)
-
-        except Exception as e:
-            logger.error(f"Error getting pending regularizations: {e}")
-            return []
-
-
-class AttendanceReportService:
-    """
-    Service to generate various attendance reports
-    """
-
-    def generate_monthly_report(self, year, month, users=None):
-        """
-        Generate monthly attendance report
-        """
-        try:
-            report_data = Attendance.objects.get_monthly_attendance_report(year, month, users)
-
-            # Add summary statistics
-            summary = {
-                'total_employees': len(report_data),
-                'avg_attendance_percentage': 0,
-                'total_working_days': 0,
-                'total_present_days': 0,
-                'total_absent_days': 0,
-                'total_late_days': 0,
-                'total_overtime_hours': 0
-            }
-
-            if report_data:
-                summary['avg_attendance_percentage'] = sum(
-                    item['attendance_percentage'] for item in report_data
-                ) / len(report_data)
-
-                summary['total_working_days'] = sum(item['total_days'] for item in report_data)
-                summary['total_present_days'] = sum(item['present_days'] for item in report_data)
-                summary['total_absent_days'] = sum(item['absent_days'] for item in report_data)
-                summary['total_late_days'] = sum(item['late_days'] for item in report_data)
-                summary['total_overtime_hours'] = sum(
-                    item['total_overtime'] or 0 for item in report_data
-                )
-
-            return {
-                'success': True,
-                'data': list(report_data),
-                'summary': summary,
-                'month': month,
-                'year': year
-            }
-
-        except Exception as e:
-            logger.error(f"Error generating monthly report: {e}")
-            return {'success': False, 'error': str(e)}
-
-    def generate_daily_report(self, date=None):
-        """
-        Generate daily attendance report
-        """
-        try:
-            if not date:
-                IST = pytz.timezone('Asia/Kolkata')
-                date = timezone.now().astimezone(IST).date()
-
-            summary = Attendance.objects.get_attendance_summary(date)
-            attendance_records = Attendance.objects.filter(date=date).select_related(
-                'user', 'shift'
-            ).order_by('user__username')
-
-            return {
-                'success': True,
-                'date': date,
-                'summary': summary,
-                'records': list(attendance_records.values(
-                    'user__username', 'user__first_name', 'user__last_name',
-                    'status', 'clock_in_time', 'clock_out_time', 'total_hours',
-                    'late_minutes', 'overtime_hours', 'location'
-                ))
-            }
-
-        except Exception as e:
-            logger.error(f"Error generating daily report: {e}")
-            return {'success': False, 'error': str(e)}
-
-    def generate_user_summary(self, user, start_date, end_date):
-        """
-        Generate attendance summary for a specific user
-        """
-        try:
-            attendances = Attendance.objects.get_user_attendance_for_period(
-                user, start_date, end_date
-            )
-
-            # Calculate summary statistics
-            total_days = attendances.count()
-            present_days = attendances.filter(
-                status__in=['Present', 'Present & Late', 'Work From Home']
-            ).count()
-            absent_days = attendances.filter(status='Absent').count()
-            late_days = attendances.filter(
-                status__in=['Present & Late', 'Late']
-            ).count()
-            leave_days = attendances.filter(status='On Leave').count()
-
-            total_hours = sum(
-                att.total_hours for att in attendances if att.total_hours
-            ) or 0
-            total_overtime = sum(
-                att.overtime_hours for att in attendances if att.overtime_hours
-            ) or 0
-
-            attendance_percentage = (present_days / total_days * 100) if total_days > 0 else 0
-
-            return {
-                'success': True,
-                'user': {
-                    'username': user.username,
-                    'name': user.get_full_name()
-                },
-                'period': {
-                    'start_date': start_date,
-                    'end_date': end_date
-                },
-                'summary': {
-                    'total_days': total_days,
-                    'present_days': present_days,
-                    'absent_days': absent_days,
-                    'late_days': late_days,
-                    'leave_days': leave_days,
-                    'total_hours': float(total_hours),
-                    'total_overtime': float(total_overtime),
-                    'attendance_percentage': round(attendance_percentage, 2)
-                },
-                'records': list(attendances.values(
-                    'date', 'status', 'clock_in_time', 'clock_out_time',
-                    'total_hours', 'late_minutes', 'overtime_hours'
-                ))
-            }
-
-        except Exception as e:
-            logger.error(f"Error generating user summary: {e}")
-            return {'success': False, 'error': str(e)}
-
-
-class AttendanceAnalyticsService:
-    """
-    Service to provide attendance analytics and insights
-    """
-
-    def get_attendance_trends(self, start_date, end_date, users=None):
-        """
-        Get attendance trends over time
-        """
-        try:
-            trends = Attendance.objects.get_attendance_trends(start_date, end_date, users)
-            return {
-                'success': True,
-                'trends': list(trends)
-            }
-        except Exception as e:
-            logger.error(f"Error getting attendance trends: {e}")
-            return {'success': False, 'error': str(e)}
-
-    def get_department_analytics(self, date=None):
-        """
-        Get attendance analytics by department
-        """
-        try:
-            analytics = Attendance.objects.get_department_attendance(date=date)
-            return {
-                'success': True,
-                'analytics': list(analytics)
-            }
-        except Exception as e:
-            logger.error(f"Error getting department analytics: {e}")
-            return {'success': False, 'error': str(e)}
-
-    def get_late_arrival_analysis(self, start_date, end_date):
-        """
-        Analyze late arrival patterns
-        """
-        try:
-            late_attendances = Attendance.objects.filter(
-                date__range=[start_date, end_date],
-                status__in=['Present & Late', 'Late'],
-                late_minutes__gt=0
-            ).select_related('user', 'shift')
-
-            # Group by user
-            user_late_data = {}
-            for attendance in late_attendances:
-                username = attendance.user.username
-                if username not in user_late_data:
-                    user_late_data[username] = {
-                        'user': attendance.user.get_full_name(),
-                        'late_days': 0,
-                        'total_late_minutes': 0,
-                        'avg_late_minutes': 0
-                    }
-
-                user_late_data[username]['late_days'] += 1
-                user_late_data[username]['total_late_minutes'] += attendance.late_minutes
-
-            # Calculate averages
-            for username, data in user_late_data.items():
-                data['avg_late_minutes'] = data['total_late_minutes'] / data['late_days']
-
-            return {
-                'success': True,
-                'analysis': list(user_late_data.values())
-            }
-
-        except Exception as e:
-            logger.error(f"Error getting late arrival analysis: {e}")
-            return {'success': False, 'error': str(e)}
-
-
-class AttendanceNotificationService:
-    """
-    Service to handle attendance-related notifications
-    """
-
-    def send_regularization_notification(self, attendance, notification_type):
-        """
-        Send regularization-related notifications
-        """
-        try:
-            if notification_type == 'new_request':
-                # Notify HR about new regularization request
-                self._notify_hr_new_regularization(attendance)
-
-            elif notification_type == 'approve':
-                # Notify employee about approval
-                self._notify_employee_regularization_status(attendance, 'approved')
-
-            elif notification_type == 'reject':
-                # Notify employee about rejection
-                self._notify_employee_regularization_status(attendance, 'rejected')
-
-        except Exception as e:
-            logger.error(f"Error sending regularization notification: {e}")
-
-    def send_daily_attendance_reminder(self, users=None):
-        """
-        Send daily attendance reminder to users who haven't marked attendance
-        """
-        try:
-            IST = pytz.timezone('Asia/Kolkata')
-            today = timezone.now().astimezone(IST).date()
-
-            if not users:
-                users = User.objects.filter(is_active=True)
-
-            # Get users who haven't marked attendance yet
-            users_without_attendance = []
-            for user in users:
-                try:
-                    attendance = Attendance.objects.get(user=user, date=today)
-                    if attendance.status in ['Not Marked', 'Yet to Clock In']:
-                        users_without_attendance.append(user)
-                except Attendance.DoesNotExist:
-                    users_without_attendance.append(user)
-
-            # Send reminders
-            for user in users_without_attendance:
-                self._send_attendance_reminder_email(user)
-
-            logger.info(f"Sent attendance reminders to {len(users_without_attendance)} users")
-
-        except Exception as e:
-            logger.error(f"Error sending attendance reminders: {e}")
-
-    def _notify_hr_new_regularization(self, attendance):
-        """
-        Notify HR about new regularization request
-        """
-        # Implementation depends on your notification system
-        # This could be email, in-app notification, Slack, etc.
-        pass
-
-    def _notify_employee_regularization_status(self, attendance, status):
-        """
-        Notify employee about regularization status change
-        """
-        # Implementation depends on your notification system
-        pass
-
-    def _send_attendance_reminder_email(self, user):
-        """
-        Send attendance reminder email to user
-        """
-        # Implementation depends on your email system
-        pass
-
-
-class AttendanceBulkOperationService:
-    """
-    Service to handle bulk attendance operations
-    """
-
-    def bulk_mark_attendance(self, users, date, status, reason=None, marked_by=None):
-        """
-        Bulk mark attendance for multiple users
-        """
-        try:
-            with transaction.atomic():
-                created_attendances = Attendance.objects.bulk_create_attendance_records(
-                    users, date, status, reason
-                )
-
-                # Update existing records
-                existing_attendances = Attendance.objects.filter(
-                    user__in=users,
-                    date=date
-                ).exclude(status=status)
-
-                updated_count = 0
-                for attendance in existing_attendances:
-                    attendance.status = status
-                    if reason:
-                        attendance.regularization_reason = reason
-                    if marked_by:
-                        attendance.modified_by = marked_by
-                    attendance.save()
-                    updated_count += 1
-
-                return {
-                    'success': True,
-                    'created': len(created_attendances),
-                    'updated': updated_count
-                }
-
-        except Exception as e:
-            logger.error(f"Error in bulk mark attendance: {e}")
-            return {'success': False, 'error': str(e)}
-
-    def bulk_apply_leave(self, users, start_date, end_date, leave_type, applied_by=None):
-        """
-        Bulk apply leave for multiple users
-        """
-        try:
-            with transaction.atomic():
-                processed_count = 0
-
-                for user in users:
-                    current_date = start_date
-                    while current_date <= end_date:
-                        attendance, created = Attendance.objects.get_or_create_today_attendance(
-                            user, current_date
-                        )
-
-                        attendance.status = 'On Leave'
-                        attendance.leave_type = leave_type
-                        attendance.regularization_reason = f"Bulk applied: {leave_type} leave"
-
-                        if applied_by:
-                            attendance.modified_by = applied_by
-
-                        attendance.save()
-                        processed_count += 1
-                        current_date += timedelta(days=1)
-
-                return {
-                    'success': True,
-                    'processed': processed_count
-                }
-
-        except Exception as e:
-            logger.error(f"Error in bulk apply leave: {e}")
-            return {'success': False, 'error': str(e)}
-
-    def bulk_update_status(self, attendance_ids, new_status, reason=None, updated_by=None):
-        """
-        Bulk update status for multiple attendance records
-        """
-        try:
-            updated_count = Attendance.objects.bulk_update_status(
-                attendance_ids, new_status, reason, updated_by
-            )
-
-            return {
-                'success': True,
-                'updated': updated_count
-            }
-
-        except Exception as e:
-            logger.error(f"Error in bulk update status: {e}")
-            return {'success': False, 'error': str(e)}
-
-
-class AttendanceValidationService:
-    """
-    Service to handle attendance data validation and business rules
-    """
-
-    @staticmethod
-    def validate_attendance_data(attendance_data):
-        """
-        Validate attendance data before saving
-        """
-        errors = []
-
-        # Check required fields
-        if not attendance_data.get('user'):
-            errors.append("User is required")
-
-        if not attendance_data.get('date'):
-            errors.append("Date is required")
-
-        # Validate clock times
-        clock_in = attendance_data.get('clock_in_time')
-        clock_out = attendance_data.get('clock_out_time')
-
-        if clock_in and clock_out:
-            if clock_out <= clock_in:
-                errors.append("Clock out time must be after clock in time")
-
-        # Validate date is not in future
-        if attendance_data.get('date'):
-            if attendance_data['date'] > timezone.now().date():
-                errors.append("Cannot create attendance for future dates")
-
-        # Validate total hours
-        total_hours = attendance_data.get('total_hours')
-        if total_hours and total_hours > 24:
-            errors.append("Total hours cannot exceed 24 hours")
-
-        return errors
-
-    @staticmethod
-    def can_edit_attendance(attendance, user):
-        """
-        Check if user can edit attendance record
-        """
-        # Own attendance can be edited within 7 days
-        if attendance.user == user:
-            days_diff = (timezone.now().date() - attendance.date).days
-            return days_diff <= 7
-
-        # HR and managers can edit
-        if user.groups.filter(name__in=['HR', 'Manager']).exists():
-            return True
-
-        # Superuser can edit
-        if user.is_superuser:
-            return True
-
-        return False
-
-    @staticmethod
-    def can_request_regularization(attendance):
-        """
-        Check if regularization can be requested for attendance
-        """
-        return attendance.can_request_regularization()
-
-
-# Utility function to initialize all services
-def get_attendance_services():
-    """
-    Get all attendance services in a dictionary
-    """
+# Utility Functions
+def get_attendance_services() -> Dict[str, BaseAttendanceService]:
+    """Get all attendance services in a dictionary"""
     return {
         'auto_marking': AttendanceAutoMarkingService(),
         'integration': AttendanceIntegrationService(),
         'regularization': AttendanceRegularizationService(),
         'reports': AttendanceReportService(),
         'analytics': AttendanceAnalyticsService(),
-        'notifications': AttendanceNotificationService(),
         'bulk_operations': AttendanceBulkOperationService(),
-        'validation': AttendanceValidationService(),
     }
+
+
+def run_daily_attendance_tasks() -> ServiceResult:
+    """Run daily attendance maintenance tasks"""
+    try:
+        logger.info("Running daily attendance tasks...")
+
+        services = get_attendance_services()
+        results = {}
+
+        # Run auto-marking
+        auto_marking_result = services['auto_marking'].run_auto_marking()
+        results['auto_marking'] = auto_marking_result.to_dict()
+
+        # Create daily records for tomorrow
+        tomorrow = timezone.now().astimezone(IST).date() + timedelta(days=1)
+        daily_creation_result = services['integration'].create_daily_attendance_records(tomorrow)
+        results['daily_creation'] = daily_creation_result.to_dict()
+
+        logger.info("Daily attendance tasks completed")
+
+        return ServiceResult(
+            success=True,
+            message="Daily attendance tasks completed successfully",
+            data=results
+        )
+
+    except Exception as e:
+        logger.error(f"Error running daily attendance tasks: {e}")
+        return ServiceResult(
+            success=False,
+            message="Failed to run daily attendance tasks",
+            errors=[str(e)]
+        )
+
+
+def initialize_attendance_system() -> ServiceResult:
+    """Initialize attendance system with necessary setup"""
+    try:
+        logger.info("Initializing attendance system...")
+
+        # Create daily attendance records if needed
+        integration_service = AttendanceIntegrationService()
+        result = integration_service.create_daily_attendance_records()
+
+        if result.success:
+            logger.info("Attendance system initialized successfully")
+            return ServiceResult(success=True, message="Attendance system initialized")
+        else:
+            logger.error("Failed to initialize attendance system")
+            return result
+
+    except Exception as e:
+        logger.error(f"Error initializing attendance system: {e}")
+        return ServiceResult(success=False, message="Failed to initialize attendance system", errors=[str(e)])
+
+    def process_session_logout(self, user: User, session: UserSession) -> ServiceResult:
+        """Process session logout and update attendance"""
+        try:
+            logout_date = session.logout_time.astimezone(self.ist).date() if session.logout_time else self.today
+
+            try:
+                attendance = Attendance.objects.get(user=user, date=logout_date)
+
+                # Update logout time if this is the last session or later than current
+                if not attendance.last_session or (session.logout_time and session.logout_time > attendance.clock_out_time):
+                    attendance.last_session = session
+                    attendance.clock_out_time = session.logout_time
+
+                attendance.save()
+                self._invalidate_user_cache(user.pk, logout_date)
+
+                return ServiceResult(success=True, message="Session logout processed", data={'attendance_id': attendance.pk})
+
+            except Attendance.DoesNotExist:
+                logger.warning(f"No attendance record found for user {user.username} on {logout_date}")
+                return ServiceResult(success=False, message="No attendance record found")
+
+        except Exception as e:
+            logger.error(f"Unexpected error during logout: {str(e)}")
+            return ServiceResult(success=False, message="An error occurred during logout")

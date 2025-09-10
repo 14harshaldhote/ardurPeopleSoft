@@ -1,24 +1,287 @@
 <div
-    class="bg-white shadow-xl rounded-xl p-6 flex items-center space-x-4 hover:shadow-2xl transition-all duration-300"
+    class="backdrop-blur-xl bg-white/20 p-6 rounded-[20px] border border-white/10 shadow-inner hover:bg-white/25 transition-all duration-300"
 >
-    <div class="bg-red-100 p-3 rounded-full animate-bounce">
-        <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="w-6 h-6 text-red-600"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-        >
-            <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-            />
-        </svg>
+    <div class="flex justify-between items-center mb-6">
+        <div class="flex items-center gap-3">
+            <div
+                class="p-3 backdrop-blur-sm bg-white/30 rounded-xl border border-white/20"
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-6 w-6 text-rose-700"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                </svg>
+            </div>
+            <div>
+                <h3 class="text-lg font-bold text-zinc-900 mb-0">
+                    Holidays & Events
+                </h3>
+                <p class="text-sm text-zinc-600 mb-0">Upcoming celebrations</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <span
+                class="px-3 py-1 text-xs font-medium bg-rose-500/20 text-rose-700 rounded-md border border-rose-500/30 flex items-center gap-1"
+            >
+                <svg
+                    class="w-3 h-3"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                </svg>
+                3 Days
+            </span>
+        </div>
     </div>
-    <div>
-        <h3 class="text-lg font-semibold text-gray-800">Next Holiday</h3>
-        <p class="text-sm text-gray-600">Independence Day — August 15, 2025</p>
+
+    <!-- Next Holiday Section -->
+    <div class="mb-6">
+        <div
+            class="backdrop-blur-sm bg-gradient-to-br from-rose-500/20 to-rose-400/30 border border-rose-500/30 p-4 rounded-xl hover:from-rose-500/30 hover:to-rose-400/40 transition-all duration-200"
+        >
+            <div class="flex items-center gap-4">
+                <div
+                    class="w-16 h-16 rounded-xl bg-gradient-to-br from-rose-400 to-rose-600 flex flex-col items-center justify-center text-white shadow-lg animate-bounce"
+                >
+                    <span class="text-xs font-medium">AUG</span>
+                    <span class="text-xl font-bold">15</span>
+                </div>
+                <div class="flex-1">
+                    <h4 class="text-lg font-bold text-rose-800 mb-1">
+                        Independence Day
+                    </h4>
+                    <p class="text-sm text-rose-700 mb-2">
+                        National Holiday - Office Closed
+                    </p>
+                    <div class="flex items-center gap-2 text-xs text-rose-600">
+                        <svg
+                            class="w-3 h-3"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                        </svg>
+                        <span class="font-medium">In 3 days</span>
+                        <span>•</span>
+                        <span>August 15, 2025</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upcoming Holidays List -->
+    <div class="mb-6">
+        <h4 class="text-sm font-bold text-zinc-700 mb-3">
+            This Month's Events
+        </h4>
+        <div class="space-y-3">
+            <!-- Holiday Item 1 -->
+            <div
+                class="backdrop-blur-sm bg-white/30 p-3 rounded-xl border border-white/20 hover:bg-white/40 transition-all duration-200 flex items-center gap-3"
+            >
+                <div
+                    class="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-400 to-orange-600 flex flex-col items-center justify-center text-white text-xs"
+                >
+                    <span class="font-medium">26</span>
+                </div>
+                <div class="flex-1">
+                    <div class="flex items-center justify-between">
+                        <h5 class="font-bold text-zinc-800 text-sm mb-0">
+                            Raksha Bandhan
+                        </h5>
+                        <span
+                            class="text-xs font-medium text-orange-700 bg-orange-500/20 px-2 py-1 rounded border border-orange-500/30"
+                        >
+                            Optional
+                        </span>
+                    </div>
+                    <p class="text-xs text-zinc-600">Traditional Festival</p>
+                </div>
+            </div>
+
+            <!-- Holiday Item 2 -->
+            <div
+                class="backdrop-blur-sm bg-white/30 p-3 rounded-xl border border-white/20 hover:bg-white/40 transition-all duration-200 flex items-center gap-3"
+            >
+                <div
+                    class="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-400 to-purple-600 flex flex-col items-center justify-center text-white text-xs"
+                >
+                    <span class="font-medium">02</span>
+                </div>
+                <div class="flex-1">
+                    <div class="flex items-center justify-between">
+                        <h5 class="font-bold text-zinc-800 text-sm mb-0">
+                            Ganesh Chaturthi
+                        </h5>
+                        <span
+                            class="text-xs font-medium text-purple-700 bg-purple-500/20 px-2 py-1 rounded border border-purple-500/30"
+                        >
+                            Regional
+                        </span>
+                    </div>
+                    <p class="text-xs text-zinc-600">September 2, 2025</p>
+                </div>
+            </div>
+
+            <!-- Holiday Item 3 -->
+            <div
+                class="backdrop-blur-sm bg-white/30 p-3 rounded-xl border border-white/20 hover:bg-white/40 transition-all duration-200 flex items-center gap-3"
+            >
+                <div
+                    class="w-10 h-10 rounded-lg bg-gradient-to-br from-green-400 to-green-600 flex flex-col items-center justify-center text-white text-xs"
+                >
+                    <span class="font-medium">15</span>
+                </div>
+                <div class="flex-1">
+                    <div class="flex items-center justify-between">
+                        <h5 class="font-bold text-zinc-800 text-sm mb-0">
+                            Engineer's Day
+                        </h5>
+                        <span
+                            class="text-xs font-medium text-green-700 bg-green-500/20 px-2 py-1 rounded border border-green-500/30"
+                        >
+                            Company
+                        </span>
+                    </div>
+                    <p class="text-xs text-zinc-600">Team Celebration</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Section -->
+    <div class="mb-6">
+        <div class="grid grid-cols-3 gap-3">
+            <div
+                class="backdrop-blur-sm bg-emerald-500/20 border border-emerald-500/30 rounded-xl p-3 text-center hover:bg-emerald-500/30 transition-all duration-200"
+            >
+                <div class="flex items-center justify-center gap-1 mb-1">
+                    <svg
+                        class="w-3 h-3 text-emerald-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                    </svg>
+                    <span
+                        class="text-xs font-medium text-emerald-700 uppercase tracking-wide"
+                    >
+                        This Month
+                    </span>
+                </div>
+                <p class="text-xl font-bold text-emerald-700 mb-0">4</p>
+                <p class="text-xs text-emerald-600">holidays</p>
+            </div>
+            <div
+                class="backdrop-blur-sm bg-blue-500/20 border border-blue-500/30 rounded-xl p-3 text-center hover:bg-blue-500/30 transition-all duration-200"
+            >
+                <div class="flex items-center justify-center gap-1 mb-1">
+                    <svg
+                        class="w-3 h-3 text-blue-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                    </svg>
+                    <span
+                        class="text-xs font-medium text-blue-700 uppercase tracking-wide"
+                    >
+                        Remaining
+                    </span>
+                </div>
+                <p class="text-xl font-bold text-blue-700 mb-0">8</p>
+                <p class="text-xs text-blue-600">days off</p>
+            </div>
+            <div
+                class="backdrop-blur-sm bg-amber-500/20 border border-amber-500/30 rounded-xl p-3 text-center hover:bg-amber-500/30 transition-all duration-200"
+            >
+                <div class="flex items-center justify-center gap-1 mb-1">
+                    <svg
+                        class="w-3 h-3 text-amber-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
+                    </svg>
+                    <span
+                        class="text-xs font-medium text-amber-700 uppercase tracking-wide"
+                    >
+                        Quarter
+                    </span>
+                </div>
+                <p class="text-xl font-bold text-amber-700 mb-0">12</p>
+                <p class="text-xs text-amber-600">total</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Footer -->
+    <div class="pt-4 border-t border-white/20">
+        <div class="flex justify-between items-center">
+            <div class="text-xs text-zinc-600">
+                <span>Last updated: </span>
+                <span class="font-medium text-zinc-700">Today</span>
+            </div>
+            <a
+                href="#"
+                class="text-sm text-blue-700 hover:text-blue-900 font-medium transition-colors duration-200 flex items-center gap-1"
+            >
+                View Calendar
+                <svg
+                    class="w-4 h-4 transition-transform duration-200 hover:translate-x-1"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M9 5l7 7-7 7"
+                    />
+                </svg>
+            </a>
+        </div>
     </div>
 </div>

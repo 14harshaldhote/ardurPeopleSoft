@@ -278,8 +278,8 @@ DATABASE_OPTIMIZATION = {
         'Holiday': [],
     },
     'prefetch_related_fields': {
-        'ShiftMaster': ['shiftassignment_set'],
-        'User': ['shiftassignment_set'],
+        'ShiftMaster': ['assignments'],
+        'User': ['shift_assignments'],
     },
     'indexes': {
         'ShiftAssignment': [

@@ -1,44 +1,389 @@
-<div class="bg-white shadow-xl rounded-xl p-6">
-    <div class="flex justify-between items-center mb-4">
+<div
+    class="backdrop-blur-xl bg-white/20 p-6 rounded-[20px] border border-white/10 shadow-inner hover:bg-white/25 transition-all duration-300"
+    id="global-update-card"
+>
+    <div class="flex justify-between items-center mb-6">
         <div class="flex items-center gap-3">
+            <div
+                class="p-3 backdrop-blur-sm bg-white/30 rounded-xl border border-white/20"
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-6 w-6 text-blue-700"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"
+                    />
+                </svg>
+            </div>
+            <div>
+                <h3 class="text-lg font-bold text-zinc-900 mb-0">
+                    Global Updates
+                </h3>
+                <p class="text-sm text-zinc-600 mb-0">
+                    Latest company announcements
+                </p>
+            </div>
+        </div>
+
+        <!-- Language Selector -->
+        <div class="flex items-center gap-2">
+            <select
+                id="language-selector"
+                class="px-3 py-2 backdrop-blur-sm bg-white/30 border border-white/20 rounded-xl text-sm text-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:bg-white/40"
+            >
+                <option value="en">English</option>
+                <option value="hi">हिंदी</option>
+                <option value="mr">मराठी</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- HR Management Buttons -->
+    {% if is_hr %}
+    <div
+        class="flex flex-wrap gap-3 mb-6 p-4 backdrop-blur-sm bg-white/20 rounded-xl border border-white/10"
+    >
+        <a
+            href="{% url 'notes:global_update_create' %}"
+            class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-lg hover:from-emerald-600 hover:to-emerald-700 transition-all duration-200 text-sm font-medium shadow-lg hover:scale-105"
+        >
             <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-6 w-6 text-blue-600"
+                class="w-4 h-4 mr-2"
                 fill="none"
-                viewBox="0 0 24 24"
                 stroke="currentColor"
+                viewBox="0 0 24 24"
             >
                 <path
                     stroke-linecap="round"
                     stroke-linejoin="round"
                     stroke-width="2"
-                    d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"
-                />
+                    d="M12 4v16m8-8H4"
+                ></path>
             </svg>
-            <h3 class="text-2xl font-semibold text-gray-800">Bulletin Board</h3>
+            Add Update
+        </a>
+        <a
+            href="{% url 'notes:global_update_list' %}"
+            class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 text-sm font-medium shadow-lg hover:scale-105"
+        >
+            <svg
+                class="w-4 h-4 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+            >
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                ></path>
+            </svg>
+            Manage All
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Updates Container -->
+    <div
+        class="space-y-4 max-h-[400px] overflow-y-auto pr-2 scrollbar-thin"
+        id="updates-container"
+    >
+        <!-- Loading indicator -->
+        <div id="loading-indicator" class="text-center py-8">
+            <div
+                class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-3"
+            ></div>
+            <p class="text-sm text-zinc-600">Loading updates...</p>
+        </div>
+
+        <!-- Updates will be loaded here via AJAX -->
+        <div id="updates-list">
+            <!-- Fallback content for non-JS browsers -->
+            <noscript>
+                <div
+                    class="backdrop-blur-sm bg-yellow-400/20 border-l-4 border-yellow-500 p-4 rounded-xl"
+                >
+                    <p class="text-yellow-800 font-medium">
+                        Please enable JavaScript to view global updates with
+                        language selection.
+                    </p>
+                    <a
+                        href="{% url 'notes:global_update_list' %}"
+                        class="text-yellow-700 underline hover:text-yellow-900 transition-colors"
+                        >View all updates</a
+                    >
+                </div>
+            </noscript>
         </div>
     </div>
-    <div class="space-y-4 max-h-[500px] overflow-y-auto pr-2">
-        <div
-            class="bg-white p-4 rounded-xl border-l-4 border-blue-500 hover:bg-blue-50"
+
+    <!-- View All Button -->
+    <div class="mt-6 pt-4 border-t border-white/20">
+        <a
+            href="{% url 'notes:global_update_list' %}"
+            class="inline-flex items-center text-blue-700 hover:text-blue-900 transition-colors duration-200 font-medium"
         >
-            <h4 class="font-semibold text-lg text-gray-800">
-                System Maintenance
-            </h4>
-            <p class="text-sm text-gray-600 mb-3">
-                Scheduled on August 20, 2025 — Expect downtime from 2 AM to 5
-                AM.
-            </p>
-        </div>
-        <div
-            class="bg-white p-4 rounded-xl border-l-4 border-green-500 hover:bg-green-50"
-        >
-            <h4 class="font-semibold text-lg text-gray-800">
-                New Policy Update
-            </h4>
-            <p class="text-sm text-gray-600 mb-3">
-                Remote work policy updated — now 3 days/week allowed.
-            </p>
-        </div>
+            <span>View All Updates</span>
+            <svg
+                class="w-4 h-4 ml-2 transition-transform duration-200 hover:translate-x-1"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+            >
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 5l7 7-7 7"
+                ></path>
+            </svg>
+        </a>
     </div>
 </div>
+
+<!-- Styles for the card -->
+<style>
+    #global-update-card .update-item {
+        @apply backdrop-blur-sm bg-white/30 p-4 rounded-xl border-l-4 hover:bg-white/40 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md;
+    }
+
+    #global-update-card .update-item.released {
+        @apply border-emerald-500 bg-emerald-50/50;
+    }
+
+    #global-update-card .update-item.upcoming {
+        @apply border-blue-500 bg-blue-50/50;
+    }
+
+    #global-update-card .update-item.scheduled {
+        @apply border-amber-500 bg-amber-50/50;
+    }
+
+    #global-update-card .update-title {
+        @apply font-bold text-base text-zinc-800 mb-2;
+    }
+
+    #global-update-card .update-description {
+        @apply text-sm text-zinc-600 mb-3 line-clamp-2 leading-relaxed;
+    }
+
+    #global-update-card .update-meta {
+        @apply text-xs text-zinc-500 flex items-center justify-between;
+    }
+
+    #global-update-card .language-indicator {
+        @apply px-2 py-1 bg-white/40 text-zinc-700 rounded-md text-xs font-medium border border-white/20;
+    }
+
+    #global-update-card .translation-status {
+        @apply text-xs italic font-medium;
+    }
+
+    #global-update-card .no-translation {
+        @apply text-amber-700;
+    }
+
+    #global-update-card .has-translation {
+        @apply text-emerald-700;
+    }
+
+    /* Custom scrollbar */
+    #global-update-card .scrollbar-thin::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    #global-update-card .scrollbar-thin::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+    }
+
+    #global-update-card .scrollbar-thin::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 10px;
+    }
+
+    #global-update-card .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.5);
+    }
+</style>
+
+<!-- JavaScript for dynamic content loading and language switching -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const languageSelector = document.getElementById('language-selector');
+        const updatesContainer = document.getElementById('updates-list');
+        const loadingIndicator = document.getElementById('loading-indicator');
+
+        // Set initial language from localStorage or default to English
+        const savedLanguage = localStorage.getItem('global-updates-language') || 'en';
+        languageSelector.value = savedLanguage;
+
+        function showLoading() {
+            loadingIndicator.style.display = 'block';
+            updatesContainer.style.display = 'none';
+        }
+
+        function hideLoading() {
+            loadingIndicator.style.display = 'none';
+            updatesContainer.style.display = 'block';
+        }
+
+        function loadUpdates(language = 'en') {
+            showLoading();
+
+            fetch(`{% url 'notes:global_update_ajax_status' %}?lang=${language}&limit=5`)
+                .then(response => response.json())
+                .then(data => {
+                    // Store language preference
+                    localStorage.setItem('global-updates-language', language);
+
+                    // Update the updates list
+                    renderUpdates(data.updates || [], language);
+                    hideLoading();
+                })
+                .catch(error => {
+                    console.error('Error loading updates:', error);
+                    updatesContainer.innerHTML = `
+                        <div class="backdrop-blur-sm bg-red-400/20 border-l-4 border-red-500 p-4 rounded-xl">
+                            <p class="text-red-800 font-medium">Error loading updates. Please refresh the page.</p>
+                        </div>
+                    `;
+                    hideLoading();
+                });
+        }
+
+        function renderUpdates(updates, language) {
+            if (!updates || updates.length === 0) {
+                updatesContainer.innerHTML = `
+                    <div class="text-center py-12">
+                        <div class="p-4 backdrop-blur-sm bg-white/20 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                            <svg class="w-8 h-8 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                            </svg>
+                        </div>
+                        <p class="text-zinc-500 font-medium">No updates available</p>
+                        <p class="text-zinc-400 text-sm">Check back later for company announcements</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const updatesHtml = updates.map(update => {
+                const statusClass = update.status.toLowerCase();
+                const hasTranslation = language !== 'en' ? update.has_translation : true;
+                const title = update.translated_title || update.title;
+                const description = update.translated_description || update.description;
+
+                return `
+                    <div class="update-item ${statusClass}" onclick="viewUpdate(${update.id}, '${language}')">
+                        <div class="update-title">${escapeHtml(title)}</div>
+                        <div class="update-description">${escapeHtml(description)}</div>
+                        <div class="update-meta">
+                            <div class="flex items-center gap-2">
+                                <span class="language-indicator">${getLanguageName(language)}</span>
+                                ${!hasTranslation && language !== 'en' ?
+                                    '<span class="translation-status no-translation">Auto-translated</span>' :
+                                    hasTranslation && language !== 'en' ?
+                                    '<span class="translation-status has-translation">Translated</span>' : ''
+                                }
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="capitalize font-medium">${update.status}</span>
+                                ${update.scheduled_date ? `<span>• ${formatDate(update.scheduled_date)}</span>` : ''}
+                                {% if is_hr %}
+                                <div class="flex gap-1 ml-2">
+                                    <button onclick="event.stopPropagation(); editUpdate(${update.id})"
+                                            class="p-1 text-blue-600 hover:text-blue-800 hover:bg-white/20 rounded transition-colors" title="Edit">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                    </button>
+                                    <button onclick="event.stopPropagation(); deleteUpdate(${update.id}, '${escapeHtml(title)}')"
+                                            class="p-1 text-red-600 hover:text-red-800 hover:bg-white/20 rounded transition-colors" title="Delete">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            updatesContainer.innerHTML = updatesHtml;
+        }
+
+        // Language change handler
+        languageSelector.addEventListener('change', function() {
+            loadUpdates(this.value);
+        });
+
+        // Helper functions
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function getLanguageName(code) {
+            const names = { en: 'EN', hi: 'हि', mr: 'मर' };
+            return names[code] || 'EN';
+        }
+
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString();
+        }
+
+        function viewUpdate(id, language) {
+            window.location.href = `{% url 'notes:global_update_detail' 0 %}`.replace('0', id) + `?lang=${language}`;
+        }
+
+        {% if is_hr %}
+        function editUpdate(id) {
+            window.location.href = `{% url 'notes:global_update_edit' 0 %}`.replace('0', id);
+        }
+
+        function deleteUpdate(id, title) {
+            if (confirm(`Are you sure you want to delete "${title}"?`)) {
+                fetch(`{% url 'notes:global_update_delete' 0 %}`.replace('0', id), {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '',
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                })
+                .then(response => {
+                    if (response.ok) {
+                        // Reload updates after deletion
+                        loadUpdates(languageSelector.value);
+                    } else {
+                        alert('Error deleting update. Please try again.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error deleting update. Please try again.');
+                });
+            }
+        }
+        {% endif %}
+
+        // Initial load
+        loadUpdates(savedLanguage);
+
+        // Auto-refresh every 5 minutes
+        setInterval(() => {
+            loadUpdates(languageSelector.value);
+        }, 300000);
+    });
+</script>

@@ -1,11 +1,12 @@
 import csv
 import io
-from datetime import datetime, date, time, timedelta
+from datetime import datetime, date, timedelta
 from decimal import Decimal
 from django import forms
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.db import models
 from django.utils import timezone
 from trueAlign.models import ShiftMaster, ShiftAssignment, Holiday
 from django.contrib.auth.models import Group
@@ -347,12 +348,14 @@ class ShiftForm(forms.ModelForm):
                 if len(day_names) == 0:
                     errors['custom_work_days'] = 'At least one working day must be specified.'
 
-        # Check for shift conflicts with existing shifts
+        # Note: Overlapping shifts are now allowed per requirements
+        # Check for shift conflicts with existing shifts (for warning only)
         if start_time and end_time and work_days:
             conflicts = self._check_shift_conflicts(cleaned_data)
             if conflicts:
                 conflict_names = [f"{c.name} ({c.start_time.strftime('%H:%M')}-{c.end_time.strftime('%H:%M')})" for c in conflicts]
-                errors['__all__'] = f'This shift has time conflicts with existing shifts: {", ".join(conflict_names)}. Please adjust the timing or working days.'
+                # Changed to warning instead of error to allow overlaps
+                self.add_error('__all__', f'Warning: This shift has time overlaps with existing shifts: {", ".join(conflict_names)}. This is allowed but may cause scheduling complexity.')
 
         if errors:
             raise ValidationError(errors)
@@ -360,7 +363,7 @@ class ShiftForm(forms.ModelForm):
         return cleaned_data
 
     def _check_shift_conflicts(self, cleaned_data):
-        """Check for conflicts with existing shifts."""
+        """Check for overlaps with existing shifts (for informational purposes)."""
         from trueAlign.models import ShiftMaster
 
         start_time = cleaned_data.get('start_time')
@@ -682,7 +685,7 @@ class ShiftAssignmentForm(forms.ModelForm):
                 real_conflicts = []
                 for conflict in conflicts:
                     conflict_end = conflict.effective_to or date.max
-                    # Allow same-day transitions
+                    # Allow same-day transitions and only flag actual time overlaps
                     if not (conflict_end == effective_from or conflict.effective_from == effective_to):
                         real_conflicts.append(conflict)
 
@@ -697,10 +700,12 @@ class ShiftAssignmentForm(forms.ModelForm):
                         desc += ")"
                         conflict_descriptions.append(desc)
 
-                    errors['__all__'] = (
-                        f"This assignment conflicts with existing assignments: {', '.join(conflict_descriptions)}. "
-                        f"Check 'Override conflicts' to proceed anyway (admin only)."
+                    # Changed to warning instead of blocking error for overlapping assignments
+                    warnings_msg = (
+                        f"Note: This assignment may have timing overlaps with existing assignments: {', '.join(conflict_descriptions)}. "
+                        f"This is allowed but check 'Override conflicts' if you want to proceed without warnings."
                     )
+                    self.add_error(None, warnings_msg)
 
             # Check if user is already assigned to this exact shift in overlapping period
             exact_conflicts = self._check_exact_shift_conflicts(user, shift, effective_from, effective_to)
@@ -1051,7 +1056,8 @@ class CSVUploadForm(forms.Form):
             # Check headers
             csv_reader = csv.DictReader(io.StringIO(csv_content))
             required_headers = ['username', 'shift_name', 'effective_from']
-            missing_headers = [h for h in required_headers if h not in csv_reader.fieldnames]
+            fieldnames = csv_reader.fieldnames or []
+            missing_headers = [h for h in required_headers if h not in fieldnames]
 
             if missing_headers:
                 raise ValidationError(f"Missing required headers: {', '.join(missing_headers)}. "

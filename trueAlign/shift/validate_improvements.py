@@ -390,7 +390,7 @@ class ShiftAppValidator:
             print_success("Service-Model integration working")
 
             # Test validation method
-            is_valid, message = service.validate_shift_assignment(
+            is_valid, message, validation_details = service.validate_shift_assignment(
                 user_id=1,
                 shift_id=1,
                 effective_from=date.today()

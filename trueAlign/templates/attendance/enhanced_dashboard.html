@@ -1,0 +1,488 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Enhanced Attendance Dashboard - TrueAlign{% endblock %}
+
+{% block extra_head %}
+<!-- ECharts.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<!-- Alpine.js for reactive components -->
+<script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<style>
+    .chart-container {
+        min-height: 300px;
+        width: 100%;
+    }
+    .metric-card {
+        transition: all 0.3s ease;
+    }
+    .metric-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    .status-indicator {
+        animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+    .loading-spinner {
+        border: 3px solid #f3f3f4;
+        border-top: 3px solid #3498db;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 p-2 sm:p-6" x-data="enhancedAttendanceDashboard()">
+    <!-- Header Section -->
+    <div class="container mx-auto px-4 py-6">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">
+                    {% if user_role == 'HR' %}
+                        HR Attendance Dashboard
+                    {% elif user_role == 'Manager' %}
+                        Team Attendance Dashboard
+                    {% elif user_role == 'Admin' %}
+                        Admin Dashboard
+                    {% else %}
+                        My Attendance Dashboard
+                    {% endif %}
+                </h1>
+                <div class="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                    <div class="flex items-center gap-2">
+                        <div class="h-3 w-3 bg-green-400 rounded-full status-indicator"></div>
+                        <span>Live Data</span>
+                    </div>
+                    <span>{{ today|date:"l, F d, Y" }}</span>
+                    <span>Role: <strong class="text-blue-600">{{ user_role }}</strong></span>
+                    <span x-text="`Last Updated: ${lastUpdated}`"></span>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-wrap gap-3">
+                {% if user_role == 'HR' or user_role == 'Admin' %}
+                <button @click="exportData('excel')"
+                        class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Export Excel
+                </button>
+                {% endif %}
+
+                {% if user_role == 'Manager' or user_role == 'HR' or user_role == 'Admin' %}
+                <button @click="exportData('csv')"
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Export CSV
+                </button>
+                {% endif %}
+
+                <button @click="refreshData()"
+                        class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+                    <svg class="w-4 h-4" :class="{'animate-spin': isLoading}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    Refresh
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats Cards -->
+    <div class="container mx-auto px-4 mb-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Today's Summary -->
+            <div class="metric-card bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="p-2 bg-blue-100 rounded-lg">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                    </div>
+                    <span class="text-sm font-medium text-gray-500">Today's Present</span>
+                </div>
+                <div class="text-3xl font-bold text-gray-900 mb-2" x-text="dashboardData.summary?.present_count || '0'"></div>
+                <div class="text-sm text-gray-500">
+                    <span x-text="`${dashboardData.summary?.attendance_rate || 0}% attendance rate`"></span>
+                </div>
+            </div>
+
+            <!-- Absent Today -->
+            <div class="metric-card bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="p-2 bg-red-100 rounded-lg">
+                        <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728"></path>
+                        </svg>
+                    </div>
+                    <span class="text-sm font-medium text-gray-500">Absent Today</span>
+                </div>
+                <div class="text-3xl font-bold text-gray-900 mb-2" x-text="dashboardData.summary?.absent_count || '0'"></div>
+                <div class="text-sm text-red-500">
+                    <span x-text="`${((dashboardData.summary?.absent_count / dashboardData.summary?.total_employees) * 100 || 0).toFixed(1)}% of workforce`"></span>
+                </div>
+            </div>
+
+            <!-- Late Arrivals -->
+            <div class="metric-card bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="p-2 bg-yellow-100 rounded-lg">
+                        <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <span class="text-sm font-medium text-gray-500">Late Today</span>
+                </div>
+                <div class="text-3xl font-bold text-gray-900 mb-2" x-text="dashboardData.summary?.late_count || '0'"></div>
+                <div class="text-sm text-yellow-600">
+                    <span x-text="`${((dashboardData.summary?.late_count / dashboardData.summary?.present_count) * 100 || 0).toFixed(1)}% of present`"></span>
+                </div>
+            </div>
+
+            <!-- On Leave -->
+            <div class="metric-card bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="p-2 bg-purple-100 rounded-lg">
+                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3a2 2 0 012-2h4a2 2 0 012 2v4m-6 0V6a2 2 0 012-2h4a2 2 0 012 2v1m-6 0h6m-6 0v5a2 2 0 002 2h2a2 2 0 002-2V7m-6 0V3a2 2 0 012-2h4a2 2 0 012 2v4"></path>
+                        </svg>
+                    </div>
+                    <span class="text-sm font-medium text-gray-500">On Leave</span>
+                </div>
+                <div class="text-3xl font-bold text-gray-900 mb-2" x-text="dashboardData.summary?.on_leave_count || '0'"></div>
+                <div class="text-sm text-purple-600">Planned absences</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="container mx-auto px-4 mb-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Daily Trend Chart -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900">Daily Attendance Trend</h3>
+                    <select x-model="chartPeriod" @change="updateCharts()"
+                            class="px-3 py-1 border border-gray-300 rounded-md text-sm">
+                        <option value="7">Last 7 Days</option>
+                        <option value="14">Last 2 Weeks</option>
+                        <option value="30">Last Month</option>
+                    </select>
+                </div>
+                <div id="dailyTrendChart" class="chart-container"></div>
+            </div>
+
+            <!-- Status Distribution Chart -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900">Status Distribution</h3>
+                    <span class="text-sm text-gray-500" x-text="`Today - ${dashboardData.summary?.total_employees || 0} employees`"></span>
+                </div>
+                <div id="statusDistributionChart" class="chart-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Department Breakdown (HR/Admin Only) -->
+    {% if user_role == 'HR' or user_role == 'Admin' %}
+    <div class="container mx-auto px-4 mb-8">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-semibold text-gray-900">Department-wise Attendance</h3>
+                <button @click="toggleDepartmentView()"
+                        class="text-sm text-blue-600 hover:text-blue-800 transition-colors">
+                    <span x-text="departmentViewMode === 'chart' ? 'Show Table' : 'Show Chart'"></span>
+                </button>
+            </div>
+
+            <!-- Department Chart -->
+            <div x-show="departmentViewMode === 'chart'" id="departmentChart" class="chart-container"></div>
+
+            <!-- Department Table -->
+            <div x-show="departmentViewMode === 'table'" class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Present</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Absent</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rate</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <template x-for="dept in Object.entries(dashboardData.department_breakdown || {})" :key="dept[0]">
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900" x-text="dept[0]"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="dept[1].total"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600" x-text="dept[1].present"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600" x-text="dept[1].absent"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    <span x-text="`${((dept[1].present / dept[1].total) * 100 || 0).toFixed(1)}%`"></span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <template x-if="(dept[1].present / dept[1].total) >= 0.9">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Excellent</span>
+                                    </template>
+                                    <template x-if="(dept[1].present / dept[1].total) >= 0.7 && (dept[1].present / dept[1].total) < 0.9">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Good</span>
+                                    </template>
+                                    <template x-if="(dept[1].present / dept[1].total) < 0.7">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Needs Attention</span>
+                                    </template>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Recent Activities & Pending Actions -->
+    <div class="container mx-auto px-4 mb-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Recent Activities -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">Recent Activities</h3>
+                <div class="space-y-4 max-h-96 overflow-y-auto">
+                    <template x-for="activity in dashboardData.recent_activities?.slice(0, 10) || []" :key="`${activity.user__username}-${activity.date}`">
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div class="flex items-center space-x-3">
+                                <div class="flex-shrink-0">
+                                    <template x-if="activity.status?.includes('Present')">
+                                        <div class="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
+                                            <svg class="h-4 w-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                            </svg>
+                                        </div>
+                                    </template>
+                                    <template x-if="activity.status === 'Absent'">
+                                        <div class="h-8 w-8 bg-red-100 rounded-full flex items-center justify-center">
+                                            <svg class="h-4 w-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                            </svg>
+                                        </div>
+                                    </template>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900" x-text="activity.user__username"></p>
+                                    <p class="text-xs text-gray-500">
+                                        <span x-text="activity.status"></span>
+                                        <span x-show="activity.clock_in_time"> - In: </span>
+                                        <span x-text="activity.clock_in_time"></span>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="text-xs text-gray-400" x-text="activity.date"></div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Pending Regularizations (HR Only) -->
+            {% if user_role == 'HR' or user_role == 'Admin' %}
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900">Pending Regularizations</h3>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"
+                          x-text="`${dashboardData.pending_regularizations || 0} pending`"></span>
+                </div>
+                <div class="space-y-4 max-h-96 overflow-y-auto">
+                    <template x-if="(dashboardData.pending_regularizations || 0) === 0">
+                        <div class="text-center py-8">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <p class="mt-2 text-sm text-gray-500">No pending regularization requests</p>
+                        </div>
+                    </template>
+                    <template x-if="(dashboardData.pending_regularizations || 0) > 0">
+                        <div class="text-center py-4">
+                            <a href="{% url 'attendance:hr_regularization_requests' %}"
+                               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors">
+                                View All Requests
+                                <svg class="ml-2 -mr-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            </a>
+                        </div>
+                    </template>
+                </div>
+            </div>
+            {% else %}
+            <!-- Personal Summary for Employees -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">My Monthly Summary</h3>
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                        <span class="text-sm font-medium text-gray-700">Present Days</span>
+                        <span class="text-lg font-semibold text-blue-600" x-text="dashboardData.summary?.present_days || '0'"></span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-red-50 rounded-lg">
+                        <span class="text-sm font-medium text-gray-700">Absent Days</span>
+                        <span class="text-lg font-semibold text-red-600" x-text="dashboardData.summary?.absent_days || '0'"></span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-yellow-50 rounded-lg">
+                        <span class="text-sm font-medium text-gray-700">Late Days</span>
+                        <span class="text-lg font-semibold text-yellow-600" x-text="dashboardData.summary?.late_days || '0'"></span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                        <span class="text-sm font-medium text-gray-700">Attendance Rate</span>
+                        <span class="text-lg font-semibold text-gray-900" x-text="`${dashboardData.summary?.attendance_rate || 0}%`"></span>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div x-show="isLoading" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 flex items-center space-x-3">
+            <div class="loading-spinner"></div>
+            <span class="text-gray-700">Loading dashboard data...</span>
+        </div>
+    </div>
+</div>
+
+<script>
+function enhancedAttendanceDashboard() {
+    return {
+        isLoading: false,
+        dashboardData: {},
+        chartPeriod: '7',
+        departmentViewMode: 'chart',
+        lastUpdated: new Date().toLocaleTimeString(),
+        dailyTrendChart: null,
+        statusDistributionChart: null,
+        departmentChart: null,
+
+        init() {
+            this.loadDashboardData();
+            this.initializeCharts();
+
+            // Auto-refresh every 5 minutes
+            setInterval(() => {
+                this.refreshData();
+            }, 300000);
+        },
+
+        async loadDashboardData() {
+            this.isLoading = true;
+            try {
+                const response = await fetch('{% url "attendance_api:dashboard_api" %}', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    this.dashboardData = data.data;
+                    this.updateCharts();
+                    this.lastUpdated = new Date().toLocaleTimeString();
+                } else {
+                    console.error('Failed to load dashboard data');
+                }
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+            } finally {
+                this.isLoading = false;
+            }
+        },
+
+        initializeCharts() {
+            // Initialize ECharts instances
+            this.dailyTrendChart = echarts.init(document.getElementById('dailyTrendChart'));
+            this.statusDistributionChart = echarts.init(document.getElementById('statusDistributionChart'));
+
+            {% if user_role == 'HR' or user_role == 'Admin' %}
+            this.departmentChart = echarts.init(document.getElementById('departmentChart'));
+            {% endif %}
+
+            // Make charts responsive
+            window.addEventListener('resize', () => {
+                this.dailyTrendChart?.resize();
+                this.statusDistributionChart?.resize();
+                this.departmentChart?.resize();
+            });
+        },
+
+        async updateCharts() {
+            if (!this.dashboardData) return;
+
+            // Load chart data
+            await this.loadChartData();
+
+            // Update Daily Trend Chart
+            this.updateDailyTrendChart();
+
+            // Update Status Distribution Chart
+            this.updateStatusDistributionChart();
+
+            // Update Department Chart (if available)
+            {% if user_role == 'HR' or user_role == 'Admin' %}
+            this.updateDepartmentChart();
+            {% endif %}
+        },
+
+        async loadChartData() {
+            try {
+                const response = await fetch(`{% url "attendance_api:dashboard_charts_api" %}?days=${this.chartPeriod}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    this.dashboardData.charts = data.data;
+                }
+            } catch (error) {
+                console.error('Error loading chart data:', error);
+            }
+        },
+
+        updateDailyTrendChart() {
+            if (!this.dailyTrendChart || !this.dashboardData.charts?.daily_trend) return;
+
+            const chartData = this.dashboardData.charts.daily_trend;
+
+            const option = {
+                title: {
+                    text: 'Daily Attendance Trend',
+                    left: 'left',
+                    textStyle: { fontSize: 14, fontWeight: 'normal' }
+                },
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: { type: 'cross' }
+                },
+                legend: {
+                    data: ['Present', 'Absent', 'Late', 'On Leave'],
+                    bottom: 0
+                },
+                xAxis: {
+                    type: 'category',

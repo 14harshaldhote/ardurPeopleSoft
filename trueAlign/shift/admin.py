@@ -108,7 +108,7 @@ class ShiftMasterAdmin(admin.ModelAdmin):
 
     def active_assignments_count(self, obj):
         """Display count of active assignments."""
-        count = obj.shiftassignment_set.filter(is_current=True).count()
+        count = obj.assignments.filter(is_current=True).count()
         if count > 0:
             url = reverse('admin:trueAlign_shiftassignment_changelist')
             return format_html(
@@ -169,8 +169,8 @@ class ShiftMasterAdmin(admin.ModelAdmin):
         """Optimize queryset with annotations."""
         return super().get_queryset(request).annotate(
             active_assignments_count=Count(
-                'shiftassignment',
-                filter=Q(shiftassignment__is_current=True)
+                'assignments',
+                filter=Q(assignments__is_current=True)
             )
         )
 
@@ -516,9 +516,9 @@ class ActiveShiftFilter(admin.SimpleListFilter):
         elif self.value() == 'inactive':
             return queryset.filter(is_active=False)
         elif self.value() == 'with_assignments':
-            return queryset.filter(shiftassignment__isnull=False).distinct()
+            return queryset.filter(assignments__isnull=False).distinct()
         elif self.value() == 'without_assignments':
-            return queryset.filter(shiftassignment__isnull=True)
+            return queryset.filter(assignments__isnull=True)
         return queryset
 
 

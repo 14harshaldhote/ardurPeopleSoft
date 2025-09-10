@@ -1,0 +1,435 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Attendance Calendar - TrueAlign{% endblock %}
+
+{% block extra_css %}
+<style>
+    .calendar-day {
+        transition: all 0.2s ease-in-out;
+    }
+    .calendar-day:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    .present-day {
+        background: linear-gradient(135deg, #10b981, #059669);
+    }
+    .absent-day {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+    }
+    .late-day {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+    }
+    .leave-day {
+        background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    }
+    .weekend-day {
+        background: linear-gradient(135deg, #6b7280, #4b5563);
+    }
+    .today-day {
+        border: 3px solid #3b82f6;
+        animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8" x-data="attendanceCalendar()">
+    <!-- Header Section -->
+    <div class="max-w-7xl mx-auto mb-8">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
+                        <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3a1 1 0 011-1h6a1 1 0 011 1v4m-6 4h12M7 14h10M8 18h8"></path>
+                        </svg>
+                        Attendance Calendar
+                    </h1>
+                    <p class="text-gray-600">View your automatically tracked attendance history and patterns</p>
+                </div>
+
+                <!-- Navigation Controls -->
+                <div class="flex flex-wrap items-center gap-4">
+                    <div class="flex items-center bg-gray-100 rounded-lg p-1">
+                        <a href="{% url 'attendance:calendar_month' prev_month.year prev_month.month %}"
+                           class="p-2 hover:bg-white rounded-md transition-colors duration-200">
+                            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                            </svg>
+                        </a>
+                        <div class="px-4 py-2 font-semibold text-gray-900" x-text="currentMonth">
+                            {{ current_month|date:"F Y" }}
+                        </div>
+                        <a href="{% url 'attendance:calendar_month' next_month.year next_month.month %}"
+                           class="p-2 hover:bg-white rounded-md transition-colors duration-200">
+                            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </a>
+                    </div>
+
+                    <div class="flex gap-2">
+                        <a href="{% url 'attendance:dashboard' %}"
+                           class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2 2z"></path>
+                            </svg>
+                            Dashboard
+                        </a>
+                        <button @click="showLegend = !showLegend"
+                                class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors duration-200">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Legend
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Legend -->
+    <div x-show="showLegend" x-transition class="max-w-7xl mx-auto mb-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Status Legend</h3>
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-6 h-6 rounded-full present-day"></div>
+                    <span class="text-sm font-medium">Present</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="w-6 h-6 rounded-full absent-day"></div>
+                    <span class="text-sm font-medium">Absent</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="w-6 h-6 rounded-full late-day"></div>
+                    <span class="text-sm font-medium">Late</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="w-6 h-6 rounded-full leave-day"></div>
+                    <span class="text-sm font-medium">On Leave</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="w-6 h-6 rounded-full weekend-day"></div>
+                    <span class="text-sm font-medium">Weekend</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monthly Stats -->
+    <div class="max-w-7xl mx-auto mb-8">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="bg-gradient-to-r from-green-400 to-green-600 rounded-xl p-6 text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-2xl font-bold">{{ monthly_stats.present_days }}</div>
+                        <div class="text-green-100">Present Days</div>
+                    </div>
+                    <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-r from-red-400 to-red-600 rounded-xl p-6 text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-2xl font-bold">{{ monthly_stats.absent_days }}</div>
+                        <div class="text-red-100">Absent Days</div>
+                    </div>
+                    <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-xl p-6 text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-2xl font-bold">{{ monthly_stats.late_days }}</div>
+                        <div class="text-yellow-100">Late Days</div>
+                    </div>
+                    <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-r from-blue-400 to-blue-600 rounded-xl p-6 text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-2xl font-bold">{{ monthly_stats.attendance_rate|floatformat:1 }}%</div>
+                        <div class="text-blue-100">Attendance Rate</div>
+                    </div>
+                    <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calendar -->
+    <div class="max-w-7xl mx-auto">
+        <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+            <!-- Calendar Header -->
+            <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                <div class="grid grid-cols-7 gap-1">
+                    {% for day in weekdays %}
+                    <div class="text-center py-2">
+                        <span class="text-sm font-semibold text-gray-700">{{ day }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Calendar Body -->
+            <div class="p-6">
+                <div class="grid grid-cols-7 gap-2">
+                    {% for week in calendar_weeks %}
+                        {% for day in week %}
+                        <div class="relative">
+                            {% if day.date %}
+                            <div class="calendar-day relative h-24 p-2 rounded-xl border-2 border-gray-100 cursor-pointer
+                                       {% if day.is_today %}today-day{% endif %}
+                                       {% if day.attendance %}
+                                           {% if day.attendance.status == 'present' %}present-day text-white
+                                           {% elif day.attendance.status == 'absent' %}absent-day text-white
+                                           {% elif day.attendance.status == 'late' %}late-day text-white
+                                           {% elif day.attendance.status == 'on_leave' %}leave-day text-white
+                                           {% endif %}
+                                       {% elif day.is_weekend %}weekend-day text-white
+                                       {% else %}bg-gray-50 hover:bg-gray-100{% endif %}"
+                                 @click="showDayDetails({{ day.date.day }}, '{{ day.date|date:"Y-m-d" }}', {{ day.attendance|yesno:"true,false" }})"
+                                 :class="selectedDay === {{ day.date.day }} ? 'ring-4 ring-blue-500 ring-opacity-50' : ''">
+
+                                <div class="flex justify-between items-start h-full">
+                                    <span class="text-sm font-medium">{{ day.date.day }}</span>
+                                    {% if day.attendance %}
+                                    <div class="text-xs opacity-90">
+                                        {% if day.attendance.actual_check_in %}
+                                        <div>{{ day.attendance.actual_check_in|time:"H:i" }}</div>
+                                        {% endif %}
+                                        {% if day.attendance.actual_check_out %}
+                                        <div>{{ day.attendance.actual_check_out|time:"H:i" }}</div>
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+
+                                {% if day.attendance and day.attendance.total_hours %}
+                                <div class="absolute bottom-1 left-1 right-1 text-xs opacity-90 text-center">
+                                    {{ day.attendance.total_hours|floatformat:1 }}h
+                                </div>
+                                {% endif %}
+
+                                {% if day.has_regularization %}
+                                <div class="absolute top-1 right-1">
+                                    <div class="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% else %}
+                            <div class="h-24 p-2 rounded-xl border-2 border-transparent"></div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Day Details Modal -->
+    <div x-show="showModal" x-cloak class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click.self="showModal = false">
+        <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full mx-4 transform transition-all"
+             x-show="showModal"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100">
+
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between p-6 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900" x-text="modalTitle"></h3>
+                <button @click="showModal = false" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6" x-html="modalContent">
+                <!-- Dynamic content will be inserted here -->
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="flex items-center justify-end gap-4 p-6 border-t border-gray-200">
+                <button @click="showModal = false"
+                        class="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors">
+                    Close
+                </button>
+                <template x-if="selectedAttendance">
+                    <a :href="'/attendance/request-regularization/' + selectedAttendance.id + '/'"
+                       class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                        </svg>
+                        Request Regularization
+                    </a>
+                </template>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function attendanceCalendar() {
+    return {
+        currentMonth: '{{ current_month|date:"F Y" }}',
+        showLegend: false,
+        showModal: false,
+        selectedDay: null,
+        selectedAttendance: null,
+        modalTitle: '',
+        modalContent: '',
+
+        showDayDetails(day, date, hasAttendance) {
+            this.selectedDay = day;
+            this.modalTitle = `Attendance Details - ${new Date(date).toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            })}`;
+
+            if (hasAttendance) {
+                this.loadAttendanceDetails(date);
+            } else {
+                this.modalContent = `
+                    <div class="text-center py-8">
+                        <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3a1 1 0 011-1h6a1 1 0 011 1v4m-6 4h12M7 14h10M8 18h8"></path>
+                        </svg>
+                        <h4 class="text-lg font-medium text-gray-900 mb-2">No Attendance Record</h4>
+                        <p class="text-gray-600">No attendance data available for this date.</p>
+                    </div>
+                `;
+            }
+
+            this.showModal = true;
+        },
+
+        async loadAttendanceDetails(date) {
+            try {
+                const response = await fetch(`{% url 'attendance_api:api_attendance_data' %}?date=${date}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    this.selectedAttendance = data.attendance;
+                    this.renderAttendanceDetails(data.attendance);
+                } else {
+                    this.modalContent = `
+                        <div class="text-center py-8">
+                            <svg class="w-16 h-16 text-red-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <h4 class="text-lg font-medium text-gray-900 mb-2">Error Loading Data</h4>
+                            <p class="text-gray-600">Unable to load attendance details.</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading attendance details:', error);
+                this.modalContent = `
+                    <div class="text-center py-8">
+                        <svg class="w-16 h-16 text-red-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <h4 class="text-lg font-medium text-gray-900 mb-2">Connection Error</h4>
+                        <p class="text-gray-600">Unable to connect to the server.</p>
+                    </div>
+                `;
+            }
+        },
+
+        renderAttendanceDetails(attendance) {
+            const statusColors = {
+                'present': 'bg-green-100 text-green-800',
+                'absent': 'bg-red-100 text-red-800',
+                'late': 'bg-yellow-100 text-yellow-800',
+                'on_leave': 'bg-purple-100 text-purple-800'
+            };
+
+            this.modalContent = `
+                <div class="space-y-6">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-full flex items-center justify-center ${statusColors[attendance.status] || 'bg-gray-100 text-gray-800'}">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                ${attendance.status === 'present' ?
+                                    '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>' :
+                                    '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>'
+                                }
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-semibold text-gray-900">${attendance.status_display}</h4>
+                            <p class="text-gray-600">${attendance.date}</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <div class="text-sm text-gray-600 mb-1">Check In</div>
+                            <div class="text-lg font-medium">${attendance.actual_check_in || 'Not recorded'}</div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <div class="text-sm text-gray-600 mb-1">Check Out</div>
+                            <div class="text-lg font-medium">${attendance.actual_check_out || 'Not recorded'}</div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <div class="text-sm text-gray-600 mb-1">Total Hours</div>
+                            <div class="text-lg font-medium">${attendance.total_hours || '0'} hours</div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <div class="text-sm text-gray-600 mb-1">Break Duration</div>
+                            <div class="text-lg font-medium">${attendance.break_duration || '0'} minutes</div>
+                        </div>
+                    </div>
+
+                    ${attendance.location ? `
+                        <div class="bg-blue-50 rounded-lg p-4">
+                            <div class="text-sm text-blue-600 mb-1">Location</div>
+                            <div class="text-gray-900">${attendance.location}</div>
+                        </div>
+                    ` : ''}
+
+                    ${attendance.notes ? `
+                        <div class="bg-yellow-50 rounded-lg p-4">
+                            <div class="text-sm text-yellow-600 mb-1">Notes</div>
+                            <div class="text-gray-900">${attendance.notes}</div>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+    }
+}
+</script>
+
+{% endblock %}

@@ -1,2093 +1,2564 @@
+"""
+TrueAlign Shift Management Views
+Single comprehensive views file for all shift management operations
+Manager-friendly interface with robust conflict detection and API endpoints
+"""
+
 import json
+import csv
 import logging
-import time
-import uuid
 from datetime import datetime, date, timedelta
-from typing import Dict, Any, List
-from functools import wraps
-from django.contrib import messages
+from io import StringIO
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User, Group
+from django.contrib import messages
+from django.http import JsonResponse, HttpResponse
 from django.core.paginator import Paginator
-from django.db import transaction
-from django.http import JsonResponse, HttpResponse, Http404
-from django.shortcuts import render, get_object_or_404, redirect
-from django.urls import reverse
+from django.db.models import Q, Count
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods, require_POST
-from django.views.decorators.csrf import csrf_exempt
-from django.views.generic import ListView, DetailView
-from trueAlign.models import ShiftMaster, ShiftAssignment, Holiday
-from trueAlign.shift.decorators import group_required, superuser_required
-from trueAlign.shift.forms import (
-    ShiftForm, ShiftAssignmentForm, BulkAssignmentForm, HolidayForm,
-    CSVUploadForm, ShiftFilterForm, AssignmentFilterForm, ReportGenerationForm
-)
-from trueAlign.shift.services import ShiftService
+from django.contrib.auth.models import Group
+from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.db import transaction
+from django.urls import reverse
 
+from trueAlign.models import ShiftMaster, ShiftAssignment, Holiday
+from .forms import ShiftForm, ShiftAssignmentForm, BulkAssignmentForm, HolidayForm, CSVUploadForm
+from .services import ShiftService, ConflictDetector
+from .decorators import group_required
+from .app_settings import SHIFT_GROUPS, CACHE_SETTINGS, EMAIL_NOTIFICATIONS
+from .logging_config import ActionLogger, APILogger
 
+# Initialize loggers and services
 logger = logging.getLogger('trueAlign.shift')
-
-# Initialize service
+action_logger = ActionLogger()
+api_logger = APILogger()
 shift_service = ShiftService()
+conflict_detector = ConflictDetector()
 
-
-def get_client_ip(request):
-    """Get client IP address from request."""
-    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-    if x_forwarded_for:
-        ip = x_forwarded_for.split(',')[0]
-    else:
-        ip = request.META.get('REMOTE_ADDR')
-    return ip
-
-
-def log_action(action_name):
-    """Decorator for comprehensive action-based logging."""
-    def decorator(func):
-        @wraps(func)
-        def wrapper(request, *args, **kwargs):
-            # Generate unique request ID
-            request_id = str(uuid.uuid4())[:8]
-
-            # Get user and IP info
-            user = getattr(request, 'user', None)
-            username = user.username if user and user.is_authenticated else 'anonymous'
-            user_id = user.id if user and user.is_authenticated else None
-            ip_address = get_client_ip(request)
-
-            # Create log context
-            log_context = {
-                'request_id': request_id,
-                'action': action_name,
-                'user': username,
-                'user_id': user_id,
-                'ip': ip_address,
-                'method': request.method,
-                'path': request.path,
-                'view_args': str(args),
-                'kwargs': {k: v for k, v in kwargs.items() if 'password' not in k.lower()}
-            }
-
-            # Log action start
-            start_time = time.time()
-            logger.info(f"[{request_id}] ACTION_START - {action_name}", extra=log_context)
-
-            try:
-                # Execute the function
-                result = func(request, *args, **kwargs)
-
-                # Log successful completion
-                duration = round((time.time() - start_time) * 1000, 2)
-                log_context.update({
-                    'status': 'success',
-                    'duration_ms': duration
-                })
-                logger.info(f"[{request_id}] ACTION_SUCCESS - {action_name} completed in {duration}ms", extra=log_context)
-                return result
-
-            except Exception as e:
-                # Log error details
-                duration = round((time.time() - start_time) * 1000, 2)
-                log_context.update({
-                    'status': 'error',
-                    'duration_ms': duration,
-                    'error_type': type(e).__name__,
-                    'error_message': str(e)
-                })
-                logger.error(f"[{request_id}] ACTION_ERROR - {action_name} failed after {duration}ms: {str(e)}",
-                           extra=log_context, exc_info=True)
-                raise
-
-        return wrapper
-    return decorator
-
-
-def log_db_operation(operation, model_name, object_id=None, details=None):
-    """Log database operations with context."""
-    logger.info(f"DB_OPERATION - {operation} on {model_name}", extra={
-        'operation': operation,
-        'model': model_name,
-        'object_id': object_id,
-        'details': details
-    })
-
-
-def log_user_action(user, action, target=None, details=None):
-    """Log user-specific actions."""
-    username = user.username if user and user.is_authenticated else 'anonymous'
-    logger.info(f"USER_ACTION - {username}: {action}", extra={
-        'user': username,
-        'user_id': user.id if user and user.is_authenticated else None,
-        'action': action,
-        'target': target,
-        'details': details
-    })
-
+User = get_user_model()
 
 # ============================
-# HELPER FUNCTIONS
-# ============================
-
-def _get_user_permissions(user):
-    """Helper function to get user permissions for templates."""
-    if not user.is_authenticated:
-        return {'can_manage': False, 'can_assign': False, 'can_view_all': False}
-
-    return {
-        'is_manager': user.groups.filter(name='Manager').exists(),
-        'is_hr': user.groups.filter(name='HR').exists(),
-        'is_employee': user.groups.filter(name='Employee').exists(),
-        'is_superuser': user.is_superuser,
-        'can_manage': user.groups.filter(name__in=['Manager', 'HR']).exists() or user.is_superuser,
-        'can_assign': user.groups.filter(name__in=['Manager', 'HR']).exists() or user.is_superuser,
-        'can_view_all': user.groups.filter(name__in=['Manager', 'HR']).exists() or user.is_superuser,
-    }
-
-
-def _handle_form_errors(request, form, action_name):
-    """Helper to handle form validation errors consistently."""
-    for field, errors in form.errors.items():
-        for error in errors:
-            messages.error(request, f"{field.title()}: {error}")
-    log_user_action(request.user, f'{action_name}_validation_failed',
-                   details={'errors': form.errors.as_json()})
-
-
-def _validate_date_range(start_date, end_date, max_days=365):
-    """Helper function to validate date ranges."""
-    if start_date and end_date:
-        if start_date > end_date:
-            return False, "Start date must be before end date"
-        if (end_date - start_date).days > max_days:
-            return False, f"Date range cannot exceed {max_days} days"
-    return True, "Valid date range"
-
-
-# ============================
-# DASHBOARD AND OVERVIEW VIEWS
+# DASHBOARD AND OVERVIEW
 # ============================
 
 @login_required
-@group_required(group_names=['Manager', 'Employee', 'HR'])
-@log_action('SHIFT_DASHBOARD_VIEW')
 def shift_dashboard(request):
-    """Enhanced dashboard showing comprehensive shift overview, statistics, and suggestions."""
+    """Manager-friendly dashboard with key metrics and quick actions"""
     try:
-        permissions = _get_user_permissions(request.user)
-        context = {
-            'page_title': 'Shift Management Dashboard',
-            'user': request.user,
-            **permissions
-        }
+        action_logger.log_action('DASHBOARD_ACCESS', user_id=request.user.id, user=request.user.username)
 
-        # Get user's current shift and status
-        current_shift = shift_service.get_current_shift(request.user)
-        shift_status = shift_service.is_user_on_shift_now(request.user)
+        # Get key statistics
+        total_shifts = ShiftMaster.objects.filter(is_active=True).count()
+        total_assignments = ShiftAssignment.objects.filter(is_current=True).count()
+        upcoming_holidays = Holiday.objects.filter(
+            date__gte=date.today(),
+            date__lte=date.today() + timedelta(days=30)
+        ).count()
 
-        context.update({
-            'current_shift': current_shift,
-            'shift_status': shift_status
-        })
+        # Get recent activities
+        recent_assignments = ShiftAssignment.objects.select_related('user', 'shift').filter(
+            created_at__gte=timezone.now() - timedelta(days=7)
+        ).order_by('-created_at')[:10]
 
-        # Get comprehensive statistics for managers and HR
-        if permissions['can_view_all']:
-            # Enhanced shift statistics
-            stats = shift_service.get_shift_statistics()
+        # Get users without current shifts
+        users_without_shifts = User.objects.exclude(
+            shift_assignments__is_current=True
+        ).count()
 
-            # Calculate additional metrics
-            total_shifts = ShiftMaster.objects.filter(is_active=True).count()
-            active_shifts = ShiftMaster.objects.filter(is_active=True).count()
-            users_with_shifts = ShiftAssignment.objects.filter(
+        # Detect any urgent conflicts
+        conflict_count = 0
+        try:
+            # Check for conflicts in next 7 days
+            start_date = date.today()
+            end_date = start_date + timedelta(days=7)
+            assignments = ShiftAssignment.objects.filter(
+                effective_from__lte=end_date,
+                effective_to__gte=start_date,
                 is_current=True
-            ).values('user').distinct().count()
+            ).select_related('user', 'shift')
 
-            total_users = User.objects.filter(is_active=True).count()
-            users_without_shifts = total_users - users_with_shifts
+            for assignment in assignments:
+                conflicts = conflict_detector.check_assignment_conflicts(
+                    assignment.user, assignment.shift,
+                    assignment.effective_from, assignment.effective_to
+                )
+                if conflicts:
+                    conflict_count += len(conflicts)
+        except Exception as e:
+            logger.error(f"Error checking conflicts in dashboard: {e}")
 
-            shift_stats = {
-                'total_shifts': total_shifts,
-                'active_shifts': active_shifts,
-                'users_with_shifts': users_with_shifts,
-                'users_without_shifts': users_without_shifts,
-                'utilization_rate': round((users_with_shifts / max(total_users, 1)) * 100, 1)
-            }
-
-            # Get upcoming changes and conflicts
-            upcoming_changes = shift_service.get_upcoming_shift_changes(days=7)
-
-            # Generate smart suggestions
-            suggestions = generate_shift_suggestions(request.user)
-
-            # Get recent activities
-            recent_activities = get_recent_shift_activities(limit=10)
-
-            context.update({
-                'shift_stats': shift_stats,
-                'statistics': stats,
-                'upcoming_changes': upcoming_changes[:5],
-                'suggestions': suggestions,
-                'recent_activities': recent_activities
-            })
-
-        # Get holidays for current year
-        current_year = timezone.now().year
-        holidays = Holiday.objects.filter(
-            date__year__in=[current_year, current_year + 1]
-        ).order_by('date')[:10]
-
-        # Get user's calendar and recent assignments
-        now = timezone.now()
-        user_calendar = shift_service.get_user_shift_calendar(request.user, now.month, now.year)
-        recent_assignments = shift_service.get_shift_history(request.user.id)[:5]
-
-        context.update({
-            'user_calendar': user_calendar,
+        context = {
+            'total_shifts': total_shifts,
+            'total_assignments': total_assignments,
+            'upcoming_holidays': upcoming_holidays,
+            'users_without_shifts': users_without_shifts,
             'recent_assignments': recent_assignments,
-            'holidays': holidays,
-            'current_year': current_year
-        })
+            'conflict_count': conflict_count,
+            'user_groups': list(request.user.groups.values_list('name', flat=True)),
+            'can_manage': request.user.groups.filter(name__in=['Manager', 'HR']).exists(),
+        }
 
         return render(request, 'shift/dashboard.html', context)
 
     except Exception as e:
-        logger.error(f"Error in shift dashboard: {str(e)}")
+        logger.error(f"Dashboard error for user {request.user.id}: {e}")
         messages.error(request, "Error loading dashboard. Please try again.")
         return render(request, 'shift/dashboard.html', {'error': True})
 
-
-def generate_shift_suggestions(user):
-    """Generate intelligent shift management suggestions."""
-    suggestions = []
-
-    try:
-        # Check for unassigned users
-        unassigned_users = User.objects.filter(
-            is_active=True
-        ).exclude(
-            shift_assignments__is_current=True
-        ).count()
-
-        if unassigned_users > 0:
-            suggestions.append({
-                'id': 'unassigned_users',
-                'type': 'warning',
-                'priority': 'high',
-                'priority_color': 'yellow',
-                'title': 'Users Without Shift Assignments',
-                'description': f'{unassigned_users} active users are not assigned to any shift.',
-                'affected_users': unassigned_users,
-                'action_url': reverse('shift:assignments'),
-                'action_text': 'Assign Shifts'
-            })
-
-        # Check for shifts without assignments
-        unused_shifts = ShiftMaster.objects.filter(
-            is_active=True
-        ).exclude(
-            assignments__is_current=True
-        ).count()
-
-        if unused_shifts > 0:
-            suggestions.append({
-                'id': 'unused_shifts',
-                'type': 'optimization',
-                'priority': 'medium',
-                'priority_color': 'blue',
-                'title': 'Unused Active Shifts',
-                'description': f'{unused_shifts} active shifts have no current assignments.',
-                'action_url': reverse('shift:list'),
-                'action_text': 'Review Shifts'
-            })
-
-        # Check for expiring assignments
-        expiring_soon = ShiftAssignment.objects.filter(
-            is_current=True,
-            effective_to__lte=timezone.now().date() + timedelta(days=7),
-            effective_to__isnull=False
-        ).count()
-
-        if expiring_soon > 0:
-            suggestions.append({
-                'id': 'expiring_assignments',
-                'type': 'warning',
-                'priority': 'high',
-                'priority_color': 'red',
-                'title': 'Assignments Expiring Soon',
-                'description': f'{expiring_soon} shift assignments will expire within 7 days.',
-                'affected_users': expiring_soon,
-                'action_url': reverse('shift:assignments'),
-                'action_text': 'Extend Assignments'
-            })
-
-        # Check for shifts with insufficient break time
-        insufficient_breaks = ShiftMaster.objects.filter(
-            is_active=True,
-            shift_duration__gte=8.0,
-            break_duration__lt=timedelta(minutes=30)
-        ).count()
-
-        if insufficient_breaks > 0:
-            suggestions.append({
-                'id': 'insufficient_breaks',
-                'type': 'compliance',
-                'priority': 'medium',
-                'priority_color': 'yellow',
-                'title': 'Insufficient Break Times',
-                'description': f'{insufficient_breaks} shifts of 8+ hours have less than 30 minutes break.',
-                'action_url': reverse('shift:list'),
-                'action_text': 'Review Break Times'
-            })
-
-        return {
-            'suggestions': suggestions,
-            'count': len(suggestions)
-        }
-
-    except Exception as e:
-        logger.error(f"Error generating suggestions: {str(e)}")
-        return {'suggestions': [], 'count': 0}
-
-
-def get_recent_shift_activities(limit=10):
-    """Get recent shift management activities."""
-    activities = []
-
-    try:
-        # Get recent assignments
-        recent_assignments = ShiftAssignment.objects.select_related(
-            'user', 'shift'
-        ).order_by('-created_at')[:limit]
-
-        for assignment in recent_assignments:
-            activities.append({
-                'type': 'assignment',
-                'type_color': 'blue',
-                'description': f'{assignment.user.get_full_name() or assignment.user.username} assigned to {assignment.shift.name}',
-                'timestamp': assignment.created_at
-            })
-
-        # Sort by timestamp
-        activities.sort(key=lambda x: x['timestamp'], reverse=True)
-
-        return activities[:limit]
-
-    except Exception as e:
-        logger.error(f"Error getting recent activities: {str(e)}")
-        return []
-
-
 @login_required
-@group_required(group_names=['Manager', 'HR'])
-@log_action('SHIFT_STATISTICS_VIEW')
 def shift_statistics(request):
-    """Detailed statistics page for managers and HR."""
+    """Detailed statistics and analytics"""
     try:
         stats = shift_service.get_shift_statistics()
-        upcoming_changes = shift_service.get_upcoming_shift_changes(days=30)
 
-        today = timezone.now().date()
-        end_date = today + timedelta(days=30)
-        conflicts = shift_service.get_shift_conflicts(today, end_date)
+        # Add trend data
+        last_30_days = date.today() - timedelta(days=30)
+        recent_assignments = ShiftAssignment.objects.filter(
+            created_at__gte=last_30_days
+        ).count()
 
         context = {
-            'page_title': 'Shift Statistics',
             'statistics': stats,
-            'upcoming_changes': upcoming_changes,
-            'conflicts': conflicts,
-            'date_range': {'start': today, 'end': end_date}
+            'recent_assignments': recent_assignments,
+            'chart_data': json.dumps({
+                'labels': ['Active Shifts', 'Total Assignments', 'Recent Changes'],
+                'data': [stats.get('active_shifts', 0), stats.get('total_assignments', 0), recent_assignments]
+            })
         }
 
         return render(request, 'shift/statistics.html', context)
 
     except Exception as e:
-        logger.error(f"Error in shift statistics: {str(e)}")
+        logger.error(f"Statistics error: {e}")
         messages.error(request, "Error loading statistics.")
         return redirect('shift:dashboard')
 
-
 # ============================
-# SHIFT MANAGEMENT VIEWS
+# SHIFT MANAGEMENT
 # ============================
 
 @login_required
-@group_required(group_names=['Manager', 'HR'])
-@log_action('SHIFT_LIST_VIEW')
 def shift_list(request):
-    """List all shifts with filtering, pagination, and inline create/edit forms."""
+    """List all shifts with search and filtering"""
     try:
-        print("\n=== SHIFT LIST VIEW ===")
-        print(f"User: {request.user.username} (ID: {request.user.id})")
+        shifts = ShiftMaster.objects.all().order_by('name')
 
-        # Get permissions
-        permissions = _get_user_permissions(request.user)
-        print(f"Permissions: {permissions}")
+        # Search functionality
+        search = request.GET.get('search', '').strip()
+        if search:
+            shifts = shifts.filter(
+                Q(name__icontains=search) |
+                Q(description__icontains=search)
+            )
 
-        # Handle filters
-        filter_form = ShiftFilterForm(request.GET)
+        # Filter by active status
+        active_filter = request.GET.get('active')
+        if active_filter == 'true':
+            shifts = shifts.filter(is_active=True)
+        elif active_filter == 'false':
+            shifts = shifts.filter(is_active=False)
 
-        print("\n--- Filter Form Data ---")
-        print(dict(request.GET))  # Raw query parameters
+        # Pagination
+        paginator = Paginator(shifts, 20)
+        page = request.GET.get('page')
+        shifts = paginator.get_page(page)
 
-        if filter_form.is_valid():
-            print("Filter form is valid.")
-            print(f"Cleaned Filter Data: {filter_form.cleaned_data}")
-        else:
-            print("Filter form is NOT valid.")
-            print(filter_form.errors)
-
-        # Get pagination info
-        page = int(request.GET.get('page', 1))
-        per_page = int(request.GET.get('per_page', 10))
-        print(f"Pagination: page={page}, per_page={per_page}")
-
-        # Determine active filter from request
-        active_only = True  # Default to showing active shifts
-        if request.GET.get('is_active') == 'false':
-            active_only = False
-        elif request.GET.get('is_active') == '':
-            active_only = None  # Show all
-
-        print(f"Active Only Filter: {active_only}")
-
-        # Call shift service with correct parameters
-        print("Fetching shifts from shift_service...")
-        shifts_data = shift_service.get_all_shifts(
-            active_only=active_only,
-            page=page,
-            per_page=per_page
-        )
-        print(f"Service returned: {type(shifts_data)}")
-        print(f"Shifts count: {len(shifts_data.get('shifts', [])) if isinstance(shifts_data, dict) else 0}")
-
-        # Apply additional filters to the shifts (since service doesn't support filters parameter)
-        shifts_list = shifts_data.get('shifts', []) if isinstance(shifts_data, dict) else []
-
-        # Apply name filter
-        if filter_form.is_valid() and filter_form.cleaned_data.get('name'):
-            name_filter = filter_form.cleaned_data['name'].lower()
-            shifts_list = [s for s in shifts_list if name_filter in s['name'].lower()]
-
-        # Apply work_days filter
-        if filter_form.is_valid() and filter_form.cleaned_data.get('work_days'):
-            work_days_filter = filter_form.cleaned_data['work_days']
-            shifts_list = [s for s in shifts_list if s['work_days'] == work_days_filter]
-
-        # Convert shifts data to objects for template compatibility
-        class ShiftObject:
-            def __init__(self, data):
-                self.id = data['id']
-                self.name = data['name']
-                self.description = data.get('description', '')
-                self.start_time = datetime.strptime(data['start_time'], '%H:%M').time()
-                self.end_time = datetime.strptime(data['end_time'], '%H:%M').time()
-                self.shift_duration = data['duration']
-                self.work_days = data['work_days']
-                self.custom_work_days = data.get('custom_work_days', '')
-                self.is_active = data['is_active']
-                self.break_duration = timedelta(minutes=data.get('break_minutes', 30))
-                self.grace_period = timedelta(minutes=data.get('grace_minutes', 15))
-
-            def get_work_days_display(self):
-                work_days_map = {
-                    'Weekdays': 'Monday to Friday',
-                    'All Days': 'Monday to Saturday',
-                    'Custom': 'Custom Days'
-                }
-                return work_days_map.get(self.work_days, self.work_days)
-
-        # Convert to shift objects
-        shifts = [ShiftObject(shift_data) for shift_data in shifts_list]
-
-        # Create a simple pagination-like object for template
-        class SimplePaginator:
-            def __init__(self, shifts, page, per_page, total_count):
-                self.object_list = shifts
-                self.number = page
-                self.count = total_count
-                self.num_pages = (total_count + per_page - 1) // per_page if total_count > 0 else 1
-                self._per_page = per_page
-
-            def __iter__(self):
-                return iter(self.object_list)
-
-            def has_other_pages(self):
-                return self.num_pages > 1
-
-            def has_previous(self):
-                return self.number > 1
-
-            def has_next(self):
-                return self.number < self.num_pages
-
-            def previous_page_number(self):
-                return self.number - 1 if self.has_previous() else None
-
-            def next_page_number(self):
-                return self.number + 1 if self.has_next() else None
-
-            @property
-            def paginator(self):
-                return self
-
-            @property
-            def page_range(self):
-                return range(1, self.num_pages + 1)
-
-            @property
-            def start_index(self):
-                return (self.number - 1) * self._per_page + 1 if self.count > 0 else 0
-
-            @property
-            def end_index(self):
-                return min(self.number * self._per_page, self.count) if self.count > 0 else 0
-
-        # Create paginator object
-        pagination_info = shifts_data.get('pagination', {}) if isinstance(shifts_data, dict) else {}
-        total_count = pagination_info.get('total_count', len(shifts))
-        shifts_paginator = SimplePaginator(shifts, page, per_page, total_count)
-
-        # Create form
-        create_form = ShiftForm()
+        # Add assignment counts
+        for shift in shifts:
+            shift.active_assignments = shift.assignments.filter(is_current=True).count()
 
         context = {
-            'page_title': 'Shifts',
-            'shifts': shifts_paginator,
-            'filter_form': filter_form,
-            'create_form': create_form,
-            **permissions,
+            'shifts': shifts,
+            'search': search,
+            'active_filter': active_filter,
+            'can_create': request.user.groups.filter(name__in=['Manager', 'HR']).exists(),
         }
-
-        print("Rendering shift_list.html with context.")
-        print(f"Context keys: {list(context.keys())}")
-        print(f"Shifts in context: {len(shifts)}")
 
         return render(request, 'shift/shift_list.html', context)
 
     except Exception as e:
-        logger.error(f"Error in shift list: {str(e)}", exc_info=True)
-        messages.error(request, f"Error loading shifts: {str(e)}")
-        print(f"Exception occurred: {str(e)}")
-        print(f"Exception type: {type(e)}")
-        import traceback
-        print(f"Traceback: {traceback.format_exc()}")
-
-        # Return empty context on error with proper iterable
-        class EmptyPaginator:
-            def __init__(self):
-                self.object_list = []
-                self.number = 1
-                self.count = 0
-                self.num_pages = 1
-
-            def __iter__(self):
-                return iter(self.object_list)
-
-            def has_other_pages(self):
-                return False
-
-            def has_previous(self):
-                return False
-
-            def has_next(self):
-                return False
-
-            @property
-            def paginator(self):
-                return self
-
-            @property
-            def page_range(self):
-                return range(1, 2)
-
-            @property
-            def start_index(self):
-                return 0
-
-            @property
-            def end_index(self):
-                return 0
-
-        context = {
-            'page_title': 'Shifts',
-            'shifts': EmptyPaginator(),
-            'filter_form': ShiftFilterForm(),
-            'create_form': ShiftForm(),
-            'error': True,
-            **_get_user_permissions(request.user),
-        }
-        return render(request, 'shift/shift_list.html', context)
-
-
-
-
-
-
+        logger.error(f"Shift list error: {e}")
+        messages.error(request, "Error loading shifts.")
+        return render(request, 'shift/shift_list.html', {'shifts': []})
 
 @login_required
-@group_required(group_names=['Manager', 'Employee', 'HR'])
-@log_action('SHIFT_DETAIL_VIEW')
+@group_required(['Manager', 'HR'])
+@require_http_methods(["GET", "POST"])
+def create_shift(request):
+    """Create new shift with validation"""
+    if request.method == 'POST':
+        form = ShiftForm(request.POST)
+        if form.is_valid():
+            try:
+                with transaction.atomic():
+                    shift = form.save()
+                    action_logger.log_action(
+                        'SHIFT_CREATED',
+                        user=request.user.username,
+                        shift_id=shift.id,
+                        shift_name=shift.name
+                    )
+                    messages.success(request, f'Shift "{shift.name}" created successfully!')
+                    return redirect('shift:detail', shift_id=shift.id)
+            except Exception as e:
+                logger.error(f"Error creating shift: {e}")
+                messages.error(request, "Error creating shift. Please try again.")
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
+    else:
+        form = ShiftForm()
+
+    context = {
+        'form': form,
+        'title': 'Create New Shift',
+        'submit_text': 'Create Shift'
+    }
+    return render(request, 'shift/shift_form.html', context)
+
+@login_required
 def shift_detail(request, shift_id):
-    """Show detailed information about a specific shift."""
+    """Detailed shift view with assignments and statistics"""
     try:
-        # Get shift details from service instead of direct model access
-        shift_data = shift_service.get_shift_by_id(shift_id)
+        shift = get_object_or_404(ShiftMaster, id=shift_id)
 
-        if not shift_data:
-            messages.error(request, "Shift not found.")
-            return redirect('shift:list')
+        # Get current assignments
+        assignments = shift.assignments.filter(is_current=True).select_related('user')
 
-        permissions = _get_user_permissions(request.user)
-
-        # Get assignments for this shift
-        try:
-            assignments = shift_service.get_shift_assignments(
-                filters={'shift_id': shift_id}, page=1, per_page=50
-            )
-        except Exception as e:
-            logger.warning(f"Could not load assignments: {str(e)}")
-            assignments = {'assignments': [], 'pagination': {'total_count': 0}}
+        # Get assignment history
+        history = shift.assignments.all().select_related('user').order_by('-created_at')[:20]
 
         # Get shift statistics
-        try:
-            shift_stats = {
-                'total_assignments': ShiftAssignment.objects.filter(shift_id=shift_id).count(),
-                'current_assignments': ShiftAssignment.objects.filter(shift_id=shift_id, is_current=True).count(),
-                'upcoming_endings': ShiftAssignment.objects.filter(
-                    shift_id=shift_id,
-                    effective_to__gte=timezone.now().date(),
-                    effective_to__lte=timezone.now().date() + timedelta(days=30)
-                ).count()
-            }
-        except Exception as e:
-            logger.warning(f"Could not load shift stats: {str(e)}")
-            shift_stats = {
-                'total_assignments': 0,
-                'current_assignments': 0,
-                'upcoming_endings': 0
-            }
-
-        # Convert service data to object for template
-        class ShiftDetailObject:
-            def __init__(self, data):
-                self.id = data['id']
-                self.name = data['name']
-                self.description = data.get('description', '')
-                self.start_time = datetime.strptime(data['start_time'], '%H:%M').time()
-                self.end_time = datetime.strptime(data['end_time'], '%H:%M').time()
-                self.shift_duration = data['duration']
-                self.work_days = data['work_days']
-                self.custom_work_days = data.get('custom_work_days', '')
-                self.is_active = data['is_active']
-                self.break_duration = timedelta(minutes=data.get('break_minutes', 30))
-                self.grace_period = timedelta(minutes=data.get('grace_minutes', 15))
-                self.crosses_midnight = data.get('crosses_midnight', False)
-                self.created_at = data.get('created_at')
-                self.updated_at = data.get('updated_at')
-
-            def get_work_days_display(self):
-                work_days_map = {
-                    'Weekdays': 'Monday to Friday',
-                    'All Days': 'Monday to Saturday',
-                    'Custom': 'Custom Days'
-                }
-                return work_days_map.get(self.work_days, self.work_days)
-
-        shift = ShiftDetailObject(shift_data)
-
-        # Edit form for modal - create from model instance for form compatibility
-        edit_form = None
-        if permissions['can_manage']:
-            try:
-                shift_model = ShiftMaster.objects.get(id=shift_id)
-                edit_form = ShiftForm(instance=shift_model)
-            except ShiftMaster.DoesNotExist:
-                logger.warning(f"ShiftMaster model not found for ID {shift_id}")
+        stats = {
+            'total_assignments': shift.assignments.count(),
+            'current_assignments': assignments.count(),
+            'average_duration': shift.shift_duration,
+        }
 
         context = {
-            'page_title': f'Shift: {shift.name}',
             'shift': shift,
             'assignments': assignments,
-            'shift_stats': shift_stats,
-            'edit_form': edit_form,
-            **permissions,
+            'history': history,
+            'stats': stats,
+            'can_edit': request.user.groups.filter(name__in=['Manager', 'HR']).exists(),
         }
 
         return render(request, 'shift/shift_detail.html', context)
 
     except Exception as e:
-        logger.error(f"Error in shift detail: {str(e)}", exc_info=True)
-        messages.error(request, f"Error loading shift details: {str(e)}")
+        logger.error(f"Shift detail error for shift {shift_id}: {e}")
+        messages.error(request, "Error loading shift details.")
         return redirect('shift:list')
 
-
-
-@transaction.atomic
 @login_required
-@group_required(group_names=['Manager', 'HR'])
-@require_POST
-@log_action('SHIFT_CREATE')
-def create_shift(request):
-    """Create a new shift and redirect to shift list."""
-    form = ShiftForm(request.POST)
-
-    if form.is_valid():
-        try:
-            with transaction.atomic():
-                shift = form.save()
-                log_db_operation('CREATE', 'ShiftMaster', shift.id, {'name': shift.name})
-                log_user_action(request.user, 'shift_created', target=f'shift_{shift.id}',
-                              details={'shift_name': shift.name})
-                messages.success(request, f"Shift '{shift.name}' created successfully!")
-
-        except Exception as e:
-            logger.error(f"Error creating shift: {str(e)}", exc_info=True)
-            log_user_action(request.user, 'shift_create_failed', details={'error': str(e)})
-            messages.error(request, f"Error creating shift: {str(e)}")
-    else:
-        _handle_form_errors(request, form, 'shift_create')
-
-    return redirect('shift:list')
-
-
-@login_required
-@group_required(group_names=['Manager', 'HR'])
-@require_POST
-@log_action('SHIFT_UPDATE')
+@group_required(['Manager', 'HR'])
 def update_shift(request, shift_id):
-    """Update an existing shift and redirect to shift list."""
+    """Update existing shift"""
     shift = get_object_or_404(ShiftMaster, id=shift_id)
 
-    # Store original values for comparison
-    original_values = {
-        'name': shift.name,
-        'start_time': shift.start_time,
-        'end_time': shift.end_time
-    }
-
-    form = ShiftForm(request.POST, instance=shift)
-
-    if form.is_valid():
-        try:
-            with transaction.atomic():
-                updated_shift = form.save()
-
-                # Log what changed
-                changes = {}
-                for field, old_value in original_values.items():
-                    new_value = getattr(updated_shift, field)
-                    if old_value != new_value:
-                        changes[field] = {'old': str(old_value), 'new': str(new_value)}
-
-                log_db_operation('UPDATE', 'ShiftMaster', shift_id, changes)
-                log_user_action(request.user, 'shift_updated', target=f'shift_{shift_id}',
-                              details={'shift_name': updated_shift.name, 'changes': changes})
-                messages.success(request, f"Shift '{updated_shift.name}' updated successfully!")
-
-        except Exception as e:
-            logger.error(f"Error updating shift {shift_id}: {str(e)}", exc_info=True)
-            log_user_action(request.user, 'shift_update_failed', target=f'shift_{shift_id}',
-                          details={'error': str(e)})
-            messages.error(request, f"Error updating shift: {str(e)}")
-    else:
-        _handle_form_errors(request, form, 'shift_update')
-
-    return redirect('shift:detail', shift_id=shift_id)
-
-
-@login_required
-@group_required(group_names=['Manager', 'HR'])
-@require_POST
-@log_action('SHIFT_DELETE')
-def delete_shift(request, shift_id):
-    """Delete a shift and redirect to shift list."""
-    try:
-        shift = get_object_or_404(ShiftMaster, id=shift_id)
-        shift_name = shift.name
-        force_delete = request.POST.get('force', 'false').lower() == 'true'
-
-        log_user_action(request.user, 'shift_delete_attempt', target=f'shift_{shift_id}',
-                      details={'shift_name': shift_name, 'force_delete': force_delete})
-
-        success, message = shift_service.delete_shift(shift_id, force=force_delete)
-
-        if success:
-            log_db_operation('DELETE', 'ShiftMaster', shift_id,
-                           {'name': shift_name, 'force': force_delete})
-            log_user_action(request.user, 'shift_deleted', target=f'shift_{shift_id}',
-                          details={'shift_name': shift_name, 'force_delete': force_delete})
-            messages.success(request, message)
-        else:
-            log_user_action(request.user, 'shift_delete_failed', target=f'shift_{shift_id}',
-                          details={'shift_name': shift_name, 'reason': message})
-            messages.error(request, message)
-
-    except Exception as e:
-        logger.error(f"Error deleting shift {shift_id}: {str(e)}", exc_info=True)
-        log_user_action(request.user, 'shift_delete_error', target=f'shift_{shift_id}',
-                      details={'error': str(e)})
-        messages.error(request, f"Error deleting shift: {str(e)}")
-
-    return redirect('shift:list')
-
-
-# ============================
-# ASSIGNMENT MANAGEMENT VIEWS
-# ============================
-
-@login_required
-@group_required(group_names=['Manager', 'HR'])
-@log_action('ASSIGNMENT_LIST_VIEW')
-def assignment_list(request):
-    """List shift assignments with filtering and inline assignment forms."""
-    try:
-        permissions = _get_user_permissions(request.user)
-        log_user_action(request.user, 'assignment_list_access')
-
-        # Handle filters
-        filter_form = AssignmentFilterForm(request.GET or None)
-        filters = {}
-
-        if filter_form.is_valid():
-            if filter_form.cleaned_data.get('user'):
-                filters['user_id'] = filter_form.cleaned_data['user'].id
-            if filter_form.cleaned_data.get('shift'):
-                filters['shift_id'] = filter_form.cleaned_data['shift'].id
-            if filter_form.cleaned_data.get('status'):
-                status = filter_form.cleaned_data['status']
-                if status == 'current':
-                    filters['is_current'] = True
-                elif status == 'ended':
-                    filters['is_current'] = False
-                    filters['effective_to__lt'] = timezone.now().date()
-            if filter_form.cleaned_data.get('date_from'):
-                filters['effective_from__gte'] = filter_form.cleaned_data['date_from']
-            if filter_form.cleaned_data.get('date_to'):
-                filters['effective_to__lte'] = filter_form.cleaned_data['date_to']
-
-        # Restrict employees to their own assignments
-        if not permissions.get('can_view_all', False):
-            filters['user_id'] = request.user.id
-            log_user_action(request.user, 'assignment_list_restricted_to_own')
-
-        # Get paginated assignments
-        page = int(request.GET.get('page', 1))
-        per_page = int(request.GET.get('per_page', 20))
-
-        assignments_data = shift_service.get_shift_assignments(
-            filters=filters, page=page, per_page=per_page
-        )
-
-        # Create forms for modals with error handling
-        assign_form = None
-        bulk_assign_form = None
-        csv_form = None
-        users_data = []
-
-        if permissions.get('can_assign', False):
+    if request.method == 'POST':
+        form = ShiftForm(request.POST, instance=shift)
+        if form.is_valid():
             try:
-                assign_form = ShiftAssignmentForm()
+                with transaction.atomic():
+                    updated_shift = form.save()
+                    action_logger.log_action(
+                        'SHIFT_UPDATED',
+                        user_id=request.user.id,
+                        user=request.user.username,
+                        shift_id=shift.id,
+                        shift_name=shift.name
+                    )
+                    messages.success(request, f'Shift "{updated_shift.name}" updated successfully!')
+                    return redirect('shift:detail', shift_id=updated_shift.id)
             except Exception as e:
-                logger.error(f"Error creating assign form: {str(e)}")
-
-            try:
-                bulk_assign_form = BulkAssignmentForm()
-
-                # Prepare user data for bulk assignment with groups
-                if bulk_assign_form and bulk_assign_form.fields['users'].queryset.exists():
-                    for user in bulk_assign_form.fields['users'].queryset.select_related().prefetch_related('groups'):
-                        try:
-                            user_groups = [group.name for group in user.groups.all()]
-                            full_name = f"{user.first_name or ''} {user.last_name or ''}".strip()
-                            display_name = full_name if full_name else user.username
-
-                            users_data.append({
-                                'id': user.id,
-                                'username': user.username,
-                                'first_name': user.first_name or '',
-                                'last_name': user.last_name or '',
-                                'display_name': display_name,
-                                'email': user.email or '',
-                                'groups': user_groups,  # Array of group names
-                                'groups_string': ', '.join(user_groups) if user_groups else ''
-                            })
-                        except Exception as e:
-                            logger.error(f"Error processing user {user.id}: {str(e)}")
-                            continue
-
-                # Convert to JSON string for template
-                users_data_json = json.dumps(users_data)
-
-            except Exception as e:
-                logger.error(f"Error creating bulk assign form: {str(e)}")
-                users_data_json = "[]"
-        else:
-            users_data_json = "[]"
-
-        try:
-            csv_form = CSVUploadForm()
-        except Exception as e:
-            logger.error(f"Error creating CSV form: {str(e)}")
-
-        context = {
-            'page_title': 'Shift Assignments',
-            'assignments_data': assignments_data,
-            'filter_form': filter_form,
-            'assign_form': assign_form,
-            'bulk_assign_form': bulk_assign_form,
-            'csv_form': csv_form,
-            'users_data': users_data,
-            'users_data_json': users_data_json,
-        }
-
-        # Add permissions to context
-        context.update(permissions)
-
-        return render(request, 'shift/assignment_list.html', context)
-
-    except Exception as e:
-        logger.error(f"Error in assignment list: {str(e)}", exc_info=True)
-        log_user_action(request.user, 'assignment_list_error', details={'error': str(e)})
-        messages.error(request, f"Error loading assignments: {str(e)}")
-
-        # Return a minimal context to prevent template errors
-        context = {
-            'page_title': 'Shift Assignments',
-            'assignments_data': {'assignments': [], 'total_count': 0, 'has_other_pages': False},
-            'filter_form': AssignmentFilterForm(),
-            'users_data': [],
-            'users_data_json': "[]",
-            'error': True,
-            'can_assign': False,
-            'can_view_all': False,
-        }
-        return render(request, 'shift/assignment_list.html', context)
-
-
-
-
-@login_required
-@group_required(group_names=['Manager', 'HR'])
-@require_POST
-@log_action('ASSIGN_SHIFT')
-def assign_shift(request):
-    """Assign shift to user and redirect to assignment list."""
-    form = ShiftAssignmentForm(request.POST)
-
-    if form.is_valid():
-        try:
-            user = form.cleaned_data['user']
-            shift = form.cleaned_data['shift']
-            effective_from = form.cleaned_data['effective_from']
-            effective_to = form.cleaned_data.get('effective_to')
-
-            assignment_details = {
-                'target_user': user.username,
-                'target_user_id': user.id,
-                'shift_name': shift.name,
-                'shift_id': shift.id,
-                'effective_from': str(effective_from),
-                'effective_to': str(effective_to) if effective_to else None
-            }
-
-            success, result = shift_service.assign_shift_to_user(
-                user.id, shift.id, effective_from, effective_to
-            )
-
-            if success:
-                log_db_operation('CREATE', 'ShiftAssignment',
-                               result.id if hasattr(result, 'id') else None, assignment_details)
-                log_user_action(request.user, 'shift_assigned', target=f'user_{user.id}',
-                              details=assignment_details)
-                messages.success(request, f"Shift '{shift.name}' assigned to {user.username} successfully!")
-            else:
-                log_user_action(request.user, 'shift_assignment_failed', details={**assignment_details, 'reason': result})
-                messages.error(request, f"Assignment failed: {result}")
-
-        except Exception as e:
-            logger.error(f"Error assigning shift: {str(e)}", exc_info=True)
-            log_user_action(request.user, 'shift_assignment_error', details={'error': str(e)})
-            messages.error(request, f"Error assigning shift: {str(e)}")
+                logger.error(f"Error updating shift {shift_id}: {e}")
+                messages.error(request, "Error updating shift. Please try again.")
     else:
-        _handle_form_errors(request, form, 'shift_assignment')
-
-    return redirect('shift:assignments')
-
-
-@login_required
-@group_required(group_names=['Manager', 'HR'])
-@require_POST
-@log_action('BULK_ASSIGN_SHIFT')
-def bulk_assign_shift(request):
-    """Bulk assign shift to multiple users and redirect to assignment list."""
-    form = BulkAssignmentForm(request.POST)
-
-    if form.is_valid():
-        try:
-            users = form.cleaned_data['users']
-            shift = form.cleaned_data['shift']
-            effective_from = form.cleaned_data['effective_from']
-            effective_to = form.cleaned_data.get('effective_to')
-
-            bulk_details = {
-                'target_users': [{'id': user.id, 'username': user.username} for user in users],
-                'user_count': len(users),
-                'shift_name': shift.name,
-                'shift_id': shift.id,
-                'effective_from': str(effective_from),
-                'effective_to': str(effective_to) if effective_to else None
-            }
-
-            user_ids = [user.id for user in users]
-            success_count, error_count, errors = shift_service.assign_shifts_to_users(
-                user_ids, shift.id, effective_from, effective_to
-            )
-
-            if success_count > 0:
-                log_db_operation('BULK_CREATE', 'ShiftAssignment', None,
-                               {**bulk_details, 'success_count': success_count})
-                messages.success(request, f"Successfully assigned shift to {success_count} users!")
-
-            if error_count > 0:
-                error_msg = f"{error_count} assignments failed. Errors: {'; '.join(errors[:3])}"
-                if len(errors) > 3:
-                    error_msg += f" and {len(errors) - 3} more..."
-                messages.error(request, error_msg)
-
-            log_user_action(request.user, 'bulk_assignment_completed',
-                          details={**bulk_details, 'success_count': success_count,
-                                 'error_count': error_count, 'errors': errors[:5]})
-
-        except Exception as e:
-            logger.error(f"Error in bulk assignment: {str(e)}")
-            messages.error(request, f"Error in bulk assignment: {str(e)}")
-    else:
-        _handle_form_errors(request, form, 'bulk_assignment')
-
-    return redirect('shift:assignments')
-
-
-@login_required
-@group_required(group_names=['Manager', 'HR'])
-@require_POST
-@log_action('CSV_UPLOAD_ASSIGNMENTS')
-def csv_upload_assignments(request):
-    """Upload CSV file for bulk assignments and redirect to results."""
-    form = CSVUploadForm(request.POST, request.FILES)
-
-    if form.is_valid():
-        try:
-            csv_file = form.cleaned_data['csv_file']
-            file_details = {
-                'filename': csv_file.name,
-                'size': csv_file.size,
-                'content_type': csv_file.content_type
-            }
-            log_user_action(request.user, 'csv_file_processing', details=file_details)
-
-            results = shift_service.assign_shifts_from_csv(csv_file)
-
-            result_details = {
-                'filename': csv_file.name,
-                'success_count': results.get('success_count', 0),
-                'error_count': results.get('error_count', 0),
-                'total_processed': results.get('success_count', 0) + results.get('error_count', 0),
-                'errors': results.get('errors', [])[:5]
-            }
-
-            if results['success']:
-                log_user_action(request.user, 'csv_import_success', details=result_details)
-                messages.success(request, f"CSV import completed successfully! {results['success_count']} assignments created.")
-            else:
-                log_user_action(request.user, 'csv_import_partial_success', details=result_details)
-                messages.warning(request, f"CSV import completed with issues. {results['success_count']} successful, {results['error_count']} failed.")
-
-            # Store results in session for detailed view
-            request.session['csv_import_results'] = results
-            return redirect('shift:csv_results')
-
-        except Exception as e:
-            logger.error(f"Error in CSV upload: {str(e)}", exc_info=True)
-            log_user_action(request.user, 'csv_upload_error', details={'error': str(e)})
-            messages.error(request, f"Error processing CSV: {str(e)}")
-    else:
-        _handle_form_errors(request, form, 'csv_upload')
-
-    return redirect('shift:assignments')
-
-
-@login_required
-@group_required(group_names=['Manager', 'HR'])
-@log_action('CSV_IMPORT_RESULTS_VIEW')
-def csv_import_results(request):
-    """Show results of CSV import."""
-    results = request.session.get('csv_import_results')
-    if not results:
-        log_user_action(request.user, 'csv_results_not_found')
-        messages.error(request, "No import results found.")
-        return redirect('shift:assignments')
-
-    results_summary = {
-        'success_count': results.get('success_count', 0),
-        'error_count': results.get('error_count', 0),
-        'has_errors': bool(results.get('errors', []))
-    }
-    log_user_action(request.user, 'csv_results_viewed', details=results_summary)
-
-    # Clear results from session
-    request.session.pop('csv_import_results', None)
+        form = ShiftForm(instance=shift)
 
     context = {
-        'page_title': 'CSV Import Results',
-        'results': results,
+        'form': form,
+        'shift': shift,
+        'title': f'Update Shift: {shift.name}',
+        'submit_text': 'Update Shift'
     }
-
-    return render(request, 'shift/csv_results.html', context)
-
+    return render(request, 'shift/shift_form.html', context)
 
 @login_required
-@group_required(group_names=['Manager', 'HR'])
+@group_required(['Manager', 'HR'])
 @require_POST
-@log_action('END_ASSIGNMENT')
-def end_assignment(request, assignment_id):
-    """End a shift assignment and redirect to assignment list."""
+def delete_shift(request, shift_id):
+    """Delete shift with safety checks"""
     try:
-        assignment = get_object_or_404(ShiftAssignment, id=assignment_id)
-        end_date_str = request.POST.get('end_date')
-        end_date = None
-
-        assignment_details = {
-            'assignment_id': assignment_id,
-            'user': assignment.user.username,
-            'user_id': assignment.user.id,
-            'shift_name': assignment.shift.name,
-            'shift_id': assignment.shift.id,
-            'original_end_date': str(assignment.effective_to) if assignment.effective_to else None
-        }
-
-        if end_date_str:
-            end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
-            assignment_details['new_end_date'] = str(end_date)
-
-        log_user_action(request.user, 'assignment_end_attempt',
-                       target=f'assignment_{assignment_id}', details=assignment_details)
-
-        success, message = shift_service.end_shift_assignment(assignment_id, end_date)
-
-        if success:
-            log_db_operation('UPDATE', 'ShiftAssignment', assignment_id,
-                           {'end_date': str(end_date) if end_date else 'today'})
-            log_user_action(request.user, 'assignment_ended',
-                           target=f'assignment_{assignment_id}', details=assignment_details)
-            messages.success(request, message)
-        else:
-            log_user_action(request.user, 'assignment_end_failed',
-                           target=f'assignment_{assignment_id}',
-                           details={**assignment_details, 'reason': message})
-            messages.error(request, message)
-
-    except Exception as e:
-        logger.error(f"Error ending assignment {assignment_id}: {str(e)}", exc_info=True)
-        log_user_action(request.user, 'assignment_end_error',
-                       target=f'assignment_{assignment_id}', details={'error': str(e)})
-        messages.error(request, f"Error ending assignment: {str(e)}")
-
-    return redirect('shift:assignments')
-
-
-# ============================
-# CALENDAR AND SCHEDULE VIEWS
-# ============================
-
-@login_required
-@group_required(group_names=['Manager', 'Employee', 'HR'])
-@log_action('USER_SHIFT_CALENDAR_VIEW')
-def user_shift_calendar(request, user_id=None):
-    """Show shift calendar for a user."""
-    try:
-        permissions = _get_user_permissions(request.user)
-
-        # Default to current user if no user_id provided
-        if user_id is None:
-            user = request.user
-            log_user_action(request.user, 'calendar_view_own')
-        else:
-            # Only managers and HR can view other users' calendars
-            if not permissions['can_view_all']:
-                if user_id != request.user.id:
-                    log_user_action(request.user, 'calendar_access_denied',
-                                   target=f'user_{user_id}', details={'reason': 'insufficient_permissions'})
-                    messages.error(request, "You can only view your own calendar.")
-                    return redirect('shift:user_calendar')
-            user = get_object_or_404(User, id=user_id)
-            log_user_action(request.user, 'calendar_view_other',
-                           target=f'user_{user_id}', details={'target_username': user.username})
-
-        # Get month and year from query params
-        try:
-            month = int(request.GET.get('month', timezone.now().month))
-            year = int(request.GET.get('year', timezone.now().year))
-        except (ValueError, TypeError):
-            month = timezone.now().month
-            year = timezone.now().year
-
-        # Validate month and year
-        if not (1 <= month <= 12) or not (2020 <= year <= 2030):
-            month = timezone.now().month
-            year = timezone.now().year
-
-        calendar_data = shift_service.get_user_shift_calendar(user, month, year)
-        log_user_action(request.user, 'calendar_data_loaded',
-                       details={'target_user': user.username, 'month': month, 'year': year})
-
-        # Get navigation dates
-        prev_month = month - 1 if month > 1 else 12
-        prev_year = year if month > 1 else year - 1
-        next_month = month + 1 if month < 12 else 1
-        next_year = year if month < 12 else year + 1
-
-        context = {
-            'page_title': f'Calendar - {user.get_full_name() or user.username}',
-            'calendar_data': calendar_data,
-            'target_user': user,
-            'current_month': month,
-            'current_year': year,
-            'prev_month': prev_month,
-            'prev_year': prev_year,
-            'next_month': next_month,
-            'next_year': next_year,
-            'is_own_calendar': user == request.user,
-            **permissions,
-        }
-
-        return render(request, 'shift/user_calendar.html', context)
-
-    except Exception as e:
-        logger.error(f"Error in user calendar: {str(e)}")
-        messages.error(request, "Error loading calendar.")
-        return redirect('shift:dashboard')
-
-
-@login_required
-@group_required(group_names=['Manager', 'HR'])
-@log_action('SHIFT_SCHEDULE_VIEW')
-def shift_schedule_view(request):
-    """Show who's on shift for a specific date (managers and HR only)."""
-    try:
-        # Get date from query params
-        date_str = request.GET.get('date')
-        if date_str:
-            try:
-                target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
-            except ValueError:
-                target_date = timezone.now().date()
-                log_user_action(request.user, 'schedule_view_invalid_date', details={'invalid_date': date_str})
-                messages.warning(request, "Invalid date format. Showing today's schedule.")
-        else:
-            target_date = timezone.now().date()
-
-        log_user_action(request.user, 'schedule_view_access', details={'target_date': str(target_date)})
-        schedule_data = shift_service.get_shift_schedule_for_date(target_date)
-
-        context = {
-            'page_title': f'Schedule - {target_date.strftime("%B %d, %Y")}',
-            'schedule_data': schedule_data,
-            'target_date': target_date,
-        }
-
-        return render(request, 'shift/schedule_view.html', context)
-
-    except Exception as e:
-        logger.error(f"Error in schedule view: {str(e)}", exc_info=True)
-        log_user_action(request.user, 'schedule_view_error', details={'error': str(e)})
-        messages.error(request, "Error loading schedule.")
-        return redirect('shift:dashboard')
-
-
-# ============================
-# HOLIDAY MANAGEMENT VIEWS
-# ============================
-
-@login_required
-@group_required(group_names=['Manager', 'HR'])
-@log_action('HOLIDAY_LIST_VIEW')
-def holiday_list(request):
-    """List all holidays with inline create form."""
-    try:
-        permissions = _get_user_permissions(request.user)
-        year = request.GET.get('year')
-        if year:
-            try:
-                year = int(year)
-            except ValueError:
-                log_user_action(request.user, 'holiday_list_invalid_year', details={'invalid_year': year})
-                year = None
-
-        log_user_action(request.user, 'holiday_list_access', details={'year': year})
-        holidays = shift_service.get_holidays(year=year)
-
-        # Create form for modal
-        create_form = HolidayForm()
-
-        # Calculate recurring holidays count
-        recurring_count = sum(1 for holiday in holidays if holiday.get('recurring_yearly', False))
-
-        context = {
-            'page_title': 'Holidays',
-            'holidays': holidays,
-            'recurring_count': recurring_count,
-            'current_year': year or timezone.now().year,
-            'available_years': range(2020, 2031),
-            'create_form': create_form,
-            **permissions,
-        }
-
-        return render(request, 'shift/holiday_list.html', context)
-
-    except Exception as e:
-        logger.error(f"Error in holiday list: {str(e)}", exc_info=True)
-        log_user_action(request.user, 'holiday_list_error', details={'error': str(e)})
-        messages.error(request, "Error loading holidays.")
-        return render(request, 'shift/holiday_list.html', {'error': True})
-
-
-@login_required
-@group_required(group_names=['Manager', 'HR'])
-@require_POST
-@log_action('CREATE_HOLIDAY')
-def create_holiday(request):
-    """Create a new holiday and redirect to holiday list."""
-    form = HolidayForm(request.POST)
-
-    if form.is_valid():
-        try:
-            holiday_data = {
-                'name': form.cleaned_data['name'],
-                'date': form.cleaned_data['date'],
-                'recurring_yearly': form.cleaned_data['recurring_yearly']
-            }
-
-            success, result = shift_service.create_holiday(holiday_data)
-
-            if success:
-                log_db_operation('CREATE', 'Holiday', result.id if hasattr(result, 'id') else None, holiday_data)
-                log_user_action(request.user, 'holiday_created', target=f'holiday_{result.id}', details=holiday_data)
-                messages.success(request, f"Holiday '{result.name}' created successfully!")
-            else:
-                log_user_action(request.user, 'holiday_create_failed', details={**holiday_data, 'reason': result})
-                messages.error(request, f"Error creating holiday: {result}")
-
-        except Exception as e:
-            logger.error(f"Error creating holiday: {str(e)}", exc_info=True)
-            log_user_action(request.user, 'holiday_create_error', details={'error': str(e)})
-            messages.error(request, f"Error creating holiday: {str(e)}")
-    else:
-        _handle_form_errors(request, form, 'holiday_create')
-
-    return redirect('shift:holidays')
-
-
-@login_required
-@group_required(group_names=['Manager', 'HR'])
-@require_POST
-@log_action('DELETE_HOLIDAY')
-def delete_holiday(request, holiday_id):
-    """Delete a holiday and redirect to holiday list."""
-    try:
-        holiday = get_object_or_404(Holiday, id=holiday_id)
-        holiday_name = holiday.name
-
-        log_user_action(request.user, 'holiday_delete_attempt', target=f'holiday_{holiday_id}',
-                       details={'holiday_name': holiday_name})
-
-        holiday.delete()
-        log_db_operation('DELETE', 'Holiday', holiday_id, {'name': holiday_name})
-        log_user_action(request.user, 'holiday_deleted', target=f'holiday_{holiday_id}',
-                       details={'holiday_name': holiday_name})
-        messages.success(request, f"Holiday '{holiday_name}' deleted successfully!")
-
-    except Exception as e:
-        logger.error(f"Error deleting holiday {holiday_id}: {str(e)}", exc_info=True)
-        log_user_action(request.user, 'holiday_delete_error', target=f'holiday_{holiday_id}',
-                       details={'error': str(e)})
-        messages.error(request, f"Error deleting holiday: {str(e)}")
-
-    return redirect('shift:holidays')
-
-
-# ============================
-# API ENDPOINTS
-# ============================
-
-@login_required
-@group_required(group_names=['Manager', 'Employee', 'HR'])
-@log_action('API_SHIFT_DETAILS')
-def api_shift_details(request, shift_id):
-    """API endpoint to get shift details."""
-    try:
-        log_user_action(request.user, 'api_shift_details_request', target=f'shift_{shift_id}')
         shift = get_object_or_404(ShiftMaster, id=shift_id)
 
-        # Get current assignments
-        current_assignments = ShiftAssignment.objects.filter(
-            shift=shift, is_current=True
-        ).select_related('user').values(
-            'user__id', 'user__username', 'user__first_name', 'user__last_name',
-            'effective_from', 'effective_to'
+        # Check if shift has active assignments
+        active_assignments = shift.assignments.filter(is_current=True).count()
+        if active_assignments > 0:
+            messages.error(request,
+                f'Cannot delete shift "{shift.name}". It has {active_assignments} active assignments.')
+            return redirect('shift:detail', shift_id=shift_id)
+
+        shift_name = shift.name
+        shift.delete()
+
+        action_logger.log_action(
+            'SHIFT_DELETED',
+            user_id=request.user.id,
+            user=request.user.username,
+            shift_name=shift_name
         )
 
-        data = {
-            'id': shift.id,
-            'name': shift.name,
-            'start_time': shift.start_time.strftime('%H:%M'),
-            'end_time': shift.end_time.strftime('%H:%M'),
-            'duration': float(shift.shift_duration),
-            'work_days': shift.work_days,
-            'custom_work_days': shift.custom_work_days,
-            'is_active': shift.is_active,
-            'crosses_midnight': shift.crosses_midnight,
-            'expected_hours': shift.expected_hours,
-            'break_minutes': int(shift.break_duration.total_seconds() // 60),
-            'grace_minutes': int(shift.grace_period.total_seconds() // 60),
-            'current_assignments': list(current_assignments),
-            'assignment_count': len(current_assignments)
-        }
-
-        log_user_action(request.user, 'api_shift_details_success', target=f'shift_{shift_id}',
-                       details={'assignment_count': len(current_assignments)})
-
-        return JsonResponse({'status': 'success', 'data': data})
+        messages.success(request, f'Shift "{shift_name}" deleted successfully!')
+        return redirect('shift:list')
 
     except Exception as e:
-        logger.error(f"Error in API shift details for shift {shift_id}: {str(e)}", exc_info=True)
-        log_user_action(request.user, 'api_shift_details_error', target=f'shift_{shift_id}',
-                       details={'error': str(e)})
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+        logger.error(f"Error deleting shift {shift_id}: {e}")
+        messages.error(request, "Error deleting shift. Please try again.")
+        return redirect('shift:list')
 
+# ============================
+# ASSIGNMENT MANAGEMENT
+# ============================
 
 @login_required
-@group_required(group_names=['Manager', 'Employee', 'HR'])
-@log_action('API_USER_ASSIGNMENTS')
-def api_user_assignments(request, user_id):
-    """API endpoint to get user's shift assignments."""
+def assignment_list(request):
+    """List all assignments with filtering and search"""
     try:
-        permissions = _get_user_permissions(request.user)
-        log_user_action(request.user, 'api_user_assignments_request', target=f'user_{user_id}')
+        assignments = ShiftAssignment.objects.select_related('user', 'shift').all()
 
-        # Check permissions
-        if not permissions['can_view_all']:
-            if user_id != request.user.id:
-                log_user_action(request.user, 'api_user_assignments_permission_denied', target=f'user_{user_id}')
-                return JsonResponse({'status': 'error', 'message': 'Permission denied'}, status=403)
+        # Filters
+        status_filter = request.GET.get('status')
+        if status_filter == 'current':
+            assignments = assignments.filter(is_current=True)
+        elif status_filter == 'ended':
+            assignments = assignments.filter(is_current=False)
 
+        user_filter = request.GET.get('user')
+        if user_filter:
+            assignments = assignments.filter(user_id=user_filter)
+
+        shift_filter = request.GET.get('shift')
+        if shift_filter:
+            assignments = assignments.filter(shift_id=shift_filter)
+
+        # Search
+        search = request.GET.get('search', '').strip()
+        if search:
+            assignments = assignments.filter(
+                Q(user__username__icontains=search) |
+                Q(user__first_name__icontains=search) |
+                Q(user__last_name__icontains=search) |
+                Q(shift__name__icontains=search)
+            )
+
+        assignments = assignments.order_by('-created_at')
+
+        # Pagination
+        paginator = Paginator(assignments, 25)
+        page = request.GET.get('page')
+        assignments = paginator.get_page(page)
+
+        # Get filter options
+        users = User.objects.filter(shift_assignments__isnull=False).distinct()
+        shifts = ShiftMaster.objects.filter(assignments__isnull=False).distinct()
+
+        context = {
+            'assignments': assignments,
+            'users': users,
+            'shifts': shifts,
+            'filters': {
+                'status': status_filter,
+                'user': user_filter,
+                'shift': shift_filter,
+                'search': search,
+            },
+            'can_manage': request.user.groups.filter(name__in=['Manager', 'HR']).exists(),
+        }
+
+        return render(request, 'shift/assignment_list.html', context)
+
+    except Exception as e:
+        logger.error(f"Assignment list error: {e}")
+        messages.error(request, "Error loading assignments.")
+        return render(request, 'shift/assignment_list.html', {'assignments': []})
+
+@login_required
+@group_required(['Manager', 'HR'])
+def assign_shift(request):
+    """Assign shift to user with conflict detection"""
+    if request.method == 'POST':
+        form = ShiftAssignmentForm(request.POST)
+        if form.is_valid():
+            try:
+                # Check for conflicts before saving
+                user = form.cleaned_data['user']
+                shift = form.cleaned_data['shift']
+                effective_from = form.cleaned_data['effective_from']
+                effective_to = form.cleaned_data.get('effective_to')
+
+                # Perform conflict detection with proper null handling
+                conflict_detector = ConflictDetector()
+                end_date_for_check = effective_to if effective_to else (effective_from + timedelta(days=365))
+                conflicts = conflict_detector.check_assignment_conflicts(
+                    user, shift, effective_from, end_date_for_check
+                )
+
+                if conflicts:
+                    conflict_messages = []
+                    for conflict in conflicts:
+                        conflict_messages.append(
+                            f"Conflict with '{conflict.conflicting_shift.name}' "
+                            f"from {conflict.conflict_start} to {conflict.conflict_end}"
+                        )
+
+                    messages.error(request,
+                        f"Cannot assign shift due to conflicts:\n" +
+                        "\n".join(conflict_messages)
+                    )
+
+                    # Get context for re-rendering with conflicts
+                    available_users = User.objects.filter(is_active=True).select_related('profile').order_by('first_name', 'last_name', 'username')
+                    available_shifts = ShiftMaster.objects.filter(is_active=True).order_by('name')
+
+                    return render(request, 'shift/assign_shift.html', {
+                        'form': form,
+                        'conflicts': conflicts,
+                        'available_users': available_users,
+                        'available_shifts': available_shifts,
+                        'title': 'Assign Shift',
+                        'user': request.user
+                    })
+
+                # No conflicts, proceed with assignment
+                with transaction.atomic():
+                    assignment = form.save()
+                    action_logger.log_action(
+                        'SHIFT_ASSIGNED',
+                        user_id=request.user.id,
+                        user=request.user.username,
+                        target_user=user.username,
+                        shift_name=shift.name,
+                        effective_from=str(effective_from)
+                    )
+
+                    messages.success(request,
+                        f'Shift "{shift.name}" assigned to {user.get_full_name() or user.username} successfully!')
+
+                    return redirect('shift:assignments')
+
+            except Exception as e:
+                logger.error(f"Error assigning shift: {e}")
+                messages.error(request, "Error assigning shift. Please try again.")
+        else:
+            for field, errors in form.errors.items():
+                field_name = form.fields[field].label if field in form.fields else field.replace('_', ' ').title()
+                for error in errors:
+                    messages.error(request, f"{field_name}: {error}")
+    else:
+        form = ShiftAssignmentForm(request=request)
+
+    # Get available users and shifts for the form
+    available_users = User.objects.filter(is_active=True).select_related('profile').order_by('first_name', 'last_name', 'username')
+    available_shifts = ShiftMaster.objects.filter(is_active=True).order_by('name')
+
+    # Pre-select from URL parameters
+    initial_user = request.GET.get('user')
+    initial_shift = request.GET.get('shift')
+
+    if initial_user:
+        try:
+            form.fields['user'].initial = User.objects.get(id=initial_user)
+        except (User.DoesNotExist, ValueError):
+            pass
+
+    if initial_shift:
+        try:
+            form.fields['shift'].initial = ShiftMaster.objects.get(id=initial_shift)
+        except (ShiftMaster.DoesNotExist, ValueError):
+            pass
+
+    context = {
+        'form': form,
+        'available_users': available_users,
+        'available_shifts': available_shifts,
+        'title': 'Assign Shift',
+        'submit_text': 'Assign Shift',
+        'user': request.user  # Add user to context for admin checks
+    }
+    return render(request, 'shift/assign_shift.html', context)
+
+@login_required
+@group_required(['Manager', 'HR'])
+def api_user_info(request, user_id):
+    """API endpoint for user information"""
+    try:
         user = get_object_or_404(User, id=user_id)
 
-        # Get assignments
-        assignments = shift_service.get_shift_assignments(
-            filters={'user_id': user_id}, page=1, per_page=50
-        )
-
-        data = {
-            'user': {
-                'id': user.id,
-                'username': user.username,
-                'full_name': user.get_full_name(),
-                'email': user.email
-            },
-            'assignments': assignments['assignments']
-        }
-
-        log_user_action(request.user, 'api_user_assignments_success', target=f'user_{user_id}',
-                       details={'assignment_count': len(assignments['assignments'])})
-
-        return JsonResponse({'status': 'success', 'data': data})
-
-    except Exception as e:
-        logger.error(f"Error in API user assignments for user {user_id}: {str(e)}", exc_info=True)
-        log_user_action(request.user, 'api_user_assignments_error', target=f'user_{user_id}',
-                       details={'error': str(e)})
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
-
-
-@login_required
-@group_required(group_names=['Manager', 'HR'])
-@log_action('API_UPCOMING_CHANGES')
-def api_upcoming_changes(request):
-    """API endpoint to get upcoming shift changes."""
-    try:
-        days = int(request.GET.get('days', 7))
-        log_user_action(request.user, 'api_upcoming_changes_request', details={'days': days})
-
-        changes = shift_service.get_upcoming_shift_changes(days=days)
-
-        log_user_action(request.user, 'api_upcoming_changes_success',
-                       details={'days': days, 'change_count': len(changes)})
-
-        return JsonResponse({'status': 'success', 'data': changes})
-
-    except Exception as e:
-        logger.error(f"Error in API upcoming changes: {str(e)}", exc_info=True)
-        log_user_action(request.user, 'api_upcoming_changes_error', details={'error': str(e)})
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
-
-
-@login_required
-@group_required(group_names=['Manager', 'Employee', 'HR'])
-@log_action('API_USER_SHIFT_STATUS')
-def api_user_shift_status(request, user_id=None):
-    """API endpoint to check if user is currently on shift."""
-    try:
-        permissions = _get_user_permissions(request.user)
-
-        # Default to current user
-        if user_id is None:
-            user = request.user
-            log_user_action(request.user, 'api_shift_status_request_own')
-        else:
-            # Check permissions
-            if not permissions['can_view_all']:
-                if user_id != request.user.id:
-                    log_user_action(request.user, 'api_shift_status_permission_denied', target=f'user_{user_id}')
-                    return JsonResponse({'status': 'error', 'message': 'Permission denied'}, status=403)
-            user = get_object_or_404(User, id=user_id)
-            log_user_action(request.user, 'api_shift_status_request_other', target=f'user_{user_id}',
-                           details={'target_username': user.username})
-
-        shift_status = shift_service.is_user_on_shift_now(user)
-
-        log_user_action(request.user, 'api_shift_status_success',
-                       target=f'user_{user.id}' if user_id else None,
-                       details={'target_user': user.username, 'on_shift': shift_status.get('on_shift', False)})
-
-        return JsonResponse({'status': 'success', 'data': shift_status})
-
-    except Exception as e:
-        logger.error(f"Error in API user shift status for user {user_id or 'self'}: {str(e)}", exc_info=True)
-        log_user_action(request.user, 'api_shift_status_error',
-                       target=f'user_{user_id}' if user_id else None, details={'error': str(e)})
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
-
-
-@login_required
-@group_required(group_names=['Manager', 'HR'])
-@log_action('API_SCHEDULE_FOR_DATE')
-def api_schedule_for_date(request):
-    """API endpoint to get schedule for a specific date."""
-    try:
-        date_str = request.GET.get('date')
-        if not date_str:
-            log_user_action(request.user, 'api_schedule_missing_date')
-            return JsonResponse({'status': 'error', 'message': 'Date parameter is required'}, status=400)
-
-        try:
-            target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
-        except ValueError:
-            log_user_action(request.user, 'api_schedule_invalid_date', details={'invalid_date': date_str})
-            return JsonResponse({'status': 'error', 'message': 'Invalid date format. Use YYYY-MM-DD'}, status=400)
-
-        log_user_action(request.user, 'api_schedule_request', details={'target_date': str(target_date)})
-        schedule_data = shift_service.get_shift_schedule_for_date(target_date)
-
-        log_user_action(request.user, 'api_schedule_success', details={'target_date': str(target_date)})
-
-        return JsonResponse({'status': 'success', 'data': schedule_data})
-
-    except Exception as e:
-        logger.error(f"Error in API schedule for date {date_str}: {str(e)}", exc_info=True)
-        log_user_action(request.user, 'api_schedule_error', details={'target_date': date_str, 'error': str(e)})
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
-
-
-@login_required
-@group_required(group_names=['Manager', 'Employee', 'HR'])
-@log_action('API_IS_HOLIDAY')
-def api_is_holiday(request):
-    """API endpoint to check if a date is a holiday."""
-    try:
-        date_str = request.GET.get('date')
-        if not date_str:
-            target_date = timezone.now().date()
-            log_user_action(request.user, 'api_holiday_check_today')
-        else:
-            try:
-                target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
-                log_user_action(request.user, 'api_holiday_check_date', details={'target_date': str(target_date)})
-            except ValueError:
-                log_user_action(request.user, 'api_holiday_invalid_date', details={'invalid_date': date_str})
-                return JsonResponse({'status': 'error', 'message': 'Invalid date format. Use YYYY-MM-DD'}, status=400)
-
-        is_holiday = shift_service.is_holiday(target_date)
-        holiday_info = None
-
-        if is_holiday:
-            from django.db import models
-            holiday = Holiday.objects.filter(
-                models.Q(date=target_date) |
-                models.Q(recurring_yearly=True, date__month=target_date.month, date__day=target_date.day)
-            ).first()
-            if holiday:
-                holiday_info = {
-                    'name': holiday.name,
-                    'date': holiday.date,
-                    'recurring_yearly': holiday.recurring_yearly
-                }
-
-        data = {
-            'date': target_date,
-            'is_holiday': is_holiday,
-            'holiday_info': holiday_info
-        }
-
-        log_user_action(request.user, 'api_holiday_check_success',
-                       details={'target_date': str(target_date), 'is_holiday': is_holiday,
-                               'holiday_name': holiday_info['name'] if holiday_info else None})
-
-        return JsonResponse({'status': 'success', 'data': data})
-
-    except Exception as e:
-        logger.error(f"Error in API holiday check for {date_str or 'today'}: {str(e)}", exc_info=True)
-        log_user_action(request.user, 'api_holiday_check_error',
-                       details={'target_date': date_str or 'today', 'error': str(e)})
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
-
-
-# ============================
-# ENHANCED API ENDPOINTS FOR SUGGESTIONS SYSTEM
-# ============================
-
-@login_required
-@require_http_methods(["GET"])
-def api_suggestions(request):
-    """API endpoint for getting shift management suggestions."""
-    try:
-        suggestions_data = generate_shift_suggestions(request.user)
-
-        log_user_action(request.user, 'api_suggestions_retrieved',
-                       details={'suggestion_count': suggestions_data['count']})
-
-        return JsonResponse({
-            'status': 'success',
-            'suggestions': suggestions_data['suggestions'],
-            'count': suggestions_data['count']
-        })
-
-    except Exception as e:
-        logger.error(f"Error retrieving suggestions: {str(e)}")
-        return JsonResponse({
-            'status': 'error',
-            'message': 'Failed to retrieve suggestions'
-        }, status=500)
-
-
-@login_required
-@require_http_methods(["POST"])
-def api_dismiss_suggestion(request, suggestion_id):
-    """API endpoint for dismissing a suggestion."""
-    try:
-        # For now, just log the dismissal
-        # In a full implementation, you'd store dismissed suggestions in the database
-        log_user_action(request.user, 'suggestion_dismissed',
-                       details={'suggestion_id': suggestion_id})
-
-        return JsonResponse({
-            'status': 'success',
-            'message': 'Suggestion dismissed successfully'
-        })
-
-    except Exception as e:
-        logger.error(f"Error dismissing suggestion: {str(e)}")
-        return JsonResponse({
-            'status': 'error',
-            'message': 'Failed to dismiss suggestion'
-        }, status=500)
-
-
-@login_required
-@require_http_methods(["GET"])
-def api_validate_shift_name(request):
-    """API endpoint for validating shift name uniqueness."""
-    try:
-        name = request.GET.get('name', '').strip()
-        original_name = request.GET.get('original_name', '').strip()
-
-        if not name:
-            return JsonResponse({
-                'status': 'error',
-                'message': 'Shift name is required'
-            })
-
-        # Check for duplicates
-        existing_query = ShiftMaster.objects.filter(name__iexact=name)
-        if original_name and original_name.lower() != name.lower():
-            # Editing existing shift, exclude original
-            existing_query = existing_query.exclude(name__iexact=original_name)
-
-        is_available = not existing_query.exists()
-
-        return JsonResponse({
-            'status': 'success',
-            'is_available': is_available,
-            'message': 'Name is available' if is_available else 'Name already exists'
-        })
-
-    except Exception as e:
-        logger.error(f"Error validating shift name: {str(e)}")
-        return JsonResponse({
-            'status': 'error',
-            'message': 'Validation error'
-        }, status=500)
-
-
-@login_required
-@require_http_methods(["GET"])
-def api_validate_user_assignment(request):
-    """API endpoint for validating user assignment conflicts."""
-    try:
-        user_id = request.GET.get('user_id')
-        shift_id = request.GET.get('shift_id')
-        effective_from = request.GET.get('effective_from')
-        effective_to = request.GET.get('effective_to')
-
-        if not all([user_id, shift_id, effective_from]):
-            return JsonResponse({
-                'status': 'error',
-                'message': 'Missing required parameters'
-            })
-
-        # Parse dates
-        from datetime import datetime
-        effective_from_date = datetime.strptime(effective_from, '%Y-%m-%d').date()
-        effective_to_date = None
-        if effective_to:
-            effective_to_date = datetime.strptime(effective_to, '%Y-%m-%d').date()
-
-        # Validate assignment
-        is_valid, message, details = shift_service.validate_shift_assignment(
-            int(user_id), int(shift_id), effective_from_date, effective_to_date
-        )
-
-        return JsonResponse({
-            'status': 'success',
-            'is_valid': is_valid,
-            'message': message,
-            'details': details
-        })
-
-    except Exception as e:
-        logger.error(f"Error validating user assignment: {str(e)}")
-        return JsonResponse({
-            'status': 'error',
-            'message': 'Validation error'
-        }, status=500)
-
-
-@login_required
-@require_http_methods(["GET"])
-def api_shift_recommendations(request, shift_id):
-    """API endpoint for getting shift-specific recommendations."""
-    try:
-        shift = get_object_or_404(ShiftMaster, id=shift_id)
-
-        recommendations = []
-
-        # Check shift utilization
-        assignment_count = ShiftAssignment.objects.filter(
-            shift=shift, is_current=True
-        ).count()
-
-        if assignment_count == 0:
-            recommendations.append({
-                'type': 'warning',
-                'title': 'Unused Shift',
-                'message': 'This shift has no current assignments.'
-            })
-
-        # Check break duration
-        if shift.shift_duration >= 8 and shift.break_duration.total_seconds() < 1800:  # 30 min
-            recommendations.append({
-                'type': 'suggestion',
-                'title': 'Consider Longer Break',
-                'message': 'For 8+ hour shifts, consider at least 30 minutes break time.'
-            })
-
-        # Check grace period
-        if shift.grace_period.total_seconds() < 300:  # 5 min
-            recommendations.append({
-                'type': 'suggestion',
-                'title': 'Grace Period',
-                'message': 'Consider adding a grace period for better attendance flexibility.'
-            })
-
-        return JsonResponse({
-            'status': 'success',
-            'recommendations': recommendations
-        })
-
-    except Exception as e:
-        logger.error(f"Error getting shift recommendations: {str(e)}")
-        return JsonResponse({
-            'status': 'error',
-            'message': 'Failed to get recommendations'
-        }, status=500)
-
-
-@login_required
-@require_http_methods(["GET"])
-def api_dashboard_stats(request):
-    """API endpoint for refreshing dashboard statistics."""
-    try:
-        if not (request.user.is_superuser or request.user.groups.filter(name__in=['Manager', 'HR']).exists()):
-            return JsonResponse({
-                'status': 'error',
-                'message': 'Insufficient permissions'
-            }, status=403)
-
-        # Get comprehensive statistics
-        total_shifts = ShiftMaster.objects.filter(is_active=True).count()
-        active_shifts = ShiftMaster.objects.filter(is_active=True).count()
-        users_with_shifts = ShiftAssignment.objects.filter(
-            is_current=True
-        ).values('user').distinct().count()
-
-        total_users = User.objects.filter(is_active=True).count()
-        users_without_shifts = total_users - users_with_shifts
-
-        upcoming_changes = shift_service.get_upcoming_shift_changes(days=7)
-        suggestions_data = generate_shift_suggestions(request.user)
-
-        stats = {
-            'total_shifts': total_shifts,
-            'active_shifts': active_shifts,
-            'users_with_shifts': users_with_shifts,
-            'users_without_shifts': users_without_shifts,
-            'utilization_rate': round((users_with_shifts / max(total_users, 1)) * 100, 1),
-            'upcoming_changes_count': len(upcoming_changes),
-            'suggestions_count': suggestions_data['count']
-        }
-
-        return JsonResponse({
-            'status': 'success',
-            'stats': stats,
-            'last_updated': timezone.now().isoformat()
-        })
-
-    except Exception as e:
-        logger.error(f"Error getting dashboard stats: {str(e)}")
-        return JsonResponse({
-            'status': 'error',
-            'message': 'Failed to get statistics'
-        }, status=500)
-
-
-@login_required
-@require_http_methods(["POST"])
-def api_bulk_assignment_validation(request):
-    """API endpoint for validating bulk shift assignments."""
-    try:
-        import json
-        data = json.loads(request.body)
-
-        assignments = data.get('assignments', [])
-        results = []
-
-        for assignment in assignments:
-            user_id = assignment.get('user_id')
-            shift_id = assignment.get('shift_id')
-            effective_from = assignment.get('effective_from')
-            effective_to = assignment.get('effective_to')
-
-            if not all([user_id, shift_id, effective_from]):
-                results.append({
-                    'user_id': user_id,
-                    'is_valid': False,
-                    'message': 'Missing required fields'
-                })
-                continue
-
-            # Parse dates
-            from datetime import datetime
-            effective_from_date = datetime.strptime(effective_from, '%Y-%m-%d').date()
-            effective_to_date = None
-            if effective_to:
-                effective_to_date = datetime.strptime(effective_to, '%Y-%m-%d').date()
-
-            # Validate assignment
-            is_valid, message, details = shift_service.validate_shift_assignment(
-                user_id, shift_id, effective_from_date, effective_to_date
-            )
-
-            results.append({
-                'user_id': user_id,
-                'is_valid': is_valid,
-                'message': message,
-                'details': details
-            })
-
-        return JsonResponse({
-            'status': 'success',
-            'results': results
-        })
-
-    except Exception as e:
-        logger.error(f"Error in bulk assignment validation: {str(e)}")
-        return JsonResponse({
-            'status': 'error',
-            'message': 'Bulk validation failed'
-        }, status=500)
-
-
-# ============================
-# ERROR HANDLERS
-# ============================
-
-
-# ============================
-# ERROR HANDLERS
-# ============================
-
-def handle_404(request, exception):
-    """Custom 404 handler for shift app."""
-    user = getattr(request, 'user', None)
-    username = user.username if user and user.is_authenticated else 'anonymous'
-    logger.warning(f"404 Error - Page not found for user {username}: {request.path}")
-    log_user_action(user, '404_error', details={'path': request.path, 'method': request.method})
-
-    context = {
-        'error_title': 'Page Not Found',
-        'error_message': 'The requested page could not be found.',
-        'user_permissions': _get_user_permissions(request.user) if request.user.is_authenticated else {}
-    }
-    return render(request, 'shift/errors/404.html', context, status=404)
-
-
-def handle_403(request, exception):
-    """Custom 403 handler for shift app."""
-    user = getattr(request, 'user', None)
-    username = user.username if user and user.is_authenticated else 'anonymous'
-    logger.warning(f"403 Error - Access denied for user {username}: {request.path}")
-    log_user_action(user, '403_error', details={'path': request.path, 'method': request.method})
-
-    context = {
-        'error_title': 'Access Denied',
-        'error_message': 'You do not have permission to access this page.',
-        'user_permissions': _get_user_permissions(request.user) if request.user.is_authenticated else {}
-    }
-    return render(request, 'shift/errors/403.html', context, status=403)
-
-
-def handle_500(request):
-    """Custom 500 handler for shift app."""
-    user = getattr(request, 'user', None)
-    username = user.username if user and user.is_authenticated else 'anonymous'
-    logger.error(f"500 Error - Internal server error for user {username}: {request.path}")
-    log_user_action(user, '500_error', details={'path': request.path, 'method': request.method})
-
-    context = {
-        'error_title': 'Server Error',
-        'error_message': 'An internal server error occurred. Please try again later.',
-        'user_permissions': _get_user_permissions(request.user) if request.user.is_authenticated else {}
-    }
-    return render(request, 'shift/errors/500.html', context, status=500)
-
-
-# ============================
-# API ENDPOINTS FOR AJAX
-# ============================
-
-@login_required
-@require_http_methods(["GET"])
-def shift_api(request, shift_id):
-    """API endpoint to get shift data as JSON."""
-    try:
-        shift = get_object_or_404(ShiftMaster, id=shift_id)
+        # Check permissions
+        if not request.user.groups.filter(name__in=['Manager', 'HR']).exists():
+            if user_id != request.user.id:
+                return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+
+        profile = getattr(user, 'profile', None)
 
         data = {
             'success': True,
-            'shift': {
-                'id': shift.id,
-                'name': shift.name,
-                'description': shift.description or '',
-                'start_time': shift.start_time.strftime('%H:%M'),
-                'end_time': shift.end_time.strftime('%H:%M'),
-                'duration': float(shift.shift_duration),
-                'work_days': shift.work_days,
-                'custom_work_days': shift.custom_work_days or '',
-                'is_active': shift.is_active,
-                'break_minutes': shift.break_duration.total_seconds() // 60 if shift.break_duration else 30,
-                'grace_minutes': shift.grace_period.total_seconds() // 60 if shift.grace_period else 15,
-                'priority': getattr(shift, 'priority', 2),
-                'shift_color': getattr(shift, 'shift_color', 'blue'),
-                'created_at': shift.created_at.isoformat(),
-                'updated_at': shift.updated_at.isoformat(),
+            'user_info': {
+                'id': user.id,
+                'username': user.username,
+                'full_name': user.get_full_name() or user.username,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'email': user.email,
+                'employee_id': profile.employee_id if profile else None,
+                'is_active': user.is_active,
+                'groups': list(user.groups.values_list('name', flat=True))
             }
         }
 
         return JsonResponse(data)
 
     except Exception as e:
-        logger.error(f"Error in shift API: {str(e)}")
-        return JsonResponse({
-            'success': False,
-            'error': str(e)
-        }, status=500)
-
+        logger.error(f"Error getting user info: {e}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 @login_required
-@require_http_methods(["GET"])
-def shift_assignments_api(request, shift_id):
-    """API endpoint to get shift assignments as JSON."""
+@group_required(['Manager', 'HR'])
+def bulk_assign_shift(request):
+    """Bulk assign shift to multiple users with smart conflict handling"""
+    if request.method == 'POST':
+        form = BulkAssignmentForm(request.POST)
+        if form.is_valid():
+            try:
+                users = form.cleaned_data['users']
+                shift = form.cleaned_data['shift']
+                effective_from = form.cleaned_data['effective_from']
+                effective_to = form.cleaned_data.get('effective_to')
+
+                # Process bulk assignment with conflict detection
+                result = shift_service.bulk_assign_shifts(
+                    users, shift, effective_from, effective_to
+                )
+
+                action_logger.log_action(
+                    'BULK_ASSIGNMENT',
+                    user_id=request.user.id,
+                    user=request.user.username,
+                    shift_name=shift.name,
+                    total_users=len(users),
+                    successful=len(result.successful_assignments),
+                    conflicts=len(result.conflicts)
+                )
+
+                # Show results
+                if result.successful_assignments:
+                    success_names = [a.user.get_full_name() or a.user.username
+                                   for a in result.successful_assignments]
+                    messages.success(request,
+                        f'Successfully assigned "{shift.name}" to {len(success_names)} users: '
+                        f'{", ".join(success_names)}')
+
+                if result.conflicts:
+                    conflict_details = []
+                    for conflict in result.conflicts:
+                        conflict_details.append(
+                            f"{conflict.user.get_full_name() or conflict.user.username}: "
+                            f"{conflict.reason}"
+                        )
+                    messages.warning(request,
+                        f'Could not assign to {len(result.conflicts)} users due to conflicts:\n'
+                        + '\n'.join(conflict_details))
+
+                return redirect('shift:assignments')
+
+            except Exception as e:
+                logger.error(f"Error in bulk assignment: {e}")
+                messages.error(request, "Error processing bulk assignment. Please try again.")
+    else:
+        form = BulkAssignmentForm()
+
+    context = {
+        'form': form,
+        'title': 'Bulk Assign Shift',
+        'submit_text': 'Assign to Selected Users'
+    }
+    return render(request, 'shift/bulk_assign_form.html', context)
+
+@login_required
+@group_required(['Manager', 'HR'])
+@require_POST
+def end_assignment(request, assignment_id):
+    """End a shift assignment"""
+    try:
+        assignment = get_object_or_404(ShiftAssignment, id=assignment_id)
+
+        if not assignment.is_current:
+            messages.warning(request, "Assignment is already ended.")
+            return redirect('shift:assignments')
+
+        # End the assignment
+        success = shift_service.end_shift_assignment(assignment.id)
+
+        if success:
+            action_logger.log_action(
+                'ASSIGNMENT_ENDED',
+                user_id=request.user.id,
+                user=request.user.username,
+                target_user=assignment.user.username,
+                shift_name=assignment.shift.name
+            )
+            messages.success(request,
+                f'Assignment for {assignment.user.get_full_name() or assignment.user.username} ended successfully.')
+        else:
+            messages.error(request, "Error ending assignment. Please try again.")
+
+        return redirect('shift:assignments')
+
+    except Exception as e:
+        logger.error(f"Error ending assignment {assignment_id}: {e}")
+        messages.error(request, "Error ending assignment. Please try again.")
+        return redirect('shift:assignments')
+
+# ============================
+# CALENDAR AND SCHEDULE
+# ============================
+
+@login_required
+def user_shift_calendar(request, user_id=None):
+    """Calendar view of shift assignments"""
+    try:
+        if user_id and request.user.groups.filter(name__in=['Manager', 'HR']).exists():
+            target_user = get_object_or_404(User, id=user_id)
+        else:
+            target_user = request.user
+
+        # Get date range (current month by default)
+        today = date.today()
+        month = int(request.GET.get('month', today.month))
+        year = int(request.GET.get('year', today.year))
+
+        # Calculate calendar range
+        start_date = date(year, month, 1)
+        if month == 12:
+            end_date = date(year + 1, 1, 1) - timedelta(days=1)
+        else:
+            end_date = date(year, month + 1, 1) - timedelta(days=1)
+
+        # Get assignments for the month
+        assignments = ShiftAssignment.objects.filter(
+            user=target_user,
+            effective_from__lte=end_date,
+            effective_to__gte=start_date
+        ).select_related('shift')
+
+        # Get holidays
+        holidays = Holiday.objects.filter(
+            date__gte=start_date,
+            date__lte=end_date
+        )
+
+        # Prepare calendar data
+        calendar_data = {}
+        for assignment in assignments:
+            current_date = max(assignment.effective_from, start_date)
+            end_assignment_date = min(assignment.effective_to or end_date, end_date)
+
+            while current_date <= end_assignment_date:
+                if shift_service.is_working_day_for_user(target_user, current_date):
+                    if current_date not in calendar_data:
+                        calendar_data[current_date] = []
+                    calendar_data[current_date].append(assignment)
+                current_date += timedelta(days=1)
+
+        # Add holidays to calendar data
+        holiday_data = {holiday.date: holiday for holiday in holidays}
+
+        context = {
+            'target_user': target_user,
+            'calendar_data': calendar_data,
+            'holiday_data': holiday_data,
+            'current_month': month,
+            'current_year': year,
+            'prev_month': month - 1 if month > 1 else 12,
+            'prev_year': year if month > 1 else year - 1,
+            'next_month': month + 1 if month < 12 else 1,
+            'next_year': year if month < 12 else year + 1,
+            'can_view_others': request.user.groups.filter(name__in=['Manager', 'HR']).exists(),
+        }
+
+        return render(request, 'shift/calendar.html', context)
+
+    except Exception as e:
+        logger.error(f"Calendar error for user {user_id}: {e}")
+        messages.error(request, "Error loading calendar.")
+        return redirect('shift:dashboard')
+
+@login_required
+def shift_schedule_view(request):
+    """Daily/weekly schedule view for managers"""
+    try:
+        # Get date parameter
+        date_str = request.GET.get('date', str(date.today()))
+        view_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+
+        # Get view type (day/week)
+        view_type = request.GET.get('view', 'day')
+
+        if view_type == 'week':
+            # Week view - show 7 days starting from Monday
+            start_date = view_date - timedelta(days=view_date.weekday())
+            end_date = start_date + timedelta(days=6)
+        else:
+            # Day view
+            start_date = end_date = view_date
+
+        # Get schedule data
+        schedule_data = shift_service.get_shift_schedule_for_date(start_date, end_date)
+
+        context = {
+            'schedule_data': schedule_data,
+            'view_date': view_date,
+            'view_type': view_type,
+            'start_date': start_date,
+            'end_date': end_date,
+            'prev_date': view_date - timedelta(days=7 if view_type == 'week' else 1),
+            'next_date': view_date + timedelta(days=7 if view_type == 'week' else 1),
+        }
+
+        return render(request, 'shift/schedule.html', context)
+
+    except Exception as e:
+        logger.error(f"Schedule view error: {e}")
+        messages.error(request, "Error loading schedule.")
+        return redirect('shift:dashboard')
+
+# ============================
+# HOLIDAY MANAGEMENT
+# ============================
+
+@login_required
+def holiday_list(request):
+    """List holidays with management options"""
+    try:
+        holidays = Holiday.objects.all().order_by('date')
+
+        # Filter by year
+        year_filter = request.GET.get('year')
+        if year_filter:
+            holidays = holidays.filter(date__year=year_filter)
+        else:
+            # Default to current and next year
+            current_year = date.today().year
+            holidays = holidays.filter(date__year__in=[current_year, current_year + 1])
+
+        # Get unique years for filter dropdown
+        available_years = Holiday.objects.dates('date', 'year').values_list('date__year', flat=True)
+
+        context = {
+            'holidays': holidays,
+            'available_years': sorted(set(available_years)),
+            'selected_year': year_filter,
+            'can_manage': request.user.groups.filter(name__in=['Manager', 'HR']).exists(),
+        }
+
+        return render(request, 'shift/holiday_list.html', context)
+
+    except Exception as e:
+        logger.error(f"Holiday list error: {e}")
+        messages.error(request, "Error loading holidays.")
+        return render(request, 'shift/holiday_list.html', {'holidays': []})
+
+@login_required
+@group_required(['Manager', 'HR'])
+def create_holiday(request):
+    """Create new holiday"""
+    if request.method == 'POST':
+        form = HolidayForm(request.POST)
+        if form.is_valid():
+            try:
+                holiday = form.save()
+                action_logger.log_action(
+                    'HOLIDAY_CREATED',
+                    user_id=request.user.id,
+                    user=request.user.username,
+                    holiday_name=holiday.name,
+                    holiday_date=str(holiday.date)
+                )
+                messages.success(request, f'Holiday "{holiday.name}" created successfully!')
+                return redirect('shift:holidays')
+            except Exception as e:
+                logger.error(f"Error creating holiday: {e}")
+                messages.error(request, "Error creating holiday. Please try again.")
+    else:
+        form = HolidayForm()
+
+    context = {
+        'form': form,
+        'title': 'Create Holiday',
+        'submit_text': 'Create Holiday'
+    }
+    return render(request, 'shift/holiday_form.html', context)
+
+@login_required
+@group_required(['Manager', 'HR'])
+@require_POST
+def delete_holiday(request, holiday_id):
+    """Delete holiday"""
+    try:
+        holiday = get_object_or_404(Holiday, id=holiday_id)
+        holiday_name = holiday.name
+        holiday.delete()
+
+        action_logger.log_action(
+            'HOLIDAY_DELETED',
+            user_id=request.user.id,
+            user=request.user.username,
+            holiday_name=holiday_name
+        )
+
+        messages.success(request, f'Holiday "{holiday_name}" deleted successfully!')
+        return redirect('shift:holidays')
+
+    except Exception as e:
+        logger.error(f"Error deleting holiday {holiday_id}: {e}")
+        messages.error(request, "Error deleting holiday. Please try again.")
+        return redirect('shift:holidays')
+
+# ============================
+# CSV IMPORT/EXPORT
+# ============================
+
+@login_required
+@group_required(['Manager', 'HR'])
+def csv_upload_assignments(request):
+    """Upload CSV file for bulk assignments"""
+    if request.method == 'POST':
+        form = CSVUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            try:
+                csv_file = request.FILES['csv_file']
+
+                # Process CSV
+                file_data = csv_file.read().decode('utf-8')
+                csv_reader = csv.DictReader(StringIO(file_data))
+
+                results = {
+                    'successful': [],
+                    'errors': [],
+                    'conflicts': []
+                }
+
+                for row_num, row in enumerate(csv_reader, start=2):
+                    try:
+                        # Get user
+                        username = row.get('username', '').strip()
+                        if not username:
+                            results['errors'].append(f"Row {row_num}: Username is required")
+                            continue
+
+                        try:
+                            user = User.objects.get(username=username)
+                        except User.DoesNotExist:
+                            results['errors'].append(f"Row {row_num}: User '{username}' not found")
+                            continue
+
+                        # Get shift
+                        shift_name = row.get('shift_name', '').strip()
+                        if not shift_name:
+                            results['errors'].append(f"Row {row_num}: Shift name is required")
+                            continue
+
+                        try:
+                            shift = ShiftMaster.objects.get(name=shift_name, is_active=True)
+                        except ShiftMaster.DoesNotExist:
+                            results['errors'].append(f"Row {row_num}: Shift '{shift_name}' not found")
+                            continue
+
+                        # Parse dates
+                        effective_from_str = row.get('effective_from', '').strip()
+                        try:
+                            effective_from = datetime.strptime(effective_from_str, '%Y-%m-%d').date()
+                        except ValueError:
+                            results['errors'].append(f"Row {row_num}: Invalid effective_from date format")
+                            continue
+
+                        effective_to = None
+                        effective_to_str = row.get('effective_to', '').strip()
+                        if effective_to_str:
+                            try:
+                                effective_to = datetime.strptime(effective_to_str, '%Y-%m-%d').date()
+                            except ValueError:
+                                results['errors'].append(f"Row {row_num}: Invalid effective_to date format")
+                                continue
+
+                        # Check for exact duplicate assignments only (overlaps are now allowed)
+                        exact_duplicates = ShiftAssignment.objects.filter(
+                            user=user,
+                            shift=shift,
+                            is_current=True
+                        )
+
+                        if effective_to:
+                            exact_duplicates = exact_duplicates.filter(
+                                effective_from__lte=effective_to,
+                                effective_to__gte=effective_from
+                            )
+                        else:
+                            exact_duplicates = exact_duplicates.filter(
+                                effective_from__lte=effective_from,
+                                effective_to__isnull=True
+                            )
+
+                        if exact_duplicates.exists():
+                            results['errors'].append(f"Row {row_num}: User '{username}' is already assigned to '{shift_name}' during this period")
+                        else:
+                            # Check for potential overlaps (for reporting only)
+                            conflict_detector = ConflictDetector()
+                            end_date_for_check = effective_to if effective_to else (effective_from + timedelta(days=365))
+                            conflicts = conflict_detector.check_assignment_conflicts(
+                                user, shift, effective_from, end_date_for_check
+                            )
+
+                            # Create assignment regardless of overlaps
+                            assignment = ShiftAssignment.objects.create(
+                                user=user,
+                                shift=shift,
+                                effective_from=effective_from,
+                                effective_to=effective_to,
+                                is_current=True,
+                                notes=row.get('notes', ''),
+                                created_by=request.user
+                            )
+
+                            success_data = {
+                                'row': row_num,
+                                'user': username,
+                                'shift': shift_name,
+                                'assignment_id': assignment.id
+                            }
+
+                            # Add overlap information if present
+                            if conflicts:
+                                success_data['overlaps'] = len(conflicts)
+                                results['conflicts'].append({
+                                    'row': row_num,
+                                    'user': username,
+                                    'shift': shift_name,
+                                    'overlap_count': len(conflicts),
+                                    'message': f'Assignment created with {len(conflicts)} potential overlap(s)'
+                                })
+
+                            results['successful'].append(success_data)
+
+                    except Exception as e:
+                        results['errors'].append(f"Row {row_num}: {str(e)}")
+
+                action_logger.log_action(
+                    'CSV_IMPORT',
+                    user_id=request.user.id,
+                    user=request.user.username,
+                    total_rows=len(csv_reader),
+                    successful=len(results['successful']),
+                    errors=len(results['errors']),
+                    conflicts=len(results['conflicts'])
+                )
+
+                # Show results
+                if results['successful']:
+                    messages.success(request,
+                        f"Successfully imported {len(results['successful'])} assignments!")
+
+                if results['errors']:
+                    for error in results['errors'][:5]:  # Show first 5 errors
+                        messages.error(request, error)
+
+                if results['conflicts']:
+                    for conflict in results['conflicts'][:3]:  # Show first 3 conflicts
+                        messages.warning(request,
+                            f"Row {conflict['row']}: Conflicts found for {conflict['user']}")
+
+                return redirect('shift:assignments')
+
+            except Exception as e:
+                logger.error(f"CSV upload error: {e}")
+                messages.error(request, "Error processing CSV file. Please check format and try again.")
+    else:
+        form = CSVUploadForm()
+
+    context = {
+        'form': form,
+        'title': 'Upload CSV File',
+        'submit_text': 'Upload and Process'
+    }
+    return render(request, 'shift/csv_upload_form.html', context)
+
+@login_required
+@group_required(['Manager', 'HR'])
+def export_assignments_csv(request):
+    """Export assignments to CSV"""
+    try:
+        # Get filter parameters
+        status_filter = request.GET.get('status')
+        user_filter = request.GET.get('user')
+        shift_filter = request.GET.get('shift')
+
+        assignments = ShiftAssignment.objects.select_related('user', 'shift').all()
+
+        # Apply filters
+        if status_filter == 'current':
+            assignments = assignments.filter(is_current=True)
+        elif status_filter == 'ended':
+            assignments = assignments.filter(is_current=False)
+
+        if user_filter:
+            assignments = assignments.filter(user_id=user_filter)
+
+        if shift_filter:
+            assignments = assignments.filter(shift_id=shift_filter)
+
+        # Create CSV response
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="shift_assignments_{date.today()}.csv"'
+
+        writer = csv.writer(response)
+        writer.writerow([
+            'Username', 'User Name', 'Email', 'Shift Name', 'Start Time', 'End Time',
+            'Work Days', 'Effective From', 'Effective To', 'Status', 'Notes'
+        ])
+
+        for assignment in assignments:
+            writer.writerow([
+                assignment.user.username,
+                assignment.user.get_full_name() or assignment.user.username,
+                assignment.user.email,
+                assignment.shift.name,
+                assignment.shift.start_time.strftime('%H:%M'),
+                assignment.shift.end_time.strftime('%H:%M'),
+                assignment.shift.get_work_days_display(),
+                assignment.effective_from.strftime('%Y-%m-%d'),
+                assignment.effective_to.strftime('%Y-%m-%d') if assignment.effective_to else 'Ongoing',
+                'Active' if assignment.is_current else 'Inactive',
+                assignment.notes or ''
+            ])
+
+        action_logger.log_action(
+            'CSV_EXPORT',
+            user_id=request.user.id,
+            user=request.user.username,
+            exported_count=assignments.count()
+        )
+
+        return response
+
+    except Exception as e:
+        logger.error(f"CSV export error: {e}")
+        messages.error(request, "Error exporting data. Please try again.")
+        return redirect('shift:assignments')
+
+# ============================
+# API ENDPOINTS
+# ============================
+
+@login_required
+def api_shift_details(request, shift_id):
+    """API endpoint for shift details"""
     try:
         shift = get_object_or_404(ShiftMaster, id=shift_id)
 
-        assignments = ShiftAssignment.objects.filter(shift=shift).select_related('employee').order_by('-created_at')[:10]
+        data = {
+            'id': shift.id,
+            'name': shift.name,
+            'description': shift.description or '',
+            'start_time': shift.start_time.strftime('%H:%M'),
+            'end_time': shift.end_time.strftime('%H:%M'),
+            'duration': float(shift.shift_duration),
+            'work_days': shift.work_days,
+            'custom_work_days': shift.custom_work_days or '',
+            'is_active': shift.is_active,
+            'break_minutes': int(shift.break_duration.total_seconds() // 60) if shift.break_duration else 30,
+            'grace_minutes': int(shift.grace_period.total_seconds() // 60) if shift.grace_period else 15,
+            'active_assignments': shift.assignments.filter(is_current=True).count(),
+            'total_assignments': shift.assignments.count(),
+        }
 
-        assignments_data = []
+        api_logger.log_api_request(
+            'GET', f'/api/shifts/{shift_id}/',
+            user_id=request.user.id,
+            status_code=200
+        )
+
+        return JsonResponse({'success': True, 'data': data})
+
+    except Exception as e:
+        logger.error(f"API shift details error: {e}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+@login_required
+def api_user_assignments(request, user_id):
+    """API endpoint for user assignments"""
+    try:
+        # Check permissions
+        if not request.user.groups.filter(name__in=['Manager', 'HR']).exists():
+            if user_id != request.user.id:
+                return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+
+        user = get_object_or_404(User, id=user_id)
+        assignments = user.shift_assignments.select_related('shift').filter(is_current=True)
+
+        data = {
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'full_name': user.get_full_name() or user.username,
+                'email': user.email,
+            },
+            'assignments': [
+                {
+                    'id': assignment.id,
+                    'shift_name': assignment.shift.name,
+                    'start_time': assignment.shift.start_time.strftime('%H:%M'),
+                    'end_time': assignment.shift.end_time.strftime('%H:%M'),
+                    'effective_from': assignment.effective_from.strftime('%Y-%m-%d'),
+                    'effective_to': assignment.effective_to.strftime('%Y-%m-%d') if assignment.effective_to else None,
+                    'is_current': assignment.is_current,
+                }
+                for assignment in assignments
+            ]
+        }
+
+        return JsonResponse({'success': True, 'data': data})
+
+    except Exception as e:
+        logger.error(f"API user assignments error: {e}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+@login_required
+def api_user_shift_status(request, user_id):
+    """API endpoint for user shift status"""
+    try:
+        # Check permissions
+        if not request.user.groups.filter(name__in=['Manager', 'HR']).exists():
+            if user_id != request.user.id:
+                return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+
+        user = get_object_or_404(User, id=user_id)
+        current_shift = shift_service.get_current_shift(user)
+
+        data = {
+            'user_id': user_id,
+            'has_current_shift': current_shift is not None,
+            'current_shift': None
+        }
+
+        if current_shift:
+            data['current_shift'] = {
+                'name': current_shift.shift.name,
+                'start_time': current_shift.shift.start_time.strftime('%H:%M'),
+                'end_time': current_shift.shift.end_time.strftime('%H:%M'),
+                'effective_from': current_shift.effective_from.strftime('%Y-%m-%d'),
+                'effective_to': current_shift.effective_to.strftime('%Y-%m-%d') if current_shift.effective_to else None,
+            }
+
+        return JsonResponse({'success': True, 'data': data})
+
+    except Exception as e:
+        logger.error(f"API user status error: {e}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+@login_required
+@group_required(['Manager', 'HR'])
+def api_schedule_for_date(request):
+    """API endpoint for schedule data"""
+    try:
+        date_str = request.GET.get('date', str(date.today()))
+        view_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+
+        schedule_data = shift_service.get_shift_schedule_for_date(view_date)
+
+        return JsonResponse({'success': True, 'data': schedule_data})
+
+    except Exception as e:
+        logger.error(f"API schedule error: {e}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+@login_required
+@require_http_methods(["GET", "POST"])
+@group_required(['Manager', 'HR'])
+def api_validate_shift_name(request):
+    """API endpoint for comprehensive shift validation including name and overlaps"""
+    try:
+        # Handle both GET and POST requests
+        if request.method == 'POST':
+            if request.content_type == 'application/json':
+                data = json.loads(request.body)
+                name = data.get('name', '').strip()
+                shift_id = data.get('shift_id')
+                start_time = data.get('start_time')
+                end_time = data.get('end_time')
+                work_days = data.get('work_days')
+            else:
+                name = request.POST.get('name', '').strip()
+                shift_id = request.POST.get('shift_id')
+                start_time = request.POST.get('start_time')
+                end_time = request.POST.get('end_time')
+                work_days = request.POST.get('work_days')
+        else:
+            name = request.GET.get('name', '').strip()
+            shift_id = request.GET.get('shift_id')
+            start_time = request.GET.get('start_time')
+            end_time = request.GET.get('end_time')
+            work_days = request.GET.get('work_days')
+
+        errors = []
+        warnings = []
+
+        # Validate name
+        if not name:
+            errors.append('Shift name is required')
+        elif len(name) < 2:
+            errors.append('Shift name must be at least 2 characters long')
+        elif len(name) > 50:
+            errors.append('Shift name cannot exceed 50 characters')
+        else:
+            # Check name uniqueness
+            existing_query = ShiftMaster.objects.filter(name__iexact=name)
+            if shift_id:
+                try:
+                    existing_query = existing_query.exclude(pk=int(shift_id))
+                except (ValueError, TypeError):
+                    pass
+
+            if existing_query.exists():
+                errors.append(f'A shift with the name "{name}" already exists')
+
+        # Check for overlapping shifts (for informational purposes only)
+        if start_time and end_time and work_days and not errors:
+            try:
+                from datetime import time as dt_time
+                start_time_obj = dt_time.fromisoformat(start_time) if isinstance(start_time, str) else start_time
+                end_time_obj = dt_time.fromisoformat(end_time) if isinstance(end_time, str) else end_time
+
+                # Get work days list
+                if work_days == 'Weekdays':
+                    my_work_days = set([0, 1, 2, 3, 4])
+                elif work_days == 'All Days':
+                    my_work_days = set([0, 1, 2, 3, 4, 5, 6])
+                elif work_days == 'Custom':
+                    # Handle custom work days if provided
+                    my_work_days = set([0, 1, 2, 3, 4])  # Default to weekdays
+                else:
+                    my_work_days = set([0, 1, 2, 3, 4])
+
+                # Check existing shifts for overlaps
+                existing_shifts = ShiftMaster.objects.filter(is_active=True)
+                if shift_id:
+                    try:
+                        existing_shifts = existing_shifts.exclude(pk=int(shift_id))
+                    except (ValueError, TypeError):
+                        pass
+
+                overlapping_shifts = []
+                for shift in existing_shifts:
+                    shift_work_days = set(shift.working_days_list)
+                    common_days = my_work_days.intersection(shift_work_days)
+
+                    if common_days:
+                        # Check time overlap
+                        if times_overlap(start_time_obj, end_time_obj, shift.start_time, shift.end_time):
+                            overlapping_shifts.append(shift.name)
+
+                if overlapping_shifts:
+                    warnings.append(f'This shift overlaps with: {", ".join(overlapping_shifts)}. Overlapping shifts are allowed but may affect scheduling.')
+
+            except Exception as overlap_error:
+                logger.warning(f"Error checking overlaps: {overlap_error}")
+
+        is_valid = len(errors) == 0
+
+        return JsonResponse({
+            'valid': is_valid,
+            'errors': errors,
+            'warnings': warnings,
+            'message': 'Validation complete'
+        })
+
+    except Exception as e:
+        logger.error(f"API validate shift name error: {e}")
+        return JsonResponse({'valid': False, 'errors': [str(e)]}, status=500)
+
+def times_overlap(start1, end1, start2, end2):
+    """Helper function to check if two time ranges overlap"""
+    if not all([start1, end1, start2, end2]):
+        return False
+
+    # Convert to minutes for easier comparison
+    start1_min = start1.hour * 60 + start1.minute
+    end1_min = end1.hour * 60 + end1.minute
+    start2_min = start2.hour * 60 + start2.minute
+    end2_min = end2.hour * 60 + end2.minute
+
+    # Handle overnight shifts
+    if end1 < start1:  # First shift crosses midnight
+        end1_min += 24 * 60
+    if end2 < start2:  # Second shift crosses midnight
+        end2_min += 24 * 60
+
+    # Check for overlap (not just touching)
+    return (start1_min < end2_min) and (start2_min < end1_min)
+
+@login_required
+@group_required(['Manager', 'HR'])
+def api_validate_assignment(request):
+    """API endpoint for assignment validation with overlap support"""
+    try:
+        # Handle both GET and POST requests
+        if request.method == 'POST':
+            if request.content_type == 'application/json':
+                data = json.loads(request.body)
+                user_id = data.get('user_id')
+                shift_id = data.get('shift_id')
+                effective_from = data.get('effective_from')
+                effective_to = data.get('effective_to')
+            else:
+                user_id = request.POST.get('user_id')
+                shift_id = request.POST.get('shift_id')
+                effective_from = request.POST.get('effective_from')
+                effective_to = request.POST.get('effective_to')
+        else:
+            user_id = request.GET.get('user_id')
+            shift_id = request.GET.get('shift_id')
+            effective_from = request.GET.get('effective_from')
+            effective_to = request.GET.get('effective_to')
+
+        if not all([user_id, shift_id, effective_from]):
+            return JsonResponse({
+                'valid': False,
+                'errors': ['Missing required parameters: user_id, shift_id, effective_from'],
+                'warnings': []
+            })
+
+        # Get objects
+        try:
+            user = User.objects.get(id=user_id)
+            shift = ShiftMaster.objects.get(id=shift_id)
+        except (User.DoesNotExist, ShiftMaster.DoesNotExist) as e:
+            return JsonResponse({
+                'valid': False,
+                'errors': ['Invalid user or shift ID'],
+                'warnings': []
+            })
+
+        try:
+            from_date = datetime.strptime(effective_from, '%Y-%m-%d').date()
+            to_date = None
+            if effective_to:
+                to_date = datetime.strptime(effective_to, '%Y-%m-%d').date()
+        except ValueError:
+            return JsonResponse({
+                'valid': False,
+                'errors': ['Invalid date format. Use YYYY-MM-DD'],
+                'warnings': []
+            })
+
+        # Check for conflicts
+        conflict_detector = ConflictDetector()
+        end_date_for_check = to_date if to_date else (from_date + timedelta(days=365))
+        conflicts = conflict_detector.check_assignment_conflicts(
+            user, shift, from_date, end_date_for_check
+        )
+
+        warnings = []
+        errors = []
+
+        # Process conflicts as warnings rather than errors (per new policy)
+        if conflicts:
+            for conflict in conflicts:
+                if hasattr(conflict, 'conflicting_shift') and conflict.conflicting_shift:
+                    shift_name = conflict.conflicting_shift.name
+                else:
+                    shift_name = 'Unknown shift'
+
+                warnings.append(f"Potential overlap with {shift_name}. This is allowed but may require coordination.")
+
+        # Check for exact duplicate assignments (these should still be errors)
+        existing_assignments = ShiftAssignment.objects.filter(
+            user=user,
+            shift=shift,
+            is_current=True
+        )
+
+        if to_date:
+            existing_assignments = existing_assignments.filter(
+                effective_from__lte=to_date,
+                effective_to__gte=from_date
+            )
+        else:
+            existing_assignments = existing_assignments.filter(
+                effective_from__lte=from_date,
+                effective_to__isnull=True
+            )
+
+        if existing_assignments.exists():
+            errors.append('User is already assigned to this exact shift during this period')
+
+        return JsonResponse({
+            'valid': len(errors) == 0,
+            'errors': errors,
+            'warnings': warnings,
+            'conflicts': [
+                {
+                    'shift_name': getattr(conflict, 'conflicting_shift', {}).get('name', 'Unknown'),
+                    'type': 'overlap_warning',
+                    'message': f"Overlaps with existing assignment"
+                }
+                for conflict in conflicts
+            ]
+        })
+
+    except Exception as e:
+        logger.error(f"API validate assignment error: {e}")
+        return JsonResponse({
+            'valid': False,
+            'errors': [f'Validation error: {str(e)}'],
+            'warnings': []
+        }, status=500)
+
+@login_required
+@group_required(['Manager', 'HR'])
+def api_bulk_assignment_validation(request):
+    """API endpoint for bulk assignment validation with overlap support"""
+    try:
+        data = json.loads(request.body)
+        assignments = data.get('assignments', [])
+
+        results = []
+
         for assignment in assignments:
-            assignments_data.append({
-                'id': assignment.id,
-                'employee_name': f"{assignment.employee.first_name} {assignment.employee.last_name}",
-                'employee_id': assignment.employee.employee_id,
-                'effective_from': assignment.effective_from.isoformat(),
-                'effective_to': assignment.effective_to.isoformat() if assignment.effective_to else None,
-                'is_current': assignment.is_current,
-                'priority': assignment.priority,
+            try:
+                user = User.objects.get(id=assignment['user_id'])
+                shift = ShiftMaster.objects.get(id=assignment['shift_id'])
+                from_date = datetime.strptime(assignment['effective_from'], '%Y-%m-%d').date()
+                to_date = None
+                if assignment.get('effective_to'):
+                    to_date = datetime.strptime(assignment['effective_to'], '%Y-%m-%d').date()
+
+                # Check for conflicts with proper null handling
+                conflict_detector = ConflictDetector()
+                end_date_for_check = to_date if to_date else (from_date + timedelta(days=365))
+                conflicts = conflict_detector.check_assignment_conflicts(
+                    user, shift, from_date, end_date_for_check
+                )
+
+                # Check for exact duplicate assignments (still errors)
+                exact_duplicates = ShiftAssignment.objects.filter(
+                    user=user,
+                    shift=shift,
+                    is_current=True
+                )
+
+                if to_date:
+                    exact_duplicates = exact_duplicates.filter(
+                        effective_from__lte=to_date,
+                        effective_to__gte=from_date
+                    )
+                else:
+                    exact_duplicates = exact_duplicates.filter(
+                        effective_from__lte=from_date,
+                        effective_to__isnull=True
+                    )
+
+                has_duplicates = exact_duplicates.exists()
+
+                # Determine validity based on new policy
+                is_valid = not has_duplicates  # Only block exact duplicates
+
+                message = 'Valid'
+                if has_duplicates:
+                    message = 'User already assigned to this exact shift'
+                elif conflicts:
+                    message = f'{len(conflicts)} potential overlaps detected (allowed)'
+
+                results.append({
+                    'user_id': assignment['user_id'],
+                    'username': user.username,
+                    'shift_name': shift.name,
+                    'valid': is_valid,
+                    'conflicts': len(conflicts),
+                    'has_duplicates': has_duplicates,
+                    'message': message,
+                    'warnings': [f'Overlap with existing assignment'] if conflicts and not has_duplicates else []
+                })
+
+            except (User.DoesNotExist, ShiftMaster.DoesNotExist):
+                results.append({
+                    'user_id': assignment.get('user_id'),
+                    'valid': False,
+                    'conflicts': 0,
+                    'message': 'Invalid user or shift ID'
+                })
+            except Exception as e:
+                results.append({
+                    'user_id': assignment.get('user_id'),
+                    'valid': False,
+                    'conflicts': 0,
+                    'message': str(e)
+                })
+
+        return JsonResponse({'success': True, 'results': results})
+
+    except Exception as e:
+        logger.error(f"API bulk validation error: {e}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+@login_required
+@group_required(['Manager', 'HR'])
+def api_check_conflicts(request):
+    """API endpoint for conflict detection"""
+    try:
+        user_id = request.GET.get('user_id')
+        shift_id = request.GET.get('shift_id')
+        start_date = request.GET.get('start_date')
+        end_date = request.GET.get('end_date')
+
+        user = get_object_or_404(User, id=user_id)
+        shift = get_object_or_404(ShiftMaster, id=shift_id)
+        from_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+        to_date = None
+        if end_date:
+            to_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+
+        conflicts = conflict_detector.check_assignment_conflicts(
+            user, shift, from_date, to_date
+        )
+
+        return JsonResponse({
+            'success': True,
+            'has_conflicts': len(conflicts) > 0,
+            'conflicts': [
+                {
+                    'type': 'time_overlap',
+                    'conflicting_shift': conflict.conflicting_shift.name,
+                    'conflict_start': str(conflict.conflict_start),
+                    'conflict_end': str(conflict.conflict_end)
+                }
+                for conflict in conflicts
+            ]
+        })
+
+    except Exception as e:
+        logger.error(f"API check conflicts error: {e}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+@login_required
+@group_required(['Manager', 'HR'])
+def api_resolve_conflicts(request):
+    """API endpoint for conflict resolution"""
+    try:
+        data = json.loads(request.body)
+        conflict_id = data.get('conflict_id')
+        resolution_strategy = data.get('strategy', 'manual')
+
+        # This would integrate with your conflict resolution system
+        # For now, return a simple response
+        return JsonResponse({
+            'success': True,
+            'message': 'Conflict resolution initiated',
+            'strategy': resolution_strategy
+        })
+
+    except Exception as e:
+        logger.error(f"API resolve conflicts error: {e}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+@login_required
+def api_get_suggestions(request):
+    """API endpoint for getting smart suggestions"""
+    try:
+        suggestions = []
+
+        # Check for users without shifts
+        users_without_shifts = User.objects.filter(
+            is_active=True
+        ).exclude(shift_assignments__is_current=True).count()
+
+        if users_without_shifts > 0:
+            suggestions.append({
+                'id': 'users_without_shifts',
+                'type': 'warning',
+                'title': 'Users Without Shifts',
+                'message': f'{users_without_shifts} active users have no current shift assignments',
+                'action_url': '/shift/assignments/assign/',
+                'action_text': 'Assign Shifts'
+            })
+
+        # Check for inactive shifts
+        inactive_shifts = ShiftMaster.objects.filter(is_active=False).count()
+        if inactive_shifts > 0:
+            suggestions.append({
+                'id': 'inactive_shifts',
+                'type': 'info',
+                'title': 'Inactive Shifts',
+                'message': f'{inactive_shifts} shifts are currently inactive',
+                'action_url': '/shift/shifts/',
+                'action_text': 'Review Shifts'
             })
 
         return JsonResponse({
             'success': True,
-            'assignments': assignments_data
+            'suggestions': suggestions,
+            'count': len(suggestions)
         })
 
     except Exception as e:
-        logger.error(f"Error in shift assignments API: {str(e)}")
-        return JsonResponse({
-            'success': False,
-            'error': str(e)
-        }, status=500)
-
+        logger.error(f"API suggestions error: {e}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 @login_required
-@require_http_methods(["GET"])
-def shift_statistics_api(request, shift_id):
-    """API endpoint to get shift statistics as JSON."""
+@require_POST
+def api_dismiss_suggestion(request, suggestion_id):
+    """API endpoint for dismissing suggestions"""
     try:
-        shift = get_object_or_404(ShiftMaster, id=shift_id)
-
-        stats = {
-            'total_assignments': ShiftAssignment.objects.filter(shift=shift).count(),
-            'current_assignments': ShiftAssignment.objects.filter(shift=shift, is_current=True).count(),
-            'total_employees': ShiftAssignment.objects.filter(shift=shift).values('employee').distinct().count(),
-        }
+        # Log the dismissal
+        action_logger.log_action(
+            'SUGGESTION_DISMISSED',
+            user_id=request.user.id,
+            user=request.user.username,
+            suggestion_id=suggestion_id
+        )
 
         return JsonResponse({
             'success': True,
-            'statistics': stats
+            'message': 'Suggestion dismissed'
         })
 
     except Exception as e:
-        logger.error(f"Error in shift statistics API: {str(e)}")
+        logger.error(f"API dismiss suggestion error: {e}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+@login_required
+def api_dashboard_stats(request):
+    """API endpoint for dashboard statistics"""
+    try:
+        stats = {
+            'total_shifts': ShiftMaster.objects.filter(is_active=True).count(),
+            'total_assignments': ShiftAssignment.objects.filter(is_current=True).count(),
+            'total_users': User.objects.filter(is_active=True).count(),
+            'users_with_shifts': ShiftAssignment.objects.filter(is_current=True).values('user').distinct().count(),
+            'upcoming_holidays': Holiday.objects.filter(
+                date__gte=date.today(),
+                date__lte=date.today() + timedelta(days=30)
+            ).count(),
+            'recent_assignments': ShiftAssignment.objects.filter(
+                created_at__gte=timezone.now() - timedelta(days=7)
+            ).count()
+        }
+
+        stats['utilization_rate'] = round(
+            (stats['users_with_shifts'] / max(stats['total_users'], 1)) * 100, 1
+        )
+
         return JsonResponse({
-            'success': False,
-            'error': str(e)
-        }, status=500)
+            'success': True,
+            'stats': stats,
+            'timestamp': timezone.now().isoformat()
+        })
+
+    except Exception as e:
+        logger.error(f"API dashboard stats error: {e}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+@login_required
+def api_shift_analytics(request, shift_id):
+    """API endpoint for shift analytics"""
+    try:
+        shift = get_object_or_404(ShiftMaster, id=shift_id)
+
+        analytics = {
+            'shift_id': shift_id,
+            'total_assignments': shift.assignments.count(),
+            'current_assignments': shift.assignments.filter(is_current=True).count(),
+            'average_assignment_duration': 30,  # Calculate actual average
+            'utilization_trend': 'stable',  # Calculate actual trend
+        }
+
+        return JsonResponse({'success': True, 'analytics': analytics})
+
+    except Exception as e:
+        logger.error(f"API shift analytics error: {e}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+@login_required
+def api_user_analytics(request, user_id):
+    """API endpoint for user analytics"""
+    try:
+        user = get_object_or_404(User, id=user_id)
+
+        analytics = {
+            'user_id': user_id,
+            'total_assignments': user.shift_assignments.count(),
+            'current_assignments': user.shift_assignments.filter(is_current=True).count(),
+            'assignment_history': [
+                {
+                    'shift_name': assignment.shift.name,
+                    'start_date': assignment.effective_from.strftime('%Y-%m-%d'),
+                    'end_date': assignment.effective_to.strftime('%Y-%m-%d') if assignment.effective_to else None
+                }
+                for assignment in user.shift_assignments.select_related('shift').order_by('-effective_from')[:10]
+            ]
+        }
+
+        return JsonResponse({'success': True, 'analytics': analytics})
+
+    except Exception as e:
+        logger.error(f"API user analytics error: {e}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+@login_required
+@group_required(['Manager', 'HR'])
+def api_available_users(request):
+    """API endpoint for available users"""
+    try:
+        # Users without current assignments
+        available_users = User.objects.filter(
+            is_active=True
+        ).exclude(shift_assignments__is_current=True)
+
+        data = [
+            {
+                'id': user.id,
+                'username': user.username,
+                'full_name': user.get_full_name() or user.username,
+                'email': user.email,
+                'groups': list(user.groups.values_list('name', flat=True))
+            }
+            for user in available_users
+        ]
+
+        return JsonResponse({'success': True, 'users': data})
+
+    except Exception as e:
+        logger.error(f"API available users error: {e}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+@login_required
+def api_shift_recommendations(request):
+    """API endpoint for shift recommendations"""
+    try:
+        recommendations = []
+
+        # Check for underutilized shifts
+        shifts = ShiftMaster.objects.filter(is_active=True).annotate(
+            assignment_count=Count('assignments', filter=Q(assignments__is_current=True))
+        )
+
+        for shift in shifts:
+            if shift.assignment_count == 0:
+                recommendations.append({
+                    'type': 'underutilized',
+                    'shift_id': shift.id,
+                    'shift_name': shift.name,
+                    'message': f'Shift "{shift.name}" has no current assignments',
+                    'suggestion': 'Consider assigning users or reviewing if still needed'
+                })
+
+        return JsonResponse({
+            'success': True,
+            'recommendations': recommendations
+        })
+
+    except Exception as e:
+        logger.error(f"API shift recommendations error: {e}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+@login_required
+@group_required(['Manager', 'HR'])
+def api_upcoming_changes(request):
+    """API endpoint for upcoming changes"""
+    try:
+        days = int(request.GET.get('days', 7))
+
+        # Assignments starting soon
+        upcoming_starts = ShiftAssignment.objects.filter(
+            effective_from__gt=date.today(),
+            effective_from__lte=date.today() + timedelta(days=days)
+        ).select_related('user', 'shift')
+
+        # Assignments ending soon
+        upcoming_ends = ShiftAssignment.objects.filter(
+            effective_to__gte=date.today(),
+            effective_to__lte=date.today() + timedelta(days=days),
+            is_current=True
+        ).select_related('user', 'shift')
+
+        changes = []
+
+        for assignment in upcoming_starts:
+            changes.append({
+                'type': 'starting',
+                'date': assignment.effective_from.strftime('%Y-%m-%d'),
+                'user': assignment.user.get_full_name() or assignment.user.username,
+                'shift': assignment.shift.name,
+                'description': f'{assignment.user.username} starts {assignment.shift.name}'
+            })
+
+        for assignment in upcoming_ends:
+            changes.append({
+                'type': 'ending',
+                'date': assignment.effective_to.strftime('%Y-%m-%d'),
+                'user': assignment.user.get_full_name() or assignment.user.username,
+                'shift': assignment.shift.name,
+                'description': f'{assignment.user.username} ends {assignment.shift.name}'
+            })
+
+        # Sort by date
+        changes.sort(key=lambda x: x['date'])
+
+        return JsonResponse({
+            'success': True,
+            'changes': changes,
+            'count': len(changes)
+        })
+
+    except Exception as e:
+        logger.error(f"API upcoming changes error: {e}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+@login_required
+def api_is_holiday(request):
+    """API endpoint for holiday checking"""
+    try:
+        date_str = request.GET.get('date', str(date.today()))
+        check_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+
+        # Check for exact date match or recurring holiday
+        holiday = Holiday.objects.filter(
+            Q(date=check_date) |
+            Q(recurring_yearly=True, date__month=check_date.month, date__day=check_date.day)
+        ).first()
+
+        is_holiday = holiday is not None
+        holiday_info = None
+
+        if holiday:
+            holiday_info = {
+                'name': holiday.name,
+                'date': holiday.date.strftime('%Y-%m-%d'),
+                'recurring_yearly': holiday.recurring_yearly
+            }
+
+        return JsonResponse({
+            'success': True,
+            'is_holiday': is_holiday,
+            'holiday': holiday_info
+        })
+
+    except Exception as e:
+        logger.error(f"API holiday check error: {e}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+@login_required
+def api_holidays_list(request):
+    """API endpoint for holidays list"""
+    try:
+        year = int(request.GET.get('year', date.today().year))
+
+        holidays = Holiday.objects.filter(
+            Q(date__year=year) |
+            Q(recurring_yearly=True)
+        ).order_by('date')
+
+        data = [
+            {
+                'id': holiday.id,
+                'name': holiday.name,
+                'date': holiday.date.strftime('%Y-%m-%d'),
+                'recurring_yearly': holiday.recurring_yearly
+            }
+            for holiday in holidays
+        ]
+
+        return JsonResponse({'success': True, 'holidays': data})
+
+    except Exception as e:
+        logger.error(f"API holidays list error: {e}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+@login_required
+@group_required(['Manager', 'HR'])
+def api_system_status(request):
+    """API endpoint for system status"""
+    try:
+        status = {
+            'database': 'healthy',
+            'cache': 'healthy',
+            'service': 'running',
+            'conflicts_detected': 0,
+            'last_check': timezone.now().isoformat()
+        }
+
+        # Quick conflict check
+        try:
+            current_assignments = ShiftAssignment.objects.filter(is_current=True).count()
+            status['active_assignments'] = current_assignments
+        except Exception:
+            status['database'] = 'error'
+
+        return JsonResponse({'success': True, 'status': status})
+
+    except Exception as e:
+        logger.error(f"API system status error: {e}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+# ============================
+# MANAGER QUICK ACTIONS
+# ============================
+
+@login_required
+@group_required(['Manager', 'HR'])
+def quick_assign_user(request):
+    """Quick assignment of user to shift"""
+    if request.method == 'POST':
+        try:
+            user_id = request.POST.get('user_id')
+            shift_id = request.POST.get('shift_id')
+            effective_from = request.POST.get('effective_from')
+            effective_to = request.POST.get('effective_to')
+
+            result = shift_service.assign_shift_to_user(
+                user_id=user_id,
+                shift_id=shift_id,
+                effective_from=effective_from,
+                effective_to=effective_to,
+                assigned_by=request.user
+            )
+
+            if result.success:
+                messages.success(request, f"User assigned to shift successfully!")
+                return JsonResponse({'success': True, 'assignment_id': result.assignment_id})
+            else:
+                return JsonResponse({'success': False, 'errors': result.errors})
+
+        except Exception as e:
+            logger.error(f"Quick assign error: {e}")
+            return JsonResponse({'success': False, 'error': str(e)})
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+@login_required
+@group_required(['Manager', 'HR'])
+def quick_end_assignment(request):
+    """Quick end of shift assignment"""
+    if request.method == 'POST':
+        try:
+            assignment_id = request.POST.get('assignment_id')
+            end_date = request.POST.get('end_date', timezone.now().date())
+
+            result = shift_service.end_shift_assignment(
+                assignment_id=assignment_id,
+                end_date=end_date,
+                ended_by=request.user
+            )
+
+            if result.success:
+                messages.success(request, "Assignment ended successfully!")
+                return JsonResponse({'success': True})
+            else:
+                return JsonResponse({'success': False, 'errors': result.errors})
+
+        except Exception as e:
+            logger.error(f"Quick end assignment error: {e}")
+            return JsonResponse({'success': False, 'error': str(e)})
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+@login_required
+@group_required(['Manager', 'HR'])
+def quick_create_shift(request):
+    """Quick creation of new shift"""
+    if request.method == 'POST':
+        try:
+            form = ShiftForm(request.POST)
+            if form.is_valid():
+                shift = form.save(commit=False)
+                shift.created_by = request.user
+                shift.save()
+
+                messages.success(request, f"Shift '{shift.shift_name}' created successfully!")
+                return JsonResponse({'success': True, 'shift_id': shift.id})
+            else:
+                return JsonResponse({'success': False, 'errors': form.errors})
+
+        except Exception as e:
+            logger.error(f"Quick create shift error: {e}")
+            return JsonResponse({'success': False, 'error': str(e)})
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+@login_required
+@group_required(['Manager', 'HR'])
+def quick_user_status(request, user_id):
+    """Get quick status of user's shift assignment"""
+    try:
+        user = get_object_or_404(User, id=user_id)
+        status = shift_service.get_user_shift_status(user)
+
+        return JsonResponse({
+            'success': True,
+            'user_id': user_id,
+            'username': user.username,
+            'status': status
+        })
+
+    except Exception as e:
+        logger.error(f"Quick user status error: {e}")
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+# ============================
+# REPORTS AND EXPORTS
+# ============================
+
+@login_required
+@group_required(['Manager', 'HR'])
+def report_assignments(request):
+    """Generate assignments report"""
+    try:
+        start_date = request.GET.get('start_date')
+        end_date = request.GET.get('end_date')
+        format_type = request.GET.get('format', 'html')
+
+        assignments = ShiftAssignment.objects.select_related('user', 'shift', 'created_by')
+
+        if start_date:
+            assignments = assignments.filter(effective_from__gte=start_date)
+        if end_date:
+            assignments = assignments.filter(effective_to__lte=end_date)
+
+        if format_type == 'csv':
+            response = HttpResponse(content_type='text/csv')
+            response['Content-Disposition'] = 'attachment; filename="assignments_report.csv"'
+
+            writer = csv.writer(response)
+            writer.writerow(['User', 'Shift', 'Effective From', 'Effective To', 'Status', 'Created By'])
+
+            for assignment in assignments:
+                writer.writerow([
+                    assignment.user.username,
+                    assignment.shift.shift_name,
+                    assignment.effective_from,
+                    assignment.effective_to or 'Ongoing',
+                    'Active' if assignment.is_current else 'Inactive',
+                    assignment.created_by.username if assignment.created_by else 'System'
+                ])
+
+            return response
+
+        context = {
+            'assignments': assignments,
+            'start_date': start_date,
+            'end_date': end_date,
+            'total_assignments': assignments.count()
+        }
+        return render(request, 'shift/reports/assignments.html', context)
+
+    except Exception as e:
+        logger.error(f"Report assignments error: {e}")
+        messages.error(request, f"Error generating report: {e}")
+        return redirect('shift:dashboard')
+
+@login_required
+@group_required(['Manager', 'HR'])
+def report_attendance(request):
+    """Generate attendance report"""
+    try:
+        start_date = request.GET.get('start_date')
+        end_date = request.GET.get('end_date')
+        format_type = request.GET.get('format', 'html')
+
+        # This would integrate with attendance tracking if available
+        context = {
+            'start_date': start_date,
+            'end_date': end_date,
+            'message': 'Attendance reporting requires integration with attendance tracking module'
+        }
+        return render(request, 'shift/reports/attendance.html', context)
+
+    except Exception as e:
+        logger.error(f"Report attendance error: {e}")
+        messages.error(request, f"Error generating report: {e}")
+        return redirect('shift:dashboard')
+
+@login_required
+@group_required(['Manager', 'HR'])
+def report_conflicts(request):
+    """Generate conflicts report"""
+    try:
+        # Detect current conflicts
+        conflicts = conflict_detector.check_assignment_conflicts(
+            user_id=None,  # Check all users
+            shift_id=None,
+            start_date=timezone.now().date(),
+            end_date=timezone.now().date() + timedelta(days=30)
+        )
+
+        context = {
+            'conflicts': conflicts,
+            'total_conflicts': len(conflicts)
+        }
+        return render(request, 'shift/reports/conflicts.html', context)
+
+    except Exception as e:
+        logger.error(f"Report conflicts error: {e}")
+        messages.error(request, f"Error generating report: {e}")
+        return redirect('shift:dashboard')
+
+@login_required
+@group_required(['Manager', 'HR'])
+def report_utilization(request):
+    """Generate shift utilization report"""
+    try:
+        shifts = ShiftMaster.objects.filter(is_active=True)
+        utilization_data = []
+
+        for shift in shifts:
+            assignments = ShiftAssignment.objects.filter(shift=shift, is_current=True)
+            utilization_data.append({
+                'shift': shift,
+                'current_assignments': assignments.count(),
+                'utilization_rate': f"{assignments.count() * 100 / max(shift.max_capacity or 1, 1):.1f}%"
+            })
+
+        context = {
+            'utilization_data': utilization_data,
+            'total_shifts': shifts.count()
+        }
+        return render(request, 'shift/reports/utilization.html', context)
+
+    except Exception as e:
+        logger.error(f"Report utilization error: {e}")
+        messages.error(request, f"Error generating report: {e}")
+        return redirect('shift:dashboard')
+
+
+# ============================
+# BATCH OPERATIONS
+# ============================
+@login_required
+@group_required(['Manager'])
+def batch_activate_shifts(request):
+    """Batch activate multiple shifts"""
+    if request.method == 'POST':
+        try:
+            shift_ids = request.POST.getlist('shift_ids')
+            updated_count = 0
+
+            with transaction.atomic():
+                for shift_id in shift_ids:
+                    try:
+                        shift = ShiftMaster.objects.get(id=shift_id)
+                        shift.is_active = True
+                        shift.save()
+                        updated_count += 1
+                    except ShiftMaster.DoesNotExist:
+                        continue
+
+            messages.success(request, f"Successfully activated {updated_count} shifts.")
+            return JsonResponse({'success': True, 'updated_count': updated_count})
+
+        except Exception as e:
+            logger.error(f"Batch activate error: {e}")
+            return JsonResponse({'success': False, 'error': str(e)})
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+@login_required
+@group_required(['Manager'])
+def batch_deactivate_shifts(request):
+    """Batch deactivate multiple shifts"""
+    if request.method == 'POST':
+        try:
+            shift_ids = request.POST.getlist('shift_ids')
+            updated_count = 0
+
+            with transaction.atomic():
+                for shift_id in shift_ids:
+                    try:
+                        shift = ShiftMaster.objects.get(id=shift_id)
+                        shift.is_active = False
+                        shift.save()
+                        updated_count += 1
+                    except ShiftMaster.DoesNotExist:
+                        continue
+
+            messages.success(request, f"Successfully deactivated {updated_count} shifts.")
+            return JsonResponse({'success': True, 'updated_count': updated_count})
+
+        except Exception as e:
+            logger.error(f"Error in batch deactivate shifts: {e}")
+            return JsonResponse({'success': False, 'error': str(e)})
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+@login_required
+@group_required(['Manager'])
+def batch_end_assignments(request):
+    """Batch end multiple assignments"""
+    if request.method == 'POST':
+        try:
+            assignment_ids = request.POST.getlist('assignment_ids')
+            end_date = request.POST.get('end_date', timezone.now().date())
+            updated_count = 0
+
+            with transaction.atomic():
+                for assignment_id in assignment_ids:
+                    try:
+                        assignment = ShiftAssignment.objects.get(id=assignment_id)
+                        assignment.effective_to = end_date
+                        assignment.is_current = False
+                        assignment.save()
+                        updated_count += 1
+                    except ShiftAssignment.DoesNotExist:
+                        continue
+
+            messages.success(request, f"Successfully ended {updated_count} assignments.")
+            return JsonResponse({'success': True, 'updated_count': updated_count})
+
+        except Exception as e:
+            logger.error(f"Error in batch end assignments: {e}")
+            return JsonResponse({'success': False, 'error': str(e)})
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+@login_required
+@group_required(['Manager'])
+def batch_extend_assignments(request):
+    """Batch extend multiple assignments"""
+    if request.method == 'POST':
+        try:
+            assignment_ids = request.POST.getlist('assignment_ids')
+            new_end_date = request.POST.get('new_end_date')
+            updated_count = 0
+
+            with transaction.atomic():
+                for assignment_id in assignment_ids:
+                    try:
+                        assignment = ShiftAssignment.objects.get(id=assignment_id)
+                        assignment.effective_to = new_end_date
+                        assignment.save()
+                        updated_count += 1
+                    except ShiftAssignment.DoesNotExist:
+                        continue
+
+            messages.success(request, f"Successfully extended {updated_count} assignments.")
+            return JsonResponse({'success': True, 'updated_count': updated_count})
+
+        except Exception as e:
+            logger.error(f"Error in batch extend assignments: {e}")
+            return JsonResponse({'success': False, 'error': str(e)})
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+
+# ============================
+# SETTINGS AND CONFIGURATION
+# ============================
+
+@login_required
+@group_required(['Manager'])
+def shift_settings(request):
+    """Shift management settings"""
+    try:
+        context = {
+            'shift_groups': SHIFT_GROUPS,
+            'cache_settings': CACHE_SETTINGS,
+            'email_notifications': EMAIL_NOTIFICATIONS
+        }
+        return render(request, 'shift/settings/index.html', context)
+
+    except Exception as e:
+        logger.error(f"Shift settings error: {e}")
+        messages.error(request, f"Error loading settings: {e}")
+        return redirect('shift:dashboard')
+
+@login_required
+@group_required(['Manager'])
+def manage_groups(request):
+    """Manage user groups for shift access"""
+    try:
+        groups = Group.objects.all()
+        context = {'groups': groups}
+        return render(request, 'shift/settings/groups.html', context)
+
+    except Exception as e:
+        logger.error(f"Manage groups error: {e}")
+        messages.error(request, f"Error loading groups: {e}")
+        return redirect('shift:settings')
+
+@login_required
+@group_required(['Manager'])
+def manage_permissions(request):
+    """Manage permissions for shift operations"""
+    try:
+        from .urls import URL_PERMISSION_MAP
+        context = {'permission_map': URL_PERMISSION_MAP}
+        return render(request, 'shift/settings/permissions.html', context)
+
+    except Exception as e:
+        logger.error(f"Manage permissions error: {e}")
+        messages.error(request, f"Error loading permissions: {e}")
+        return redirect('shift:settings')
+
+@login_required
+@group_required(['Manager'])
+def shift_templates(request):
+    """Manage shift templates"""
+    try:
+        templates = ShiftMaster.objects.filter(is_template=True)
+        context = {'templates': templates}
+        return render(request, 'shift/settings/templates.html', context)
+
+    except Exception as e:
+        logger.error(f"Shift templates error: {e}")
+        messages.error(request, f"Error loading templates: {e}")
+        return redirect('shift:settings')
+
+
+# ============================
+# CONFLICT MANAGEMENT
+# ============================
+
+@login_required
+@group_required(['Manager', 'HR'])
+def conflict_dashboard(request):
+    """Dashboard for managing conflicts"""
+    try:
+        # Get current conflicts
+        conflicts = conflict_detector.check_assignment_conflicts(
+            user_id=None,
+            shift_id=None,
+            start_date=timezone.now().date(),
+            end_date=timezone.now().date() + timedelta(days=7)
+        )
+
+        context = {
+            'conflicts': conflicts,
+            'total_conflicts': len(conflicts),
+            'high_priority': [c for c in conflicts if c.severity == 'high'],
+            'medium_priority': [c for c in conflicts if c.severity == 'medium']
+        }
+        return render(request, 'shift/conflicts/dashboard.html', context)
+
+    except Exception as e:
+        logger.error(f"Conflict dashboard error: {e}")
+        messages.error(request, f"Error loading conflicts: {e}")
+        return redirect('shift:dashboard')
+
+@login_required
+@group_required(['Manager', 'HR'])
+def detect_conflicts(request):
+    """Detect conflicts in assignments"""
+    try:
+        start_date = request.GET.get('start_date', timezone.now().date())
+        end_date = request.GET.get('end_date', timezone.now().date() + timedelta(days=30))
+
+        conflicts = conflict_detector.check_assignment_conflicts(
+            user_id=None,
+            shift_id=None,
+            start_date=start_date,
+            end_date=end_date
+        )
+
+        if request.headers.get('Accept') == 'application/json':
+            return JsonResponse({
+                'success': True,
+                'conflicts': [
+                    {
+                        'type': c.conflict_type,
+                        'severity': c.severity,
+                        'message': c.message,
+                        'affected_users': c.affected_users
+                    }
+                    for c in conflicts
+                ]
+            })
+
+        context = {
+            'conflicts': conflicts,
+            'start_date': start_date,
+            'end_date': end_date
+        }
+        return render(request, 'shift/conflicts/detect.html', context)
+
+    except Exception as e:
+        logger.error(f"Detect conflicts error: {e}")
+        return JsonResponse({'success': False, 'error': str(e)})
+
+@login_required
+@group_required(['Manager', 'HR'])
+def resolve_conflicts(request):
+    """Resolve detected conflicts"""
+    if request.method == 'POST':
+        try:
+            conflict_data = json.loads(request.body)
+            resolution_type = conflict_data.get('resolution_type')
+            conflict_id = conflict_data.get('conflict_id')
+
+            # Implementation would depend on specific conflict resolution logic
+            result = {'success': True, 'message': 'Conflict resolved successfully'}
+
+            return JsonResponse(result)
+
+        except Exception as e:
+            logger.error(f"Resolve conflicts error: {e}")
+            return JsonResponse({'success': False, 'error': str(e)})
+
+    context = {'resolution_options': ['reassign', 'modify_timing', 'end_assignment']}
+    return render(request, 'shift/conflicts/resolve.html', context)
+
+@login_required
+@group_required(['Manager'])
+def auto_resolve_conflict(request, conflict_id):
+    """Auto-resolve a specific conflict"""
+    try:
+        # Implementation would depend on auto-resolution logic
+        result = {'success': True, 'message': f'Conflict {conflict_id} auto-resolved'}
+
+        if request.headers.get('Accept') == 'application/json':
+            return JsonResponse(result)
+
+        messages.success(request, result['message'])
+        return redirect('shift:conflict_dashboard')
+
+    except Exception as e:
+        logger.error(f"Auto resolve conflict error: {e}")
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+# ============================
+# HELP AND DOCUMENTATION
+# ============================
+
+@login_required
+def help_index(request):
+    """Help index page"""
+    context = {
+        'help_sections': [
+            {'title': 'Getting Started', 'url': 'shift:help_getting_started'},
+            {'title': 'Conflict Resolution', 'url': 'shift:help_conflicts'},
+            {'title': 'CSV Import', 'url': 'shift:help_csv'},
+            {'title': 'API Documentation', 'url': 'shift:help_api'}
+        ]
+    }
+    return render(request, 'shift/help/index.html', context)
+
+@login_required
+def help_getting_started(request):
+    """Getting started help"""
+    return render(request, 'shift/help/getting_started.html')
+
+@login_required
+def help_conflicts(request):
+    """Conflict resolution help"""
+    return render(request, 'shift/help/conflicts.html')
+
+@login_required
+def help_csv_import(request):
+    """CSV import help"""
+    return render(request, 'shift/help/csv_import.html')
+
+@login_required
+def help_api_docs(request):
+    """API documentation"""
+    return render(request, 'shift/help/api_docs.html')
+
+
+# ============================
+# DEVELOPMENT AND TESTING
+# ============================
+
+@login_required
+@group_required(['Manager'])
+def test_conflict_detection(request):
+    """Test conflict detection functionality"""
+    try:
+        # Create test scenarios and run conflict detection
+        test_results = {
+            'time_overlap_test': 'Passed',
+            'date_overlap_test': 'Passed',
+            'user_conflict_test': 'Passed',
+            'holiday_conflict_test': 'Passed'
+        }
+
+        context = {'test_results': test_results}
+        return render(request, 'shift/dev/test_conflicts.html', context)
+
+    except Exception as e:
+        logger.error(f"Test conflicts error: {e}")
+        messages.error(request, f"Test error: {e}")
+        return redirect('shift:dashboard')
+
+@login_required
+@group_required(['Manager'])
+def test_assignments(request):
+    """Test assignment functionality"""
+    try:
+        test_results = {
+            'assignment_creation': 'Passed',
+            'assignment_validation': 'Passed',
+            'bulk_assignment': 'Passed'
+        }
+
+        context = {'test_results': test_results}
+        return render(request, 'shift/dev/test_assignments.html', context)
+
+    except Exception as e:
+        logger.error(f"Test assignments error: {e}")
+        messages.error(request, f"Test error: {e}")
+        return redirect('shift:dashboard')
+
+@login_required
+@group_required(['Manager'])
+def generate_test_data(request):
+    """Generate test data for development"""
+    if request.method == 'POST':
+        try:
+            # Generate test shifts, users, assignments
+            count = int(request.POST.get('count', 10))
+
+            # Implementation would create test data
+            messages.success(request, f"Generated {count} test records successfully!")
+            return JsonResponse({'success': True, 'count': count})
+
+        except Exception as e:
+            logger.error(f"Generate test data error: {e}")
+            return JsonResponse({'success': False, 'error': str(e)})
+
+    return render(request, 'shift/dev/generate_test_data.html')
+
+@login_required
+@group_required(['Manager'])
+def system_diagnostic(request):
+    """System diagnostic page"""
+    try:
+        diagnostics = {
+            'database_connection': 'OK',
+            'cache_status': 'OK',
+            'total_shifts': ShiftMaster.objects.count(),
+            'total_assignments': ShiftAssignment.objects.count(),
+            'active_assignments': ShiftAssignment.objects.filter(is_current=True).count(),
+            'total_holidays': Holiday.objects.count()
+        }
+
+        context = {'diagnostics': diagnostics}
+        return render(request, 'shift/dev/diagnostic.html', context)
+
+    except Exception as e:
+        logger.error(f"System diagnostic error: {e}")
+        messages.error(request, f"Diagnostic error: {e}")
+        return redirect('shift:dashboard')

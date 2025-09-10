@@ -1,18 +1,24 @@
 # attendance/managers.py
-from django.db import models
-from django.utils import timezone
-from django.db.models import Q, Count, Avg, Sum, Case, When, F
-from django.contrib.auth import get_user_model
-from datetime import datetime, timedelta, date
-import pytz
 import logging
+from datetime import timedelta
+from decimal import Decimal
+
+from django.db import models, transaction
+from django.db.models import Q, Count, Avg, Sum, Case, When, F, Value
+from django.contrib.auth import get_user_model
+from django.utils import timezone
+from django.core.cache import cache
+from django.core.exceptions import ObjectDoesNotExist
+import pytz
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
+IST = pytz.timezone('Asia/Kolkata')
+
 
 class AttendanceQuerySet(models.QuerySet):
     """
-    Custom QuerySet for Attendance with optimized methods
+    Optimized QuerySet for Attendance with efficient filtering and aggregation methods
     """
 
     def for_date(self, date):
@@ -23,13 +29,30 @@ class AttendanceQuerySet(models.QuerySet):
         """Filter attendance for specific user"""
         return self.filter(user=user)
 
+    def for_users(self, users):
+        """Filter attendance for multiple users efficiently"""
+        if isinstance(users, (list, tuple)):
+            user_ids = [u.id if hasattr(u, 'id') else u for u in users]
+            return self.filter(user_id__in=user_ids)
+        return self.filter(user__in=users)
+
     def for_date_range(self, start_date, end_date):
         """Filter attendance for date range"""
         return self.filter(date__range=[start_date, end_date])
 
+    def for_month(self, year, month):
+        """Filter attendance for specific month"""
+        return self.filter(date__year=year, date__month=month)
+
+    def for_year(self, year):
+        """Filter attendance for specific year"""
+        return self.filter(date__year=year)
+
     def present(self):
         """Filter present attendance records"""
-        return self.filter(status__in=['Present', 'Present & Late', 'Work From Home'])
+        return self.filter(
+            status__in=['Present', 'Present & Late', 'Work From Home']
+        )
 
     def absent(self):
         """Filter absent attendance records"""
@@ -37,156 +60,249 @@ class AttendanceQuerySet(models.QuerySet):
 
     def late(self):
         """Filter late attendance records"""
-        return self.filter(status__in=['Present & Late', 'Late'], late_minutes__gt=0)
+        return self.filter(
+            Q(status__in=['Present & Late', 'Late']) | Q(late_minutes__gt=0)
+        )
+
+    def on_leave(self):
+        """Filter leave attendance records"""
+        return self.filter(status='On Leave')
+
+    def weekend_or_holiday(self):
+        """Filter weekend/holiday records"""
+        return self.filter(status__in=['Weekend', 'Holiday'])
 
     def pending_regularization(self):
         """Filter records with pending regularization"""
         return self.filter(regularization_status='Pending')
 
+    def approved_regularization(self):
+        """Filter records with approved regularization"""
+        return self.filter(regularization_status='Approved')
+
+    def rejected_regularization(self):
+        """Filter records with rejected regularization"""
+        return self.filter(regularization_status='Rejected')
+
     def with_overtime(self):
         """Filter records with overtime"""
         return self.filter(overtime_hours__gt=0)
 
-    def select_related_data(self):
-        """Select related data for performance"""
-        return self.select_related('user', 'shift', 'modified_by', 'first_session', 'last_session')
+    def with_early_departure(self):
+        """Filter records with early departure"""
+        return self.filter(left_early=True, early_departure_minutes__gt=0)
 
-    def prefetch_user_data(self):
-        """Prefetch user related data"""
+    def incomplete_attendance(self):
+        """Filter incomplete attendance records (no clock out)"""
+        return self.filter(
+            Q(clock_in_time__isnull=False) & Q(clock_out_time__isnull=True)
+        ).exclude(status__in=['Weekend', 'Holiday', 'On Leave'])
+
+    def not_marked(self):
+        """Filter not marked records"""
+        return self.filter(status__in=['Not Marked', 'Yet to Clock In'])
+
+    def select_optimized(self):
+        """Select related data for performance optimization"""
+        return self.select_related(
+            'user',
+            'user__profile',
+            'shift',
+            'modified_by',
+            'first_session',
+            'last_session'
+        ).prefetch_related('user__groups')
+
+    def with_user_details(self):
+        """Include user profile details"""
         return self.select_related('user__profile')
 
+    def with_shift_details(self):
+        """Include shift details"""
+        return self.select_related('shift')
 
-class AttendanceManager(models.Manager):
-    """
-    Custom manager for Attendance model with optimized queries and business logic
-    """
+    def with_session_details(self):
+        """Include session details"""
+        return self.select_related('first_session', 'last_session')
 
-    def get_queryset(self):
-        return AttendanceQuerySet(self.model, using=self._db)
+    def order_by_date_user(self):
+        """Default ordering by date and user"""
+        return self.order_by('-date', 'user__username')
 
-    def for_date(self, date):
-        return self.get_queryset().for_date(date)
+    def order_by_user_date(self):
+        """Order by user then date"""
+        return self.order_by('user__username', '-date')
 
-    def for_user(self, user):
-        return self.get_queryset().for_user(user)
-
-    def for_date_range(self, start_date, end_date):
-        return self.get_queryset().for_date_range(start_date, end_date)
-
-    def present(self):
-        return self.get_queryset().present()
-
-    def absent(self):
-        return self.get_queryset().absent()
-
-    def late(self):
-        return self.get_queryset().late()
-
-    def pending_regularization(self):
-        return self.get_queryset().pending_regularization()
-
-    def with_overtime(self):
-        return self.get_queryset().with_overtime()
-
-    def get_or_create_today_attendance(self, user, date=None):
-        """
-        Get or create attendance record for specific date with proper defaults
-        """
-        if not date:
-            IST = pytz.timezone('Asia/Kolkata')
-            date = timezone.now().astimezone(IST).date()
-
-        try:
-            attendance, created = self.get_or_create(
-                user=user,
-                date=date,
-                defaults={
-                    'status': 'Not Marked',
-                    'regularization_reason': 'Auto-created attendance record'
-                }
+    def annotate_working_hours(self):
+        """Annotate with calculated working hours"""
+        return self.annotate(
+            working_hours=Case(
+                When(total_hours__isnull=True, then=Value(0, output_field=models.DecimalField())),
+                default=F('total_hours'),
+                output_field=models.DecimalField(max_digits=5, decimal_places=2)
             )
+        )
 
-            if created:
-                logger.info(f"Created new attendance record for {user.username} on {date}")
-                # Initialize with shift and other data in a separate method
-                attendance._initialize_attendance_defaults()
-                attendance.save()
+    def annotate_status_counts(self):
+        """Annotate with status counts for user"""
+        return self.annotate(
+            user_present_count=Count(
+                'user__attendance_records',
+                filter=Q(user__attendance_records__status__in=['Present', 'Present & Late', 'Work From Home'])
+            ),
+            user_absent_count=Count(
+                'user__attendance_records',
+                filter=Q(user__attendance_records__status='Absent')
+            ),
+            user_late_count=Count(
+                'user__attendance_records',
+                filter=Q(user__attendance_records__status__in=['Present & Late', 'Late'])
+            )
+        )
 
-            return attendance, created
-
-        except Exception as e:
-            logger.error(f"Error creating attendance for {user.username} on {date}: {e}")
-            raise
-
-    def get_users_without_attendance_today(self, date=None):
-        """
-        Get users who don't have attendance record for given date
-        """
-        if not date:
-            IST = pytz.timezone('Asia/Kolkata')
-            date = timezone.now().astimezone(IST).date()
-
-        users_with_attendance = self.filter(date=date).values_list('user_id', flat=True)
-        return User.objects.filter(
-            is_active=True
-        ).exclude(id__in=users_with_attendance)
-
-    def get_attendance_summary(self, date=None):
-        """
-        Get attendance summary for a specific date
-        """
-        if not date:
-            IST = pytz.timezone('Asia/Kolkata')
-            date = timezone.now().astimezone(IST).date()
-
-        return self.filter(date=date).aggregate(
-            total_employees=Count('id'),
+    def get_summary_stats(self):
+        """Get summary statistics for the queryset"""
+        return self.aggregate(
+            total_records=Count('id'),
             present_count=Count('id', filter=Q(status__in=['Present', 'Present & Late', 'Work From Home'])),
             absent_count=Count('id', filter=Q(status='Absent')),
             late_count=Count('id', filter=Q(status__in=['Present & Late', 'Late'])),
             on_leave_count=Count('id', filter=Q(status='On Leave')),
             holiday_count=Count('id', filter=Q(status='Holiday')),
             weekend_count=Count('id', filter=Q(status='Weekend')),
-            not_marked_count=Count('id', filter=Q(status='Not Marked')),
-            yet_to_clock_in_count=Count('id', filter=Q(status='Yet to Clock In'))
+            not_marked_count=Count('id', filter=Q(status__in=['Not Marked', 'Yet to Clock In'])),
+            total_hours=Sum('total_hours', filter=Q(total_hours__isnull=False)),
+            avg_hours=Avg('total_hours', filter=Q(total_hours__isnull=False)),
+            overtime_hours=Sum('overtime_hours', filter=Q(overtime_hours__gt=0)),
+            late_minutes=Sum('late_minutes', filter=Q(late_minutes__gt=0)),
+            early_departure_minutes=Sum('early_departure_minutes', filter=Q(early_departure_minutes__gt=0))
         )
 
-    def get_user_attendance_for_period(self, user, start_date, end_date):
-        """
-        Get attendance records for a user within a specific period
-        """
-        return self.filter(
-            user=user,
-            date__range=[start_date, end_date]
-        ).select_related('shift').order_by('date')
 
-    def get_team_attendance(self, manager_user, date=None):
+class AttendanceManager(models.Manager):
+    """
+    Optimized manager for Attendance model with business logic and performance improvements
+    """
+
+    def get_queryset(self):
+        return AttendanceQuerySet(self.model, using=self._db)
+
+    def for_date(self, date=None):
+        """Get attendance for specific date (defaults to today)"""
+        if not date:
+            date = timezone.now().astimezone(IST).date()
+        return self.get_queryset().for_date(date)
+
+    def for_user(self, user):
+        """Get attendance for specific user"""
+        return self.get_queryset().for_user(user)
+
+    def for_users(self, users):
+        """Get attendance for multiple users"""
+        return self.get_queryset().for_users(users)
+
+    def for_date_range(self, start_date, end_date):
+        """Get attendance for date range"""
+        return self.get_queryset().for_date_range(start_date, end_date)
+
+    def for_month(self, year=None, month=None):
+        """Get attendance for specific month"""
+        if not year:
+            today = timezone.now().astimezone(IST).date()
+            year = today.year
+            month = month or today.month
+        return self.get_queryset().for_month(year, month)
+
+    def present(self):
+        """Get all present records"""
+        return self.get_queryset().present()
+
+    def absent(self):
+        """Get all absent records"""
+        return self.get_queryset().absent()
+
+    def late(self):
+        """Get all late records"""
+        return self.get_queryset().late()
+
+    def pending_regularization(self):
+        """Get all pending regularization records"""
+        return self.get_queryset().pending_regularization()
+
+    def with_overtime(self):
+        """Get records with overtime"""
+        return self.get_queryset().with_overtime()
+
+    def incomplete_attendance(self):
+        """Get incomplete attendance records"""
+        return self.get_queryset().incomplete_attendance()
+
+    def get_or_create_today_attendance(self, user, date=None):
         """
-        Get attendance for all team members under a manager
+        Get or create attendance record for specific date with optimized defaults
         """
         if not date:
-            IST = pytz.timezone('Asia/Kolkata')
             date = timezone.now().astimezone(IST).date()
 
-        # Get team members (assuming there's a relationship)
-        try:
-            team_members = User.objects.filter(
-                profile__manager=manager_user,
-                is_active=True
-            )
+        cache_key = f"attendance_today_{user.id}_{date}"
+        cached_result = cache.get(cache_key)
 
-            return self.filter(
-                user__in=team_members,
-                date=date
-            ).select_related_data()
+        if cached_result:
+            try:
+                attendance = self.get(id=cached_result['id'])
+                return attendance, False
+            except self.model.DoesNotExist:
+                cache.delete(cache_key)
+
+        try:
+            with transaction.atomic():
+                attendance, created = self.get_or_create(
+                    user=user,
+                    date=date,
+                    defaults=self._get_attendance_defaults(user, date)
+                )
+
+                if created:
+                    logger.info(f"Created new attendance record for {user.username} on {date}")
+                    self._initialize_attendance_record(attendance)
+
+                # Cache for 1 hour
+                cache.set(cache_key, {'id': attendance.id}, 3600)
+
+                return attendance, created
 
         except Exception as e:
-            logger.error(f"Error getting team attendance for {manager_user.username}: {e}")
-            return self.none()
+            logger.error(f"Error creating attendance for {user.username} on {date}: {e}")
+            raise
+
+    def _get_attendance_defaults(self, user, date):
+        """Get default values for new attendance record"""
+        return {
+            'status': 'Not Marked',
+            'regularization_reason': 'Auto-created attendance record',
+            'created_at': timezone.now(),
+        }
+
+    def _initialize_attendance_record(self, attendance):
+        """Initialize attendance record with shift and other data"""
+        try:
+            # Set shift if available
+            from trueAlign.models import ShiftAssignment
+            shift = ShiftAssignment.get_user_current_shift(attendance.user, attendance.date)
+            if shift:
+                attendance.shift = shift
+                attendance.expected_hours = Decimal(str(shift.shift_duration))
+
+            # Initialize status based on leave/holiday/weekend
+            attendance._initialize_attendance_defaults()
+            attendance.save()
+
+        except Exception as e:
+            logger.error(f"Error initializing attendance record: {e}")
 
     def bulk_create_attendance_records(self, users, date, status='Not Marked', reason=None):
         """
-        Bulk create attendance records for multiple users
+        Efficiently bulk create attendance records for multiple users
         """
         if not isinstance(users, (list, tuple)):
             users = list(users)
@@ -194,35 +310,45 @@ class AttendanceManager(models.Manager):
         if not reason:
             reason = f'Bulk created with status: {status}'
 
-        # Check for existing records
+        # Get existing attendance user IDs to avoid duplicates
         existing_user_ids = set(
             self.filter(date=date, user__in=users).values_list('user_id', flat=True)
         )
 
-        # Create records for users without existing attendance
+        # Prepare records for users without existing attendance
         attendance_records = []
         for user in users:
             if user.id not in existing_user_ids:
+                defaults = self._get_attendance_defaults(user, date)
+                defaults.update({
+                    'status': status,
+                    'regularization_reason': reason
+                })
+
                 attendance_records.append(
-                    self.model(
-                        user=user,
-                        date=date,
-                        status=status,
-                        regularization_reason=reason
-                    )
+                    self.model(user=user, date=date, **defaults)
                 )
 
         if attendance_records:
-            created_attendances = self.bulk_create(attendance_records)
-            logger.info(f"Bulk created {len(created_attendances)} attendance records for {date}")
-            return created_attendances
+            try:
+                created_attendances = self.bulk_create(attendance_records, batch_size=100)
+                logger.info(f"Bulk created {len(created_attendances)} attendance records for {date}")
 
-        logger.info(f"No new attendance records created - all users already have records for {date}")
-        return []
+                # Clear relevant caches
+                cache_keys = [f"attendance_today_{user.id}_{date}" for user in users]
+                cache.delete_many(cache_keys)
+
+                return created_attendances
+            except Exception as e:
+                logger.error(f"Error in bulk create: {e}")
+                raise
+        else:
+            logger.info(f"No new attendance records needed for {date} - all users already have records")
+            return []
 
     def bulk_update_status(self, attendance_ids, status, reason=None, updated_by=None):
         """
-        Bulk update status for multiple attendance records
+        Efficiently bulk update status for multiple attendance records
         """
         if not reason:
             reason = f'Bulk updated to: {status}'
@@ -236,195 +362,311 @@ class AttendanceManager(models.Manager):
         if updated_by:
             update_fields['modified_by'] = updated_by
 
-        updated_count = self.filter(id__in=attendance_ids).update(**update_fields)
-        logger.info(f"Bulk updated {updated_count} attendance records to status: {status}")
-        return updated_count
+        try:
+            updated_count = self.filter(id__in=attendance_ids).update(**update_fields)
+            logger.info(f"Bulk updated {updated_count} attendance records to status: {status}")
 
-    def get_attendance_analytics(self, start_date, end_date, users=None, group_by='date'):
+            # Clear relevant caches
+            self._clear_attendance_caches(attendance_ids)
+
+            return updated_count
+        except Exception as e:
+            logger.error(f"Error in bulk update: {e}")
+            raise
+
+    def _clear_attendance_caches(self, attendance_ids):
+        """Clear caches for updated attendance records"""
+        try:
+            attendances = self.filter(id__in=attendance_ids).values('user_id', 'date')
+            cache_keys = [f"attendance_today_{att['user_id']}_{att['date']}" for att in attendances]
+            cache.delete_many(cache_keys)
+        except Exception as e:
+            logger.warning(f"Error clearing caches: {e}")
+
+    def get_users_without_attendance(self, date=None):
         """
-        Get attendance analytics for given period
-        """
-        queryset = self.filter(date__range=[start_date, end_date])
-
-        if users:
-            queryset = queryset.filter(user__in=users)
-
-        if group_by == 'date':
-            return queryset.values('date').annotate(
-                total_count=Count('id'),
-                present_count=Count('id', filter=Q(status__in=['Present', 'Present & Late', 'Work From Home'])),
-                absent_count=Count('id', filter=Q(status='Absent')),
-                late_count=Count('id', filter=Q(status__in=['Present & Late', 'Late'])),
-                avg_hours=Avg('total_hours'),
-                total_overtime=Sum('overtime_hours')
-            ).order_by('date')
-
-        elif group_by == 'user':
-            return queryset.values('user__username', 'user__first_name', 'user__last_name').annotate(
-                total_days=Count('id'),
-                present_days=Count('id', filter=Q(status__in=['Present', 'Present & Late', 'Work From Home'])),
-                absent_days=Count('id', filter=Q(status='Absent')),
-                late_days=Count('id', filter=Q(status__in=['Present & Late', 'Late'])),
-                avg_hours=Avg('total_hours'),
-                total_overtime=Sum('overtime_hours'),
-                attendance_percentage=Case(
-                    When(total_days=0, then=0),
-                    default=F('present_days') * 100.0 / F('total_days')
-                )
-            ).order_by('user__username')
-
-        elif group_by == 'status':
-            return queryset.values('status').annotate(
-                count=Count('id'),
-                percentage=Case(
-                    When(count=0, then=0),
-                    default=F('count') * 100.0 / Count('id', distinct=False)
-                )
-            ).order_by('status')
-
-        else:
-            return queryset.aggregate(
-                total_records=Count('id'),
-                present_count=Count('id', filter=Q(status__in=['Present', 'Present & Late', 'Work From Home'])),
-                absent_count=Count('id', filter=Q(status='Absent')),
-                late_count=Count('id', filter=Q(status__in=['Present & Late', 'Late'])),
-                avg_hours=Avg('total_hours'),
-                total_overtime=Sum('overtime_hours')
-            )
-
-    def get_late_attendances(self, date=None, threshold_minutes=10):
-        """
-        Get late attendance records above threshold
+        Get active users who don't have attendance record for given date
         """
         if not date:
-            IST = pytz.timezone('Asia/Kolkata')
             date = timezone.now().astimezone(IST).date()
 
-        return self.filter(
-            date=date,
-            status__in=['Present & Late', 'Late'],
-            late_minutes__gt=threshold_minutes
-        ).select_related('user', 'shift').order_by('-late_minutes')
+        cache_key = f"users_without_attendance_{date}"
+        cached_result = cache.get(cache_key)
 
-    def get_overtime_records(self, start_date=None, end_date=None):
+        if cached_result is not None:
+            return User.objects.filter(id__in=cached_result)
+
+        try:
+            users_with_attendance = self.filter(date=date).values_list('user_id', flat=True)
+            users_without_attendance = User.objects.filter(
+                is_active=True
+            ).exclude(id__in=users_with_attendance).values_list('id', flat=True)
+
+            # Cache for 30 minutes
+            cache.set(cache_key, list(users_without_attendance), 1800)
+
+            return User.objects.filter(id__in=users_without_attendance)
+        except Exception as e:
+            logger.error(f"Error getting users without attendance: {e}")
+            return User.objects.none()
+
+    def get_attendance_summary(self, date=None, department=None, manager=None):
         """
-        Get records with overtime
+        Get comprehensive attendance summary for a specific date
         """
-        queryset = self.filter(overtime_hours__gt=0)
+        if not date:
+            date = timezone.now().astimezone(IST).date()
 
-        if start_date and end_date:
-            queryset = queryset.filter(date__range=[start_date, end_date])
-        elif start_date:
-            queryset = queryset.filter(date__gte=start_date)
-        elif end_date:
-            queryset = queryset.filter(date__lte=end_date)
+        cache_key = f"attendance_summary_{date}_{department}_{manager.id if manager else 'all'}"
+        cached_result = cache.get(cache_key)
 
-        return queryset.select_related('user', 'shift').order_by('-overtime_hours')
+        if cached_result:
+            return cached_result
 
-    def get_regularization_requests(self, status=None, user=None):
+        try:
+            queryset = self.for_date(date)
+
+            # Apply filters
+            if department:
+                queryset = queryset.filter(user__profile__department=department)
+
+            if manager:
+                team_members = User.objects.filter(profile__manager=manager)
+                queryset = queryset.filter(user__in=team_members)
+
+            summary = queryset.get_summary_stats()
+
+            # Calculate additional metrics
+            if summary['total_records'] > 0:
+                summary['attendance_percentage'] = (
+                    (summary['present_count'] / summary['total_records']) * 100
+                )
+                summary['punctuality_percentage'] = (
+                    ((summary['present_count'] - summary['late_count']) / summary['total_records']) * 100
+                ) if summary['present_count'] > 0 else 0
+            else:
+                summary['attendance_percentage'] = 0
+                summary['punctuality_percentage'] = 0
+
+            # Cache for 15 minutes
+            cache.set(cache_key, summary, 900)
+
+            return summary
+        except Exception as e:
+            logger.error(f"Error getting attendance summary: {e}")
+            return {}
+
+    def get_user_attendance_for_period(self, user, start_date, end_date):
         """
-        Get regularization requests with optional filtering
+        Get optimized attendance records for a user within a specific period
         """
-        queryset = self.exclude(regularization_status__isnull=True)
+        cache_key = f"user_attendance_{user.id}_{start_date}_{end_date}"
+        cached_result = cache.get(cache_key)
 
-        if status:
-            queryset = queryset.filter(regularization_status=status)
+        if cached_result is not None:
+            return self.get_queryset().filter(id__in=cached_result).select_optimized().order_by('date')
 
-        if user:
-            queryset = queryset.filter(user=user)
+        try:
+            queryset = self.get_queryset().filter(
+                user=user,
+                date__range=[start_date, end_date]
+            ).select_optimized().order_by('date')
 
-        return queryset.select_related('user', 'shift', 'modified_by').order_by('-last_regularization_date')
+            attendance_ids = list(queryset.values_list('id', flat=True))
 
-    def get_monthly_attendance_report(self, year, month, users=None):
+            # Cache for 1 hour
+            cache.set(cache_key, attendance_ids, 3600)
+
+            return queryset
+        except Exception as e:
+            logger.error(f"Error getting user attendance for period: {e}")
+            return self.none()
+
+    def get_team_attendance(self, manager_user, date=None):
         """
-        Get monthly attendance report
+        Get optimized attendance for all team members under a manager
         """
-        start_date = date(year, month, 1)
+        if not date:
+            date = timezone.now().astimezone(IST).date()
 
-        # Calculate last day of month
-        if month == 12:
-            end_date = date(year + 1, 1, 1) - timedelta(days=1)
-        else:
-            end_date = date(year, month + 1, 1) - timedelta(days=1)
+        cache_key = f"team_attendance_{manager_user.id}_{date}"
+        cached_result = cache.get(cache_key)
 
-        queryset = self.filter(date__range=[start_date, end_date])
+        if cached_result is not None:
+            return self.get_queryset().filter(id__in=cached_result).select_optimized()
 
-        if users:
-            queryset = queryset.filter(user__in=users)
+        try:
+            # Get team members efficiently
+            team_members = User.objects.filter(
+                profile__manager=manager_user,
+                is_active=True
+            ).values_list('id', flat=True)
 
-        return queryset.values(
-            'user__id',
-            'user__username',
-            'user__first_name',
-            'user__last_name'
-        ).annotate(
-            total_days=Count('id'),
-            present_days=Count('id', filter=Q(status__in=['Present', 'Present & Late', 'Work From Home'])),
-            absent_days=Count('id', filter=Q(status='Absent')),
-            late_days=Count('id', filter=Q(status__in=['Present & Late', 'Late'])),
-            leave_days=Count('id', filter=Q(status='On Leave')),
-            holiday_days=Count('id', filter=Q(status='Holiday')),
-            weekend_days=Count('id', filter=Q(status='Weekend')),
-            total_hours=Sum('total_hours'),
-            total_overtime=Sum('overtime_hours'),
-            avg_hours=Avg('total_hours'),
-            attendance_percentage=Case(
-                When(total_days=0, then=0),
-                default=F('present_days') * 100.0 / F('total_days')
-            )
+            if not team_members:
+                return self.none()
+
+            queryset = self.get_queryset().filter(
+                user_id__in=team_members,
+                date=date
+            ).select_optimized().order_by('user__username')
+
+            attendance_ids = list(queryset.values_list('id', flat=True))
+
+            # Cache for 30 minutes
+            cache.set(cache_key, attendance_ids, 1800)
+
+            return queryset
+
+        except Exception as e:
+            logger.error(f"Error getting team attendance for {manager_user.username}: {e}")
+            return self.none()
+
+    def get_attendance_analytics(self, start_date, end_date, users=None, department=None):
+        """
+        Get optimized attendance analytics for given period with caching
+        """
+        cache_key = f"attendance_analytics_{start_date}_{end_date}_{department}_{hash(str(users)) if users else 'all'}"
+        cached_result = cache.get(cache_key)
+
+        if cached_result:
+            return cached_result
+
+        try:
+            queryset = self.for_date_range(start_date, end_date)
+
+            if users:
+                queryset = queryset.for_users(users)
+
+            if department:
+                queryset = queryset.filter(user__profile__department=department)
+
+            # Get comprehensive analytics
+            analytics = {
+                'summary': queryset.get_summary_stats(),
+                'daily_breakdown': self._get_daily_breakdown(queryset, start_date, end_date),
+                'user_breakdown': self._get_user_breakdown(queryset),
+                'trend_analysis': self._get_trend_analysis(queryset, start_date, end_date)
+            }
+
+            # Cache for 2 hours
+            cache.set(cache_key, analytics, 7200)
+
+            return analytics
+        except Exception as e:
+            logger.error(f"Error getting attendance analytics: {e}")
+            return {}
+
+    def _get_daily_breakdown(self, queryset, start_date, end_date):
+        """Get daily breakdown of attendance"""
+        return queryset.values('date').annotate(
+            total=Count('id'),
+            present=Count('id', filter=Q(status__in=['Present', 'Present & Late', 'Work From Home'])),
+            absent=Count('id', filter=Q(status='Absent')),
+            late=Count('id', filter=Q(status__in=['Present & Late', 'Late'])),
+            on_leave=Count('id', filter=Q(status='On Leave'))
+        ).order_by('date')
+
+    def _get_user_breakdown(self, queryset):
+        """Get user-wise breakdown of attendance"""
+        return queryset.values('user__username', 'user__first_name', 'user__last_name').annotate(
+            total=Count('id'),
+            present=Count('id', filter=Q(status__in=['Present', 'Present & Late', 'Work From Home'])),
+            absent=Count('id', filter=Q(status='Absent')),
+            late=Count('id', filter=Q(status__in=['Present & Late', 'Late'])),
+            avg_hours=Avg('total_hours', filter=Q(total_hours__isnull=False))
         ).order_by('user__username')
 
-    def cleanup_old_records(self, days_to_keep=365):
+    def _get_trend_analysis(self, queryset, start_date, end_date):
+        """Get trend analysis data"""
+        total_days = (end_date - start_date).days + 1
+        summary = queryset.get_summary_stats()
+
+        return {
+            'period_days': total_days,
+            'attendance_rate': (summary['present_count'] / summary['total_records'] * 100) if summary['total_records'] > 0 else 0,
+            'punctuality_rate': ((summary['present_count'] - summary['late_count']) / summary['total_records'] * 100) if summary['total_records'] > 0 else 0,
+            'avg_working_hours': float(summary['avg_hours'] or 0),
+            'total_overtime': float(summary['overtime_hours'] or 0)
+        }
+
+    def get_regularization_requests(self, status='Pending', manager=None, department=None):
         """
-        Clean up old attendance records (keep only specified number of days)
+        Get regularization requests with efficient filtering
         """
-        cutoff_date = timezone.now().date() - timedelta(days=days_to_keep)
+        cache_key = f"regularization_requests_{status}_{manager.id if manager else 'all'}_{department}"
+        cached_result = cache.get(cache_key)
 
-        deleted_count = self.filter(date__lt=cutoff_date).delete()[0]
-        logger.info(f"Cleaned up {deleted_count} old attendance records before {cutoff_date}")
-        return deleted_count
+        if cached_result is not None:
+            return self.get_queryset().filter(id__in=cached_result).select_optimized()
 
-    def get_attendance_trends(self, start_date, end_date, user=None):
+        try:
+            queryset = self.get_queryset().filter(regularization_status=status).select_optimized()
+
+            if manager and not manager.is_superuser:
+                # Filter by team members
+                team_members = User.objects.filter(profile__manager=manager)
+                queryset = queryset.filter(user__in=team_members)
+
+            if department:
+                queryset = queryset.filter(user__profile__department=department)
+
+            queryset = queryset.order_by('-last_regularization_date', '-date')
+            request_ids = list(queryset.values_list('id', flat=True))
+
+            # Cache for 10 minutes
+            cache.set(cache_key, request_ids, 600)
+
+            return queryset
+
+        except Exception as e:
+            logger.error(f"Error getting regularization requests: {e}")
+            return self.none()
+
+    def cleanup_old_records(self, days_to_keep=1095):  # 3 years default
         """
-        Get attendance trends over time
+        Cleanup old attendance records beyond retention period
         """
-        queryset = self.filter(date__range=[start_date, end_date])
+        try:
+            cutoff_date = timezone.now().date() - timedelta(days=days_to_keep)
 
-        if user:
-            queryset = queryset.filter(user=user)
+            old_records = self.filter(date__lt=cutoff_date)
+            count = old_records.count()
 
-        # Group by week
-        return queryset.extra(
-            select={'week': "date_trunc('week', date)"}
-        ).values('week').annotate(
-            present_count=Count('id', filter=Q(status__in=['Present', 'Present & Late', 'Work From Home'])),
-            absent_count=Count('id', filter=Q(status='Absent')),
-            late_count=Count('id', filter=Q(status__in=['Present & Late', 'Late'])),
-            avg_hours=Avg('total_hours')
-        ).order_by('week')
+            if count > 0:
+                logger.info(f"Cleaning up {count} attendance records older than {cutoff_date}")
+                old_records.delete()
 
-    def get_department_attendance(self, department=None, date=None):
+                # Clear relevant caches (delete_pattern not available in all cache backends)
+                try:
+                    if hasattr(cache, 'delete_pattern'):
+                        cache.delete_pattern("attendance_*")
+                    else:
+                        # Clear specific known cache keys
+                        cache.clear()
+                except Exception as e:
+                    logger.warning(f"Could not clear cache: {e}")
+
+                return count
+            return 0
+        except Exception as e:
+            logger.error(f"Error cleaning up old attendance records: {e}")
+            return 0
+
+    def get_health_check_stats(self):
         """
-        Get attendance by department
+        Get system health check statistics
         """
-        if not date:
-            IST = pytz.timezone('Asia/Kolkata')
-            date = timezone.now().astimezone(IST).date()
+        try:
+            today = timezone.now().astimezone(IST).date()
 
-        queryset = self.filter(date=date)
-
-        if department:
-            queryset = queryset.filter(user__profile__department=department)
-
-        return queryset.values(
-            'user__profile__department'
-        ).annotate(
-            total_employees=Count('id'),
-            present_count=Count('id', filter=Q(status__in=['Present', 'Present & Late', 'Work From Home'])),
-            absent_count=Count('id', filter=Q(status='Absent')),
-            late_count=Count('id', filter=Q(status__in=['Present & Late', 'Late'])),
-            attendance_percentage=Case(
-                When(total_employees=0, then=0),
-                default=F('present_count') * 100.0 / F('total_employees')
-            )
-        ).order_by('user__profile__department')
+            return {
+                'total_records_today': self.for_date(today).count(),
+                'incomplete_records_today': self.for_date(today).incomplete_attendance().count(),
+                'pending_regularizations': self.pending_regularization().count(),
+                'recent_errors': 0,  # This would need error logging implementation
+                'cache_hit_rate': 'N/A',  # This would need cache monitoring
+                'last_auto_marking': 'N/A'  # This would need to track last run
+            }
+        except Exception as e:
+            logger.error(f"Error getting health check stats: {e}")
+            return {}

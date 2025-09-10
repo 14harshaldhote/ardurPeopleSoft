@@ -1,802 +1,1239 @@
-import logging
-import csv
-import io
-from datetime import datetime, date, time, timedelta
-from decimal import Decimal
-from typing import List, Dict, Optional, Tuple, Any, Union
-from django.contrib.auth.models import User, Group
-from django.db import transaction, models
-from django.db.models import Q, Count, Avg, Sum
-from django.utils import timezone
-from django.core.exceptions import ValidationError
-from django.core.paginator import Paginator
-from django.core.files.uploadedfile import InMemoryUploadedFile
-from trueAlign.models import ShiftMaster, ShiftAssignment, Holiday
+"""
+Enhanced Shift Management Services
 
-logger = logging.getLogger('trueAlign.shift')
+This module provides comprehensive shift management functionality including:
+- Dynamic conflict detection for any arbitrary shift times
+- Midnight-crossing shift support
+- Configurable conflict rules
+- Employee availability integration
+- Bulk assignment with intelligent conflict handling
+- Audit logging and change tracking
+- Performance-optimized queries
+
+Author: TrueAlign Development Team
+Version: 2.0.0
+"""
+
+import logging
+from datetime import datetime, timedelta, time, date
+from decimal import Decimal
+from typing import List, Dict, Optional, Tuple, Set, Any, Union
+from dataclasses import dataclass
+from enum import Enum
+
+from django.db import transaction, models
+from django.db.models import Q, F, Count, Avg, Sum, Prefetch
+from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
+from django.utils import timezone
+from django.core.cache import cache
+from django.conf import settings
+
+from trueAlign.models import ShiftMaster, ShiftAssignment, Holiday
+from .app_settings import (
+    SHIFT_VALIDATION, CACHE_SETTINGS, CACHE_KEY_PREFIXES,
+    PERFORMANCE_MONITORING, FEATURE_FLAGS
+)
+
+logger = logging.getLogger('trueAlign.shift.services')
+
+
+class ConflictType(Enum):
+    """Types of shift assignment conflicts."""
+    TIME_OVERLAP = "time_overlap"
+    LEAVE_CONFLICT = "leave_conflict"
+    HOLIDAY_CONFLICT = "holiday_conflict"
+    AVAILABILITY_CONFLICT = "availability_conflict"
+    CAPACITY_EXCEEDED = "capacity_exceeded"
+    POLICY_VIOLATION = "policy_violation"
+
+
+class AssignmentStatus(Enum):
+    """Status of shift assignment operations."""
+    SUCCESS = "success"
+    CONFLICT = "conflict"
+    WARNING = "warning"
+    ERROR = "error"
+
+
+@dataclass
+class ConflictDetail:
+    """Detailed information about a shift assignment conflict."""
+    conflict_type: ConflictType
+    message: str
+    conflicting_assignment: Optional['ShiftAssignment'] = None
+    conflicting_shift: Optional['ShiftMaster'] = None
+    overlap_start: Optional[datetime] = None
+    overlap_end: Optional[datetime] = None
+    severity: str = "high"  # low, medium, high, critical
+    suggestion: Optional[str] = None
+
+
+@dataclass
+class AssignmentResult:
+    """Result of a shift assignment operation."""
+    status: AssignmentStatus
+    assignment: Optional['ShiftAssignment'] = None
+    conflicts: List[ConflictDetail] = None
+    warnings: List[str] = None
+    metadata: Dict[str, Any] = None
+
+    def __post_init__(self):
+        if self.conflicts is None:
+            self.conflicts = []
+        if self.warnings is None:
+            self.warnings = []
+        if self.metadata is None:
+            self.metadata = {}
+
+
+@dataclass
+class BulkAssignmentResult:
+    """Result of bulk shift assignment operation."""
+    total_attempted: int = 0
+    successful: List[AssignmentResult] = None
+    failed: List[AssignmentResult] = None
+    skipped: List[AssignmentResult] = None
+    summary: Dict[str, Any] = None
+
+    def __post_init__(self):
+        if self.successful is None:
+            self.successful = []
+        if self.failed is None:
+            self.failed = []
+        if self.skipped is None:
+            self.skipped = []
+        if self.summary is None:
+            self.summary = {}
+
+
+class TimeOverlapCalculator:
+    """Utility class for calculating time overlaps, including midnight-crossing shifts."""
+
+    @staticmethod
+    def normalize_time_range(start_time: time, end_time: time, base_date: date) -> Tuple[datetime, datetime]:
+        """
+        Normalize a time range to datetime objects, handling midnight crossing.
+
+        Args:
+            start_time: Start time of the shift
+            end_time: End time of the shift
+            base_date: Base date for the shift
+
+        Returns:
+            Tuple of (start_datetime, end_datetime)
+        """
+        start_dt = timezone.make_aware(datetime.combine(base_date, start_time))
+
+        # If end_time is before start_time, it crosses midnight
+        if end_time <= start_time:
+            end_dt = timezone.make_aware(datetime.combine(base_date + timedelta(days=1), end_time))
+        else:
+            end_dt = timezone.make_aware(datetime.combine(base_date, end_time))
+
+        return start_dt, end_dt
+
+    @staticmethod
+    def times_overlap(start1: time, end1: time, start2: time, end2: time,
+                     date1: date, date2: date = None) -> Tuple[bool, Optional[datetime], Optional[datetime]]:
+        """
+        Check if two time ranges overlap, handling midnight crossing.
+
+        Args:
+            start1, end1: First time range
+            start2, end2: Second time range
+            date1: Date for first range
+            date2: Date for second range (defaults to date1)
+
+        Returns:
+            Tuple of (overlaps: bool, overlap_start: datetime, overlap_end: datetime)
+        """
+        if date2 is None:
+            date2 = date1
+
+        dt1_start, dt1_end = TimeOverlapCalculator.normalize_time_range(start1, end1, date1)
+        dt2_start, dt2_end = TimeOverlapCalculator.normalize_time_range(start2, end2, date2)
+
+        # Check for overlap
+        overlap_start = max(dt1_start, dt2_start)
+        overlap_end = min(dt1_end, dt2_end)
+
+        overlaps = overlap_start < overlap_end
+
+        return overlaps, overlap_start if overlaps else None, overlap_end if overlaps else None
+
+    @staticmethod
+    def calculate_overlap_duration(start1: time, end1: time, start2: time, end2: time,
+                                 date1: date, date2: date = None) -> timedelta:
+        """Calculate the duration of overlap between two time ranges."""
+        overlaps, overlap_start, overlap_end = TimeOverlapCalculator.times_overlap(
+            start1, end1, start2, end2, date1, date2
+        )
+
+        if overlaps and overlap_start and overlap_end:
+            return overlap_end - overlap_start
+
+        return timedelta(0)
+
+
+class ConflictDetector:
+    """Advanced conflict detection for shift assignments."""
+
+    def __init__(self, config: Dict[str, Any] = None):
+        """Initialize conflict detector with configuration."""
+        self.config = config or {}
+        self.tolerance_minutes = self.config.get('tolerance_minutes', 0)
+        self.check_holidays = self.config.get('check_holidays', True)
+        self.check_leave = self.config.get('check_leave', True)
+        self.strict_mode = self.config.get('strict_mode', True)
+
+    def check_assignment_conflicts(self, user: User, shift: ShiftMaster,
+                                 effective_from: date, effective_to: date = None) -> List[ConflictDetail]:
+        """
+        Check for conflicts when assigning a shift to a user.
+
+        Args:
+            user: User to assign shift to
+            shift: Shift to assign
+            effective_from: Start date of assignment
+            effective_to: End date of assignment (None for ongoing)
+
+        Returns:
+            List of conflict details
+        """
+        conflicts = []
+
+        # Validate inputs
+        if not user or not shift or not effective_from:
+            return conflicts
+
+        # Get date range to check
+        end_date = effective_to or (effective_from + timedelta(days=365))  # Check up to 1 year ahead
+        check_dates = self._get_dates_to_check(effective_from, end_date, shift)
+
+        for check_date in check_dates:
+            # Check time conflicts
+            time_conflicts = self._check_time_conflicts(user, shift, check_date)
+            conflicts.extend(time_conflicts)
+
+            # Check holiday conflicts
+            if self.check_holidays:
+                holiday_conflicts = self._check_holiday_conflicts(shift, check_date)
+                conflicts.extend(holiday_conflicts)
+
+            # Check leave conflicts (if leave system is available)
+            if self.check_leave:
+                leave_conflicts = self._check_leave_conflicts(user, check_date)
+                conflicts.extend(leave_conflicts)
+
+        return conflicts
+
+    def _get_dates_to_check(self, start_date: date, end_date: date, shift: ShiftMaster) -> List[date]:
+        """Get list of dates to check based on shift working days."""
+        dates_to_check = []
+        current_date = start_date
+
+        while current_date <= end_date:
+            if shift.is_working_day(current_date):
+                dates_to_check.append(current_date)
+            current_date += timedelta(days=1)
+
+            # Limit to prevent excessive checking
+            if len(dates_to_check) > 100:
+                logger.warning(f"Limiting conflict check to 100 dates for performance")
+                break
+
+        return dates_to_check
+
+    def _check_time_conflicts(self, user: User, shift: ShiftMaster, check_date: date) -> List[ConflictDetail]:
+        """Check for time-based conflicts on a specific date."""
+        conflicts = []
+
+        # Get existing assignments for the user on this date
+        existing_assignments = self._get_existing_assignments(user, check_date)
+
+        for assignment in existing_assignments:
+            existing_shift = assignment.shift
+
+            # Check if shifts overlap
+            overlaps, overlap_start, overlap_end = TimeOverlapCalculator.times_overlap(
+                shift.start_time, shift.end_time,
+                existing_shift.start_time, existing_shift.end_time,
+                check_date
+            )
+
+            if overlaps:
+                # Apply tolerance if configured
+                if self.tolerance_minutes > 0:
+                    overlap_duration = overlap_end - overlap_start
+                    if overlap_duration.total_seconds() / 60 <= self.tolerance_minutes:
+                        continue  # Within tolerance, no conflict
+
+                conflict = ConflictDetail(
+                    conflict_type=ConflictType.TIME_OVERLAP,
+                    message=f"Shift '{shift.name}' overlaps with existing assignment '{existing_shift.name}' on {check_date}",
+                    conflicting_assignment=assignment,
+                    conflicting_shift=existing_shift,
+                    overlap_start=overlap_start,
+                    overlap_end=overlap_end,
+                    severity="high",
+                    suggestion=f"Consider adjusting shift times or selecting a different date"
+                )
+                conflicts.append(conflict)
+
+        return conflicts
+
+    def _get_existing_assignments(self, user: User, check_date: date) -> List[ShiftAssignment]:
+        """Get existing shift assignments for a user on a specific date."""
+        return list(ShiftAssignment.objects.filter(
+            user=user,
+            effective_from__lte=check_date
+        ).filter(
+            Q(effective_to__gte=check_date) | Q(effective_to__isnull=True)
+        ).select_related('shift'))
+
+    def _check_holiday_conflicts(self, shift: ShiftMaster, check_date: date) -> List[ConflictDetail]:
+        """Check for holiday conflicts."""
+        conflicts = []
+
+        if Holiday.is_holiday(check_date):
+            holiday = Holiday.objects.filter(
+                Q(date=check_date) |
+                Q(recurring_yearly=True, date__month=check_date.month, date__day=check_date.day)
+            ).first()
+
+            conflict = ConflictDetail(
+                conflict_type=ConflictType.HOLIDAY_CONFLICT,
+                message=f"Cannot assign shift on holiday: {holiday.name if holiday else 'Unknown Holiday'} ({check_date})",
+                severity="medium",
+                suggestion="Consider assigning shift on a different date"
+            )
+            conflicts.append(conflict)
+
+        return conflicts
+
+    def _check_leave_conflicts(self, user: User, check_date: date) -> List[ConflictDetail]:
+        """Check for leave conflicts (placeholder for future integration)."""
+        conflicts = []
+
+        # TODO: Integrate with leave management system
+        # This is a placeholder for future implementation
+        try:
+            # Check if user is on leave (requires leave models)
+            # from ..models import LeaveRequest
+            # leave_requests = LeaveRequest.objects.filter(
+            #     user=user,
+            #     start_date__lte=check_date,
+            #     end_date__gte=check_date,
+            #     status='approved'
+            # )
+            # if leave_requests.exists():
+            #     conflict = ConflictDetail(
+            #         conflict_type=ConflictType.LEAVE_CONFLICT,
+            #         message=f"User is on approved leave on {check_date}",
+            #         severity="high"
+            #     )
+            #     conflicts.append(conflict)
+            pass
+        except ImportError:
+            pass  # Leave system not available
+
+        return conflicts
+
 
 class ShiftService:
     """
-    Comprehensive service class for shift management operations.
-    Handles all business logic for shifts, assignments, holidays, and reporting.
+    Enhanced shift management service with comprehensive functionality.
+
+    Provides methods for:
+    - Creating and managing shifts
+    - Dynamic conflict detection
+    - Bulk assignment operations
+    - Performance optimization
+    - Audit logging
     """
 
     def __init__(self):
-        self.logger = logger
-        self.timezone = timezone.get_current_timezone()
+        """Initialize the shift service."""
+        self.conflict_detector = ConflictDetector()
+        self.cache_timeout = 300  # Default cache timeout
+        self.performance_monitoring = True  # Enable performance monitoring
 
     # ============================
-    # SHIFT MANAGEMENT METHODS
+    # SHIFT MANAGEMENT
     # ============================
 
-    def get_all_shifts(self, active_only: bool = True, page: int = 1, per_page: int = 20) -> Dict[str, Any]:
+    def get_all_shifts(self, active_only: bool = True, include_stats: bool = False, page: int = None, per_page: int = 10) -> Dict[str, Any]:
         """
-        Get paginated list of all shifts with filtering options.
+        Get all shifts with optional statistics and pagination.
 
         Args:
-            active_only: Only return active shifts
+            active_only: If True, return only active shifts
+            include_stats: If True, include assignment statistics
             page: Page number for pagination
-            per_page: Items per page
+            per_page: Number of items per page
 
         Returns:
-            Dict containing shifts, pagination info, and metadata
+            Dictionary with shifts list, pagination info, and metadata
         """
-        try:
-            query = ShiftMaster.objects.all()
+        cache_key = f"{CACHE_KEY_PREFIXES['shift_statistics']}all_shifts_{active_only}_{include_stats}"
+        cached_result = cache.get(cache_key)
 
-            if active_only:
-                query = query.filter(is_active=True)
+        if cached_result:
+            logger.debug("Returning cached shift list")
+            return cached_result
 
-            # Add annotation for assignment count
-            query = query.annotate(
-                assignment_count=Count('assignments'),
-                active_assignment_count=Count(
+        start_time = timezone.now()
+
+        queryset = ShiftMaster.objects.all()
+
+        if active_only:
+            queryset = queryset.filter(is_active=True)
+
+        if include_stats:
+            queryset = queryset.prefetch_related(
+                Prefetch(
+                    'assignments',
+                    queryset=ShiftAssignment.objects.select_related('user')
+                )
+            ).annotate(
+                total_assignments=Count('assignments'),
+                active_assignments=Count(
                     'assignments',
                     filter=Q(assignments__is_current=True)
                 )
-            ).order_by('name')
+            )
 
-            paginator = Paginator(query, per_page)
-            page_obj = paginator.get_page(page)
-
-            shifts_data = []
-            for shift in page_obj:
-                shifts_data.append({
-                    'id': shift.id,
-                    'name': shift.name,
-                    'start_time': shift.start_time.strftime('%H:%M'),
-                    'end_time': shift.end_time.strftime('%H:%M'),
-                    'duration': float(shift.shift_duration),
-                    'work_days': shift.work_days,
-                    'custom_work_days': shift.custom_work_days,
-                    'is_active': shift.is_active,
-                    'crosses_midnight': shift.crosses_midnight,
-                    'assignment_count': shift.assignment_count,
-                    'active_assignment_count': shift.active_assignment_count,
-                    'expected_hours': shift.expected_hours,
-                    'break_minutes': shift.break_duration.total_seconds() // 60,
-                    'grace_minutes': shift.grace_period.total_seconds() // 60,
-                    'created_at': shift.created_at,
-                    'updated_at': shift.updated_at
-                })
-
-            return {
-                'shifts': shifts_data,
-                'pagination': {
-                    'current_page': page_obj.number,
-                    'total_pages': paginator.num_pages,
-                    'total_count': paginator.count,
-                    'has_next': page_obj.has_next(),
-                    'has_previous': page_obj.has_previous(),
-                    'per_page': per_page
-                },
-                'summary': {
-                    'total_shifts': paginator.count,
-                    'active_shifts': query.filter(is_active=True).count(),
-                    'inactive_shifts': query.filter(is_active=False).count()
-                }
-            }
-
-        except Exception as e:
-            self.logger.error(f"Error getting all shifts: {str(e)}")
-            raise
-
-    def get_shift_by_id(self, shift_id: int) -> Dict[str, Any]:
-        """
-        Get a single shift by ID.
-
-        Args:
-            shift_id: The ID of the shift to retrieve
-
-        Returns:
-            Dict containing shift data or None if not found
-        """
-        try:
-            shift = ShiftMaster.objects.get(id=shift_id)
-
-            return {
+        shifts = []
+        for shift in queryset:
+            shift_data = {
                 'id': shift.id,
                 'name': shift.name,
-                'description': getattr(shift, 'description', ''),
-                'start_time': shift.start_time.strftime('%H:%M'),
-                'end_time': shift.end_time.strftime('%H:%M'),
-                'duration': float(shift.shift_duration),
+                'start_time': shift.start_time,
+                'end_time': shift.end_time,
+                'shift_duration': shift.shift_duration,
+                'break_duration': shift.break_duration,
+                'grace_period': shift.grace_period,
                 'work_days': shift.work_days,
                 'custom_work_days': shift.custom_work_days,
                 'is_active': shift.is_active,
                 'crosses_midnight': shift.crosses_midnight,
-                'break_minutes': shift.break_duration.total_seconds() // 60,
-                'grace_minutes': shift.grace_period.total_seconds() // 60,
+                'is_night_shift': shift.is_night_shift(),
+                'working_days_list': shift.working_days_list,
+                'expected_hours': shift.expected_hours,
                 'created_at': shift.created_at,
-                'updated_at': shift.updated_at
+                'updated_at': shift.updated_at,
             }
 
-        except ShiftMaster.DoesNotExist:
-            self.logger.warning(f"Shift with ID {shift_id} not found")
-            return None
-        except Exception as e:
-            self.logger.error(f"Error getting shift by ID {shift_id}: {str(e)}")
-            return None
+            if include_stats:
+                shift_data.update({
+                    'total_assignments': getattr(shift, 'total_assignments', 0),
+                    'active_assignments': getattr(shift, 'active_assignments', 0),
+                    'assignment_history': list(shift.assignments.values(
+                        'user__username', 'effective_from', 'effective_to', 'is_current'
+                    ))
+                })
 
+            shifts.append(shift_data)
 
-    def get_shift_by_name(self, name: str) -> Optional[ShiftMaster]:
-        """Get shift by name with error handling."""
+        # Cache the result
+        cache.set(cache_key, shifts, self.cache_timeout)
+
+        # Log performance
+        if self.performance_monitoring:
+            duration = (timezone.now() - start_time).total_seconds() * 1000
+            logger.info(f"get_all_shifts completed in {duration:.2f}ms")
+
+        # Handle pagination if requested
+        total_count = len(shifts)
+        if page is not None:
+            start_idx = (page - 1) * per_page
+            end_idx = start_idx + per_page
+            paginated_shifts = shifts[start_idx:end_idx]
+
+            # Calculate pagination info
+            total_pages = (total_count + per_page - 1) // per_page
+            has_next = page < total_pages
+            has_previous = page > 1
+
+            return {
+                'shifts': paginated_shifts,
+                'pagination': {
+                    'current_page': page,
+                    'per_page': per_page,
+                    'total_count': total_count,
+                    'total_pages': total_pages,
+                    'has_next': has_next,
+                    'has_previous': has_previous,
+                    'next_page': page + 1 if has_next else None,
+                    'previous_page': page - 1 if has_previous else None,
+                },
+                'total_shifts': total_count,
+            }
+
+        return {
+            'shifts': shifts,
+            'total_shifts': total_count,
+        }
+
+    def get_shift_assignments(self, filters: Dict[str, Any] = None, page: int = 1, per_page: int = 50) -> Dict[str, Any]:
+        """
+        Get shift assignments with optional filtering and pagination.
+
+        Args:
+            filters: Dictionary of filters (shift_id, user_id, active_only, etc.)
+            page: Page number for pagination
+            per_page: Number of items per page
+
+        Returns:
+            Dictionary with assignments list, pagination info, and metadata
+        """
+        queryset = ShiftAssignment.objects.select_related('user', 'shift', 'created_by')
+
+        # Apply filters
+        if filters:
+            if 'shift_id' in filters and filters['shift_id']:
+                queryset = queryset.filter(shift_id=filters['shift_id'])
+
+            if 'user_id' in filters and filters['user_id']:
+                queryset = queryset.filter(user_id=filters['user_id'])
+
+            if filters.get('active_only', True):
+                queryset = queryset.filter(is_current=True)
+
+            if 'effective_from' in filters and filters['effective_from']:
+                queryset = queryset.filter(effective_from__gte=filters['effective_from'])
+
+            if 'effective_to' in filters and filters['effective_to']:
+                queryset = queryset.filter(effective_to__lte=filters['effective_to'])
+
+        # Get total count for pagination
+        total_count = queryset.count()
+
+        # Apply pagination
+        start_idx = (page - 1) * per_page
+        end_idx = start_idx + per_page
+        paginated_queryset = queryset[start_idx:end_idx]
+
+        assignments = []
+        for assignment in paginated_queryset:
+            # Get user's full name
+            user_full_name = f"{assignment.user.first_name} {assignment.user.last_name}".strip()
+            if not user_full_name:
+                user_full_name = assignment.user.username
+
+            assignment_data = {
+                'id': assignment.id,
+                'user': {
+                    'id': assignment.user.id,
+                    'username': assignment.user.username,
+                    'first_name': assignment.user.first_name,
+                    'last_name': assignment.user.last_name,
+                    'email': assignment.user.email,
+                    'full_name': user_full_name,
+                },
+                'shift': {
+                    'id': assignment.shift.id,
+                    'name': assignment.shift.name,
+                    'start_time': assignment.shift.start_time.strftime('%H:%M'),
+                    'end_time': assignment.shift.end_time.strftime('%H:%M'),
+                    'shift_duration': float(assignment.shift.shift_duration),
+                },
+                'effective_from': assignment.effective_from.strftime('%Y-%m-%d'),
+                'effective_to': assignment.effective_to.strftime('%Y-%m-%d') if assignment.effective_to else None,
+                'is_current': assignment.is_current,
+                'created_at': assignment.created_at.isoformat(),
+                'updated_at': assignment.updated_at.isoformat(),
+                'created_by': assignment.created_by.username if assignment.created_by else None,
+                'notes': assignment.notes,
+                'days_remaining': assignment.days_remaining(),
+                'total_duration': assignment.total_duration(),
+                'has_ended': assignment.has_ended(),
+            }
+            assignments.append(assignment_data)
+
+        # Calculate pagination info
+        total_pages = (total_count + per_page - 1) // per_page
+        has_next = page < total_pages
+        has_previous = page > 1
+
+        return {
+            'assignments': assignments,
+            'pagination': {
+                'current_page': page,
+                'per_page': per_page,
+                'total_count': total_count,
+                'total_pages': total_pages,
+                'has_next': has_next,
+                'has_previous': has_previous,
+                'next_page': page + 1 if has_next else None,
+                'previous_page': page - 1 if has_previous else None,
+            },
+            'filters_applied': filters or {},
+            'total_assignments': total_count,
+        }
+
+    def get_user_shift_calendar(self, user_or_id, month_or_start_date=None, year_or_end_date=None) -> Dict[str, Any]:
+        """
+        Get user's shift calendar data for a date range.
+        Supports both (user_id, start_date, end_date) and (user, month, year) formats.
+
+        Args:
+            user_or_id: User object or User ID
+            month_or_start_date: Month number or start date string
+            year_or_end_date: Year number or end date string
+
+        Returns:
+            Dictionary with calendar data
+        """
+        # Handle different parameter formats
+        if isinstance(user_or_id, User):
+            user = user_or_id
+        else:
+            try:
+                user = User.objects.get(id=user_or_id)
+            except User.DoesNotExist:
+                return {'error': 'User not found'}
+
+        # Handle date parameters - check if they're month/year or date strings
+        if isinstance(month_or_start_date, int) and isinstance(year_or_end_date, int):
+            # Month/year format
+            month = month_or_start_date
+            year = year_or_end_date
+            start_date = timezone.datetime(year, month, 1).date()
+            # Last day of the month
+            if month == 12:
+                next_month = timezone.datetime(year + 1, 1, 1).date()
+            else:
+                next_month = timezone.datetime(year, month + 1, 1).date()
+            end_date = next_month - timedelta(days=1)
+        else:
+            # Date string format
+            if not month_or_start_date:
+                start_date = timezone.now().date().replace(day=1)
+            else:
+                start_date = timezone.datetime.strptime(month_or_start_date, '%Y-%m-%d').date()
+
+            if not year_or_end_date:
+                # Last day of current month
+                next_month = start_date.replace(month=start_date.month + 1) if start_date.month < 12 else start_date.replace(year=start_date.year + 1, month=1)
+                end_date = next_month - timedelta(days=1)
+            else:
+                end_date = timezone.datetime.strptime(year_or_end_date, '%Y-%m-%d').date()
+
+        # Get assignments for the date range
+        assignments = ShiftAssignment.objects.filter(
+            user=user,
+            effective_from__lte=end_date
+        ).filter(
+            Q(effective_to__gte=start_date) | Q(effective_to__isnull=True)
+        ).select_related('shift')
+
+        # Get holidays for the date range
+        holidays = Holiday.objects.filter(
+            date__range=(start_date, end_date)
+        )
+
+        # Build calendar data
+        calendar_events = []
+        working_days_count = 0
+        holidays_count = 0
+        total_expected_hours = 0
+
+        # Generate calendar events for each day
+        current_date = start_date
+        while current_date <= end_date:
+            # Find assignment for this date
+            day_assignment = None
+            for assignment in assignments:
+                if assignment.is_active_on(current_date):
+                    day_assignment = assignment
+                    break
+
+            # Check if it's a holiday
+            is_holiday = any(h.date == current_date for h in holidays)
+            if is_holiday:
+                holidays_count += 1
+
+            # Determine if it's a working day
+            is_working_day = False
+            if day_assignment and day_assignment.shift.is_working_day(current_date) and not is_holiday:
+                is_working_day = True
+                working_days_count += 1
+                total_expected_hours += float(day_assignment.shift.expected_hours)
+
+            event = {
+                'day': current_date.day,
+                'date': current_date.strftime('%Y-%m-%d'),
+                'weekday': current_date.strftime('%A'),
+                'is_working_day': is_working_day,
+                'is_weekend': current_date.weekday() >= 5,
+                'is_holiday': is_holiday,
+                'assignment': {
+                    'id': day_assignment.id,
+                    'shift_name': day_assignment.shift.name,
+                    'start_time': day_assignment.shift.start_time.strftime('%H:%M'),
+                    'end_time': day_assignment.shift.end_time.strftime('%H:%M'),
+                } if day_assignment else None,
+            }
+
+            calendar_events.append(event)
+            current_date += timedelta(days=1)
+
+        return {
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+            },
+            'calendar': calendar_events,
+            'summary': {
+                'total_days': len(calendar_events),
+                'working_days': working_days_count,
+                'holidays': holidays_count,
+                'total_expected_hours': total_expected_hours,
+            },
+            'start_date': start_date.strftime('%Y-%m-%d'),
+            'end_date': end_date.strftime('%Y-%m-%d'),
+        }
+
+    def get_shift_by_id(self, shift_id: int, include_assignments: bool = False) -> Optional[Dict[str, Any]]:
+        """
+        Get a specific shift by ID.
+
+        Args:
+            shift_id: ID of the shift
+            include_assignments: If True, include current assignments
+
+        Returns:
+            Shift dictionary or None if not found
+        """
+        cache_key = f"{CACHE_KEY_PREFIXES['user_current_shift']}shift_{shift_id}_{include_assignments}"
+        cached_result = cache.get(cache_key)
+
+        if cached_result:
+            return cached_result
+
         try:
-            return ShiftMaster.objects.get(name=name, is_active=True)
-        except ShiftMaster.DoesNotExist:
-            self.logger.warning(f"Active shift with name '{name}' not found")
-            return None
-        except Exception as e:
-            self.logger.error(f"Error getting shift by name '{name}': {str(e)}")
-            raise
+            queryset = ShiftMaster.objects
 
-    def create_shift(self, shift_data: Dict[str, Any]) -> Tuple[bool, Union[ShiftMaster, str]]:
+            if include_assignments:
+                queryset = queryset.prefetch_related(
+                    Prefetch(
+                        'assignments',
+                        queryset=ShiftAssignment.objects.filter(is_current=True).select_related('user')
+                    )
+                )
+
+            shift = queryset.get(id=shift_id)
+
+            shift_data = {
+                'id': shift.id,
+                'name': shift.name,
+                'start_time': shift.start_time,
+                'end_time': shift.end_time,
+                'shift_duration': shift.shift_duration,
+                'break_duration': shift.break_duration,
+                'grace_period': shift.grace_period,
+                'work_days': shift.work_days,
+                'custom_work_days': shift.custom_work_days,
+                'is_active': shift.is_active,
+                'crosses_midnight': shift.crosses_midnight,
+                'is_night_shift': shift.is_night_shift(),
+                'working_days_list': shift.working_days_list,
+                'expected_hours': shift.expected_hours,
+                'created_at': shift.created_at,
+                'updated_at': shift.updated_at,
+            }
+
+            if include_assignments:
+                shift_data['current_assignments'] = [
+                    {
+                        'id': assignment.id,
+                        'user_id': assignment.user.id,
+                        'username': assignment.user.username,
+                        'user_full_name': f"{assignment.user.first_name} {assignment.user.last_name}".strip(),
+                        'effective_from': assignment.effective_from,
+                        'effective_to': assignment.effective_to,
+                        'notes': assignment.notes,
+                    }
+                    for assignment in shift.assignments.all()
+                ]
+
+            cache.set(cache_key, shift_data, self.cache_timeout)
+            return shift_data
+
+        except ShiftMaster.DoesNotExist:
+            logger.warning(f"Shift with ID {shift_id} not found")
+            return None
+
+    def create_shift(self, shift_data: Dict[str, Any], created_by: User = None) -> AssignmentResult:
         """
         Create a new shift with validation.
 
         Args:
             shift_data: Dictionary containing shift information
+            created_by: User creating the shift
 
         Returns:
-            Tuple of (success: bool, result: ShiftMaster or error_message)
+            AssignmentResult with creation status
         """
         try:
-            # Validate required fields
-            required_fields = ['name', 'start_time', 'end_time', 'shift_duration']
-            for field in required_fields:
-                if field not in shift_data or not shift_data[field]:
-                    return False, f"Field '{field}' is required"
-
-            # Check for duplicate name
-            if ShiftMaster.objects.filter(name=shift_data['name']).exists():
-                return False, f"Shift with name '{shift_data['name']}' already exists"
-
-            # Validate time format and values
-            try:
-                if isinstance(shift_data['start_time'], str):
-                    shift_data['start_time'] = datetime.strptime(shift_data['start_time'], '%H:%M').time()
-                if isinstance(shift_data['end_time'], str):
-                    shift_data['end_time'] = datetime.strptime(shift_data['end_time'], '%H:%M').time()
-            except ValueError as e:
-                return False, f"Invalid time format: {str(e)}"
-
-            # Validate shift duration
-            duration = Decimal(str(shift_data['shift_duration']))
-            if duration <= 0 or duration > 24:
-                return False, "Shift duration must be between 0 and 24 hours"
-
-            # Set defaults for optional fields
-            shift_data.setdefault('break_duration', timedelta(minutes=30))
-            shift_data.setdefault('grace_period', timedelta(minutes=15))
-            shift_data.setdefault('work_days', 'Weekdays')
-            shift_data.setdefault('is_active', True)
-
-            # Convert string durations to timedelta if needed
-            if isinstance(shift_data.get('break_duration'), (int, str)):
-                minutes = int(shift_data['break_duration'])
-                shift_data['break_duration'] = timedelta(minutes=minutes)
-
-            if isinstance(shift_data.get('grace_period'), (int, str)):
-                minutes = int(shift_data['grace_period'])
-                shift_data['grace_period'] = timedelta(minutes=minutes)
-
-            # Create the shift
             with transaction.atomic():
+                # Validate required fields
+                required_fields = ['name', 'start_time', 'end_time']
+                for field in required_fields:
+                    if field not in shift_data:
+                        return AssignmentResult(
+                            status=AssignmentStatus.ERROR,
+                            conflicts=[ConflictDetail(
+                                conflict_type=ConflictType.POLICY_VIOLATION,
+                                message=f"Required field '{field}' is missing",
+                                severity="critical"
+                            )]
+                        )
+
+                # Check for duplicate shift names
+                if ShiftMaster.objects.filter(name__iexact=shift_data['name']).exists():
+                    return AssignmentResult(
+                        status=AssignmentStatus.CONFLICT,
+                        conflicts=[ConflictDetail(
+                            conflict_type=ConflictType.POLICY_VIOLATION,
+                            message=f"A shift with name '{shift_data['name']}' already exists",
+                            severity="high"
+                        )]
+                    )
+
+                # Create the shift
                 shift = ShiftMaster.objects.create(**shift_data)
-                self.logger.info(f"Created new shift: {shift.name} (ID: {shift.id})")
-                return True, shift
 
+                # Clear related caches
+                self._clear_shift_caches()
+
+                # Log the creation
+                logger.info(f"Shift '{shift.name}' created by {created_by}")
+
+                return AssignmentResult(
+                    status=AssignmentStatus.SUCCESS,
+                    metadata={'shift_id': shift.id, 'shift_name': shift.name}
+                )
+
+        except ValidationError as e:
+            logger.error(f"Validation error creating shift: {e}")
+            return AssignmentResult(
+                status=AssignmentStatus.ERROR,
+                conflicts=[ConflictDetail(
+                    conflict_type=ConflictType.POLICY_VIOLATION,
+                    message=str(e),
+                    severity="high"
+                )]
+            )
         except Exception as e:
-            self.logger.error(f"Error creating shift: {str(e)}")
-            return False, f"Error creating shift: {str(e)}"
+            logger.error(f"Error creating shift: {e}")
+            return AssignmentResult(
+                status=AssignmentStatus.ERROR,
+                conflicts=[ConflictDetail(
+                    conflict_type=ConflictType.POLICY_VIOLATION,
+                    message=f"Failed to create shift: {str(e)}",
+                    severity="critical"
+                )]
+            )
 
-    def update_shift(self, shift_id: int, update_data: Dict[str, Any]) -> Tuple[bool, Union[ShiftMaster, str]]:
+    def update_shift(self, shift_id: int, update_data: Dict[str, Any],
+                    updated_by: User = None) -> AssignmentResult:
         """
-        Update an existing shift with validation.
+        Update an existing shift.
 
         Args:
             shift_id: ID of shift to update
-            update_data: Dictionary containing fields to update
+            update_data: Dictionary of fields to update
+            updated_by: User making the update
 
         Returns:
-            Tuple of (success: bool, result: ShiftMaster or error_message)
+            AssignmentResult with update status
         """
         try:
-            shift = self.get_shift_by_id(shift_id)
-            if not shift:
-                return False, f"Shift with ID {shift_id} not found"
-
-            # Check if name is being changed and if it conflicts
-            if 'name' in update_data and update_data['name'] != shift.name:
-                if ShiftMaster.objects.filter(name=update_data['name']).exclude(id=shift_id).exists():
-                    return False, f"Shift with name '{update_data['name']}' already exists"
-
-            # Validate time formats
-            for time_field in ['start_time', 'end_time']:
-                if time_field in update_data and isinstance(update_data[time_field], str):
-                    try:
-                        update_data[time_field] = datetime.strptime(update_data[time_field], '%H:%M').time()
-                    except ValueError:
-                        return False, f"Invalid time format for {time_field}"
-
-            # Validate duration
-            if 'shift_duration' in update_data:
-                duration = Decimal(str(update_data['shift_duration']))
-                if duration <= 0 or duration > 24:
-                    return False, "Shift duration must be between 0 and 24 hours"
-
-            # Convert duration fields
-            for duration_field in ['break_duration', 'grace_period']:
-                if duration_field in update_data and isinstance(update_data[duration_field], (int, str)):
-                    minutes = int(update_data[duration_field])
-                    update_data[duration_field] = timedelta(minutes=minutes)
-
-            # Update the shift
             with transaction.atomic():
+                shift = ShiftMaster.objects.get(id=shift_id)
+                original_data = {
+                    'name': shift.name,
+                    'start_time': shift.start_time,
+                    'end_time': shift.end_time,
+                }
+
+                # Update fields
                 for field, value in update_data.items():
                     if hasattr(shift, field):
                         setattr(shift, field, value)
 
+                # Validate the updated shift
+                shift.full_clean()
                 shift.save()
-                self.logger.info(f"Updated shift: {shift.name} (ID: {shift.id})")
-                return True, shift
 
+                # Check impact on existing assignments
+                warnings = self._check_update_impact(shift, original_data)
+
+                # Clear related caches
+                self._clear_shift_caches()
+
+                logger.info(f"Shift '{shift.name}' updated by {updated_by}")
+
+                return AssignmentResult(
+                    status=AssignmentStatus.SUCCESS,
+                    warnings=warnings,
+                    metadata={'shift_id': shift.id, 'changes': update_data}
+                )
+
+        except ShiftMaster.DoesNotExist:
+            return AssignmentResult(
+                status=AssignmentStatus.ERROR,
+                conflicts=[ConflictDetail(
+                    conflict_type=ConflictType.POLICY_VIOLATION,
+                    message=f"Shift with ID {shift_id} not found",
+                    severity="high"
+                )]
+            )
         except Exception as e:
-            self.logger.error(f"Error updating shift {shift_id}: {str(e)}")
-            return False, f"Error updating shift: {str(e)}"
+            logger.error(f"Error updating shift {shift_id}: {e}")
+            return AssignmentResult(
+                status=AssignmentStatus.ERROR,
+                conflicts=[ConflictDetail(
+                    conflict_type=ConflictType.POLICY_VIOLATION,
+                    message=f"Failed to update shift: {str(e)}",
+                    severity="critical"
+                )]
+            )
 
-    def delete_shift(self, shift_id: int, force: bool = False) -> Tuple[bool, str]:
+    def delete_shift(self, shift_id: int, deleted_by: User = None,
+                    force: bool = False) -> AssignmentResult:
         """
         Delete a shift with safety checks.
 
         Args:
             shift_id: ID of shift to delete
+            deleted_by: User deleting the shift
             force: If True, delete even with active assignments
 
         Returns:
-            Tuple of (success: bool, message: str)
+            AssignmentResult with deletion status
         """
         try:
-            shift = self.get_shift_by_id(shift_id)
-            if not shift:
-                return False, f"Shift with ID {shift_id} not found"
-
-            # Check for active assignments
-            active_assignments = ShiftAssignment.objects.filter(
-                shift=shift,
-                is_current=True
-            ).count()
-
-            if active_assignments > 0 and not force:
-                return False, f"Cannot delete shift. {active_assignments} active assignments exist. Use force=True to override."
-
             with transaction.atomic():
-                # If forcing deletion, deactivate assignments
-                if force and active_assignments > 0:
-                    ShiftAssignment.objects.filter(
-                        shift=shift,
-                        is_current=True
-                    ).update(
-                        is_current=False,
-                        effective_to=timezone.now().date()
+                shift = ShiftMaster.objects.get(id=shift_id)
+
+                # Check for active assignments
+                active_assignments = ShiftAssignment.objects.filter(
+                    shift=shift,
+                    is_current=True
+                ).count()
+
+                if active_assignments > 0 and not force:
+                    return AssignmentResult(
+                        status=AssignmentStatus.CONFLICT,
+                        conflicts=[ConflictDetail(
+                            conflict_type=ConflictType.POLICY_VIOLATION,
+                            message=f"Cannot delete shift '{shift.name}' - {active_assignments} active assignments exist",
+                            severity="high",
+                            suggestion="End all assignments first or use force=True"
+                        )]
                     )
 
                 shift_name = shift.name
                 shift.delete()
-                self.logger.info(f"Deleted shift: {shift_name} (ID: {shift_id})")
-                return True, f"Shift '{shift_name}' deleted successfully"
 
+                # Clear related caches
+                self._clear_shift_caches()
+
+                logger.info(f"Shift '{shift_name}' deleted by {deleted_by}")
+
+                return AssignmentResult(
+                    status=AssignmentStatus.SUCCESS,
+                    metadata={'deleted_shift': shift_name, 'active_assignments': active_assignments}
+                )
+
+        except ShiftMaster.DoesNotExist:
+            return AssignmentResult(
+                status=AssignmentStatus.ERROR,
+                conflicts=[ConflictDetail(
+                    conflict_type=ConflictType.POLICY_VIOLATION,
+                    message=f"Shift with ID {shift_id} not found",
+                    severity="high"
+                )]
+            )
         except Exception as e:
-            self.logger.error(f"Error deleting shift {shift_id}: {str(e)}")
-            return False, f"Error deleting shift: {str(e)}"
+            logger.error(f"Error deleting shift {shift_id}: {e}")
+            return AssignmentResult(
+                status=AssignmentStatus.ERROR,
+                conflicts=[ConflictDetail(
+                    conflict_type=ConflictType.POLICY_VIOLATION,
+                    message=f"Failed to delete shift: {str(e)}",
+                    severity="critical"
+                )]
+            )
 
     # ============================
-    # SHIFT ASSIGNMENT METHODS
+    # ASSIGNMENT MANAGEMENT
     # ============================
 
-    def assign_shift_to_user(self, user_id: int, shift_id: int, effective_from: date,
-                           effective_to: Optional[date] = None) -> Tuple[bool, Union[ShiftAssignment, str]]:
+    def assign_shift_to_user(self, user: User, shift: ShiftMaster,
+                           effective_from: date, effective_to: date = None,
+                           created_by: User = None, notes: str = "",
+                           force: bool = False) -> AssignmentResult:
         """
-        Assign a shift to a user with overlap handling.
+        Assign a shift to a user with comprehensive conflict checking.
 
         Args:
-            user_id: ID of user to assign shift to
-            shift_id: ID of shift to assign
+            user: User to assign shift to
+            shift: Shift to assign
             effective_from: Start date of assignment
-            effective_to: End date of assignment (optional)
+            effective_to: End date of assignment (None for ongoing)
+            created_by: User creating the assignment
+            notes: Additional notes
+            force: If True, skip conflict checking
 
         Returns:
-            Tuple of (success: bool, result: ShiftAssignment or error_message)
+            AssignmentResult with assignment status
         """
         try:
-            # Validate user and shift exist
-            try:
-                user = User.objects.get(id=user_id)
-                shift = ShiftMaster.objects.get(id=shift_id)
-            except (User.DoesNotExist, ShiftMaster.DoesNotExist) as e:
-                return False, f"User or Shift not found: {str(e)}"
-
-            # Validate dates
-            if effective_from < timezone.now().date():
-                return False, "Effective from date cannot be in the past"
-
-            if effective_to and effective_to <= effective_from:
-                return False, "Effective to date must be after effective from date"
-
-            # Check for overlapping assignments
-            is_valid, error_message = self.validate_shift_assignment(user_id, shift_id, effective_from, effective_to)
-            if not is_valid:
-                return False, error_message
-
             with transaction.atomic():
-                # Create new assignment
+                # Check conflicts unless forced
+                if not force:
+                    conflicts = self.conflict_detector.check_assignment_conflicts(
+                        user, shift, effective_from, effective_to or (effective_from + timedelta(days=365))
+                    )
+
+                    if conflicts:
+                        critical_conflicts = [c for c in conflicts if c.severity == "critical"]
+                        if critical_conflicts:
+                            return AssignmentResult(
+                                status=AssignmentStatus.CONFLICT,
+                                conflicts=conflicts
+                            )
+
+                # Create the assignment
                 assignment = ShiftAssignment.objects.create(
                     user=user,
                     shift=shift,
                     effective_from=effective_from,
                     effective_to=effective_to,
+                    created_by=created_by,
+                    notes=notes,
                     is_current=True
                 )
 
-                self.logger.info(f"Assigned shift '{shift.name}' to user '{user.username}' from {effective_from}")
-                return True, assignment
+                # Clear related caches
+                self._clear_user_shift_cache(user.id)
+
+                logger.info(f"Shift '{shift.name}' assigned to {user.username} by {created_by}")
+
+                return AssignmentResult(
+                    status=AssignmentStatus.SUCCESS,
+                    assignment=assignment,
+                    conflicts=conflicts if not force else [],
+                    metadata={
+                        'assignment_id': assignment.id,
+                        'user_id': user.id,
+                        'shift_id': shift.id
+                    }
+                )
 
         except Exception as e:
-            self.logger.error(f"Error assigning shift: {str(e)}")
-            return False, f"Error assigning shift: {str(e)}"
+            logger.error(f"Error assigning shift {shift.id} to user {user.id}: {e}")
+            return AssignmentResult(
+                status=AssignmentStatus.ERROR,
+                conflicts=[ConflictDetail(
+                    conflict_type=ConflictType.POLICY_VIOLATION,
+                    message=f"Failed to assign shift: {str(e)}",
+                    severity="critical"
+                )]
+            )
 
-    def assign_shifts_to_users(self, user_ids: List[int], shift_id: int, effective_from: date,
-                             effective_to: Optional[date] = None) -> Tuple[int, int, List[str]]:
+    def bulk_assign_shifts(self, assignments_data: List[Dict[str, Any]],
+                          created_by: User = None,
+                          auto_skip_conflicts: bool = True) -> BulkAssignmentResult:
         """
-        Bulk assign shift to multiple users.
+        Perform bulk shift assignments with intelligent conflict handling.
 
         Args:
-            user_ids: List of user IDs
-            shift_id: ID of shift to assign
-            effective_from: Start date of assignment
-            effective_to: End date of assignment (optional)
+            assignments_data: List of assignment dictionaries
+            created_by: User creating the assignments
+            auto_skip_conflicts: If True, automatically skip conflicting assignments
 
         Returns:
-            Tuple of (success_count: int, error_count: int, errors: List[str])
+            BulkAssignmentResult with detailed results
         """
-        success_count = 0
-        error_count = 0
-        errors = []
+        result = BulkAssignmentResult(total_attempted=len(assignments_data))
 
-        try:
-            shift = ShiftMaster.objects.get(id=shift_id)
-        except ShiftMaster.DoesNotExist:
-            return 0, len(user_ids), [f"Shift with ID {shift_id} not found"]
-
-        for user_id in user_ids:
+        for assignment_data in assignments_data:
             try:
-                success, result = self.assign_shift_to_user(user_id, shift_id, effective_from, effective_to)
-                if success:
-                    success_count += 1
+                user = User.objects.get(id=assignment_data['user_id'])
+                shift = ShiftMaster.objects.get(id=assignment_data['shift_id'])
+                effective_from = assignment_data['effective_from']
+                effective_to = assignment_data.get('effective_to')
+                notes = assignment_data.get('notes', '')
+
+                assignment_result = self.assign_shift_to_user(
+                    user=user,
+                    shift=shift,
+                    effective_from=effective_from,
+                    effective_to=effective_to,
+                    created_by=created_by,
+                    notes=notes,
+                    force=not auto_skip_conflicts
+                )
+
+                if assignment_result.status == AssignmentStatus.SUCCESS:
+                    result.successful.append(assignment_result)
+                elif assignment_result.status == AssignmentStatus.CONFLICT and auto_skip_conflicts:
+                    result.skipped.append(assignment_result)
                 else:
-                    error_count += 1
-                    errors.append(f"User {user_id}: {result}")
-            except Exception as e:
-                error_count += 1
-                errors.append(f"User {user_id}: {str(e)}")
+                    result.failed.append(assignment_result)
 
-        self.logger.info(f"Bulk assignment completed: {success_count} successful, {error_count} failed")
-        return success_count, error_count, errors
+            except (User.DoesNotExist, ShiftMaster.DoesNotExist) as e:
+                error_result = AssignmentResult(
+                    status=AssignmentStatus.ERROR,
+                    conflicts=[ConflictDetail(
+                        conflict_type=ConflictType.POLICY_VIOLATION,
+                        message=f"Invalid data: {str(e)}",
+                        severity="high"
+                    )],
+                    metadata=assignment_data
+                )
+                result.failed.append(error_result)
 
-    def validate_shift_assignment(self, user_id: int, shift_id: int, effective_from: date,
-                                effective_to: Optional[date] = None, assignment_id: Optional[int] = None,
-                                override_conflicts: bool = False) -> Tuple[bool, str, dict]:
-        """
-        Enhanced validation for shift assignments with comprehensive business rules.
-
-        Args:
-            user_id: ID of user
-            shift_id: ID of shift
-            effective_from: Start date
-            effective_to: End date (optional)
-            assignment_id: ID of assignment being edited (optional)
-            override_conflicts: Allow admin to override conflicts
-
-        Returns:
-            Tuple of (is_valid: bool, message: str, validation_details: dict)
-        """
-        validation_details = {
-            'conflicts': [],
-            'warnings': [],
-            'business_rules': [],
-            'recommendations': []
+        # Generate summary
+        result.summary = {
+            'total_attempted': result.total_attempted,
+            'successful_count': len(result.successful),
+            'failed_count': len(result.failed),
+            'skipped_count': len(result.skipped),
+            'success_rate': len(result.successful) / result.total_attempted if result.total_attempted > 0 else 0
         }
 
-        try:
-            # Check if user and shift exist and are active
-            try:
-                user = User.objects.get(id=user_id, is_active=True)
-                shift = ShiftMaster.objects.get(id=shift_id, is_active=True)
-            except User.DoesNotExist:
-                return False, "User not found or inactive", validation_details
-            except ShiftMaster.DoesNotExist:
-                return False, "Shift not found or inactive", validation_details
+        logger.info(f"Bulk assignment completed: {len(result.successful)} successful, "
+                   f"{len(result.failed)} failed, {len(result.skipped)} skipped")
 
-            # Validate date ranges
-            today = timezone.now().date()
-            if effective_from < today and not assignment_id:
-                validation_details['business_rules'].append("Cannot create assignments with past effective dates")
-                return False, "Effective date cannot be in the past for new assignments", validation_details
+        return result
 
-            if effective_to and effective_to <= effective_from:
-                return False, "End date must be after start date", validation_details
-
-            # Check maximum assignment duration (1 year)
-            if effective_to:
-                duration = (effective_to - effective_from).days
-                if duration > 365:
-                    validation_details['business_rules'].append("Assignment duration exceeds 1 year limit")
-                    if not override_conflicts:
-                        return False, "Assignment duration cannot exceed 1 year", validation_details
-
-            # Check for overlapping assignments
-            overlapping_assignments = self._find_overlapping_assignments(
-                user_id, effective_from, effective_to, assignment_id
-            )
-
-            if overlapping_assignments:
-                conflict_msgs = []
-                for assignment in overlapping_assignments:
-                    end_str = assignment.effective_to.strftime('%Y-%m-%d') if assignment.effective_to else 'ongoing'
-                    conflict_msg = f"{assignment.shift.name} ({assignment.effective_from.strftime('%Y-%m-%d')} to {end_str})"
-                    conflict_msgs.append(conflict_msg)
-                    validation_details['conflicts'].append({
-                        'type': 'overlapping_assignment',
-                        'assignment_id': assignment.id,
-                        'shift_name': assignment.shift.name,
-                        'effective_from': assignment.effective_from,
-                        'effective_to': assignment.effective_to
-                    })
-
-                if not override_conflicts:
-                    return False, f"Overlapping assignments found: {', '.join(conflict_msgs)}", validation_details
-
-            # Check for exact same shift assignment
-            exact_conflicts = self._find_exact_shift_conflicts(
-                user_id, shift_id, effective_from, effective_to, assignment_id
-            )
-
-            if exact_conflicts and not override_conflicts:
-                validation_details['conflicts'].append({
-                    'type': 'exact_shift_conflict',
-                    'message': 'User already assigned to this shift in overlapping period'
-                })
-                return False, "User is already assigned to this shift during the specified period", validation_details
-
-            # Business rule validations
-            business_rule_issues = self._validate_business_rules(user, shift, effective_from, effective_to)
-            validation_details['business_rules'].extend(business_rule_issues)
-
-            # Check working days alignment
-            working_days_warning = self._check_working_days_alignment(shift, effective_from, effective_to)
-            if working_days_warning:
-                validation_details['warnings'].append(working_days_warning)
-
-            # Check for shift pattern recommendations
-            recommendations = self._get_shift_recommendations(user, shift, effective_from)
-            validation_details['recommendations'].extend(recommendations)
-
-            # Final validation
-            has_critical_issues = any(
-                conflict['type'] in ['overlapping_assignment', 'exact_shift_conflict']
-                for conflict in validation_details['conflicts']
-            )
-
-            if has_critical_issues and not override_conflicts:
-                return False, "Critical conflicts found - admin override required", validation_details
-
-            return True, "Assignment is valid", validation_details
-
-        except Exception as e:
-            self.logger.error(f"Error validating assignment: {str(e)}")
-            return False, f"Validation error: {str(e)}", validation_details
-
-    def _find_overlapping_assignments(self, user_id: int, effective_from: date,
-                                    effective_to: Optional[date], assignment_id: Optional[int]) -> List[ShiftAssignment]:
-        """Find assignments that overlap with the given date range."""
-        query = ShiftAssignment.objects.filter(user_id=user_id)
-
-        if assignment_id:
-            query = query.exclude(id=assignment_id)
-
-        # Complex overlap detection
-        if effective_to:
-            # Assignment has end date
-            query = query.filter(
-                Q(effective_from__lte=effective_to) &
-                (Q(effective_to__gte=effective_from) | Q(effective_to__isnull=True))
-            )
-        else:
-            # Assignment is ongoing
-            query = query.filter(
-                Q(effective_to__gte=effective_from) | Q(effective_to__isnull=True)
-            )
-
-        return list(query.select_related('shift'))
-
-    def _find_exact_shift_conflicts(self, user_id: int, shift_id: int, effective_from: date,
-                                   effective_to: Optional[date], assignment_id: Optional[int]) -> List[ShiftAssignment]:
-        """Find assignments to the exact same shift in overlapping period."""
-        query = ShiftAssignment.objects.filter(user_id=user_id, shift_id=shift_id)
-
-        if assignment_id:
-            query = query.exclude(id=assignment_id)
-
-        if effective_to:
-            query = query.filter(
-                Q(effective_from__lte=effective_to) &
-                (Q(effective_to__gte=effective_from) | Q(effective_to__isnull=True))
-            )
-        else:
-            query = query.filter(
-                Q(effective_to__gte=effective_from) | Q(effective_to__isnull=True)
-            )
-
-        return list(query.select_related('shift'))
-
-    def _validate_business_rules(self, user, shift: ShiftMaster, effective_from: date,
-                               effective_to: Optional[date]) -> List[str]:
-        """Validate business rules for shift assignments."""
-        issues = []
-
-        # Rule 1: Check if user has too many shift changes in short period
-        recent_assignments = ShiftAssignment.objects.filter(
-            user=user,
-            created_at__gte=timezone.now() - timedelta(days=30)
-        ).count()
-
-        if recent_assignments >= 5:
-            issues.append(f"User has {recent_assignments} shift changes in the last 30 days - may indicate instability")
-
-        # Rule 2: Check for rapid consecutive assignments
-        last_assignment = ShiftAssignment.objects.filter(
-            user=user,
-            effective_from__lt=effective_from
-        ).order_by('-effective_from').first()
-
-        if last_assignment and last_assignment.effective_to:
-            gap = (effective_from - last_assignment.effective_to).days
-            if gap < 1:
-                issues.append("Assignment starts immediately after previous assignment ends - no buffer time")
-            elif gap == 1:
-                issues.append("Assignment starts next day after previous assignment - minimal buffer time")
-
-        # Rule 3: Check weekend/holiday assignments
-        if effective_from.weekday() >= 5:  # Saturday or Sunday
-            issues.append(f"Assignment starts on {effective_from.strftime('%A')} - weekend start date")
-
-        # Rule 4: Check for night shift to day shift transitions
-        if last_assignment and last_assignment.shift.is_night_shift() and not shift.is_night_shift():
-            issues.append("Transition from night shift to day shift - consider adjustment period")
-
-        return issues
-
-    def _check_working_days_alignment(self, shift: ShiftMaster, effective_from: date,
-                                    effective_to: Optional[date]) -> Optional[str]:
-        """Check if assignment period aligns with shift working days."""
-        working_days = set(shift.working_days_list)
-
-        # Check first week of assignment
-        check_date = effective_from
-        end_check = effective_to or (effective_from + timedelta(days=7))
-        end_check = min(end_check, effective_from + timedelta(days=14))  # Max 2 weeks check
-
-        working_day_found = False
-        for i in range((end_check - check_date).days + 1):
-            date_to_check = check_date + timedelta(days=i)
-            if date_to_check.weekday() in working_days:
-                working_day_found = True
-                break
-
-        if not working_day_found:
-            day_names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-            working_day_names = [day_names[i] for i in working_days]
-            return f"Shift works on {', '.join(working_day_names)} but assignment period may not include these days"
-
-        return None
-
-    def _get_shift_recommendations(self, user, shift: ShiftMaster, effective_from: date) -> List[str]:
-        """Get recommendations for the shift assignment."""
-        recommendations = []
-
-        # Recommendation 1: Optimal start dates
-        if effective_from.weekday() == 0:  # Monday
-            recommendations.append("Good choice: Starting assignment on Monday allows full week adjustment")
-        elif effective_from.weekday() >= 5:  # Weekend
-            recommendations.append("Consider: Weekend start may require special arrangements")
-
-        # Recommendation 2: Grace period suggestions
-        if shift.grace_period and shift.grace_period.total_seconds() < 600:  # Less than 10 minutes
-            recommendations.append("Consider: Increase grace period for better attendance flexibility")
-
-        # Recommendation 3: Break duration optimization
-        if shift.break_duration:
-            break_hours = shift.break_duration.total_seconds() / 3600
-            if break_hours < 0.5 and shift.shift_duration >= 8:
-                recommendations.append("Consider: Increase break duration for shifts 8+ hours long")
-
-        return recommendations
-
-    def end_shift_assignment(self, assignment_id: int, end_date: Optional[date] = None) -> Tuple[bool, str]:
+    def end_shift_assignment(self, assignment_id: int, end_date: date = None,
+                           ended_by: User = None) -> AssignmentResult:
         """
         End a shift assignment.
 
         Args:
             assignment_id: ID of assignment to end
             end_date: Date to end assignment (defaults to today)
+            ended_by: User ending the assignment
 
         Returns:
-            Tuple of (success: bool, message: str)
+            AssignmentResult with status
         """
         try:
-            assignment = ShiftAssignment.objects.get(id=assignment_id)
-
-            if not end_date:
-                end_date = timezone.now().date()
-
-            if assignment.effective_from > end_date:
-                return False, "End date cannot be before start date"
-
             with transaction.atomic():
+                assignment = ShiftAssignment.objects.get(id=assignment_id)
+
+                if not end_date:
+                    end_date = timezone.now().date()
+
+                if assignment.effective_from > end_date:
+                    return AssignmentResult(
+                        status=AssignmentStatus.CONFLICT,
+                        conflicts=[ConflictDetail(
+                            conflict_type=ConflictType.POLICY_VIOLATION,
+                            message="End date cannot be before assignment start date",
+                            severity="high"
+                        )]
+                    )
+
                 assignment.effective_to = end_date
                 assignment.is_current = False
                 assignment.save()
 
-                self.logger.info(f"Ended shift assignment {assignment_id} on {end_date}")
-                return True, f"Assignment ended successfully on {end_date}"
+                # Clear related caches
+                self._clear_user_shift_cache(assignment.user.id)
+
+                logger.info(f"Assignment {assignment_id} ended by {ended_by}")
+
+                return AssignmentResult(
+                    status=AssignmentStatus.SUCCESS,
+                    metadata={'assignment_id': assignment_id, 'end_date': end_date}
+                )
 
         except ShiftAssignment.DoesNotExist:
-            return False, f"Assignment with ID {assignment_id} not found"
+            return AssignmentResult(
+                status=AssignmentStatus.ERROR,
+                conflicts=[ConflictDetail(
+                    conflict_type=ConflictType.POLICY_VIOLATION,
+                    message=f"Assignment with ID {assignment_id} not found",
+                    severity="high"
+                )]
+            )
         except Exception as e:
-            self.logger.error(f"Error ending assignment {assignment_id}: {str(e)}")
-            return False, f"Error ending assignment: {str(e)}"
-
-    def get_shift_assignments(self, filters: Dict[str, Any] = None, page: int = 1, per_page: int = 20) -> Dict[str, Any]:
-        """
-        Get paginated shift assignments with filtering.
-
-        Args:
-            filters: Dictionary of filter criteria
-            page: Page number
-            per_page: Items per page
-
-        Returns:
-            Dictionary containing assignments and pagination info
-        """
-        try:
-            query = ShiftAssignment.objects.select_related('user', 'shift').all()
-
-            if filters:
-                if filters.get('user_id'):
-                    query = query.filter(user_id=filters['user_id'])
-                if filters.get('shift_id'):
-                    query = query.filter(shift_id=filters['shift_id'])
-                if filters.get('is_current') is not None:
-                    query = query.filter(is_current=filters['is_current'])
-                if filters.get('effective_from'):
-                    query = query.filter(effective_from__gte=filters['effective_from'])
-                if filters.get('effective_to'):
-                    query = query.filter(effective_to__lte=filters['effective_to'])
-
-            query = query.order_by('-created_at')
-            paginator = Paginator(query, per_page)
-            page_obj = paginator.get_page(page)
-
-            assignments_data = []
-            for assignment in page_obj:
-                assignments_data.append({
-                    'id': assignment.id,
-                    'user': {
-                        'id': assignment.user.id,
-                        'username': assignment.user.username,
-                        'full_name': assignment.user.get_full_name(),
-                        'email': assignment.user.email
-                    },
-                    'shift': {
-                        'id': assignment.shift.id,
-                        'name': assignment.shift.name,
-                        'start_time': assignment.shift.start_time.strftime('%H:%M'),
-                        'end_time': assignment.shift.end_time.strftime('%H:%M')
-                    },
-                    'effective_from': assignment.effective_from,
-                    'effective_to': assignment.effective_to,
-                    'is_current': assignment.is_current,
-                    'days_remaining': assignment.days_remaining(),
-                    'total_duration': assignment.total_duration(),
-                    'has_ended': assignment.has_ended(),
-                    'created_at': assignment.created_at
-                })
-
-            return {
-                'assignments': assignments_data,
-                'pagination': {
-                    'current_page': page_obj.number,
-                    'total_pages': paginator.num_pages,
-                    'total_count': paginator.count,
-                    'has_next': page_obj.has_next(),
-                    'has_previous': page_obj.has_previous(),
-                    'per_page': per_page
-                }
-            }
-
-        except Exception as e:
-            self.logger.error(f"Error getting shift assignments: {str(e)}")
-            raise
+            logger.error(f"Error ending assignment {assignment_id}: {e}")
+            return AssignmentResult(
+                status=AssignmentStatus.ERROR,
+                conflicts=[ConflictDetail(
+                    conflict_type=ConflictType.POLICY_VIOLATION,
+                    message=f"Failed to end assignment: {str(e)}",
+                    severity="critical"
+                )]
+            )
 
     # ============================
-    # USER SHIFT METHODS
+    # USER SHIFT QUERIES
     # ============================
 
-    def get_current_shift(self, user: User, date: Optional[date] = None) -> Optional[ShiftMaster]:
+    def get_current_shift(self, user: User, check_date: date = None) -> Optional[ShiftMaster]:
         """
         Get user's current shift for a specific date.
 
         Args:
             user: User object
-            date: Date to check (defaults to today)
+            check_date: Date to check (defaults to today)
 
         Returns:
             ShiftMaster object or None
         """
-        if not date:
-            date = timezone.now().date()
+        if not check_date:
+            check_date = timezone.now().date()
 
-        return ShiftAssignment.get_user_current_shift(user, date)
+        cache_key = f"{CACHE_KEY_PREFIXES['user_current_shift']}{user.id}_{check_date}"
+        cached_shift = cache.get(cache_key)
 
-    def is_working_day_for_user(self, user: User, date: date) -> bool:
+        if cached_shift:
+            return cached_shift
+
+        shift = ShiftAssignment.get_user_current_shift(user, check_date)
+        cache.set(cache_key, shift, self.cache_timeout)
+
+        return shift
+
+    def is_working_day_for_user(self, user: User, check_date: date) -> bool:
         """
-        Check if a date is a working day for the user based on their assigned shift.
+        Check if a date is a working day for the user.
 
         Args:
             user: User object
-            date: Date to check
+            check_date: Date to check
 
         Returns:
-            True if it's a working day, False otherwise
+            True if it's a working day
         """
-        try:
-            # Check if it's a holiday first
-            if Holiday.is_holiday(date):
-                return False
-
-            shift = self.get_current_shift(user, date)
-            if not shift:
-                return False
-
-            return shift.is_working_day(date)
-
-        except Exception as e:
-            self.logger.error(f"Error checking working day for user {user.username}: {str(e)}")
+        # Check holidays first
+        if Holiday.is_holiday(check_date):
             return False
 
-    def is_user_on_shift_now(self, user: User) -> Dict[str, Any]:
+        # Get user's shift
+        shift = self.get_current_shift(user, check_date)
+        if not shift:
+            return False
+
+        return shift.is_working_day(check_date)
+
+    def get_user_shift_status(self, user: User) -> Dict[str, Any]:
         """
-        Check if user is currently within their shift hours.
+        Get comprehensive shift status for a user.
 
         Args:
             user: User object
@@ -804,379 +1241,179 @@ class ShiftService:
         Returns:
             Dictionary with shift status information
         """
-        try:
-            now = timezone.now()
-            today = now.date()
-            current_time = now.time()
+        now = timezone.now()
+        today = now.date()
+        current_time = now.time()
 
-            shift = self.get_current_shift(user, today)
-            if not shift:
-                return {
-                    'on_shift': False,
-                    'message': 'No shift assigned',
-                    'shift': None
-                }
-
-            # Check if today is a working day
-            if not self.is_working_day_for_user(user, today):
-                return {
-                    'on_shift': False,
-                    'message': 'Not a working day',
-                    'shift': {
-                        'name': shift.name,
-                        'start_time': shift.start_time.strftime('%H:%M'),
-                        'end_time': shift.end_time.strftime('%H:%M')
-                    }
-                }
-
-            # Check if within shift hours (considering grace period)
-            is_within_hours = shift.is_within_shift_hours(now, today)
-
-            # Check with grace period
-            grace_start = (datetime.combine(today, shift.start_time) - shift.grace_period).time()
-            grace_end_date = today
-            if shift.crosses_midnight:
-                grace_end_date = today + timedelta(days=1)
-            grace_end = (datetime.combine(grace_end_date, shift.end_time) + shift.grace_period).time()
-
-            within_grace = False
-            if shift.crosses_midnight:
-                within_grace = current_time >= grace_start or current_time <= grace_end
-            else:
-                within_grace = grace_start <= current_time <= grace_end
-
-            return {
-                'on_shift': is_within_hours,
-                'within_grace_period': within_grace,
-                'shift': {
-                    'name': shift.name,
-                    'start_time': shift.start_time.strftime('%H:%M'),
-                    'end_time': shift.end_time.strftime('%H:%M'),
-                    'crosses_midnight': shift.crosses_midnight
-                },
-                'current_time': current_time.strftime('%H:%M'),
-                'message': 'On shift' if is_within_hours else 'Off shift'
-            }
-
-        except Exception as e:
-            self.logger.error(f"Error checking shift status for user {user.username}: {str(e)}")
+        shift = self.get_current_shift(user, today)
+        if not shift:
             return {
                 'on_shift': False,
-                'message': f'Error checking shift status: {str(e)}',
-                'shift': None
+                'status': 'no_shift',
+                'message': 'No shift assigned',
+                'shift': None,
+                'next_shift_date': None
             }
 
-    def get_user_shift_calendar(self, user: User, month: int, year: int) -> Dict[str, Any]:
-        """
-        Get calendar view of user's shifts for a specific month.
-
-        Args:
-            user: User object
-            month: Month (1-12)
-            year: Year
-
-        Returns:
-            Dictionary with calendar data
-        """
-        try:
-            from calendar import monthrange
-
-            # Get first and last day of month
-            first_day = date(year, month, 1)
-            last_day = date(year, month, monthrange(year, month)[1])
-
-            calendar_data = []
-            current_date = first_day
-
-            while current_date <= last_day:
-                shift = self.get_current_shift(user, current_date)
-                is_working = self.is_working_day_for_user(user, current_date)
-                is_holiday = Holiday.is_holiday(current_date)
-
-                day_data = {
-                    'date': current_date,
-                    'day': current_date.day,
-                    'weekday': current_date.strftime('%A'),
-                    'is_working_day': is_working,
-                    'is_holiday': is_holiday,
-                    'shift': {
-                        'name': shift.name if shift else None,
-                        'start_time': shift.start_time.strftime('%H:%M') if shift else None,
-                        'end_time': shift.end_time.strftime('%H:%M') if shift else None,
-                        'duration': float(shift.shift_duration) if shift else None
-                    } if shift else None
-                }
-
-                if is_holiday:
-                    holiday = Holiday.objects.filter(
-                        Q(date=current_date) |
-                        Q(recurring_yearly=True, date__month=current_date.month, date__day=current_date.day)
-                    ).first()
-                    day_data['holiday_name'] = holiday.name if holiday else 'Holiday'
-
-                calendar_data.append(day_data)
-                current_date += timedelta(days=1)
-
-            # Calculate summary
-            working_days = sum(1 for day in calendar_data if day['is_working_day'])
-            holidays = sum(1 for day in calendar_data if day['is_holiday'])
-            total_hours = sum(day['shift']['duration'] for day in calendar_data
-                            if day['shift'] and day['is_working_day']) or 0
-
+        # Check if today is a working day
+        if not self.is_working_day_for_user(user, today):
             return {
-                'month': month,
-                'year': year,
-                'calendar': calendar_data,
-                'summary': {
-                    'total_days': len(calendar_data),
-                    'working_days': working_days,
-                    'holidays': holidays,
-                    'total_expected_hours': round(total_hours, 2)
-                }
+                'on_shift': False,
+                'status': 'non_working_day',
+                'message': 'Not a working day' if not Holiday.is_holiday(today) else 'Holiday',
+                'shift': {
+                    'name': shift.name,
+                    'start_time': shift.start_time,
+                    'end_time': shift.end_time
+                },
+                'next_shift_date': self._get_next_working_day(user, today)
             }
 
-        except Exception as e:
-            self.logger.error(f"Error generating calendar for user {user.username}: {str(e)}")
-            raise
+        # Check if within shift hours
+        is_within_hours = shift.is_within_shift_hours(now, today)
 
-    def get_shift_history(self, user_id: int, start_date: Optional[date] = None,
-                         end_date: Optional[date] = None) -> List[Dict[str, Any]]:
-        """
-        Get shift assignment history for a user.
+        # Check grace period
+        grace_start_dt = timezone.make_aware(
+            datetime.combine(today, shift.start_time)
+        ) - shift.grace_period
 
-        Args:
-            user_id: User ID
-            start_date: Start date filter
-            end_date: End date filter
+        end_date = today if not shift.crosses_midnight else today + timedelta(days=1)
+        grace_end_dt = timezone.make_aware(
+            datetime.combine(end_date, shift.end_time)
+        ) + shift.grace_period
 
-        Returns:
-            List of shift assignment history
-        """
-        try:
-            assignments = ShiftAssignment.get_shift_history(
-                User.objects.get(id=user_id),
-                start_date,
-                end_date
-            )
+        within_grace = grace_start_dt <= now <= grace_end_dt
 
-            history = []
-            for assignment in assignments:
-                history.append({
-                    'id': assignment.id,
-                    'shift_name': assignment.shift.name,
-                    'start_time': assignment.shift.start_time.strftime('%H:%M'),
-                    'end_time': assignment.shift.end_time.strftime('%H:%M'),
-                    'effective_from': assignment.effective_from,
-                    'effective_to': assignment.effective_to,
-                    'duration_days': assignment.total_duration(),
-                    'is_current': assignment.is_current,
-                    'created_at': assignment.created_at
-                })
+        return {
+            'on_shift': is_within_hours,
+            'within_grace_period': within_grace,
+            'status': 'on_shift' if is_within_hours else 'off_shift',
+            'shift': {
+                'name': shift.name,
+                'start_time': shift.start_time,
+                'end_time': shift.end_time,
+                'crosses_midnight': shift.crosses_midnight,
+                'expected_hours': shift.expected_hours
+            },
+            'current_time': current_time,
+            'message': 'Currently on shift' if is_within_hours else 'Currently off shift'
+        }
 
-            return history
+    def _get_next_working_day(self, user: User, from_date: date) -> Optional[date]:
+        """Get the next working day for a user."""
+        shift = self.get_current_shift(user, from_date)
+        if not shift:
+            return None
 
-        except Exception as e:
-            self.logger.error(f"Error getting shift history for user {user_id}: {str(e)}")
-            raise
+        check_date = from_date + timedelta(days=1)
+        for _ in range(14):  # Check up to 2 weeks ahead
+            if self.is_working_day_for_user(user, check_date):
+                return check_date
+            check_date += timedelta(days=1)
+
+        return None
 
     # ============================
-    # HOLIDAY METHODS
+    # HOLIDAY MANAGEMENT
     # ============================
 
-    def is_holiday(self, date: date) -> bool:
-        """Check if a date is a holiday."""
-        return Holiday.is_holiday(date)
-
-    def get_holidays(self, year: Optional[int] = None) -> List[Dict[str, Any]]:
+    def get_holidays(self, year: int = None) -> List[Dict[str, Any]]:
         """
-        Get list of holidays, optionally filtered by year.
+        Get holidays for a specific year.
 
         Args:
-            year: Year to filter by (optional)
+            year: Year to filter by (defaults to current year)
 
         Returns:
-            List of holiday data
+            List of holiday dictionaries
         """
-        try:
-            query = Holiday.objects.all()
+        if not year:
+            year = timezone.now().year
 
-            if year:
-                query = query.filter(date__year=year)
+        cache_key = f"{CACHE_KEY_PREFIXES['holidays']}{year}"
+        cached_holidays = cache.get(cache_key)
 
-            holidays = []
-            for holiday in query.order_by('date'):
-                holidays.append({
-                    'id': holiday.id,
-                    'name': holiday.name,
-                    'date': holiday.date,
-                    'recurring_yearly': holiday.recurring_yearly,
-                    'created_at': holiday.created_at
-                })
+        if cached_holidays:
+            return cached_holidays
 
-            return holidays
+        holidays = []
+        holiday_objects = Holiday.objects.filter(date__year=year).order_by('date')
 
-        except Exception as e:
-            self.logger.error(f"Error getting holidays: {str(e)}")
-            raise
+        for holiday in holiday_objects:
+            holidays.append({
+                'id': holiday.id,
+                'name': holiday.name,
+                'date': holiday.date,
+                'recurring_yearly': holiday.recurring_yearly,
+                'created_at': holiday.created_at
+            })
 
-    def create_holiday(self, holiday_data: Dict[str, Any]) -> Tuple[bool, Union[Holiday, str]]:
+        cache.set(cache_key, holidays, CACHE_SETTINGS.get('holidays_timeout', 3600))
+        return holidays
+
+    def create_holiday(self, holiday_data: Dict[str, Any], created_by: User = None) -> AssignmentResult:
         """
         Create a new holiday.
 
         Args:
-            holiday_data: Dictionary containing holiday information
+            holiday_data: Holiday information
+            created_by: User creating the holiday
 
         Returns:
-            Tuple of (success: bool, result: Holiday or error_message)
+            AssignmentResult with creation status
         """
         try:
-            # Validate required fields
-            if not holiday_data.get('name') or not holiday_data.get('date'):
-                return False, "Name and date are required"
-
-            # Convert string date to date object if needed
-            if isinstance(holiday_data['date'], str):
-                try:
-                    holiday_data['date'] = datetime.strptime(holiday_data['date'], '%Y-%m-%d').date()
-                except ValueError:
-                    return False, "Invalid date format. Use YYYY-MM-DD"
-
-            # Check for duplicate
-            existing = Holiday.objects.filter(
-                name=holiday_data['name'],
-                date=holiday_data['date']
-            ).exists()
-
-            if existing:
-                return False, f"Holiday '{holiday_data['name']}' on {holiday_data['date']} already exists"
-
-            # Set default for recurring_yearly
-            holiday_data.setdefault('recurring_yearly', True)
-
             with transaction.atomic():
-                holiday = Holiday.objects.create(**holiday_data)
-                self.logger.info(f"Created holiday: {holiday.name} on {holiday.date}")
-                return True, holiday
-
-        except Exception as e:
-            self.logger.error(f"Error creating holiday: {str(e)}")
-            return False, f"Error creating holiday: {str(e)}"
-
-    # ============================
-    # CSV IMPORT METHODS
-    # ============================
-
-    def assign_shifts_from_csv(self, csv_file: InMemoryUploadedFile) -> Dict[str, Any]:
-        """
-        Bulk assign shifts from CSV file.
-
-        Expected CSV format:
-        username,shift_name,effective_from,effective_to
-
-        Args:
-            csv_file: Uploaded CSV file
-
-        Returns:
-            Dictionary with import results
-        """
-        try:
-            # Read and validate CSV
-            csv_content = csv_file.read().decode('utf-8')
-            csv_reader = csv.DictReader(io.StringIO(csv_content))
-
-            # Validate headers
-            required_headers = ['username', 'shift_name', 'effective_from']
-            missing_headers = [h for h in required_headers if h not in csv_reader.fieldnames]
-            if missing_headers:
-                return {
-                    'success': False,
-                    'message': f"Missing required headers: {', '.join(missing_headers)}",
-                    'success_count': 0,
-                    'error_count': 0,
-                    'errors': []
-                }
-
-            results = {
-                'success': True,
-                'success_count': 0,
-                'error_count': 0,
-                'errors': [],
-                'assignments': []
-            }
-
-            row_number = 1
-            for row in csv_reader:
-                row_number += 1
-                try:
-                    # Get user
-                    try:
-                        user = User.objects.get(username=row['username'])
-                    except User.DoesNotExist:
-                        results['errors'].append(f"Row {row_number}: User '{row['username']}' not found")
-                        results['error_count'] += 1
-                        continue
-
-                    # Get shift
-                    try:
-                        shift = ShiftMaster.objects.get(name=row['shift_name'], is_active=True)
-                    except ShiftMaster.DoesNotExist:
-                        results['errors'].append(f"Row {row_number}: Shift '{row['shift_name']}' not found")
-                        results['error_count'] += 1
-                        continue
-
-                    # Parse dates
-                    try:
-                        effective_from = datetime.strptime(row['effective_from'], '%Y-%m-%d').date()
-                    except ValueError:
-                        results['errors'].append(f"Row {row_number}: Invalid effective_from date format")
-                        results['error_count'] += 1
-                        continue
-
-                    effective_to = None
-                    if row.get('effective_to') and row['effective_to'].strip():
-                        try:
-                            effective_to = datetime.strptime(row['effective_to'], '%Y-%m-%d').date()
-                        except ValueError:
-                            results['errors'].append(f"Row {row_number}: Invalid effective_to date format")
-                            results['error_count'] += 1
-                            continue
-
-                    # Assign shift
-                    success, result = self.assign_shift_to_user(
-                        user.id, shift.id, effective_from, effective_to
+                # Validate required fields
+                if not holiday_data.get('name') or not holiday_data.get('date'):
+                    return AssignmentResult(
+                        status=AssignmentStatus.ERROR,
+                        conflicts=[ConflictDetail(
+                            conflict_type=ConflictType.POLICY_VIOLATION,
+                            message="Holiday name and date are required",
+                            severity="high"
+                        )]
                     )
 
-                    if success:
-                        results['success_count'] += 1
-                        results['assignments'].append({
-                            'user': user.username,
-                            'shift': shift.name,
-                            'effective_from': effective_from,
-                            'effective_to': effective_to
-                        })
-                    else:
-                        results['error_count'] += 1
-                        results['errors'].append(f"Row {row_number}: {result}")
+                # Check for duplicates
+                existing = Holiday.objects.filter(
+                    name__iexact=holiday_data['name'],
+                    date=holiday_data['date']
+                ).exists()
 
-                except Exception as e:
-                    results['error_count'] += 1
-                    results['errors'].append(f"Row {row_number}: {str(e)}")
+                if existing:
+                    return AssignmentResult(
+                        status=AssignmentStatus.CONFLICT,
+                        conflicts=[ConflictDetail(
+                            conflict_type=ConflictType.POLICY_VIOLATION,
+                            message=f"Holiday '{holiday_data['name']}' already exists on {holiday_data['date']}",
+                            severity="medium"
+                        )]
+                    )
 
-            # Update overall success status
-            results['success'] = results['error_count'] == 0
+                # Create holiday
+                holiday = Holiday.objects.create(**holiday_data)
 
-            self.logger.info(f"CSV import completed: {results['success_count']} successful, {results['error_count']} failed")
-            return results
+                # Clear holiday cache
+                self._clear_holiday_caches()
+
+                logger.info(f"Holiday '{holiday.name}' created by {created_by}")
+
+                return AssignmentResult(
+                    status=AssignmentStatus.SUCCESS,
+                    metadata={'holiday_id': holiday.id, 'holiday_name': holiday.name}
+                )
 
         except Exception as e:
-            self.logger.error(f"Error processing CSV import: {str(e)}")
-            return {
-                'success': False,
-                'message': f"Error processing CSV: {str(e)}",
-                'success_count': 0,
-                'error_count': 0,
-                'errors': []
-            }
+            logger.error(f"Error creating holiday: {e}")
+            return AssignmentResult(
+                status=AssignmentStatus.ERROR,
+                conflicts=[ConflictDetail(
+                    conflict_type=ConflictType.POLICY_VIOLATION,
+                    message=f"Failed to create holiday: {str(e)}",
+                    severity="critical"
+                )]
+            )
 
     # ============================
     # STATISTICS AND REPORTING
@@ -1184,120 +1421,144 @@ class ShiftService:
 
     def get_shift_statistics(self) -> Dict[str, Any]:
         """
-        Get comprehensive shift statistics.
+        Get comprehensive shift management statistics.
 
         Returns:
             Dictionary with various statistics
         """
+        cache_key = f"{CACHE_KEY_PREFIXES['shift_statistics']}overview"
+        cached_stats = cache.get(cache_key)
+
+        if cached_stats:
+            return cached_stats
+
+        start_time = timezone.now()
+
         try:
             today = timezone.now().date()
 
-            # Basic counts
-            total_shifts = ShiftMaster.objects.count()
-            active_shifts = ShiftMaster.objects.filter(is_active=True).count()
-            total_assignments = ShiftAssignment.objects.count()
-            current_assignments = ShiftAssignment.objects.filter(is_current=True).count()
+            # Basic counts with single queries
+            shifts_stats = ShiftMaster.objects.aggregate(
+                total_shifts=Count('id'),
+                active_shifts=Count('id', filter=Q(is_active=True))
+            )
+
+            assignment_stats = ShiftAssignment.objects.aggregate(
+                total_assignments=Count('id'),
+                current_assignments=Count('id', filter=Q(is_current=True))
+            )
 
             # User statistics
-            total_users = User.objects.count()
-            users_with_shifts = User.objects.filter(
-                shiftassignment__is_current=True
-            ).distinct().count()
-            users_without_shifts = total_users - users_with_shifts
+            user_stats = User.objects.aggregate(
+                total_users=Count('id'),
+                users_with_shifts=Count('id', filter=Q(shift_assignments__is_current=True))
+            )
 
             # Shift distribution
-            shift_distribution = ShiftMaster.objects.annotate(
-                assignment_count=Count('shiftassignment', filter=Q(shiftassignment__is_current=True))
-            ).values('name', 'assignment_count')
+            shift_distribution = list(ShiftMaster.objects.filter(is_active=True).annotate(
+                assignment_count=Count('assignments', filter=Q(assignments__is_current=True))
+            ).values('name', 'assignment_count'))
 
-            # Assignment trends (last 30 days)
+            # Recent activity
             thirty_days_ago = today - timedelta(days=30)
             recent_assignments = ShiftAssignment.objects.filter(
                 created_at__date__gte=thirty_days_ago
             ).count()
 
-            # Upcoming changes (next 7 days)
-            upcoming_changes = ShiftAssignment.upcoming_shift_endings(days=7).count()
-
-            # Holiday count
-            total_holidays = Holiday.objects.count()
-            upcoming_holidays = Holiday.objects.filter(
-                Q(date__gte=today, date__lte=today + timedelta(days=30)) |
-                Q(recurring_yearly=True, date__month__gte=today.month,
-                  date__day__gte=today.day if today.month == today.month else 1)
+            # Upcoming changes
+            upcoming_changes = ShiftAssignment.objects.filter(
+                effective_to__range=(today, today + timedelta(days=7))
             ).count()
 
-            # Work pattern distribution
-            work_pattern_stats = ShiftMaster.objects.values('work_days').annotate(
-                count=Count('id')
+            # Holiday statistics
+            holiday_stats = Holiday.objects.aggregate(
+                total_holidays=Count('id')
             )
 
-            return {
+            stats = {
                 'overview': {
-                    'total_shifts': total_shifts,
-                    'active_shifts': active_shifts,
-                    'inactive_shifts': total_shifts - active_shifts,
-                    'total_assignments': total_assignments,
-                    'current_assignments': current_assignments
+                    'total_shifts': shifts_stats['total_shifts'],
+                    'active_shifts': shifts_stats['active_shifts'],
+                    'inactive_shifts': shifts_stats['total_shifts'] - shifts_stats['active_shifts'],
+                    'total_assignments': assignment_stats['total_assignments'],
+                    'current_assignments': assignment_stats['current_assignments']
                 },
                 'users': {
-                    'total_users': total_users,
-                    'users_with_shifts': users_with_shifts,
-                    'users_without_shifts': users_without_shifts,
-                    'coverage_percentage': round((users_with_shifts / total_users * 100) if total_users > 0 else 0, 2)
+                    'total_users': user_stats['total_users'],
+                    'users_with_shifts': user_stats['users_with_shifts'],
+                    'users_without_shifts': user_stats['total_users'] - user_stats['users_with_shifts'],
+                    'coverage_percentage': round(
+                        (user_stats['users_with_shifts'] / user_stats['total_users'] * 100)
+                        if user_stats['total_users'] > 0 else 0, 2
+                    )
                 },
-                'shift_distribution': list(shift_distribution),
-                'trends': {
+                'shift_distribution': shift_distribution,
+                'activity': {
                     'recent_assignments': recent_assignments,
                     'upcoming_changes': upcoming_changes
                 },
                 'holidays': {
-                    'total_holidays': total_holidays,
-                    'upcoming_holidays': upcoming_holidays
+                    'total_holidays': holiday_stats['total_holidays']
                 },
-                'work_patterns': list(work_pattern_stats),
                 'updated_at': timezone.now()
             }
 
+            # Cache the results
+            cache.set(cache_key, stats, CACHE_SETTINGS.get('statistics_timeout', 1800))
+
+            # Log performance
+            if self.performance_monitoring:
+                duration = (timezone.now() - start_time).total_seconds() * 1000
+                logger.info(f"get_shift_statistics completed in {duration:.2f}ms")
+
+            return stats
+
         except Exception as e:
-            self.logger.error(f"Error getting shift statistics: {str(e)}")
+            logger.error(f"Error getting shift statistics: {e}")
             raise
 
-    def get_shift_schedule_for_date(self, date: date) -> Dict[str, Any]:
+    def get_shift_schedule_for_date(self, check_date: date) -> Dict[str, Any]:
         """
-        Get who is on shift for a specific date.
+        Get shift schedule for a specific date.
 
         Args:
-            date: Date to check
+            check_date: Date to get schedule for
 
         Returns:
             Dictionary with schedule information
         """
+        cache_key = f"{CACHE_KEY_PREFIXES['schedule']}{check_date}"
+        cached_schedule = cache.get(cache_key)
+
+        if cached_schedule:
+            return cached_schedule
+
         try:
-            # Get all current assignments
+            # Get active assignments for the date
             assignments = ShiftAssignment.objects.filter(
-                effective_from__lte=date
+                effective_from__lte=check_date
             ).filter(
-                Q(effective_to__gte=date) | Q(effective_to__isnull=True)
+                Q(effective_to__gte=check_date) | Q(effective_to__isnull=True)
             ).select_related('user', 'shift')
 
             schedule = {}
             total_scheduled = 0
+            is_holiday = Holiday.is_holiday(check_date)
 
             for assignment in assignments:
                 shift = assignment.shift
                 user = assignment.user
 
-                # Check if it's a working day for this shift
-                if shift.is_working_day(date) and not Holiday.is_holiday(date):
+                # Check if user should work on this date
+                if shift.is_working_day(check_date) and not is_holiday:
                     if shift.name not in schedule:
                         schedule[shift.name] = {
                             'shift_info': {
                                 'id': shift.id,
                                 'name': shift.name,
-                                'start_time': shift.start_time.strftime('%H:%M'),
-                                'end_time': shift.end_time.strftime('%H:%M'),
-                                'duration': float(shift.shift_duration),
+                                'start_time': shift.start_time,
+                                'end_time': shift.end_time,
+                                'duration': shift.shift_duration,
                                 'crosses_midnight': shift.crosses_midnight
                             },
                             'users': []
@@ -1306,28 +1567,52 @@ class ShiftService:
                     schedule[shift.name]['users'].append({
                         'id': user.id,
                         'username': user.username,
-                        'full_name': user.get_full_name(),
-                        'email': user.email
+                        'first_name': user.first_name,
+                        'last_name': user.last_name,
+                        'email': user.email,
+                        'assignment_id': assignment.id
                     })
                     total_scheduled += 1
 
-            # Check if it's a holiday
-            is_holiday = Holiday.is_holiday(date)
+            result = {
+                'date': check_date,
+                'schedule': schedule,
+                'total_scheduled': total_scheduled,
+                'is_holiday': is_holiday,
+                'day_name': check_date.strftime('%A')
+            }
+
+            # Cache the result
+            cache.set(cache_key, result, self.cache_timeout)
+            return result
+
+        except Exception as e:
+            logger.error(f"Error getting schedule for {check_date}: {e}")
+            return {
+                'date': check_date,
+                'schedule': {},
+                'total_scheduled': 0,
+                'is_holiday': False,
+                'error': str(e)
+            }
+
+            # Get holiday information
             holiday_info = None
             if is_holiday:
                 holiday = Holiday.objects.filter(
-                    Q(date=date) |
-                    Q(recurring_yearly=True, date__month=date.month, date__day=date.day)
+                    Q(date=check_date) |
+                    Q(recurring_yearly=True, date__month=check_date.month, date__day=check_date.day)
                 ).first()
-                holiday_info = {
-                    'name': holiday.name if holiday else 'Holiday',
-                    'date': holiday.date if holiday else date,
-                    'recurring': holiday.recurring_yearly if holiday else False
-                }
+                if holiday:
+                    holiday_info = {
+                        'name': holiday.name,
+                        'date': holiday.date,
+                        'recurring': holiday.recurring_yearly
+                    }
 
-            return {
-                'date': date,
-                'weekday': date.strftime('%A'),
+            result = {
+                'date': check_date,
+                'weekday': check_date.strftime('%A'),
                 'is_holiday': is_holiday,
                 'holiday_info': holiday_info,
                 'total_scheduled': total_scheduled,
@@ -1338,318 +1623,262 @@ class ShiftService:
                 }
             }
 
-        except Exception as e:
-            self.logger.error(f"Error getting schedule for date {date}: {str(e)}")
-            raise
-
-    def get_upcoming_shift_changes(self, days: int = 7) -> List[Dict[str, Any]]:
-        """
-        Get shift assignments ending in the next N days.
-
-        Args:
-            days: Number of days to look ahead
-
-        Returns:
-            List of upcoming changes
-        """
-        try:
-            upcoming = ShiftAssignment.upcoming_shift_endings(days)
-            changes = []
-
-            for assignment in upcoming:
-                changes.append({
-                    'id': assignment.id,
-                    'user': {
-                        'id': assignment.user.id,
-                        'username': assignment.user.username,
-                        'full_name': assignment.user.get_full_name()
-                    },
-                    'shift': {
-                        'id': assignment.shift.id,
-                        'name': assignment.shift.name,
-                        'start_time': assignment.shift.start_time.strftime('%H:%M'),
-                        'end_time': assignment.shift.end_time.strftime('%H:%M')
-                    },
-                    'effective_from': assignment.effective_from,
-                    'effective_to': assignment.effective_to,
-                    'days_remaining': assignment.days_remaining(),
-                    'total_duration': assignment.total_duration()
-                })
-
-            return changes
+            # Cache the result
+            cache.set(cache_key, result, self.cache_timeout)
+            return result
 
         except Exception as e:
-            self.logger.error(f"Error getting upcoming changes: {str(e)}")
-            raise
-
-    def generate_shift_report(self, start_date: date, end_date: date,
-                            filters: Dict[str, Any] = None) -> Dict[str, Any]:
-        """
-        Generate comprehensive shift report for date range.
-
-        Args:
-            start_date: Start date of report
-            end_date: End date of report
-            filters: Additional filters (user_ids, shift_ids, etc.)
-
-        Returns:
-            Dictionary with report data
-        """
-        try:
-            # Get assignments in date range
-            query = ShiftAssignment.objects.filter(
-                effective_from__lte=end_date
-            ).filter(
-                Q(effective_to__gte=start_date) | Q(effective_to__isnull=True)
-            ).select_related('user', 'shift')
-
-            if filters:
-                if filters.get('user_ids'):
-                    query = query.filter(user_id__in=filters['user_ids'])
-                if filters.get('shift_ids'):
-                    query = query.filter(shift_id__in=filters['shift_ids'])
-
-            assignments = list(query)
-
-            # Process each day in range
-            report_data = []
-            current_date = start_date
-
-            while current_date <= end_date:
-                day_data = {
-                    'date': current_date,
-                    'weekday': current_date.strftime('%A'),
-                    'is_holiday': Holiday.is_holiday(current_date),
-                    'shifts': {}
-                }
-
-                # Process assignments for this date
-                for assignment in assignments:
-                    if assignment.is_active_on(current_date):
-                        shift = assignment.shift
-                        user = assignment.user
-
-                        # Check if working day
-                        if shift.is_working_day(current_date) and not day_data['is_holiday']:
-                            shift_name = shift.name
-                            if shift_name not in day_data['shifts']:
-                                day_data['shifts'][shift_name] = {
-                                    'shift_info': {
-                                        'name': shift.name,
-                                        'start_time': shift.start_time.strftime('%H:%M'),
-                                        'end_time': shift.end_time.strftime('%H:%M'),
-                                        'expected_hours': shift.expected_hours
-                                    },
-                                    'users': []
-                                }
-
-                            day_data['shifts'][shift_name]['users'].append({
-                                'username': user.username,
-                                'full_name': user.get_full_name()
-                            })
-
-                report_data.append(day_data)
-                current_date += timedelta(days=1)
-
-            # Calculate summary statistics
-            total_days = len(report_data)
-            working_days = sum(1 for day in report_data if not day['is_holiday'])
-            holidays = total_days - working_days
-
-            total_scheduled_days = sum(
-                sum(len(shift_data['users']) for shift_data in day['shifts'].values())
-                for day in report_data
-            )
-
+            logger.error(f"Error getting schedule for {check_date}: {e}")
             return {
-                'report_period': {
-                    'start_date': start_date,
-                    'end_date': end_date,
-                    'total_days': total_days
-                },
-                'summary': {
-                    'working_days': working_days,
-                    'holidays': holidays,
-                    'total_scheduled_days': total_scheduled_days,
-                    'average_daily_assignments': round(total_scheduled_days / working_days if working_days > 0 else 0, 2)
-                },
-                'daily_data': report_data,
-                'generated_at': timezone.now()
+                'date': check_date,
+                'schedule': {},
+                'total_scheduled': 0,
+                'is_holiday': False,
+                'error': str(e)
             }
 
-        except Exception as e:
-            self.logger.error(f"Error generating shift report: {str(e)}")
-            raise
-
     # ============================
-    # UTILITY METHODS
+    # UTILITY AND CACHE METHODS
     # ============================
 
-    def calculate_expected_hours(self, user: User, date: date) -> float:
+    def _clear_shift_caches(self):
+        """Clear all shift-related caches."""
+        cache_patterns = [
+            f"{CACHE_KEY_PREFIXES['shift_statistics']}*",
+            f"{CACHE_KEY_PREFIXES['user_current_shift']}*",
+            f"{CACHE_KEY_PREFIXES['schedule']}*"
+        ]
+        for pattern in cache_patterns:
+            try:
+                cache.delete_many(cache.keys(pattern))
+            except Exception:
+                pass  # Cache backend may not support pattern deletion
+
+    def _clear_user_shift_cache(self, user_id: int):
+        """Clear shift cache for a specific user."""
+        cache_pattern = f"{CACHE_KEY_PREFIXES['user_current_shift']}{user_id}_*"
+        try:
+            cache.delete_many(cache.keys(cache_pattern))
+        except Exception:
+            pass
+
+    def _clear_holiday_caches(self):
+        """Clear holiday-related caches."""
+        cache_pattern = f"{CACHE_KEY_PREFIXES['holidays']}*"
+        try:
+            cache.delete_many(cache.keys(cache_pattern))
+        except Exception:
+            pass
+
+    def _check_update_impact(self, shift: ShiftMaster, original_data: Dict[str, Any]) -> List[str]:
+        """Check impact of shift updates on existing assignments."""
+        warnings = []
+
+        # Check if timing changed
+        if (original_data['start_time'] != shift.start_time or
+            original_data['end_time'] != shift.end_time):
+
+            active_assignments = ShiftAssignment.objects.filter(
+                shift=shift,
+                is_current=True
+            ).count()
+
+            if active_assignments > 0:
+                warnings.append(
+                    f"Shift timing changed - this affects {active_assignments} active assignments"
+                )
+
+        # Check if name changed
+        if original_data['name'] != shift.name:
+            warnings.append("Shift name changed - update any external references")
+
+        return warnings
+
+    def validate_assignment_data(self, assignment_data: Dict[str, Any]) -> List[ConflictDetail]:
         """
-        Calculate expected working hours for a user on a specific date.
+        Validate assignment data before processing.
 
         Args:
-            user: User object
-            date: Date to calculate for
+            assignment_data: Assignment data to validate
 
         Returns:
-            Expected hours as float
+            List of validation conflicts
         """
-        try:
-            if not self.is_working_day_for_user(user, date):
-                return 0.0
+        conflicts = []
 
-            shift = self.get_current_shift(user, date)
-            if not shift:
-                return 0.0
+        # Required fields validation
+        required_fields = ['user_id', 'shift_id', 'effective_from']
+        for field in required_fields:
+            if field not in assignment_data:
+                conflicts.append(ConflictDetail(
+                    conflict_type=ConflictType.POLICY_VIOLATION,
+                    message=f"Required field '{field}' is missing",
+                    severity="critical"
+                ))
 
-            return shift.expected_hours
+        # Date validation
+        if 'effective_from' in assignment_data:
+            try:
+                effective_from = assignment_data['effective_from']
+                if isinstance(effective_from, str):
+                    effective_from = datetime.strptime(effective_from, '%Y-%m-%d').date()
 
-        except Exception as e:
-            self.logger.error(f"Error calculating expected hours: {str(e)}")
-            return 0.0
+                if effective_from < timezone.now().date() - timedelta(days=7):
+                    conflicts.append(ConflictDetail(
+                        conflict_type=ConflictType.POLICY_VIOLATION,
+                        message="Assignment cannot be more than 7 days in the past",
+                        severity="medium"
+                    ))
+            except (ValueError, TypeError):
+                conflicts.append(ConflictDetail(
+                    conflict_type=ConflictType.POLICY_VIOLATION,
+                    message="Invalid effective_from date format",
+                    severity="high"
+                ))
 
-    def get_available_shifts_for_user(self, user: User, date: date) -> List[Dict[str, Any]]:
+        return conflicts
+
+    def get_assignment_recommendations(self, user: User, shift: ShiftMaster) -> List[str]:
         """
-        Get shifts that can be assigned to a user for a specific date.
+        Get recommendations for a shift assignment.
 
         Args:
-            user: User object
-            date: Date to check availability for
+            user: User to assign shift to
+            shift: Shift to assign
 
         Returns:
-            List of available shifts
+            List of recommendation strings
         """
-        try:
-            available_shifts = []
-            shifts = ShiftMaster.objects.filter(is_active=True)
+        recommendations = []
 
-            for shift in shifts:
-                # Check if shift can be assigned (no conflicts)
-                is_valid, message = self.validate_shift_assignment(user.id, shift.id, date)
+        # Check user's shift history
+        recent_assignments = ShiftAssignment.objects.filter(
+            user=user,
+            created_at__gte=timezone.now() - timedelta(days=30)
+        ).count()
 
-                if is_valid:
-                    available_shifts.append({
-                        'id': shift.id,
-                        'name': shift.name,
-                        'start_time': shift.start_time.strftime('%H:%M'),
-                        'end_time': shift.end_time.strftime('%H:%M'),
-                        'duration': float(shift.shift_duration),
-                        'work_days': shift.work_days,
-                        'crosses_midnight': shift.crosses_midnight,
-                        'expected_hours': shift.expected_hours
-                    })
+        if recent_assignments >= 3:
+            recommendations.append(
+                "User has had multiple shift changes recently - consider stability"
+            )
 
-            return available_shifts
+        # Check shift compatibility
+        current_shift = self.get_current_shift(user)
+        if current_shift:
+            if current_shift.is_night_shift() and not shift.is_night_shift():
+                recommendations.append(
+                    "Transitioning from night to day shift - consider adjustment period"
+                )
+            elif not current_shift.is_night_shift() and shift.is_night_shift():
+                recommendations.append(
+                    "Transitioning from day to night shift - consider adjustment period"
+                )
 
-        except Exception as e:
-            self.logger.error(f"Error getting available shifts for user: {str(e)}")
-            return []
+        # Check optimal timing
+        if shift.grace_period.total_seconds() < 600:  # Less than 10 minutes
+            recommendations.append(
+                "Consider increasing grace period for better attendance flexibility"
+            )
 
-    def bulk_update_assignments(self, assignment_ids: List[int],
-                              update_data: Dict[str, Any]) -> Tuple[int, int, List[str]]:
+        return recommendations
+
+    def get_user_availability_status(self, user_id: int, date: date = None) -> Dict[str, Any]:
         """
-        Bulk update multiple assignments.
+        Get user's availability status for a specific date.
 
         Args:
-            assignment_ids: List of assignment IDs to update
-            update_data: Data to update
+            user_id: User ID to check
+            date: Date to check (defaults to today)
 
         Returns:
-            Tuple of (success_count, error_count, errors)
+            Dictionary with availability status
         """
-        success_count = 0
-        error_count = 0
-        errors = []
+        if date is None:
+            date = timezone.now().date()
 
         try:
-            with transaction.atomic():
-                for assignment_id in assignment_ids:
-                    try:
-                        assignment = ShiftAssignment.objects.get(id=assignment_id)
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return {'error': 'User not found'}
 
-                        for field, value in update_data.items():
-                            if hasattr(assignment, field):
-                                setattr(assignment, field, value)
+        # Check current assignment
+        current_assignment = ShiftAssignment.current_assignment_for_user(user)
 
-                        assignment.save()
-                        success_count += 1
+        # Check if on leave
+        from ..models import LeaveRequest
+        on_leave = LeaveRequest.objects.filter(
+            user=user,
+            start_date__lte=date,
+            end_date__gte=date,
+            status='Approved'
+        ).exists()
 
-                    except ShiftAssignment.DoesNotExist:
-                        error_count += 1
-                        errors.append(f"Assignment {assignment_id} not found")
-                    except Exception as e:
-                        error_count += 1
-                        errors.append(f"Assignment {assignment_id}: {str(e)}")
+        # Check if holiday
+        is_holiday = Holiday.is_holiday(date)
 
-                self.logger.info(f"Bulk update completed: {success_count} successful, {error_count} failed")
-                return success_count, error_count, errors
+        return {
+            'user_id': user_id,
+            'date': date.strftime('%Y-%m-%d'),
+            'available': bool(current_assignment and not on_leave and not is_holiday),
+            'current_assignment': {
+                'id': current_assignment.id,
+                'shift_name': current_assignment.shift.name,
+                'shift_times': f"{current_assignment.shift.start_time} - {current_assignment.shift.end_time}"
+            } if current_assignment else None,
+            'on_leave': on_leave,
+            'is_holiday': is_holiday,
+            'status': 'Available' if current_assignment and not on_leave and not is_holiday else
+                     'On Leave' if on_leave else
+                     'Holiday' if is_holiday else
+                     'No Assignment'
+        }
 
-        except Exception as e:
-            self.logger.error(f"Error in bulk update: {str(e)}")
-            return 0, len(assignment_ids), [f"Bulk update failed: {str(e)}"]
-
-    def get_shift_conflicts(self, start_date: date, end_date: date) -> List[Dict[str, Any]]:
+    def get_shift_coverage_report(self, start_date: date, end_date: date) -> Dict[str, Any]:
         """
-        Find potential shift assignment conflicts in date range.
+        Generate shift coverage report for a date range.
 
         Args:
-            start_date: Start date to check
-            end_date: End date to check
+            start_date: Start date for the report
+            end_date: End date for the report
 
         Returns:
-            List of conflicts found
+            Dictionary with coverage statistics
         """
-        try:
-            conflicts = []
+        assignments = ShiftAssignment.objects.filter(
+            effective_from__lte=end_date
+        ).filter(
+            Q(effective_to__gte=start_date) | Q(effective_to__isnull=True)
+        ).select_related('user', 'shift')
 
-            # Find overlapping assignments for same user
-            assignments = ShiftAssignment.objects.filter(
-                effective_from__lte=end_date
-            ).filter(
-                Q(effective_to__gte=start_date) | Q(effective_to__isnull=True)
-            ).select_related('user', 'shift').order_by('user', 'effective_from')
+        coverage_data = {}
+        current_date = start_date
 
-            user_assignments = {}
+        while current_date <= end_date:
+            day_coverage = {}
+            day_total = 0
+
             for assignment in assignments:
-                user_id = assignment.user.id
-                if user_id not in user_assignments:
-                    user_assignments[user_id] = []
-                user_assignments[user_id].append(assignment)
+                if assignment.is_active_on(current_date) and assignment.shift.is_working_day(current_date):
+                    shift_name = assignment.shift.name
+                    if shift_name not in day_coverage:
+                        day_coverage[shift_name] = 0
+                    day_coverage[shift_name] += 1
+                    day_total += 1
 
-            # Check for overlaps within each user's assignments
-            for user_id, user_assigns in user_assignments.items():
-                for i, assign1 in enumerate(user_assigns):
-                    for assign2 in user_assigns[i+1:]:
-                        # Check if assignments overlap
-                        assign1_end = assign1.effective_to or date(2099, 12, 31)
-                        assign2_end = assign2.effective_to or date(2099, 12, 31)
+            coverage_data[current_date.strftime('%Y-%m-%d')] = {
+                'date': current_date,
+                'day_name': current_date.strftime('%A'),
+                'is_weekend': current_date.weekday() >= 5,
+                'is_holiday': Holiday.is_holiday(current_date),
+                'shift_coverage': day_coverage,
+                'total_coverage': day_total
+            }
 
-                        if (assign1.effective_from <= assign2_end and
-                            assign2.effective_from <= assign1_end):
-                            conflicts.append({
-                                'type': 'overlapping_assignments',
-                                'user': {
-                                    'id': assign1.user.id,
-                                    'username': assign1.user.username
-                                },
-                                'assignment1': {
-                                    'id': assign1.id,
-                                    'shift': assign1.shift.name,
-                                    'from': assign1.effective_from,
-                                    'to': assign1.effective_to
-                                },
-                                'assignment2': {
-                                    'id': assign2.id,
-                                    'shift': assign2.shift.name,
-                                    'from': assign2.effective_from,
-                                    'to': assign2.effective_to
-                                }
-                            })
+            current_date += timedelta(days=1)
 
-            return conflicts
-
-        except Exception as e:
-            self.logger.error(f"Error finding conflicts: {str(e)}")
-            return []
+        return {
+            'start_date': start_date.strftime('%Y-%m-%d'),
+            'end_date': end_date.strftime('%Y-%m-%d'),
+            'coverage_data': coverage_data,
+            'total_days': (end_date - start_date).days + 1
+        }

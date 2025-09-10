@@ -1,447 +1,524 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ page_title }}{% endblock %}
-
-{% block extra_css %}
-<style>
-    /* Modal Backdrop with Blur */
-    .modal-backdrop {
-        backdrop-filter: blur(4px);
-    }
-
-    /* Form Input Styling */
-    .form-input {
-        @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-sky-500 focus:border-sky-500 block w-full p-2.5;
-    }
-
-    /* Primary Button Styling (Sky Blue) */
-    .btn-primary {
-        @apply text-white bg-sky-600 hover:bg-sky-700 focus:ring-4 focus:outline-none focus:ring-sky-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-all duration-200;
-    }
-
-    /* Secondary Button Styling */
-    .btn-secondary {
-        @apply bg-white hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-gray-200 rounded-lg border border-gray-200 text-sm font-medium px-5 py-2.5 hover:text-gray-900 focus:z-10 transition-all duration-200;
-    }
-
-    /* Danger Button Styling (Rose Red) */
-    .btn-danger {
-        @apply text-white bg-rose-600 hover:bg-rose-700 focus:ring-4 focus:outline-none focus:ring-rose-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-all duration-200;
-    }
-
-    /* Recurring Badge Styling (Emerald Green) */
-    .badge-recurring {
-        @apply px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-emerald-100 text-emerald-800;
-    }
-
-    /* One-time Badge Styling (Amber Yellow) */
-    .badge-one-time {
-        @apply px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-amber-100 text-amber-800;
-    }
-
-    /* Holiday Card Styling */
-    .holiday-card {
-        @apply bg-white rounded-xl shadow-md border border-gray-200 p-6 hover:shadow-lg transition-shadow duration-300 ease-in-out;
-    }
-
-    /* Holiday Date Styling (Sky Blue) */
-    .holiday-date {
-        @apply text-2xl font-extrabold text-sky-600;
-    }
-
-    /* Holiday Name Styling */
-    .holiday-name {
-        @apply text-xl font-semibold text-gray-900 mt-1;
-    }
-
-    /* Holiday Meta Info Styling */
-    .holiday-meta {
-        @apply text-sm text-gray-500;
-    }
-</style>
-{% endblock %}
+{% block title %}Holiday Management - TrueAlign{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div class="mb-8">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-                <h1 class="text-4xl font-extrabold text-gray-900 leading-tight">{{ page_title }}</h1>
-                <p class="mt-2 text-md text-gray-600">Effortlessly manage company holidays and special dates</p>
-            </div>
-            <div class="flex flex-col sm:flex-row gap-3"> {# Added this flex container for buttons #}
-                {% if can_manage %}
-                <button type="button" onclick="openCreateModal()" class="inline-flex items-center px-6 py-3 bg-sky-600 hover:bg-sky-700 text-white font-semibold rounded-lg shadow-lg transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2">
-                    <svg class="w-5 h-5 mr-2 -ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                    </svg>
-                    Add New Holiday
-                </button>
-                {% endif %}
-                <a href="{% url 'shift:dashboard' %}"
-                    class="btn-secondary inline-flex items-center"> {# Using btn-secondary class #}
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
-                        </path>
-                    </svg>
-                    Dashboard
-                </a>
-            </div>
-        </div>
-    </div>
-
-    
-
-    <div class="bg-white rounded-xl shadow-md border border-gray-200 mb-8">
-        <div class="p-6">
-            <h3 class="text-xl font-semibold text-gray-900 mb-4">Filter Holidays</h3>
-            <form method="get" action="{% url 'shift:holidays' %}" class="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
-                <div class="flex-1 w-full sm:w-auto">
-                    <label for="year_filter" class="block text-sm font-medium text-gray-700 mb-2"> Select Year </label>
-                    <select name="year" id="year_filter" class="form-input">
-                        <option value="">All Years</option>
-                        {% for year in available_years %}
-                        <option value="{{ year }}" {% if year == current_year %}selected{% endif %}>
-                            {{ year }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="flex gap-3">
-                    <button type="submit" class="btn-primary">
-                        <svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
-                        </svg>
-                        Apply Filter
-                    </button>
-                    {% if request.GET.year %}
-                    <a href="{% url 'shift:holidays' %}" class="btn-secondary">
-                        <svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                        Clear Filter
-                    </a>
-                    {% endif %}
-                </div>
-            </form>
-        </div>
-    </div>
-
-    
-
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div class="bg-white rounded-xl shadow-md border border-gray-200 p-6">
-            <div class="flex items-center">
-                <div class="flex-shrink-0">
-                    <div class="w-10 h-10 bg-sky-100 rounded-full flex items-center justify-center">
-                        <svg class="w-6 h-6 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                        </svg>
+<div class="min-h-screen bg-gray-50">
+    <!-- Header Section -->
+    <div class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="py-6">
+                <div class="flex items-center justify-between">
+                    <div></div>
+                        <h1 class="text-3xl font-bold text-gray-900">Holiday Management</h1>
+                        <p class="mt-2 text-gray-600">Manage company holidays and special dates</p>
                     </div>
-                </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-500">Total Holidays</p>
-                    <p class="text-3xl font-bold text-gray-900">{{ holidays|length }}</p>
-                </div>
-            </div>
-        </div>
-        <div class="bg-white rounded-xl shadow-md border border-gray-200 p-6">
-            <div class="flex items-center">
-                <div class="flex-shrink-0">
-                    <div class="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
-                        <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                        </svg>
+                    <div class="flex space-x-3">
+                        <a href="{% url 'shift:dashboard' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500">
+                            <i class="ri-dashboard-line mr-2"></i>
+                            Dashboard
+                        </a>
+                        {% if can_manage %}
+                        <a href="{% url 'shift:create_holiday' %}" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
+                            <i class="ri-add-line mr-2"></i>
+                            Add Holiday
+                        </a>
+                        {% endif %}
                     </div>
-                </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-500">Recurring Holidays</p>
-                    <p class="text-3xl font-bold text-gray-900">{{ recurring_count }}</p>                </div>
-            </div>
-        </div>
-        <div class="bg-white rounded-xl shadow-md border border-gray-200 p-6">
-            <div class="flex items-center">
-                <div class="flex-shrink-0">
-                    <div class="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
-                        <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
-                        </svg>
-                    </div>
-                </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-500">Current Filter Year</p>
-                    <p class="text-3xl font-bold text-gray-900">{{ current_year }}</p>
                 </div>
             </div>
         </div>
     </div>
 
-    
-
-    <div class="bg-white rounded-xl shadow-md border border-gray-200">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <h3 class="text-xl font-semibold text-gray-900">
-                {% if current_year and current_year != "All Years" %}
-                Holidays for {{ current_year }}
-                {% else %}
-                All Company Holidays
-                {% endif %}
-            </h3>
-        </div>
-        <div class="p-6">
-            {% if holidays %}
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {% for holiday in holidays %}
-                <div class="holiday-card">
-                    <div class="flex justify-between items-start mb-4">
-                        <div class="flex-1">
-                            <div class="holiday-date mb-2">
-                                {{ holiday.date|date:"M d" }}
-                            </div>
-                            <h4 class="holiday-name mb-2">{{ holiday.name }}</h4>
-                            <div class="holiday-meta mb-3">
-                                <p>{{ holiday.date|date:"l, F d, Y" }}</p>
-                                {% if holiday.recurring_yearly %}
-                                <span class="badge-recurring mt-2">Recurring</span>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Messages -->
+        {% if messages %}
+            <div class="mb-6">
+                {% for message in messages %}
+                    <div class="mb-4 p-4 rounded-md {% if message.tags == 'error' %}bg-red-50 border border-red-200 text-red-800{% elif message.tags == 'success' %}bg-emerald-50 border border-emerald-200 text-emerald-800{% elif message.tags == 'warning' %}bg-amber-50 border border-amber-200 text-amber-800{% else %}bg-sky-50 border border-sky-200 text-sky-800{% endif %}">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                {% if message.tags == 'error' %}
+                                    <i class="ri-error-warning-line text-red-500"></i>
+                                {% elif message.tags == 'success' %}
+                                    <i class="ri-check-line text-emerald-500"></i>
+                                {% elif message.tags == 'warning' %}
+                                    <i class="ri-alert-line text-amber-500"></i>
                                 {% else %}
-                                <span class="badge-one-time mt-2">One-time</span>
+                                    <i class="ri-information-line text-sky-500"></i>
                                 {% endif %}
                             </div>
-                        </div>
-                        {% if can_manage %}
-                        <div class="flex-shrink-0 ml-4">
-                            <div class="flex space-x-2">
-                                <button type="button" onclick="confirmDelete({{ holiday.id }}, '{{ holiday.name|escapejs }}')" class="text-rose-600 hover:text-rose-800 transition-colors" title="Delete Holiday">
-                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                    </svg>
-                                </button>
+                            <div class="ml-3">
+                                <p class="text-sm">{{ message }}</p>
                             </div>
                         </div>
-                        {% endif %}
                     </div>
-                    <div class="text-xs text-gray-500">
-                        Created: {{ holiday.created_at|date:"M d, Y" }}
-                    </div>
-                </div>
                 {% endfor %}
             </div>
-            {% else %}
-            <div class="text-center py-12">
-                <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                </svg>
-                <h3 class="mt-4 text-lg font-medium text-gray-900">No holidays found</h3>
-                <p class="mt-2 text-md text-gray-500">
-                    {% if current_year and current_year != "All Years" %}
-                    It looks like no holidays are scheduled for {{ current_year }}.
-                    {% else %}
-                    No company holidays have been created yet.
-                    {% endif %}
-                </p>
-                {% if can_manage %}
-                <div class="mt-8">
-                    <button type="button" onclick="openCreateModal()" class="inline-flex items-center px-6 py-3 border border-transparent shadow-sm text-base font-medium rounded-md text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500">
-                        <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                        </svg>
-                        Add your first holiday
-                    </button>
-                </div>
-                {% endif %}
-            </div>
-            {% endif %}
-        </div>
-    </div>
+        {% endif %}
 
-    
-
-    {% if can_manage %}
-    <div id="create-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50 modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="create-modal-title">
-        <div class="relative top-20 mx-auto p-6 border w-full max-w-md shadow-lg rounded-xl bg-white">
-            <div class="mt-3">
-                <div class="flex items-center justify-between mb-5">
-                    <h3 class="text-xl font-semibold text-gray-900" id="create-modal-title"> Add New Holiday </h3>
-                    <button type="button" onclick="closeCreateModal()" class="text-gray-400 hover:text-gray-600 focus:outline-none" aria-label="Close modal">
-                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                    </button>
-                </div>
-                <form id="holiday-form" method="post" action="{% url 'shift:create_holiday' %}" class="space-y-5">
-                    {% csrf_token %}
-                    <div>
-                        <label for="{{ create_form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                            {{ create_form.name.label }}
-                        </label>
-                        {{ create_form.name }}
-                        {% if create_form.name.help_text %}
-                        <p class="mt-1 text-xs text-gray-500">{{ create_form.name.help_text }}</p>
-                        {% endif %}
-                    </div>
-                    <div>
-                        <label for="{{ create_form.date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                            {{ create_form.date.label }}
-                        </label>
-                        {{ create_form.date }}
-                        {% if create_form.date.help_text %}
-                        <p class="mt-1 text-xs text-gray-500">{{ create_form.date.help_text }}</p>
-                        {% endif %}
-                    </div>
+        <!-- Holiday Statistics -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
                     <div class="flex items-center">
-                        {{ create_form.recurring_yearly }}
-                        <label for="{{ create_form.recurring_yearly.id_for_label }}" class="ml-2 text-sm font-medium text-gray-700">
-                            {{ create_form.recurring_yearly.label }}
-                        </label>
+                        <div class="flex-shrink-0">
+                            <div class="w-8 h-8 bg-rose-500 rounded-md flex items-center justify-center">
+                                <i class="ri-calendar-event-line text-white"></i>
+                            </div>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Total Holidays</dt>
+                                <dd class="text-lg font-medium text-gray-900">{{ total_holidays|default:0 }}</dd>
+                            </dl>
+                        </div>
                     </div>
-                    {% if create_form.recurring_yearly.help_text %}
-                    <p class="text-xs text-gray-500">{{ create_form.recurring_yearly.help_text }}</p>
-                    {% endif %}
-                    <div id="form-feedback" class="hidden p-3 mb-4 text-sm text-rose-700 bg-rose-100 rounded-lg" role="alert">
+                </div>
+            </div>
+
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="w-8 h-8 bg-emerald-500 rounded-md flex items-center justify-center">
+                                <i class="ri-calendar-check-line text-white"></i>
+                            </div>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">This Year</dt>
+                                <dd class="text-lg font-medium text-gray-900">{{ current_year_holidays|default:0 }}</dd>
+                            </dl>
+                        </div>
                     </div>
-                    <div class="flex justify-end space-x-3 pt-4">
-                        <button type="button" onclick="closeCreateModal()" class="btn-secondary"> Cancel </button>
-                        <button type="submit" class="btn-primary">
-                            <svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                            </svg>
-                            Add Holiday
+                </div>
+            </div>
+
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="w-8 h-8 bg-amber-500 rounded-md flex items-center justify-center">
+                                <i class="ri-time-line text-white"></i>
+                            </div>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Upcoming</dt>
+                                <dd class="text-lg font-medium text-gray-900">{{ upcoming_holidays|default:0 }}</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center">
+                                <i class="ri-calendar-schedule-line text-white"></i>
+                            </div>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Next Holiday</dt>
+                                <dd class="text-sm font-medium text-gray-900">{{ next_holiday.date|date:"M d"|default:"None" }}</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters and Search -->
+        <div class="bg-white shadow rounded-lg mb-6">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">Filter Holidays</h3>
+            </div>
+            <div class="p-6">
+                <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label for="search" class="block text-sm font-medium text-gray-700 mb-2">Search</label>
+                        <input type="text"
+                               name="search"
+                               id="search"
+                               value="{{ request.GET.search }}"
+                               placeholder="Search holidays..."
+                               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm">
+                    </div>
+
+                    <div>
+                        <label for="year" class="block text-sm font-medium text-gray-700 mb-2">Year</label>
+                        <select name="year" id="year" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm">
+                            <option value="">All Years</option>
+                            {% for year in available_years %}
+                                <option value="{{ year }}" {% if year == selected_year %}selected{% endif %}>{{ year }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="month" class="block text-sm font-medium text-gray-700 mb-2">Month</label>
+                        <select name="month" id="month" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm">
+                            <option value="">All Months</option>
+                            <option value="1" {% if selected_month == 1 %}selected{% endif %}>January</option>
+                            <option value="2" {% if selected_month == 2 %}selected{% endif %}>February</option>
+                            <option value="3" {% if selected_month == 3 %}selected{% endif %}>March</option>
+                            <option value="4" {% if selected_month == 4 %}selected{% endif %}>April</option>
+                            <option value="5" {% if selected_month == 5 %}selected{% endif %}>May</option>
+                            <option value="6" {% if selected_month == 6 %}selected{% endif %}>June</option>
+                            <option value="7" {% if selected_month == 7 %}selected{% endif %}>July</option>
+                            <option value="8" {% if selected_month == 8 %}selected{% endif %}>August</option>
+                            <option value="9" {% if selected_month == 9 %}selected{% endif %}>September</option>
+                            <option value="10" {% if selected_month == 10 %}selected{% endif %}>October</option>
+                            <option value="11" {% if selected_month == 11 %}selected{% endif %}>November</option>
+                            <option value="12" {% if selected_month == 12 %}selected{% endif %}>December</option>
+                        </select>
+                    </div>
+
+                    <div class="flex items-end">
+                        <button type="submit" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500">
+                            <i class="ri-search-line mr-2"></i>
+                            Filter
                         </button>
                     </div>
                 </form>
             </div>
         </div>
-    </div>
-    {% endif %}
 
-    
-
-    {% if can_manage %}
-    <div id="delete-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50 modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
-        <div class="relative top-20 mx-auto p-6 border w-full max-w-md shadow-lg rounded-xl bg-white">
-            <div class="mt-3 text-center">
-                <div class="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-rose-100 mb-4">
-                    <svg class="h-8 w-8 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.667-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/>
-                    </svg>
-                </div>
-                <h3 class="text-xl font-semibold text-gray-900 mb-3" id="delete-modal-title"> Delete Holiday </h3>
-                <p class="text-md text-gray-500 mb-5"> Are you sure you want to delete "<span id="delete-holiday-name" class="font-medium text-gray-900"></span>"? This action cannot be undone. </p>
-                <div class="flex justify-center space-x-3">
-                    <button type="button" onclick="closeDeleteModal()" class="btn-secondary"> Cancel </button>
-                    <form id="delete-form" method="post" class="inline">
-                        {% csrf_token %}
-                        <button type="submit" class="btn-danger">
-                            <svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                            </svg>
-                            Delete Holiday
-                        </button>
-                    </form>
+        <!-- Holiday List -->
+        <div class="bg-white shadow rounded-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-medium text-gray-900">Holiday List</h3>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm text-gray-500">{{ holidays|length }} holidays</span>
+                    </div>
                 </div>
             </div>
+
+            {% if holidays %}
+                <div class="overflow-hidden">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Holiday Name</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Day</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                {% if can_manage %}
+                                <th scope="col" class="relative px-6 py-3"><span class="sr-only">Actions</span></th>
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for holiday in holidays %}
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <div class="flex-shrink-0 h-8 w-8">
+                                                <div class="h-8 w-8 rounded-full bg-rose-100 flex items-center justify-center">
+                                                    <i class="ri-calendar-event-line text-rose-600"></i>
+                                                </div>
+                                            </div>
+                                            <div class="ml-4">
+                                                <div class="text-sm font-medium text-gray-900">{{ holiday.name }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-900">{{ holiday.date|date:"M d, Y" }}</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-500">{{ holiday.date|date:"l" }}</div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="text-sm text-gray-900">{{ holiday.description|default:"No description" }}</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        {% if holiday.date|date:"Y-m-d" < today|date:"Y-m-d" %}
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                                <i class="ri-history-line mr-1"></i>
+                                                Past
+                                            </span>
+                                        {% elif holiday.date|date:"Y-m-d" == today|date:"Y-m-d" %}
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                                                <i class="ri-calendar-today-line mr-1"></i>
+                                                Today
+                                            </span>
+                                        {% else %}
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                                                <i class="ri-calendar-schedule-line mr-1"></i>
+                                                Upcoming
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    {% if can_manage %}
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <div class="flex items-center justify-end space-x-2">
+                                            <button onclick="editHoliday({{ holiday.id|default:'null' }})" class="text-sky-600 hover:text-sky-900">
+                                                <i class="ri-edit-line"></i>
+                                            </button>
+                                            <form method="post" action="{% url 'shift:delete_holiday' holiday.id %}" class="inline" onsubmit="return confirm('Are you sure you want to delete this holiday?')">
+                                                {% csrf_token %}
+                                                <button type="submit" class="text-rose-600 hover:text-rose-900">
+                                                    <i class="ri-delete-bin-line"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                    {% endif %}
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if holidays.has_other_pages %}
+                    <div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1 flex justify-between sm:hidden">
+                                {% if holidays.has_previous %}
+                                    <a href="?page={{ holidays.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.year %}&year={{ request.GET.year }}{% endif %}{% if request.GET.month %}&month={{ request.GET.month }}{% endif %}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                        Previous
+                                    </a>
+                                {% endif %}
+                                {% if holidays.has_next %}
+                                    <a href="?page={{ holidays.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.year %}&year={{ request.GET.year }}{% endif %}{% if request.GET.month %}&month={{ request.GET.month }}{% endif %}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                        Next
+                                    </a>
+                                {% endif %}
+                            </div>
+                            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-700">
+                                        Showing
+                                        <span class="font-medium">{{ holidays.start_index }}</span>
+                                        to
+                                        <span class="font-medium">{{ holidays.end_index }}</span>
+                                        of
+                                        <span class="font-medium">{{ holidays.paginator.count }}</span>
+                                        results
+                                    </p>
+                                </div>
+                                <div>
+                                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                                        {% if holidays.has_previous %}
+                                            <a href="?page={{ holidays.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.year %}&year={{ request.GET.year }}{% endif %}{% if request.GET.month %}&month={{ request.GET.month }}{% endif %}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                                <i class="ri-arrow-left-s-line"></i>
+                                            </a>
+                                        {% endif %}
++
+                                        {% for num in holidays.paginator.page_range %}
+                                            {% if holidays.number == num %}
+                                                <span class="relative inline-flex items-center px-4 py-2 border border-sky-500 bg-sky-50 text-sm font-medium text-sky-600">
+                                                    {{ num }}
+                                                </span>
+                                            {% else %}
+                                                <a href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.year %}&year={{ request.GET.year }}{% endif %}{% if request.GET.month %}&month={{ request.GET.month }}{% endif %}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                                    {{ num }}
+                                                </a>
+                                            {% endif %}
+                                        {% endfor %}
+
+                                        {% if holidays.has_next %}
+                                            <a href="?page={{ holidays.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.year %}&year={{ request.GET.year }}{% endif %}{% if request.GET.month %}&month={{ request.GET.month }}{% endif %}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                                <i class="ri-arrow-right-s-line"></i>
+                                            </a>
+                                        {% endif %}
+                                    </nav>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            {% else %}
+                <!-- Empty State -->
+                <div class="text-center py-12">
+                    <div class="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                        <i class="ri-calendar-event-line text-4xl text-gray-400"></i>
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">No holidays found</h3>
+                    <p class="text-gray-500 mb-6">
+                        {% if request.GET.search or request.GET.year or request.GET.month %}
+                            No holidays match your current filters.
+                        {% else %}
+                            You haven't added any holidays yet.
+                        {% endif %}
+                    </p>
+                    <div class="flex items-center justify-center space-x-4">
+                        {% if request.GET.search or request.GET.year or request.GET.month %}
+                            <a href="{% url 'shift:holidays' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500">
+                                <i class="ri-filter-off-line mr-2"></i>
+                                Clear Filters
+                            </a>
+                        {% endif %}
+                        {% if can_manage %}
+                            <a href="{% url 'shift:create_holiday' %}" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
+                                <i class="ri-add-line mr-2"></i>
+                                Add First Holiday
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Upcoming Holidays Preview -->
+        {% if upcoming_holidays_list %}
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Upcoming Holidays</h3>
+                    <p class="mt-1 text-sm text-gray-500">Next {{ upcoming_holidays_list|length }} holidays</p>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {% for holiday in upcoming_holidays_list %}
+                            <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h4 class="text-sm font-medium text-gray-900">{{ holiday.name }}</h4>
+                                    <span class="text-xs text-gray-500">{{ holiday.date|timeuntil }} away</span>
+                                </div>
+                                <div class="flex items-center space-x-2 text-sm text-gray-600">
+                                    <i class="ri-calendar-line"></i>
+                                    <span>{{ holiday.date|date:"l, M d, Y" }}</span>
+                                </div>
+                                {% if holiday.description %}
+                                    <p class="mt-2 text-xs text-gray-500">{{ holiday.description|truncatechars:100 }}</p>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Holiday Import Modal -->
+<div id="importModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900">Import Holidays</h3>
+                <button onclick="closeImportModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="ri-close-line text-xl"></i>
+                </button>
+            </div>
+            <form id="importForm" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="mb-4">
+                    <label for="holidayFile" class="block text-sm font-medium text-gray-700 mb-2">CSV File</label>
+                    <input type="file" id="holidayFile" name="file" accept=".csv" required
+                           class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-medium file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100">
+                    <p class="mt-1 text-xs text-gray-500">Upload a CSV file with columns: name, date, description</p>
+                </div>
+
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="closeImportModal()" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-md hover:bg-emerald-700">
+                        Import
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
-    {% endif %}
+</div>
+
 <script>
-    // Modal Functions
-    function openCreateModal() {
-        document.getElementById("create-modal").classList.remove("hidden");
-        // Set default date to today
-        const today = new Date().toISOString().split("T")[0];
-        document.getElementById("{{ create_form.date.id_for_label }}").value =
-            today;
-        // Focus on first field
-        setTimeout(() => {
-            document
-                .getElementById("{{ create_form.name.id_for_label }}")
-                .focus();
-        }, 100);
-    }
-
-    function closeCreateModal() {
-        document.getElementById("create-modal").classList.add("hidden");
-        document.getElementById("holiday-form").reset();
-        document.getElementById("form-feedback").classList.add("hidden");
-    }
-
-    function confirmDelete(holidayId, holidayName) {
-        document.getElementById("delete-holiday-name").textContent =
-            holidayName;
-        document.getElementById("delete-form").action =
-            "{% url 'shift:delete_holiday' 0 %}".replace("0", holidayId);
-        document.getElementById("delete-modal").classList.remove("hidden");
-    }
-
-    function closeDeleteModal() {
-        document.getElementById("delete-modal").classList.add("hidden");
-    }
-
-    // Form validation
-    document
-        .getElementById("holiday-form")
-        ?.addEventListener("submit", function (e) {
-            const name = document
-                .getElementById("{{ create_form.name.id_for_label }}")
-                .value.trim();
-            const date = document.getElementById(
-                "{{ create_form.date.id_for_label }}",
-            ).value;
-            const feedback = document.getElementById("form-feedback");
-
-            if (!name || !date) {
-                e.preventDefault();
-                feedback.textContent = "Please fill in all required fields.";
-                feedback.classList.remove("hidden");
-                return false;
-            }
-
-            feedback.classList.add("hidden");
-            return true;
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit form on filter change
+    const filterSelects = document.querySelectorAll('#year, #month');
+    filterSelects.forEach(select => {
+        select.addEventListener('change', function() {
+            this.form.submit();
         });
-
-    // Close modals when clicking outside
-    document.addEventListener("click", function (e) {
-        const createModal = document.getElementById("create-modal");
-        const deleteModal = document.getElementById("delete-modal");
-
-        if (
-            e.target === createModal &&
-            !createModal.classList.contains("hidden")
-        ) {
-            closeCreateModal();
-        }
-        if (
-            e.target === deleteModal &&
-            !deleteModal.classList.contains("hidden")
-        ) {
-            closeDeleteModal();
-        }
     });
+});
 
-    // Handle ESC key to close modals
-    document.addEventListener("keydown", function (e) {
-        if (e.key === "Escape") {
-            const createModal = document.getElementById("create-modal");
-            const deleteModal = document.getElementById("delete-modal");
+function editHoliday(holidayId) {
+    // For now, redirect to create form with edit mode
+    // In a full implementation, this could open a modal or dedicated edit page
+    window.location.href = `{% url 'shift:create_holiday' %}?edit=${holidayId}`;
+}
 
-            if (!createModal.classList.contains("hidden")) {
-                closeCreateModal();
-            }
-            if (!deleteModal.classList.contains("hidden")) {
-                closeDeleteModal();
-            }
+function openImportModal() {
+    document.getElementById('importModal').classList.remove('hidden');
+}
+
+function closeImportModal() {
+    document.getElementById('importModal').classList.add('hidden');
+    document.getElementById('importForm').reset();
+}
+
+// Handle import form submission
+document.getElementById('importForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+
+    fetch('{% url "shift:csv_upload" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(`${data.imported_count} holidays imported successfully!`, 'success');
+            closeImportModal();
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            showNotification(data.error || 'Error importing holidays', 'error');
         }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error importing holidays', 'error');
     });
+});
 
-    // Check if we should show the modal based on session storage
-    document.addEventListener("DOMContentLoaded", function () {
-        if (sessionStorage.getItem("show_holiday_modal") === "true") {
-            sessionStorage.removeItem("show_holiday_modal");
-            openCreateModal();
-        }
-    });
+// Utility functions
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg border max-w-sm transform transition-transform duration-300`;
+
+    const colors = {
+        success: 'bg-emerald-50 border-emerald-200 text-emerald-800',
+        error: 'bg-rose-50 border-rose-200 text-rose-800',
+        warning: 'bg-amber-50 border-amber-200 text-amber-800',
+        info: 'bg-sky-50 border-sky-200 text-sky-800'
+    };
+
+    notification.className += ` ${colors[type] || colors.info}`;
+    notification.innerHTML = `
+        <div class="flex items-center justify-between">
+            <p class="text-sm font-medium">${message}</p>
+            <button onclick="this.parentElement.parentElement.remove()" class="ml-3 text-gray-400 hover:text-gray-600">
+                <i class="ri-close-line"></i>
+            </button>
+        </div>
+    `;
+
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+        notification.style.transform = 'translateX(0)';
+    }, 100);
+
+    setTimeout(() => {
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => notification.remove(), 300);
+    }, 5000);
+}
 </script>
 {% endblock %}

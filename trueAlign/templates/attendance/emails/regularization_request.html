@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regularization Request - {{ employee.get_full_name|default:employee.username }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .email-container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #007bff;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #007bff;
+            margin: 0;
+            font-size: 24px;
+        }
+        .header p {
+            color: #666;
+            margin: 5px 0 0 0;
+            font-size: 14px;
+        }
+        .content {
+            margin-bottom: 30px;
+        }
+        .greeting {
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        .request-details {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 20px 0;
+            border-left: 4px solid #ffc107;
+        }
+        .request-details h3 {
+            color: #495057;
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 5px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        .detail-label {
+            font-weight: bold;
+            color: #495057;
+            width: 40%;
+        }
+        .detail-value {
+            color: #212529;
+            width: 55%;
+            text-align: right;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .status-present {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status-absent {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .status-late {
+            background-color: #ffeaa7;
+            color: #6c5502;
+        }
+        .reason-box {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+            font-style: italic;
+        }
+        .reason-box h4 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .action-buttons {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            margin: 0 10px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .footer {
+            border-top: 2px solid #e9ecef;
+            padding-top: 20px;
+            margin-top: 30px;
+            font-size: 12px;
+            color: #6c757d;
+            text-align: center;
+        }
+        .footer a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .urgent-notice {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        .urgent-notice h4 {
+            color: #856404;
+            margin-top: 0;
+        }
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            .email-container {
+                padding: 20px;
+            }
+            .detail-row {
+                flex-direction: column;
+            }
+            .detail-label, .detail-value {
+                width: 100%;
+                text-align: left;
+            }
+            .detail-value {
+                margin-top: 5px;
+                font-weight: normal;
+            }
+            .btn {
+                display: block;
+                margin: 10px 0;
+                width: 100%;
+                box-sizing: border-box;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <!-- Header -->
+        <div class="header">
+            <h1>{{ site_name|default:"Attendance System" }}</h1>
+            <p>Regularization Request Notification</p>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            <div class="greeting">
+                <p>Dear {{ hr_user.get_full_name|default:hr_user.username }},</p>
+                <p>A new attendance regularization request has been submitted and requires your review.</p>
+            </div>
+
+            <!-- Request Details -->
+            <div class="request-details">
+                <h3>📋 Request Details</h3>
+
+                <div class="detail-row">
+                    <span class="detail-label">Employee:</span>
+                    <span class="detail-value">{{ employee.get_full_name|default:employee.username }}</span>
+                </div>
+
+                <div class="detail-row">
+                    <span class="detail-label">Employee ID:</span>
+                    <span class="detail-value">{{ employee.username }}</span>
+                </div>
+
+                <div class="detail-row">
+                    <span class="detail-label">Date:</span>
+                    <span class="detail-value">{{ request_date|date:"F d, Y (l)" }}</span>
+                </div>
+
+                <div class="detail-row">
+                    <span class="detail-label">Current Status:</span>
+                    <span class="detail-value">
+                        {% if current_status == "Present" %}
+                            <span class="status-badge status-present">{{ current_status }}</span>
+                        {% elif current_status == "Absent" %}
+                            <span class="status-badge status-absent">{{ current_status }}</span>
+                        {% elif current_status == "Present & Late" %}
+                            <span class="status-badge status-late">{{ current_status }}</span>
+                        {% else %}
+                            <span class="status-badge status-pending">{{ current_status }}</span>
+                        {% endif %}
+                    </span>
+                </div>
+
+                <div class="detail-row">
+                    <span class="detail-label">Requested Status:</span>
+                    <span class="detail-value">
+                        {% if requested_status == "Present" %}
+                            <span class="status-badge status-present">{{ requested_status }}</span>
+                        {% elif requested_status == "Absent" %}
+                            <span class="status-badge status-absent">{{ requested_status }}</span>
+                        {% elif requested_status == "Present & Late" %}
+                            <span class="status-badge status-late">{{ requested_status }}</span>
+                        {% else %}
+                            <span class="status-badge status-pending">{{ requested_status }}</span>
+                        {% endif %}
+                    </span>
+                </div>
+
+                <div class="detail-row">
+                    <span class="detail-label">Submitted:</span>
+                    <span class="detail-value">{{ attendance.regularization_requested_at|date:"M d, Y H:i" }}</span>
+                </div>
+            </div>
+
+            <!-- Reason -->
+            {% if reason %}
+            <div class="reason-box">
+                <h4>💬 Employee's Reason:</h4>
+                <p>{{ reason }}</p>
+            </div>
+            {% endif %}
+
+            <!-- Attendance Details -->
+            <div class="request-details">
+                <h3>🕐 Attendance Information</h3>
+
+                {% if attendance.clock_in_time %}
+                <div class="detail-row">
+                    <span class="detail-label">Clock In:</span>
+                    <span class="detail-value">{{ attendance.clock_in_time|time:"H:i:s" }}</span>
+                </div>
+                {% endif %}
+
+                {% if attendance.clock_out_time %}
+                <div class="detail-row">
+                    <span class="detail-label">Clock Out:</span>
+                    <span class="detail-value">{{ attendance.clock_out_time|time:"H:i:s" }}</span>
+                </div>
+                {% endif %}
+
+                {% if attendance.total_hours %}
+                <div class="detail-row">
+                    <span class="detail-label">Total Hours:</span>
+                    <span class="detail-value">{{ attendance.total_hours }} hours</span>
+                </div>
+                {% endif %}
+
+                {% if attendance.late_minutes %}
+                <div class="detail-row">
+                    <span class="detail-label">Late Minutes:</span>
+                    <span class="detail-value">{{ attendance.late_minutes }} minutes</span>
+                </div>
+                {% endif %}
+
+                {% if attendance.shift %}
+                <div class="detail-row">
+                    <span class="detail-label">Shift:</span>
+                    <span class="detail-value">{{ attendance.shift.shift_name }}</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                {% if view_url %}
+                <a href="{{ view_url }}" class="btn btn-primary">Review Request</a>
+                <a href="{{ view_url }}" class="btn btn-secondary">View Details</a>
+                {% else %}
+                <p style="color: #6c757d; font-style: italic;">Please log in to the attendance system to review this request.</p>
+                {% endif %}
+            </div>
+
+            <!-- Urgent Notice -->
+            <div class="urgent-notice">
+                <h4>⚠️ Action Required</h4>
+                <p>This regularization request is pending your approval. Please review and process it at your earliest convenience to ensure accurate attendance records.</p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>This is an automated notification from {{ site_name|default:"Attendance System" }}.</p>
+            <p>Please do not reply to this email. For support, contact your system administrator.</p>
+            <p>Generated on {{ "now"|date:"F d, Y H:i T" }}</p>
+        </div>
+    </div>
+</body>
+</html>

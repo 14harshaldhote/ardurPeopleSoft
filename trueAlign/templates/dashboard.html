@@ -1,118 +1,173 @@
-{% extends 'base.html' %}
-{% block title %}Dashboard - APS Portal{% endblock %}
+{% extends 'base.html' %} {% block title %}Dashboard - Ardur Home{% endblock %}
 {% block content %}
 
-<div class="min-h-screen py-4 px-2 sm:px-4 lg:px-8 overflow-y-auto">
-    <div class="max-w-7xl mx-auto">
+<div class="mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full">
+    <!-- Header Section -->
+    <div
+        class="relative overflow-hidden mb-6 rounded-[28px] bg-white/10 border border-white/40 shadow-[0_10px_30px_rgba(0,0,0,0.15)] hover:scale-[1.015] transition-all duration-500"
+    >
+        <!-- Gradient Background -->
+        <div
+            class="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-white/10 rounded-[28px]"
+        ></div>
 
-        <!-- Header Section -->
-        <div class="relative overflow-hidden mb-6 rounded-[28px] bg-white/10 border border-white/40 shadow-[0_10px_30px_rgba(0,0,0,0.15)] hover:scale-[1.015] transition-all duration-500">
+        <!-- Soft Orbs -->
+        <div class="absolute inset-0 overflow-hidden">
+            <div
+                class="absolute -top-16 -left-16 w-56 h-56 bg-gradient-to-br from-teal-300/30 to-teal-400/10 rounded-full"
+            ></div>
+            <div
+                class="absolute -bottom-16 -right-16 w-56 h-56 bg-gradient-to-tr from-rose-400/30 to-rose-500/10 rounded-full"
+            ></div>
 
-            <!-- Gradient Background -->
-            <div class="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-white/10 rounded-[28px]"></div>
+            <div
+                class="absolute top-1/2 left-1/2 w-48 h-48 bg-gradient-to-br from-sky-300/30 to-sky-400/10 rounded-full -translate-x-1/2 -translate-y-1/2"
+            ></div>
+        </div>
 
-            <!-- Soft Orbs -->
-            <div class="absolute inset-0 overflow-hidden">
-                <div class="absolute -top-16 -left-16 w-56 h-56 bg-gradient-to-br from-teal-300/30 to-teal-400/10 rounded-full"></div>
-                <div class="absolute -bottom-16 -right-16 w-56 h-56 bg-gradient-to-tr from-rose-400/30 to-rose-500/10 rounded-full"></div>
-                <div class="absolute top-1/2 left-1/2 w-48 h-48 bg-gradient-to-br from-sky-300/30 to-sky-400/10 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
-            </div>
+        <!-- Header Content -->
+        <div class="relative p-6 sm:p-8 lg:p-12 z-10 w-full">
+            <!-- Top Navigation -->
+            <nav
+                class="backdrop-blur-xl bg-white/20 rounded-[20px] border border-white/10 shadow-md p-3 mb-6 flex flex-wrap justify-between items-center"
+            >
+                <!-- Time -->
+                <div
+                    class="px-5 py-3 backdrop-blur-sm bg-white/20 rounded-xl border border-white/10"
+                >
+                    <span
+                        class="text-zinc-900 font-semibold text-sm sm:text-md"
+                        id="time"
+                        >12:34:56</span
+                    >
+                    <span
+                        class="text-zinc-600 font-medium text-sm sm:text-md"
+                        id="time-ampm"
+                        >AM</span
+                    >
+                </div>
 
-            <!-- Header Content -->
-            <div class="relative p-6 sm:p-8 lg:p-12 z-10">
+                <!-- Status & Notification -->
+                <div class="flex items-center space-x-4 mt-3 sm:mt-0">
+                    <span
+                        class="flex items-center space-x-2 px-4 py-2 backdrop-blur-sm bg-white/20 rounded-xl border border-white/10"
+                    >
+                        <span
+                            class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"
+                        ></span>
+                        <span class="text-sm text-zinc-700">Active</span>
+                    </span>
 
-                <!-- Top Navigation -->
-                <nav class="backdrop-blur-xl bg-white/20 rounded-[20px] border border-white/10 shadow-md p-3 mb-6 flex flex-wrap justify-between items-center">
-                    <!-- Time -->
-                    <div class="px-5 py-3 backdrop-blur-sm bg-white/20 rounded-xl border border-white/10">
-                        <span class="text-zinc-900 font-semibold text-sm sm:text-md" id="time">12:34:56</span>
-                        <span class="text-zinc-600 font-medium text-sm sm:text-md" id="time-ampm">AM</span>
+                    <button
+                        class="p-3 backdrop-blur-sm bg-white/20 rounded-xl border border-white/10 hover:bg-white/30 hover:scale-105 transition"
+                    >
+                        <svg
+                            class="w-5 h-5 text-zinc-700"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                            />
+                        </svg>
+                    </button>
+                </div>
+            </nav>
+
+            <!-- Main Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Left: Welcome + Cards -->
+                <div class="lg:col-span-2 space-y-6">
+                    <!-- Welcome Card -->
+                    <div
+                        class="backdrop-blur-xl bg-white/20 p-6 rounded-[20px] border border-white/10 hover:bg-white/25 transition shadow-inner"
+                    >
+                        <h1
+                            class="text-xl lg:text-3xl font-bold text-zinc-900 mb-2"
+                        >
+                            Welcome, {{ user.first_name }} {{ user.last_name }}!
+                        </h1>
+                        <p class="text-zinc-600 text-sm sm:text-base">
+                            Last login: {{ user.last_login|date:"F j, Y, g:i a" }}
+                        </p>
                     </div>
 
-                    <!-- Status & Notification -->
-                    <div class="flex items-center space-x-4 mt-3 sm:mt-0">
-                        <span class="flex items-center space-x-2 px-4 py-2 backdrop-blur-sm bg-white/20 rounded-xl border border-white/10">
-                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                            <span class="text-sm text-zinc-700">Active</span>
-                        </span>
-                        <button class="p-3 backdrop-blur-sm bg-white/20 rounded-xl border border-white/10 hover:bg-white/30 hover:scale-105 transition">
-                            <svg class="w-5 h-5 text-zinc-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-                            </svg>
-                        </button>
-                    </div>
-                </nav>
-
-                <!-- Main Grid -->
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    
-                    <!-- Left: Welcome + Cards -->
-                    <div class="lg:col-span-2 space-y-6">
-
-                        <!-- Welcome Card -->
-                        <div class="backdrop-blur-xl bg-white/20 p-6 rounded-[20px] border border-white/10 hover:bg-white/25 transition shadow-inner">
-                            <h1 class="text-xl lg:text-3xl font-bold text-zinc-900 mb-2">
-                                Welcome, {{ user.first_name }} {{ user.last_name }}!
-                            </h1>
-                            <p class="text-zinc-600 text-sm sm:text-base">
-                                Last login: {{ user.last_login|date:"F j, Y, g:i a" }}
-                            </p>
-                        </div>
-
-                        <!-- Role Based Cards Grid -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
-
-                            {% if is_admin or is_manager %}
-                                {% include 'dashboard/attendace_card.html' %}
-                                {% include 'dashboard/conferenceBooking_card.html' %}
-                                {% include 'dashboard/teamUpdate_card.html' %}
-                                {% include 'dashboard/globalUpdate_card.html' %}
-                                {% include 'dashboard/performance_card.html' %}
-                            {% elif is_hr %}
-                                {% include 'dashboard/holiday.html' %}
-                                {% include 'dashboard/performance_card.html' %}
-                                {% include 'dashboard/conferenceBooking_card.html' %}
-                                {% include 'dashboard/attendace_card.html' %}
-                                {% include 'dashboard/globalUpdate_card.html' %}
-                            {% elif is_employee %}
-                                {% include 'dashboard/performance_card.html' %}
-                                {% include 'dashboard/conferenceBooking_card.html' %}
-                                {% include 'dashboard/attendace_card.html' %}
-                                {% include 'dashboard/teamUpdate_card.html' %}
-                            {% elif is_client %}
-                                {% include 'dashboard/billingSummary_card.html' %}
-                                {% include 'dashboard/supportTickets_card.html' %}
-                                {% include 'dashboard/globalUpdate_card.html' %}
-                            {% endif %}
-
-                        </div>
+                    <!-- Role Based Cards Grid -->
+                    <div
+                        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6"
+                    >
+                        {% if is_admin or is_manager %} 
+                        {% include 'dashboard/attendace_card.html' %} 
+                        {% include 'dashboard/conferenceBooking_card.html' %} 
+                        {% include 'dashboard/performance_card.html' %} 
+                        {% elif is_hr %} 
+                        {% include 'dashboard/holiday.html' %} 
+                        {% include 'dashboard/performance_card.html' %} 
+                        {% include 'dashboard/conferenceBooking_card.html' %} 
+                        {% include 'dashboard/attendace_card.html' %} 
+                        {% elif is_employee %} 
+                        {% include 'dashboard/performance_card.html' %} 
+                        {% include 'dashboard/conferenceBooking_card.html' %} 
+                        {% include 'dashboard/attendace_card.html' %} 
+                        {% elif is_client %} 
+                        {% include 'dashboard/billingSummary_card.html' %} 
+                        {% include 'dashboard/supportTickets_card.html' %} {% endif %}
                     </div>
 
-                    <!-- Right: Stats Column -->
-                    <div class="space-y-6">
-                        {% if not is_admin %}
-                        <div class="backdrop-blur-xl bg-white/20 p-6 rounded-[20px] border border-white/10 shadow-inner">
-                            <h3 class="text-zinc-900 font-bold mb-4 text-lg">Quick Stats</h3>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div class="backdrop-blur-sm bg-gradient-to-tr from-teal-300/20 to-teal-400/10 p-5 rounded-xl border border-white/10 hover:bg-teal-400/20 transition shadow">
-                                    <p class="text-teal-900 text-sm mb-1">Active Projects</p>
-                                    <p class="text-3xl font-bold text-teal-700">{{ projects|length }}</p>
-                                </div>
-                                <div class="backdrop-blur-sm bg-gradient-to-tr from-rose-300/20 to-rose-400/10 p-5 rounded-xl border border-white/10 hover:bg-rose-400/20 transition shadow">
-                                    <p class="text-rose-900 text-sm mb-1">Present Today</p>
-                                    <p class="text-3xl font-bold text-rose-700">{{ present_employees_count }}</p>
-                                </div>
+                    <!-- Full Width Cards -->
+                    {% if is_admin or is_manager or is_employee %}
+                    <div class="w-full">
+                        {% include 'dashboard/teamUpdate_card.html' %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Right: Stats Column -->
+                <div class="space-y-6">
+                    {% if not is_admin %}
+                    <div
+                        class="backdrop-blur-xl bg-white/20 p-6 rounded-[20px] border border-white/10 shadow-inner"
+                    >
+                        <h3 class="text-zinc-900 font-bold mb-4 text-lg">
+                            Quick Stats
+                        </h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div
+                                class="backdrop-blur-sm bg-gradient-to-tr from-teal-300/20 to-teal-400/10 p-5 rounded-xl border border-white/10 hover:bg-teal-400/20 transition shadow"
+                            >
+                                <p class="text-teal-900 text-sm mb-1">
+                                    Active Projects
+                                </p>
+                                <p class="text-3xl font-bold text-teal-700">
+                                    {{ projects|length }}
+                                </p>
+                            </div>
+                            <div
+                                class="backdrop-blur-sm bg-gradient-to-tr from-rose-300/20 to-rose-400/10 p-5 rounded-xl border border-white/10 hover:bg-rose-400/20 transition shadow"
+                            >
+                                <p class="text-rose-900 text-sm mb-1">
+                                    Present Today
+                                </p>
+                                <p class="text-3xl font-bold text-rose-700">
+                                    {{ present_employees_count }}
+                                </p>
                             </div>
                         </div>
-                        {% endif %}
                     </div>
+                    {% endif %}
 
+                    <!-- Global Updates Card -->
+                    {% if is_admin or is_manager or is_hr or is_employee or is_client %} {% include 'dashboard/globalUpdate_card.html' %} {% endif %}
                 </div>
             </div>
         </div>
     </div>
 </div>
+
 <!-- CSS for buttons and smooth scrolling -->
 <style>
     html {
@@ -156,7 +211,6 @@
             opacity: 0;
             transform: translateY(10px);
         }
-
         to {
             opacity: 1;
             transform: translateY(0);
@@ -174,11 +228,9 @@
         0% {
             transform: scale(1);
         }
-
         50% {
             transform: scale(1.05);
         }
-
         100% {
             transform: scale(1);
         }
@@ -355,12 +407,13 @@
     // Show notification function
     window.showNotification = function (message, type = "info") {
         const notification = document.createElement("div");
-        notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${type === "success"
+        notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+            type === "success"
                 ? "bg-green-100 text-green-800 border-green-400"
                 : type === "error"
-                    ? "bg-red-100 text-red-800 border-red-400"
-                    : "bg-blue-100 text-blue-800 border-blue-400"
-            } border-l-4`;
+                  ? "bg-red-100 text-red-800 border-red-400"
+                  : "bg-blue-100 text-blue-800 border-blue-400"
+        } border-l-4`;
         notification.textContent = message;
 
         document.body.appendChild(notification);
@@ -372,7 +425,9 @@
 
     function formatAsLocalDateTime(date) {
         const pad = (num) => num.toString().padStart(2, "0");
-        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(
+            date.getHours(),
+        )}:${pad(date.getMinutes())}`;
     }
 </script>
 {% endblock %}

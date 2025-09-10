@@ -1340,8 +1340,6 @@ class OptimizedSessionTracker {
       this.log('Failed to clear session data: ' + error.message, 'error');
     }
   }
-<<<<<<< HEAD
-=======
 
   sendHeartbeat() {
     if (!this.state.isActive || !this.state.userId) return;
@@ -1370,7 +1368,6 @@ class OptimizedSessionTracker {
       timezone_offset: new Date().getTimezoneOffset(),
       csrf_token: this.getCSRFToken(),
     };
->>>>>>> 6f5e6bc (checkpoint before checking out cursor/fix-session-tracker-loading-and-syntax-errors-8a44)
 
   getCSRFToken() {
     // First try to get from cookies

@@ -66,7 +66,7 @@ REGULARIZATION_STATUS_CHOICES = [
     ('Rejected', 'Rejected')
 ]
 
-# Default Settings
+# Default Settings - AUTOMATIC ATTENDANCE SYSTEM
 ATTENDANCE_DEFAULTS = {
     'grace_period_minutes': 10,
     'minimum_working_hours': 4.0,
@@ -74,10 +74,12 @@ ATTENDANCE_DEFAULTS = {
     'overtime_threshold_hours': 8.0,
     'regularization_deadline_days': 7,
     'max_regularization_attempts': 5,
-    'auto_marking_enabled': True,
+    'auto_marking_enabled': True,  # MANDATORY - No manual attendance allowed
     'session_timeout_minutes': 30,
     'late_threshold_minutes': 1,
     'early_departure_threshold_minutes': 30,
+    'manual_attendance_disabled': True,  # Disable manual check-in/check-out
+    'session_based_only': True,  # Only session-based attendance tracking
 }
 
 # Time Configuration
@@ -92,14 +94,16 @@ TIME_SETTINGS = {
     }
 }
 
-# Auto-Marking Configuration
+# Auto-Marking Configuration - MANDATORY AUTOMATIC ATTENDANCE
 AUTO_MARKING_CONFIG = {
-    'enabled': True,
+    'enabled': True,  # ALWAYS ENABLED - Attendance is fully automatic
     'run_time': '09:30',  # Time to run auto-marking daily
     'process_past_days': 1,  # How many past days to process
     'batch_size': 100,  # Number of users to process in one batch
     'retry_attempts': 3,
     'timeout_seconds': 300,
+    'real_time_updates': True,  # Enable real-time attendance updates
+    'session_based_tracking': True,  # Track attendance based on login sessions
 }
 
 # Notification Configuration
@@ -247,16 +251,18 @@ ERROR_HANDLING = {
     'error_threshold_percentage': 10.0,
 }
 
-# Feature Flags
+# Feature Flags - AUTOMATIC ATTENDANCE FOCUSED
 FEATURE_FLAGS = {
     'geolocation_tracking': False,
     'biometric_integration': False,
     'mobile_app_support': True,
     'offline_mode': False,
-    'real_time_updates': True,
+    'real_time_updates': True,  # Essential for automatic attendance
     'advanced_analytics': True,
     'custom_reports': True,
     'api_access': True,
+    'manual_attendance': False,  # Manual attendance completely disabled
+    'automatic_session_tracking': True,  # Automatic session-based tracking enabled
 }
 
 # Integration Configuration
@@ -277,7 +283,7 @@ INTEGRATION_CONFIG = {
     }
 }
 
-# Business Rules
+# Business Rules - AUTOMATIC ATTENDANCE SYSTEM
 BUSINESS_RULES = {
     'weekend_work_requires_approval': True,
     'holiday_work_requires_approval': True,
@@ -285,6 +291,9 @@ BUSINESS_RULES = {
     'regularization_requires_manager_approval': True,
     'bulk_operations_require_hr_approval': True,
     'attendance_freeze_after_payroll': True,
+    'manual_attendance_forbidden': True,  # No manual attendance allowed
+    'session_based_attendance_mandatory': True,  # Sessions determine attendance
+    'automatic_status_calculation': True,  # Status calculated automatically
 }
 
 # Compliance Configuration

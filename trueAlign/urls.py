@@ -25,9 +25,12 @@ urlpatterns = [
     path('profile/', include('trueAlign.profile.urls')),
     path('shift/',include('trueAlign.shift.urls')),
     path('leave_management/', include('trueAlign.leave_management.urls')),
+    path('attendance/', include('trueAlign.attendance.urls')),
+    path('notes/', include('trueAlign.notes.urls')),
 
     # API endpoints
     path('api/', include('trueAlign.leave_management.api_urls')),
+    path('api/attendance/', include('trueAlign.attendance.api_urls')),
 
     # The session endpoints will be handled by core.urls directly
     # They're defined in trueAlign.core.urls.py with paths like:

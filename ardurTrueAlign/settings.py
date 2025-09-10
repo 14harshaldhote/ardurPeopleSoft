@@ -115,7 +115,7 @@ INSTALLED_APPS = [
     'rest_framework',  # Temporarily disabled - missing dependency
     'widget_tweaks',   # Temporarily disabled - missing dependency
     'mathfilters',     # Math filters for templates
-    'django_cron',  # Temporarily disabled - missing dependency
+    'django_cron',  # Cron job management
     'django_celery_beat',  # Temporarily disabled - missing dependency
 ]
 
@@ -123,6 +123,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -349,6 +350,79 @@ LOGGING = {
             'backupCount': 5,
             'formatter': 'json',
         },
+        # Attendance-specific handlers
+        'attendance_file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'attendance', 'attendance.log'),
+            'maxBytes': 1024 * 1024 * 20,
+            'backupCount': 10,
+            'formatter': 'detailed',
+        },
+        'attendance_api_file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'attendance', 'attendance_api.log'),
+            'maxBytes': 1024 * 1024 * 15,
+            'backupCount': 10,
+            'formatter': 'json',
+        },
+        'attendance_operations_file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'attendance', 'attendance_operations.log'),
+            'maxBytes': 1024 * 1024 * 15,
+            'backupCount': 10,
+            'formatter': 'detailed',
+        },
+        'attendance_cron_file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'attendance', 'attendance_cron.log'),
+            'maxBytes': 1024 * 1024 * 15,
+            'backupCount': 10,
+            'formatter': 'detailed',
+        },
+        'attendance_errors_file': {
+            'level': 'ERROR',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'attendance', 'attendance_errors.log'),
+            'maxBytes': 1024 * 1024 * 15,
+            'backupCount': 10,
+            'formatter': 'detailed',
+        },
+        'attendance_security_file': {
+            'level': 'WARNING',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'attendance', 'attendance_security.log'),
+            'maxBytes': 1024 * 1024 * 15,
+            'backupCount': 10,
+            'formatter': 'detailed',
+        },
+        'attendance_performance_file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'attendance', 'attendance_performance.log'),
+            'maxBytes': 1024 * 1024 * 15,
+            'backupCount': 10,
+            'formatter': 'json',
+        },
+        'attendance_regularization_file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'attendance', 'attendance_regularization.log'),
+            'maxBytes': 1024 * 1024 * 10,
+            'backupCount': 5,
+            'formatter': 'detailed',
+        },
+        'attendance_exports_file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'attendance', 'attendance_exports.log'),
+            'maxBytes': 1024 * 1024 * 10,
+            'backupCount': 5,
+            'formatter': 'json',
+        },
         'mail_admins': {
             'level': 'ERROR',
             'filters': ['require_debug_false'],
@@ -432,6 +506,163 @@ LOGGING = {
             'level': 'ERROR',
             'propagate': False,
         },
+        # Attendance System Loggers
+        'trueAlign.attendance': {
+            'handlers': ['attendance_file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'trueAlign.attendance.views': {
+            'handlers': ['attendance_file', 'attendance_operations_file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'trueAlign.attendance.api_views': {
+            'handlers': ['attendance_api_file', 'attendance_file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'trueAlign.attendance.services': {
+            'handlers': ['attendance_file', 'attendance_operations_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'trueAlign.attendance.models': {
+            'handlers': ['attendance_file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'trueAlign.attendance.signals': {
+            'handlers': ['attendance_file', 'attendance_operations_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'trueAlign.attendance.cron': {
+            'handlers': ['attendance_cron_file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'trueAlign.attendance.management': {
+            'handlers': ['attendance_cron_file', 'attendance_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'trueAlign.attendance.exports': {
+            'handlers': ['attendance_exports_file', 'attendance_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'trueAlign.attendance.notifications': {
+            'handlers': ['attendance_file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'trueAlign.attendance.monitoring': {
+            'handlers': ['attendance_file', 'attendance_performance_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'trueAlign.attendance.regularization': {
+            'handlers': ['attendance_regularization_file', 'attendance_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'trueAlign.attendance.analytics': {
+            'handlers': ['attendance_file', 'attendance_performance_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'trueAlign.attendance.auto_marking': {
+            'handlers': ['attendance_cron_file', 'attendance_operations_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'trueAlign.attendance.bulk_operations': {
+            'handlers': ['attendance_operations_file', 'attendance_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'trueAlign.attendance.integrations': {
+            'handlers': ['attendance_api_file', 'attendance_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'trueAlign.attendance.security': {
+            'handlers': ['attendance_security_file', 'attendance_errors_file'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'trueAlign.attendance.performance': {
+            'handlers': ['attendance_performance_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        # Operation-specific loggers
+        'trueAlign.attendance.operations.clock_in': {
+            'handlers': ['attendance_operations_file', 'attendance_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'trueAlign.attendance.operations.clock_out': {
+            'handlers': ['attendance_operations_file', 'attendance_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'trueAlign.attendance.operations.break_start': {
+            'handlers': ['attendance_operations_file', 'attendance_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'trueAlign.attendance.operations.break_end': {
+            'handlers': ['attendance_operations_file', 'attendance_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'trueAlign.attendance.operations.overtime': {
+            'handlers': ['attendance_operations_file', 'attendance_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'trueAlign.attendance.operations.leave': {
+            'handlers': ['attendance_operations_file', 'attendance_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'trueAlign.attendance.operations.holiday': {
+            'handlers': ['attendance_operations_file', 'attendance_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'trueAlign.attendance.operations.regularization_request': {
+            'handlers': ['attendance_regularization_file', 'attendance_operations_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'trueAlign.attendance.operations.regularization_approval': {
+            'handlers': ['attendance_regularization_file', 'attendance_operations_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'trueAlign.attendance.operations.report_generation': {
+            'handlers': ['attendance_exports_file', 'attendance_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'trueAlign.attendance.operations.data_export': {
+            'handlers': ['attendance_exports_file', 'attendance_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'trueAlign.attendance.operations.bulk_update': {
+            'handlers': ['attendance_operations_file', 'attendance_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'trueAlign.attendance.operations.cron_jobs': {
+            'handlers': ['attendance_cron_file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
     },
 }
 
@@ -441,11 +672,23 @@ LOGGING = {
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'en'
 TIME_ZONE = 'Asia/Kolkata'
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
+
+# Supported languages for Global Updates
+LANGUAGES = [
+    ('en', 'English'),
+    ('hi', 'Hindi'),
+    ('mr', 'Marathi'),
+]
+
+# Path to translation files
+LOCALE_PATHS = [
+    os.path.join(BASE_DIR, 'locale'),
+]
 
 
 # Static files (CSS, JavaScript, Images)
@@ -565,3 +808,25 @@ LOGOUT_REDIRECT_URL = '/login/'
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
+
+# ===========================
+# DJANGO CRON CONFIGURATION
+# ===========================
+
+# Cron job classes
+CRON_CLASSES = [
+    'trueAlign.attendance.cron.DailyAttendanceCreationCronJob',
+    'trueAlign.attendance.cron.AttendanceAutoMarkingCronJob',
+    'trueAlign.attendance.cron.AttendanceNotificationCronJob',
+    'trueAlign.attendance.cron.AttendanceCleanupCronJob',
+]
+
+# Cron job settings
+DJANGO_CRON_LOCK_BACKEND = 'django_cron.backends.lock.cache.CacheLock'
+DJANGO_CRON_DELETE_LOGS_OLDER_THAN = 7  # days
+DJANGO_CRON_CACHE_KEY = 'django_cron.last_run'
+
+# Failed job settings
+CRON_CACHE_TIMEOUT = 3600  # 1 hour
+CRON_FAILURE_EMAIL_RECIPIENTS = []  # Add admin emails if needed
+CRON_EMAIL_SUBJECT_PREFIX = '[TrueAlign Cron] '
