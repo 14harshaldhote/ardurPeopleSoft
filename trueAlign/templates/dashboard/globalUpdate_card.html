@@ -146,7 +146,7 @@
 
 <!-- Enhanced Styles -->
 <style>
-    @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+    @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
 
     .font-system {
         font-family:
@@ -176,38 +176,55 @@
 
     .update-item {
         @apply bg-white/90 backdrop-blur-sm p-4 rounded-xl border-l-4 hover:bg-white transition-all duration-300 cursor-pointer shadow-sm hover:shadow-lg transform hover:scale-[1.02] hover:-translate-y-1;
+        /* subtle colorful left accent for better identification */
+        border-left-width: 6px;
+        border-left-color: rgba(124,58,237,0.92); /* default accent color (will be overridden by status classes) */
     }
 
     .update-item.released {
         @apply border-emerald-500 bg-gradient-to-r from-emerald-50/80 to-emerald-100/60;
+        border-left-color: rgba(16,185,129,0.95);
     }
 
     .update-item.upcoming {
         @apply border-blue-500 bg-gradient-to-r from-blue-50/80 to-blue-100/60;
+        border-left-color: rgba(59,130,246,0.95);
     }
 
     .update-item.scheduled {
         @apply border-amber-500 bg-gradient-to-r from-amber-50/80 to-amber-100/60;
+        border-left-color: rgba(245,158,11,0.95);
     }
 
+    /* Title: bold + colorful gradient text for strong identification */
     .update-title {
-        @apply font-bold text-base text-gray-800 mb-2 leading-tight;
+        @apply mb-2 leading-tight;
         font-family: "Inter", sans-serif;
-        font-weight: 600;
+        font-weight: 700;
+        font-size: 1.05rem;
+        /* gradient text */
+        background: linear-gradient(90deg, #1f2937, #7c3aed);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        /* slight lift so titles feel prominent */
+        text-shadow: 0 1px 0 rgba(0,0,0,0.03);
     }
 
+    /* Description: thinner / lighter font for visual hierarchy */
     .update-description {
-        @apply text-sm text-gray-600 mb-3 leading-relaxed line-clamp-2;
+        @apply text-sm mb-3 leading-relaxed line-clamp-2;
         font-family: "Inter", sans-serif;
-        font-weight: 400;
+        font-weight: 300; /* thin */
+        color: #475569; /* slate-600 */
     }
 
-    .update-meta {
-        @apply text-xs text-gray-500 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0;
-    }
-
+    /* Language indicator: italic and slightly bolder to stand out */
     .language-indicator {
-        @apply px-2 py-1 bg-white/70 text-gray-700 rounded-md text-xs font-medium border border-gray-200/50 shadow-sm;
+        @apply px-2 py-1 bg-blue-100/70 text-blue-700 rounded-md text-xs font-medium border border-blue-200/50 shadow-sm;
+        font-style: italic;
+        font-weight: 600;
+        letter-spacing: 0.01em;
     }
 
     .status-badge {
@@ -270,7 +287,7 @@
     }
 </style>
 
-<!-- Simplified JavaScript -->
+<!-- Simplified JavaScript (unchanged) -->
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         const languageSelector = document.getElementById("language-selector");
@@ -365,7 +382,7 @@
                             : true;
 
                     return `
-                <div class="update-item ${status} animate-fade-in bg-pink-100/50 rounded-xl p-2" onclick="viewUpdate(${update.id}, '${language}')">
+                <div class="update-item ${status} animate-fade-in rounded-xl p-2" onclick="viewUpdate(${update.id}, '${language}')">
                     <div class="update-title">${escapeHtml(title)}</div>
                     <div class="update-description ">${escapeHtml(description)}</div>
                     <div class="update-meta">
@@ -373,13 +390,13 @@
                             <span class="language-indicator">${getLanguageName(language)}</span>
                             ${
                                 !hasTranslation && language !== "en"
-                                    ? '<span class="text-xs italic text-amber-600 font-medium">Auto-translated</span>'
+                                    ? '<span class="text-xs italic text-blue-600 font-medium">Auto-translated</span>'
                                     : ""
                             }
                         </div>
                         <div class="flex items-center gap-2">
                             <span class="status-badge status-${status}">${status}</span>
-                            ${update.scheduled_date ? `<span class="text-xs text-gray-500">• ${formatDate(update.scheduled_date)}</span>` : ""}
+                            ${update.scheduled_date ? `<span class="text-xs text-red-500">• ${formatDate(update.scheduled_date)}</span>` : ""}
                         </div>
                     </div>
                 </div>
