@@ -1,14 +1,16 @@
 <div
-    class="backdrop-blur-xl bg-white/20 p-6 rounded-[20px] border border-white/10 shadow-inner hover:bg-white/25 transition-all duration-300"
+    class="backdrop-blur-xl bg-white/20 p-3 sm:p-4 lg:p-6 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner hover:bg-white/25 transition-all duration-300"
 >
-    <div class="flex justify-between items-center mb-6">
-        <div class="flex items-center gap-3">
+    <div
+        class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 sm:mb-4 lg:mb-6 gap-3 sm:gap-0"
+    >
+        <div class="flex items-center gap-2 sm:gap-3">
             <div
-                class="p-3 backdrop-blur-sm bg-white/30 rounded-xl border border-white/20"
+                class="p-2 sm:p-3 backdrop-blur-sm bg-white/30 rounded-lg sm:rounded-xl border border-white/20"
             >
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    class="h-6 w-6 text-rose-700"
+                    class="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-rose-700"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -22,18 +24,22 @@
                 </svg>
             </div>
             <div>
-                <h3 class="text-lg font-bold text-zinc-900 mb-0">
+                <h3
+                    class="text-sm sm:text-base lg:text-lg font-bold text-zinc-900 mb-0"
+                >
                     Holidays & Events
                 </h3>
-                <p class="text-sm text-zinc-600 mb-0">Upcoming celebrations</p>
+                <p class="text-xs sm:text-sm text-zinc-600 mb-0">
+                    Upcoming celebrations
+                </p>
             </div>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 mt-2 sm:mt-0">
             <span
-                class="px-3 py-1 text-xs font-medium bg-rose-500/20 text-rose-700 rounded-md border border-rose-500/30 flex items-center gap-1"
+                class="px-2 sm:px-3 py-0.5 sm:py-1 text-xs font-medium bg-rose-500/20 text-rose-700 rounded-md border border-rose-500/30 flex items-center gap-1"
             >
                 <svg
-                    class="w-3 h-3"
+                    class="w-2.5 h-2.5 sm:w-3 sm:h-3"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -51,40 +57,48 @@
     </div>
 
     <!-- Next Holiday Section -->
-    <div class="mb-6">
+    <div class="mb-3 sm:mb-4 lg:mb-6">
         <div
-            class="backdrop-blur-sm bg-gradient-to-br from-rose-500/20 to-rose-400/30 border border-rose-500/30 p-4 rounded-xl hover:from-rose-500/30 hover:to-rose-400/40 transition-all duration-200"
+            class="backdrop-blur-sm bg-gradient-to-br from-rose-500/20 to-rose-400/30 border border-rose-500/30 p-3 sm:p-4 rounded-lg sm:rounded-xl hover:from-rose-500/30 hover:to-rose-400/40 transition-all duration-200"
         >
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-3 sm:gap-4">
                 <div
-                    class="w-16 h-16 rounded-xl bg-gradient-to-br from-rose-400 to-rose-600 flex flex-col items-center justify-center text-white shadow-lg animate-bounce"
+                    class="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 rounded-lg sm:rounded-xl bg-gradient-to-br from-rose-400 to-rose-600 flex flex-col items-center justify-center text-white shadow-lg animate-bounce"
                 >
                     <span class="text-xs font-medium">AUG</span>
-                    <span class="text-xl font-bold">15</span>
+                    <span class="text-base sm:text-lg lg:text-xl font-bold">
+                        15
+                    </span>
                 </div>
                 <div class="flex-1">
-                    <h4 class="text-lg font-bold text-rose-800 mb-1">
+                    <h4
+                        class="text-sm sm:text-base lg:text-lg font-bold text-rose-800 mb-1"
+                    >
                         Independence Day
                     </h4>
-                    <p class="text-sm text-rose-700 mb-2">
+                    <p class="text-xs sm:text-sm text-rose-700 mb-1 sm:mb-2">
                         National Holiday - Office Closed
                     </p>
-                    <div class="flex items-center gap-2 text-xs text-rose-600">
-                        <svg
-                            class="w-3 h-3"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                        </svg>
-                        <span class="font-medium">In 3 days</span>
-                        <span>•</span>
+                    <div
+                        class="flex flex-col sm:flex-row items-start sm:items-center gap-1 sm:gap-2 text-xs text-rose-600"
+                    >
+                        <div class="flex items-center gap-1">
+                            <svg
+                                class="w-2.5 h-2.5 sm:w-3 sm:h-3"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                />
+                            </svg>
+                            <span class="font-medium">In 3 days</span>
+                        </div>
+                        <span class="hidden sm:inline">•</span>
                         <span>August 15, 2025</span>
                     </div>
                 </div>
@@ -93,27 +107,31 @@
     </div>
 
     <!-- Upcoming Holidays List -->
-    <div class="mb-6">
-        <h4 class="text-sm font-bold text-zinc-700 mb-3">
+    <div class="mb-3 sm:mb-4 lg:mb-6">
+        <h4 class="text-xs sm:text-sm font-bold text-zinc-700 mb-2 sm:mb-3">
             This Month's Events
         </h4>
-        <div class="space-y-3">
+        <div class="space-y-2 sm:space-y-3">
             <!-- Holiday Item 1 -->
             <div
-                class="backdrop-blur-sm bg-white/30 p-3 rounded-xl border border-white/20 hover:bg-white/40 transition-all duration-200 flex items-center gap-3"
+                class="backdrop-blur-sm bg-white/30 p-2.5 sm:p-3 rounded-lg sm:rounded-xl border border-white/20 hover:bg-white/40 transition-all duration-200 flex items-center gap-2 sm:gap-3"
             >
                 <div
-                    class="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-400 to-orange-600 flex flex-col items-center justify-center text-white text-xs"
+                    class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-orange-400 to-orange-600 flex flex-col items-center justify-center text-white text-xs"
                 >
-                    <span class="font-medium">26</span>
+                    <span class="font-medium text-xs sm:text-sm">26</span>
                 </div>
                 <div class="flex-1">
-                    <div class="flex items-center justify-between">
-                        <h5 class="font-bold text-zinc-800 text-sm mb-0">
+                    <div
+                        class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1 sm:gap-0"
+                    >
+                        <h5
+                            class="font-bold text-zinc-800 text-xs sm:text-sm mb-0"
+                        >
                             Raksha Bandhan
                         </h5>
                         <span
-                            class="text-xs font-medium text-orange-700 bg-orange-500/20 px-2 py-1 rounded border border-orange-500/30"
+                            class="text-xs font-medium text-orange-700 bg-orange-500/20 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded border border-orange-500/30"
                         >
                             Optional
                         </span>
@@ -124,20 +142,24 @@
 
             <!-- Holiday Item 2 -->
             <div
-                class="backdrop-blur-sm bg-white/30 p-3 rounded-xl border border-white/20 hover:bg-white/40 transition-all duration-200 flex items-center gap-3"
+                class="backdrop-blur-sm bg-white/30 p-2.5 sm:p-3 rounded-lg sm:rounded-xl border border-white/20 hover:bg-white/40 transition-all duration-200 flex items-center gap-2 sm:gap-3"
             >
                 <div
-                    class="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-400 to-purple-600 flex flex-col items-center justify-center text-white text-xs"
+                    class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-purple-400 to-purple-600 flex flex-col items-center justify-center text-white text-xs"
                 >
-                    <span class="font-medium">02</span>
+                    <span class="font-medium text-xs sm:text-sm">02</span>
                 </div>
                 <div class="flex-1">
-                    <div class="flex items-center justify-between">
-                        <h5 class="font-bold text-zinc-800 text-sm mb-0">
+                    <div
+                        class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1 sm:gap-0"
+                    >
+                        <h5
+                            class="font-bold text-zinc-800 text-xs sm:text-sm mb-0"
+                        >
                             Ganesh Chaturthi
                         </h5>
                         <span
-                            class="text-xs font-medium text-purple-700 bg-purple-500/20 px-2 py-1 rounded border border-purple-500/30"
+                            class="text-xs font-medium text-purple-700 bg-purple-500/20 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded border border-purple-500/30"
                         >
                             Regional
                         </span>
@@ -148,20 +170,24 @@
 
             <!-- Holiday Item 3 -->
             <div
-                class="backdrop-blur-sm bg-white/30 p-3 rounded-xl border border-white/20 hover:bg-white/40 transition-all duration-200 flex items-center gap-3"
+                class="backdrop-blur-sm bg-white/30 p-2.5 sm:p-3 rounded-lg sm:rounded-xl border border-white/20 hover:bg-white/40 transition-all duration-200 flex items-center gap-2 sm:gap-3"
             >
                 <div
-                    class="w-10 h-10 rounded-lg bg-gradient-to-br from-green-400 to-green-600 flex flex-col items-center justify-center text-white text-xs"
+                    class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-green-400 to-green-600 flex flex-col items-center justify-center text-white text-xs"
                 >
-                    <span class="font-medium">15</span>
+                    <span class="font-medium text-xs sm:text-sm">15</span>
                 </div>
                 <div class="flex-1">
-                    <div class="flex items-center justify-between">
-                        <h5 class="font-bold text-zinc-800 text-sm mb-0">
+                    <div
+                        class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1 sm:gap-0"
+                    >
+                        <h5
+                            class="font-bold text-zinc-800 text-xs sm:text-sm mb-0"
+                        >
                             Engineer's Day
                         </h5>
                         <span
-                            class="text-xs font-medium text-green-700 bg-green-500/20 px-2 py-1 rounded border border-green-500/30"
+                            class="text-xs font-medium text-green-700 bg-green-500/20 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded border border-green-500/30"
                         >
                             Company
                         </span>
@@ -173,14 +199,16 @@
     </div>
 
     <!-- Stats Section -->
-    <div class="mb-6">
-        <div class="grid grid-cols-3 gap-3">
+    <div class="mb-3 sm:mb-4 lg:mb-6">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
             <div
-                class="backdrop-blur-sm bg-emerald-500/20 border border-emerald-500/30 rounded-xl p-3 text-center hover:bg-emerald-500/30 transition-all duration-200"
+                class="backdrop-blur-sm bg-emerald-500/20 border border-emerald-500/30 rounded-lg sm:rounded-xl p-3 text-center hover:bg-emerald-500/30 transition-all duration-200"
             >
-                <div class="flex items-center justify-center gap-1 mb-1">
+                <div
+                    class="flex items-center justify-center gap-0.5 sm:gap-1 mb-1"
+                >
                     <svg
-                        class="w-3 h-3 text-emerald-600"
+                        class="w-2.5 h-2.5 sm:w-3 sm:h-3 text-emerald-600"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -192,21 +220,27 @@
                             d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                         />
                     </svg>
-                    <span
-                        class="text-xs font-medium text-emerald-700 uppercase tracking-wide"
+                    <p
+                        class="text-xs font-medium text-emerald-700 uppercase tracking-wide mb-0"
                     >
                         This Month
-                    </span>
+                    </p>
                 </div>
-                <p class="text-xl font-bold text-emerald-700 mb-0">4</p>
+                <p
+                    class="text-lg sm:text-xl font-bold text-emerald-700 mb-0"
+                >
+                    4
+                </p>
                 <p class="text-xs text-emerald-600">holidays</p>
             </div>
             <div
-                class="backdrop-blur-sm bg-blue-500/20 border border-blue-500/30 rounded-xl p-3 text-center hover:bg-blue-500/30 transition-all duration-200"
+                class="backdrop-blur-sm bg-blue-500/20 border border-blue-500/30 rounded-lg sm:rounded-xl p-3 text-center hover:bg-blue-500/30 transition-all duration-200"
             >
-                <div class="flex items-center justify-center gap-1 mb-1">
+                <div
+                    class="flex items-center justify-center gap-0.5 sm:gap-1 mb-1"
+                >
                     <svg
-                        class="w-3 h-3 text-blue-600"
+                        class="w-2.5 h-2.5 sm:w-3 sm:h-3 text-blue-600"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -224,15 +258,19 @@
                         Remaining
                     </span>
                 </div>
-                <p class="text-xl font-bold text-blue-700 mb-0">8</p>
+                <p class="text-lg sm:text-xl font-bold text-blue-700 mb-0">
+                    8
+                </p>
                 <p class="text-xs text-blue-600">days off</p>
             </div>
             <div
-                class="backdrop-blur-sm bg-amber-500/20 border border-amber-500/30 rounded-xl p-3 text-center hover:bg-amber-500/30 transition-all duration-200"
+                class="backdrop-blur-sm bg-amber-500/20 border border-amber-500/30 rounded-lg sm:rounded-xl p-3 text-center hover:bg-amber-500/30 transition-all duration-200"
             >
-                <div class="flex items-center justify-center gap-1 mb-1">
+                <div
+                    class="flex items-center justify-center gap-0.5 sm:gap-1 mb-1"
+                >
                     <svg
-                        class="w-3 h-3 text-amber-600"
+                        class="w-2.5 h-2.5 sm:w-3 sm:h-3 text-amber-600"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -250,26 +288,30 @@
                         Quarter
                     </span>
                 </div>
-                <p class="text-xl font-bold text-amber-700 mb-0">12</p>
+                <p class="text-lg sm:text-xl font-bold text-amber-700 mb-0">
+                    12
+                </p>
                 <p class="text-xs text-amber-600">total</p>
             </div>
         </div>
     </div>
 
     <!-- Action Footer -->
-    <div class="pt-4 border-t border-white/20">
-        <div class="flex justify-between items-center">
+    <div class="pt-3 sm:pt-4 border-t border-white/20">
+        <div
+            class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0"
+        >
             <div class="text-xs text-zinc-600">
                 <span>Last updated: </span>
                 <span class="font-medium text-zinc-700">Today</span>
             </div>
             <a
                 href="#"
-                class="text-sm text-blue-700 hover:text-blue-900 font-medium transition-colors duration-200 flex items-center gap-1"
+                class="text-xs sm:text-sm text-blue-700 hover:text-blue-900 font-medium transition-colors duration-200 flex items-center gap-1 mt-2 sm:mt-0"
             >
                 View Calendar
                 <svg
-                    class="w-4 h-4 transition-transform duration-200 hover:translate-x-1"
+                    class="w-3 h-3 sm:w-4 sm:h-4 transition-transform duration-200 hover:translate-x-1"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -284,4 +326,5 @@
             </a>
         </div>
     </div>
+</div>
 </div>

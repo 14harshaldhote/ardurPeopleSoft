@@ -1,15 +1,39 @@
-<div class="bg-white shadow-xl rounded-xl p-6">
-    <h3 class="text-lg font-semibold text-gray-800 mb-4">Billing Summary</h3>
-    <div class="grid grid-cols-2 gap-4">
-        <div class="bg-green-50 p-4 rounded-lg text-center">
-            <p class="text-xs text-gray-600">Paid</p>
-            <p class="text-2xl font-bold text-green-600" id="paid-amount">
+<div
+    class="backdrop-blur-xl bg-white/20 p-3 sm:p-4 lg:p-6 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner hover:bg-white/25 transition-all duration-300"
+>
+    <h3
+        class="text-sm sm:text-base lg:text-lg font-semibold text-zinc-800 mb-2 sm:mb-3 lg:mb-4"
+    >
+        Billing Summary
+    </h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 lg:gap-4">
+        <div
+            class="backdrop-blur-sm bg-emerald-500/20 border border-emerald-500/30 p-3 sm:p-4 rounded-lg sm:rounded-xl text-center hover:bg-emerald-500/30 transition-all duration-200"
+        >
+            <p
+                class="text-xs font-medium text-emerald-700 uppercase tracking-wide mb-1"
+            >
+                Paid
+            </p>
+            <p
+                class="text-lg sm:text-xl lg:text-2xl font-bold text-emerald-600"
+                id="paid-amount"
+            >
                 $12,500
             </p>
         </div>
-        <div class="bg-red-50 p-4 rounded-lg text-center">
-            <p class="text-xs text-gray-600">Due</p>
-            <p class="text-2xl font-bold text-red-600" id="due-amount">
+        <div
+            class="backdrop-blur-sm bg-rose-500/20 border border-rose-500/30 p-3 sm:p-4 rounded-lg sm:rounded-xl text-center hover:bg-rose-500/30 transition-all duration-200"
+        >
+            <p
+                class="text-xs font-medium text-rose-700 uppercase tracking-wide mb-1"
+            >
+                Due
+            </p>
+            <p
+                class="text-lg sm:text-xl lg:text-2xl font-bold text-rose-600"
+                id="due-amount"
+            >
                 $3,200
             </p>
         </div>

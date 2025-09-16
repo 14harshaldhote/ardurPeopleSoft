@@ -1,14 +1,16 @@
 <div
-    class="backdrop-blur-xl bg-white/20 p-6 rounded-[20px] border border-white/10 shadow-inner hover:bg-white/25 transition-all duration-300"
+    class="backdrop-blur-xl bg-white/20 p-3 sm:p-4 lg:p-6 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner hover:bg-white/25 transition-all duration-300"
 >
-    <div class="flex justify-between items-center mb-6">
-        <div class="flex items-center gap-3">
+    <div
+        class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 sm:mb-4 lg:mb-6 gap-3 sm:gap-0"
+    >
+        <div class="flex items-center gap-2 sm:gap-3">
             <div
-                class="p-3 backdrop-blur-sm bg-white/30 rounded-xl border border-white/20"
+                class="p-2 sm:p-3 backdrop-blur-sm bg-white/30 rounded-lg sm:rounded-xl border border-white/20"
             >
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    class="h-6 w-6 text-indigo-700"
+                    class="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-indigo-700"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -22,12 +24,16 @@
                 </svg>
             </div>
             <div>
-                <h3 class="text-lg font-bold text-zinc-900 mb-0">
+                <h3
+                    class="text-sm sm:text-base lg:text-lg font-bold text-zinc-900 mb-0"
+                >
                     Today's Attendance
                 </h3>
-                <div class="flex items-center gap-2 mt-1">
+                <div
+                    class="flex flex-col sm:flex-row items-start sm:items-center gap-1 sm:gap-2 mt-1"
+                >
                     <span
-                        class="px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-700 border border-emerald-500/30"
+                        class="px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-700 border border-emerald-500/30"
                     >
                         Present
                     </span>
@@ -37,11 +43,11 @@
         </div>
         <a
             href="#"
-            class="text-sm text-blue-700 hover:text-blue-900 font-medium transition-colors duration-200 flex items-center gap-1"
+            class="text-xs sm:text-sm text-blue-700 hover:text-blue-900 font-medium transition-colors duration-200 flex items-center gap-1 mt-2 sm:mt-0"
         >
             Details
             <svg
-                class="w-4 h-4 transition-transform duration-200 hover:translate-x-1"
+                class="w-3 h-3 sm:w-4 sm:h-4 transition-transform duration-200 hover:translate-x-1"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -57,14 +63,16 @@
     </div>
 
     <!-- Time In/Out Section -->
-    <div class="grid grid-cols-2 gap-3 mb-6">
+    <div
+        class="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mb-3 sm:mb-4 lg:mb-6"
+    >
         <div
-            class="backdrop-blur-sm bg-white/30 p-4 rounded-xl border border-white/20 hover:bg-white/40 transition-all duration-200"
+            class="backdrop-blur-sm bg-white/30 p-3 sm:p-4 rounded-lg sm:rounded-xl border border-white/20 hover:bg-white/40 transition-all duration-200"
         >
-            <div class="flex items-center gap-2 mb-2">
+            <div class="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    class="h-4 w-4 text-emerald-600"
+                    class="h-3 w-3 sm:h-4 sm:w-4 text-emerald-600"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -82,16 +90,20 @@
                     Time In
                 </span>
             </div>
-            <p class="text-lg font-bold text-zinc-800 mb-0">09:15 AM</p>
+            <p
+                class="text-sm sm:text-base lg:text-lg font-bold text-zinc-800 mb-0"
+            >
+                09:15 AM
+            </p>
             <p class="text-xs text-zinc-500">On time</p>
         </div>
         <div
-            class="backdrop-blur-sm bg-white/30 p-4 rounded-xl border border-white/20 hover:bg-white/40 transition-all duration-200"
+            class="backdrop-blur-sm bg-white/30 p-3 sm:p-4 rounded-lg sm:rounded-xl border border-white/20 hover:bg-white/40 transition-all duration-200"
         >
-            <div class="flex items-center gap-2 mb-2">
+            <div class="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    class="h-4 w-4 text-rose-600"
+                    class="h-3 w-3 sm:h-4 sm:w-4 text-rose-600"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -109,30 +121,38 @@
                     Time Out
                 </span>
             </div>
-            <p class="text-lg font-bold text-zinc-800 mb-0">--:-- --</p>
+            <p
+                class="text-sm sm:text-base lg:text-lg font-bold text-zinc-800 mb-0"
+            >
+                --:-- --
+            </p>
             <p class="text-xs text-zinc-500">In progress</p>
         </div>
     </div>
 
     <!-- Monthly Stats -->
-    <div class="mb-6">
-        <div class="flex justify-between items-center mb-4">
-            <h4 class="text-sm font-bold text-zinc-700 mb-0">
+    <div class="mb-3 sm:mb-4 lg:mb-6">
+        <div
+            class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 sm:mb-3 lg:mb-4 gap-2 sm:gap-0"
+        >
+            <h4 class="text-xs sm:text-sm font-bold text-zinc-700 mb-0">
                 Monthly Overview
             </h4>
             <span
-                class="px-2 py-1 text-xs font-medium bg-emerald-500/20 text-emerald-700 rounded-md border border-emerald-500/30"
+                class="px-2 py-0.5 sm:py-1 text-xs font-medium bg-emerald-500/20 text-emerald-700 rounded-md border border-emerald-500/30"
             >
                 95% Present
             </span>
         </div>
-        <div class="grid grid-cols-3 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
             <div
-                class="backdrop-blur-sm bg-emerald-500/20 border border-emerald-500/30 rounded-xl p-4 text-center hover:bg-emerald-500/30 transition-all duration-200"
+                class="backdrop-blur-sm bg-emerald-500/20 border border-emerald-500/30 rounded-lg sm:rounded-xl p-3 sm:p-4 text-center hover:bg-emerald-500/30 transition-all duration-200"
             >
-                <div class="flex items-center justify-center gap-1 mb-2">
+                <div
+                    class="flex items-center justify-center gap-1 mb-1 sm:mb-2"
+                >
                     <svg
-                        class="w-4 h-4 text-emerald-600"
+                        class="w-3 h-3 sm:w-4 sm:h-4 text-emerald-600"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -150,15 +170,21 @@
                         Present
                     </p>
                 </div>
-                <p class="text-2xl font-bold text-emerald-700 mb-0">20</p>
+                <p
+                    class="text-lg sm:text-xl lg:text-2xl font-bold text-emerald-700 mb-0"
+                >
+                    20
+                </p>
                 <p class="text-xs text-emerald-600">days</p>
             </div>
             <div
-                class="backdrop-blur-sm bg-amber-500/20 border border-amber-500/30 rounded-xl p-4 text-center hover:bg-amber-500/30 transition-all duration-200"
+                class="backdrop-blur-sm bg-amber-500/20 border border-amber-500/30 rounded-lg sm:rounded-xl p-3 sm:p-4 text-center hover:bg-amber-500/30 transition-all duration-200"
             >
-                <div class="flex items-center justify-center gap-1 mb-2">
+                <div
+                    class="flex items-center justify-center gap-1 mb-1 sm:mb-2"
+                >
                     <svg
-                        class="w-4 h-4 text-amber-600"
+                        class="w-3 h-3 sm:w-4 sm:h-4 text-amber-600"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -176,15 +202,21 @@
                         Late
                     </p>
                 </div>
-                <p class="text-2xl font-bold text-amber-700 mb-0">2</p>
+                <p
+                    class="text-lg sm:text-xl lg:text-2xl font-bold text-amber-700 mb-0"
+                >
+                    2
+                </p>
                 <p class="text-xs text-amber-600">times</p>
             </div>
             <div
-                class="backdrop-blur-sm bg-violet-500/20 border border-violet-500/30 rounded-xl p-4 text-center hover:bg-violet-500/30 transition-all duration-200"
+                class="backdrop-blur-sm bg-violet-500/20 border border-violet-500/30 rounded-lg sm:rounded-xl p-3 sm:p-4 text-center hover:bg-violet-500/30 transition-all duration-200"
             >
-                <div class="flex items-center justify-center gap-1 mb-2">
+                <div
+                    class="flex items-center justify-center gap-1 mb-1 sm:mb-2"
+                >
                     <svg
-                        class="w-4 h-4 text-violet-600"
+                        class="w-3 h-3 sm:w-4 sm:h-4 text-violet-600"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -202,25 +234,35 @@
                         Leave
                     </p>
                 </div>
-                <p class="text-2xl font-bold text-violet-700 mb-0">1</p>
+                <p
+                    class="text-lg sm:text-xl lg:text-2xl font-bold text-violet-700 mb-0"
+                >
+                    1
+                </p>
                 <p class="text-xs text-violet-600">day</p>
             </div>
         </div>
     </div>
 
     <!-- Summary Stats -->
-    <div class="pt-4 border-t border-white/20">
-        <div class="grid grid-cols-2 gap-4">
+    <div class="pt-3 sm:pt-4 border-t border-white/20">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 lg:gap-4">
             <div class="flex justify-between items-center">
-                <span class="text-sm text-zinc-600">Working Days</span>
-                <span class="text-sm font-bold text-zinc-800">22</span>
+                <span class="text-xs sm:text-sm text-zinc-600"
+                    >Working Days</span
+                >
+                <span class="text-xs sm:text-sm font-bold text-zinc-800"
+                    >22</span
+                >
             </div>
             <div class="flex justify-between items-center">
-                <span class="text-sm text-zinc-600">Efficiency</span>
-                <span class="text-sm font-bold text-emerald-700">95%</span>
+                <span class="text-xs sm:text-sm text-zinc-600">Efficiency</span>
+                <span class="text-xs sm:text-sm font-bold text-emerald-700"
+                    >95%</span
+                >
             </div>
         </div>
-        <div class="mt-3">
+        <div class="mt-2 sm:mt-3">
             <div class="flex justify-between items-center mb-1">
                 <span class="text-xs text-zinc-600">Attendance Rate</span>
                 <span class="text-xs font-medium text-zinc-700"
@@ -228,7 +270,7 @@
                 >
             </div>
             <div
-                class="w-full bg-white/30 rounded-full h-2 border border-white/20 overflow-hidden"
+                class="w-full bg-white/30 rounded-full h-1.5 sm:h-2 border border-white/20 overflow-hidden"
             >
                 <div
                     class="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full transition-all duration-1000"

@@ -112,6 +112,7 @@ INSTALLED_APPS = [
     'trueAlign.leave_management',
     'trueAlign.profile',  # Profile management app
     'trueAlign.notifications',  # New notification system
+    'trueAlign.notes',  # Global updates and notes management
     'rest_framework',  # Temporarily disabled - missing dependency
     'widget_tweaks',   # Temporarily disabled - missing dependency
     'mathfilters',     # Math filters for templates
