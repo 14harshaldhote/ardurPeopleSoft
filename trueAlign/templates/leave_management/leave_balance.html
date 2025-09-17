@@ -1,27 +1,51 @@
-{% extends 'base.html' %}
-{% load static %}
-
-{% block title %}Leave Balance - Leave Management{% endblock %}
-
-{% block content %}
-<div class="space-y-6">
+{% extends 'base.html' %} {% load static %} {% block title %}Leave Balance -
+Leave Management{% endblock %} {% block content %}
+<div
+    class="mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-6 w-full max-w-full overflow-x-hidden"
+>
     <!-- Header Section -->
-    <div class="bg-gradient-to-r from-emerald-500 to-teal-500 rounded-lg shadow-lg p-6 text-white">
-        <div class="flex items-center justify-between">
-            <div>
-                <h1 class="text-3xl font-bold">Leave Balance</h1>
-                <p class="text-emerald-100 mt-2">
-                    {% if user_to_view != user %}
-                        Viewing balance for {{ user_to_view.get_full_name|default:user_to_view.username }}
-                    {% else %}
-                        Your current leave balance and allocation details
-                    {% endif %}
-                </p>
-            </div>
-            <div class="hidden md:block">
-                <div class="flex items-center space-x-4">
-                    <div class="text-right">
-                        <p class="text-2xl font-bold">{{ year }}</p>
+    <div
+        class="relative overflow-hidden mb-3 sm:mb-6 rounded-[16px] sm:rounded-[20px] lg:rounded-[28px] bg-white/10 border border-white/40 shadow-[0_10px_30px_rgba(0,0,0,0.15)] hover:scale-[1.005] sm:hover:scale-[1.015] transition-all duration-500"
+    >
+        <!-- Gradient Background -->
+        <div
+            class="absolute inset-0 bg-gradient-to-br from-emerald-300/20 via-teal-200/10 to-emerald-300/20 rounded-[28px]"
+        ></div>
+
+        <!-- Soft Orbs -->
+        <div class="absolute inset-0 overflow-hidden">
+            <div
+                class="absolute -top-8 sm:-top-16 -left-8 sm:-left-16 w-32 h-32 sm:w-56 sm:h-56 bg-gradient-to-br from-emerald-300/30 to-teal-400/10 rounded-full"
+            ></div>
+            <div
+                class="absolute -bottom-8 sm:-bottom-16 -right-8 sm:-right-16 w-32 h-32 sm:w-56 sm:h-56 bg-gradient-to-tr from-teal-400/30 to-emerald-500/10 rounded-full"
+            ></div>
+            <div
+                class="absolute top-1/2 left-1/2 w-24 h-24 sm:w-48 sm:h-48 bg-gradient-to-br from-emerald-300/30 to-teal-400/10 rounded-full -translate-x-1/2 -translate-y-1/2"
+            ></div>
+        </div>
+
+        <!-- Header Content -->
+        <div class="relative p-3 sm:p-6 md:p-8 lg:p-12 z-10 w-full">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1
+                        class="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2"
+                    >
+                        Leave Balance
+                    </h1>
+                    <p class="text-emerald-100 text-sm sm:text-base md:text-lg">
+                        {% if user_to_view != user %} Viewing balance for {{
+                        user_to_view.get_full_name|default:user_to_view.username
+                        }} {% else %} Your current leave balance and allocation
+                        details {% endif %}
+                    </p>
+                </div>
+                <div class="hidden md:block">
+                    <div
+                        class="backdrop-blur-sm bg-white/20 rounded-xl border border-white/10 p-4"
+                    >
+                        <p class="text-2xl font-bold text-white">{{ year }}</p>
                         <p class="text-emerald-200 text-sm">Leave Year</p>
                     </div>
                 </div>
@@ -31,314 +55,513 @@
 
     <!-- Filter Section -->
     {% if can_view_all %}
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
-                <div class="flex items-center space-x-4">
-                    <label for="userSelect" class="text-gray-700 font-medium">View balance for:</label>
-                    <select id="userSelect" onchange="changeUser(this.value)"
-                            class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
-                        <option value="">Select Employee</option>
-                        {% for employee in all_employees %}
-                            <option value="{{ employee.id }}" {% if employee.id == user_to_view.id %}selected{% endif %}>
-                                {{ employee.get_full_name|default:employee.username }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="flex items-center space-x-2">
-                    <label for="yearSelect" class="text-gray-700 font-medium">Year:</label>
-                    <select id="yearSelect" onchange="changeYear(this.value)"
-                            class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
-                        {% for year_option in year_range %}
-                            <option value="{{ year_option }}" {% if year_option == year %}selected{% endif %}>
-                                {{ year_option }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </div>
+    <div
+        class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300 mb-6"
+    >
+        <div
+            class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0"
+        >
+            <div class="flex items-center space-x-4">
+                <label
+                    for="userSelect"
+                    class="text-gray-800 font-medium whitespace-nowrap"
+                    >View balance for:</label
+                >
+                <select
+                    id="userSelect"
+                    onchange="changeUser(this.value)"
+                    class="px-3 py-2 border border-gray-300/50 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 backdrop-blur-sm bg-white/50"
+                >
+                    <option value="">Select Employee</option>
+                    {% for employee in all_employees %}
+                    <option
+                        value="{{ employee.id }}"
+                        {%
+                        if
+                        employee.id=""
+                        ="user_to_view.id"
+                        %}selected{%
+                        endif
+                        %}
+                    >
+                        {{ employee.get_full_name|default:employee.username }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="flex items-center space-x-2">
+                <label
+                    for="yearSelect"
+                    class="text-gray-800 font-medium whitespace-nowrap"
+                    >Year:</label
+                >
+                <select
+                    id="yearSelect"
+                    onchange="changeYear(this.value)"
+                    class="px-3 py-2 border border-gray-300/50 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 backdrop-blur-sm bg-white/50"
+                >
+                    {% for year_option in year_range %}
+                    <option
+                        value="{{ year_option }}"
+                        {%
+                        if
+                        year_option=""
+                        ="year"
+                        %}selected{%
+                        endif
+                        %}
+                    >
+                        {{ year_option }}
+                    </option>
+                    {% endfor %}
+                </select>
             </div>
         </div>
+    </div>
     {% endif %}
 
     <!-- Balance Overview -->
     {% if balances %}
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {% for balance in balances %}
-                <div class="bg-white rounded-lg shadow-md p-6 border-l-4 {% if balance.leave_type.is_paid %}border-emerald-500{% else %}border-gray-400{% endif %}">
-                    <!-- Leave Type Header -->
-                    <div class="flex items-center justify-between mb-4">
-                        <div>
-                            <h3 class="text-lg font-semibold text-gray-900">{{ balance.leave_type.name }}</h3>
-                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {% if balance.leave_type.is_paid %}bg-emerald-100 text-emerald-800{% else %}bg-gray-100 text-gray-800{% endif %}">
-                                {% if balance.leave_type.is_paid %}
-                                    <i class="fas fa-dollar-sign mr-1"></i>Paid
-                                {% else %}
-                                    <i class="fas fa-minus mr-1"></i>Unpaid
-                                {% endif %}
-                            </span>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-2xl font-bold {% if balance.available > 0 %}text-emerald-600{% elif balance.available == 0 %}text-amber-600{% else %}text-rose-600{% endif %}">
-                                {{ balance.available }}
-                            </p>
-                            <p class="text-sm text-gray-500">Available</p>
-                        </div>
-                    </div>
-
-                    <!-- Balance Details -->
-                    <div class="grid grid-cols-3 gap-4 mb-4">
-                        <div class="text-center">
-                            <p class="text-2xl font-bold text-sky-600">{{ balance.allocated|default:0 }}</p>
-                            <p class="text-sm text-gray-600">Allocated</p>
-                        </div>
-                        <div class="text-center">
-                            <p class="text-2xl font-bold text-rose-600">{{ balance.used|default:0 }}</p>
-                            <p class="text-sm text-gray-600">Used</p>
-                        </div>
-                        <div class="text-center">
-                            <p class="text-2xl font-bold text-amber-600">{{ balance.pending|default:0 }}</p>
-                            <p class="text-sm text-gray-600">Pending</p>
-                        </div>
-                    </div>
-
-                    <!-- Progress Bar -->
-                    <div class="mb-4">
-                        {% if balance.allocated > 0 %}
-                            {% widthratio balance.used balance.allocated 100 as usage_percent %}
-                            {% widthratio balance.pending balance.allocated 100 as pending_percent %}
-                            <div class="w-full bg-gray-200 rounded-full h-3 relative overflow-hidden">
-                                <!-- Used portion -->
-                                <div class="absolute h-full bg-rose-500 rounded-full transition-all duration-300"
-                                     style="width: {{ usage_percent|default:0 }}%"></div>
-                                <!-- Pending portion -->
-                                <div class="absolute h-full bg-amber-400 rounded-full transition-all duration-300"
-                                     style="left: {{ usage_percent|default:0 }}%; width: {{ pending_percent|default:0 }}%"></div>
-                            </div>
-                            <div class="flex justify-between text-xs text-gray-500 mt-1">
-                                <span>{{ usage_percent|default:0 }}% used</span>
-                                <span>{{ pending_percent|default:0 }}% pending</span>
-                            </div>
-                        {% else %}
-                            <div class="w-full bg-gray-200 rounded-full h-3">
-                                <div class="h-full bg-gray-300 rounded-full" style="width: 0%"></div>
-                            </div>
-                            <p class="text-xs text-gray-500 mt-1">No allocation for this leave type</p>
-                        {% endif %}
-                    </div>
-
-                    <!-- Additional Info -->
-                    <div class="text-sm text-gray-600 space-y-1">
-                        {% if balance.leave_type.carryover_allowed %}
-                            <p><i class="fas fa-arrow-right mr-1 text-blue-500"></i>Carryover allowed</p>
-                        {% endif %}
-                        {% if balance.leave_type.requires_documentation %}
-                            <p><i class="fas fa-file-alt mr-1 text-amber-500"></i>Requires documentation</p>
-                        {% endif %}
-                        {% if balance.leave_type.can_be_half_day %}
-                            <p><i class="fas fa-clock mr-1 text-emerald-500"></i>Half-day allowed</p>
-                        {% endif %}
-                    </div>
-
-                    <!-- Quick Actions -->
-                    <div class="mt-4 pt-4 border-t border-gray-200">
-                        <div class="flex justify-between">
-                            {% if balance.available > 0 %}
-                                <a href="{% url 'leave_management:apply_leave' %}?leave_type={{ balance.leave_type.id }}"
-                                   class="inline-flex items-center px-3 py-1 border border-emerald-300 text-sm font-medium rounded-md text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors">
-                                    <i class="fas fa-plus mr-1"></i>
-                                    Apply
-                                </a>
-                            {% else %}
-                                <span class="inline-flex items-center px-3 py-1 rounded-md text-sm text-gray-500 bg-gray-100">
-                                    <i class="fas fa-ban mr-1"></i>
-                                    No balance
-                                </span>
-                            {% endif %}
-                            <a href="{% url 'leave_management:my_leaves' %}?leave_type={{ balance.leave_type.id }}"
-                               class="inline-flex items-center text-sm font-medium text-sky-600 hover:text-sky-800">
-                                View History <i class="fas fa-arrow-right ml-1"></i>
-                            </a>
-                        </div>
-                    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+        {% for balance in balances %}
+        <div
+            class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300 {% if balance.leave_type.is_paid %}border-l-4 border-l-emerald-500{% else %}border-l-4 border-l-gray-400{% endif %}"
+            data-balance-card
+            data-allocated="{{ balance.allocated|default:0 }}"
+            data-used="{{ balance.used|default:0 }}"
+            data-pending="{{ balance.pending|default:0 }}"
+            data-available="{{ balance.available|default:0 }}"
+        >
+            <!-- Leave Type Header -->
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800">
+                        {{ balance.leave_type.name }}
+                    </h3>
+                    <span
+                        class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium backdrop-blur-sm {% if balance.leave_type.is_paid %}bg-emerald-100/80 text-emerald-800{% else %}bg-gray-100/80 text-gray-800{% endif %}"
+                    >
+                        {% if balance.leave_type.is_paid %}
+                        <i class="fas fa-dollar-sign mr-1"></i>Paid {% else %}
+                        <i class="fas fa-minus mr-1"></i>Unpaid {% endif %}
+                    </span>
                 </div>
-            {% endfor %}
-        </div>
-
-        <!-- Summary Stats -->
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Balance Summary</h3>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div class="text-center p-4 bg-sky-50 rounded-lg border border-sky-200">
-                    <p class="text-2xl font-bold text-sky-600">{{ total_allocated|default:0 }}</p>
-                    <p class="text-sm text-gray-600">Total Allocated</p>
-                </div>
-                <div class="text-center p-4 bg-emerald-50 rounded-lg border border-emerald-200">
-                    <p class="text-2xl font-bold text-emerald-600">{{ total_available|default:0 }}</p>
-                    <p class="text-sm text-gray-600">Total Available</p>
-                </div>
-                <div class="text-center p-4 bg-rose-50 rounded-lg border border-rose-200">
-                    <p class="text-2xl font-bold text-rose-600">{{ total_used|default:0 }}</p>
-                    <p class="text-sm text-gray-600">Total Used</p>
-                </div>
-                <div class="text-center p-4 bg-amber-50 rounded-lg border border-amber-200">
-                    <p class="text-2xl font-bold text-amber-600">{{ total_pending|default:0 }}</p>
-                    <p class="text-sm text-gray-600">Total Pending</p>
+                <div class="text-right">
+                    <p
+                        class="text-2xl font-bold {% if balance.available > 0 %}text-emerald-600{% elif balance.available == 0 %}text-amber-600{% else %}text-rose-600{% endif %}"
+                    >
+                        {{ balance.available }}
+                    </p>
+                    <p class="text-sm text-gray-600">Available</p>
                 </div>
             </div>
-        </div>
 
-        <!-- Recent Transactions -->
-        {% if recent_transactions %}
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-semibold text-gray-900">Recent Leave Transactions</h3>
-                    <a href="{% url 'leave_management:my_leaves' %}" class="text-emerald-600 hover:text-emerald-800 text-sm font-medium">
-                        View All <i class="fas fa-arrow-right ml-1"></i>
+            <!-- Balance Details -->
+            <div class="grid grid-cols-3 gap-4 mb-4">
+                <div class="text-center">
+                    <p class="text-2xl font-bold text-sky-600">
+                        {{ balance.allocated|default:0 }}
+                    </p>
+                    <p class="text-sm text-gray-700">Allocated</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-2xl font-bold text-rose-600">
+                        {{ balance.used|default:0 }}
+                    </p>
+                    <p class="text-sm text-gray-700">Used</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-2xl font-bold text-amber-600">
+                        {{ balance.pending|default:0 }}
+                    </p>
+                    <p class="text-sm text-gray-700">Pending</p>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="mb-4">
+                {% if balance.allocated > 0 %} {% widthratio balance.used
+                balance.allocated 100 as usage_percent %} {% widthratio
+                balance.pending balance.allocated 100 as pending_percent %}
+                <div
+                    class="w-full bg-gray-200/50 rounded-full h-3 relative overflow-hidden backdrop-blur-sm"
+                >
+                    <!-- Used portion -->
+                    <div
+                        class="absolute h-full bg-rose-500 rounded-full transition-all duration-300"
+                        style="width: {{ usage_percent|default:0 }}%"
+                    ></div>
+                    <!-- Pending portion -->
+                    <div
+                        class="absolute h-full bg-amber-400 rounded-full transition-all duration-300"
+                        style="left: {{ usage_percent|default:0 }}%; width: {{ pending_percent|default:0 }}%"
+                    ></div>
+                </div>
+                <div class="flex justify-between text-xs text-gray-600 mt-1">
+                    <span>{{ usage_percent|default:0 }}% used</span>
+                    <span>{{ pending_percent|default:0 }}% pending</span>
+                </div>
+                {% else %}
+                <div
+                    class="w-full bg-gray-200/50 rounded-full h-3 backdrop-blur-sm"
+                >
+                    <div
+                        class="h-full bg-gray-300 rounded-full"
+                        style="width: 0%"
+                    ></div>
+                </div>
+                <p class="text-xs text-gray-600 mt-1">
+                    No allocation for this leave type
+                </p>
+                {% endif %}
+            </div>
+
+            <!-- Additional Info -->
+            <div class="text-sm text-gray-800 space-y-1 mb-4">
+                {% if balance.leave_type.carryover_allowed %}
+                <p>
+                    <i class="fas fa-arrow-right mr-1 text-blue-500"></i
+                    >Carryover allowed
+                </p>
+                {% endif %} {% if balance.leave_type.requires_documentation %}
+                <p>
+                    <i class="fas fa-file-alt mr-1 text-amber-500"></i>Requires
+                    documentation
+                </p>
+                {% endif %} {% if balance.leave_type.can_be_half_day %}
+                <p>
+                    <i class="fas fa-clock mr-1 text-emerald-500"></i>Half-day
+                    allowed
+                </p>
+                {% endif %}
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="pt-4 border-t border-gray-200/30">
+                <div class="flex justify-between">
+                    {% if balance.available > 0 %}
+                    <a
+                        href="{% url 'leave_management:apply_leave' %}?leave_type={{ balance.leave_type.id }}"
+                        class="btn-secondary-small"
+                    >
+                        <i class="fas fa-plus mr-1"></i>
+                        Apply
+                    </a>
+                    {% else %}
+                    <span
+                        class="inline-flex items-center px-3 py-1 rounded-md text-sm text-gray-600 bg-gray-100/50 backdrop-blur-sm"
+                    >
+                        <i class="fas fa-ban mr-1"></i>
+                        No balance
+                    </span>
+                    {% endif %}
+                    <a
+                        href="{% url 'leave_management:my_leaves' %}?leave_type={{ balance.leave_type.id }}"
+                        class="inline-flex items-center text-sm font-medium text-sky-600 hover:text-sky-800 transition-colors bg-sky-50 px-3 py-1 rounded-md hover:bg-sky-100"
+                    >
+                        View History <i class="fas fa-arrow-right ml-1"></i>
                     </a>
                 </div>
-                <div class="space-y-3">
-                    {% for transaction in recent_transactions %}
-                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                            <div class="flex items-center space-x-3">
-                                <div class="w-8 h-8 {% if transaction.status == 'Approved' %}bg-emerald-100 text-emerald-600{% elif transaction.status == 'Pending' %}bg-amber-100 text-amber-600{% else %}bg-rose-100 text-rose-600{% endif %} rounded-full flex items-center justify-center">
-                                    <i class="fas {% if transaction.status == 'Approved' %}fa-check{% elif transaction.status == 'Pending' %}fa-clock{% else %}fa-times{% endif %} text-sm"></i>
-                                </div>
-                                <div>
-                                    <p class="font-medium text-gray-900">{{ transaction.leave_type.name }}</p>
-                                    <p class="text-sm text-gray-600">
-                                        {{ transaction.start_date|date:"M j" }} - {{ transaction.end_date|date:"M j, Y" }}
-                                    </p>
-                                </div>
-                            </div>
-                            <div class="text-right">
-                                <p class="font-medium {% if transaction.status == 'Approved' %}text-rose-600{% else %}text-gray-600{% endif %}">
-                                    {% if transaction.status == 'Approved' %}-{% endif %}{{ transaction.leave_days }} days
-                                </p>
-                                <p class="text-sm text-gray-500">{{ transaction.status }}</p>
-                            </div>
-                        </div>
-                    {% endfor %}
-                </div>
-            </div>
-        {% endif %}
-    {% else %}
-        <!-- Empty State -->
-        <div class="bg-white rounded-lg shadow-md p-12">
-            <div class="text-center">
-                <div class="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                    <i class="fas fa-chart-bar text-gray-400 text-3xl"></i>
-                </div>
-                <h3 class="text-lg font-medium text-gray-900 mb-2">No Leave Balance Information</h3>
-                <p class="text-gray-600 mb-6">
-                    {% if user_to_view != user %}
-                        No leave balance information is available for {{ user_to_view.get_full_name|default:user_to_view.username }} for {{ year }}.
-                    {% else %}
-                        You don't have any leave balance information for {{ year }}.
-                    {% endif %}
-                </p>
-                {% if can_view_all %}
-                    <p class="text-sm text-gray-500 mb-4">Contact HR to set up leave allocations for this employee.</p>
-                {% else %}
-                    <p class="text-sm text-gray-500 mb-4">Contact HR to set up your leave allocations.</p>
-                {% endif %}
-                <a href="{% url 'leave_management:dashboard' %}"
-                   class="inline-flex items-center px-4 py-2 border border-emerald-300 text-sm font-medium rounded-md text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors">
-                    <i class="fas fa-arrow-left mr-2"></i>
-                    Back to Dashboard
-                </a>
             </div>
         </div>
+        {% endfor %}
+    </div>
+
+    <!-- Summary Stats -->
+    <div
+        class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300 mb-6"
+    >
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">
+            Balance Summary
+        </h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div
+                class="text-center p-4 backdrop-blur-sm bg-white/30 rounded-lg border border-sky-200/30"
+            >
+                <p
+                    class="text-2xl font-bold text-sky-600"
+                    data-summary="allocated"
+                >
+                    {{ total_allocated|default:0 }}
+                </p>
+                <p class="text-sm text-gray-800">Total Allocated</p>
+            </div>
+            <div
+                class="text-center p-4 backdrop-blur-sm bg-white/30 rounded-lg border border-emerald-200/30"
+            >
+                <p
+                    class="text-2xl font-bold text-emerald-600"
+                    data-summary="available"
+                >
+                    {{ total_available|default:0 }}
+                </p>
+                <p class="text-sm text-gray-800">Total Available</p>
+            </div>
+            <div
+                class="text-center p-4 backdrop-blur-sm bg-white/30 rounded-lg border border-rose-200/30"
+            >
+                <p class="text-2xl font-bold text-rose-600" data-summary="used">
+                    {{ total_used|default:0 }}
+                </p>
+                <p class="text-sm text-gray-800">Total Used</p>
+            </div>
+            <div
+                class="text-center p-4 backdrop-blur-sm bg-white/30 rounded-lg border border-amber-200/30"
+            >
+                <p
+                    class="text-2xl font-bold text-amber-600"
+                    data-summary="pending"
+                >
+                    {{ total_pending|default:0 }}
+                </p>
+                <p class="text-sm text-gray-800">Total Pending</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Transactions -->
+    {% if recent_transactions %}
+    <div
+        class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300 mb-6"
+    >
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-800">
+                Recent Leave Transactions
+            </h3>
+            <a
+                href="{% url 'leave_management:my_leaves' %}"
+                class="text-emerald-600 hover:text-emerald-800 text-sm font-medium transition-colors"
+            >
+                View All <i class="fas fa-arrow-right ml-1"></i>
+            </a>
+        </div>
+        <div class="space-y-3">
+            {% for transaction in recent_transactions %}
+            <div
+                class="flex items-center justify-between p-3 backdrop-blur-sm bg-white/30 rounded-lg hover:bg-white/40 transition-all duration-200"
+            >
+                <div class="flex items-center space-x-3">
+                    <div
+                        class="w-8 h-8 {% if transaction.status == 'Approved' %}bg-emerald-100/50 text-emerald-600{% elif transaction.status == 'Pending' %}bg-amber-100/50 text-amber-600{% else %}bg-rose-100/50 text-rose-600{% endif %} rounded-full flex items-center justify-center backdrop-blur-sm"
+                    >
+                        <i
+                            class="fas {% if transaction.status == 'Approved' %}fa-check{% elif transaction.status == 'Pending' %}fa-clock{% else %}fa-times{% endif %} text-sm"
+                        ></i>
+                    </div>
+                    <div>
+                        <p class="font-medium text-gray-800">
+                            {{ transaction.leave_type.name }}
+                        </p>
+                        <p class="text-sm text-gray-700">
+                            {{ transaction.start_date|date:"M j" }} - {{
+                            transaction.end_date|date:"M j, Y" }}
+                        </p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p
+                        class="font-medium {% if transaction.status == 'Approved' %}text-rose-600{% else %}text-gray-600{% endif %}"
+                    >
+                        {% if transaction.status == 'Approved' %}-{% endif %}{{
+                        transaction.leave_days }} days
+                    </p>
+                    <p class="text-sm text-gray-600">
+                        {{ transaction.status }}
+                    </p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %} {% else %}
+    <!-- Empty State -->
+    <div
+        class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-12 hover:bg-white/25 transition-all duration-300"
+    >
+        <div class="text-center">
+            <div
+                class="mx-auto w-24 h-24 bg-gray-100/50 rounded-full flex items-center justify-center mb-4 backdrop-blur-sm"
+            >
+                <i class="fas fa-chart-bar text-gray-400 text-3xl"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-800 mb-2">
+                No Leave Balance Information
+            </h3>
+            <p class="text-gray-700 mb-6">
+                {% if user_to_view != user %} No leave balance information is
+                available for {{
+                user_to_view.get_full_name|default:user_to_view.username }} for
+                {{ year }}. {% else %} You don't have any leave balance
+                information for {{ year }}. {% endif %}
+            </p>
+            {% if can_view_all %}
+            <p class="text-sm text-gray-600 mb-4">
+                Contact HR to set up leave allocations for this employee.
+            </p>
+            {% else %}
+            <p class="text-sm text-gray-600 mb-4">
+                Contact HR to set up your leave allocations.
+            </p>
+            {% endif %}
+            <a
+                href="{% url 'leave_management:dashboard' %}"
+                class="btn-secondary"
+            >
+                <i class="fas fa-arrow-left mr-2"></i>
+                Back to Dashboard
+            </a>
+        </div>
+    </div>
     {% endif %}
 
     <!-- Help Section -->
-    <div class="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg p-6 border border-emerald-200">
+    <div
+        class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300"
+    >
         <div class="flex items-start space-x-3">
             <div class="flex-shrink-0">
                 <i class="fas fa-info-circle text-2xl text-emerald-500"></i>
             </div>
             <div>
-                <h3 class="text-lg font-medium text-gray-900 mb-2">Understanding Your Balance</h3>
-                <div class="text-sm text-gray-600 space-y-2">
-                    <p>• <strong>Allocated:</strong> Total leave days assigned to you for this year</p>
-                    <p>• <strong>Used:</strong> Leave days you've already taken (approved requests)</p>
-                    <p>• <strong>Pending:</strong> Leave days in submitted requests awaiting approval</p>
-                    <p>• <strong>Available:</strong> Remaining leave days you can use (Allocated - Used - Pending)</p>
-                    <p>• Some leave types may have carryover policies - check with HR for details</p>
+                <h3 class="text-lg font-medium text-gray-800 mb-2">
+                    Understanding Your Balance
+                </h3>
+                <div class="text-sm text-gray-800 space-y-2">
+                    <p>
+                        • <strong>Allocated:</strong> Total leave days assigned
+                        to you for this year
+                    </p>
+                    <p>
+                        • <strong>Used:</strong> Leave days you've already taken
+                        (approved requests)
+                    </p>
+                    <p>
+                        • <strong>Pending:</strong> Leave days in submitted
+                        requests awaiting approval
+                    </p>
+                    <p>
+                        • <strong>Available:</strong> Remaining leave days you
+                        can use (Allocated - Used - Pending)
+                    </p>
+                    <p>
+                        • Some leave types may have carryover policies - check
+                        with HR for details
+                    </p>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+<style>
+    .btn-primary {
+        @apply px-2 py-1.5 sm:px-3 sm:py-2 lg:px-4 lg:py-2.5 bg-emerald-600 text-white rounded-lg shadow-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg text-xs sm:text-sm lg:text-base backdrop-blur-sm font-medium;
+    }
+
+    .btn-secondary {
+        @apply px-2 py-1.5 sm:px-3 sm:py-2 lg:px-4 lg:py-2.5 bg-white/50 text-gray-800 border border-gray-400/60 rounded-lg shadow-sm hover:bg-white/70 hover:border-gray-500/70 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-300 hover:shadow-md text-xs sm:text-sm lg:text-base backdrop-blur-sm font-medium;
+    }
+
+    .btn-secondary-small {
+        @apply px-2 py-1 bg-white/50 text-gray-800 border border-emerald-400/60 rounded text-xs font-medium hover:bg-white/70 hover:border-emerald-500/70 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-300 hover:shadow-sm backdrop-blur-sm;
+    }
+
+    /* Custom scrollbar */
+    .scrollbar-thin::-webkit-scrollbar {
+        width: 3px;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 10px;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.5);
+    }
+</style>
+
 <script>
-{% if can_view_all %}
-function changeUser(userId) {
-    const currentUrl = new URL(window.location.href);
-    if (userId) {
-        currentUrl.searchParams.set('user_id', userId);
-    } else {
-        currentUrl.searchParams.delete('user_id');
+    {% if can_view_all %}
+    function changeUser(userId) {
+        const currentUrl = new URL(window.location.href);
+        if (userId) {
+            currentUrl.searchParams.set("user_id", userId);
+        } else {
+            currentUrl.searchParams.delete("user_id");
+        }
+        window.location.href = currentUrl.toString();
     }
-    window.location.href = currentUrl.toString();
-}
-{% endif %}
+    {% endif %}
 
-function changeYear(year) {
-    const currentUrl = new URL(window.location.href);
-    currentUrl.searchParams.set('year', year);
-    window.location.href = currentUrl.toString();
-}
-
-// Auto-refresh every 5 minutes to get latest balance updates
-setTimeout(function() {
-    if (document.visibilityState === 'visible') {
-        window.location.reload();
+    function changeYear(year) {
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.set("year", year);
+        window.location.href = currentUrl.toString();
     }
-}, 300000);
 
-// Add hover effects to balance cards
-document.querySelectorAll('.bg-white.rounded-lg.shadow-md').forEach(function(card) {
-    card.addEventListener('mouseenter', function() {
-        this.classList.add('shadow-lg');
-        this.style.transform = 'translateY(-2px)';
-        this.style.transition = 'all 0.2s ease-in-out';
+    // Auto-refresh every 5 minutes to get latest balance updates
+    setTimeout(function () {
+        if (document.visibilityState === "visible") {
+            window.location.reload();
+        }
+    }, 300000);
+
+    // Add hover effects to balance cards
+    document
+        .querySelectorAll(".backdrop-blur-xl")
+        .forEach(function (card) {
+            card.addEventListener("mouseenter", function () {
+                this.style.transform = "translateY(-2px)";
+                this.style.transition = "all 0.2s ease-in-out";
+            });
+
+            card.addEventListener("mouseleave", function () {
+                this.style.transform = "translateY(0)";
+            });
+        });
+
+    // Calculate totals dynamically (in case template doesn't provide them)
+    document.addEventListener("DOMContentLoaded", function () {
+        const balanceCards = document.querySelectorAll("[data-balance-card]");
+        let totalAllocated = 0,
+            totalUsed = 0,
+            totalPending = 0,
+            totalAvailable = 0;
+
+        balanceCards.forEach(function (card) {
+            const allocated = parseFloat(card.dataset.allocated || 0);
+            const used = parseFloat(card.dataset.used || 0);
+            const pending = parseFloat(card.dataset.pending || 0);
+            const available = parseFloat(card.dataset.available || 0);
+
+            totalAllocated += allocated;
+            totalUsed += used;
+            totalPending += pending;
+            totalAvailable += available;
+        });
+
+        // Update summary if elements exist
+        const summaryElements = {
+            allocated: document.querySelector('[data-summary="allocated"]'),
+            used: document.querySelector('[data-summary="used"]'),
+            pending: document.querySelector('[data-summary="pending"]'),
+            available: document.querySelector('[data-summary="available"]'),
+        };
+
+        if (summaryElements.allocated)
+            summaryElements.allocated.textContent = totalAllocated;
+        if (summaryElements.used)
+            summaryElements.used.textContent = totalUsed;
+        if (summaryElements.pending)
+            summaryElements.pending.textContent = totalPending;
+        if (summaryElements.available)
+            summaryElements.available.textContent = totalAvailable;
     });
-
-    card.addEventListener('mouseleave', function() {
-        this.classList.remove('shadow-lg');
-        this.style.transform = 'translateY(0)';
-    });
-});
-
-// Calculate totals dynamically (in case template doesn't provide them)
-document.addEventListener('DOMContentLoaded', function() {
-    const balanceCards = document.querySelectorAll('[data-balance-card]');
-    let totalAllocated = 0, totalUsed = 0, totalPending = 0, totalAvailable = 0;
-
-    balanceCards.forEach(function(card) {
-        const allocated = parseFloat(card.dataset.allocated || 0);
-        const used = parseFloat(card.dataset.used || 0);
-        const pending = parseFloat(card.dataset.pending || 0);
-        const available = parseFloat(card.dataset.available || 0);
-
-        totalAllocated += allocated;
-        totalUsed += used;
-        totalPending += pending;
-        totalAvailable += available;
-    });
-
-    // Update summary if elements exist
-    const summaryElements = {
-        allocated: document.querySelector('[data-summary="allocated"]'),
-        used: document.querySelector('[data-summary="used"]'),
-        pending: document.querySelector('[data-summary="pending"]'),
-        available: document.querySelector('[data-summary="available"]')
-    };
-
-    if (summaryElements.allocated) summaryElements.allocated.textContent = totalAllocated;
-    if (summaryElements.used) summaryElements.used.textContent = totalUsed;
-    if (summaryElements.pending) summaryElements.pending.textContent = totalPending;
-    if (summaryElements.available) summaryElements.available.textContent = totalAvailable;
-});
 </script>
 {% endblock %}

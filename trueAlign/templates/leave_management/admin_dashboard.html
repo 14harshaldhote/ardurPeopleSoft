@@ -1,22 +1,55 @@
-{% extends 'base.html' %}
-{% load static %}
-
-{% block title %}Admin Dashboard - Leave Management{% endblock %}
-
-{% block content %}
-<div class="space-y-6">
+{% extends 'base.html' %} {% load static %} {% block title %}Admin Dashboard -
+Leave Management{% endblock %} {% block content %}
+<div
+    class="mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-6 w-full max-w-full overflow-x-hidden"
+>
     <!-- Header Section -->
-    <div class="bg-gradient-to-r from-rose-500 to-pink-500 rounded-lg shadow-lg p-6 text-white">
-        <div class="flex items-center justify-between">
-            <div>
-                <h1 class="text-3xl font-bold">Admin Dashboard</h1>
-                <p class="text-rose-100 mt-2">System-wide leave management and administration</p>
-            </div>
-            <div class="hidden md:block">
-                <div class="flex items-center space-x-4">
-                    <div class="text-right">
-                        <p class="text-2xl font-bold">{{ current_year }}</p>
-                        <p class="text-rose-200 text-sm">Current Year</p>
+    <div
+        class="relative overflow-hidden mb-3 sm:mb-6 rounded-[16px] sm:rounded-[20px] lg:rounded-[28px] bg-white/10 border border-white/40 shadow-[0_10px_30px_rgba(0,0,0,0.15)] hover:scale-[1.005] sm:hover:scale-[1.015] transition-all duration-500"
+    >
+        <!-- Gradient Background -->
+        <div
+            class="absolute inset-0 bg-gradient-to-br from-rose-300/20 via-pink-200/10 to-rose-300/20 rounded-[28px]"
+        ></div>
+
+        <!-- Soft Orbs -->
+        <div class="absolute inset-0 overflow-hidden">
+            <div
+                class="absolute -top-8 sm:-top-16 -left-8 sm:-left-16 w-32 h-32 sm:w-56 sm:h-56 bg-gradient-to-br from-rose-300/30 to-pink-400/10 rounded-full"
+            ></div>
+            <div
+                class="absolute -bottom-8 sm:-bottom-16 -right-8 sm:-right-16 w-32 h-32 sm:w-56 sm:h-56 bg-gradient-to-tr from-rose-400/30 to-pink-500/10 rounded-full"
+            ></div>
+            <div
+                class="absolute top-1/2 left-1/2 w-24 h-24 sm:w-48 sm:h-48 bg-gradient-to-br from-rose-300/30 to-pink-400/10 rounded-full -translate-x-1/2 -translate-y-1/2"
+            ></div>
+        </div>
+
+        <!-- Header Content -->
+        <div class="relative p-3 sm:p-6 md:p-8 lg:p-12 z-10 w-full">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1
+                        class="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2"
+                    >
+                        Admin Dashboard
+                    </h1>
+                    <p class="text-rose-100 text-sm sm:text-base md:text-lg">
+                        System-wide leave management and administration
+                    </p>
+                </div>
+                <div class="hidden md:block">
+                    <div class="flex items-center space-x-4">
+                        <div
+                            class="text-right backdrop-blur-sm bg-white/20 rounded-xl border border-white/10 p-4"
+                        >
+                            <p
+                                class="text-2xl sm:text-3xl font-bold text-white"
+                            >
+                                {{ current_year }}
+                            </p>
+                            <p class="text-rose-200 text-sm">Current Year</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -24,154 +57,270 @@
     </div>
 
     <!-- Quick Stats -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6">
         <!-- Total Users -->
-        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-rose-500">
+        <div
+            class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300"
+        >
             <div class="flex items-center">
-                <div class="p-3 rounded-full bg-rose-100 text-rose-600">
-                    <i class="fas fa-users text-xl"></i>
+                <div
+                    class="p-3 rounded-full bg-rose-500/20 text-rose-600 backdrop-blur-sm border border-rose-400/20"
+                >
+                    <i class="fas fa-users text-lg sm:text-xl"></i>
                 </div>
                 <div class="ml-4">
-                    <p class="text-2xl font-semibold text-gray-900">{{ stats.total_users|default:0 }}</p>
-                    <p class="text-gray-600">Total Users</p>
+                    <p class="text-xl sm:text-2xl font-semibold text-gray-800">
+                        {{ stats.total_users|default:0 }}
+                    </p>
+                    <p class="text-gray-800 text-sm sm:text-base font-medium">
+                        Total Users
+                    </p>
                 </div>
             </div>
         </div>
 
         <!-- Leave Types -->
-        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-emerald-500">
+        <div
+            class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300"
+        >
             <div class="flex items-center">
-                <div class="p-3 rounded-full bg-emerald-100 text-emerald-600">
-                    <i class="fas fa-list text-xl"></i>
+                <div
+                    class="p-3 rounded-full bg-emerald-500/20 text-emerald-600 backdrop-blur-sm border border-emerald-400/20"
+                >
+                    <i class="fas fa-list text-lg sm:text-xl"></i>
                 </div>
                 <div class="ml-4">
-                    <p class="text-2xl font-semibold text-gray-900">{{ stats.total_leave_types|default:0 }}</p>
-                    <p class="text-gray-600">Leave Types</p>
+                    <p class="text-xl sm:text-2xl font-semibold text-gray-800">
+                        {{ stats.total_leave_types|default:0 }}
+                    </p>
+                    <p class="text-gray-800 text-sm sm:text-base font-medium">
+                        Leave Types
+                    </p>
                 </div>
             </div>
         </div>
 
         <!-- Policies -->
-        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-sky-500">
+        <div
+            class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300"
+        >
             <div class="flex items-center">
-                <div class="p-3 rounded-full bg-sky-100 text-sky-600">
-                    <i class="fas fa-file-alt text-xl"></i>
+                <div
+                    class="p-3 rounded-full bg-sky-500/20 text-sky-600 backdrop-blur-sm border border-sky-400/20"
+                >
+                    <i class="fas fa-file-alt text-lg sm:text-xl"></i>
                 </div>
                 <div class="ml-4">
-                    <p class="text-2xl font-semibold text-gray-900">{{ stats.total_policies|default:0 }}</p>
-                    <p class="text-gray-600">Active Policies</p>
+                    <p class="text-xl sm:text-2xl font-semibold text-gray-800">
+                        {{ stats.total_policies|default:0 }}
+                    </p>
+                    <p class="text-gray-800 text-sm sm:text-base font-medium">
+                        Active Policies
+                    </p>
                 </div>
             </div>
         </div>
 
         <!-- Pending Requests -->
-        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-amber-500">
+        <div
+            class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300"
+        >
             <div class="flex items-center">
-                <div class="p-3 rounded-full bg-amber-100 text-amber-600">
-                    <i class="fas fa-clock text-xl"></i>
+                <div
+                    class="p-3 rounded-full bg-amber-500/20 text-amber-600 backdrop-blur-sm border border-amber-400/20"
+                >
+                    <i class="fas fa-clock text-lg sm:text-xl"></i>
                 </div>
                 <div class="ml-4">
-                    <p class="text-2xl font-semibold text-gray-900">{{ stats.pending_requests|default:0 }}</p>
-                    <p class="text-gray-600">Pending Requests</p>
+                    <p class="text-xl sm:text-2xl font-semibold text-gray-800">
+                        {{ stats.pending_requests|default:0 }}
+                    </p>
+                    <p class="text-gray-800 text-sm sm:text-base font-medium">
+                        Pending Requests
+                    </p>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Main Content Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
         <!-- Left Column - System Management -->
-        <div class="lg:col-span-2 space-y-6">
+        <div class="lg:col-span-2 space-y-3 sm:space-y-4 lg:space-y-6">
             <!-- System Management Tools -->
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">System Management</h3>
+            <div
+                class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300"
+            >
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                    System Management
+                </h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="p-4 border border-rose-200 rounded-lg hover:shadow-md transition-shadow bg-rose-50">
+                    <div
+                        class="backdrop-blur-sm bg-white/20 rounded-[12px] border border-rose-200/30 p-4 hover:bg-white/30 transition-all duration-200 transform hover:scale-105"
+                    >
                         <div class="flex items-center mb-3">
-                            <i class="fas fa-users text-rose-600 text-xl mr-3"></i>
-                            <h4 class="font-medium text-gray-900">User Management</h4>
+                            <i
+                                class="fas fa-users text-rose-600 text-xl mr-3"
+                            ></i>
+                            <h4 class="font-medium text-gray-800">
+                                User Management
+                            </h4>
                         </div>
-                        <p class="text-sm text-gray-600 mb-4">Manage user roles and permissions</p>
-                        <a href="/admin/auth/user/" class="inline-flex items-center text-sm font-medium text-rose-600 hover:text-rose-800">
+                        <p class="text-sm text-gray-700 mb-4">
+                            Manage user roles and permissions
+                        </p>
+                        <a
+                            href="/admin/auth/user/"
+                            class="inline-flex items-center text-sm font-medium text-rose-600 hover:text-rose-800 transition-colors bg-rose-50 px-3 py-1 rounded-md hover:bg-rose-100"
+                        >
                             Manage Users <i class="fas fa-arrow-right ml-1"></i>
                         </a>
                     </div>
 
-                    <div class="p-4 border border-emerald-200 rounded-lg hover:shadow-md transition-shadow bg-emerald-50">
+                    <div
+                        class="backdrop-blur-sm bg-white/20 rounded-[12px] border border-emerald-200/30 p-4 hover:bg-white/30 transition-all duration-200 transform hover:scale-105"
+                    >
                         <div class="flex items-center mb-3">
-                            <i class="fas fa-list text-emerald-600 text-xl mr-3"></i>
-                            <h4 class="font-medium text-gray-900">Leave Types</h4>
+                            <i
+                                class="fas fa-list text-emerald-600 text-xl mr-3"
+                            ></i>
+                            <h4 class="font-medium text-gray-800">
+                                Leave Types
+                            </h4>
                         </div>
-                        <p class="text-sm text-gray-600 mb-4">Configure available leave types</p>
-                        <a href="/admin/trueAlign/leavetype/" class="inline-flex items-center text-sm font-medium text-emerald-600 hover:text-emerald-800">
+                        <p class="text-sm text-gray-700 mb-4">
+                            Configure available leave types
+                        </p>
+                        <a
+                            href="/admin/trueAlign/leavetype/"
+                            class="inline-flex items-center text-sm font-medium text-emerald-600 hover:text-emerald-800 transition-colors bg-emerald-50 px-3 py-1 rounded-md hover:bg-emerald-100"
+                        >
                             Manage Types <i class="fas fa-arrow-right ml-1"></i>
                         </a>
                     </div>
 
-                    <div class="p-4 border border-sky-200 rounded-lg hover:shadow-md transition-shadow bg-sky-50">
+                    <div
+                        class="backdrop-blur-sm bg-white/20 rounded-[12px] border border-sky-200/30 p-4 hover:bg-white/30 transition-all duration-200 transform hover:scale-105"
+                    >
                         <div class="flex items-center mb-3">
-                            <i class="fas fa-file-alt text-sky-600 text-xl mr-3"></i>
-                            <h4 class="font-medium text-gray-900">Leave Policies</h4>
+                            <i
+                                class="fas fa-file-alt text-sky-600 text-xl mr-3"
+                            ></i>
+                            <h4 class="font-medium text-gray-800">
+                                Leave Policies
+                            </h4>
                         </div>
-                        <p class="text-sm text-gray-600 mb-4">Configure leave policies and rules</p>
-                        <a href="/admin/trueAlign/leavepolicy/" class="inline-flex items-center text-sm font-medium text-sky-600 hover:text-sky-800">
-                            Manage Policies <i class="fas fa-arrow-right ml-1"></i>
+                        <p class="text-sm text-gray-700 mb-4">
+                            Configure leave policies and rules
+                        </p>
+                        <a
+                            href="/admin/trueAlign/leavepolicy/"
+                            class="inline-flex items-center text-sm font-medium text-sky-600 hover:text-sky-800 transition-colors bg-sky-50 px-3 py-1 rounded-md hover:bg-sky-100"
+                        >
+                            Manage Policies
+                            <i class="fas fa-arrow-right ml-1"></i>
                         </a>
                     </div>
 
-                    <div class="p-4 border border-amber-200 rounded-lg hover:shadow-md transition-shadow bg-amber-50">
+                    <div
+                        class="backdrop-blur-sm bg-white/20 rounded-[12px] border border-amber-200/30 p-4 hover:bg-white/30 transition-all duration-200 transform hover:scale-105"
+                    >
                         <div class="flex items-center mb-3">
-                            <i class="fas fa-chart-bar text-amber-600 text-xl mr-3"></i>
-                            <h4 class="font-medium text-gray-900">Leave Allocations</h4>
+                            <i
+                                class="fas fa-chart-bar text-amber-600 text-xl mr-3"
+                            ></i>
+                            <h4 class="font-medium text-gray-800">
+                                Leave Allocations
+                            </h4>
                         </div>
-                        <p class="text-sm text-gray-600 mb-4">Manage leave allocations</p>
-                        <a href="/admin/trueAlign/leaveallocation/" class="inline-flex items-center text-sm font-medium text-amber-600 hover:text-amber-800">
-                            Manage Allocations <i class="fas fa-arrow-right ml-1"></i>
+                        <p class="text-sm text-gray-700 mb-4">
+                            Manage leave allocations
+                        </p>
+                        <a
+                            href="/admin/trueAlign/leaveallocation/"
+                            class="inline-flex items-center text-sm font-medium text-amber-600 hover:text-amber-800 transition-colors bg-amber-50 px-3 py-1 rounded-md hover:bg-amber-100"
+                        >
+                            Manage Allocations
+                            <i class="fas fa-arrow-right ml-1"></i>
                         </a>
                     </div>
                 </div>
             </div>
 
             <!-- System Status -->
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">System Status</h3>
+            <div
+                class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300"
+            >
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                    System Status
+                </h3>
                 <div class="space-y-4">
-                    <div class="flex items-center justify-between p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+                    <div
+                        class="flex items-center justify-between p-4 backdrop-blur-sm bg-white/30 border border-emerald-200/30 rounded-lg"
+                    >
                         <div class="flex items-center space-x-3">
-                            <div class="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
+                            <div
+                                class="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"
+                            ></div>
                             <div>
-                                <p class="font-medium text-gray-900">Leave Management System</p>
-                                <p class="text-sm text-gray-600">All services operational</p>
+                                <p class="font-medium text-gray-800">
+                                    Leave Management System
+                                </p>
+                                <p class="text-sm text-gray-700">
+                                    All services operational
+                                </p>
                             </div>
                         </div>
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                        <span
+                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100/80 text-emerald-800 backdrop-blur-sm"
+                        >
                             Active
                         </span>
                     </div>
 
-                    <div class="flex items-center justify-between p-4 bg-sky-50 border border-sky-200 rounded-lg">
+                    <div
+                        class="flex items-center justify-between p-4 backdrop-blur-sm bg-white/30 border border-sky-200/30 rounded-lg"
+                    >
                         <div class="flex items-center space-x-3">
                             <div class="w-3 h-3 bg-sky-500 rounded-full"></div>
                             <div>
-                                <p class="font-medium text-gray-900">Database</p>
-                                <p class="text-sm text-gray-600">Connected and responsive</p>
+                                <p class="font-medium text-gray-800">
+                                    Database
+                                </p>
+                                <p class="text-sm text-gray-700">
+                                    Connected and responsive
+                                </p>
                             </div>
                         </div>
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-sky-100 text-sky-800">
+                        <span
+                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-sky-100/80 text-sky-800 backdrop-blur-sm"
+                        >
                             Healthy
                         </span>
                     </div>
 
                     {% if stats.pending_requests > 0 %}
-                    <div class="flex items-center justify-between p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                    <div
+                        class="flex items-center justify-between p-4 backdrop-blur-sm bg-white/30 border border-amber-200/30 rounded-lg"
+                    >
                         <div class="flex items-center space-x-3">
-                            <div class="w-3 h-3 bg-amber-500 rounded-full animate-pulse"></div>
+                            <div
+                                class="w-3 h-3 bg-amber-500 rounded-full animate-pulse"
+                            ></div>
                             <div>
-                                <p class="font-medium text-gray-900">Pending Approvals</p>
-                                <p class="text-sm text-gray-600">{{ stats.pending_requests }} request{{ stats.pending_requests|pluralize }} awaiting approval</p>
+                                <p class="font-medium text-gray-800">
+                                    Pending Approvals
+                                </p>
+                                <p class="text-sm text-gray-700">
+                                    {{ stats.pending_requests }} request{{
+                                    stats.pending_requests|pluralize }} awaiting
+                                    approval
+                                </p>
                             </div>
                         </div>
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                        <span
+                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100/80 text-amber-800 backdrop-blur-sm"
+                        >
                             Attention
                         </span>
                     </div>
@@ -181,31 +330,40 @@
         </div>
 
         <!-- Right Column - Quick Actions -->
-        <div class="space-y-6">
+        <div class="space-y-3 sm:space-y-4 lg:space-y-6">
             <!-- Admin Tools -->
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Admin Tools</h3>
+            <div
+                class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300"
+            >
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                    Admin Tools
+                </h3>
                 <div class="space-y-3">
-                    <a href="/admin/"
-                       class="flex items-center justify-center w-full px-4 py-3 border border-transparent text-sm font-medium rounded-md text-white bg-rose-600 hover:bg-rose-700 transition-colors">
+                    <a href="/admin/" class="btn-primary w-full text-center">
                         <i class="fas fa-cog mr-2"></i>
                         Django Admin
                     </a>
 
-                    <a href="{% url 'leave_management:team_leaves' %}"
-                       class="flex items-center justify-center w-full px-4 py-3 border border-emerald-300 text-sm font-medium rounded-md text-emerald-700 bg-white hover:bg-emerald-50 transition-colors">
+                    <a
+                        href="{% url 'leave_management:team_leaves' %}"
+                        class="btn-secondary w-full text-center"
+                    >
                         <i class="fas fa-list mr-2"></i>
                         All Leave Requests
                     </a>
 
-                    <a href="{% url 'leave_management:leave_balance' %}"
-                       class="flex items-center justify-center w-full px-4 py-3 border border-sky-300 text-sm font-medium rounded-md text-sky-700 bg-white hover:bg-sky-50 transition-colors">
+                    <a
+                        href="{% url 'leave_management:leave_balance' %}"
+                        class="btn-secondary w-full text-center"
+                    >
                         <i class="fas fa-chart-bar mr-2"></i>
                         System Balances
                     </a>
 
-                    <a href="{% url 'leave_management:apply_leave' %}"
-                       class="flex items-center justify-center w-full px-4 py-3 border border-lime-300 text-sm font-medium rounded-md text-lime-700 bg-white hover:bg-lime-50 transition-colors">
+                    <a
+                        href="{% url 'leave_management:apply_leave' %}"
+                        class="btn-secondary w-full text-center"
+                    >
                         <i class="fas fa-plus mr-2"></i>
                         Apply Leave
                     </a>
@@ -213,31 +371,55 @@
             </div>
 
             <!-- Recent Activity -->
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">System Overview</h3>
+            <div
+                class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300"
+            >
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                    System Overview
+                </h3>
                 <div class="space-y-4">
-                    <div class="text-center p-4 border border-gray-200 rounded-lg">
-                        <div class="text-2xl font-bold text-rose-600 mb-1">{{ stats.total_users|default:0 }}</div>
-                        <div class="text-sm text-gray-600">Active Users</div>
+                    <div
+                        class="text-center p-4 backdrop-blur-sm bg-white/30 border border-rose-200/30 rounded-lg"
+                    >
+                        <div class="text-2xl font-bold text-rose-600 mb-1">
+                            {{ stats.total_users|default:0 }}
+                        </div>
+                        <div class="text-sm text-gray-700">Active Users</div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-3">
-                        <div class="text-center p-3 bg-emerald-50 rounded-lg">
-                            <div class="text-lg font-semibold text-emerald-600">{{ stats.total_leave_types|default:0 }}</div>
-                            <div class="text-xs text-gray-600">Leave Types</div>
+                        <div
+                            class="text-center p-3 backdrop-blur-sm bg-white/30 rounded-lg border border-emerald-200/20"
+                        >
+                            <div class="text-lg font-semibold text-emerald-600">
+                                {{ stats.total_leave_types|default:0 }}
+                            </div>
+                            <div class="text-xs text-gray-700">Leave Types</div>
                         </div>
-                        <div class="text-center p-3 bg-sky-50 rounded-lg">
-                            <div class="text-lg font-semibold text-sky-600">{{ stats.total_policies|default:0 }}</div>
-                            <div class="text-xs text-gray-600">Policies</div>
+                        <div
+                            class="text-center p-3 backdrop-blur-sm bg-white/30 rounded-lg border border-sky-200/20"
+                        >
+                            <div class="text-lg font-semibold text-sky-600">
+                                {{ stats.total_policies|default:0 }}
+                            </div>
+                            <div class="text-xs text-gray-700">Policies</div>
                         </div>
                     </div>
 
                     {% if stats.pending_requests > 0 %}
-                    <div class="text-center p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                        <div class="text-lg font-semibold text-amber-600">{{ stats.pending_requests }}</div>
-                        <div class="text-xs text-gray-600">Pending Approvals</div>
-                        <a href="{% url 'leave_management:team_leaves' %}?status=Pending"
-                           class="inline-block mt-2 text-xs text-amber-700 hover:text-amber-900 font-medium">
+                    <div
+                        class="text-center p-3 backdrop-blur-sm bg-white/30 border border-amber-200/30 rounded-lg"
+                    >
+                        <div class="text-lg font-semibold text-amber-600">
+                            {{ stats.pending_requests }}
+                        </div>
+                        <div class="text-xs text-gray-700">
+                            Pending Approvals
+                        </div>
+                        <a
+                            href="{% url 'leave_management:team_leaves' %}?status=Pending"
+                            class="inline-block mt-2 text-xs text-amber-700 hover:text-amber-900 font-medium"
+                        >
                             Review Now →
                         </a>
                     </div>
@@ -246,19 +428,36 @@
             </div>
 
             <!-- Quick Links -->
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Links</h3>
+            <div
+                class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300"
+            >
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                    Quick Links
+                </h3>
                 <div class="space-y-2 text-sm">
-                    <a href="/admin/auth/group/" class="block text-rose-600 hover:text-rose-800 py-1">
+                    <a
+                        href="/admin/auth/group/"
+                        class="block text-rose-600 hover:text-rose-800 py-2 px-3 rounded-md hover:bg-rose-50 transition-colors font-medium"
+                    >
                         <i class="fas fa-users-cog mr-2"></i>Manage User Groups
                     </a>
-                    <a href="/admin/trueAlign/leaverequest/" class="block text-emerald-600 hover:text-emerald-800 py-1">
-                        <i class="fas fa-calendar-check mr-2"></i>All Leave Requests
+                    <a
+                        href="/admin/trueAlign/leaverequest/"
+                        class="block text-emerald-600 hover:text-emerald-800 py-2 px-3 rounded-md hover:bg-emerald-50 transition-colors font-medium"
+                    >
+                        <i class="fas fa-calendar-check mr-2"></i>All Leave
+                        Requests
                     </a>
-                    <a href="/admin/trueAlign/userleavebalance/" class="block text-sky-600 hover:text-sky-800 py-1">
+                    <a
+                        href="/admin/trueAlign/userleavebalance/"
+                        class="block text-sky-600 hover:text-sky-800 py-2 px-3 rounded-md hover:bg-sky-50 transition-colors font-medium"
+                    >
                         <i class="fas fa-balance-scale mr-2"></i>User Balances
                     </a>
-                    <a href="/admin/trueAlign/compoffrequest/" class="block text-amber-600 hover:text-amber-800 py-1">
+                    <a
+                        href="/admin/trueAlign/compoffrequest/"
+                        class="block text-amber-600 hover:text-amber-800 py-2 px-3 rounded-md hover:bg-amber-50 transition-colors font-medium"
+                    >
                         <i class="fas fa-clock mr-2"></i>Comp-off Requests
                     </a>
                 </div>
@@ -267,55 +466,80 @@
     </div>
 
     <!-- Admin Guidelines -->
-    <div class="bg-gradient-to-r from-rose-50 to-pink-50 rounded-lg p-6 border border-rose-200">
+    <div
+        class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300 mt-6"
+    >
         <div class="flex items-start space-x-3">
             <div class="flex-shrink-0">
                 <i class="fas fa-shield-alt text-2xl text-rose-500"></i>
             </div>
             <div>
-                <h3 class="text-lg font-medium text-gray-900 mb-2">Administrator Guidelines</h3>
-                <div class="text-sm text-gray-600 space-y-2">
-                    <p>• Regular system backups are recommended for data protection</p>
-                    <p>• Monitor user activity and system performance regularly</p>
-                    <p>• Review and update leave policies based on organizational changes</p>
+                <h3 class="text-lg font-medium text-gray-800 mb-2">
+                    Administrator Guidelines
+                </h3>
+                <div class="text-sm text-gray-700 space-y-2">
+                    <p>
+                        • Regular system backups are recommended for data
+                        protection
+                    </p>
+                    <p>
+                        • Monitor user activity and system performance regularly
+                    </p>
+                    <p>
+                        • Review and update leave policies based on
+                        organizational changes
+                    </p>
                     <p>• Ensure proper user role assignments for security</p>
-                    <p>• Keep audit trails for compliance and reporting requirements</p>
+                    <p>
+                        • Keep audit trails for compliance and reporting
+                        requirements
+                    </p>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+<style>
+    .btn-primary {
+        @apply px-2 py-1.5 sm:px-3 sm:py-2 lg:px-4 lg:py-2.5 bg-rose-600 text-white rounded-lg shadow-md hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg text-xs sm:text-sm lg:text-base backdrop-blur-sm font-medium;
+    }
+
+    .btn-secondary {
+        @apply px-2 py-1.5 sm:px-3 sm:py-2 lg:px-4 lg:py-2.5 bg-white/50 text-gray-800 border border-gray-400/60 rounded-lg shadow-sm hover:bg-white/70 hover:border-gray-500/70 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 transition-all duration-300 hover:shadow-md text-xs sm:text-sm lg:text-base backdrop-blur-sm font-medium;
+    }
+</style>
+
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Auto-refresh every 5 minutes
-    setTimeout(function() {
-        if (document.visibilityState === 'visible') {
-            window.location.reload();
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-refresh every 5 minutes
+        setTimeout(function() {
+            if (document.visibilityState === 'visible') {
+                window.location.reload();
+            }
+        }, 300000);
+
+        // Update page title with pending count if any
+        const pendingCount = {{ stats.pending_requests|default:0 }};
+        if (pendingCount > 0) {
+            document.title = `(${pendingCount}) Admin Dashboard - Leave Management`;
         }
-    }, 300000);
 
-    // Update page title with pending count if any
-    const pendingCount = {{ stats.pending_requests|default:0 }};
-    if (pendingCount > 0) {
-        document.title = `(${pendingCount}) Admin Dashboard - Leave Management`;
-    }
+        // Add visual alerts for high pending counts
+        if (pendingCount > 20) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'fixed top-4 right-4 backdrop-blur-xl bg-amber-100/90 border-l-4 border-amber-500 text-amber-700 p-4 rounded shadow-lg z-50';
+            alertDiv.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    <span>High volume of pending requests: ${pendingCount}</span>
+                </div>
+            `;
+            document.body.appendChild(alertDiv);
 
-    // Add visual alerts for high pending counts
-    if (pendingCount > 20) {
-        const alertDiv = document.createElement('div');
-        alertDiv.className = 'fixed top-4 right-4 bg-amber-100 border-l-4 border-amber-500 text-amber-700 p-4 rounded shadow-lg z-50';
-        alertDiv.innerHTML = `
-            <div class="flex items-center">
-                <i class="fas fa-exclamation-triangle mr-2"></i>
-                <span>High volume of pending requests: ${pendingCount}</span>
-            </div>
-        `;
-        document.body.appendChild(alertDiv);
-
-        // Auto-hide after 10 seconds
-        setTimeout(() => alertDiv.remove(), 10000);
-    }
-});
+            // Auto-hide after 10 seconds
+            setTimeout(() => alertDiv.remove(), 10000);
+        }
+    });
 </script>
 {% endblock %}

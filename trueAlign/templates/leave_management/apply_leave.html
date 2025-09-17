@@ -1,77 +1,134 @@
-{% extends 'base.html' %}
-{% load static %}
+{% extends 'base.html' %} {% load static %} {% block title %}Apply for Leave -
+Leave Management{% endblock %} {% block content %}
+<div
+    class="mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-6 w-full max-w-full overflow-x-hidden"
+>
+    <!-- Header Section -->
+    <div
+        class="relative overflow-hidden mb-3 sm:mb-6 rounded-[16px] sm:rounded-[20px] lg:rounded-[28px] bg-white/10 border border-white/40 shadow-[0_10px_30px_rgba(0,0,0,0.15)] hover:scale-[1.005] sm:hover:scale-[1.015] transition-all duration-500"
+    >
+        <!-- Gradient Background -->
+        <div
+            class="absolute inset-0 bg-gradient-to-br from-sky-300/20 via-blue-200/10 to-sky-300/20 rounded-[28px]"
+        ></div>
 
-{% block title %}Apply for Leave - Leave Management{% endblock %}
+        <!-- Soft Orbs -->
+        <div class="absolute inset-0 overflow-hidden">
+            <div
+                class="absolute -top-8 sm:-top-16 -left-8 sm:-left-16 w-32 h-32 sm:w-56 sm:h-56 bg-gradient-to-br from-sky-300/30 to-blue-400/10 rounded-full"
+            ></div>
+            <div
+                class="absolute -bottom-8 sm:-bottom-16 -right-8 sm:-right-16 w-32 h-32 sm:w-56 sm:h-56 bg-gradient-to-tr from-blue-400/30 to-sky-500/10 rounded-full"
+            ></div>
+            <div
+                class="absolute top-1/2 left-1/2 w-24 h-24 sm:w-48 sm:h-48 bg-gradient-to-br from-sky-300/30 to-blue-400/10 rounded-full -translate-x-1/2 -translate-y-1/2"
+            ></div>
+        </div>
 
-{% block content %}
-<div class="max-w-4xl mx-auto space-y-6">
-    <!-- Header -->
-    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-sky-500">
-        <div class="flex items-center">
-            <div class="p-3 rounded-full bg-sky-100 text-sky-600 mr-4">
-                <i class="fas fa-calendar-plus text-xl"></i>
-            </div>
-            <div>
-                <h1 class="text-2xl font-bold text-gray-900">Apply for Leave</h1>
-                <p class="text-gray-600 mt-1">Submit a new leave request</p>
+        <!-- Header Content -->
+        <div class="relative p-3 sm:p-6 md:p-8 lg:p-12 z-10 w-full">
+            <div class="flex items-center">
+                <div
+                    class="p-3 rounded-full bg-sky-100/30 text-sky-600 mr-4 backdrop-blur-sm border border-sky-400/20"
+                >
+                    <i class="fas fa-calendar-plus text-xl sm:text-2xl"></i>
+                </div>
+                <div>
+                    <h1
+                        class="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2"
+                    >
+                        Apply for Leave
+                    </h1>
+                    <p class="text-sky-100 text-sm sm:text-base md:text-lg">
+                        Submit a new leave request
+                    </p>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
         <!-- Leave Balance Panel -->
         <div class="lg:col-span-1">
-            <div class="bg-white rounded-lg shadow-md p-6 sticky top-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Your Leave Balance</h3>
+            <div
+                class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300 sticky top-6"
+            >
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    Your Leave Balance
+                </h3>
 
                 {% if balances %}
-                    <div class="space-y-4">
-                        {% for balance in balances %}
-                            <div class="border border-gray-200 rounded-lg p-4" data-leave-type="{{ balance.leave_type }}">
-                                <div class="flex justify-between items-center mb-2">
-                                    <h4 class="font-medium text-gray-900">{{ balance.leave_type }}</h4>
-                                    <span class="text-xs px-2 py-1 rounded-full {% if balance.is_paid %}bg-emerald-100 text-emerald-800{% else %}bg-gray-100 text-gray-800{% endif %}">
-                                        {% if balance.is_paid %}Paid{% else %}Unpaid{% endif %}
-                                    </span>
-                                </div>
+                <div class="space-y-4">
+                    {% for balance in balances %}
+                    <div
+                        class="backdrop-blur-sm bg-white/30 border border-gray-200/30 rounded-lg p-4 hover:bg-white/40 transition-all duration-200"
+                        data-leave-type="{{ balance.leave_type }}"
+                    >
+                        <div class="flex justify-between items-center mb-2">
+                            <h4 class="font-medium text-gray-800">
+                                {{ balance.leave_type }}
+                            </h4>
+                            <span
+                                class="text-xs px-2 py-1 rounded-full {% if balance.is_paid %}bg-emerald-100/80 text-emerald-800{% else %}bg-gray-100/80 text-gray-800{% endif %} backdrop-blur-sm"
+                            >
+                                {% if balance.is_paid %}Paid{% else %}Unpaid{%
+                                endif %}
+                            </span>
+                        </div>
 
-                                <div class="grid grid-cols-2 gap-3 text-sm">
-                                    <div class="text-center">
-                                        <p class="font-semibold text-emerald-600">{{ balance.available }}</p>
-                                        <p class="text-gray-600">Available</p>
-                                    </div>
-                                    <div class="text-center">
-                                        <p class="font-semibold text-rose-600">{{ balance.used }}</p>
-                                        <p class="text-gray-600">Used</p>
-                                    </div>
-                                </div>
-
-                                <!-- Progress Bar -->
-                                <div class="mt-3">
-                                    {% if balance.allocated > 0 %}
-                                        {% widthratio balance.used balance.allocated 100 as usage_percent %}
-                                        <div class="w-full bg-gray-200 rounded-full h-2">
-                                            <div class="h-2 rounded-full {% if usage_percent < 50 %}bg-emerald-500{% elif usage_percent < 80 %}bg-amber-500{% else %}bg-rose-500{% endif %}"
-                                                 style="width: {{ usage_percent|default:0 }}%"></div>
-                                        </div>
-                                        <p class="text-xs text-gray-500 mt-1">{{ usage_percent|default:0 }}% used of {{ balance.allocated }} days</p>
-                                    {% else %}
-                                        <p class="text-xs text-gray-500">No allocation limit</p>
-                                    {% endif %}
-                                </div>
+                        <div class="grid grid-cols-3 gap-3 text-sm">
+                            <div class="text-center">
+                                <p class="font-semibold text-emerald-600">
+                                    {{ balance.available }}
+                                </p>
+                                <p class="text-gray-800">Available</p>
                             </div>
-                        {% endfor %}
+                            <div class="text-center">
+                                <p class="font-semibold text-rose-600">
+                                    {{ balance.used }}
+                                </p>
+                                <p class="text-gray-800">Used</p>
+                            </div>
+                        </div>
+
+                        <!-- Progress Bar -->
+                        <div class="mt-3">
+                            {% if balance.allocated > 0 %} {% widthratio
+                            balance.used balance.allocated 100 as usage_percent
+                            %}
+                            <div
+                                class="w-full bg-gray-200/50 rounded-full h-2 backdrop-blur-sm"
+                            >
+                                <div
+                                    class="h-2 rounded-full {% if usage_percent < 50 %}bg-emerald-500{% elif usage_percent < 80 %}bg-amber-500{% else %}bg-rose-500{% endif %}"
+                                    style="width: {{ usage_percent|default:0 }}%"
+                                ></div>
+                            </div>
+                            <p class="text-xs text-gray-600 mt-1">
+                                {{ usage_percent|default:0 }}% used of {{
+                                balance.allocated }} days
+                            </p>
+                            {% else %}
+                            <p class="text-xs text-gray-600">
+                                No allocation limit
+                            </p>
+                            {% endif %}
+                        </div>
                     </div>
+                    {% endfor %}
+                </div>
                 {% else %}
-                    <div class="text-center py-6 text-gray-500">
-                        <i class="fas fa-info-circle text-2xl mb-2"></i>
-                        <p class="text-sm">No balance information available</p>
-                        <p class="text-xs">Contact HR for allocation</p>
-                    </div>
+                <div class="text-center py-6 text-gray-600">
+                    <i class="fas fa-info-circle text-2xl mb-2"></i>
+                    <p class="text-sm">No balance information available</p>
+                    <p class="text-xs">Contact HR for allocation</p>
+                </div>
                 {% endif %}
 
                 <!-- Quick Tips -->
-                <div class="mt-6 bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <div
+                    class="mt-6 backdrop-blur-sm bg-white/30 border border-amber-200/30 rounded-lg p-4"
+                >
                     <h4 class="text-sm font-medium text-amber-800 mb-2">
                         <i class="fas fa-lightbulb mr-1"></i>
                         Quick Tips
@@ -88,32 +145,51 @@
 
         <!-- Application Form -->
         <div class="lg:col-span-2">
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <form method="post" enctype="multipart/form-data" id="leave-form" class="space-y-6">
+            <div
+                class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300"
+            >
+                <form
+                    method="post"
+                    enctype="multipart/form-data"
+                    id="leave-form"
+                    class="space-y-6"
+                >
                     {% csrf_token %}
 
                     <!-- Leave Type Selection -->
                     <div>
-                        <label for="{{ form.leave_type.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        <label
+                            for="{{ form.leave_type.id_for_label }}"
+                            class="block text-sm font-medium text-gray-800 mb-2"
+                        >
                             Leave Type <span class="text-rose-500">*</span>
                         </label>
-                        <select name="{{ form.leave_type.name }}" id="{{ form.leave_type.id_for_label }}"
-                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm"
-                                onchange="updateLeaveTypeInfo(this.value)" required>
+                        <select
+                            name="{{ form.leave_type.name }}"
+                            id="{{ form.leave_type.id_for_label }}"
+                            class="block w-full rounded-md border-gray-300/50 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm backdrop-blur-sm bg-white/50"
+                            onchange="updateLeaveTypeInfo(this.value)"
+                            required
+                        >
                             <option value="">Select Leave Type</option>
                             {% for choice in form.leave_type.field.queryset %}
-                                <option value="{{ choice.id }}"
-                                        data-paid="{{ choice.is_paid|yesno:'true,false' }}"
-                                        data-half-day="{{ choice.can_be_half_day|yesno:'true,false' }}"
-                                        data-documentation="{{ choice.requires_documentation|yesno:'true,false' }}"
-                                        data-weekends="{{ choice.count_weekends|yesno:'true,false' }}">
-                                    {{ choice.name }}
-                                </option>
+                            <option
+                                value="{{ choice.id }}"
+                                data-paid="{{ choice.is_paid|yesno:'true,false' }}"
+                                data-half-day="{{ choice.can_be_half_day|yesno:'true,false' }}"
+                                data-documentation="{{ choice.requires_documentation|yesno:'true,false' }}"
+                                data-weekends="{{ choice.count_weekends|yesno:'true,false' }}"
+                            >
+                                {{ choice.name }}
+                            </option>
                             {% endfor %}
                         </select>
 
                         <!-- Leave Type Info Display -->
-                        <div id="leave-type-info" class="mt-2 text-sm text-gray-600 hidden">
+                        <div
+                            id="leave-type-info"
+                            class="mt-2 text-sm text-gray-700 hidden"
+                        >
                             <div class="flex flex-wrap gap-2"></div>
                         </div>
                     </div>
@@ -121,13 +197,19 @@
                     <!-- Date Selection -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label for="{{ form.start_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            <label
+                                for="{{ form.start_date.id_for_label }}"
+                                class="block text-sm font-medium text-gray-800 mb-2"
+                            >
                                 Start Date <span class="text-rose-500">*</span>
                             </label>
                             {{ form.start_date }}
                         </div>
                         <div>
-                            <label for="{{ form.end_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            <label
+                                for="{{ form.end_date.id_for_label }}"
+                                class="block text-sm font-medium text-gray-800 mb-2"
+                            >
                                 End Date <span class="text-rose-500">*</span>
                             </label>
                             {{ form.end_date }}
@@ -138,27 +220,44 @@
                     <div id="half-day-section" class="hidden">
                         <div class="flex items-center">
                             {{ form.half_day }}
-                            <label for="{{ form.half_day.id_for_label }}" class="ml-2 block text-sm text-gray-700">
+                            <label
+                                for="{{ form.half_day.id_for_label }}"
+                                class="ml-2 block text-sm text-gray-800"
+                            >
                                 Half Day Leave
                             </label>
                         </div>
-                        <p class="text-xs text-gray-500 mt-1">Check if this is a half-day leave</p>
+                        <p class="text-xs text-gray-600 mt-1">
+                            Check if this is a half-day leave
+                        </p>
                     </div>
 
                     <!-- Leave Days Display -->
-                    <div id="leave-days-display" class="bg-gray-50 rounded-lg p-4 hidden">
+                    <div
+                        id="leave-days-display"
+                        class="backdrop-blur-sm bg-white/30 rounded-lg p-4 hidden border border-sky-200/30"
+                    >
                         <div class="flex items-center justify-between">
-                            <span class="text-sm font-medium text-gray-700">Calculated Leave Days:</span>
-                            <span id="calculated-days" class="text-lg font-bold text-sky-600">0</span>
+                            <span class="text-sm font-medium text-gray-800"
+                                >Calculated Leave Days:</span
+                            >
+                            <span
+                                id="calculated-days"
+                                class="text-lg font-bold text-sky-600"
+                                >0</span
+                            >
                         </div>
-                        <div class="text-xs text-gray-500 mt-1">
+                        <div class="text-xs text-gray-600 mt-1">
                             <span id="weekend-info"></span>
                         </div>
                     </div>
 
                     <!-- Reason -->
                     <div>
-                        <label for="{{ form.reason.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        <label
+                            for="{{ form.reason.id_for_label }}"
+                            class="block text-sm font-medium text-gray-800 mb-2"
+                        >
                             Reason <span class="text-rose-500">*</span>
                         </label>
                         {{ form.reason }}
@@ -166,12 +265,19 @@
 
                     <!-- Documentation Upload -->
                     <div id="documentation-section" class="hidden">
-                        <label for="{{ form.documentation.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                            Supporting Documentation <span id="doc-required" class="text-rose-500 hidden">*</span>
+                        <label
+                            for="{{ form.documentation.id_for_label }}"
+                            class="block text-sm font-medium text-gray-800 mb-2"
+                        >
+                            Supporting Documentation
+                            <span id="doc-required" class="text-rose-500 hidden"
+                                >*</span
+                            >
                         </label>
                         {{ form.documentation }}
-                        <p class="text-xs text-gray-500 mt-1">
-                            Accepted formats: PDF, DOC, DOCX, JPG, JPEG, PNG (Max 5MB)
+                        <p class="text-xs text-gray-600 mt-1">
+                            Accepted formats: PDF, DOC, DOCX, JPG, JPEG, PNG
+                            (Max 5MB)
                         </p>
                     </div>
 
@@ -179,26 +285,43 @@
                     <div>
                         <div class="flex items-center">
                             {{ form.is_retroactive }}
-                            <label for="{{ form.is_retroactive.id_for_label }}" class="ml-2 block text-sm text-gray-700">
+                            <label
+                                for="{{ form.is_retroactive.id_for_label }}"
+                                class="ml-2 block text-sm text-gray-800"
+                            >
                                 Retroactive Application
                             </label>
                         </div>
-                        <p class="text-xs text-gray-500 mt-1">Check if applying for past dates (requires special approval)</p>
+                        <p class="text-xs text-gray-600 mt-1">
+                            Check if applying for past dates (requires special
+                            approval)
+                        </p>
                     </div>
 
                     <!-- Form Actions -->
-                    <div class="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">
-                        <a href="{% url 'leave_management:dashboard' %}"
-                           class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500">
+                    <div
+                        class="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200/30"
+                    >
+                        <a
+                            href="{% url 'leave_management:dashboard' %}"
+                            class="btn-secondary"
+                        >
                             Cancel
                         </a>
-                        <button type="button" id="preview-btn"
-                                class="px-4 py-2 border border-sky-300 rounded-md shadow-sm text-sm font-medium text-sky-700 bg-sky-50 hover:bg-sky-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500">
+                        <button
+                            type="button"
+                            id="preview-btn"
+                            class="btn-secondary"
+                        >
                             <i class="fas fa-eye mr-2"></i>Preview
                         </button>
-                        <button type="submit" id="submit-btn"
-                                class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
-                            <i class="fas fa-paper-plane mr-2"></i>Submit Application
+                        <button
+                            type="submit"
+                            id="submit-btn"
+                            class="btn-primary"
+                        >
+                            <i class="fas fa-paper-plane mr-2"></i>Submit
+                            Application
                         </button>
                     </div>
                 </form>
@@ -208,12 +331,22 @@
 </div>
 
 <!-- Preview Modal -->
-<div id="preview-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-    <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-lg shadow-lg rounded-md bg-white">
+<div
+    id="preview-modal"
+    class="fixed inset-0 bg-gray-600/50 backdrop-blur-sm overflow-y-auto h-full w-full hidden z-50"
+>
+    <div
+        class="relative top-20 mx-auto p-5 border w-11/12 max-w-lg shadow-lg rounded-[20px] backdrop-blur-xl bg-white/90 border-white/40"
+    >
         <div class="mt-3">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-medium text-gray-900">Leave Application Preview</h3>
-                <button onclick="closePreview()" class="text-gray-400 hover:text-gray-600">
+                <h3 class="text-lg font-medium text-gray-800">
+                    Leave Application Preview
+                </h3>
+                <button
+                    onclick="closePreview()"
+                    class="text-gray-400 hover:text-gray-600 transition-colors"
+                >
                     <i class="fas fa-times"></i>
                 </button>
             </div>
@@ -222,13 +355,13 @@
                 <!-- Preview content will be populated by JavaScript -->
             </div>
 
-            <div class="flex items-center justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
-                <button onclick="closePreview()"
-                        class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+            <div
+                class="flex items-center justify-end space-x-3 mt-6 pt-4 border-t border-gray-200/30"
+            >
+                <button onclick="closePreview()" class="btn-secondary">
                     Edit
                 </button>
-                <button onclick="submitForm()"
-                        class="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700">
+                <button onclick="submitForm()" class="btn-primary">
                     Confirm & Submit
                 </button>
             </div>
@@ -236,166 +369,227 @@
     </div>
 </div>
 
+<style>
+    .btn-primary {
+        @apply px-2 py-1.5 sm:px-3 sm:py-2 lg:px-4 lg:py-2.5 bg-emerald-600 text-white rounded-lg shadow-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg text-xs sm:text-sm lg:text-base backdrop-blur-sm font-medium;
+    }
+
+    .btn-secondary {
+        @apply px-2 py-1.5 sm:px-3 sm:py-2 lg:px-4 lg:py-2.5 bg-white/50 text-gray-800 border border-gray-400/60 rounded-lg shadow-sm hover:bg-white/70 hover:border-gray-500/70 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 transition-all duration-300 hover:shadow-md text-xs sm:text-sm lg:text-base backdrop-blur-sm font-medium;
+    }
+
+    /* Form inputs styling */
+    input[type="date"],
+    textarea,
+    select,
+    input[type="file"] {
+        @apply block w-full rounded-md border-gray-300/50 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm backdrop-blur-sm bg-white/50;
+    }
+
+    input[type="checkbox"] {
+        @apply rounded border-gray-300/50 text-emerald-600 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 backdrop-blur-sm;
+    }
+
+    /* Custom scrollbar */
+    .scrollbar-thin::-webkit-scrollbar {
+        width: 3px;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 10px;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.5);
+    }
+</style>
+
 <script>
-let selectedLeaveType = null;
+    let selectedLeaveType = null;
 
-function updateLeaveTypeInfo(leaveTypeId) {
-    const select = document.querySelector('select[name="leave_type"]');
-    const option = select.querySelector(`option[value="${leaveTypeId}"]`);
-    const infoDiv = document.getElementById('leave-type-info');
-    const halfDaySection = document.getElementById('half-day-section');
-    const docSection = document.getElementById('documentation-section');
-    const docRequired = document.getElementById('doc-required');
+    function updateLeaveTypeInfo(leaveTypeId) {
+        const select = document.querySelector('select[name="leave_type"]');
+        const option = select.querySelector(`option[value="${leaveTypeId}"]`);
+        const infoDiv = document.getElementById("leave-type-info");
+        const halfDaySection = document.getElementById("half-day-section");
+        const docSection = document.getElementById("documentation-section");
+        const docRequired = document.getElementById("doc-required");
 
-    if (!option || !leaveTypeId) {
-        infoDiv.classList.add('hidden');
-        halfDaySection.classList.add('hidden');
-        docSection.classList.add('hidden');
-        selectedLeaveType = null;
-        return;
-    }
-
-    selectedLeaveType = {
-        id: leaveTypeId,
-        name: option.text,
-        paid: option.dataset.paid === 'true',
-        halfDay: option.dataset.halfDay === 'true',
-        documentation: option.dataset.documentation === 'true',
-        weekends: option.dataset.weekends === 'true'
-    };
-
-    // Show info badges
-    const infoContent = infoDiv.querySelector('div');
-    infoContent.innerHTML = '';
-
-    const badges = [];
-    if (selectedLeaveType.paid) {
-        badges.push('<span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-emerald-100 text-emerald-800">Paid Leave</span>');
-    } else {
-        badges.push('<span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-800">Unpaid Leave</span>');
-    }
-
-    if (selectedLeaveType.halfDay) {
-        badges.push('<span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-sky-100 text-sky-800">Half-day Available</span>');
-    }
-
-    if (selectedLeaveType.documentation) {
-        badges.push('<span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-amber-100 text-amber-800">Documentation Required</span>');
-    }
-
-    if (selectedLeaveType.weekends) {
-        badges.push('<span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-rose-100 text-rose-800">Includes Weekends</span>');
-    }
-
-    infoContent.innerHTML = badges.join(' ');
-    infoDiv.classList.remove('hidden');
-
-    // Show/hide half-day option
-    if (selectedLeaveType.halfDay) {
-        halfDaySection.classList.remove('hidden');
-    } else {
-        halfDaySection.classList.add('hidden');
-        document.getElementById('id_half_day').checked = false;
-    }
-
-    // Show/hide documentation section
-    if (selectedLeaveType.documentation) {
-        docSection.classList.remove('hidden');
-        docRequired.classList.remove('hidden');
-    } else {
-        docSection.classList.add('hidden');
-        docRequired.classList.add('hidden');
-    }
-
-    calculateLeaveDays();
-}
-
-function calculateLeaveDays() {
-    const startDate = document.getElementById('id_start_date').value;
-    const endDate = document.getElementById('id_end_date').value;
-    const halfDay = document.getElementById('id_half_day').checked;
-    const displayDiv = document.getElementById('leave-days-display');
-    const daysSpan = document.getElementById('calculated-days');
-    const weekendInfo = document.getElementById('weekend-info');
-
-    if (!startDate || !endDate || !selectedLeaveType) {
-        displayDiv.classList.add('hidden');
-        return;
-    }
-
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-
-    if (start > end) {
-        displayDiv.classList.add('hidden');
-        return;
-    }
-
-    let days = 0;
-    let current = new Date(start);
-    let weekendCount = 0;
-
-    while (current <= end) {
-        const isWeekend = current.getDay() === 0 || current.getDay() === 6; // Sunday or Saturday
-
-        if (!isWeekend || selectedLeaveType.weekends) {
-            days += halfDay ? 0.5 : 1;
+        if (!option || !leaveTypeId) {
+            infoDiv.classList.add("hidden");
+            halfDaySection.classList.add("hidden");
+            docSection.classList.add("hidden");
+            selectedLeaveType = null;
+            return;
         }
 
-        if (isWeekend) {
-            weekendCount++;
-        }
+        selectedLeaveType = {
+            id: leaveTypeId,
+            name: option.text,
+            paid: option.dataset.paid === "true",
+            halfDay: option.dataset.halfDay === "true",
+            documentation: option.dataset.documentation === "true",
+            weekends: option.dataset.weekends === "true",
+        };
 
-        current.setDate(current.getDate() + 1);
-    }
+        // Show info badges
+        const infoContent = infoDiv.querySelector("div");
+        infoContent.innerHTML = "";
 
-    daysSpan.textContent = days;
-
-    let weekendText = '';
-    if (weekendCount > 0) {
-        if (selectedLeaveType.weekends) {
-            weekendText = `Includes ${weekendCount} weekend day(s)`;
+        const badges = [];
+        if (selectedLeaveType.paid) {
+            badges.push(
+                '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-emerald-100/80 text-emerald-800 backdrop-blur-sm">Paid Leave</span>',
+            );
         } else {
-            weekendText = `Excludes ${weekendCount} weekend day(s)`;
+            badges.push(
+                '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100/80 text-gray-800 backdrop-blur-sm">Unpaid Leave</span>',
+            );
         }
+
+        if (selectedLeaveType.halfDay) {
+            badges.push(
+                '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-sky-100/80 text-sky-800 backdrop-blur-sm">Half-day Available</span>',
+            );
+        }
+
+        if (selectedLeaveType.documentation) {
+            badges.push(
+                '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-amber-100/80 text-amber-800 backdrop-blur-sm">Documentation Required</span>',
+            );
+        }
+
+        if (selectedLeaveType.weekends) {
+            badges.push(
+                '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-rose-100/80 text-rose-800 backdrop-blur-sm">Includes Weekends</span>',
+            );
+        }
+
+        infoContent.innerHTML = badges.join(" ");
+        infoDiv.classList.remove("hidden");
+
+        // Show/hide half-day option
+        if (selectedLeaveType.halfDay) {
+            halfDaySection.classList.remove("hidden");
+        } else {
+            halfDaySection.classList.add("hidden");
+            document.getElementById("id_half_day").checked = false;
+        }
+
+        // Show/hide documentation section
+        if (selectedLeaveType.documentation) {
+            docSection.classList.remove("hidden");
+            docRequired.classList.remove("hidden");
+        } else {
+            docSection.classList.add("hidden");
+            docRequired.classList.add("hidden");
+        }
+
+        calculateLeaveDays();
     }
-    weekendInfo.textContent = weekendText;
 
-    displayDiv.classList.remove('hidden');
-}
+    function calculateLeaveDays() {
+        const startDate = document.getElementById("id_start_date").value;
+        const endDate = document.getElementById("id_end_date").value;
+        const halfDay = document.getElementById("id_half_day").checked;
+        const displayDiv = document.getElementById("leave-days-display");
+        const daysSpan = document.getElementById("calculated-days");
+        const weekendInfo = document.getElementById("weekend-info");
 
-// Event listeners for date changes
-document.getElementById('id_start_date').addEventListener('change', calculateLeaveDays);
-document.getElementById('id_end_date').addEventListener('change', calculateLeaveDays);
-document.getElementById('id_half_day').addEventListener('change', calculateLeaveDays);
+        if (!startDate || !endDate || !selectedLeaveType) {
+            displayDiv.classList.add("hidden");
+            return;
+        }
 
-// Preview functionality
-document.getElementById('preview-btn').addEventListener('click', showPreview);
+        const start = new Date(startDate);
+        const end = new Date(endDate);
 
-function showPreview() {
-    const form = document.getElementById('leave-form');
-    const formData = new FormData(form);
+        if (start > end) {
+            displayDiv.classList.add("hidden");
+            return;
+        }
 
-    // Validate required fields
-    const leaveType = formData.get('leave_type');
-    const startDate = formData.get('start_date');
-    const endDate = formData.get('end_date');
-    const reason = formData.get('reason');
+        let days = 0;
+        let current = new Date(start);
+        let weekendCount = 0;
 
-    if (!leaveType || !startDate || !endDate || !reason) {
-        alert('Please fill in all required fields');
-        return;
+        while (current <= end) {
+            const isWeekend = current.getDay() === 0 || current.getDay() === 6; // Sunday or Saturday
+
+            if (!isWeekend || selectedLeaveType.weekends) {
+                days += halfDay ? 0.5 : 1;
+            }
+
+            if (isWeekend) {
+                weekendCount++;
+            }
+
+            current.setDate(current.getDate() + 1);
+        }
+
+        daysSpan.textContent = days;
+
+        let weekendText = "";
+        if (weekendCount > 0) {
+            if (selectedLeaveType.weekends) {
+                weekendText = `Includes ${weekendCount} weekend day(s)`;
+            } else {
+                weekendText = `Excludes ${weekendCount} weekend day(s)`;
+            }
+        }
+        weekendInfo.textContent = weekendText;
+
+        displayDiv.classList.remove("hidden");
     }
 
-    // Build preview content
-    const previewContent = document.getElementById('preview-content');
-    const leaveTypeName = document.querySelector(`option[value="${leaveType}"]`).text;
-    const halfDay = formData.get('half_day') ? 'Yes' : 'No';
-    const retroactive = formData.get('is_retroactive') ? 'Yes' : 'No';
-    const documentation = formData.get('documentation');
+    // Event listeners for date changes
+    document
+        .getElementById("id_start_date")
+        .addEventListener("change", calculateLeaveDays);
+    document
+        .getElementById("id_end_date")
+        .addEventListener("change", calculateLeaveDays);
+    document
+        .getElementById("id_half_day")
+        .addEventListener("change", calculateLeaveDays);
 
-    previewContent.innerHTML = `
-        <div class="grid grid-cols-2 gap-3">
+    // Preview functionality
+    document
+        .getElementById("preview-btn")
+        .addEventListener("click", showPreview);
+
+    function showPreview() {
+        const form = document.getElementById("leave-form");
+        const formData = new FormData(form);
+
+        // Validate required fields
+        const leaveType = formData.get("leave_type");
+        const startDate = formData.get("start_date");
+        const endDate = formData.get("end_date");
+        const reason = formData.get("reason");
+
+        if (!leaveType || !startDate || !endDate || !reason) {
+            alert("Please fill in all required fields");
+            return;
+        }
+
+        // Build preview content
+        const previewContent = document.getElementById("preview-content");
+        const leaveTypeName = document.querySelector(
+            `option[value="${leaveType}"]`,
+        ).text;
+        const halfDay = formData.get("half_day") ? "Yes" : "No";
+        const retroactive = formData.get("is_retroactive") ? "Yes" : "No";
+        const documentation = formData.get("documentation");
+
+        previewContent.innerHTML = `
+        <div class="grid grid-cols-2 gap-3 backdrop-blur-sm bg-white/30 p-3 rounded-lg border border-sky-200/30">
             <div><strong>Leave Type:</strong></div>
             <div>${leaveTypeName}</div>
 
@@ -409,7 +603,7 @@ function showPreview() {
             <div>${halfDay}</div>
 
             <div><strong>Leave Days:</strong></div>
-            <div>${document.getElementById('calculated-days').textContent}</div>
+            <div class="font-bold text-sky-600">${document.getElementById("calculated-days").textContent}</div>
 
             <div><strong>Retroactive:</strong></div>
             <div>${retroactive}</div>
@@ -417,52 +611,68 @@ function showPreview() {
 
         <div class="mt-4">
             <strong>Reason:</strong>
-            <p class="mt-1 text-gray-700">${reason}</p>
+            <div class="mt-1 p-2 backdrop-blur-sm bg-white/30 rounded border border-gray-200/30">
+                <p class="text-gray-700">${reason}</p>
+            </div>
         </div>
 
-        ${documentation ? `
+        ${
+            documentation
+                ? `
             <div class="mt-4">
                 <strong>Documentation:</strong>
-                <p class="mt-1 text-gray-700">${documentation.name}</p>
+                <div class="mt-1 p-2 backdrop-blur-sm bg-white/30 rounded border border-gray-200/30">
+                    <p class="text-gray-700">${documentation.name}</p>
+                </div>
             </div>
-        ` : ''}
+        `
+                : ""
+        }
     `;
 
-    document.getElementById('preview-modal').classList.remove('hidden');
-}
+        document.getElementById("preview-modal").classList.remove("hidden");
+    }
 
-function closePreview() {
-    document.getElementById('preview-modal').classList.add('hidden');
-}
+    function closePreview() {
+        document.getElementById("preview-modal").classList.add("hidden");
+    }
 
-function submitForm() {
-    document.getElementById('leave-form').submit();
-}
+    function submitForm() {
+        document.getElementById("leave-form").submit();
+    }
 
-// Form validation
-document.getElementById('leave-form').addEventListener('submit', function(e) {
-    const submitBtn = document.getElementById('submit-btn');
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Submitting...';
-});
+    // Form validation
+    document
+        .getElementById("leave-form")
+        .addEventListener("submit", function (e) {
+            const submitBtn = document.getElementById("submit-btn");
+            submitBtn.disabled = true;
+            submitBtn.innerHTML =
+                '<i class="fas fa-spinner fa-spin mr-2"></i>Submitting...';
+        });
 
-// Initialize form
-document.addEventListener('DOMContentLoaded', function() {
-    // Set minimum date to today
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('id_start_date').setAttribute('min', today);
-    document.getElementById('id_end_date').setAttribute('min', today);
+    // Initialize form
+    document.addEventListener("DOMContentLoaded", function () {
+        // Set minimum date to today
+        const today = new Date().toISOString().split("T")[0];
+        document.getElementById("id_start_date").setAttribute("min", today);
+        document.getElementById("id_end_date").setAttribute("min", today);
 
-    // Auto-set end date when start date is selected
-    document.getElementById('id_start_date').addEventListener('change', function() {
-        const startDate = this.value;
-        if (startDate) {
-            document.getElementById('id_end_date').setAttribute('min', startDate);
-            if (!document.getElementById('id_end_date').value) {
-                document.getElementById('id_end_date').value = startDate;
-            }
-        }
+        // Auto-set end date when start date is selected
+        document
+            .getElementById("id_start_date")
+            .addEventListener("change", function () {
+                const startDate = this.value;
+                if (startDate) {
+                    document
+                        .getElementById("id_end_date")
+                        .setAttribute("min", startDate);
+                    if (!document.getElementById("id_end_date").value) {
+                        document.getElementById("id_end_date").value =
+                            startDate;
+                    }
+                }
+            });
     });
-});
 </script>
 {% endblock %}

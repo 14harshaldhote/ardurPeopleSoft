@@ -1,80 +1,127 @@
-{% extends 'base.html' %}
-{% load static %}
-
-{% block title %}Leave Request Details - Leave Management{% endblock %}
-
+{% extends 'base.html' %} {% load static %} {% block title %}Leave Request Details - Leave Management{% endblock %} 
 {% block content %}
-<div class="space-y-6">
+<div
+    class="mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-6 w-full max-w-full overflow-x-hidden"
+>
     <!-- Header Section -->
-    <div class="bg-gradient-to-r from-sky-500 to-blue-500 rounded-lg shadow-lg p-6 text-white">
-        <div class="flex items-center justify-between">
-            <div>
-                <h1 class="text-3xl font-bold">Leave Request Details</h1>
-                <p class="text-sky-100 mt-2">Request ID: #{{ leave_request.id }}</p>
-            </div>
-            <div class="hidden md:block">
-                <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium {% if leave_request.status == 'Pending' %}bg-amber-100 text-amber-800{% elif leave_request.status == 'Approved' %}bg-emerald-100 text-emerald-800{% elif leave_request.status == 'Rejected' %}bg-rose-100 text-rose-800{% else %}bg-gray-100 text-gray-800{% endif %}">
-                    <i class="fas {% if leave_request.status == 'Pending' %}fa-clock{% elif leave_request.status == 'Approved' %}fa-check-circle{% elif leave_request.status == 'Rejected' %}fa-times-circle{% else %}fa-ban{% endif %} mr-2"></i>
-                    {{ leave_request.status }}
-                </span>
+    <div
+        class="relative overflow-hidden mb-3 sm:mb-6 rounded-[16px] sm:rounded-[20px] lg:rounded-[28px] bg-white/10 border border-white/40 shadow-[0_10px_30px_rgba(0,0,0,0.15)] hover:scale-[1.005] sm:hover:scale-[1.015] transition-all duration-500"
+    >
+        <!-- Gradient Background -->
+        <div
+            class="absolute inset-0 bg-gradient-to-br from-sky-300/20 via-blue-200/10 to-sky-300/20 rounded-[28px]"
+        ></div>
+
+        <!-- Soft Orbs -->
+        <div class="absolute inset-0 overflow-hidden">
+            <div
+                class="absolute -top-8 sm:-top-16 -left-8 sm:-left-16 w-32 h-32 sm:w-56 sm:h-56 bg-gradient-to-br from-sky-300/30 to-blue-400/10 rounded-full"
+            ></div>
+          
+            <div
+                class="absolute top-1/2 left-1/2 w-24 h-24 sm:w-48 sm:h-48 bg-gradient-to-br from-sky-300/30 to-blue-400/10 rounded-full -translate-x-1/2 -translate-y-1/2"
+            ></div>
+        </div>
+
+        <!-- Header Content -->
+        <div class="relative p-3 sm:p-6 md:p-8 lg:p-12 z-10 w-full">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1
+                        class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-2"
+                    >
+                        Leave Request Details
+                    </h1>
+                    <p class="text-sky-800 text-sm sm:text-base md:text-lg">
+                        Request ID: #{{ leave_request.id }}
+                    </p>
+                </div>
+                <div class="hidden md:block">
+                    <span
+                        class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium backdrop-blur-sm bg-white/20 border border-white/10 {% if leave_request.status == 'Pending' %}text-amber-800{% elif leave_request.status == 'Approved' %}text-emerald-800{% elif leave_request.status == 'Rejected' %}text-rose-800{% else %}text-gray-800{% endif %}"
+                    >
+                        <i
+                            class="fas {% if leave_request.status == 'Pending' %}fa-clock{% elif leave_request.status == 'Approved' %}fa-check-circle{% elif leave_request.status == 'Rejected' %}fa-times-circle{% else %}fa-ban{% endif %} mr-2"
+                        ></i>
+                        {{ leave_request.status }}
+                    </span>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
         <!-- Main Content -->
-        <div class="lg:col-span-2 space-y-6">
+        <div class="lg:col-span-2 space-y-3 sm:space-y-4 lg:space-y-6">
             <!-- Request Information -->
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Request Information</h3>
+            <div
+                class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300"
+            >
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    Request Information
+                </h3>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="space-y-4">
                         <div class="flex items-center space-x-3">
-                            <div class="w-10 h-10 bg-sky-100 rounded-full flex items-center justify-center">
+                            <div
+                                class="w-10 h-10 bg-sky-100/50 rounded-full flex items-center justify-center backdrop-blur-sm"
+                            >
                                 <i class="fas fa-user text-sky-600"></i>
                             </div>
                             <div>
                                 <p class="text-sm text-gray-600">Employee</p>
-                                <p class="font-medium text-gray-900">{{ leave_request.user.get_full_name|default:leave_request.user.username }}</p>
+                                <p class="font-medium text-gray-800">
+                                    {{ leave_request.user.get_full_name|default:leave_request.user.username }}
+                                </p>
                             </div>
                         </div>
 
                         <div class="flex items-center space-x-3">
-                            <div class="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
+                            <div
+                                class="w-10 h-10 bg-emerald-100/50 rounded-full flex items-center justify-center backdrop-blur-sm"
+                            >
                                 <i class="fas fa-list text-emerald-600"></i>
                             </div>
                             <div>
                                 <p class="text-sm text-gray-600">Leave Type</p>
-                                <p class="font-medium text-gray-900">{{ leave_request.leave_type.name }}</p>
+                                <p class="font-medium text-gray-800">
+                                    {{ leave_request.leave_type.name }}
+                                </p>
                                 {% if leave_request.leave_type.is_paid %}
-                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs bg-emerald-100 text-emerald-800 mt-1">
-                                        Paid Leave
-                                    </span>
+                                <span
+                                    class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs bg-emerald-100/80 text-emerald-800 mt-1 backdrop-blur-sm"
+                                >
+                                    Paid Leave
+                                </span>
                                 {% else %}
-                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs bg-gray-100 text-gray-800 mt-1">
-                                        Unpaid Leave
-                                    </span>
+                                <span
+                                    class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs bg-gray-100/80 text-gray-800 mt-1 backdrop-blur-sm"
+                                >
+                                    Unpaid Leave
+                                </span>
                                 {% endif %}
                             </div>
                         </div>
 
                         <div class="flex items-center space-x-3">
-                            <div class="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
+                            <div
+                                class="w-10 h-10 bg-amber-100/50 rounded-full flex items-center justify-center backdrop-blur-sm"
+                            >
                                 <i class="fas fa-calendar text-amber-600"></i>
                             </div>
                             <div>
                                 <p class="text-sm text-gray-600">Duration</p>
-                                <p class="font-medium text-gray-900">
+                                <p class="font-medium text-gray-800">
                                     {{ leave_request.start_date|date:"F j, Y" }}
-                                    {% if leave_request.start_date != leave_request.end_date %}
-                                        - {{ leave_request.end_date|date:"F j, Y" }}
-                                    {% endif %}
+                                    {% if leave_request.start_date != leave_request.end_date %} - {{ leave_request.end_date|date:"F j, Y" }} {% endif %}
                                 </p>
                                 {% if leave_request.half_day %}
-                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs bg-blue-100 text-blue-800 mt-1">
-                                        <i class="fas fa-clock mr-1"></i>Half Day
-                                    </span>
+                                <span
+                                    class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs bg-blue-100/80 text-blue-800 mt-1 backdrop-blur-sm"
+                                >
+                                    <i class="fas fa-clock mr-1"></i>Half Day
+                                </span>
                                 {% endif %}
                             </div>
                         </div>
@@ -82,42 +129,53 @@
 
                     <div class="space-y-4">
                         <div class="flex items-center space-x-3">
-                            <div class="w-10 h-10 bg-rose-100 rounded-full flex items-center justify-center">
+                            <div
+                                class="w-10 h-10 bg-rose-100/50 rounded-full flex items-center justify-center backdrop-blur-sm"
+                            >
                                 <i class="fas fa-clock text-rose-600"></i>
                             </div>
                             <div>
                                 <p class="text-sm text-gray-600">Leave Days</p>
-                                <p class="font-medium text-gray-900">{{ leave_request.leave_days }} day{{ leave_request.leave_days|pluralize }}</p>
-                            </div>
-                        </div>
-
-                        <div class="flex items-center space-x-3">
-                            <div class="w-10 h-10 bg-lime-100 rounded-full flex items-center justify-center">
-                                <i class="fas fa-user-check text-lime-600"></i>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-600">Approver</p>
-                                <p class="font-medium text-gray-900">
-                                    {% if leave_request.approver %}
-                                        {{ leave_request.approver.get_full_name|default:leave_request.approver.username }}
-                                    {% else %}
-                                        Not assigned
-                                    {% endif %}
+                                <p class="font-medium text-gray-800">
+                                    {{ leave_request.leave_days }} day{{ leave_request.leave_days|pluralize }}
                                 </p>
                             </div>
                         </div>
 
                         <div class="flex items-center space-x-3">
-                            <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                                <i class="fas fa-calendar-plus text-gray-600"></i>
+                            <div
+                                class="w-10 h-10 bg-lime-100/50 rounded-full flex items-center justify-center backdrop-blur-sm"
+                            >
+                                <i class="fas fa-user-check text-lime-600"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">Approver</p>
+                                <p class="font-medium text-gray-800">
+                                    {% if leave_request.approver %} 
+                                    {{ leave_request.approver.get_full_name|default:leave_request.approver.username }} {% else %} Not assigned {% endif %}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center space-x-3">
+                            <div
+                                class="w-10 h-10 bg-gray-100/50 rounded-full flex items-center justify-center backdrop-blur-sm"
+                            >
+                                <i
+                                    class="fas fa-calendar-plus text-gray-600"
+                                ></i>
                             </div>
                             <div>
                                 <p class="text-sm text-gray-600">Applied On</p>
-                                <p class="font-medium text-gray-900">{{ leave_request.created_at|date:"F j, Y g:i A" }}</p>
+                                <p class="font-medium text-gray-800">
+                                    {{ leave_request.created_at|date:"F j, Y g:i A" }}
+                                </p>
                                 {% if leave_request.is_retroactive %}
-                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs bg-orange-100 text-orange-800 mt-1">
-                                        <i class="fas fa-history mr-1"></i>Retroactive
-                                    </span>
+                                <span
+                                    class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs bg-orange-100/80 text-orange-800 mt-1 backdrop-blur-sm"
+                                >
+                                    <i class="fas fa-history mr-1"></i >Retroactive
+                                </span>
                                 {% endif %}
                             </div>
                         </div>
@@ -127,160 +185,235 @@
 
             <!-- Reason Section -->
             {% if leave_request.reason %}
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Reason for Leave</h3>
-                    <div class="bg-sky-50 border-l-4 border-sky-400 p-4 rounded-r-lg">
-                        <p class="text-gray-800 whitespace-pre-line">{{ leave_request.reason }}</p>
-                    </div>
+            <div
+                class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300"
+            >
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                    Reason for Leave
+                </h3>
+                <div
+                    class="backdrop-blur-sm bg-white/30 border-l-4 border-sky-400 p-4 rounded-r-lg"
+                >
+                    <p class="text-gray-800 whitespace-pre-line">
+                        {{ leave_request.reason }}
+                    </p>
                 </div>
+            </div>
             {% endif %}
 
             <!-- Status-specific Information -->
             {% if leave_request.status == 'Approved' and leave_request.approved_at %}
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Approval Information</h3>
-                    <div class="bg-emerald-50 border-l-4 border-emerald-400 p-4 rounded-r-lg">
-                        <div class="flex items-center space-x-2 mb-2">
-                            <i class="fas fa-check-circle text-emerald-600"></i>
-                            <p class="font-medium text-emerald-800">Request Approved</p>
-                        </div>
+            <div
+                class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300"
+            >
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                    Approval Information
+                </h3>
+                <div
+                    class="backdrop-blur-sm bg-white/30 border-l-4 border-emerald-400 p-4 rounded-r-lg"
+                >
+                    <div class="flex items-center space-x-2 mb-2">
+                        <i class="fas fa-check-circle text-emerald-600"></i>
+                        <p class="font-medium text-emerald-800">
+                            Request Approved
+                        </p>
+                    </div>
+                    <p class="text-emerald-700">
+                        Approved by {{
+                        leave_request.approver.get_full_name|default:leave_request.approver.username
+                        }} on {{ leave_request.approved_at|date:"F j, Y g:i A"
+                        }}
+                    </p>
+                    {% if leave_request.approval_comments %}
+                    <div class="mt-3">
+                        <p class="text-sm text-emerald-600 mb-1">
+                            Approval Comments:
+                        </p>
                         <p class="text-emerald-700">
-                            Approved by {{ leave_request.approver.get_full_name|default:leave_request.approver.username }}
-                            on {{ leave_request.approved_at|date:"F j, Y g:i A" }}
+                            {{ leave_request.approval_comments }}
                         </p>
-                        {% if leave_request.approval_comments %}
-                            <div class="mt-3">
-                                <p class="text-sm text-emerald-600 mb-1">Approval Comments:</p>
-                                <p class="text-emerald-700">{{ leave_request.approval_comments }}</p>
-                            </div>
-                        {% endif %}
                     </div>
+                    {% endif %}
                 </div>
-            {% endif %}
-
-            {% if leave_request.status == 'Rejected' %}
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Rejection Information</h3>
-                    <div class="bg-rose-50 border-l-4 border-rose-400 p-4 rounded-r-lg">
-                        <div class="flex items-center space-x-2 mb-2">
-                            <i class="fas fa-times-circle text-rose-600"></i>
-                            <p class="font-medium text-rose-800">Request Rejected</p>
-                        </div>
-                        {% if leave_request.approver %}
-                            <p class="text-rose-700 mb-3">
-                                Rejected by {{ leave_request.approver.get_full_name|default:leave_request.approver.username }}
-                                {% if leave_request.updated_at %}
-                                    on {{ leave_request.updated_at|date:"F j, Y g:i A" }}
-                                {% endif %}
-                            </p>
-                        {% endif %}
-                        {% if leave_request.rejection_reason %}
-                            <div>
-                                <p class="text-sm text-rose-600 mb-1">Rejection Reason:</p>
-                                <p class="text-rose-700">{{ leave_request.rejection_reason }}</p>
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
-            {% endif %}
-
-            {% if leave_request.status == 'Cancelled' %}
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Cancellation Information</h3>
-                    <div class="bg-gray-50 border-l-4 border-gray-400 p-4 rounded-r-lg">
-                        <div class="flex items-center space-x-2 mb-2">
-                            <i class="fas fa-ban text-gray-600"></i>
-                            <p class="font-medium text-gray-800">Request Cancelled</p>
-                        </div>
-                        <p class="text-gray-700 mb-3">
-                            Cancelled on {{ leave_request.updated_at|date:"F j, Y g:i A" }}
+            </div>
+            {% endif %} {% if leave_request.status == 'Rejected' %}
+            <div
+                class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300"
+            >
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                    Rejection Information
+                </h3>
+                <div
+                    class="backdrop-blur-sm bg-white/30 border-l-4 border-rose-400 p-4 rounded-r-lg"
+                >
+                    <div class="flex items-center space-x-2 mb-2">
+                        <i class="fas fa-times-circle text-rose-600"></i>
+                        <p class="font-medium text-rose-800">
+                            Request Rejected
                         </p>
-                        {% if leave_request.cancellation_reason %}
-                            <div>
-                                <p class="text-sm text-gray-600 mb-1">Cancellation Reason:</p>
-                                <p class="text-gray-700">{{ leave_request.cancellation_reason }}</p>
-                            </div>
-                        {% endif %}
                     </div>
+                    {% if leave_request.approver %}
+                    <p class="text-rose-700 mb-3">
+                        Rejected by {{
+                        leave_request.approver.get_full_name|default:leave_request.approver.username }} {% if leave_request.updated_at %} on 
+                        {{ leave_request.updated_at|date:"F j, Y g:i A" }} {% endif %}
+                    </p>
+                    {% endif %} {% if leave_request.rejection_reason %}
+                    <div>
+                        <p class="text-sm text-rose-600 mb-1">
+                            Rejection Reason:
+                        </p>
+                        <p class="text-rose-700">
+                            {{ leave_request.rejection_reason }}
+                        </p>
+                    </div>
+                    {% endif %}
                 </div>
+            </div>
+            {% endif %} {% if leave_request.status == 'Cancelled' %}
+            <div
+                class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300"
+            >
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                    Cancellation Information
+                </h3>
+                <div
+                    class="backdrop-blur-sm bg-white/30 border-l-4 border-gray-400 p-4 rounded-r-lg"
+                >
+                    <div class="flex items-center space-x-2 mb-2">
+                        <i class="fas fa-ban text-gray-600"></i>
+                        <p class="font-medium text-gray-800">
+                            Request Cancelled
+                        </p>
+                    </div>
+                    <p class="text-gray-700 mb-3">
+                        Cancelled on {{ leave_request.updated_at|date:"F j, Y g:i A" }}
+                    </p>
+                    {% if leave_request.cancellation_reason %}
+                    <div>
+                        <p class="text-sm text-gray-600 mb-1">
+                            Cancellation Reason:
+                        </p>
+                        <p class="text-gray-700">
+                            {{ leave_request.cancellation_reason }}
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
             {% endif %}
 
             <!-- Documentation -->
             {% if leave_request.documentation %}
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Supporting Documentation</h3>
-                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border">
-                        <div class="flex items-center space-x-3">
-                            <i class="fas fa-file-alt text-gray-600 text-xl"></i>
-                            <div>
-                                <p class="font-medium text-gray-900">{{ leave_request.documentation.name }}</p>
-                                <p class="text-sm text-gray-600">Attached document</p>
-                            </div>
+            <div
+                class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300"
+            >
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                    Supporting Documentation
+                </h3>
+                <div
+                    class="flex items-center justify-between p-4 backdrop-blur-sm bg-white/30 rounded-lg border border-gray-200/30"
+                >
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-file-alt text-gray-600 text-xl"></i>
+                        <div>
+                            <p class="font-medium text-gray-800">
+                                {{ leave_request.documentation.name }}
+                            </p>
+                            <p class="text-sm text-gray-600">
+                                Attached document
+                            </p>
                         </div>
-                        <a href="{{ leave_request.documentation.url }}" target="_blank"
-                           class="inline-flex items-center px-3 py-1 border border-sky-300 text-sm font-medium rounded-md text-sky-700 bg-sky-50 hover:bg-sky-100 transition-colors">
-                            <i class="fas fa-download mr-1"></i>
-                            Download
-                        </a>
                     </div>
+                    <a
+                        href="{{ leave_request.documentation.url }}"
+                        target="_blank"
+                        class="btn-secondary-small"
+                    >
+                        <i class="fas fa-download mr-1"></i>
+                        Download
+                    </a>
                 </div>
+            </div>
             {% endif %}
         </div>
 
         <!-- Action Panel -->
-        <div class="space-y-6">
+        <div class="space-y-3 sm:space-y-4 lg:space-y-6">
             <!-- Action Buttons -->
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Actions</h3>
+            <div
+                class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300"
+            >
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                    Actions
+                </h3>
                 <div class="space-y-3">
                     {% if leave_request.status == 'Pending' and can_approve %}
-                        <form method="post" action="{% url 'leave_management:approve_leave' leave_request.id %}" class="inline">
-                            {% csrf_token %}
-                            <button type="submit"
-                                    onclick="return confirm('Are you sure you want to approve this leave request?')"
-                                    class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700 transition-colors">
-                                <i class="fas fa-check mr-2"></i>
-                                Approve Request
-                            </button>
-                        </form>
-
-                        <button onclick="showRejectModal()"
-                                class="w-full inline-flex items-center justify-center px-4 py-2 border border-rose-300 text-sm font-medium rounded-md text-rose-700 bg-rose-50 hover:bg-rose-100 transition-colors">
-                            <i class="fas fa-times mr-2"></i>
-                            Reject Request
+                    <form
+                        method="post"
+                        action="{% url 'leave_management:approve_leave' leave_request.id %}"
+                        class="inline w-full"
+                    >
+                        {% csrf_token %}
+                        <button
+                            type="submit"
+                            onclick="return confirm('Are you sure you want to approve this leave request?')"
+                            class="bg-green-500 hover:bg-green-600 text-white w-full text-center py-2 rounded-md shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg"
+                        >
+                            <i class="fas fa-check mr-2"></i>
+                            Approve Request
                         </button>
+                    </form>
+
+                    <button
+                        onclick="showRejectModal()"
+                        class="bg-red-500 hover:bg-red-600 text-white w-full text-center py-2 rounded-md shadow-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg"
+                    >
+                        <i class="fas fa-times mr-2"></i>
+                        Reject Request
+                    </button>
+                    {% endif %} {% if leave_request.status == 'Pending' and can_cancel %}
+                    <button
+                        onclick="showCancelModal()"
+                        class="btn-warning w-full text-center"
+                    >
+                        <i class="fas fa-ban mr-2"></i>
+                        Cancel Request
+                    </button>
                     {% endif %}
 
-                    {% if leave_request.status == 'Pending' and can_cancel %}
-                        <button onclick="showCancelModal()"
-                                class="w-full inline-flex items-center justify-center px-4 py-2 border border-amber-300 text-sm font-medium rounded-md text-amber-700 bg-amber-50 hover:bg-amber-100 transition-colors">
-                            <i class="fas fa-ban mr-2"></i>
-                            Cancel Request
-                        </button>
-                    {% endif %}
-
-                    <a href="{% url 'leave_management:my_leaves' %}"
-                       class="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                    <a
+                        href="{% url 'leave_management:my_leaves' %}"
+                        class="bg-gray-500 hover:bg-gray-600 text-white w-full text-center py-2 rounded-md shadow-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg"
+                    >
                         <i class="fas fa-arrow-left mr-2"></i>
                         Back to My Leaves
                     </a>
 
                     {% if can_approve %}
-                        <a href="{% url 'leave_management:team_leaves' %}"
-                           class="w-full inline-flex items-center justify-center px-4 py-2 border border-sky-300 text-sm font-medium rounded-md text-sky-700 bg-sky-50 hover:bg-sky-100 transition-colors">
-                            <i class="fas fa-list mr-2"></i>
-                            View Team Leaves
-                        </a>
+                    <a
+                        href="{% url 'leave_management:team_leaves' %}"
+                        class="bg-gray-500 hover:bg-gray-600 text-white w-full text-center py-2 rounded-md shadow-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg"
+                    >
+                        <i class="fas fa-list mr-2"></i>
+                        View Team Leaves
+                    </a>
                     {% endif %}
                 </div>
             </div>
 
             <!-- Leave Balance Info -->
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Leave Balance</h3>
+            <div
+                class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300"
+            >
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                    Leave Balance
+                </h3>
                 <div class="text-center">
-                    <a href="{% url 'leave_management:leave_balance' %}{% if leave_request.user != user %}?user_id={{ leave_request.user.id }}{% endif %}"
-                       class="inline-flex items-center px-4 py-2 border border-sky-300 text-sm font-medium rounded-md text-sky-700 bg-sky-50 hover:bg-sky-100 transition-colors">
+                    <a
+                        href="{% url 'leave_management:leave_balance' %}{% if leave_request.user != user %}?user_id={{ leave_request.user.id }}{% endif %}"
+                        class="btn-secondary w-full text-center"
+                    >
                         <i class="fas fa-chart-bar mr-2"></i>
                         View Balance Details
                     </a>
@@ -288,49 +421,85 @@
             </div>
 
             <!-- Request Timeline -->
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Request Timeline</h3>
+            <div
+                class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300"
+            >
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                    Request Timeline
+                </h3>
                 <div class="space-y-4">
                     <div class="flex items-start space-x-3">
-                        <div class="w-2 h-2 bg-sky-500 rounded-full mt-2"></div>
+                        <div
+                            class="w-2 h-2 bg-sky-500 rounded-full mt-2 flex-shrink-0"
+                        ></div>
                         <div>
-                            <p class="font-medium text-gray-900">Request Submitted</p>
-                            <p class="text-sm text-gray-600">{{ leave_request.created_at|date:"F j, Y g:i A" }}</p>
+                            <p class="font-medium text-gray-800">
+                                Request Submitted
+                            </p>
+                            <p class="text-sm text-gray-600">
+                                {{ leave_request.created_at|date:"F j, Y g:i A"
+                                }}
+                            </p>
                         </div>
                     </div>
 
                     {% if leave_request.status == 'Approved' and leave_request.approved_at %}
-                        <div class="flex items-start space-x-3">
-                            <div class="w-2 h-2 bg-emerald-500 rounded-full mt-2"></div>
-                            <div>
-                                <p class="font-medium text-gray-900">Request Approved</p>
-                                <p class="text-sm text-gray-600">{{ leave_request.approved_at|date:"F j, Y g:i A" }}</p>
-                            </div>
+                    <div class="flex items-start space-x-3">
+                        <div
+                            class="w-2 h-2 bg-emerald-500 rounded-full mt-2 flex-shrink-0"
+                        ></div>
+                        <div>
+                            <p class="font-medium text-gray-800">
+                                Request Approved
+                            </p>
+                            <p class="text-sm text-gray-600">
+                                {{ leave_request.approved_at|date:"F j, Y g:i A" }}
+                            </p>
                         </div>
+                    </div>
                     {% elif leave_request.status == 'Rejected' %}
-                        <div class="flex items-start space-x-3">
-                            <div class="w-2 h-2 bg-rose-500 rounded-full mt-2"></div>
-                            <div>
-                                <p class="font-medium text-gray-900">Request Rejected</p>
-                                <p class="text-sm text-gray-600">{{ leave_request.updated_at|date:"F j, Y g:i A" }}</p>
-                            </div>
+                    <div class="flex items-start space-x-3">
+                        <div
+                            class="w-2 h-2 bg-rose-500 rounded-full mt-2 flex-shrink-0"
+                        ></div>
+                        <div>
+                            <p class="font-medium text-gray-800">
+                                Request Rejected
+                            </p>
+                            <p class="text-sm text-gray-600">
+                                {{ leave_request.updated_at|date:"F j, Y g:i A" }}
+                            </p>
                         </div>
+                    </div>
                     {% elif leave_request.status == 'Cancelled' %}
-                        <div class="flex items-start space-x-3">
-                            <div class="w-2 h-2 bg-gray-500 rounded-full mt-2"></div>
-                            <div>
-                                <p class="font-medium text-gray-900">Request Cancelled</p>
-                                <p class="text-sm text-gray-600">{{ leave_request.updated_at|date:"F j, Y g:i A" }}</p>
-                            </div>
+                    <div class="flex items-start space-x-3">
+                        <div
+                            class="w-2 h-2 bg-gray-500 rounded-full mt-2 flex-shrink-0"
+                        ></div>
+                        <div>
+                            <p class="font-medium text-gray-800">
+                                Request Cancelled
+                            </p>
+                            <p class="text-sm text-gray-600">
+                                {{ leave_request.updated_at|date:"F j, Y g:i A"
+                                }}
+                            </p>
                         </div>
+                    </div>
                     {% else %}
-                        <div class="flex items-start space-x-3">
-                            <div class="w-2 h-2 bg-amber-500 rounded-full mt-2 animate-pulse"></div>
-                            <div>
-                                <p class="font-medium text-gray-900">Awaiting Approval</p>
-                                <p class="text-sm text-gray-600">Status: {{ leave_request.status }}</p>
-                            </div>
+                    <div class="flex items-start space-x-3">
+                        <div
+                            class="w-2 h-2 bg-amber-500 rounded-full mt-2 animate-pulse flex-shrink-0"
+                        ></div>
+                        <div>
+                            <p class="font-medium text-gray-800">
+                                Awaiting Approval
+                            </p>
+                            <p class="text-sm text-gray-600">
+                                Status: {{ leave_request.status }}
+                            </p>
                         </div>
+                    </div>
                     {% endif %}
                 </div>
             </div>
@@ -339,30 +508,53 @@
 </div>
 
 <!-- Reject Request Modal -->
-<div id="rejectModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
-    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+<div
+    id="rejectModal"
+    class="fixed inset-0 bg-gray-600/50 backdrop-blur-sm overflow-y-auto h-full w-full z-50 hidden"
+>
+    <div
+        class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-[20px] backdrop-blur-xl bg-white/90 border-white/40"
+    >
         <div class="mt-3">
-            <div class="flex items-center justify-center w-12 h-12 mx-auto bg-rose-100 rounded-full mb-4">
+            <div
+                class="flex items-center justify-center w-12 h-12 mx-auto bg-rose-100/80 rounded-full mb-4 backdrop-blur-sm"
+            >
                 <i class="fas fa-times-circle text-rose-600 text-xl"></i>
             </div>
-            <h3 class="text-lg font-medium text-gray-900 text-center mb-4">Reject Leave Request</h3>
-            <form id="rejectForm" method="post" action="{% url 'leave_management:reject_leave' leave_request.id %}">
+            <h3 class="text-lg font-medium text-gray-800 text-center mb-4">
+                Reject Leave Request
+            </h3>
+            <form
+                id="rejectForm"
+                method="post"
+                action="{% url 'leave_management:reject_leave' leave_request.id %}"
+            >
                 {% csrf_token %}
                 <div class="mb-4">
-                    <label for="rejection_reason" class="block text-sm font-medium text-gray-700 mb-2">
+                    <label
+                        for="rejection_reason"
+                        class="block text-sm font-medium text-gray-800 mb-2"
+                    >
                         Reason for rejection *
                     </label>
-                    <textarea id="rejection_reason" name="rejection_reason" rows="4" required
-                              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-rose-500 focus:border-rose-500"
-                              placeholder="Please provide a clear reason for rejecting this leave request..."></textarea>
+                    <textarea
+                        id="rejection_reason"
+                        name="rejection_reason"
+                        rows="4"
+                        required
+                        class="w-full px-3 py-2 border border-gray-300/50 rounded-md shadow-sm focus:outline-none focus:ring-rose-500 focus:border-rose-500 backdrop-blur-sm bg-white/50"
+                        placeholder="Please provide a clear reason for rejecting this leave request..."
+                    ></textarea>
                 </div>
                 <div class="flex items-center justify-end space-x-3">
-                    <button type="button" onclick="closeRejectModal()"
-                            class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                    <button
+                        type="button"
+                        onclick="closeRejectModal()"
+                        class="btn-secondary"
+                    >
                         Cancel
                     </button>
-                    <button type="submit"
-                            class="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-rose-600 hover:bg-rose-700 transition-colors">
+                    <button type="submit" class="btn-reject">
                         Reject Request
                     </button>
                 </div>
@@ -372,30 +564,54 @@
 </div>
 
 <!-- Cancel Request Modal -->
-<div id="cancelModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
-    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+<div
+    id="cancelModal"
+    class="fixed inset-0 bg-gray-600/50 backdrop-blur-sm overflow-y-auto h-full w-full z-50 hidden"
+>
+    <div
+        class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-[20px] backdrop-blur-xl bg-white/90 border-white/40"
+    >
         <div class="mt-3">
-            <div class="flex items-center justify-center w-12 h-12 mx-auto bg-amber-100 rounded-full mb-4">
-                <i class="fas fa-exclamation-triangle text-amber-600 text-xl"></i>
+            <div
+                class="flex items-center justify-center w-12 h-12 mx-auto bg-amber-100/80 rounded-full mb-4 backdrop-blur-sm"
+            >
+                <i
+                    class="fas fa-exclamation-triangle text-amber-600 text-xl"
+                ></i>
             </div>
-            <h3 class="text-lg font-medium text-gray-900 text-center mb-4">Cancel Leave Request</h3>
-            <form id="cancelForm" method="post" action="{% url 'leave_management:cancel_leave' leave_request.id %}">
+            <h3 class="text-lg font-medium text-gray-800 text-center mb-4">
+                Cancel Leave Request
+            </h3>
+            <form
+                id="cancelForm"
+                method="post"
+                action="{% url 'leave_management:cancel_leave' leave_request.id %}"
+            >
                 {% csrf_token %}
                 <div class="mb-4">
-                    <label for="cancellation_reason" class="block text-sm font-medium text-gray-700 mb-2">
+                    <label
+                        for="cancellation_reason"
+                        class="block text-sm font-medium text-gray-800 mb-2"
+                    >
                         Reason for cancellation (optional)
                     </label>
-                    <textarea id="cancellation_reason" name="cancellation_reason" rows="3"
-                              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-amber-500 focus:border-amber-500"
-                              placeholder="Please provide a reason for cancelling this request..."></textarea>
+                    <textarea
+                        id="cancellation_reason"
+                        name="cancellation_reason"
+                        rows="3"
+                        class="w-full px-3 py-2 border border-gray-300/50 rounded-md shadow-sm focus:outline-none focus:ring-amber-500 focus:border-amber-500 backdrop-blur-sm bg-white/50"
+                        placeholder="Please provide a reason for cancelling this request..."
+                    ></textarea>
                 </div>
                 <div class="flex items-center justify-end space-x-3">
-                    <button type="button" onclick="closeCancelModal()"
-                            class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                    <button
+                        type="button"
+                        onclick="closeCancelModal()"
+                        class="btn-secondary"
+                    >
                         Cancel
                     </button>
-                    <button type="submit"
-                            class="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-amber-600 hover:bg-amber-700 transition-colors">
+                    <button type="submit" class="btn-warning">
                         Confirm Cancellation
                     </button>
                 </div>
@@ -404,44 +620,56 @@
     </div>
 </div>
 
-<script>
-function showRejectModal() {
-    document.getElementById('rejectModal').classList.remove('hidden');
-}
-
-function closeRejectModal() {
-    document.getElementById('rejectModal').classList.add('hidden');
-    document.getElementById('rejection_reason').value = '';
-}
-
-function showCancelModal() {
-    document.getElementById('cancelModal').classList.remove('hidden');
-}
-
-function closeCancelModal() {
-    document.getElementById('cancelModal').classList.add('hidden');
-    document.getElementById('cancellation_reason').value = '';
-}
-
-// Close modals when clicking outside
-document.getElementById('rejectModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-        closeRejectModal();
+<style>
+    .btn-primary {
+        @apply px-2 py-1.5 sm:px-3 sm:py-2 lg:px-4 lg:py-2.5 bg-emerald-600 text-white rounded-lg shadow-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg text-xs sm:text-sm lg:text-base backdrop-blur-sm font-medium;
     }
-});
 
-document.getElementById('cancelModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-        closeCancelModal();
+    .btn-secondary {
+        @apply px-2 py-1.5 sm:px-3 sm:py-2 lg:px-4 lg:py-2.5 bg-white/50 text-gray-800 border border-gray-400/60 rounded-lg shadow-sm hover:bg-white/70 hover:border-gray-500/70 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-300 hover:shadow-md text-xs sm:text-sm lg:text-base backdrop-blur-sm font-medium;
     }
-});
 
-// Handle escape key
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        closeRejectModal();
-        closeCancelModal();
+    .btn-reject {
+        @apply px-2 py-1.5 sm:px-3 sm:py-2 lg:px-4 lg:py-2.5 bg-rose-600 text-white rounded-lg shadow-md hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg text-xs sm:text-sm lg:text-base backdrop-blur-sm font-medium;
     }
-});
-</script>
+
+    .btn-warning {
+        @apply px-2 py-1.5 sm:px-3 sm:py-2 lg:px-4 lg:py-2.5 bg-amber-600 text-white rounded-lg shadow-md hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg text-xs sm:text-sm lg:text-base backdrop-blur-sm font-medium;
+    }
+
+    .btn-secondary-small {
+        @apply px-2 py-1 bg-white/50 text-gray-800 border border-gray-400/60 rounded text-xs font-medium hover:bg-white/70 hover:border-gray-500/70 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-300 hover:shadow-sm backdrop-blur-sm;
+    }
+
+    /* Form inputs styling */
+    input[type="date"],
+    textarea,
+    select,
+    input[type="file"] {
+        @apply block w-full rounded-md border-gray-300/50 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm backdrop-blur-sm bg-white/50;
+    }
+
+    input[type="checkbox"] {
+        @apply rounded border-gray-300/50 text-emerald-600 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 backdrop-blur-sm;
+    }
+
+    /* Custom scrollbar */
+    .scrollbar-thin::-webkit-scrollbar {
+        width: 3px;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 10px;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.5);
+    }
+</style>
 {% endblock %}
