@@ -27,6 +27,7 @@ urlpatterns = [
     path('leave_management/', include('trueAlign.leave_management.urls')),
     path('attendance/', include('trueAlign.attendance.urls')),
     path('notes/', include('trueAlign.notes.urls')),
+    path('support/', include('trueAlign.support.urls')),
 
     # API endpoints
     path('api/', include('trueAlign.leave_management.api_urls')),

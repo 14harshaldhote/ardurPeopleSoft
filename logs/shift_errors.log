@@ -2908,3 +2908,1832 @@ Traceback (most recent call last):
   File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 578, in unclosed_block_tag
     raise self.error(token, msg)
 django.template.exceptions.TemplateSyntaxError: Unclosed tag on line 1: 'block'. Looking for one of: endblock.
+[2025-09-17 09:37:24] ERROR - django.request - log_response:241 - Internal Server Error: /support/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'endfor'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 220, in _get_response
+    response = response.render()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 114, in render
+    self.content = self.rendered_content
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 42, in select_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 337: 'endfor', expected 'endblock'. Did you forget to register or load this tag?
+[2025-09-17 09:38:05] ERROR - django.request - log_response:241 - Internal Server Error: /support/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'endfor'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 220, in _get_response
+    response = response.render()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 114, in render
+    self.content = self.rendered_content
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 42, in select_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 352: 'endfor', expected 'endblock'. Did you forget to register or load this tag?
+[2025-09-17 09:38:26] ERROR - django.request - log_response:241 - Internal Server Error: /support/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'endif'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 220, in _get_response
+    response = response.render()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 114, in render
+    self.content = self.rendered_content
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 42, in select_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 961, in do_if
+    nodelist = parser.parse(("elif", "else", "endif"))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 861, in do_for
+    nodelist_loop = parser.parse(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 557: 'endif', expected 'empty' or 'endfor'. Did you forget to register or load this tag?
+[2025-09-17 09:38:48] ERROR - django.request - log_response:241 - Internal Server Error: /support/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'endfor'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 220, in _get_response
+    response = response.render()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 114, in render
+    self.content = self.rendered_content
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 42, in select_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 961, in do_if
+    nodelist = parser.parse(("elif", "else", "endif"))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 666: 'endfor', expected 'elif', 'else' or 'endif'. Did you forget to register or load this tag?
+[2025-09-17 09:39:15] ERROR - django.request - log_response:241 - Internal Server Error: /support/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'endif'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 220, in _get_response
+    response = response.render()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 114, in render
+    self.content = self.rendered_content
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 42, in select_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 749: 'endif', expected 'endblock'. Did you forget to register or load this tag?
+[2025-09-17 09:39:18] ERROR - django.request - log_response:241 - Internal Server Error: /support/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'endif'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 220, in _get_response
+    response = response.render()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 114, in render
+    self.content = self.rendered_content
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 42, in select_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 749: 'endif', expected 'endblock'. Did you forget to register or load this tag?
+[2025-09-17 09:39:37] ERROR - django.request - log_response:241 - Internal Server Error: /support/create/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'endif'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 220, in _get_response
+    response = response.render()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 114, in render
+    self.content = self.rendered_content
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 42, in select_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 116: 'endif', expected 'endblock'. Did you forget to register or load this tag?
+[2025-09-17 09:40:02] ERROR - django.request - log_response:241 - Internal Server Error: /support/create/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'endif'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 220, in _get_response
+    response = response.render()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 114, in render
+    self.content = self.rendered_content
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 42, in select_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 116: 'endif', expected 'endblock'. Did you forget to register or load this tag?
+[2025-09-17 09:43:24] ERROR - django.request - log_response:241 - Internal Server Error: /attendance/
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 1079, in _get_user_current_shift
+    return ShiftAssignment.objects.filter(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 1476, in filter
+    return self._filter_or_exclude(False, args, kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 1494, in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 1501, in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/sql/query.py", line 1613, in add_q
+    clause, _ = self._add_q(q_object, self.used_aliases)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/sql/query.py", line 1645, in _add_q
+    child_clause, needed_inner = self.build_filter(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/sql/query.py", line 1495, in build_filter
+    lookups, parts, reffed_expression = self.solve_lookup_type(arg, summarize)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/sql/query.py", line 1307, in solve_lookup_type
+    _, field, _, lookup_parts = self.names_to_path(lookup_splitted, self.get_meta())
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/sql/query.py", line 1772, in names_to_path
+    raise FieldError(
+django.core.exceptions.FieldError: Cannot resolve keyword 'end_date' into field. Choices are: created_at, created_by, created_by_id, effective_from, effective_to, id, is_current, notes, shift, shift_id, updated_at, user, user_id
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 73, in attendance_dashboard
+    context = _build_dashboard_context(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 119, in _build_dashboard_context
+    'current_shift': _get_user_current_shift(request.user, today),
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 1085, in _get_user_current_shift
+    logger.error(f"Error getting current shift for {user.username}: {e}")
+NameError: name 'logger' is not defined
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/decorators.py", line 167, in _wrapped_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 78, in attendance_dashboard
+    logger.error(f"Error in attendance dashboard: {e}")
+NameError: name 'logger' is not defined
+[2025-09-17 10:03:07] ERROR - django.request - log_response:241 - Internal Server Error: /support/create/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'render_field'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 220, in _get_response
+    response = response.render()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 114, in render
+    self.content = self.rendered_content
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 42, in select_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 142: 'render_field', expected 'endblock'. Did you forget to register or load this tag?
+[2025-09-17 10:03:25] ERROR - django.request - log_response:241 - Internal Server Error: /support/create/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'render_field'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 220, in _get_response
+    response = response.render()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 114, in render
+    self.content = self.rendered_content
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 42, in select_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 142: 'render_field', expected 'endblock'. Did you forget to register or load this tag?
+[2025-09-17 10:03:55] ERROR - django.request - log_response:241 - Internal Server Error: /support/create/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'render_field'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 220, in _get_response
+    response = response.render()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 114, in render
+    self.content = self.rendered_content
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 42, in select_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 142: 'render_field', expected 'endblock'. Did you forget to register or load this tag?
+[2025-09-17 10:03:56] ERROR - django.request - log_response:241 - Internal Server Error: /support/create/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'render_field'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 220, in _get_response
+    response = response.render()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 114, in render
+    self.content = self.rendered_content
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 42, in select_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 142: 'render_field', expected 'endblock'. Did you forget to register or load this tag?
+[2025-09-17 10:04:11] ERROR - django.request - log_response:241 - Internal Server Error: /support/create/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'render_field'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 220, in _get_response
+    response = response.render()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 114, in render
+    self.content = self.rendered_content
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 42, in select_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 142: 'render_field', expected 'endblock'. Did you forget to register or load this tag?
+[2025-09-17 10:04:19] ERROR - django.request - log_response:241 - Internal Server Error: /support/create/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'render_field'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 220, in _get_response
+    response = response.render()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 114, in render
+    self.content = self.rendered_content
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 42, in select_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 142: 'render_field', expected 'endblock'. Did you forget to register or load this tag?
+[2025-09-17 10:04:20] ERROR - django.request - log_response:241 - Internal Server Error: /support/create/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'render_field'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 220, in _get_response
+    response = response.render()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 114, in render
+    self.content = self.rendered_content
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 42, in select_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 142: 'render_field', expected 'endblock'. Did you forget to register or load this tag?
+[2025-09-17 10:05:26] ERROR - django.request - log_response:241 - Internal Server Error: /support/create/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'render_field'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 220, in _get_response
+    response = response.render()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 114, in render
+    self.content = self.rendered_content
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 42, in select_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 162: 'render_field', expected 'endblock'. Did you forget to register or load this tag?
+[2025-09-17 10:05:27] ERROR - django.request - log_response:241 - Internal Server Error: /support/create/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'render_field'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 220, in _get_response
+    response = response.render()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 114, in render
+    self.content = self.rendered_content
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 42, in select_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 162: 'render_field', expected 'endblock'. Did you forget to register or load this tag?
+[2025-09-17 10:05:42] ERROR - django.request - log_response:241 - Internal Server Error: /support/create/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'render_field'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 220, in _get_response
+    response = response.render()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 114, in render
+    self.content = self.rendered_content
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 42, in select_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 172: 'render_field', expected 'endblock'. Did you forget to register or load this tag?
+[2025-09-17 10:05:56] ERROR - django.request - log_response:241 - Internal Server Error: /support/create/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'render_field'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 220, in _get_response
+    response = response.render()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 114, in render
+    self.content = self.rendered_content
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 42, in select_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 202: 'render_field', expected 'endblock'. Did you forget to register or load this tag?
+[2025-09-17 10:05:57] ERROR - django.request - log_response:241 - Internal Server Error: /support/create/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'render_field'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 220, in _get_response
+    response = response.render()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 114, in render
+    self.content = self.rendered_content
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 42, in select_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 202: 'render_field', expected 'endblock'. Did you forget to register or load this tag?
+[2025-09-17 10:07:14] ERROR - django.request - log_response:241 - Internal Server Error: /support/create/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'render_field'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 220, in _get_response
+    response = response.render()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 114, in render
+    self.content = self.rendered_content
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 42, in select_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 211: 'render_field', expected 'endblock'. Did you forget to register or load this tag?
+[2025-09-17 10:07:16] ERROR - django.request - log_response:241 - Internal Server Error: /support/create/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'render_field'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 220, in _get_response
+    response = response.render()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 114, in render
+    self.content = self.rendered_content
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 42, in select_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 211: 'render_field', expected 'endblock'. Did you forget to register or load this tag?
+[2025-09-17 10:16:40] ERROR - django.request - log_response:241 - Internal Server Error: /support/create/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1034, in find_library
+    return parser.libraries[name]
+KeyError: 'widget_tweaks'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 220, in _get_response
+    response = response.render()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 114, in render
+    self.content = self.rendered_content
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 42, in select_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1096, in load
+    lib = find_library(parser, name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 1036, in find_library
+    raise TemplateSyntaxError(
+django.template.exceptions.TemplateSyntaxError: 'widget_tweaks' is not a registered tag library. Must be one of:
+admin_list
+admin_modify
+admin_urls
+cache
+crispy_forms_field
+crispy_forms_filters
+crispy_forms_tags
+crispy_forms_utils
+i18n
+l10n
+log
+mathfilters
+rest_framework
+sessions_extras
+static
+tailwind_field
+tailwind_filters
+tz
+[2025-09-17 10:19:28] ERROR - django.request - log_response:241 - Internal Server Error: /support/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'endfor'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 220, in _get_response
+    response = response.render()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 114, in render
+    self.content = self.rendered_content
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 42, in select_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 317: 'endfor', expected 'endblock'. Did you forget to register or load this tag?
+[2025-09-17 10:21:11] ERROR - django.request - log_response:241 - Internal Server Error: /support/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'endfor'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 220, in _get_response
+    response = response.render()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 114, in render
+    self.content = self.rendered_content
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 42, in select_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 317: 'endfor', expected 'endblock'. Did you forget to register or load this tag?
+[2025-09-17 10:21:13] ERROR - django.request - log_response:241 - Internal Server Error: /support/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'endfor'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 220, in _get_response
+    response = response.render()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 114, in render
+    self.content = self.rendered_content
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 42, in select_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 317: 'endfor', expected 'endblock'. Did you forget to register or load this tag?
+[2025-09-17 10:21:35] ERROR - django.request - log_response:241 - Internal Server Error: /support/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'endfor'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 220, in _get_response
+    response = response.render()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 114, in render
+    self.content = self.rendered_content
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 42, in select_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 961, in do_if
+    nodelist = parser.parse(("elif", "else", "endif"))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 678: 'endfor', expected 'elif', 'else' or 'endif'. Did you forget to register or load this tag?
+[2025-09-17 10:22:37] ERROR - django.request - log_response:241 - Internal Server Error: /attendance/
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 1079, in _get_user_current_shift
+    return ShiftAssignment.objects.filter(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 1476, in filter
+    return self._filter_or_exclude(False, args, kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 1494, in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/query.py", line 1501, in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/sql/query.py", line 1613, in add_q
+    clause, _ = self._add_q(q_object, self.used_aliases)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/sql/query.py", line 1645, in _add_q
+    child_clause, needed_inner = self.build_filter(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/sql/query.py", line 1495, in build_filter
+    lookups, parts, reffed_expression = self.solve_lookup_type(arg, summarize)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/sql/query.py", line 1307, in solve_lookup_type
+    _, field, _, lookup_parts = self.names_to_path(lookup_splitted, self.get_meta())
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/db/models/sql/query.py", line 1772, in names_to_path
+    raise FieldError(
+django.core.exceptions.FieldError: Cannot resolve keyword 'end_date' into field. Choices are: created_at, created_by, created_by_id, effective_from, effective_to, id, is_current, notes, shift, shift_id, updated_at, user, user_id
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 73, in attendance_dashboard
+    context = _build_dashboard_context(request)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 119, in _build_dashboard_context
+    'current_shift': _get_user_current_shift(request.user, today),
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 1085, in _get_user_current_shift
+    logger.error(f"Error getting current shift for {user.username}: {e}")
+NameError: name 'logger' is not defined
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/decorators.py", line 167, in _wrapped_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/harshalsmac/WORK/ardur/ardurHome/trueAlign/attendance/views.py", line 78, in attendance_dashboard
+    logger.error(f"Error in attendance dashboard: {e}")
+NameError: name 'logger' is not defined
+[2025-09-17 10:25:37] ERROR - django.request - log_response:241 - Internal Server Error: /support/create/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'endblock'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 220, in _get_response
+    response = response.render()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 114, in render
+    self.content = self.rendered_content
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 42, in select_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 565, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 2: 'endblock'. Did you forget to register or load this tag?
+[2025-09-17 10:25:53] ERROR - django.request - log_response:241 - Internal Server Error: /support/create/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'endblock'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 220, in _get_response
+    response = response.render()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 114, in render
+    self.content = self.rendered_content
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 42, in select_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 565, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 2: 'endblock'. Did you forget to register or load this tag?
+[2025-09-17 10:26:06] ERROR - django.request - log_response:241 - Internal Server Error: /support/create/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'endif'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 220, in _get_response
+    response = response.render()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 114, in render
+    self.content = self.rendered_content
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 42, in select_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 555, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 161: 'endif', expected 'endblock'. Did you forget to register or load this tag?
+[2025-09-17 10:39:58] ERROR - django.request - log_response:241 - Internal Server Error: /support/create/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'endblock'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 220, in _get_response
+    response = response.render()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 114, in render
+    self.content = self.rendered_content
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 42, in select_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 565, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 2: 'endblock'. Did you forget to register or load this tag?
+[2025-09-17 10:43:19] ERROR - django.request - log_response:241 - Internal Server Error: /support/create/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 502, in parse
+    compile_func = self.tags[command]
+KeyError: 'endblock'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 220, in _get_response
+    response = response.render()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 114, in render
+    self.content = self.rendered_content
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 42, in select_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 504, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 565, in invalid_block_tag
+    raise self.error(
+django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 2: 'endblock'. Did you forget to register or load this tag?
+[2025-09-17 10:44:19] ERROR - django.request - log_response:241 - Internal Server Error: /support/ticket/4/
+Traceback (most recent call last):
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/core/handlers/base.py", line 220, in _get_response
+    response = response.render()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 114, in render
+    self.content = self.rendered_content
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader.py", line 42, in select_template
+    return engine.get_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/backends/django.py", line 33, in get_template
+    return Template(self.engine.get_template(template_name), self)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 196, in compile_nodelist
+    return parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 295, in do_extends
+    nodelist = parser.parse()
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 510, in parse
+    raise self.error(token, e)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 508, in parse
+    compiled_result = compile_func(self, token)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/defaulttags.py", line 961, in do_if
+    nodelist = parser.parse(("elif", "else", "endif"))
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 515, in parse
+    self.unclosed_block_tag(parse_until)
+  File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 578, in unclosed_block_tag
+    raise self.error(token, msg)
+django.template.exceptions.TemplateSyntaxError: Unclosed tag on line 451: 'if'. Looking for one of: elif, else, endif.

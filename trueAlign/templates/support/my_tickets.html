@@ -1,0 +1,714 @@
+{% extends 'base.html' %} {% load static %} {% block title %}My Tickets -
+TrueAlign{% endblock %} {% block extra_head %}
+<style>
+    .ticket-priority-critical {
+        @apply bg-red-100 text-red-800 border-red-200;
+    }
+    .ticket-priority-high {
+        @apply bg-orange-100 text-orange-800 border-orange-200;
+    }
+    .ticket-priority-medium {
+        @apply bg-blue-100 text-blue-800 border-blue-200;
+    }
+    .ticket-priority-low {
+        @apply bg-gray-100 text-gray-800 border-gray-200;
+    }
+
+    .ticket-status-new {
+        @apply bg-indigo-100 text-indigo-800 border-indigo-200;
+    }
+    .ticket-status-open {
+        @apply bg-blue-100 text-blue-800 border-blue-200;
+    }
+    .ticket-status-in-progress {
+        @apply bg-yellow-100 text-yellow-800 border-yellow-200;
+    }
+    .ticket-status-pending {
+        @apply bg-purple-100 text-purple-800 border-purple-200;
+    }
+    .ticket-status-resolved {
+        @apply bg-green-100 text-green-800 border-green-200;
+    }
+    .ticket-status-closed {
+        @apply bg-gray-100 text-gray-800 border-gray-200;
+    }
+
+    .ticket-card {
+        @apply block hover:bg-gray-50 transition-all duration-200 border-b border-gray-200 last:border-b-0;
+    }
+
+    .filter-card {
+        @apply bg-white shadow-lg rounded-2xl border border-gray-100;
+    }
+
+    .quick-stats-card {
+        @apply bg-white shadow-lg rounded-2xl p-6 text-center hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1;
+    }
+</style>
+{% endblock %} {% block content %}
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <!-- Header Section -->
+    <div class="bg-white border-b border-gray-200 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between py-8">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">My Tickets</h1>
+                    <p class="mt-2 text-gray-600">
+                        View and manage your support requests
+                    </p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a
+                        href="{% url 'support:dashboard' %}"
+                        class="inline-flex items-center px-4 py-2 border-2 border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-xl text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
+                    >
+                        <svg
+                            class="w-4 h-4 mr-2"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                            ></path>
+                        </svg>
+                        Back to Dashboard
+                    </a>
+                    <a
+                        href="{% url 'support:create_ticket' %}"
+                        class="inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium rounded-xl shadow-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 hover:shadow-xl"
+                    >
+                        <svg
+                            class="w-4 h-4 mr-2"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                            ></path>
+                        </svg>
+                        New Ticket
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Quick Stats Row -->
+        {% if tickets %}
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="quick-stats-card">
+                <div class="text-2xl font-bold text-indigo-600 mb-1">
+                    {{ tickets|length }}
+                </div>
+                <div class="text-sm text-gray-600">
+                    {% if current_status %}{{ current_status|title }}{% else
+                    %}Total{% endif %} Tickets
+                </div>
+            </div>
+            <div class="quick-stats-card">
+                <div class="text-2xl font-bold text-yellow-600 mb-1">
+                    {% with open_count=tickets|length %}{{ open_count }}{%
+                    endwith %}
+                </div>
+                <div class="text-sm text-gray-600">Open Issues</div>
+            </div>
+            <div class="quick-stats-card">
+                <div class="text-2xl font-bold text-green-600 mb-1">0</div>
+                <div class="text-sm text-gray-600">Resolved Today</div>
+            </div>
+            <div class="quick-stats-card">
+                <div class="text-2xl font-bold text-purple-600 mb-1">
+                    {% if tickets %}{{ tickets.0.created_at|timesince }}{% else
+                    %}N/A{% endif %}
+                </div>
+                <div class="text-sm text-gray-600">Last Created</div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Filter Section -->
+        <div class="filter-card mb-8">
+            <div class="px-6 py-6">
+                <div
+                    class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0"
+                >
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">
+                            Filter Your Tickets
+                        </h3>
+                        <p class="text-sm text-gray-600">
+                            Find specific tickets by status or view all your
+                            requests
+                        </p>
+                    </div>
+                    <div
+                        class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4"
+                    >
+                        <form method="get" class="flex items-center space-x-4">
+                            <div class="min-w-0 flex-shrink-0">
+                                <label for="status" class="sr-only"
+                                    >Filter by status</label
+                                >
+                                <select
+                                    name="status"
+                                    id="status"
+                                    onchange="this.form.submit()"
+                                    class="focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block w-full py-3 pl-4 pr-8 border border-gray-300 bg-white text-gray-700 sm:text-sm rounded-xl shadow-sm transition-all duration-200"
+                                >
+                                    <option value="">All Statuses</option>
+                                    {% for status_value, status_label in
+                                    status_choices %}
+                                    <option
+                                        value="{{ status_value }}"
+                                        {%
+                                        if
+                                        status_value=""
+                                        ="current_status"
+                                        %}selected{%
+                                        endif
+                                        %}
+                                    >
+                                        {{ status_label }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            {% if current_status %}
+                            <a
+                                href="{% url 'support:my_tickets' %}"
+                                class="inline-flex items-center px-4 py-3 border-2 border-gray-300 text-sm font-medium rounded-xl text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
+                            >
+                                <svg
+                                    class="w-4 h-4 mr-2"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M6 18L18 6M6 6l12 12"
+                                    ></path>
+                                </svg>
+                                Clear Filter
+                            </a>
+                            {% endif %}
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tickets List -->
+        <div
+            class="bg-white shadow-xl overflow-hidden rounded-2xl border border-gray-100"
+        >
+            <div class="px-6 py-6 border-b border-gray-200 bg-gray-50">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3
+                            class="text-lg leading-6 font-semibold text-gray-900"
+                        >
+                            Your Support Tickets
+                        </h3>
+                        <p class="mt-1 max-w-2xl text-sm text-gray-600">
+                            {% if current_status %} Showing {{
+                            current_status|lower }} tickets {% else %} All your
+                            support requests and tickets {% endif %}
+                        </p>
+                    </div>
+                    {% if tickets %}
+                    <div class="flex items-center space-x-4">
+                        <span class="text-sm text-gray-500">
+                            <span class="font-medium"
+                                >{{ tickets|length }}</span
+                            >
+                            {% if current_status %}{{ current_status|lower }}{%
+                            endif %} tickets
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if tickets %}
+            <div class="divide-y divide-gray-200">
+                {% for ticket in tickets %}
+                <div class="ticket-card">
+                    <a
+                        href="{% url 'support:ticket_detail' ticket_id=ticket.id %}"
+                        class="block"
+                    >
+                        <div class="px-6 py-6">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center min-w-0 flex-1">
+                                    <div class="flex-shrink-0">
+                                        <span
+                                            class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ticket-priority-{{ ticket.priority|lower }}"
+                                        >
+                                            {{ ticket.get_priority_display }}
+                                        </span>
+                                    </div>
+                                    <div class="ml-6 flex-1 min-w-0">
+                                        <div class="flex items-center mb-2">
+                                            <p
+                                                class="text-sm font-semibold text-indigo-600 truncate"
+                                            >
+                                                {{ ticket.ticket_id }}
+                                            </p>
+                                            <span
+                                                class="ml-3 inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ticket-status-{{ ticket.status|lower|slice:':3' }}"
+                                            >
+                                                {{ ticket.get_status_display }}
+                                            </span>
+                                        </div>
+                                        <p
+                                            class="text-base font-medium text-gray-900 mb-2"
+                                        >
+                                            {{ ticket.subject }}
+                                        </p>
+                                        <p
+                                            class="text-sm text-gray-600 mb-3 line-clamp-2"
+                                        >
+                                            {{
+                                            ticket.description|truncatechars:150
+                                            }}
+                                        </p>
+                                        <div
+                                            class="flex items-center text-xs text-gray-500 space-x-4"
+                                        >
+                                            <div class="flex items-center">
+                                                <svg
+                                                    class="w-4 h-4 mr-1"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+                                                    ></path>
+                                                </svg>
+                                                <span
+                                                    >{{
+                                                    ticket.get_issue_type_display
+                                                    }}</span
+                                                >
+                                            </div>
+                                            {% if ticket.department %}
+                                            <span>•</span>
+                                            <div class="flex items-center">
+                                                <svg
+                                                    class="w-4 h-4 mr-1"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                                                    ></path>
+                                                </svg>
+                                                <span
+                                                    >{{ ticket.department
+                                                    }}</span
+                                                >
+                                            </div>
+                                            {% endif %} {% if
+                                            ticket.assigned_to_user %}
+                                            <span>•</span>
+                                            <div class="flex items-center">
+                                                <svg
+                                                    class="w-4 h-4 mr-1"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                                                    ></path>
+                                                </svg>
+                                                <span
+                                                    >Assigned to {{
+                                                    ticket.assigned_to_user.get_full_name|default:ticket.assigned_to_user.username
+                                                    }}</span
+                                                >
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-6">
+                                    <div
+                                        class="flex flex-col items-end text-right"
+                                    >
+                                        <div
+                                            class="flex items-center space-x-4 mb-2"
+                                        >
+                                            <!-- Comments count -->
+                                            <div
+                                                class="flex items-center text-gray-500"
+                                            >
+                                                <svg
+                                                    class="h-4 w-4 mr-1"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                                                    ></path>
+                                                </svg>
+                                                <span class="text-xs"
+                                                    >{{ ticket.comments.count
+                                                    }}</span
+                                                >
+                                            </div>
+
+                                            <!-- Attachments count -->
+                                            {% if ticket.attachments.count > 0
+                                            %}
+                                            <div
+                                                class="flex items-center text-gray-500"
+                                            >
+                                                <svg
+                                                    class="h-4 w-4 mr-1"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
+                                                    ></path>
+                                                </svg>
+                                                <span class="text-xs"
+                                                    >{{ ticket.attachments.count
+                                                    }}</span
+                                                >
+                                            </div>
+                                            {% endif %}
+                                        </div>
+
+                                        <p class="text-xs text-gray-500">
+                                            Created {{
+                                            ticket.created_at|timesince }} ago
+                                        </p>
+                                        {% if ticket.updated_at !=
+                                        ticket.created_at %}
+                                        <p class="text-xs text-gray-500">
+                                            Updated {{
+                                            ticket.updated_at|timesince }} ago
+                                        </p>
+                                        {% endif %} {% if ticket.resolved_at %}
+                                        <p
+                                            class="text-xs text-green-600 font-medium mt-1"
+                                        >
+                                            Resolved {{
+                                            ticket.resolved_at|timesince }} ago
+                                        </p>
+                                        {% endif %}
+
+                                        <!-- Status indicators -->
+                                        <div
+                                            class="flex items-center space-x-2 mt-2"
+                                        >
+                                            {% if ticket.is_overdue %}
+                                            <div
+                                                class="flex items-center text-red-600"
+                                            >
+                                                <svg
+                                                    class="h-4 w-4 mr-1"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                                    ></path>
+                                                </svg>
+                                                <span
+                                                    class="text-xs font-medium"
+                                                    >Overdue</span
+                                                >
+                                            </div>
+                                            {% endif %} {% if
+                                            ticket.escalation_level > 0 %}
+                                            <div
+                                                class="flex items-center text-orange-600"
+                                            >
+                                                <svg
+                                                    class="h-4 w-4 mr-1"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M5 10l7-7m0 0l7 7m-7-7v18"
+                                                    ></path>
+                                                </svg>
+                                                <span
+                                                    class="text-xs font-medium"
+                                                    >Escalated (Level {{
+                                                    ticket.escalation_level
+                                                    }})</span
+                                                >
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="flex-shrink-0">
+                                        <svg
+                                            class="h-5 w-5 text-gray-400"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M9 5l7 7-7 7"
+                                            ></path>
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if tickets.has_other_pages %}
+            <div
+                class="bg-gray-50 px-6 py-4 flex items-center justify-between border-t border-gray-200"
+            >
+                <div class="flex-1 flex justify-between sm:hidden">
+                    {% if tickets.has_previous %}
+                    <a
+                        href="?page={{ tickets.previous_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}"
+                        class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-xl text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                    >
+                        Previous
+                    </a>
+                    {% endif %} {% if tickets.has_next %}
+                    <a
+                        href="?page={{ tickets.next_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}"
+                        class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-xl text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                    >
+                        Next
+                    </a>
+                    {% endif %}
+                </div>
+                <div
+                    class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between"
+                >
+                    <div>
+                        <p class="text-sm text-gray-700">
+                            Showing
+                            <span class="font-medium"
+                                >{{ tickets.start_index }}</span
+                            >
+                            to
+                            <span class="font-medium"
+                                >{{ tickets.end_index }}</span
+                            >
+                            of
+                            <span class="font-medium"
+                                >{{ tickets.paginator.count }}</span
+                            >
+                            results
+                        </p>
+                    </div>
+                    <div>
+                        <nav
+                            class="relative z-0 inline-flex rounded-xl shadow-sm -space-x-px"
+                            aria-label="Pagination"
+                        >
+                            {% if tickets.has_previous %}
+                            <a
+                                href="?page={{ tickets.previous_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}"
+                                class="relative inline-flex items-center px-3 py-2 rounded-l-xl border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors"
+                            >
+                                <span class="sr-only">Previous</span>
+                                <svg
+                                    class="h-5 w-5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M15 19l-7-7 7-7"
+                                    ></path>
+                                </svg>
+                            </a>
+                            {% endif %} {% for num in
+                            tickets.paginator.page_range %} {% if tickets.number
+                            == num %}
+                            <span
+                                class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-indigo-50 text-sm font-medium text-indigo-600"
+                            >
+                                {{ num }}
+                            </span>
+                            {% elif num > tickets.number|add:'-3' and num <
+                            tickets.number|add:'3' %}
+                            <a
+                                href="?page={{ num }}{% if current_status %}&status={{ current_status }}{% endif %}"
+                                class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                            >
+                                {{ num }}
+                            </a>
+                            {% endif %} {% endfor %} {% if tickets.has_next %}
+                            <a
+                                href="?page={{ tickets.next_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}"
+                                class="relative inline-flex items-center px-3 py-2 rounded-r-xl border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors"
+                            >
+                                <span class="sr-only">Next</span>
+                                <svg
+                                    class="h-5 w-5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M9 5l7 7-7 7"
+                                    ></path>
+                                </svg>
+                            </a>
+                            {% endif %}
+                        </nav>
+                    </div>
+                </div>
+            </div>
+            {% endif %} {% else %}
+            <!-- Empty State -->
+            <div class="text-center py-16">
+                <div
+                    class="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-gray-100 mb-6"
+                >
+                    {% if current_status %}
+                    <svg
+                        class="h-10 w-10 text-gray-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                        ></path>
+                    </svg>
+                    {% else %}
+                    <svg
+                        class="h-10 w-10 text-gray-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        ></path>
+                    </svg>
+                    {% endif %}
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">
+                    {% if current_status %} No {{ current_status|lower }}
+                    tickets found {% else %} No tickets found {% endif %}
+                </h3>
+                <p class="text-gray-600 mb-8 max-w-md mx-auto">
+                    {% if current_status %} You don't have any tickets with {{
+                    current_status|lower }} status. Try selecting a different
+                    status or view all tickets. {% else %} You haven't created
+                    any support tickets yet. Get started by submitting your
+                    first support request. {% endif %}
+                </p>
+                <div class="flex justify-center space-x-4">
+                    {% if current_status %}
+                    <a
+                        href="{% url 'support:my_tickets' %}"
+                        class="inline-flex items-center px-6 py-2 border-2 border-gray-300 shadow-sm text-sm font-medium rounded-xl text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
+                    >
+                        <svg
+                            class="w-4 h-4 mr-2"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M4 6h16M4 10h16M4 14h16M4 18h16"
+                            ></path>
+                        </svg>
+                        View All Tickets
+                    </a>
+                    {% endif %}
+                    <a
+                        href="{% url 'support:create_ticket' %}"
+                        class="inline-flex items-center px-6 py-2 border border-transparent shadow-lg text-sm font-medium rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 hover:shadow-xl"
+                    >
+                        <svg
+                            class="w-4 h-4 mr-2"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                            ></path>
+                        </svg>
+                        {% if current_status %}Create New Ticket{% else %}Create
+                        Your First Ticket{% endif %}
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

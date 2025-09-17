@@ -33,23 +33,9 @@ from .decorators import (
     attendance_permission_required
 )
 from .config import PRESENT_STATUSES, get_setting
-from .logging import (
-    get_attendance_logger,
-    log_attendance_action,
-    log_attendance_error,
-    log_performance_metric,
-    log_data_access,
-    log_security_event
-)
-from .logging.utils import (
-    log_clock_action,
-    log_regularization_action,
-    log_data_export,
-    log_api_access,
-    AttendanceOperationLogger
-)
 
-logger = get_attendance_logger('views')
+
+
 User = get_user_model()
 IST = pytz.timezone('Asia/Kolkata')
 

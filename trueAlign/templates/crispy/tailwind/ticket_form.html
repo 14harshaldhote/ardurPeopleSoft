@@ -1,0 +1,24 @@
+{% load crispy_forms_field %}
+
+<div class="mb-6">
+    {% if field.label %}
+        <label for="{{ field.id_for_label }}" class="block text-sm font-semibold text-gray-800 mb-2">
+            {{ field.label }}
+            {% if field.field.required %}
+                <span class="text-red-500">*</span>
+            {% endif %}
+        </label>
+    {% endif %}
+
+    {% crispy_field field 'class="block w-full px-4 py-3 rounded-xl bg-white/50 border border-white/40 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"' %}
+
+    {% if field.help_text %}
+        <div class="text-sm text-gray-600 mt-2">{{ field.help_text }}</div>
+    {% endif %}
+
+    {% if field.errors %}
+        <div class="text-red-600 text-sm mt-1">
+            {{ field.errors.0 }}
+        </div>
+    {% endif %}
+</div>

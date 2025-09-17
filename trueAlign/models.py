@@ -4756,3 +4756,561 @@ class GlobalUpdate(models.Model):
         permissions = [
             ("manage_globalupdate", "Can manage Global Updates"),
         ]
+
+
+
+'''-------------------------------------------- SUPPORT AREA ---------------------------------------'''
+import uuid
+from django.db import models
+from django.utils.timezone import now
+from django.contrib.auth import get_user_model
+from django.utils import timezone
+
+from django.db import models
+from django.utils.timezone import now
+import uuid
+from django.contrib.auth.models import User
+
+class Support(models.Model):
+    class Status(models.TextChoices):
+        NEW = 'New', 'New'
+        OPEN = 'Open', 'Open'
+        IN_PROGRESS = 'In Progress', 'In Progress'
+        PENDING_USER = 'Pending User Response', 'Pending User Response'
+        PENDING_THIRD_PARTY = 'Pending Third Party', 'Pending Third Party'
+        ON_HOLD = 'On Hold', 'On Hold'
+        RESOLVED = 'Resolved', 'Resolved'
+        CLOSED = 'Closed', 'Closed'
+
+    class Priority(models.TextChoices):
+        LOW = 'Low', 'Low'
+        MEDIUM = 'Medium', 'Medium'
+        HIGH = 'High', 'High'
+        CRITICAL = 'Critical', 'Critical'
+
+    class IssueType(models.TextChoices):
+        HARDWARE = 'Hardware Issue', 'Hardware Issue'
+        SOFTWARE = 'Software Issue', 'Software Issue'
+        NETWORK = 'Network Issue', 'Network Issue'
+        INTERNET = 'Internet Issue', 'Internet Issue'
+        APPLICATION = 'Application Issue', 'Application Issue'
+        HR = 'HR Related Issue', 'HR Related Issue'
+        ACCESS = 'Access Management', 'Access Management'
+        SECURITY = 'Security Incident', 'Security Incident'
+        SERVICE = 'Service Request', 'Service Request'
+
+    class AssignedGroup(models.TextChoices):
+        HR = 'HR', 'HR'
+        ADMIN = 'Admin', 'Admin'
+
+    # SLA Status choices
+    class SLAStatus(models.TextChoices):
+        WITHIN_SLA = 'Within SLA', 'Within SLA'
+        BREACHED = 'Breached', 'Breached'
+
+    # Explicitly define the id field (though Django creates this automatically)
+    id = models.AutoField(primary_key=True)
+
+    # Core Fields
+    ticket_id = models.CharField(max_length=100, unique=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tickets')
+    issue_type = models.CharField(max_length=50, choices=IssueType.choices)
+    subject = models.CharField(max_length=200)
+    description = models.TextField()
+
+    # Status and Assignment
+    status = models.CharField(max_length=30, choices=Status.choices, default=Status.NEW)
+    priority = models.CharField(max_length=20, choices=Priority.choices, default=Priority.MEDIUM)
+    assigned_group = models.CharField(max_length=50, choices=AssignedGroup.choices, null=True, blank=True)
+    assigned_to_user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='assigned_tickets'
+    )
+
+    # CC Users
+    cc_users = models.ManyToManyField(
+        User,
+        blank=True,
+        related_name='cc_tickets',
+        help_text="Users to be CC'd on this ticket"
+    )
+
+    # Timestamps
+    created_at = models.DateTimeField(default=now)
+    updated_at = models.DateTimeField(auto_now=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    due_date = models.DateTimeField(null=True, blank=True)
+
+    # Additional Fields
+    location = models.CharField(max_length=100, blank=True)
+    asset_id = models.CharField(max_length=50, blank=True, help_text="Related hardware/software asset ID")
+
+    # Related Issues
+    parent_ticket = models.ForeignKey(
+        'self',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='sub_tickets',
+        help_text="Parent ticket for related issues"
+    )
+
+    # SLA and Resolution
+    sla_breach = models.BooleanField(default=False)
+    sla_target_date = models.DateTimeField(null=True, blank=True, help_text="Target date for SLA compliance")
+    sla_status = models.CharField(
+        max_length=20,
+        choices=SLAStatus.choices,
+        null=True,
+        blank=True,
+        help_text="Status of SLA compliance"
+    )
+    resolution_summary = models.TextField(blank=True)
+    resolution_time = models.DurationField(null=True, blank=True)
+
+    # Response time tracking
+    response_time = models.DurationField(
+        null=True,
+        blank=True,
+        help_text="Time taken for first response"
+    )
+    time_to_close = models.DurationField(
+        null=True,
+        blank=True,
+        help_text="Total time from creation to closure"
+    )
+
+    # Escalation tracking
+    escalation_level = models.PositiveSmallIntegerField(
+        default=0,
+        help_text="Current escalation level of the ticket"
+    )
+
+    # Add this field
+    reopen_count = models.PositiveSmallIntegerField(
+        default=0,
+        help_text="Number of times this ticket has been reopened"
+    )
+
+    # User Satisfaction
+    satisfaction_rating = models.IntegerField(null=True, blank=True, choices=[(i, i) for i in range(1, 6)])
+    feedback = models.TextField(blank=True)
+
+    # Soft delete field - ADD DEFAULT VALUE
+    is_deleted = models.BooleanField(default=False, help_text="Soft delete flag")
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['ticket_id']),
+            models.Index(fields=['status']),
+            models.Index(fields=['created_at']),
+            models.Index(fields=['user']),
+            models.Index(fields=['due_date']),
+            models.Index(fields=['resolved_at']),
+            models.Index(fields=['priority']),
+        ]
+        verbose_name = "Support Ticket"
+        verbose_name_plural = "Support Tickets"
+
+    def __str__(self):
+        return f"[{self.priority}] {self.ticket_id} - {self.subject} ({self.status})"
+
+    @property
+    def is_overdue(self):
+        return bool(self.due_date and self.due_date < now())
+
+    def save(self, *args, **kwargs):
+        # Extract user from kwargs (if present) before passing to super().save()
+        user = kwargs.pop('user', None)
+
+        # Auto-generate ticket_id if not set
+        if not self.ticket_id:
+            # Short code from IssueType value (convert to uppercase and replace spaces with _ or remove)
+            issue_type_code = self.issue_type.upper().replace(' ', '_')
+
+            # Count existing tickets with this issue_type
+            existing_count = Support.objects.filter(issue_type=self.issue_type).count() + 1
+
+            # Generate ticket_id
+            self.ticket_id = f"{issue_type_code}-{existing_count}"
+
+        # Auto-assign tickets to HR or Admin based on issue type
+        if not self.assigned_group:
+            hr_issues = [self.IssueType.HR, self.IssueType.ACCESS]
+            self.assigned_group = self.AssignedGroup.HR if self.issue_type in hr_issues else self.AssignedGroup.ADMIN
+
+        # Calculate SLA target date if not set
+        if not self.sla_target_date and self.created_at:
+            self.set_sla_target_date()
+
+        # Track status changes
+        if self.pk:
+            old_ticket = Support.objects.get(pk=self.pk)
+
+            # Check for status changes
+            if old_ticket.status != self.status:
+                self._status_changed = (old_ticket.status, self.status)
+
+                # Track resolution time when moving to Resolved status
+                if self.status == self.Status.RESOLVED and not self.resolved_at:
+                    self.resolved_at = now()
+                    if self.created_at:
+                        self.resolution_time = self.resolved_at - self.created_at
+
+                # Calculate time_to_close when status changes to Closed
+                if self.status == self.Status.CLOSED and not self.time_to_close:
+                    if self.created_at:
+                        self.time_to_close = now() - self.created_at
+            else:
+                self._status_changed = None
+        else:
+            # New ticket
+            self._status_changed = (None, self.status)
+
+        # Check SLA compliance based on target date
+        if self.sla_target_date:
+            if self.resolved_at and self.resolved_at > self.sla_target_date:
+                self.sla_breach = True
+                self.sla_status = self.SLAStatus.BREACHED
+            elif self.resolved_at and self.resolved_at <= self.sla_target_date:
+                self.sla_breach = False
+                self.sla_status = self.SLAStatus.WITHIN_SLA
+
+        super().save(*args, **kwargs)
+
+        # Create status log if needed
+        if hasattr(self, '_status_changed') and self._status_changed:
+            old_status, new_status = self._status_changed
+            StatusLog.objects.create(
+                ticket=self,
+                old_status=old_status if old_status else '',
+                new_status=new_status,
+                changed_by=user
+            )
+
+
+    def set_sla_target_date(self):
+        """Calculate SLA target date based on priority"""
+        if not self.created_at:
+            return
+
+        # Define SLA target times based on priority (in hours)
+        sla_targets = {
+            self.Priority.CRITICAL: 4,    # 4 hours
+            self.Priority.HIGH: 8,        # 8 hours
+            self.Priority.MEDIUM: 24,     # 24 hours
+            self.Priority.LOW: 48,        # 48 hours
+        }
+
+        # Get target hours for this ticket's priority
+        target_hours = sla_targets.get(self.priority, 24)  # Default to 24 hours
+
+        # Calculate target date (considering business hours could be added here)
+        self.sla_target_date = self.created_at + timezone.timedelta(hours=target_hours)
+
+
+import os
+
+class StatusLog(models.Model):
+    ticket = models.ForeignKey(Support, on_delete=models.CASCADE, related_name='status_logs')
+    old_status = models.CharField(max_length=30, blank=True)
+    new_status = models.CharField(max_length=30, choices=Support.Status.choices)
+    changed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    changed_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.ticket.ticket_id}: {self.old_status} -> {self.new_status}"
+
+
+class TicketComment(models.Model):
+    """Model for comments on support tickets"""
+    ticket = models.ForeignKey(Support, on_delete=models.CASCADE, related_name='comments')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_internal = models.BooleanField(default=False, help_text="Internal notes only visible to staff")
+
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"Comment on {self.ticket.ticket_id} by {self.user.username}"
+
+
+
+
+
+class TicketActivity(models.Model):
+    """Model for tracking ticket activity, including reopening"""
+    class Action(models.TextChoices):
+        CREATED = 'CREATED', 'Created'
+        UPDATED = 'UPDATED', 'Updated'
+        ASSIGNED = 'ASSIGNED', 'Assigned'
+        COMMENTED = 'COMMENTED', 'Commented'
+        REOPENED = 'REOPENED', 'Reopened'
+        ESCALATED = 'ESCALATED', 'Escalated'
+        RESOLVED = 'RESOLVED', 'Resolved'
+        CLOSED = 'CLOSED', 'Closed'
+
+    ticket = models.ForeignKey(Support, on_delete=models.CASCADE, related_name='ticket_activity')
+    action = models.CharField(max_length=20, choices=Action.choices)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    details = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['-timestamp']
+        verbose_name_plural = "Ticket Activities"
+
+    def __str__(self):
+        return f"{self.action} on {self.ticket.ticket_id} by {self.user.username if self.user else 'System'}"
+
+
+# Add this to your trueAlign/models.py file
+from django.db import models
+from django.contrib.auth.models import User
+from django.utils.text import get_valid_filename
+import os
+import uuid
+
+class CommentAttachment(models.Model):
+    """Model for storing attachments related to ticket comments"""
+    comment = models.ForeignKey(
+        TicketComment,
+        on_delete=models.CASCADE,
+        related_name='attachments',  # Use 'attachments' for easy access from a comment object
+        help_text="The comment this attachment belongs to"
+    )
+
+    ticket_activity = models.ForeignKey(
+        'TicketActivity',
+        on_delete=models.CASCADE,
+        related_name='comment_attachments',
+        help_text="The ticket activity/comment this attachment belongs to"
+    )
+
+    file = models.FileField(
+        upload_to='comment_attachments/%Y/%m/%d/',
+        help_text="Upload attachment file"
+    )
+
+    original_filename = models.CharField(
+        max_length=255,
+        help_text="Original name of the uploaded file"
+    )
+
+    formatted_filename = models.CharField(
+        max_length=255,
+        help_text="Formatted filename with ticket ID and number",
+        blank=True
+    )
+
+    file_size = models.PositiveIntegerField(
+        default=0,
+        help_text="Size of the file in bytes"
+    )
+
+    content_type = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text="MIME type of the file"
+    )
+
+    uploaded_by = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        help_text="User who uploaded this attachment"
+    )
+
+    uploaded_at = models.DateTimeField(
+        auto_now_add=True,
+        help_text="When the attachment was uploaded"
+    )
+
+    description = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Optional description of the attachment"
+    )
+
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Whether this attachment is active"
+    )
+
+
+    class Meta:
+        db_table = 'truealign_comment_attachment'
+        verbose_name = 'Comment Attachment'
+        verbose_name_plural = 'Comment Attachments'
+        ordering = ['-uploaded_at']
+
+    def __str__(self):
+        return f"{self.original_filename} - {self.ticket_activity}"
+
+    def generate_formatted_filename(self, filename):
+        """Generate formatted filename based on ticket ID and comment number"""
+        # Get ticket id
+        ticket_id = self.ticket_activity.ticket.ticket_id
+
+        # Get count of existing attachments
+        existing_count = CommentAttachment.objects.filter(
+            ticket_activity=self.ticket_activity,
+            is_active=True
+        ).count()
+
+        # Next number for this comment
+        next_number = existing_count + 1
+
+        # Get file extension
+        ext = filename.split('.')[-1].lower()
+
+        # Build formatted filename
+        return f"{ticket_id}-comment-{next_number}.{ext}"
+
+    def comment_attachment_path(self, filename):
+        """Define the upload path and filename"""
+        ticket_id = self.ticket_activity.ticket.ticket_id
+        formatted_name = self.generate_formatted_filename(filename)
+
+        # Store the formatted filename
+        self.formatted_filename = formatted_name
+
+        # Return full path
+        return os.path.join('comment_attachments', str(ticket_id), formatted_name)
+
+    def save(self, *args, **kwargs):
+        if self.file:
+            # Store original filename
+            if not self.original_filename:
+                self.original_filename = get_valid_filename(self.file.name)
+
+            # Generate formatted filename and update file path
+            if not self.formatted_filename:
+                self.file.name = self.comment_attachment_path(self.file.name)
+
+            # Update file size
+            if not self.file_size and hasattr(self.file, 'size'):
+                self.file_size = self.file.size
+
+            # Update content type
+            if not self.content_type and hasattr(self.file, 'content_type'):
+                self.content_type = self.file.content_type
+
+        super().save(*args, **kwargs)
+
+    @property
+    def file_size_human(self):
+        """Return human readable file size"""
+        size = self.file_size
+        for unit in ['B', 'KB', 'MB', 'GB']:
+            if size < 1024.0:
+                return f"{size:.1f} {unit}"
+            size /= 1024.0
+        return f"{size:.1f} TB"
+
+
+class TicketAttachment(models.Model):
+    """Model for file attachments on tickets"""
+    ticket = models.ForeignKey(Support, on_delete=models.CASCADE, related_name='attachments')
+    file = models.FileField(upload_to='ticket_attachments/%Y/%m/%d/')
+    uploaded_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    description = models.CharField(max_length=255, blank=True)
+
+    original_filename = models.CharField(
+        max_length=255,
+        help_text="Original name of the uploaded file"
+    )
+
+    formatted_filename = models.CharField(
+        max_length=255,
+        help_text="Formatted filename with ticket ID and number",
+        blank=True
+    )
+
+    file_size = models.PositiveIntegerField(
+        default=0,
+        help_text="File size in bytes"
+    )
+
+    file_type = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text="MIME type of the file"
+    )
+
+    is_deleted = models.BooleanField(
+        default=False,
+        help_text="Soft delete flag"
+    )
+
+    def generate_formatted_filename(self, filename):
+        """Generate formatted filename based on ticket ID and attachment number"""
+        # Get ticket_id
+        ticket_id = self.ticket.ticket_id
+
+        # Get count of existing attachments
+        existing_count = TicketAttachment.objects.filter(
+            ticket=self.ticket,
+            is_deleted=False
+        ).count()
+
+        # Next number
+        next_number = existing_count + 1
+
+        # Get file extension
+        ext = filename.split('.')[-1].lower()
+
+        # Build formatted filename
+        return f"{ticket_id}-{next_number}.{ext}"
+
+    def ticket_attachment_path(self, filename):
+        """Define the upload path and filename"""
+        ticket_id = self.ticket.ticket_id
+        formatted_name = self.generate_formatted_filename(filename)
+
+        # Store the formatted filename
+        self.formatted_filename = formatted_name
+
+        # Return full path
+        return os.path.join('ticket_attachments', str(ticket_id), formatted_name)
+
+    def save(self, *args, **kwargs):
+        if self.file:
+            # Store original filename
+            if not self.original_filename:
+                self.original_filename = get_valid_filename(self.file.name)
+
+            # Generate formatted filename and update file path
+            if not self.formatted_filename:
+                self.file.name = self.ticket_attachment_path(self.file.name)
+
+            # Update file size
+            if not self.file_size and hasattr(self.file, 'size'):
+                self.file_size = self.file.size
+
+            # Update file type
+            if not self.file_type and hasattr(self.file, 'content_type'):
+                self.file_type = self.file.content_type
+
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Attachment for {self.ticket.ticket_id}: {self.original_filename}"
+
+    @property
+    def file_size_human(self):
+        """Return human readable file size"""
+        size = self.file_size
+        for unit in ['B', 'KB', 'MB', 'GB']:
+            if size < 1024.0:
+                return f"{size:.1f} {unit}"
+            size /= 1024.0
+        return f"{size:.1f} TB"

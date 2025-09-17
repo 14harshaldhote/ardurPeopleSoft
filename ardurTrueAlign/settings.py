@@ -110,15 +110,21 @@ INSTALLED_APPS = [
     'trueAlign.core',
     'trueAlign.sessions',
     'trueAlign.leave_management',
-    'trueAlign.profile',  # Profile management app
-    'trueAlign.notifications',  # New notification system
-    'trueAlign.notes',  # Global updates and notes management
-    'rest_framework',  # Temporarily disabled - missing dependency
-    'widget_tweaks',   # Temporarily disabled - missing dependency
-    'mathfilters',     # Math filters for templates
-    'django_cron',  # Cron job management
-    'django_celery_beat',  # Temporarily disabled - missing dependency
+    'trueAlign.profile',
+    'trueAlign.notifications',
+    'trueAlign.notes',
+    'trueAlign.support',
+    'rest_framework',
+    'crispy_forms',
+    'crispy_tailwind',
+    'mathfilters',
+    'django_cron',
+    'django_celery_beat',
 ]
+
+# Crispy Forms Settings
+CRISPY_ALLOWED_TEMPLATE_PACKS = "tailwind"
+CRISPY_TEMPLATE_PACK = "tailwind"
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

@@ -27,20 +27,7 @@ from django.db.models import Q, Count, Avg
 
 import pytz
 
-from .logging import (
-    get_attendance_logger,
-    log_attendance_action,
-    log_attendance_error,
-    log_performance_metric,
-    log_data_access,
-    AttendanceLoggerMixin
-)
-from .logging.utils import (
-    log_attendance_operation,
-    log_cron_job_execution,
-    log_bulk_operation,
-    AttendanceOperationLogger
-)
+
 
 from trueAlign.models import (
     Attendance, UserSession, Holiday, ShiftAssignment,

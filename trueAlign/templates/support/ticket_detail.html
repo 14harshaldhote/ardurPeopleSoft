@@ -1,0 +1,1067 @@
+{% extends 'base.html' %} {% load static %} {% block title %}{{ ticket.ticket_id }} - {{ ticket.subject }} - TrueAlign{% endblock %} {% block content %}
+<div
+    class="mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-6 w-full max-w-full overflow-x-hidden"
+>
+    <!-- Header Section with Glass Effect -->
+    <div
+        class="relative overflow-hidden mb-3 sm:mb-6 rounded-[16px] sm:rounded-[20px] lg:rounded-[28px] bg-white/10 border border-white/40 shadow-[0_10px_30px_rgba(0,0,0,0.15)] hover:scale-[1.005] sm:hover:scale-[1.015] transition-all duration-500"
+    >
+        <!-- Gradient Background -->
+        <div
+            class="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-white/10 rounded-[28px]"
+        ></div>
+
+        <!-- Soft Orbs -->
+        <div class="absolute inset-0 overflow-hidden">
+            <div
+                class="absolute -top-8 sm:-top-16 -left-8 sm:-left-16 w-32 h-32 sm:w-56 sm:h-56 bg-gradient-to-br from-indigo-300/30 to-indigo-400/10 rounded-full"
+            ></div>
+            <div
+                class="absolute -bottom-8 sm:-bottom-16 -right-8 sm:-right-16 w-32 h-32 sm:w-56 sm:h-56 bg-gradient-to-tr from-purple-400/30 to-purple-500/10 rounded-full"
+            ></div>
+            <div
+                class="absolute top-1/2 left-1/2 w-24 h-24 sm:w-48 sm:h-48 bg-gradient-to-br from-blue-300/30 to-blue-400/10 rounded-full -translate-x-1/2 -translate-y-1/2"
+            ></div>
+        </div>
+
+        <!-- Header Content -->
+        <div class="relative p-3 sm:p-6 md:p-8 lg:p-12 z-10 w-full">
+            <!-- Navigation Bar -->
+            <nav
+                class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-md p-2 sm:p-3 mb-3 sm:mb-6 flex flex-col sm:flex-row gap-3 sm:gap-0 justify-between items-center"
+            >
+                <!-- Ticket ID & Status -->
+                <div class="flex items-center space-x-3 sm:space-x-4">
+                    <div
+                        class="px-3 sm:px-4 lg:px-5 py-2 sm:py-3 backdrop-blur-sm bg-white/20 rounded-lg sm:rounded-xl border border-white/10"
+                    >
+                        <span
+                            class="text-zinc-900 font-bold text-sm sm:text-base lg:text-lg"
+                            >{{ ticket.ticket_id }}</span
+                        >
+                    </div>
+
+                    <!-- Priority Badge -->
+                    <span
+                        class="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 lg:px-4 py-1.5 sm:py-2 backdrop-blur-sm rounded-lg sm:rounded-xl border border-white/10 {% if ticket.priority|lower == 'critical' %}bg-red-400/20 text-red-900 {% elif ticket.priority|lower == 'high' %}bg-orange-400/20 text-orange-900 {% elif ticket.priority|lower == 'medium' %}bg-blue-400/20 text-blue-900 {% else %}bg-gray-400/20 text-gray-900{% endif %}"
+                    >
+                        <span
+                            class="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full {% if ticket.priority|lower == 'critical' %}bg-red-500 animate-pulse {% elif ticket.priority|lower == 'high' %}bg-orange-500 animate-pulse {% elif ticket.priority|lower == 'medium' %}bg-blue-500 {% else %}bg-gray-500{% endif %}"
+                        ></span>
+                        <span class="text-xs sm:text-sm font-medium"
+                            >{{ ticket.priority }}</span
+                        >
+                    </span>
+
+                    <!-- Status Badge -->
+                    <span
+                        class="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 lg:px-4 py-1.5 sm:py-2 backdrop-blur-sm rounded-lg sm:rounded-xl border border-white/10 {% if ticket.status|lower == 'new' %}bg-indigo-400/20 text-indigo-900 {% elif ticket.status|lower == 'open' %}bg-blue-400/20 text-blue-900 {% elif 'progress' in ticket.status|lower %}bg-yellow-400/20 text-yellow-900 {% elif 'pending' in ticket.status|lower %}bg-purple-400/20 text-purple-900 {% elif ticket.status|lower == 'resolved' %}bg-green-400/20 text-green-900 {% else %}bg-gray-400/20 text-gray-900{% endif %}"
+                    >
+                        <span
+                            class="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full {% if ticket.status|lower == 'new' %}bg-indigo-500 {% elif ticket.status|lower == 'open' %}bg-blue-500 {% elif 'progress' in ticket.status|lower %}bg-yellow-500 animate-pulse {% elif 'pending' in ticket.status|lower %}bg-purple-500 {% elif ticket.status|lower == 'resolved' %}bg-green-500 {% else %}bg-gray-500{% endif %}"
+                        ></span>
+                        <span class="text-xs sm:text-sm font-medium"
+                            >{{ ticket.status }}</span
+                        >
+                    </span>
+
+                    {% if ticket.is_overdue %}
+                    <span
+                        class="flex items-center space-x-1 px-2 sm:px-3 py-1.5 sm:py-2 backdrop-blur-sm bg-red-400/20 rounded-lg sm:rounded-xl border border-white/10"
+                    >
+                        <span
+                            class="w-2 h-2 bg-red-500 rounded-full animate-pulse"
+                        ></span>
+                        <span
+                            class="text-xs sm:text-sm text-red-900 font-medium"
+                            >Overdue</span
+                        >
+                    </span>
+                    {% endif %}
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex items-center space-x-2 sm:space-x-3">
+                    <button
+                        id="escalateBtn"
+                        class="p-2 sm:p-3 backdrop-blur-sm bg-orange-400/20 rounded-lg sm:rounded-xl border border-white/10 hover:bg-orange-400/30 hover:scale-105 transition text-orange-900"
+                    >
+                        <svg
+                            class="w-4 h-4 sm:w-5 sm:h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M5 10l7-7m0 0l7 7m-7-7v18"
+                            />
+                            
+                        </svg> 
+                        <span>Escalate</span>
+                    </button>
+                        <a
+                        href="{% url 'support:dashboard' %}"
+                        class="inline-flex items-center px-4 py-2 backdrop-blur-sm bg-white/20 rounded-xl border border-white/10 text-sm font-medium text-gray-700 hover:bg-white/30 hover:scale-105 transition-all duration-200"
+                    >
+                        <svg
+                            class="w-4 h-4 mr-2"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                            ></path>
+                        </svg>
+                        Back to Dashboard
+                    </a>
+                </div>
+            </nav>
+
+            <!-- Ticket Title -->
+            <div
+                class="backdrop-blur-xl bg-white/20 p-3 sm:p-4 lg:p-6 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 hover:bg-white/25 transition shadow-inner"
+            >
+                <h1
+                    class="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-zinc-900 mb-1 sm:mb-2"
+                >
+                    {{ ticket.subject }}
+                </h1>
+                <div
+                    class="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-zinc-600"
+                >
+                    <span class="flex items-center space-x-1">
+                        <svg
+                            class="w-3 h-3 sm:w-4 sm:h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                            />
+                        </svg>
+                        <span
+                            >{{ ticket.user.get_full_name|default:ticket.user.username }}</span
+                        >
+                    </span>
+                    <span>•</span>
+                    <span class="flex items-center space-x-1">
+                        <svg
+                            class="w-3 h-3 sm:w-4 sm:h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                        </svg>
+                        <span
+                            >{{ ticket.created_at|date:"M j, Y \at g:i A" }}</span
+                        >
+                    </span>
+                    {% if ticket.assigned_to_user %}
+                    <span>•</span>
+                    <span class="flex items-center space-x-1">
+                        <svg
+                            class="w-3 h-3 sm:w-4 sm:h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                        </svg>
+                        <span
+                            >Assigned to {{ ticket.assigned_to_user.get_full_name|default:ticket.assigned_to_user.username }}</span
+                        >
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
+        <!-- Left Column - Main Content -->
+        <div class="lg:col-span-2 space-y-3 sm:space-y-4 lg:space-y-6">
+            <!-- Description Card -->
+            <div
+                class="backdrop-blur-xl bg-white/20 p-3 sm:p-4 lg:p-6 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 hover:bg-white/25 transition shadow-inner"
+            >
+                <h3
+                    class="text-zinc-900 font-bold mb-2 sm:mb-3 lg:mb-4 text-sm sm:text-base lg:text-lg flex items-center space-x-2"
+                >
+                    <svg
+                        class="w-4 h-4 sm:w-5 sm:h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        />
+                    </svg>
+                    <span>Description</span>
+                </h3>
+                <div
+                    class="text-zinc-700 text-xs sm:text-sm lg:text-base leading-relaxed"
+                >
+                    {{ ticket.description|linebreaks }}
+                </div>
+            </div>
+
+            <!-- Attachments -->
+            {% if attachments %}
+            <div
+                class="backdrop-blur-xl bg-white/20 p-3 sm:p-4 lg:p-6 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 hover:bg-white/25 transition shadow-inner"
+            >
+                <h3
+                    class="text-zinc-900 font-bold mb-2 sm:mb-3 lg:mb-4 text-sm sm:text-base lg:text-lg flex items-center space-x-2"
+                >
+                    <svg
+                        class="w-4 h-4 sm:w-5 sm:h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
+                        />
+                    </svg>
+                    <span>Attachments</span>
+                </h3>
+                <div class="space-y-2 sm:space-y-3">
+                    {% for attachment in attachments %}
+                    <div
+                        class="flex items-center justify-between p-2 sm:p-3 backdrop-blur-sm bg-white/20 rounded-lg border border-white/10 hover:bg-white/30 transition"
+                    >
+                        <div class="flex items-center space-x-2 sm:space-x-3">
+                            <div
+                                class="w-8 h-8 sm:w-10 sm:h-10 bg-white/20 rounded-lg flex items-center justify-center"
+                            >
+                                <svg
+                                    class="w-4 h-4 sm:w-5 sm:h-5 text-zinc-600"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                    />
+                                </svg>
+                            </div>
+                            <div>
+                                <p
+                                    class="text-xs sm:text-sm font-medium text-zinc-900"
+                                >
+                                    {{ attachment.original_filename }}
+                                </p>
+                                <p class="text-xs text-zinc-600">
+                                    {{ attachment.uploaded_at|timesince }} ago
+                                </p>
+                            </div>
+                        </div>
+                        <a
+                            href="{{ attachment.file.url }}"
+                            target="_blank"
+                            class="p-1.5 sm:p-2 backdrop-blur-sm bg-indigo-400/20 rounded-lg border border-white/10 hover:bg-indigo-400/30 transition text-indigo-900"
+                        >
+                            <svg
+                                class="w-3 h-3 sm:w-4 sm:h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                />
+                            </svg>
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Comments -->
+            <div
+                class="backdrop-blur-xl bg-white/20 p-3 sm:p-4 lg:p-6 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 hover:bg-white/25 transition shadow-inner"
+            >
+                <h3
+                    class="text-zinc-900 font-bold mb-2 sm:mb-3 lg:mb-4 text-sm sm:text-base lg:text-lg flex items-center space-x-2"
+                >
+                    <svg
+                        class="w-4 h-4 sm:w-5 sm:h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                        />
+                    </svg>
+                    <span>Comments & Updates</span>
+                </h3>
+
+                <!-- Existing Comments -->
+                {% if comments %}
+                <div
+                    class="space-y-3 sm:space-y-4 mb-4 sm:mb-6 scrollbar-thin max-h-96 overflow-y-auto"
+                >
+                    {% for comment in comments %}
+                    <div
+                        class="p-3 sm:p-4 backdrop-blur-sm rounded-lg border border-white/10 shadow-sm {% if comment.is_internal %}bg-gradient-to-r from-yellow-400/20 to-yellow-300/10 border-yellow-300/30 {% else %}bg-gradient-to-r from-blue-400/20 to-blue-300/10 border-blue-300/30{% endif %}"
+                    >
+                        <div
+                            class="flex items-center justify-between mb-2 sm:mb-3"
+                        >
+                            <div
+                                class="flex items-center space-x-2 sm:space-x-3"
+                            >
+                                <div
+                                    class="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-white/20 flex items-center justify-center"
+                                >
+                                    <span
+                                        class="text-xs sm:text-sm font-medium text-zinc-700"
+                                    >
+                                        {{ comment.user.get_full_name|default:comment.user.username|first|upper }}
+                                    </span>
+                                </div>
+                                <div>
+                                    <span
+                                        class="text-xs sm:text-sm font-semibold text-zinc-900"
+                                    >
+                                        {{ comment.user.get_full_name|default:comment.user.username }}
+                                    </span>
+                                    {% if comment.is_internal %}
+                                    <span
+                                        class="ml-2 px-2 py-0.5 text-xs bg-yellow-400/30 text-yellow-900 rounded-full"
+                                        >Internal</span
+                                    >
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <span class="text-xs text-zinc-500"
+                                >{{ comment.created_at|date:"M j, g:i A" }}</span
+                            >
+                        </div>
+                        <div
+                            class="text-xs sm:text-sm text-zinc-700 leading-relaxed"
+                        >
+                            {{ comment.content|linebreaks }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- Add Comment Form -->
+                <div class="border-t border-white/20 pt-4 sm:pt-6">
+                    <h4
+                        class="text-sm sm:text-base font-semibold text-zinc-900 mb-3 sm:mb-4"
+                    >
+                        Add Comment
+                    </h4>
+                    <form
+                        method="post"
+                        action="{% url 'support:add_comment' ticket_id=ticket.pk %}"
+                    >
+                        {% csrf_token %}
+                        <div class="mb-3 sm:mb-4">
+                            <textarea
+                                name="content"
+                                id="content"
+                                rows="3"
+                                required
+                                class="block w-full px-3 sm:px-4 py-2 sm:py-3 bg-white/20 border border-white/20 rounded-lg backdrop-blur-sm text-zinc-900 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent text-xs sm:text-sm transition-all"
+                                placeholder="Enter your comment..."
+                            ></textarea>
+                        </div>
+                        {% if can_resolve %}
+                        <div class="mb-4 sm:mb-6">
+                            <label class="flex items-center space-x-2">
+                                <input
+                                    type="checkbox"
+                                    name="is_internal"
+                                    class="rounded border-white/20 text-indigo-600 bg-white/20 focus:ring-indigo-500/50"
+                                />
+                                <span class="text-xs sm:text-sm text-zinc-700"
+                                    >Internal note (staff only)</span
+                                >
+                            </label>
+                        </div>
+                        {% endif %}
+                        <button type="submit" class="btn-primary">
+                            <svg
+                                class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                                />
+                            </svg>
+                            Add Comment
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column - Sidebar -->
+        <div class="space-y-3 sm:space-y-4 lg:space-y-6">
+            <!-- Ticket Information -->
+            <div
+                class="backdrop-blur-xl bg-white/20 p-3 sm:p-4 lg:p-6 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 hover:bg-white/25 transition shadow-inner"
+            >
+                <h3
+                    class="text-zinc-900 font-bold mb-2 sm:mb-3 lg:mb-4 text-sm sm:text-base lg:text-lg"
+                >
+                    Ticket Information
+                </h3>
+                <div class="space-y-2 sm:space-y-3">
+                    <div class="flex justify-between items-center py-1 sm:py-2">
+                        <span class="text-xs sm:text-sm text-zinc-600"
+                            >Issue Type</span
+                        >
+                        <span
+                            class="text-xs sm:text-sm font-medium text-zinc-900"
+                            >{{ ticket.issue_type }}</span
+                        >
+                    </div>
+                    {% if ticket.location %}
+                    <div class="flex justify-between items-center py-1 sm:py-2">
+                        <span class="text-xs sm:text-sm text-zinc-600"
+                            >Location</span
+                        >
+                        <span
+                            class="text-xs sm:text-sm font-medium text-zinc-900"
+                            >{{ ticket.location }}</span
+                        >
+                    </div>
+                    {% endif %} {% if ticket.asset_id %}
+                    <div class="flex justify-between items-center py-1 sm:py-2">
+                        <span class="text-xs sm:text-sm text-zinc-600"
+                            >Asset ID</span
+                        >
+                        <span
+                            class="text-xs sm:text-sm font-medium text-zinc-900"
+                            >{{ ticket.asset_id }}</span
+                        >
+                    </div>
+                    {% endif %} {% if ticket.assigned_group %}
+                    <div class="flex justify-between items-center py-1 sm:py-2">
+                        <span class="text-xs sm:text-sm text-zinc-600"
+                            >Group</span
+                        >
+                        <span
+                            class="text-xs sm:text-sm font-medium text-zinc-900"
+                            >{{ ticket.assigned_group }}</span
+                        >
+                    </div>
+                    {% endif %} {% if ticket.due_date %}
+                    <div class="flex justify-between items-center py-1 sm:py-2">
+                        <span class="text-xs sm:text-sm text-zinc-600"
+                            >Due Date</span
+                        >
+                        <span
+                            class="text-xs sm:text-sm font-medium {% if ticket.is_overdue %}text-red-600{% else %}text-zinc-900{% endif %}"
+                        >
+                            {{ ticket.due_date|date:"M j, Y" }}
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Actions -->
+            {% if can_resolve or can_reassign %}
+            <div
+                class="backdrop-blur-xl bg-white/20 p-3 sm:p-4 lg:p-6 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 hover:bg-white/25 transition shadow-inner"
+            >
+                <h3
+                    class="text-zinc-900 font-bold mb-2 sm:mb-3 lg:mb-4 text-sm sm:text-base lg:text-lg"
+                >
+                    Quick Actions
+                </h3>
+                <div class="space-y-2 sm:space-y-3">
+                    {% if can_resolve %}
+                    <button id="statusBtn" class="w-full btn-primary">
+                        <svg
+                            class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                        </svg>
+                        Update Status
+                    </button>
+                    {% endif %} {% if can_reassign %}
+                    <button id="reassignBtn" class="w-full btn-secondary">
+                        <svg
+                            class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4-4m-4 4l4-4"
+                            />
+                        </svg>
+                        Reassign Ticket
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Upload Attachment -->
+            <div
+                class="backdrop-blur-xl bg-white/20 p-3 sm:p-4 lg:p-6 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 hover:bg-white/25 transition shadow-inner"
+            >
+                <h3
+                    class="text-zinc-900 font-bold mb-2 sm:mb-3 lg:mb-4 text-sm sm:text-base lg:text-lg"
+                >
+                    Add Attachment
+                </h3>
+                <form
+                    method="post"
+                    action="{% url 'support:add_attachment' ticket_id=ticket.pk %}"
+                    enctype="multipart/form-data"
+                >
+                    {% csrf_token %}
+                    <div class="mb-3 sm:mb-4">
+                        <input
+                            type="file"
+                            name="file"
+                            id="file"
+                            required
+                            class="block w-full text-xs sm:text-sm text-zinc-700 file:mr-2 sm:file:mr-4 file:py-1.5 sm:file:py-2 file:px-2 sm:file:px-4 file:rounded-lg file:border-0 file:text-xs sm:file:text-sm file:font-medium file:bg-white/20 file:text-zinc-700 hover:file:bg-white/30 file:cursor-pointer cursor-pointer backdrop-blur-sm"
+                        />
+                        <p class="mt-1 sm:mt-2 text-xs text-zinc-500">
+                            Max size: 10MB
+                        </p>
+                    </div>
+                    <div class="mb-3 sm:mb-4">
+                        <input
+                            type="text"
+                            name="description"
+                            placeholder="Description (optional)"
+                            class="block w-full px-3 sm:px-4 py-2 sm:py-3 bg-white/20 border border-white/20 rounded-lg backdrop-blur-sm text-zinc-900 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent text-xs sm:text-sm transition-all"
+                        />
+                    </div>
+                    <button type="submit" class="w-full btn-secondary">
+                        <svg
+                            class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                            />
+                        </svg>
+                        Upload File
+                    </button>
+                </form>
+            </div>
+
+            <!-- Recent Activity -->
+            {% if activities %}
+            <div
+                class="backdrop-blur-xl bg-white/20 p-3 sm:p-4 lg:p-6 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 hover:bg-white/25 transition shadow-inner"
+            >
+                <h3
+                    class="text-zinc-900 font-bold mb-2 sm:mb-3 lg:mb-4 text-sm sm:text-base lg:text-lg"
+                >
+                    Recent Activity
+                </h3>
+                <div
+                    class="space-y-2 sm:space-y-3 scrollbar-thin max-h-64 overflow-y-auto"
+                >
+                    {% for activity in activities %}
+                    <div
+                        class="flex items-start space-x-2 sm:space-x-3 p-2 sm:p-3 backdrop-blur-sm bg-white/10 rounded-lg border border-white/10"
+                    >
+                        <div
+                            class="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-indigo-400/20 flex items-center justify-center flex-shrink-0"
+                        >
+                            <svg
+                                class="w-3 h-3 sm:w-4 sm:h-4 text-indigo-600"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                />
+                            </svg>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-xs sm:text-sm text-zinc-900">
+                                <span class="font-medium"
+                                    >{{ activity.user.get_full_name|default:activity.user.username|default:"System" }}</span
+                                >
+                                <span class="text-zinc-600">
+                                    {{ activity.action|lower }}ed the
+                                    ticket</span
+                                >
+                            </p>
+                            {% if activity.details %}
+                            <p class="text-xs text-zinc-500 mt-1">
+                                {{ activity.details }}
+                            </p>
+                            {% endif %}
+                            <p class="text-xs text-zinc-400 mt-1">
+                                {{ activity.timestamp|timesince }} ago
+                            </p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modals -->
+<!-- Status Update Modal -->
+{% if can_resolve %}
+<div id="statusModal" class="modal-overlay">
+    <div class="modal-backdrop">
+        <div class="modal-dialog">
+            <div
+                class="backdrop-blur-xl bg-white/90 rounded-[16px] sm:rounded-[20px] border border-white/40 shadow-[0_20px_50px_rgba(0,0,0,0.3)] p-4 sm:p-6 max-w-md w-full mx-4"
+            >
+                <h3
+                    class="text-lg sm:text-xl font-bold text-zinc-900 mb-4 sm:mb-6 text-center"
+                >
+                    Update Status
+                </h3>
+                <form
+                    method="post"
+                    action="{% url 'support:update_status' ticket_id=ticket.pk %}"
+                >
+                    {% csrf_token %}
+                    <div class="mb-4 sm:mb-6">
+                        <label
+                            class="block text-sm font-medium text-zinc-700 mb-2"
+                            >New Status</label
+                        >
+                        <select
+                            name="status"
+                            required
+                            class="w-full px-3 sm:px-4 py-2 sm:py-3 bg-white/60 border border-white/30 rounded-lg backdrop-blur-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-sm transition-all"
+                        >
+                            <option value="">Select Status</option>
+                            <option value="Open">Open</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Pending User Response">
+                                Pending User Response
+                            </option>
+                            <option value="Pending Third Party">
+                                Pending Third Party
+                            </option>
+                            <option value="On Hold">On Hold</option>
+                            <option value="Resolved">Resolved</option>
+                            <option value="Closed">Closed</option>
+                        </select>
+                    </div>
+                    <div class="mb-4 sm:mb-6">
+                        <label
+                            class="block text-sm font-medium text-zinc-700 mb-2"
+                            >Comment (Optional)</label
+                        >
+                        <textarea
+                            name="comment"
+                            rows="3"
+                            class="w-full px-3 sm:px-4 py-2 sm:py-3 bg-white/60 border border-white/30 rounded-lg backdrop-blur-sm text-zinc-900 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-sm transition-all"
+                            placeholder="Add a note..."
+                        ></textarea>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button
+                            type="button"
+                            class="modal-close flex-1 btn-secondary"
+                        >
+                            Cancel
+                        </button>
+                        <button type="submit" class="flex-1 btn-primary">
+                            Update
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Reassign Modal -->
+{% if can_reassign %}
+<div id="reassignModal" class="modal-overlay">
+    <div class="modal-backdrop">
+        <div class="modal-dialog">
+            <div
+                class="backdrop-blur-xl bg-white/90 rounded-[16px] sm:rounded-[20px] border border-white/40 shadow-[0_20px_50px_rgba(0,0,0,0.3)] p-4 sm:p-6 max-w-md w-full mx-4"
+            >
+                <h3
+                    class="text-lg sm:text-xl font-bold text-zinc-900 mb-4 sm:mb-6 text-center"
+                >
+                    Reassign Ticket
+                </h3>
+                <form
+                    method="post"
+                    action="{% url 'support:reassign_ticket' ticket_id=ticket.pk %}"
+                >
+                    {% csrf_token %}
+                    <div class="mb-4 sm:mb-6">
+                        <label
+                            class="block text-sm font-medium text-zinc-700 mb-2"
+                            >Assign to User</label
+                        >
+                        <select
+                            name="assigned_to_user"
+                            class="w-full px-3 sm:px-4 py-2 sm:py-3 bg-white/60 border border-white/30 rounded-lg backdrop-blur-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-sm transition-all"
+                        >
+                            <option value="">-- Select User --</option>
+                            {% for assignee in available_assignees %}
+                            <option value="{{ assignee.id }}">
+                                {{ assignee.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-4 sm:mb-6">
+                        <label
+                            class="block text-sm font-medium text-zinc-700 mb-2"
+                            >Assign to Group</label
+                        >
+                        <select
+                            name="assigned_group"
+                            class="w-full px-3 sm:px-4 py-2 sm:py-3 bg-white/60 border border-white/30 rounded-lg backdrop-blur-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-sm transition-all"
+                        >
+                            <option value="">-- Select Group --</option>
+                            <option value="HR">HR</option>
+                            <option value="Admin">Admin</option>
+                        </select>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button
+                            type="button"
+                            class="modal-close flex-1 btn-secondary"
+                        >
+                            Cancel
+                        </button>
+                        <button type="submit" class="flex-1 btn-primary">
+                            Reassign
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Escalate Modal -->
+<div id="escalateModal" class="modal-overlay">
+    <div class="modal-backdrop">
+        <div class="modal-dialog">
+            <div
+                class="backdrop-blur-xl bg-white/90 rounded-[16px] sm:rounded-[20px] border border-white/40 shadow-[0_20px_50px_rgba(0,0,0,0.3)] p-4 sm:p-6 max-w-md w-full mx-4"
+            >
+                <h3
+                    class="text-lg sm:text-xl font-bold text-zinc-900 mb-4 sm:mb-6 text-center"
+                >
+                    Escalate Ticket
+                </h3>
+                <form
+                    method="post"
+                    action="{% url 'support:escalate_ticket' ticket_id=ticket.pk %}"
+                >
+                    {% csrf_token %}
+                    <div class="mb-4 sm:mb-6">
+                        <label
+                            class="block text-sm font-medium text-zinc-700 mb-2"
+                            >Escalation Reason</label
+                        >
+                        <textarea
+                            name="reason"
+                            rows="4"
+                            required
+                            class="w-full px-3 sm:px-4 py-2 sm:py-3 bg-white/60 border border-white/30 rounded-lg backdrop-blur-sm text-zinc-900 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-sm transition-all"
+                            placeholder="Please provide a reason for escalation..."
+                        ></textarea>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button
+                            type="button"
+                            class="modal-close flex-1 btn-secondary"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            class="flex-1 btn-primary bg-orange-600 hover:bg-orange-700"
+                        >
+                            Escalate
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CSS and JavaScript -->
+<style>
+    html {
+        scroll-behavior: smooth;
+    }
+
+    .btn-primary {
+        @apply px-2 py-1.5 sm:px-3 sm:py-2 lg:px-4 lg:py-2.5 bg-indigo-600 text-white rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-300 transform hover:-translate-y-1 text-xs sm:text-sm lg:text-base;
+    }
+
+    .btn-secondary {
+        @apply px-2 py-1.5 sm:px-3 sm:py-2 lg:px-4 lg:py-2.5 bg-white/60 text-gray-700 border border-white/30 rounded-lg shadow-sm hover:bg-white/80 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-300 text-xs sm:text-sm lg:text-base backdrop-blur-sm;
+    }
+
+    /* Modal Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1000;
+        display: none;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.show {
+        display: flex;
+        opacity: 1;
+    }
+
+    .modal-backdrop {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(4px);
+    }
+
+    .modal-dialog {
+        transform: scale(0.7) translateY(-20px);
+        transition: transform 0.3s ease;
+    }
+
+    .modal-overlay.show .modal-dialog {
+        transform: scale(1) translateY(0);
+    }
+
+    /* Custom scrollbar */
+    .scrollbar-thin::-webkit-scrollbar {
+        width: 3px;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 10px;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.5);
+    }
+
+    /* Animation for elements */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .backdrop-blur-xl {
+        animation: fadeIn 0.5s ease-out;
+    }
+</style>
+
+<script>
+    // Simple Modal JavaScript
+    function openModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.add("show");
+            document.body.style.overflow = "hidden";
+        }
+    }
+
+    function closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.remove("show");
+            document.body.style.overflow = "";
+        }
+    }
+
+    // Event listeners
+    document.addEventListener("DOMContentLoaded", function () {
+        // Modal trigger buttons
+        const statusBtn = document.getElementById("statusBtn");
+        const reassignBtn = document.getElementById("reassignBtn");
+        const escalateBtn = document.getElementById("escalateBtn");
+
+        if (statusBtn) {
+            statusBtn.addEventListener("click", function (e) {
+                e.preventDefault();
+                openModal("statusModal");
+            });
+        }
+
+        if (reassignBtn) {
+            reassignBtn.addEventListener("click", function (e) {
+                e.preventDefault();
+                openModal("reassignModal");
+            });
+        }
+
+        if (escalateBtn) {
+            escalateBtn.addEventListener("click", function (e) {
+                e.preventDefault();
+                openModal("escalateModal");
+            });
+        }
+
+        // Close modal buttons
+        document.querySelectorAll(".modal-close").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                const modal = this.closest(".modal-overlay");
+                if (modal) {
+                    modal.classList.remove("show");
+                    document.body.style.overflow = "";
+                }
+            });
+        });
+
+        // Close modal when clicking backdrop
+        document
+            .querySelectorAll(".modal-backdrop")
+            .forEach(function (backdrop) {
+                backdrop.addEventListener("click", function (e) {
+                    if (e.target === this) {
+                        const modal = this.closest(".modal-overlay");
+                        if (modal) {
+                            modal.classList.remove("show");
+                            document.body.style.overflow = "";
+                        }
+                    }
+                });
+            });
+
+        // Close modal with Escape key
+        document.addEventListener("keydown", function (e) {
+            if (e.key === "Escape") {
+                document
+                    .querySelectorAll(".modal-overlay.show")
+                    .forEach(function (modal) {
+                        modal.classList.remove("show");
+                        document.body.style.overflow = "";
+                    });
+            }
+        });
+
+        // Form validation for reassign modal
+        const reassignForm = document.querySelector("#reassignModal form");
+        if (reassignForm) {
+            reassignForm.addEventListener("submit", function (e) {
+                const userSelect = this.querySelector(
+                    '[name="assigned_to_user"]',
+                );
+                const groupSelect = this.querySelector(
+                    '[name="assigned_group"]',
+                );
+
+                if (!userSelect.value && !groupSelect.value) {
+                    e.preventDefault();
+                    alert(
+                        "Please select either a user or a group for assignment.",
+                    );
+                    return false;
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,313 @@
+{% extends 'base.html' %} {% load static %} {% block title %}Page Not Found -
+Support - TrueAlign{% endblock %} {% block content %}
+<div
+    class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8"
+>
+    <!-- Error Icon and Code -->
+    <div class="sm:mx-auto sm:w-full sm:max-w-md">
+        <div class="text-center">
+            <div
+                class="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-gray-100 mb-4"
+            >
+                <svg
+                    class="h-10 w-10 text-gray-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="1.5"
+                        d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6 4h6m6 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    ></path>
+                </svg>
+            </div>
+            <h1 class="text-6xl font-bold text-gray-900 mb-2">404</h1>
+            <h2 class="text-2xl font-semibold text-gray-700">Page Not Found</h2>
+            <p class="mt-2 text-gray-500">
+                The support resource you're looking for doesn't exist
+            </p>
+        </div>
+    </div>
+
+    <!-- Main Error Card -->
+    <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-lg">
+        <div
+            class="bg-white py-8 px-6 shadow-xl ring-1 ring-gray-900/5 sm:rounded-2xl sm:px-10"
+        >
+            <div class="text-center">
+                <!-- Search Icon -->
+                <div
+                    class="inline-flex items-center justify-center w-16 h-16 bg-gray-50 rounded-full mb-6"
+                >
+                    <svg
+                        class="w-8 h-8 text-gray-500"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                        ></path>
+                    </svg>
+                </div>
+
+                <h3 class="text-xl font-semibold text-gray-900 mb-3">
+                    Support Resource Not Found
+                </h3>
+                <p class="text-gray-600 mb-6">
+                    The support page or ticket you're looking for doesn't exist.
+                    This could be because:
+                </p>
+
+                <!-- Reasons List -->
+                <div class="text-left bg-gray-50 rounded-xl p-5 mb-8">
+                    <ul class="text-sm text-gray-700 space-y-3">
+                        <li class="flex items-start">
+                            <div
+                                class="flex-shrink-0 w-2 h-2 bg-gray-400 rounded-full mt-2 mr-3"
+                            ></div>
+                            <span>The ticket ID you entered doesn't exist</span>
+                        </li>
+                        <li class="flex items-start">
+                            <div
+                                class="flex-shrink-0 w-2 h-2 bg-gray-400 rounded-full mt-2 mr-3"
+                            ></div>
+                            <span>The ticket has been deleted or archived</span>
+                        </li>
+                        <li class="flex items-start">
+                            <div
+                                class="flex-shrink-0 w-2 h-2 bg-gray-400 rounded-full mt-2 mr-3"
+                            ></div>
+                            <span>You may have typed the URL incorrectly</span>
+                        </li>
+                        <li class="flex items-start">
+                            <div
+                                class="flex-shrink-0 w-2 h-2 bg-gray-400 rounded-full mt-2 mr-3"
+                            ></div>
+                            <span>The link you followed may be outdated</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Quick Search Section -->
+                <div class="mb-8">
+                    <h4 class="text-sm font-medium text-gray-900 mb-4">
+                        Search for a Ticket
+                    </h4>
+                    <div class="flex space-x-2">
+                        <div class="flex-1 relative">
+                            <div
+                                class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+                            >
+                                <svg
+                                    class="h-4 w-4 text-gray-400"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                                    ></path>
+                                </svg>
+                            </div>
+                            <input
+                                type="text"
+                                placeholder="Enter ticket ID..."
+                                id="ticket-search"
+                                class="block w-full pl-9 pr-3 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                            />
+                        </div>
+                        <button
+                            onclick="searchTicket()"
+                            class="inline-flex items-center px-4 py-3 border border-transparent text-sm font-medium rounded-xl shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
+                        >
+                            <svg
+                                class="w-4 h-4 mr-2"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                                ></path>
+                            </svg>
+                            Search
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="space-y-3 mb-8">
+                    <a
+                        href="{% url 'support:dashboard' %}"
+                        class="w-full flex justify-center items-center py-3 px-6 border border-transparent rounded-xl text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 shadow-lg hover:shadow-xl"
+                    >
+                        <svg
+                            class="w-4 h-4 mr-2"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2V7"
+                            ></path>
+                        </svg>
+                        Go to Support Dashboard
+                    </a>
+
+                    <a
+                        href="{% url 'support:my_tickets' %}"
+                        class="w-full flex justify-center items-center py-3 px-6 border-2 border-gray-200 rounded-xl text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
+                    >
+                        <svg
+                            class="w-4 h-4 mr-2"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                            ></path>
+                        </svg>
+                        View My Tickets
+                    </a>
+
+                    <a
+                        href="{% url 'support:create_ticket' %}"
+                        class="w-full flex justify-center items-center py-3 px-6 border-2 border-gray-200 rounded-xl text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
+                    >
+                        <svg
+                            class="w-4 h-4 mr-2"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                            ></path>
+                        </svg>
+                        Create New Ticket
+                    </a>
+                </div>
+
+                <!-- Footer Note -->
+                <div class="pt-6 border-t border-gray-200">
+                    <p class="text-xs text-gray-500 leading-relaxed">
+                        Can't find what you're looking for? Try searching from
+                        the support dashboard or create a new ticket.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Helpful Tips Section -->
+    <div class="mt-6 sm:mx-auto sm:w-full sm:max-w-lg">
+        <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 shadow-sm">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <div
+                        class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center"
+                    >
+                        <svg
+                            class="h-5 w-5 text-blue-600"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                            ></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <h3 class="text-sm font-semibold text-blue-900 mb-3">
+                        Helpful Tips
+                    </h3>
+                    <div class="text-sm text-blue-800 space-y-2">
+                        <div class="flex items-start">
+                            <span class="text-blue-500 mr-2">•</span>
+                            <span
+                                >Ticket IDs are usually in the format:
+                                ISSUE_TYPE-NUMBER (e.g., HARDWARE_ISSUE-1)</span
+                            >
+                        </div>
+                        <div class="flex items-start">
+                            <span class="text-blue-500 mr-2">•</span>
+                            <span
+                                >Use the search function on the dashboard to
+                                find tickets by subject or description</span
+                            >
+                        </div>
+                        <div class="flex items-start">
+                            <span class="text-blue-500 mr-2">•</span>
+                            <span
+                                >Check your "My Tickets" section for tickets
+                                you've created</span
+                            >
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function searchTicket() {
+        const ticketId = document.getElementById("ticket-search").value.trim();
+        if (ticketId) {
+            // Redirect to dashboard with search parameter
+            window.location.href =
+                '{% url "support:dashboard" %}?search=' +
+                encodeURIComponent(ticketId);
+        } else {
+            // Show feedback if empty
+            const input = document.getElementById("ticket-search");
+            input.focus();
+            input.classList.add("border-red-300", "focus:ring-red-500");
+            setTimeout(() => {
+                input.classList.remove("border-red-300", "focus:ring-red-500");
+            }, 2000);
+        }
+    }
+
+    // Allow Enter key to trigger search
+    document
+        .getElementById("ticket-search")
+        .addEventListener("keypress", function (e) {
+            if (e.key === "Enter") {
+                searchTicket();
+            }
+        });
+
+    // Auto-focus on search input for better UX
+    document.addEventListener("DOMContentLoaded", function () {
+        document.getElementById("ticket-search").focus();
+    });
+</script>
+{% endblock %}
