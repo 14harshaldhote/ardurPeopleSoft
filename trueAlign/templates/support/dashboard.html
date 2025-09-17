@@ -452,9 +452,7 @@ TrueAlign{% endblock %} {% block content %}
                                                         </div>
                                                         <span>•</span>
                                                         <span
-                                                            >{{
-                                                            ticket.get_issue_type_display
-                                                            }}</span
+                                                            >{{ ticket.get_issue_type_display }}</span
                                                         >
                                                     </div>
                                                 </div>
@@ -475,9 +473,7 @@ TrueAlign{% endblock %} {% block content %}
                                                     <p
                                                         class="text-xs text-zinc-500 mt-1"
                                                     >
-                                                        Assigned to {{
-                                                        ticket.assigned_to_user.get_full_name|default:ticket.assigned_to_user.username
-                                                        }}
+                                                        Assigned to {{ ticket.assigned_to_user.get_full_name|default:ticket.assigned_to_user.username }}
                                                     </p>
                                                     {% endif %}
 
@@ -622,8 +618,7 @@ TrueAlign{% endblock %} {% block content %}
                                         >
                                         of
                                         <span class="font-medium"
-                                            >{{ page_obj.paginator.count
-                                            }}</span
+                                            >{{ page_obj.paginator.count }}</span
                                         >
                                         results
                                     </p>

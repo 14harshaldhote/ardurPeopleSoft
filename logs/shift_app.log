@@ -4964,3 +4964,6 @@ Traceback (most recent call last):
   File "/opt/anaconda3/envs/aps/lib/python3.10/site-packages/django/template/base.py", line 578, in unclosed_block_tag
     raise self.error(token, msg)
 django.template.exceptions.TemplateSyntaxError: Unclosed tag on line 451: 'if'. Looking for one of: elif, else, endif.
+[2025-09-17 11:08:35] INFO - django.utils.autoreload - run_with_reloader:668 - Watching for file changes with StatReloader
+[2025-09-17 11:09:31] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
+[2025-09-17 11:18:34] ERROR - trueAlign.core.middleware - _create_new_session_throttled:283 - Error creating/getting session: "Attempt to overwrite 'message' in LogRecord"
