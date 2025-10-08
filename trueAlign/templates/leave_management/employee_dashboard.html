@@ -8,42 +8,88 @@
         class="relative overflow-hidden mb-3 sm:mb-6 rounded-[16px] sm:rounded-[20px] lg:rounded-[28px] bg-white/10 border border-white/40 shadow-[0_10px_30px_rgba(0,0,0,0.15)] hover:scale-[1.005] sm:hover:scale-[1.015] transition-all duration-500"
     >
         <!-- Gradient Background -->
-      
+        <div
+            class="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-white/10 rounded-[28px]"
+        ></div>
 
         <!-- Soft Orbs -->
         <div class="absolute inset-0 overflow-hidden">
             <div
-                class="absolute -top-8 sm:-top-16 -left-8 sm:-left-16 w-32 h-32 sm:w-56 sm:h-56 bg-gradient-to-br from-sky-300/30 to-emerald-400/10 rounded-full"
+                class="absolute -top-8 sm:-top-16 -left-8 sm:-left-16 w-32 h-32 sm:w-56 sm:h-56 bg-gradient-to-br from-teal-300/30 to-teal-400/10 rounded-full"
             ></div>
             <div
-                class="absolute -bottom-8 sm:-bottom-16 -right-8 sm:-right-16 w-32 h-32 sm:w-56 sm:h-56 bg-gradient-to-tr from-emerald-400/30 to-sky-500/10 rounded-full"
+                class="absolute -bottom-8 sm:-bottom-16 -right-8 sm:-right-16 w-32 h-32 sm:w-56 sm:h-56 bg-gradient-to-tr from-rose-400/30 to-rose-500/10 rounded-full"
             ></div>
             <div
-                class="absolute top-1/2 left-1/2 w-24 h-24 sm:w-48 sm:h-48 bg-gradient-to-br from-sky-300/30 to-emerald-400/10 rounded-full -translate-x-1/2 -translate-y-1/2"
+                class="absolute top-1/2 left-1/2 w-24 h-24 sm:w-48 sm:h-48 bg-gradient-to-br from-sky-300/30 to-sky-400/10 rounded-full -translate-x-1/2 -translate-y-1/2"
             ></div>
         </div>
 
         <!-- Header Content -->
         <div class="relative p-3 sm:p-6 md:p-8 lg:p-12 z-10 w-full">
+            <!-- Top Navigation -->
+            <nav
+                class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-md p-2 sm:p-3 mb-3 sm:mb-6 flex flex-col sm:flex-row gap-3 sm:gap-0 justify-between items-center"
+            >
+                <!-- Time -->
+                <div
+                    class="px-3 sm:px-4 lg:px-5 py-2 sm:py-3 backdrop-blur-sm bg-white/20 rounded-lg sm:rounded-xl border border-white/10"
+                >
+                    <span
+                        class="text-zinc-900 font-semibold text-xs sm:text-sm lg:text-md"
+                        id="time"
+                        >12:34:56</span
+                    >
+                    <span
+                        class="text-zinc-600 font-medium text-xs sm:text-sm lg:text-md"
+                        id="time-ampm"
+                        >AM</span
+                    >
+                </div>
+
+                <!-- Status & Notification -->
+                <div class="flex items-center space-x-2 sm:space-x-4 mt-0">
+                    <span
+                        class="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 lg:px-4 py-1.5 sm:py-2 backdrop-blur-sm bg-white/20 rounded-lg sm:rounded-xl border border-white/10"
+                    >
+                        <span
+                            class="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-emerald-500 animate-pulse"
+                        ></span>
+                        <span class="text-xs sm:text-sm text-zinc-700"
+                            >Active</span
+                        >
+                    </span>
+
+                    <button
+                        class="p-2 sm:p-3 backdrop-blur-sm bg-white/20 rounded-lg sm:rounded-xl border border-white/10 hover:bg-white/30 hover:scale-105 transition"
+                    >
+                        <i
+                            class="fas fa-bell w-4 h-4 sm:w-5 sm:h-5 text-zinc-700"
+                        ></i>
+                    </button>
+                </div>
+            </nav>
+
+            <!-- Main Header Content -->
             <div class="flex items-center justify-between">
                 <div>
                     <h1
-                        class="text-2xl sm:text-3xl md:text-4xl font-bold  mb-2 text-gray-800"
+                        class="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 text-zinc-900"
                     >
-                        Leave Management
+                        Employee Dashboard
                     </h1>
-                    <p class="text-sky-700 text-sm sm:text-base md:text-lg">
+                    <p class="text-zinc-600 text-sm sm:text-base md:text-lg">
                         Manage your leave requests and view your balance
                     </p>
                 </div>
                 <div class="hidden md:block">
                     <div
-                        class="backdrop-blur-sm bg-sky-700 rounded-xl border border-white/10 p-4"
+                        class="backdrop-blur-sm bg-white/20 rounded-xl border border-white/10 p-4"
                     >
-                        <p class="text-2xl font-bold text-white">
+                        <p class="text-2xl font-bold text-zinc-900">
                             {{ current_year }}
                         </p>
-                        <p class="text-sky-100 text-sm">Current Year</p>
+                        <p class="text-zinc-600 text-sm">Current Year</p>
                     </div>
                 </div>
             </div>
@@ -58,15 +104,15 @@
         >
             <div class="flex items-center">
                 <div
-                    class="p-3 rounded-full bg-sky-500/20 text-sky-600 backdrop-blur-sm border border-sky-400/20"
+                    class="p-3 rounded-full bg-gradient-to-tr from-teal-300/20 to-teal-400/10 text-teal-600 backdrop-blur-sm border border-teal-400/20"
                 >
                     <i class="fas fa-calendar-alt text-lg sm:text-xl"></i>
                 </div>
                 <div class="ml-4">
-                    <p class="text-xl sm:text-2xl font-semibold text-gray-800">
+                    <p class="text-xl sm:text-2xl font-semibold text-zinc-900">
                         {{ summary.statistics.total_requests|default:0 }}
                     </p>
-                    <p class="text-gray-800 text-sm sm:text-base font-medium">
+                    <p class="text-zinc-700 text-sm sm:text-base font-medium">
                         Total Requests
                     </p>
                 </div>
@@ -79,15 +125,15 @@
         >
             <div class="flex items-center">
                 <div
-                    class="p-3 rounded-full bg-amber-500/20 text-amber-600 backdrop-blur-sm border border-amber-400/20"
+                    class="p-3 rounded-full bg-gradient-to-tr from-rose-300/20 to-rose-400/10 text-rose-600 backdrop-blur-sm border border-rose-400/20"
                 >
                     <i class="fas fa-clock text-lg sm:text-xl"></i>
                 </div>
                 <div class="ml-4">
-                    <p class="text-xl sm:text-2xl font-semibold text-gray-800">
+                    <p class="text-xl sm:text-2xl font-semibold text-zinc-900">
                         {{ pending_count }}
                     </p>
-                    <p class="text-gray-800 text-sm sm:text-base font-medium">
+                    <p class="text-zinc-700 text-sm sm:text-base font-medium">
                         Pending
                     </p>
                 </div>
@@ -100,15 +146,15 @@
         >
             <div class="flex items-center">
                 <div
-                    class="p-3 rounded-full bg-emerald-500/20 text-emerald-600 backdrop-blur-sm border border-emerald-400/20"
+                    class="p-3 rounded-full bg-gradient-to-tr from-emerald-300/20 to-emerald-400/10 text-emerald-600 backdrop-blur-sm border border-emerald-400/20"
                 >
                     <i class="fas fa-check-circle text-lg sm:text-xl"></i>
                 </div>
                 <div class="ml-4">
-                    <p class="text-xl sm:text-2xl font-semibold text-gray-800">
+                    <p class="text-xl sm:text-2xl font-semibold text-zinc-900">
                         {{ summary.statistics.approved_requests|default:0 }}
                     </p>
-                    <p class="text-gray-800 text-sm sm:text-base font-medium">
+                    <p class="text-zinc-700 text-sm sm:text-base font-medium">
                         Approved
                     </p>
                 </div>
@@ -121,15 +167,15 @@
         >
             <div class="flex items-center">
                 <div
-                    class="p-3 rounded-full bg-rose-500/20 text-rose-600 backdrop-blur-sm border border-rose-400/20"
+                    class="p-3 rounded-full bg-gradient-to-tr from-violet-300/20 to-violet-400/10 text-violet-600 backdrop-blur-sm border border-violet-400/20"
                 >
                     <i class="fas fa-times-circle text-lg sm:text-xl"></i>
                 </div>
                 <div class="ml-4">
-                    <p class="text-xl sm:text-2xl font-semibold text-gray-800">
+                    <p class="text-xl sm:text-2xl font-semibold text-zinc-900">
                         {{ summary.statistics.rejected_requests|default:0 }}
                     </p>
-                    <p class="text-gray-800 text-sm sm:text-base font-medium">
+                    <p class="text-zinc-700 text-sm sm:text-base font-medium">
                         Rejected
                     </p>
                 </div>
@@ -145,12 +191,12 @@
                 class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300"
             >
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-semibold text-gray-800">
+                    <h3 class="text-lg font-semibold text-zinc-900">
                         Leave Balance
                     </h3>
                     <a
                         href="{% url 'leave_management:leave_balance' %}"
-                        class="text-sky-600 hover:text-sky-800 text-sm font-medium transition-colors"
+                        class="text-teal-600 hover:text-teal-800 text-sm font-medium transition-colors"
                     >
                         View Details <i class="fas fa-arrow-right ml-1"></i>
                     </a>
@@ -160,10 +206,10 @@
                 <div class="space-y-4">
                     {% for balance in summary.balances %}
                     <div
-                        class="backdrop-blur-sm bg-white/30 border border-gray-200/30 rounded-lg p-4 hover:bg-white/40 transition-all duration-200"
+                        class="backdrop-blur-sm bg-white/30 border border-white/30 rounded-lg p-4 hover:bg-white/40 transition-all duration-200"
                     >
                         <div class="flex justify-between items-center mb-2">
-                            <h4 class="font-medium text-gray-800">
+                            <h4 class="font-medium text-zinc-900">
                                 {{ balance.leave_type }}
                             </h4>
                             <span
@@ -174,23 +220,29 @@
                         </div>
 
                         <div class="grid grid-cols-3 gap-2 text-sm">
-                            <div class="text-center">
-                                <p class="font-semibold text-gray-800">
+                            <div
+                                class="text-center p-2 rounded-lg backdrop-blur-sm bg-white/20"
+                            >
+                                <p class="font-semibold text-zinc-900">
                                     {{ balance.allocated }}
                                 </p>
-                                <p class="text-gray-800">Allocated</p>
+                                <p class="text-zinc-700">Allocated</p>
                             </div>
-                            <div class="text-center">
+                            <div
+                                class="text-center p-2 rounded-lg backdrop-blur-sm bg-white/20"
+                            >
                                 <p class="font-semibold text-rose-600">
                                     {{ balance.used }}
                                 </p>
-                                <p class="text-gray-800">Used</p>
+                                <p class="text-zinc-700">Used</p>
                             </div>
-                            <div class="text-center">
+                            <div
+                                class="text-center p-2 rounded-lg backdrop-blur-sm bg-white/20"
+                            >
                                 <p class="font-semibold text-emerald-600">
                                     {{ balance.available }}
                                 </p>
-                                <p class="text-gray-800">Available</p>
+                                <p class="text-zinc-700">Available</p>
                             </div>
                         </div>
 
@@ -201,11 +253,11 @@
                             >
                                 {% widthratio balance.used balance.allocated 100 as usage_percent %}
                                 <div
-                                    class="h-2 rounded-full {% if usage_percent < 50 %}bg-emerald-500{% elif usage_percent < 80 %}bg-amber-500{% else %}bg-rose-500{% endif %}"
+                                    class="h-2 rounded-full {% if usage_percent < 50 %}bg-gradient-to-r from-emerald-400 to-emerald-500{% elif usage_percent < 80 %}bg-gradient-to-r from-rose-400 to-rose-500{% else %}bg-gradient-to-r from-violet-400 to-violet-500{% endif %}"
                                     style="width: {{ usage_percent|default:0 }}%"
                                 ></div>
                             </div>
-                            <p class="text-xs text-gray-600 mt-1">
+                            <p class="text-xs text-zinc-600 mt-1">
                                 {{ usage_percent|default:0 }}% used
                             </p>
                         </div>
@@ -213,8 +265,10 @@
                     {% endfor %}
                 </div>
                 {% else %}
-                <div class="text-center py-8 text-gray-600">
-                    <i class="fas fa-info-circle text-4xl mb-4"></i>
+                <div class="text-center py-8 text-zinc-600">
+                    <i
+                        class="fas fa-info-circle text-4xl mb-4 text-teal-400"
+                    ></i>
                     <p class="mb-2">No leave balance information available</p>
                     <p class="text-sm">Contact HR for leave allocation</p>
                 </div>
@@ -228,13 +282,13 @@
             <div
                 class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300"
             >
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                <h3 class="text-lg font-semibold text-zinc-900 mb-4">
                     Quick Actions
                 </h3>
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <a
                         href="{% url 'leave_management:apply_leave' %}"
-                        class=" text-center bg-sky-600 text-white  rounded-lg shadow-md hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg text-xs sm:text-sm lg:text-base backdrop-blur-sm font-medium"
+                        class="px-4 py-3 text-center bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-lg shadow-md hover:from-teal-600 hover:to-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg text-sm font-medium backdrop-blur-sm"
                     >
                         <i class="fas fa-plus mr-2"></i>
                         Apply for Leave
@@ -242,7 +296,7 @@
 
                     <a
                         href="{% url 'leave_management:apply_comp_off' %}"
-                        class=" text-center bg-sky-600 text-white  rounded-lg shadow-md hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg text-xs sm:text-sm lg:text-base backdrop-blur-sm font-medium"
+                        class="px-4 py-3 text-center bg-gradient-to-r from-rose-500 to-rose-600 text-white rounded-lg shadow-md hover:from-rose-600 hover:to-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg text-sm font-medium backdrop-blur-sm"
                     >
                         <i class="fas fa-clock mr-2"></i>
                         Request Comp-off
@@ -250,7 +304,7 @@
 
                     <a
                         href="{% url 'leave_management:my_leaves' %}"
-                        class=" text-center bg-sky-600 text-white  rounded-lg shadow-md hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg text-xs sm:text-sm lg:text-base backdrop-blur-sm font-medium"
+                        class="px-4 py-3 text-center bg-gradient-to-r from-sky-500 to-sky-600 text-white rounded-lg shadow-md hover:from-sky-600 hover:to-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg text-sm font-medium backdrop-blur-sm"
                     >
                         <i class="fas fa-list mr-2"></i>
                         View All Requests
@@ -263,13 +317,13 @@
                 class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300"
             >
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-semibold text-gray-800">
+                    <h3 class="text-lg font-semibold text-zinc-900">
                         Recent Leave Requests
                     </h3>
                     {% if recent_requests.count > 5 %}
                     <a
                         href="{% url 'leave_management:my_leaves' %}"
-                        class="text-sky-600 hover:text-sky-800 text-sm font-medium transition-colors"
+                        class="text-teal-600 hover:text-teal-800 text-sm font-medium transition-colors"
                     >
                         View All <i class="fas fa-arrow-right ml-1"></i>
                     </a>
@@ -280,30 +334,32 @@
                 <div class="space-y-4">
                     {% for request in recent_requests %}
                     <div
-                        class="backdrop-blur-sm bg-white/30 border border-gray-200/30 rounded-lg p-4 hover:bg-white/40 hover:shadow-md transition-all duration-200"
+                        class="backdrop-blur-sm bg-white/30 border border-white/30 rounded-lg p-4 hover:bg-white/40 hover:shadow-md transition-all duration-200"
                     >
                         <div class="flex items-center justify-between mb-2">
                             <div class="flex items-center space-x-3">
-                                <h4 class="font-medium text-gray-800">
+                                <h4 class="font-medium text-zinc-900">
                                     {{ request.leave_type.name }}
                                 </h4>
                                 <span
-                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium backdrop-blur-sm {% if request.status == 'Pending' %}bg-amber-100/80 text-amber-800{% elif request.status == 'Approved' %}bg-emerald-100/80 text-emerald-800{% elif request.status == 'Rejected' %}bg-rose-100/80 text-rose-800{% else %}bg-gray-100/80 text-gray-800{% endif %}"
+                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium backdrop-blur-sm {% if request.status == 'Pending' %}bg-rose-100/80 text-rose-800{% elif request.status == 'Approved' %}bg-emerald-100/80 text-emerald-800{% elif request.status == 'Rejected' %}bg-violet-100/80 text-violet-800{% else %}bg-gray-100/80 text-gray-800{% endif %}"
                                 >
                                     {{ request.status }}
                                 </span>
                             </div>
-                            <span class="text-sm font-medium text-gray-800"
-                                >{{ request.leave_days }} day{{ request.leave_days|pluralize }}</span
+                            <span class="text-sm font-medium text-zinc-900"
+                                >{{ request.leave_days }} day{{
+                                request.leave_days|pluralize }}</span
                             >
                         </div>
 
-                        <div class="text-sm text-gray-700 mb-2">
-                            <i class="fas fa-calendar mr-1"></i>
+                        <div class="text-sm text-zinc-700 mb-2">
+                            <i class="fas fa-calendar mr-1 text-teal-600"></i>
                             {{ request.start_date|date:"M j, Y" }} 
-                            {% if request.start_date != request.end_date %} - {{ request.end_date|date:"M j, Y" }} {% endif %} {% if request.half_day %}
+                            {% if request.start_date != request.end_date %} - 
+                            {{ request.end_date|date:"M j, Y" }} {% endif %} {% if request.half_day %}
                             <span
-                                class="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-100/80 text-blue-800 ml-2 backdrop-blur-sm"
+                                class="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-sky-100/80 text-sky-800 ml-2 backdrop-blur-sm"
                             >
                                 Half Day
                             </span>
@@ -312,21 +368,22 @@
 
                         {% if request.reason %}
                         <p
-                            class="text-sm text-gray-700 mb-2 backdrop-blur-sm bg-white/30 p-2 rounded border-l-2 border-sky-300"
+                            class="text-sm text-zinc-700 mb-2 backdrop-blur-sm bg-white/30 p-2 rounded border-l-2 border-teal-300"
                         >
                             {{ request.reason|truncatewords:15 }}
                         </p>
                         {% endif %}
 
                         <div
-                            class="flex items-center justify-between text-xs text-gray-600"
+                            class="flex items-center justify-between text-xs text-zinc-600"
                         >
                             <span
-                                >Applied: {{ request.created_at|date:"M j, Y g:i A" }}</span
+                                >Applied: {{ request.created_at|date:"M j, Y g:i
+                                A" }}</span
                             >
                             <a
                                 href="{% url 'leave_management:leave_detail' request.id %}"
-                                class="text-sky-600 hover:text-sky-800 font-medium transition-colors"
+                                class="text-teal-600 hover:text-teal-800 font-medium transition-colors"
                             >
                                 View Details
                                 <i class="fas fa-arrow-right ml-1"></i>
@@ -336,7 +393,7 @@
                     {% endfor %}
                 </div>
                 {% else %}
-                <div class="text-center py-8 text-gray-600">
+                <div class="text-center py-8 text-zinc-600">
                     <i
                         class="fas fa-calendar-times text-4xl mb-4 text-emerald-400"
                     ></i>
@@ -357,7 +414,7 @@
             <div
                 class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300"
             >
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                <h3 class="text-lg font-semibold text-zinc-900 mb-4">
                     Upcoming Approved Leaves
                 </h3>
                 <div class="space-y-3">
@@ -366,10 +423,10 @@
                         class="flex items-center justify-between p-3 backdrop-blur-sm bg-emerald-50/50 border border-emerald-200/30 rounded-lg hover:bg-emerald-50/70 transition-all duration-200"
                     >
                         <div>
-                            <p class="font-medium text-gray-800">
+                            <p class="font-medium text-zinc-900">
                                 {{ leave.leave_type }}
                             </p>
-                            <p class="text-sm text-gray-700">
+                            <p class="text-sm text-zinc-700">
                                 {{ leave.start_date|date:"M j" }} - {{ leave.end_date|date:"M j, Y" }}
                             </p>
                         </div>
@@ -393,25 +450,40 @@
     >
         <div class="flex items-start space-x-3">
             <div class="flex-shrink-0">
-                <i class="fas fa-lightbulb text-2xl text-amber-500"></i>
+                <i class="fas fa-lightbulb text-2xl text-rose-500"></i>
             </div>
             <div>
-                <h3 class="text-lg font-medium text-gray-800 mb-2">
+                <h3 class="text-lg font-medium text-zinc-900 mb-2">
                     Need Help?
                 </h3>
-                <div class="text-sm text-gray-800 space-y-2">
-                    <p>• Check your leave balance before applying for leave</p>
-                    <p>
-                        • Some leave types may require documentation or advance
-                        notice
+                <div class="text-sm text-zinc-700 space-y-2">
+                    <p class="flex items-start space-x-2">
+                        <span class="text-teal-600">•</span>
+                        <span
+                            >Check your leave balance before applying for
+                            leave</span
+                        >
                     </p>
-                    <p>
-                        • You can cancel pending requests, but approved requests
-                        may need manager approval
+                    <p class="flex items-start space-x-2">
+                        <span class="text-teal-600">•</span>
+                        <span
+                            >Some leave types may require documentation or
+                            advance notice</span
+                        >
                     </p>
-                    <p>
-                        • Contact HR for any leave policy questions or balance
-                        adjustments
+                    <p class="flex items-start space-x-2">
+                        <span class="text-teal-600">•</span>
+                        <span
+                            >You can cancel pending requests, but approved
+                            requests may need manager approval</span
+                        >
+                    </p>
+                    <p class="flex items-start space-x-2">
+                        <span class="text-teal-600">•</span>
+                        <span
+                            >Contact HR for any leave policy questions or
+                            balance adjustments</span
+                        >
                     </p>
                 </div>
             </div>
@@ -420,12 +492,16 @@
 </div>
 
 <style>
+    html {
+        scroll-behavior: smooth;
+    }
+
     .btn-primary {
-        @apply px-2 py-1.5 sm:px-3 sm:py-2 lg:px-4 lg:py-2.5 bg-sky-600 text-white rounded-lg shadow-md hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg text-xs sm:text-sm lg:text-base backdrop-blur-sm font-medium;
+        @apply px-2 py-1.5 sm:px-3 sm:py-2 lg:px-4 lg:py-2.5 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-lg shadow-md hover:from-teal-600 hover:to-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg text-xs sm:text-sm lg:text-base backdrop-blur-sm font-medium;
     }
 
     .btn-secondary {
-        @apply px-2 py-1.5 sm:px-3 sm:py-2 lg:px-4 lg:py-2.5 bg-white/50 text-gray-800 border border-gray-400/60 rounded-lg shadow-sm hover:bg-white/70 hover:border-gray-500/70 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 transition-all duration-300 hover:shadow-md text-xs sm:text-sm lg:text-base backdrop-blur-sm font-medium;
+        @apply px-2 py-1.5 sm:px-3 sm:py-2 lg:px-4 lg:py-2.5 bg-white/50 text-zinc-800 border border-zinc-400/60 rounded-lg shadow-sm hover:bg-white/70 hover:border-zinc-500/70 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 transition-all duration-300 hover:shadow-md text-xs sm:text-sm lg:text-base backdrop-blur-sm font-medium;
     }
 
     /* Custom scrollbar */
@@ -449,6 +525,30 @@
 </style>
 
 <script>
+    function updateTime() {
+        const timeElement = document.getElementById("time");
+        const ampmElement = document.getElementById("time-ampm");
+        const now = new Date();
+        let hours = now.getHours();
+        let minutes = now.getMinutes();
+        let seconds = now.getSeconds();
+        let ampm = hours >= 12 ? "PM" : "AM";
+
+        // Convert to 12-hour format
+        hours = hours % 12;
+        hours = hours ? hours : 12; // 0 becomes 12
+        minutes = minutes < 10 ? "0" + minutes : minutes;
+        seconds = seconds < 10 ? "0" + seconds : seconds;
+
+        const formattedTime = `${hours}:${minutes}:${seconds}`;
+        timeElement.textContent = formattedTime;
+        ampmElement.textContent = ampm;
+    }
+
+    // Update time immediately and every second
+    updateTime();
+    setInterval(updateTime, 1000);
+
     document.addEventListener("DOMContentLoaded", function () {
         // Auto-refresh page every 5 minutes to get latest data
         setTimeout(function () {

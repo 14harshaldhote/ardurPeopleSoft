@@ -9,32 +9,76 @@ Leave Management{% endblock %} {% block content %}
     >
         <!-- Gradient Background -->
         <div
-            class="absolute inset-0 bg-gradient-to-br from-emerald-300/20 via-teal-200/10 to-emerald-300/20 rounded-[28px]"
+            class="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-white/10 rounded-[28px]"
         ></div>
 
         <!-- Soft Orbs -->
         <div class="absolute inset-0 overflow-hidden">
             <div
-                class="absolute -top-8 sm:-top-16 -left-8 sm:-left-16 w-32 h-32 sm:w-56 sm:h-56 bg-gradient-to-br from-emerald-300/30 to-teal-400/10 rounded-full"
+                class="absolute -top-8 sm:-top-16 -left-8 sm:-left-16 w-32 h-32 sm:w-56 sm:h-56 bg-gradient-to-br from-teal-300/30 to-teal-400/10 rounded-full"
             ></div>
             <div
-                class="absolute -bottom-8 sm:-bottom-16 -right-8 sm:-right-16 w-32 h-32 sm:w-56 sm:h-56 bg-gradient-to-tr from-teal-400/30 to-emerald-500/10 rounded-full"
+                class="absolute -bottom-8 sm:-bottom-16 -right-8 sm:-right-16 w-32 h-32 sm:w-56 sm:h-56 bg-gradient-to-tr from-rose-400/30 to-rose-500/10 rounded-full"
             ></div>
             <div
-                class="absolute top-1/2 left-1/2 w-24 h-24 sm:w-48 sm:h-48 bg-gradient-to-br from-emerald-300/30 to-teal-400/10 rounded-full -translate-x-1/2 -translate-y-1/2"
+                class="absolute top-1/2 left-1/2 w-24 h-24 sm:w-48 sm:h-48 bg-gradient-to-br from-sky-300/30 to-sky-400/10 rounded-full -translate-x-1/2 -translate-y-1/2"
             ></div>
         </div>
 
         <!-- Header Content -->
         <div class="relative p-3 sm:p-6 md:p-8 lg:p-12 z-10 w-full">
+            <!-- Top Navigation -->
+            <nav
+                class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-md p-2 sm:p-3 mb-3 sm:mb-6 flex flex-col sm:flex-row gap-3 sm:gap-0 justify-between items-center"
+            >
+                <!-- Time -->
+                <div
+                    class="px-3 sm:px-4 lg:px-5 py-2 sm:py-3 backdrop-blur-sm bg-white/20 rounded-lg sm:rounded-xl border border-white/10"
+                >
+                    <span
+                        class="text-zinc-900 font-semibold text-xs sm:text-sm lg:text-md"
+                        id="time"
+                        >12:34:56</span
+                    >
+                    <span
+                        class="text-zinc-600 font-medium text-xs sm:text-sm lg:text-md"
+                        id="time-ampm"
+                        >AM</span
+                    >
+                </div>
+
+                <!-- Status & Notification -->
+                <div class="flex items-center space-x-2 sm:space-x-4 mt-0">
+                    <span
+                        class="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 lg:px-4 py-1.5 sm:py-2 backdrop-blur-sm bg-white/20 rounded-lg sm:rounded-xl border border-white/10"
+                    >
+                        <span
+                            class="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-emerald-500 animate-pulse"
+                        ></span>
+                        <span class="text-xs sm:text-sm text-zinc-700"
+                            >Active</span
+                        >
+                    </span>
+
+                    <button
+                        class="p-2 sm:p-3 backdrop-blur-sm bg-white/20 rounded-lg sm:rounded-xl border border-white/10 hover:bg-white/30 hover:scale-105 transition"
+                    >
+                        <i
+                            class="fas fa-bell w-4 h-4 sm:w-5 sm:h-5 text-zinc-700"
+                        ></i>
+                    </button>
+                </div>
+            </nav>
+
+            <!-- Main Header Content -->
             <div class="flex items-center justify-between">
                 <div>
                     <h1
-                        class="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2"
+                        class="text-2xl sm:text-3xl md:text-4xl font-bold text-zinc-900 mb-2"
                     >
                         HR Dashboard
                     </h1>
-                    <p class="text-emerald-100 text-sm sm:text-base md:text-lg">
+                    <p class="text-zinc-600 text-sm sm:text-base md:text-lg">
                         Organization-wide leave management and oversight
                     </p>
                 </div>
@@ -42,10 +86,10 @@ Leave Management{% endblock %} {% block content %}
                     <div
                         class="backdrop-blur-sm bg-white/20 rounded-xl border border-white/10 p-4"
                     >
-                        <p class="text-2xl font-bold text-white">
+                        <p class="text-2xl font-bold text-zinc-900">
                             {{ current_year }}
                         </p>
-                        <p class="text-emerald-200 text-sm">Current Year</p>
+                        <p class="text-zinc-600 text-sm">Current Year</p>
                     </div>
                 </div>
             </div>
@@ -60,15 +104,15 @@ Leave Management{% endblock %} {% block content %}
         >
             <div class="flex items-center">
                 <div
-                    class="p-3 rounded-full bg-emerald-500/20 text-emerald-600 backdrop-blur-sm border border-emerald-400/20"
+                    class="p-3 rounded-full bg-gradient-to-tr from-emerald-300/20 to-emerald-400/10 text-emerald-600 backdrop-blur-sm border border-emerald-400/20"
                 >
                     <i class="fas fa-users text-lg sm:text-xl"></i>
                 </div>
                 <div class="ml-4">
-                    <p class="text-xl sm:text-2xl font-semibold text-gray-800">
+                    <p class="text-xl sm:text-2xl font-semibold text-zinc-900">
                         {{ stats.total_employees|default:0 }}
                     </p>
-                    <p class="text-gray-800 text-sm sm:text-base font-medium">
+                    <p class="text-zinc-700 text-sm sm:text-base font-medium">
                         Total Employees
                     </p>
                 </div>
@@ -81,15 +125,15 @@ Leave Management{% endblock %} {% block content %}
         >
             <div class="flex items-center">
                 <div
-                    class="p-3 rounded-full bg-amber-500/20 text-amber-600 backdrop-blur-sm border border-amber-400/20"
+                    class="p-3 rounded-full bg-gradient-to-tr from-rose-300/20 to-rose-400/10 text-rose-600 backdrop-blur-sm border border-rose-400/20"
                 >
                     <i class="fas fa-clock text-lg sm:text-xl"></i>
                 </div>
                 <div class="ml-4">
-                    <p class="text-xl sm:text-2xl font-semibold text-gray-800">
+                    <p class="text-xl sm:text-2xl font-semibold text-zinc-900">
                         {{ stats.pending_requests|default:0 }}
                     </p>
-                    <p class="text-gray-800 text-sm sm:text-base font-medium">
+                    <p class="text-zinc-700 text-sm sm:text-base font-medium">
                         Pending Requests
                     </p>
                 </div>
@@ -102,15 +146,15 @@ Leave Management{% endblock %} {% block content %}
         >
             <div class="flex items-center">
                 <div
-                    class="p-3 rounded-full bg-sky-500/20 text-sky-600 backdrop-blur-sm border border-sky-400/20"
+                    class="p-3 rounded-full bg-gradient-to-tr from-teal-300/20 to-teal-400/10 text-teal-600 backdrop-blur-sm border border-teal-400/20"
                 >
                     <i class="fas fa-check-circle text-lg sm:text-xl"></i>
                 </div>
                 <div class="ml-4">
-                    <p class="text-xl sm:text-2xl font-semibold text-gray-800">
+                    <p class="text-xl sm:text-2xl font-semibold text-zinc-900">
                         {{ stats.approved_this_month|default:0 }}
                     </p>
-                    <p class="text-gray-800 text-sm sm:text-base font-medium">
+                    <p class="text-zinc-700 text-sm sm:text-base font-medium">
                         Approved This Month
                     </p>
                 </div>
@@ -123,15 +167,15 @@ Leave Management{% endblock %} {% block content %}
         >
             <div class="flex items-center">
                 <div
-                    class="p-3 rounded-full bg-rose-500/20 text-rose-600 backdrop-blur-sm border border-rose-400/20"
+                    class="p-3 rounded-full bg-gradient-to-tr from-violet-300/20 to-violet-400/10 text-violet-600 backdrop-blur-sm border border-violet-400/20"
                 >
                     <i class="fas fa-calendar-alt text-lg sm:text-xl"></i>
                 </div>
                 <div class="ml-4">
-                    <p class="text-xl sm:text-2xl font-semibold text-gray-800">
+                    <p class="text-xl sm:text-2xl font-semibold text-zinc-900">
                         {{ stats.total_leave_days_this_year|default:0 }}
                     </p>
-                    <p class="text-gray-800 text-sm sm:text-base font-medium">
+                    <p class="text-zinc-700 text-sm sm:text-base font-medium">
                         Leave Days {{ current_year }}
                     </p>
                 </div>
@@ -147,7 +191,7 @@ Leave Management{% endblock %} {% block content %}
                 class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300"
             >
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-semibold text-gray-800">
+                    <h3 class="text-lg font-semibold text-zinc-900">
                         Recent Pending Requests
                     </h3>
                     <a
@@ -162,12 +206,12 @@ Leave Management{% endblock %} {% block content %}
                 <div class="space-y-4">
                     {% for request in recent_requests %}
                     <div
-                        class="backdrop-blur-sm bg-white/30 border border-amber-200/30 rounded-lg p-4 hover:bg-white/40 hover:shadow-md transition-all duration-200"
+                        class="backdrop-blur-sm bg-white/30 border border-white/30 rounded-lg p-4 hover:bg-white/40 hover:shadow-md transition-all duration-200"
                     >
                         <div class="flex items-center justify-between mb-3">
                             <div class="flex items-center space-x-3">
                                 <div
-                                    class="w-10 h-10 bg-emerald-100/50 rounded-full flex items-center justify-center backdrop-blur-sm"
+                                    class="w-10 h-10 bg-gradient-to-tr from-emerald-300/20 to-emerald-400/10 rounded-full flex items-center justify-center backdrop-blur-sm border border-emerald-400/20"
                                 >
                                     <span
                                         class="text-emerald-600 font-medium text-sm"
@@ -180,32 +224,37 @@ Leave Management{% endblock %} {% block content %}
                                     </span>
                                 </div>
                                 <div>
-                                    <h4 class="font-medium text-gray-800">
+                                    <h4 class="font-medium text-zinc-900">
                                         {{
                                         request.user.get_full_name|default:request.user.username
                                         }}
                                     </h4>
-                                    <p class="text-sm text-gray-700">
+                                    <p class="text-sm text-zinc-700">
                                         {{ request.leave_type.name }}
                                     </p>
                                 </div>
                             </div>
                             <div class="text-right">
-                                <span class="text-sm font-medium text-amber-800"
+                                <span
+                                    class="text-sm font-medium text-rose-800 bg-rose-100/80 px-2 py-1 rounded-full backdrop-blur-sm"
                                     >{{ request.leave_days }} day{{
                                     request.leave_days|pluralize }}</span
                                 >
                                 {% if request.half_day %}
-                                <p class="text-xs text-amber-600">Half Day</p>
+                                <p class="text-xs text-rose-600 mt-1">
+                                    Half Day
+                                </p>
                                 {% endif %}
                             </div>
                         </div>
 
                         <div
-                            class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3 text-sm text-gray-700"
+                            class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3 text-sm text-zinc-700"
                         >
-                            <div class="flex items-center space-x-2">
-                                <i class="fas fa-calendar text-gray-500"></i>
+                            <div
+                                class="flex items-center space-x-2 p-2 rounded-lg backdrop-blur-sm bg-white/20"
+                            >
+                                <i class="fas fa-calendar text-teal-600"></i>
                                 <span>
                                     {{ request.start_date|date:"M j, Y" }} {% if
                                     request.start_date != request.end_date %} -
@@ -213,8 +262,10 @@ Leave Management{% endblock %} {% block content %}
                                     endif %}
                                 </span>
                             </div>
-                            <div class="flex items-center space-x-2">
-                                <i class="fas fa-clock text-gray-500"></i>
+                            <div
+                                class="flex items-center space-x-2 p-2 rounded-lg backdrop-blur-sm bg-white/20"
+                            >
+                                <i class="fas fa-clock text-rose-600"></i>
                                 <span
                                     >Applied: {{ request.created_at|date:"M j, Y
                                     g:i A" }}</span
@@ -224,17 +275,25 @@ Leave Management{% endblock %} {% block content %}
 
                         {% if request.reason %}
                         <div
-                            class="text-sm text-gray-700 mb-3 backdrop-blur-sm bg-white/30 p-2 rounded border-l-2 border-emerald-300"
+                            class="text-sm text-zinc-700 mb-3 backdrop-blur-sm bg-white/30 p-3 rounded-lg border-l-4 border-emerald-400"
                         >
                             {{ request.reason|truncatewords:25 }}
                         </div>
                         {% endif %}
 
                         <div class="flex items-center justify-between">
-                            <div class="text-xs text-gray-600">
-                                {% if request.approver %} Approver: {{
+                            <div
+                                class="text-xs text-zinc-600 p-2 rounded-lg backdrop-blur-sm bg-white/20"
+                            >
+                                {% if request.approver %}
+                                <i class="fas fa-user text-teal-600 mr-1"></i>
+                                Approver: {{
                                 request.approver.get_full_name|default:request.approver.username
-                                }} {% else %} No approver assigned {% endif %}
+                                }} {% else %}
+                                <i
+                                    class="fas fa-user-times text-rose-600 mr-1"
+                                ></i>
+                                No approver assigned {% endif %}
                             </div>
                             <div class="flex space-x-2">
                                 <a
@@ -250,7 +309,7 @@ Leave Management{% endblock %} {% block content %}
                     {% endfor %}
                 </div>
                 {% else %}
-                <div class="text-center py-8 text-gray-600">
+                <div class="text-center py-8 text-zinc-600">
                     <i
                         class="fas fa-check-circle text-4xl mb-4 text-emerald-400"
                     ></i>
@@ -269,13 +328,13 @@ Leave Management{% endblock %} {% block content %}
             <div
                 class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300"
             >
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                <h3 class="text-lg font-semibold text-zinc-900 mb-4">
                     HR Tools
                 </h3>
                 <div class="space-y-3">
                     <a
                         href="{% url 'leave_management:team_leaves' %}"
-                        class="btn-primary w-full text-center"
+                        class="btn-primary w-full text-center block"
                     >
                         <i class="fas fa-list mr-2"></i>
                         All Leave Requests
@@ -283,7 +342,7 @@ Leave Management{% endblock %} {% block content %}
 
                     <a
                         href="{% url 'leave_management:team_leaves' %}?status=Pending"
-                        class="btn-secondary w-full text-center"
+                        class="btn-secondary w-full text-center block"
                     >
                         <i class="fas fa-clock mr-2"></i>
                         Pending Approvals
@@ -291,7 +350,7 @@ Leave Management{% endblock %} {% block content %}
 
                     <a
                         href="{% url 'leave_management:leave_balance' %}"
-                        class="btn-secondary w-full text-center"
+                        class="btn-secondary w-full text-center block"
                     >
                         <i class="fas fa-chart-bar mr-2"></i>
                         Leave Balances
@@ -299,7 +358,7 @@ Leave Management{% endblock %} {% block content %}
 
                     <a
                         href="{% url 'leave_management:apply_leave' %}"
-                        class="btn-secondary w-full text-center"
+                        class="btn-secondary w-full text-center block"
                     >
                         <i class="fas fa-plus mr-2"></i>
                         Apply Leave
@@ -307,7 +366,7 @@ Leave Management{% endblock %} {% block content %}
 
                     <a
                         href="{% url 'leave_management:my_leaves' %}"
-                        class="btn-secondary w-full text-center"
+                        class="btn-secondary w-full text-center block"
                     >
                         <i class="fas fa-user mr-2"></i>
                         My Leaves
@@ -319,7 +378,7 @@ Leave Management{% endblock %} {% block content %}
             <div
                 class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300"
             >
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                <h3 class="text-lg font-semibold text-zinc-900 mb-4">
                     System Overview
                 </h3>
                 <div class="space-y-4">
@@ -328,36 +387,11 @@ Leave Management{% endblock %} {% block content %}
                     >
                         <div class="flex items-center space-x-3">
                             <i class="fas fa-users text-emerald-600"></i>
-                            <span class="text-gray-700">Active Employees</span>
+                            <span class="text-zinc-700">Active Employees</span>
                         </div>
-                        <span class="font-semibold text-emerald-600"
+                        <span
+                            class="font-semibold text-emerald-600 bg-emerald-100/80 px-2 py-1 rounded-full text-sm backdrop-blur-sm"
                             >{{ stats.total_employees|default:0 }}</span
-                        >
-                    </div>
-
-                    <div
-                        class="flex justify-between items-center p-3 backdrop-blur-sm bg-white/30 rounded-lg border border-amber-200/30"
-                    >
-                        <div class="flex items-center space-x-3">
-                            <i class="fas fa-hourglass-half text-amber-600"></i>
-                            <span class="text-gray-700">Pending Requests</span>
-                        </div>
-                        <span class="font-semibold text-amber-600"
-                            >{{ stats.pending_requests|default:0 }}</span
-                        >
-                    </div>
-
-                    <div
-                        class="flex justify-between items-center p-3 backdrop-blur-sm bg-white/30 rounded-lg border border-sky-200/30"
-                    >
-                        <div class="flex items-center space-x-3">
-                            <i class="fas fa-check text-sky-600"></i>
-                            <span class="text-gray-700"
-                                >Approved This Month</span
-                            >
-                        </div>
-                        <span class="font-semibold text-sky-600"
-                            >{{ stats.approved_this_month|default:0 }}</span
                         >
                     </div>
 
@@ -365,12 +399,41 @@ Leave Management{% endblock %} {% block content %}
                         class="flex justify-between items-center p-3 backdrop-blur-sm bg-white/30 rounded-lg border border-rose-200/30"
                     >
                         <div class="flex items-center space-x-3">
-                            <i class="fas fa-calendar-day text-rose-600"></i>
-                            <span class="text-gray-700"
+                            <i class="fas fa-hourglass-half text-rose-600"></i>
+                            <span class="text-zinc-700">Pending Requests</span>
+                        </div>
+                        <span
+                            class="font-semibold text-rose-600 bg-rose-100/80 px-2 py-1 rounded-full text-sm backdrop-blur-sm"
+                            >{{ stats.pending_requests|default:0 }}</span
+                        >
+                    </div>
+
+                    <div
+                        class="flex justify-between items-center p-3 backdrop-blur-sm bg-white/30 rounded-lg border border-teal-200/30"
+                    >
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-check text-teal-600"></i>
+                            <span class="text-zinc-700"
+                                >Approved This Month</span
+                            >
+                        </div>
+                        <span
+                            class="font-semibold text-teal-600 bg-teal-100/80 px-2 py-1 rounded-full text-sm backdrop-blur-sm"
+                            >{{ stats.approved_this_month|default:0 }}</span
+                        >
+                    </div>
+
+                    <div
+                        class="flex justify-between items-center p-3 backdrop-blur-sm bg-white/30 rounded-lg border border-violet-200/30"
+                    >
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-calendar-day text-violet-600"></i>
+                            <span class="text-zinc-700"
                                 >Total Days {{ current_year }}</span
                             >
                         </div>
-                        <span class="font-semibold text-rose-600"
+                        <span
+                            class="font-semibold text-violet-600 bg-violet-100/80 px-2 py-1 rounded-full text-sm backdrop-blur-sm"
                             >{{ stats.total_leave_days_this_year|default:0
                             }}</span
                         >
@@ -382,29 +445,30 @@ Leave Management{% endblock %} {% block content %}
             <div
                 class="backdrop-blur-xl bg-white/20 rounded-[12px] sm:rounded-[16px] lg:rounded-[20px] border border-white/10 shadow-inner p-4 sm:p-6 hover:bg-white/25 transition-all duration-300"
             >
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                <h3 class="text-lg font-semibold text-zinc-900 mb-4">
                     Quick Filters
                 </h3>
                 <div class="space-y-2 text-sm">
                     <a
                         href="{% url 'leave_management:team_leaves' %}?status=Approved"
-                        class="block text-emerald-600 hover:text-emerald-800 py-2 px-3 rounded-md hover:bg-emerald-50 transition-colors font-medium"
+                        class="flex items-center space-x-3 text-emerald-600 hover:text-emerald-800 py-2 px-3 rounded-md hover:bg-emerald-50/50 transition-colors font-medium backdrop-blur-sm bg-white/20 border border-emerald-200/30"
                     >
-                        <i class="fas fa-check-circle mr-2"></i>Approved
-                        Requests
+                        <i class="fas fa-check-circle"></i>
+                        <span>Approved Requests</span>
                     </a>
                     <a
                         href="{% url 'leave_management:team_leaves' %}?status=Rejected"
-                        class="block text-rose-600 hover:text-rose-800 py-2 px-3 rounded-md hover:bg-rose-50 transition-colors font-medium"
+                        class="flex items-center space-x-3 text-rose-600 hover:text-rose-800 py-2 px-3 rounded-md hover:bg-rose-50/50 transition-colors font-medium backdrop-blur-sm bg-white/20 border border-rose-200/30"
                     >
-                        <i class="fas fa-times-circle mr-2"></i>Rejected
-                        Requests
+                        <i class="fas fa-times-circle"></i>
+                        <span>Rejected Requests</span>
                     </a>
                     <a
                         href="{% url 'leave_management:team_leaves' %}?status=Cancelled"
-                        class="block text-gray-600 hover:text-gray-800 py-2 px-3 rounded-md hover:bg-gray-50 transition-colors font-medium"
+                        class="flex items-center space-x-3 text-zinc-600 hover:text-zinc-800 py-2 px-3 rounded-md hover:bg-gray-50/50 transition-colors font-medium backdrop-blur-sm bg-white/20 border border-gray-200/30"
                     >
-                        <i class="fas fa-ban mr-2"></i>Cancelled Requests
+                        <i class="fas fa-ban"></i>
+                        <span>Cancelled Requests</span>
                     </a>
                 </div>
             </div>
@@ -417,32 +481,47 @@ Leave Management{% endblock %} {% block content %}
     >
         <div class="flex items-start space-x-3">
             <div class="flex-shrink-0">
-                <i class="fas fa-info-circle text-2xl text-emerald-500"></i>
+                <i class="fas fa-info-circle text-2xl text-sky-500"></i>
             </div>
             <div>
-                <h3 class="text-lg font-medium text-gray-800 mb-2">
+                <h3 class="text-lg font-medium text-zinc-900 mb-2">
                     HR Guidelines
                 </h3>
-                <div class="text-sm text-gray-700 space-y-2">
-                    <p>
-                        • Monitor leave patterns to identify potential issues or
-                        policy gaps
+                <div class="text-sm text-zinc-700 space-y-2">
+                    <p class="flex items-start space-x-2">
+                        <span class="text-teal-600">•</span>
+                        <span
+                            >Monitor leave patterns to identify potential issues
+                            or policy gaps</span
+                        >
                     </p>
-                    <p>
-                        • Ensure fair distribution of leave approvals across all
-                        departments
+                    <p class="flex items-start space-x-2">
+                        <span class="text-teal-600">•</span>
+                        <span
+                            >Ensure fair distribution of leave approvals across
+                            all departments</span
+                        >
                     </p>
-                    <p>
-                        • Review and update leave policies based on
-                        organizational needs
+                    <p class="flex items-start space-x-2">
+                        <span class="text-teal-600">•</span>
+                        <span
+                            >Review and update leave policies based on
+                            organizational needs</span
+                        >
                     </p>
-                    <p>
-                        • Maintain confidentiality of employee personal
-                        information
+                    <p class="flex items-start space-x-2">
+                        <span class="text-teal-600">•</span>
+                        <span
+                            >Maintain confidentiality of employee personal
+                            information</span
+                        >
                     </p>
-                    <p>
-                        • Keep accurate records for compliance and reporting
-                        purposes
+                    <p class="flex items-start space-x-2">
+                        <span class="text-teal-600">•</span>
+                        <span
+                            >Keep accurate records for compliance and reporting
+                            purposes</span
+                        >
                     </p>
                 </div>
             </div>
@@ -451,16 +530,24 @@ Leave Management{% endblock %} {% block content %}
 </div>
 
 <style>
+    html {
+        scroll-behavior: smooth;
+    }
+
     .btn-primary {
-        @apply px-2 py-1.5 sm:px-3 sm:py-2 lg:px-4 lg:py-2.5 bg-emerald-600 text-white rounded-lg shadow-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg text-xs sm:text-sm lg:text-base backdrop-blur-sm font-medium;
+        @apply px-2 py-1.5 sm:px-3 sm:py-2 lg:px-4 lg:py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-lg shadow-md hover:from-emerald-600 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg text-xs sm:text-sm lg:text-base backdrop-blur-sm font-medium;
     }
 
     .btn-secondary {
-        @apply px-2 py-1.5 sm:px-3 sm:py-2 lg:px-4 lg:py-2.5 bg-white/50 text-gray-800 border border-gray-400/60 rounded-lg shadow-sm hover:bg-white/70 hover:border-gray-500/70 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-300 hover:shadow-md text-xs sm:text-sm lg:text-base backdrop-blur-sm font-medium;
+        @apply px-2 py-1.5 sm:px-3 sm:py-2 lg:px-4 lg:py-2.5 bg-white/50 text-zinc-800 border border-zinc-400/60 rounded-lg shadow-sm hover:bg-white/70 hover:border-zinc-500/70 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-300 hover:shadow-md text-xs sm:text-sm lg:text-base backdrop-blur-sm font-medium;
     }
 
     .btn-secondary-small {
-        @apply px-2 py-1 bg-white/50 text-gray-800 border border-emerald-400/60 rounded text-xs font-medium hover:bg-white/70 hover:border-emerald-500/70 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-300 hover:shadow-sm backdrop-blur-sm;
+        @apply px-2 py-1 bg-white/50 text-zinc-800 border border-emerald-400/60 rounded text-xs font-medium hover:bg-white/70 hover:border-emerald-500/70 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-300 hover:shadow-sm backdrop-blur-sm;
+    }
+
+    .card {
+        @apply backdrop-blur-xl bg-white/30 p-2 sm:p-3 md:p-4 lg:p-6 rounded-lg sm:rounded-xl shadow transition-all duration-300 border border-white/20;
     }
 
     /* Custom scrollbar */
@@ -481,9 +568,85 @@ Leave Management{% endblock %} {% block content %}
     .scrollbar-thin::-webkit-scrollbar-thumb:hover {
         background: rgba(255, 255, 255, 0.5);
     }
+
+    /* Responsive utilities */
+    @media (max-width: 640px) {
+        .scrollbar-thin {
+            scrollbar-width: thin;
+        }
+
+        .grid {
+            gap: 0.5rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .scrollbar-thin::-webkit-scrollbar {
+            width: 2px;
+        }
+    }
+
+    /* Animation for elements */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .card,
+    .btn-primary,
+    .btn-secondary {
+        animation: fadeIn 0.5s ease-out;
+    }
+
+    /* Pulse animation for notifications */
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.05);
+        }
+        100% {
+            transform: scale(1);
+        }
+    }
+
+    .animate-pulse {
+        animation: pulse 2s infinite;
+    }
 </style>
 
 <script>
+    function updateTime() {
+        const timeElement = document.getElementById("time");
+        const ampmElement = document.getElementById("time-ampm");
+        const now = new Date();
+        let hours = now.getHours();
+        let minutes = now.getMinutes();
+        let seconds = now.getSeconds();
+        let ampm = hours >= 12 ? "PM" : "AM";
+
+        // Convert to 12-hour format
+        hours = hours % 12;
+        hours = hours ? hours : 12; // 0 becomes 12
+        minutes = minutes < 10 ? "0" + minutes : minutes;
+        seconds = seconds < 10 ? "0" + seconds : seconds;
+
+        const formattedTime = `${hours}:${minutes}:${seconds}`;
+        timeElement.textContent = formattedTime;
+        ampmElement.textContent = ampm;
+    }
+
+    // Update time immediately and every second
+    updateTime();
+    setInterval(updateTime, 1000);
+
     document.addEventListener("DOMContentLoaded", function () {
         // Auto-refresh every 3 minutes for HR dashboard
         setTimeout(function () {
@@ -503,12 +666,12 @@ Leave Management{% endblock %} {% block content %}
         if (highPriorityCount > 10) {
             // Add visual warning for high pending count
             const statsCard = document.querySelector(
-                ".border-amber-400/20",
+                ".border-rose-400/20",
             ).closest(".backdrop-blur-xl");
             if (statsCard) {
                 statsCard.classList.add(
                     "ring-2",
-                    "ring-amber-300",
+                    "ring-rose-300",
                     "ring-opacity-50",
                 );
             }
